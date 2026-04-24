@@ -1,0 +1,90 @@
+<div class="space-y-8">
+  <div class="flex items-center justify-between">
+    <div>
+      <h2 class="text-2xl font-semibold tracking-tight">Reportes</h2>
+      <p class="text-sm text-muted-foreground">KPIs, métricas de rendimiento y progreso</p>
+    </div>
+    <button uiButton variant="outline" size="sm" (click)="load()">
+      <ng-icon name="lucideRefreshCw" size="14" />
+      Actualizar
+    </button>
+  </div>
+
+  <!-- KPI Cards -->
+  <div class="grid gap-4 grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+    @for (card of kpiCards(); track card.label) {
+      <ui-card>
+        <ui-card-header>
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-medium text-muted-foreground">{{ card.label }}</span>
+            <ng-icon [name]="card.icon" size="14" class="text-muted-foreground" />
+          </div>
+        </ui-card-header>
+        <ui-card-content>
+          <p class="text-2xl font-bold">{{ card.value }}</p>
+          <p class="text-xs text-muted-foreground mt-0.5">{{ card.sub }}</p>
+        </ui-card-content>
+      </ui-card>
+    }
+  </div>
+
+  <div class="grid gap-6 lg:grid-cols-2">
+
+    <!-- Task Breakdown -->
+    <ui-card>
+      <ui-card-header>
+        <ui-card-title>Distribución de tareas</ui-card-title>
+      </ui-card-header>
+      <ui-card-content>
+        <div class="space-y-3">
+          @for (item of breakdown(); track item.status) {
+            <div class="flex items-center gap-3">
+              <span class="text-sm w-28 shrink-0">{{ item.status }}</span>
+              <div class="flex-1 bg-muted rounded-full h-2 overflow-hidden">
+                <div
+                  class="h-full bg-primary rounded-full transition-all"
+                  [style.width.%]="totalBreakdown() > 0 ? (item.count / totalBreakdown()) * 100 : 0"
+                ></div>
+              </div>
+              <span class="text-sm font-medium w-8 text-right">{{ item.count }}</span>
+            </div>
+          } @empty {
+            <p class="text-sm text-muted-foreground text-center py-4">Sin datos</p>
+          }
+        </div>
+      </ui-card-content>
+    </ui-card>
+
+    <!-- Project Progress -->
+    <ui-card>
+      <ui-card-header>
+        <ui-card-title>Progreso por proyecto</ui-card-title>
+      </ui-card-header>
+      <ui-card-content>
+        <div class="space-y-4">
+          @for (p of progress(); track p.id) {
+            <div class="space-y-1.5">
+              <div class="flex items-center justify-between">
+                <span class="text-sm font-medium truncate max-w-[180px]">{{ p.name }}</span>
+                <div class="flex items-center gap-2 shrink-0">
+                  <ui-badge [variant]="statusBadge(p.status)">{{ p.status }}</ui-badge>
+                  <span class="text-xs text-muted-foreground">{{ p.completionPct | number:'1.0-0' }}%</span>
+                </div>
+              </div>
+              <div class="bg-muted rounded-full h-1.5 overflow-hidden">
+                <div
+                  class="h-full bg-primary rounded-full transition-all"
+                  [style.width.%]="p.completionPct"
+                ></div>
+              </div>
+              <p class="text-xs text-muted-foreground">{{ p.doneTasks }} / {{ p.totalTasks }} tareas</p>
+            </div>
+          } @empty {
+            <p class="text-sm text-muted-foreground text-center py-4">Sin proyectos</p>
+          }
+        </div>
+      </ui-card-content>
+    </ui-card>
+
+  </div>
+</div>

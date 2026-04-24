@@ -1,0 +1,67 @@
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+  <div class="w-full max-w-lg rounded-lg border border-border bg-card shadow-xl">
+    <div class="flex items-center justify-between px-6 py-4 border-b border-border">
+      <h3 class="text-base font-semibold">Nuevo ticket</h3>
+      <button (click)="close()" class="text-muted-foreground hover:text-foreground text-lg leading-none">&times;</button>
+    </div>
+
+    <div class="px-6 py-4 space-y-4">
+      <div class="grid grid-cols-2 gap-4">
+        <div class="space-y-1.5">
+          <label uiLabel for="t-subject">Asunto *</label>
+          <input uiInput id="t-subject" [(ngModel)]="subject" placeholder="Asunto del ticket" />
+        </div>
+        <div class="space-y-1.5">
+          <label uiLabel for="t-category">Categoría</label>
+          <select id="t-category" [(ngModel)]="category"
+                  class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+            @for (cat of categories; track cat) {
+              <option [value]="cat">{{ cat }}</option>
+            }
+          </select>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div class="space-y-1.5">
+          <label uiLabel for="t-name">Nombre contacto</label>
+          <input uiInput id="t-name" [(ngModel)]="contactName" placeholder="Nombre" />
+        </div>
+        <div class="space-y-1.5">
+          <label uiLabel for="t-company">Empresa</label>
+          <input uiInput id="t-company" [(ngModel)]="company" placeholder="Empresa" />
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div class="space-y-1.5">
+          <label uiLabel for="t-email">Email *</label>
+          <input uiInput id="t-email" type="email" [(ngModel)]="contactEmail" placeholder="email@ejemplo.com" />
+        </div>
+        <div class="space-y-1.5">
+          <label uiLabel for="t-phone">Teléfono</label>
+          <input uiInput id="t-phone" [(ngModel)]="contactPhone" placeholder="+1 234 567" />
+        </div>
+      </div>
+
+      <div class="space-y-1.5">
+        <label uiLabel for="t-message">Mensaje *</label>
+        <textarea id="t-message" [(ngModel)]="message" rows="3"
+                  placeholder="Describe el problema..."
+                  class="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring resize-none">
+        </textarea>
+      </div>
+
+      @if (error()) {
+        <p class="text-sm text-destructive">{{ error() }}</p>
+      }
+    </div>
+
+    <div class="flex justify-end gap-2 px-6 py-4 border-t border-border">
+      <button uiButton variant="outline" (click)="close()">Cancelar</button>
+      <button uiButton (click)="submit()" [disabled]="loading()">
+        {{ loading() ? 'Creando...' : 'Crear ticket' }}
+      </button>
+    </div>
+  </div>
+</div>

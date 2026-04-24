@@ -1,0 +1,146 @@
+<div class="space-y-4">
+
+  <!-- Header -->
+  <div class="flex items-center justify-between">
+    <div>
+      <h2 class="text-2xl font-semibold tracking-tight">Tickets</h2>
+      <p class="text-sm text-muted-foreground">{{ totalVisible() }} tickets</p>
+    </div>
+    <div class="flex items-center gap-2">
+      <div class="flex rounded-md border border-border overflow-hidden">
+        <button (click)="viewMode.set('board')"
+          [class.bg-primary]="viewMode() === 'board'"
+          [class.text-primary-foreground]="viewMode() === 'board'"
+          class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium transition-colors hover:bg-accent">
+          <ng-icon name="lucideLayoutDashboard" size="13" /> Board
+        </button>
+        <button (click)="viewMode.set('list')"
+          [class.bg-primary]="viewMode() === 'list'"
+          [class.text-primary-foreground]="viewMode() === 'list'"
+          class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium transition-colors hover:bg-accent border-l border-border">
+          <ng-icon name="lucideList" size="13" /> Lista
+        </button>
+      </div>
+      <button uiButton variant="outline" size="sm" (click)="load()">
+        <ng-icon name="lucideRefreshCw" size="14" /> Actualizar
+      </button>
+      <button uiButton size="sm" (click)="showModal.set(true)">
+        <ng-icon name="lucidePlus" size="14" /> Nuevo ticket
+      </button>
+    </div>
+  </div>
+
+  <!-- Filtros -->
+  <div class="flex flex-wrap items-center gap-3 p-3 rounded-lg border border-border bg-muted/30">
+    <ng-icon name="lucideFilter" size="14" class="text-muted-foreground shrink-0" />
+    <input class="h-8 rounded-md border border-input bg-background px-3 text-sm w-48 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+      placeholder="Buscar ticket..." [ngModel]="filterSearch()" (ngModelChange)="filterSearch.set($event); applyFilters()" />
+    <select class="h-8 rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+      [ngModel]="filterStatus()" (ngModelChange)="filterStatus.set($event); applyFilters()">
+      <option value="">Todos los estados</option>
+      @for (s of statuses; track s) { <option [value]="s">{{ s }}</option> }
+    </select>
+    <select class="h-8 rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+      [ngModel]="filterCategory()" (ngModelChange)="filterCategory.set($event); applyFilters()">
+      <option value="">Todas las categorías</option>
+      @for (cat of categories(); track cat) { <option [value]="cat">{{ cat }}</option> }
+    </select>
+    @if (filterStatus() || filterCategory() || filterSearch()) {
+      <button (click)="clearFilters()" class="text-xs text-muted-foreground hover:text-destructive transition-colors">
+        Limpiar filtros
+      </button>
+    }
+  </div>
+
+  <!-- VISTA BOARD -->
+  @if (viewMode() === 'board') {
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      @for (col of cols; track col.key) {
+        <div class="flex flex-col gap-3">
+          <div class="flex items-center justify-between px-1">
+            <span class="text-sm font-medium">{{ col.label }}</span>
+            <ui-badge [variant]="col.badge">{{ col.tickets.length }}</ui-badge>
+          </div>
+          <div cdkDropList
+            [id]="col.key"
+            [cdkDropListData]="col.tickets"
+            [cdkDropListConnectedTo]="columnIds"
+            (cdkDropListDropped)="drop($event, col.key)"
+            class="flex flex-col gap-2 min-h-28 rounded-lg border border-dashed border-border p-2 transition-colors"
+            [class.bg-accent/20]="col.tickets.length === 0">
+            @for (ticket of col.tickets; track ticket.id) {
+              <div cdkDrag [cdkDragData]="ticket"
+                (click)="openDetail(ticket)"
+                class="rounded-lg border border-border bg-card p-3 space-y-2 shadow-sm cursor-pointer hover:shadow-md hover:border-primary/30 transition-all select-none">
+                <div *cdkDragPreview class="rounded-lg border border-primary bg-card p-3 shadow-xl w-52 opacity-90">
+                  <p class="text-sm font-medium truncate">{{ ticket.subject }}</p>
+                  <p class="text-xs text-muted-foreground mt-0.5">{{ ticket.company }}</p>
+                </div>
+                <div *cdkDragPlaceholder class="rounded-lg border-2 border-dashed border-primary/40 bg-primary/5 h-16"></div>
+                <p class="text-sm font-medium leading-snug">{{ ticket.subject }}</p>
+                <div class="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <ng-icon name="lucideUser" size="11" />
+                  <span class="truncate">{{ ticket.contactName || ticket.company || '—' }}</span>
+                </div>
+                <div class="flex items-center justify-between">
+                  <ui-badge variant="outline" class="text-[10px]">{{ ticket.category }}</ui-badge>
+                  <ui-badge [variant]="statusBadge(ticket.status)" class="text-[10px]">{{ ticket.status }}</ui-badge>
+                </div>
+              </div>
+            } @empty {
+              <div class="flex items-center justify-center h-16 text-xs text-muted-foreground">Sin tickets</div>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- VISTA LISTA -->
+  @if (viewMode() === 'list') {
+    <div class="rounded-md border border-border overflow-hidden">
+      <table class="w-full text-sm">
+        <thead class="bg-muted/50">
+          <tr>
+            <th class="px-4 py-3 text-left font-medium text-muted-foreground">Asunto</th>
+            <th class="px-4 py-3 text-left font-medium text-muted-foreground">Empresa</th>
+            <th class="px-4 py-3 text-left font-medium text-muted-foreground">Contacto</th>
+            <th class="px-4 py-3 text-left font-medium text-muted-foreground">Categoría</th>
+            <th class="px-4 py-3 text-left font-medium text-muted-foreground">Estado</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (ticket of filteredList(); track ticket.id) {
+            <tr class="border-t border-border hover:bg-muted/30 transition-colors cursor-pointer"
+                (click)="openDetail(ticket)">
+              <td class="px-4 py-3 font-medium max-w-xs truncate">{{ ticket.subject }}</td>
+              <td class="px-4 py-3 text-muted-foreground">{{ ticket.company }}</td>
+              <td class="px-4 py-3 text-muted-foreground">{{ ticket.contactName }}</td>
+              <td class="px-4 py-3"><ui-badge variant="outline">{{ ticket.category }}</ui-badge></td>
+              <td class="px-4 py-3"><ui-badge [variant]="statusBadge(ticket.status)">{{ ticket.status }}</ui-badge></td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="5" class="px-4 py-8 text-center text-muted-foreground">
+                No hay tickets con los filtros aplicados
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+
+</div>
+
+@if (showModal()) {
+  <app-ticket-create-modal (created)="onTicketCreated($event)" (closed)="showModal.set(false)" />
+}
+
+@if (selectedTicket()) {
+  <app-ticket-detail-panel
+    [ticket]="selectedTicket()!"
+    (closed)="selectedTicket.set(null)"
+    (updated)="onTicketUpdated($event)"
+  />
+}

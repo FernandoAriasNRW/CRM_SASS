@@ -1,0 +1,313 @@
+<div class="min-h-screen bg-background">
+  <!-- Header -->
+  <div class="border-b border-border bg-card px-6 py-4">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+          <ng-icon name="lucideWebhook" size="22" class="text-primary" />
+        </div>
+        <div>
+          <h1 class="text-xl font-semibold">Webhooks</h1>
+          <p class="text-sm text-muted-foreground">Gestiona integraciones con sistemas externos</p>
+        </div>
+      </div>
+
+      <button
+        (click)="openCreateModal()"
+        class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium hover:bg-primary/90 transition-colors"
+      >
+        <ng-icon name="lucidePlus" size="16" />
+        Nuevo Webhook
+      </button>
+    </div>
+
+    <!-- Stats -->
+    <div class="mt-4 grid grid-cols-4 gap-4">
+      <div class="rounded-lg border border-border bg-muted/30 px-4 py-3">
+        <p class="text-xs text-muted-foreground">Total Suscripciones</p>
+        <p class="text-2xl font-bold">{{ stats().total }}</p>
+      </div>
+      <div class="rounded-lg border border-border bg-muted/30 px-4 py-3">
+        <p class="text-xs text-muted-foreground">Activas</p>
+        <p class="text-2xl font-bold text-green-600">{{ stats().active }}</p>
+      </div>
+      <div class="rounded-lg border border-border bg-muted/30 px-4 py-3">
+        <p class="text-xs text-muted-foreground">Entregas Exitosas</p>
+        <p class="text-2xl font-bold text-blue-600">{{ stats().successCount }}</p>
+      </div>
+      <div class="rounded-lg border border-border bg-muted/30 px-4 py-3">
+        <p class="text-xs text-muted-foreground">Entregas Fallidas</p>
+        <p class="text-2xl font-bold text-red-600">{{ stats().failureCount }}</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Content -->
+  <div class="p-6">
+    <!-- Search -->
+    <div class="mb-4 relative">
+      <ng-icon
+        name="lucideSearch"
+        size="16"
+        class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+      />
+      <input
+        type="text"
+        placeholder="Buscar webhooks..."
+        [ngModel]="searchQuery()"
+        (ngModelChange)="searchQuery.set($any($event))"
+        class="w-full pl-10 pr-4 py-2 border border-input rounded-md bg-background text-sm focus:ring-2 focus:ring-ring outline-none"
+      />
+    </div>
+
+    <!-- Loading State -->
+    @if (loading()) {
+      <div class="space-y-4">
+        @for (i of [1, 2, 3]; track i) {
+          <div class="animate-pulse rounded-lg border border-border bg-card p-4">
+            <div class="h-4 bg-muted rounded w-1/4 mb-2"></div>
+            <div class="h-3 bg-muted rounded w-3/4"></div>
+          </div>
+        }
+      </div>
+    } @else if (filteredSubscriptions().length === 0) {
+      <!-- Empty State -->
+      <div class="flex flex-col items-center justify-center py-12 text-center">
+        <div class="flex h-16 w-16 items-center justify-center rounded-full bg-muted mb-4">
+          <ng-icon name="lucideWebhook" size="32" class="text-muted-foreground" />
+        </div>
+        <h3 class="text-lg font-medium mb-2">No hay webhooks configurados</h3>
+        <p class="text-sm text-muted-foreground mb-4 max-w-sm">
+          Crea tu primer webhook para recibir notificaciones de eventos en tu sistema CRM.
+        </p>
+        <button
+          (click)="openCreateModal()"
+          class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium hover:bg-primary/90 transition-colors"
+        >
+          <ng-icon name="lucidePlus" size="16" />
+          Crear Webhook
+        </button>
+      </div>
+    } @else {
+      <!-- Subscription List -->
+      <div class="space-y-3">
+        @for (subscription of filteredSubscriptions(); track subscription.id) {
+          <div class="rounded-lg border border-border bg-card overflow-hidden">
+            <div class="p-4">
+              <div class="flex items-start justify-between gap-4">
+                <!-- Left: Info -->
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-2 mb-1">
+                    <h3 class="font-medium truncate">{{ subscription.name }}</h3>
+                    @if (subscription.isActive) {
+                      <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">
+                        <ng-icon name="lucideCheck" size="10" />
+                        Activo
+                      </span>
+                    } @else {
+                      <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-muted text-muted-foreground">
+                        <ng-icon name="lucideX" size="10" />
+                        Inactivo
+                      </span>
+                    }
+                  </div>
+
+                  <div class="flex items-center gap-1 text-sm text-muted-foreground mb-3">
+                    <ng-icon name="lucideExternalLink" size="12" />
+                    <span class="truncate">{{ subscription.url }}</span>
+                  </div>
+
+                  <!-- Event Types -->
+                  <div class="flex flex-wrap gap-1">
+                    @for (eventType of getEventTypeLabels(subscription.eventTypes); track eventType) {
+                      <span
+                        class="inline-flex items-center px-2 py-0.5 rounded text-xs bg-primary/10 text-primary"
+                        [title]="getEventTypeDescription(eventType)"
+                      >
+                        {{ eventType }}
+                      </span>
+                    }
+                  </div>
+                </div>
+
+                <!-- Right: Stats & Actions -->
+                <div class="flex flex-col items-end gap-2">
+                  <!-- Stats -->
+                  <div class="flex items-center gap-3 text-xs text-muted-foreground">
+                    <span class="flex items-center gap-1" [class.text-green-600]="subscription.successCount > 0">
+                      <ng-icon name="lucideCheck" size="12" />
+                      {{ subscription.successCount }}
+                    </span>
+                    <span class="flex items-center gap-1" [class.text-red-600]="subscription.failureCount > 0">
+                      <ng-icon name="lucideX" size="12" />
+                      {{ subscription.failureCount }}
+                    </span>
+                  </div>
+
+                  <!-- Actions -->
+                  <div class="flex items-center gap-1">
+                    @if (togglingId() === subscription.id) {
+                      <span class="p-2">
+                        <ng-icon name="lucideLoader2" size="14" class="animate-spin" />
+                      </span>
+                    } @else {
+                      <button
+                        (click)="toggleActive(subscription)"
+                        class="p-2 rounded hover:bg-muted transition-colors"
+                        [title]="subscription.isActive ? 'Desactivar' : 'Activar'"
+                      >
+                        @if (subscription.isActive) {
+                          <ng-icon name="lucideEyeOff" size="14" class="text-muted-foreground" />
+                        } @else {
+                          <ng-icon name="lucideEye" size="14" class="text-green-600" />
+                        }
+                      </button>
+                    }
+
+                    <button
+                      (click)="regenerateSecret(subscription)"
+                      [disabled]="regeneratingId() === subscription.id"
+                      class="p-2 rounded hover:bg-muted transition-colors disabled:opacity-50"
+                      title="Regenerar Secret"
+                    >
+                      @if (regeneratingId() === subscription.id) {
+                        <ng-icon name="lucideLoader2" size="14" class="animate-spin" />
+                      } @else {
+                        <ng-icon name="lucideRefreshCw" size="14" class="text-muted-foreground" />
+                      }
+                    </button>
+
+                    <button
+                      (click)="openEditModal(subscription)"
+                      class="p-2 rounded hover:bg-muted transition-colors"
+                      title="Editar"
+                    >
+                      <ng-icon name="lucideEdit3" size="14" class="text-muted-foreground" />
+                    </button>
+
+                    <button
+                      (click)="confirmDelete(subscription)"
+                      class="p-2 rounded hover:bg-destructive/10 transition-colors"
+                      title="Eliminar"
+                    >
+                      <ng-icon name="lucideTrash2" size="14" class="text-destructive" />
+                    </button>
+                  </div>
+
+                  <!-- Last triggered -->
+                  <span class="text-[10px] text-muted-foreground">
+                    Última vez: {{ formatDate(subscription.lastTriggeredAtUtc) }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </div>
+</div>
+
+<!-- Form Modal -->
+@if (showForm()) {
+  <app-webhook-form-modal
+    [subscription]="editingSubscription()"
+    [tenantId]="getTenantId()"
+    (closed)="closeFormModal()"
+    (saved)="onFormSaved($event)"
+  />
+}
+
+<!-- Secret Modal -->
+@if (showSecretModal() && secretToShow()) {
+  <div
+    class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4"
+    (click)="closeSecretModal()"
+  >
+    <div
+      class="w-full max-w-md rounded-lg border border-border bg-card shadow-xl"
+      (click)="$event.stopPropagation()"
+    >
+      <div class="flex items-center justify-between px-6 py-4 border-b border-border">
+        <h3 class="text-base font-semibold">Nuevo Secret</h3>
+        <button
+          (click)="closeSecretModal()"
+          class="text-muted-foreground hover:text-foreground p-1 rounded hover:bg-muted"
+        >
+          <ng-icon name="lucideX" size="18" />
+        </button>
+      </div>
+
+      <div class="p-6">
+        <p class="text-sm text-muted-foreground mb-4">
+          El secret para <strong>{{ secretToShow()!.name }}</strong> ha sido regenerado.
+          Guarda este secret de forma segura, ya que no se mostrará nuevamente.
+        </p>
+
+        <div class="flex items-center gap-2 p-3 rounded-md bg-muted/50 border border-border">
+          <code class="flex-1 text-sm font-mono break-all">{{ secretToShow()!.secret }}</code>
+          <button
+            (click)="copyToClipboard(secretToShow()!.secret)"
+            class="shrink-0 p-2 rounded hover:bg-muted transition-colors"
+            title="Copiar"
+          >
+            <ng-icon name="lucideLoader2" size="14" />
+          </button>
+        </div>
+      </div>
+
+      <div class="px-6 py-4 border-t border-border bg-muted/30 flex justify-end">
+        <button
+          (click)="closeSecretModal()"
+          class="px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium hover:bg-primary/90"
+        >
+          Cerrar
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Delete Confirmation Modal -->
+@if (confirmDeleteId()) {
+  <div
+    class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4"
+    (click)="cancelDelete()"
+  >
+    <div
+      class="w-full max-w-sm rounded-lg border border-border bg-card shadow-xl"
+      (click)="$event.stopPropagation()"
+    >
+      <div class="p-6">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="flex h-10 w-10 items-center justify-center rounded-full bg-destructive/10">
+            <ng-icon name="lucideTrash2" size="20" class="text-destructive" />
+          </div>
+          <div>
+            <h3 class="font-semibold">Eliminar Webhook</h3>
+            <p class="text-sm text-muted-foreground">Esta acción no se puede deshacer</p>
+          </div>
+        </div>
+
+        <p class="text-sm text-muted-foreground">
+          ¿Estás seguro de que deseas eliminar este webhook? Se perderán todas las configuraciones y estadísticas asociadas.
+        </p>
+      </div>
+
+      <div class="px-6 py-4 border-t border-border bg-muted/30 flex justify-end gap-2">
+        <button
+          (click)="cancelDelete()"
+          class="px-4 py-2 border border-border rounded-md text-sm hover:bg-muted/50"
+        >
+          Cancelar
+        </button>
+        <button
+          (click)="deleteSubscription(confirmDeleteId()!)"
+          class="px-4 py-2 bg-destructive text-destructive-foreground rounded-md text-sm font-medium hover:bg-destructive/90"
+        >
+          Eliminar
+        </button>
+      </div>
+    </div>
+  </div>
+}
