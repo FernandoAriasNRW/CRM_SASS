@@ -1,0 +1,35 @@
+<div class="min-h-screen flex items-center justify-center bg-background px-4">
+  <ui-card class="w-full max-w-sm">
+    <ui-card-header>
+      <ui-card-title>Iniciar sesión</ui-card-title>
+      <ui-card-description>Ingresa tus credenciales para continuar</ui-card-description>
+    </ui-card-header>
+
+    <ui-card-content>
+      <form (ngSubmit)="login()" class="space-y-4">
+        <div class="space-y-1.5">
+          <label uiLabel for="email">Email</label>
+          <input uiInput id="email" type="email" [(ngModel)]="email" name="email"
+                 placeholder="admin@acme.com" />
+        </div>
+        <div class="space-y-1.5">
+          <label uiLabel for="password">Contraseña</label>
+          <input uiInput id="password" type="password" [(ngModel)]="password" name="password"
+                 placeholder="••••••••" />
+        </div>
+
+        @if (error()) {
+          <p class="text-sm text-destructive">{{ error() }}</p>
+        }
+
+        <button uiButton type="submit" class="w-full" [disabled]="loading()">
+          {{ loading() ? 'Ingresando...' : 'Ingresar' }}
+        </button>
+      </form>
+    </ui-card-content>
+
+    <ui-card-footer>
+      <p class="text-xs text-muted-foreground">Demo: admin&#64;acme.com / admin123</p>
+    </ui-card-footer>
+  </ui-card>
+</div>

@@ -1,0 +1,55 @@
+<div class="relative">
+  <button
+    (click)="toggle()"
+    class="relative p-1.5 rounded-md hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
+  >
+    <ng-icon name="lucideBell" size="18" />
+    @if ((unreadCount$ | async) ?? 0; as count) {
+      @if (count > 0) {
+        <span class="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-destructive-foreground">
+          {{ count > 9 ? '9+' : count }}
+        </span>
+      }
+    }
+  </button>
+
+  @if (open()) {
+    <div class="absolute right-0 top-10 z-50 w-80 rounded-lg border border-border bg-card shadow-lg">
+      <div class="flex items-center justify-between px-4 py-3 border-b border-border">
+        <span class="text-sm font-medium">Notificaciones</span>
+        @if ((unreadCount$ | async) ?? 0; as count) {
+          @if (count > 0) {
+            <span class="text-xs text-muted-foreground">{{ count }} sin leer</span>
+          }
+        }
+      </div>
+
+      <div class="max-h-80 overflow-y-auto">
+        @for (n of notifications$ | async; track n.id) {
+          <div
+            class="flex items-start gap-3 px-4 py-3 border-b border-border last:border-0 hover:bg-muted/30 transition-colors"
+            [class.bg-primary/5]="!n.isRead"
+          >
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-medium truncate">{{ n.title }}</p>
+              <p class="text-xs text-muted-foreground mt-0.5 line-clamp-2">{{ n.body }}</p>
+            </div>
+            @if (!n.isRead) {
+              <button
+                (click)="markRead(n.id)"
+                class="shrink-0 p-1 rounded hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
+                title="Marcar como leída"
+              >
+                <ng-icon name="lucideCheck" size="13" />
+              </button>
+            }
+          </div>
+        } @empty {
+          <div class="px-4 py-8 text-center text-sm text-muted-foreground">
+            Sin notificaciones
+          </div>
+        }
+      </div>
+    </div>
+  }
+</div>

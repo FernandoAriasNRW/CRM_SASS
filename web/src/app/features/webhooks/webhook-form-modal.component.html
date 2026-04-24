@@ -1,0 +1,196 @@
+<div
+  class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4"
+  (click)="close()"
+>
+  <div
+    class="w-full max-w-2xl rounded-lg border border-border bg-card shadow-xl max-h-[90vh] overflow-hidden flex flex-col"
+    (click)="$event.stopPropagation()"
+  >
+    <!-- Header -->
+    <div class="flex items-center justify-between px-6 py-4 border-b border-border shrink-0">
+      <div class="flex items-center gap-3">
+        <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+          <ng-icon name="lucideWebhook" size="20" class="text-primary" />
+        </div>
+        <div>
+          <h3 class="text-lg font-semibold">
+            {{ isEditing() ? 'Editar Webhook' : 'Nuevo Webhook' }}
+          </h3>
+          <p class="text-xs text-muted-foreground">
+            {{ isEditing() ? 'Actualiza la configuración del webhook' : 'Configura un nuevo webhook' }}
+          </p>
+        </div>
+      </div>
+      <button
+        (click)="close()"
+        class="text-muted-foreground hover:text-foreground p-1 rounded hover:bg-muted transition-colors"
+      >
+        <ng-icon name="lucideX" size="18" />
+      </button>
+    </div>
+
+    <!-- Body -->
+    <div class="flex-1 overflow-y-auto p-6 space-y-6">
+      <!-- Name Field -->
+      <div>
+        <label for="webhook-name" class="block text-sm font-medium mb-1.5">
+          Nombre del Webhook <span class="text-destructive">*</span>
+        </label>
+        <input
+          id="webhook-name"
+          type="text"
+          [ngModel]="name()"
+          (ngModelChange)="name.set($event); clearError('name')"
+          placeholder="Ej: Notificaciones de Tareas"
+          class="w-full px-3 py-2 border border-input rounded-md bg-background text-sm focus:ring-2 focus:ring-ring outline-none transition-all"
+          [class.border-destructive]="errors()['name']"
+        />
+        @if (errors()['name']) {
+          <p class="text-xs text-destructive mt-1 flex items-center gap-1">
+            <ng-icon name="lucideAlertCircle" size="12" />
+            {{ errors()['name'] }}
+          </p>
+        }
+      </div>
+
+      <!-- URL Field -->
+      <div>
+        <label for="webhook-url" class="block text-sm font-medium mb-1.5">
+          URL del Endpoint <span class="text-destructive">*</span>
+        </label>
+        <div class="relative">
+          <ng-icon
+            name="lucideServer"
+            size="14"
+            class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+          />
+          <input
+            id="webhook-url"
+            type="url"
+            [ngModel]="url()"
+            (ngModelChange)="url.set($event); clearError('url')"
+            placeholder="https://api.tu-sistema.com/webhooks"
+            class="w-full pl-10 pr-4 py-2 border border-input rounded-md bg-background text-sm focus:ring-2 focus:ring-ring outline-none transition-all"
+            [class.border-destructive]="errors()['url']"
+          />
+        </div>
+        <p class="text-xs text-muted-foreground mt-1">
+          La URL donde se enviarán las notificaciones del webhook
+        </p>
+        @if (errors()['url']) {
+          <p class="text-xs text-destructive mt-1 flex items-center gap-1">
+            <ng-icon name="lucideAlertCircle" size="12" />
+            {{ errors()['url'] }}
+          </p>
+        }
+      </div>
+
+      <!-- Event Types -->
+      <div>
+        <label class="block text-sm font-medium mb-1.5">
+          Tipos de Eventos <span class="text-destructive">*</span>
+        </label>
+        <p class="text-xs text-muted-foreground mb-3">
+          Selecciona los eventos que quieres recibir en este webhook
+        </p>
+
+        <div class="grid grid-cols-2 gap-2 max-h-64 overflow-y-auto p-4 rounded-lg border border-border bg-muted/30">
+          @for (event of eventTypes; track event.type) {
+            <button
+              type="button"
+              (click)="toggleEventType(event.type)"
+              class="flex items-start gap-3 p-3 rounded-md border transition-all text-left"
+              [class.bg-primary]="isEventTypeSelected(event.type)"
+              [class.border-primary]="isEventTypeSelected(event.type)"
+              [class.text-primary-foreground]="isEventTypeSelected(event.type)"
+              [class.bg-card]="!isEventTypeSelected(event.type)"
+              [class.border-border]="!isEventTypeSelected(event.type)"
+              [class.hover:border-primary]="!isEventTypeSelected(event.type)"
+            >
+              @if (isEventTypeSelected(event.type)) {
+                <ng-icon name="lucideCheck" size="14" class="shrink-0 mt-0.5" />
+              } @else {
+                <span class="w-4 h-4 border border-current rounded shrink-0 mt-0.5"></span>
+              }
+              <div class="min-w-0">
+                <p class="text-sm font-medium">{{ event.type }}</p>
+                <p class="text-xs opacity-70">{{ event.description }}</p>
+              </div>
+            </button>
+          }
+        </div>
+
+        @if (errors()['eventTypes']) {
+          <p class="text-xs text-destructive mt-2 flex items-center gap-1">
+            <ng-icon name="lucideAlertCircle" size="12" />
+            {{ errors()['eventTypes'] }}
+          </p>
+        }
+      </div>
+
+      <!-- Advanced Options -->
+      <div class="border-t border-border pt-4">
+        <h4 class="text-sm font-medium mb-3">Opciones Avanzadas</h4>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label for="max-retries" class="block text-xs text-muted-foreground mb-1">
+              Reintentos máximos
+            </label>
+            <input
+              id="max-retries"
+              type="number"
+              [ngModel]="maxRetries()"
+              (ngModelChange)="maxRetries.set($event)"
+              min="0"
+              max="10"
+              class="w-full px-3 py-2 border border-input rounded-md bg-background text-sm focus:ring-2 focus:ring-ring outline-none"
+            />
+          </div>
+          <div>
+            <label for="timeout" class="block text-xs text-muted-foreground mb-1">
+              Timeout (segundos)
+            </label>
+            <input
+              id="timeout"
+              type="number"
+              [ngModel]="timeoutSeconds()"
+              (ngModelChange)="timeoutSeconds.set($event)"
+              min="5"
+              max="120"
+              class="w-full px-3 py-2 border border-input rounded-md bg-background text-sm focus:ring-2 focus:ring-ring outline-none"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="flex items-center justify-between px-6 py-4 border-t border-border bg-muted/30 shrink-0">
+      <div class="flex items-center gap-2 text-xs text-muted-foreground">
+        <ng-icon name="lucideKey" size="12" />
+        <span>El secret se genera automáticamente al crear</span>
+      </div>
+      <div class="flex gap-2">
+        <button
+          (click)="close()"
+          [disabled]="saving()"
+          class="px-4 py-2 border border-border rounded-md text-sm hover:bg-muted/50 transition-colors disabled:opacity-50"
+        >
+          Cancelar
+        </button>
+        <button
+          (click)="save()"
+          [disabled]="saving()"
+          class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
+        >
+          @if (saving()) {
+            <ng-icon name="lucideLoader2" size="14" class="animate-spin" />
+            Guardando...
+          } @else {
+            {{ isEditing() ? 'Guardar Cambios' : 'Crear Webhook' }}
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

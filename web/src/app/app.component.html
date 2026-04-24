@@ -1,0 +1,92 @@
+@if (authStore.isAuthenticated()) {
+  <div class="flex h-screen bg-background">
+    <aside
+      [class]="sidebarOpen() ? 'w-60' : 'w-16'"
+      class="flex flex-col border-r border-border bg-card transition-all duration-200 shrink-0"
+    >
+      <div class="flex items-center justify-between px-4 py-4 border-b border-border">
+        @if (sidebarOpen()) {
+          <span class="font-semibold text-sm text-foreground">CRM SaaS</span>
+        }
+        <button
+          (click)="sidebarOpen.set(!sidebarOpen())"
+          class="p-1.5 rounded-md hover:bg-accent text-muted-foreground hover:text-foreground transition-colors ml-auto"
+        >
+          <ng-icon [name]="sidebarOpen() ? 'lucideX' : 'lucideMenu'" size="16" />
+        </button>
+      </div>
+
+      <nav class="flex-1 px-2 py-3 space-y-1">
+        @for (item of navItems; track item.path) {
+          <a
+            [routerLink]="item.path"
+            routerLinkActive="bg-accent text-foreground"
+            [routerLinkActiveOptions]="{ exact: item.exact ?? false }"
+            class="flex items-center gap-3 px-3 py-2 rounded-md text-sm text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+          >
+            <ng-icon [name]="item.icon" size="16" class="shrink-0" />
+            @if (sidebarOpen()) {
+              <span>{{ item.label }}</span>
+            }
+          </a>
+        }
+
+        @if (authStore.isAdmin()) {
+          <div class="pt-4 mt-4 border-t border-border">
+            <span class="px-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              @if (sidebarOpen()) { Administración }
+            </span>
+            <a
+              routerLink="/admin/users"
+              routerLinkActive="bg-accent text-foreground"
+              class="flex items-center gap-3 px-3 py-2 mt-2 rounded-md text-sm text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+            >
+              <ng-icon name="lucideSettings" size="16" class="shrink-0" />
+              @if (sidebarOpen()) {
+                <span>Usuarios</span>
+              }
+            </a>
+          </div>
+        }
+      </nav>
+
+      <div class="px-2 py-3 border-t border-border">
+        <button
+          (click)="logout()"
+          class="flex items-center gap-3 px-3 py-2 w-full rounded-md text-sm text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+        >
+          <ng-icon name="lucideLogOut" size="16" class="shrink-0" />
+          @if (sidebarOpen()) {
+            <span>Cerrar sesión</span>
+          }
+        </button>
+      </div>
+    </aside>
+
+    <div class="flex-1 flex flex-col overflow-hidden">
+      <header class="h-14 border-b border-border bg-card flex items-center justify-between px-6 shrink-0">
+        <h1 class="text-sm font-medium text-muted-foreground">CRM SaaS Suite</h1>
+        <div class="flex items-center gap-4">
+          @if (authStore.userInfo(); as user) {
+            <button
+              (click)="navigateToProfile()"
+              class="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <ng-icon name="lucideUser" size="16" />
+              <span class="hidden sm:inline">{{ user.name }}</span>
+            </button>
+          }
+          <app-notifications />
+        </div>
+      </header>
+      <main class="flex-1 overflow-auto p-6">
+        <router-outlet />
+      </main>
+    </div>
+  </div>
+} @else {
+  <router-outlet />
+}
+
+<!-- Toast notifications container - disponible en toda la app -->
+<app-toast-container />

@@ -1,0 +1,138 @@
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4" (click)="close()">
+  <div class="w-full max-w-lg rounded-lg border border-border bg-card shadow-xl" (click)="$event.stopPropagation()">
+    <!-- Header -->
+    <div class="flex items-center justify-between px-6 py-4 border-b border-border">
+      <h3 class="text-base font-semibold">
+        @if (isEditing()) { Editar proyecto } @else { Detalle del proyecto }
+      </h3>
+      <button (click)="close()" class="text-muted-foreground hover:text-foreground transition-colors text-lg leading-none p-1 rounded hover:bg-muted">
+        <ng-icon name="lucideX" size="18" />
+      </button>
+    </div>
+
+    <!-- Content -->
+    <div class="px-6 py-4 space-y-4">
+      @if (!isEditing()) {
+        <!-- View Mode -->
+        <div class="space-y-3">
+          <div>
+            <p class="text-xs text-muted-foreground mb-1">Nombre</p>
+            <p class="font-medium text-lg">{{ project().name }}</p>
+          </div>
+          <div>
+            <p class="text-xs text-muted-foreground mb-1">Descripción</p>
+            <p class="text-sm text-muted-foreground">{{ project().description || 'Sin descripción' }}</p>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <p class="text-xs text-muted-foreground mb-1">Estado</p>
+              <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                {{ project().status }}
+              </span>
+            </div>
+            <div>
+              <p class="text-xs text-muted-foreground mb-1">Fecha estimada</p>
+              <p class="text-sm font-medium">{{ project().estimatedEndDate || 'No definida' }}</p>
+            </div>
+            <div>
+              <p class="text-xs text-muted-foreground mb-1">Fecha de inicio</p>
+              <p class="text-sm font-medium">{{ project().startDate || 'No definida' }}</p>
+            </div>
+          </div>
+        </div>
+      } @else {
+        <!-- Edit Mode -->
+        <div class="space-y-4">
+          <div>
+            <label for="edit-name" class="block text-xs text-muted-foreground mb-1.5">Nombre del proyecto *</label>
+            <input
+              id="edit-name"
+              type="text"
+              [(ngModel)]="editName"
+              class="w-full px-3 py-2 border border-input rounded-md bg-background text-sm focus:ring-2 focus:ring-ring focus:border-ring outline-none transition-all"
+              placeholder="Nombre del proyecto"
+              [class.border-destructive]="error() && !editName.trim()" />
+          </div>
+          <div>
+            <label for="edit-desc" class="block text-xs text-muted-foreground mb-1.5">Descripción</label>
+            <textarea
+              id="edit-desc"
+              [(ngModel)]="editDescription"
+              rows="3"
+              class="w-full px-3 py-2 border border-input rounded-md bg-background text-sm resize-none focus:ring-2 focus:ring-ring focus:border-ring outline-none transition-all"
+              placeholder="Describe los objetivos y alcance del proyecto"></textarea>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label for="edit-status" class="block text-xs text-muted-foreground mb-1.5">Estado</label>
+              <select
+                id="edit-status"
+                [(ngModel)]="editStatus"
+                class="w-full px-3 py-2 border border-input rounded-md bg-background text-sm focus:ring-2 focus:ring-ring focus:border-ring outline-none transition-all cursor-pointer">
+                @for (s of statuses; track s) {
+                  <option [value]="s">{{ s }}</option>
+                }
+              </select>
+            </div>
+            <div>
+              <label for="edit-date" class="block text-xs text-muted-foreground mb-1.5">Fecha estimada</label>
+              <input
+                id="edit-date"
+                type="date"
+                [(ngModel)]="editEstimatedEndDate"
+                class="w-full px-3 py-2 border border-input rounded-md bg-background text-sm focus:ring-2 focus:ring-ring focus:border-ring outline-none transition-all" />
+            </div>
+          </div>
+        </div>
+      }
+
+      @if (error()) {
+        <div class="flex items-center gap-2 p-3 rounded-md bg-destructive/10 border border-destructive/20 text-sm text-destructive">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          {{ error() }}
+        </div>
+      }
+    </div>
+
+    <!-- Footer -->
+    <div class="flex justify-between items-center px-6 py-4 border-t border-border bg-muted/30">
+      <div>
+        @if (!isEditing() && !deleting()) {
+          <button (click)="deleteProject()" class="inline-flex items-center gap-2 px-3 py-1.5 text-sm text-destructive hover:bg-destructive/10 rounded-md transition-colors">
+            <ng-icon name="lucideTrash2" size="14" />
+            Eliminar
+          </button>
+        }
+        @if (deleting()) {
+          <span class="inline-flex items-center gap-2 px-3 py-1.5 text-sm text-muted-foreground">
+            <ng-icon name="lucideLoader2" size="14" class="animate-spin" />
+            Eliminando...
+          </span>
+        }
+      </div>
+      <div class="flex gap-2">
+        @if (isEditing()) {
+          <button (click)="cancelEdit()" [disabled]="loading()" class="px-4 py-2 border border-border rounded-md text-sm hover:bg-muted/50 transition-colors disabled:opacity-50">
+            Cancelar
+          </button>
+          <button (click)="saveEdit()" [disabled]="loading()" class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm hover:bg-primary/90 transition-colors disabled:opacity-50">
+            @if (loading()) {
+              <ng-icon name="lucideLoader2" size="14" class="animate-spin" />
+              Guardando...
+            } @else {
+              Guardar
+            }
+          </button>
+        } @else {
+          <button (click)="close()" class="px-4 py-2 border border-border rounded-md text-sm hover:bg-muted/50 transition-colors">
+            Cerrar
+          </button>
+          <button (click)="startEdit()" [disabled]="deleting()" class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm hover:bg-primary/90 transition-colors disabled:opacity-50">
+            <ng-icon name="lucideEdit3" size="14" />
+            Editar
+          </button>
+        }
+      </div>
+    </div>
+  </div>
+</div>

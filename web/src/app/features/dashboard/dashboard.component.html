@@ -1,0 +1,27 @@
+<div class="space-y-6">
+  <div>
+    <h2 class="text-2xl font-semibold tracking-tight">Dashboard</h2>
+    <p class="text-sm text-muted-foreground">Resumen general del workspace</p>
+  </div>
+
+  <div class="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+    @for (card of kpiCards(); track card.label) {
+      <ui-card>
+        <ui-card-header>
+          <div class="flex items-center justify-between">
+            <ui-card-title class="text-sm font-medium text-muted-foreground">
+              {{ card.label }}
+            </ui-card-title>
+            <ng-icon [name]="card.icon" size="16" class="text-muted-foreground" />
+          </div>
+        </ui-card-header>
+        <ui-card-content>
+          <p class="text-3xl font-bold">{{ card.value }}</p>
+          @if (card.sub) {
+            <p class="text-xs text-muted-foreground mt-1">{{ card.sub }}</p>
+          }
+        </ui-card-content>
+      </ui-card>
+    }
+  </div>
+</div>
