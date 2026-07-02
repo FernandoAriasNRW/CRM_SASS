@@ -26,5 +26,32 @@
         ]
       }
     }
-  ]
+  ],
+  "dataGroups": [
+    {
+      "name": "api-notifications",
+      "urls": ["/api/notifications/**"],
+      "cacheConfig": {
+        "strategy": "freshness",
+        "maxSize": 100,
+        "maxAge": "1h",
+        "timeout": "10s"
+      }
+    }
+  ],
+  "push": {
+    "enabled": true,
+    "options": {
+      "browserNotifications": true
+    },
+    "showNotifications": true,
+    "notificationOptions": {
+      "body": "notification.body",
+      "title": "CRM SaaS",
+      "icon": "/assets/icons/icon-192x192.png",
+      "badge": "/assets/icons/badge-72x72.png",
+      "tag": "crm-notification",
+      "requireInteraction": false
+    }
+  }
 }

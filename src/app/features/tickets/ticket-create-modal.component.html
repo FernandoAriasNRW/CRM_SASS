@@ -6,48 +6,25 @@
     </div>
 
     <div class="px-6 py-4 space-y-4">
-      <div class="grid grid-cols-2 gap-4">
-        <div class="space-y-1.5">
-          <label uiLabel for="t-subject">Asunto *</label>
-          <input uiInput id="t-subject" [(ngModel)]="subject" placeholder="Asunto del ticket" />
-        </div>
-        <div class="space-y-1.5">
-          <label uiLabel for="t-category">Categoría</label>
-          <select id="t-category" [(ngModel)]="category"
-                  class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
-            @for (cat of categories; track cat) {
-              <option [value]="cat">{{ cat }}</option>
-            }
-          </select>
-        </div>
-      </div>
-
-      <div class="grid grid-cols-2 gap-4">
-        <div class="space-y-1.5">
-          <label uiLabel for="t-name">Nombre contacto</label>
-          <input uiInput id="t-name" [(ngModel)]="contactName" placeholder="Nombre" />
-        </div>
-        <div class="space-y-1.5">
-          <label uiLabel for="t-company">Empresa</label>
-          <input uiInput id="t-company" [(ngModel)]="company" placeholder="Empresa" />
-        </div>
-      </div>
-
-      <div class="grid grid-cols-2 gap-4">
-        <div class="space-y-1.5">
-          <label uiLabel for="t-email">Email *</label>
-          <input uiInput id="t-email" type="email" [(ngModel)]="contactEmail" placeholder="email@ejemplo.com" />
-        </div>
-        <div class="space-y-1.5">
-          <label uiLabel for="t-phone">Teléfono</label>
-          <input uiInput id="t-phone" [(ngModel)]="contactPhone" placeholder="+1 234 567" />
-        </div>
+      <div class="space-y-1.5">
+        <label uiLabel for="t-title">Título *</label>
+        <input uiInput id="t-title" [(ngModel)]="title" placeholder="Ej: Problema con facturación" />
       </div>
 
       <div class="space-y-1.5">
-        <label uiLabel for="t-message">Mensaje *</label>
-        <textarea id="t-message" [(ngModel)]="message" rows="3"
-                  placeholder="Describe el problema..."
+        <label uiLabel for="t-priority">Prioridad</label>
+        <select id="t-priority" [(ngModel)]="priority"
+                class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+          @for (p of priorities; track p) {
+            <option [value]="p">{{ p }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="space-y-1.5">
+        <label uiLabel for="t-description">Descripción *</label>
+        <textarea id="t-description" [(ngModel)]="description" rows="3"
+                  placeholder="Describe el problema en detalle..."
                   class="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring resize-none">
         </textarea>
       </div>

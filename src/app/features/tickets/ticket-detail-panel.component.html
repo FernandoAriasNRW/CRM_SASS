@@ -5,8 +5,8 @@
     <div class="flex items-center justify-between px-6 py-3 border-b border-border shrink-0">
       <div class="flex items-center gap-3">
         <ui-badge [variant]="statusBadge(status)">{{ status }}</ui-badge>
-        <ui-badge variant="outline">{{ category }}</ui-badge>
-        @if (saving()) {
+        <ui-badge variant="outline">{{ priority }}</ui-badge>
+        @if (isSaving()) {
           <span class="text-xs text-muted-foreground">Guardando...</span>
         }
       </div>
@@ -21,13 +21,13 @@
       <!-- Panel izquierdo -->
       <div class="flex-1 overflow-y-auto px-8 py-6 space-y-6">
 
-        <!-- Asunto -->
+        <!-- Título -->
         <textarea
-          [(ngModel)]="subject"
-          (blur)="saveField('subject', subject)"
+          [(ngModel)]="title"
+          (blur)="saveField('title', title)"
           rows="2"
           class="w-full text-2xl font-bold bg-transparent border-none outline-none resize-none placeholder:text-muted-foreground/40 leading-tight"
-          placeholder="Asunto del ticket"
+          placeholder="Título del ticket"
         ></textarea>
 
         <!-- Propiedades -->
@@ -59,9 +59,9 @@
 
           <div class="flex items-center gap-3">
             <span class="text-muted-foreground w-28 shrink-0 flex items-center gap-1.5">
-              <ng-icon name="lucideTag" size="13" /> Categoría
+              <ng-icon name="lucideTag" size="13" /> Prioridad
             </span>
-            <input [(ngModel)]="category" (blur)="saveField('category', category)"
+            <input [(ngModel)]="priority" (blur)="saveField('priority', priority)"
                    class="bg-transparent border-none outline-none text-sm hover:text-primary transition-colors" />
           </div>
 
@@ -101,39 +101,14 @@
 
         </div>
 
-        <div class="border-t border-border"></div>
 
-        <!-- Datos del contacto -->
-        <div class="space-y-3">
-          <p class="text-xs font-medium text-muted-foreground uppercase tracking-wide">Información del contacto</p>
-          <div class="grid grid-cols-2 gap-3 text-sm">
-            <div class="flex items-center gap-2 text-muted-foreground">
-              <ng-icon name="lucideUser" size="13" />
-              <span>{{ ticket().contactName || '—' }}</span>
-            </div>
-            <div class="flex items-center gap-2 text-muted-foreground">
-              <ng-icon name="lucideBuilding" size="13" />
-              <span>{{ ticket().company || '—' }}</span>
-            </div>
-            <div class="flex items-center gap-2 text-muted-foreground">
-              <ng-icon name="lucideMail" size="13" />
-              <span>{{ ticket().contactEmail || '—' }}</span>
-            </div>
-            <div class="flex items-center gap-2 text-muted-foreground">
-              <ng-icon name="lucidePhone" size="13" />
-              <span>{{ ticket().contactPhone || '—' }}</span>
-            </div>
-          </div>
-        </div>
 
-        <div class="border-t border-border"></div>
-
-        <!-- Mensaje -->
+        <!-- Descripción -->
         <div class="space-y-2">
-          <p class="text-xs font-medium text-muted-foreground uppercase tracking-wide">Mensaje</p>
+          <p class="text-xs font-medium text-muted-foreground uppercase tracking-wide">Descripción</p>
           <textarea
-            [(ngModel)]="message"
-            (blur)="saveField('message', message)"
+            [(ngModel)]="description"
+            (blur)="saveField('description', description)"
             rows="6"
             placeholder="Descripción del problema..."
             class="w-full bg-transparent border border-transparent hover:border-border focus:border-border rounded-lg px-3 py-2 text-sm outline-none resize-none placeholder:text-muted-foreground/40 transition-colors focus:ring-1 focus:ring-ring"

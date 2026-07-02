@@ -4,7 +4,6 @@
   <div class="flex items-center justify-between">
     <div>
       <h2 class="text-2xl font-semibold tracking-tight">Tareas</h2>
-      <p class="text-sm text-muted-foreground">{{ totalVisible() }} tareas</p>
     </div>
     <div class="flex items-center gap-2">
       <div class="flex rounded-md border border-border overflow-hidden">
@@ -21,8 +20,8 @@
           <ng-icon name="lucideList" size="13" /> Lista
         </button>
       </div>
-      <button uiButton variant="outline" size="sm" (click)="load()">
-        <ng-icon name="lucideRefreshCw" size="14" /> Actualizar
+      <button uiButton variant="outline" size="sm" (click)="loadTasks()">
+        <ng-icon name="lucideRefreshCw" size="16" class="mr-2" /> Actualizar
       </button>
       <button uiButton size="sm" (click)="showModal.set(true)">
         <ng-icon name="lucidePlus" size="14" /> Nueva tarea
@@ -31,27 +30,22 @@
   </div>
 
   <!-- Filtros -->
-  <div class="flex flex-wrap items-center gap-3 p-3 rounded-lg border border-border bg-muted/30">
-    <ng-icon name="lucideFilter" size="14" class="text-muted-foreground shrink-0" />
-    <input class="h-8 rounded-md border border-input bg-background px-3 text-sm w-48 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-      placeholder="Buscar tarea..." [ngModel]="filterSearch()" (ngModelChange)="filterSearch.set($event); applyFilters()" />
-    <select class="h-8 rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-      [ngModel]="filterProject()" (ngModelChange)="filterProject.set($event); applyFilters()">
-      <option value="">Todos los proyectos</option>
-      @for (s of projectOptions(); track s.id) {
-        <option [value]="s.id">{{ s.name }}</option>
-      }
-    </select>
-    <select class="h-8 rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-      [ngModel]="filterStatus()" (ngModelChange)="filterStatus.set($event); applyFilters()">
-      <option value="">Todos los estados</option>
-      @for (s of statuses; track s) { <option [value]="s">{{ s }}</option> }
-    </select>
-    @if (filterProject() || filterStatus() || filterSearch()) {
-      <button (click)="clearFilters()" class="text-xs text-muted-foreground hover:text-destructive transition-colors">
-        Limpiar filtros
-      </button>
-    }
+  <ui-advanced-filters
+    [fields]="filterFields()"
+    [filters]="tableState().filters || {}"
+    (filtersChange)="onFiltersChange($event)">
+  </ui-advanced-filters>
+
+  <!-- Saved Views Selection -->
+  <div class="flex items-center gap-2 mb-4" *ngIf="savedViews().length > 0">
+    <span class="text-sm font-medium text-slate-500">Saved Views:</span>
+    <button *ngFor="let view of savedViews()"
+            (click)="applySavedView(view)"
+            [class.bg-blue-100]="activeViewId() === view.id"
+            [class.text-blue-700]="activeViewId() === view.id"
+            class="px-3 py-1 text-xs rounded-full border border-slate-200 hover:bg-slate-100 transition-colors">
+      {{ view.viewName }}
+    </button>
   </div>
 
   <!-- VISTA BOARD -->
@@ -101,43 +95,28 @@
 
   <!-- VISTA LISTA -->
   @if (viewMode() === 'list') {
-    <div class="rounded-md border border-border overflow-hidden">
-      <table class="w-full text-sm">
-        <thead class="bg-muted/50">
-          <tr>
-            <th class="px-4 py-3 text-left font-medium text-muted-foreground">Tarea</th>
-            <th class="px-4 py-3 text-left font-medium text-muted-foreground">Estado</th>
-            <th class="px-4 py-3 text-left font-medium text-muted-foreground">Horas</th>
-            <th class="px-4 py-3 text-left font-medium text-muted-foreground">Fecha límite</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (task of filteredList(); track task.id) {
-            <tr class="border-t border-border hover:bg-muted/30 transition-colors cursor-pointer"
-                (click)="openDetail(task)">
-              <td class="px-4 py-3">
-                <p class="font-medium">{{ task.title }}</p>
-                @if (task.description) {
-                  <p class="text-xs text-muted-foreground mt-0.5 truncate max-w-xs">{{ task.description }}</p>
-                }
-              </td>
-              <td class="px-4 py-3">
-                <ui-badge [variant]="statusBadge(task.status)">{{ task.status }}</ui-badge>
-              </td>
-              <td class="px-4 py-3 text-muted-foreground">{{ task.estimatedHours }}h</td>
-              <td class="px-4 py-3 text-muted-foreground">{{ task.dueDate }}</td>
-            </tr>
-          } @empty {
-            <tr>
-              <td colspan="4" class="px-4 py-8 text-center text-muted-foreground">
-                No hay tareas con los filtros aplicados
-              </td>
-            </tr>
-          }
-        </tbody>
-      </table>
+    <div class="h-[650px]">
+      <ui-data-table
+        [columns]="tableColumns"
+        [data]="allTasks()"
+        [totalItems]="totalItems()"
+        [loading]="isLoading()"
+        [initialState]="tableState()"
+        (stateChange)="onTableStateChange($event)"
+        (onSaveView)="saveCurrentView('Custom View ' + (savedViews().length + 1))">
+        
+        <!-- Define column templates via structural directive or we can pass a dictionary of templates, 
+             for now we can just rely on default rendering in the table or pass content children. 
+             Since our table doesn't have ngTemplateOutlet wired for dynamic children mapping easily without more code,
+             I'll update the DataTable to accept templates from parent if needed, but for now it renders text. -->
+             
+      </ui-data-table>
     </div>
   }
+
+  <ng-template #statusTemplate let-item>
+    <ui-badge [variant]="statusBadge(item.status)">{{ item.status }}</ui-badge>
+  </ng-template>
 
 </div>
 

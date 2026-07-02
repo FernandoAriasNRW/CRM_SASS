@@ -7,18 +7,16 @@ import { LabelComponent } from '../../shared/ui/label.component';
 
 export interface Ticket {
   id: string;
-  subject: string;
-  company: string;
-  contactName: string;
-  contactPhone: string;
-  contactEmail: string;
-  message: string;
-  category: string;
+  title: string;
+  description: string;
+  priority: string;
   status: string;
-  assignedToId?: string;
+  assignedAgentId?: string;
+  customerId?: string;
+  createdAt: string;
 }
 
-const CATEGORIES = ['Soporte técnico', 'Facturación', 'Consulta general', 'Reclamo', 'Otro'];
+const PRIORITIES = ['Low', 'Medium', 'High', 'Urgent'];
 
 @Component({
   selector: 'app-ticket-create-modal',
@@ -30,15 +28,11 @@ export class TicketCreateModalComponent {
   readonly created = output<Ticket>();
   readonly closed = output<void>();
 
-  readonly categories = CATEGORIES;
+  readonly priorities = PRIORITIES;
 
-  subject = '';
-  company = '';
-  contactName = '';
-  contactPhone = '';
-  contactEmail = '';
-  message = '';
-  category = CATEGORIES[0];
+  title = '';
+  description = '';
+  priority = PRIORITIES[1];
 
   loading = signal(false);
   error = signal('');
@@ -46,16 +40,14 @@ export class TicketCreateModalComponent {
   private readonly api = inject(ApiService);
 
   submit(): void {
-    if (!this.subject.trim() || !this.contactEmail.trim() || !this.message.trim()) {
-      this.error.set('Asunto, email y mensaje son requeridos');
+    if (!this.title.trim() || !this.description.trim()) {
+      this.error.set('Título y descripción son requeridos');
       return;
     }
     this.loading.set(true);
     this.error.set('');
     this.api.post<Ticket>('/tickets', {
-      subject: this.subject, company: this.company,
-      contactName: this.contactName, contactPhone: this.contactPhone,
-      contactEmail: this.contactEmail, message: this.message, category: this.category,
+      title: this.title, description: this.description, priority: this.priority
     }).subscribe({
       next: ticket => { this.created.emit(ticket); this.closed.emit(); },
       error: () => { this.error.set('Error al crear el ticket'); this.loading.set(false); },

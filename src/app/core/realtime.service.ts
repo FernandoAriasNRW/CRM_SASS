@@ -8,6 +8,7 @@ export interface RealtimeNotification {
   userId: string;
   title: string;
   body: string;
+  type: 'info' | 'success' | 'warning' | 'error';
   createdAtUtc: string;
   isRead: boolean;
 }
@@ -26,7 +27,7 @@ export class RealtimeService {
     if (this.hub?.state === signalR.HubConnectionState.Connected) return;
 
     this.hub = new signalR.HubConnectionBuilder()
-      .withUrl('http://localhost:5239/hubs/notifications', {
+      .withUrl('http://localhost:8080/hubs/notifications', {
         accessTokenFactory: () => this.authStore.getAccessToken() ?? '',
       })
       .withAutomaticReconnect()
@@ -39,7 +40,7 @@ export class RealtimeService {
 
   connectBoard(projectId: string): void {
     const boardHub = new signalR.HubConnectionBuilder()
-      .withUrl('http://localhost:5239/hubs/board', {
+      .withUrl('http://localhost:8080/hubs/board', {
         accessTokenFactory: () => this.authStore.getAccessToken() ?? '',
       })
       .withAutomaticReconnect()
@@ -54,7 +55,7 @@ export class RealtimeService {
   connectChat(): void {
     if (this.chatHub?.state === signalR.HubConnectionState.Connected) return;
     this.chatHub = new signalR.HubConnectionBuilder()
-      .withUrl('http://localhost:5239/hubs/chat', {
+      .withUrl('http://localhost:8080/hubs/chat', {
         accessTokenFactory: () => this.authStore.getAccessToken() ?? '',
       })
       .withAutomaticReconnect()

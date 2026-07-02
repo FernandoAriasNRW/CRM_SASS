@@ -50,16 +50,16 @@ export class TicketDetailPanelComponent implements OnInit {
 
   private readonly api = inject(ApiService);
 
-  subject = '';
-  message = '';
+  isEditing = false;
+  isSaving = signal(false);
+  title = '';
+  description = '';
   status = '';
-  category = '';
   priority = 'normal';
   selectedTags = signal<string[]>([]);
   showTagPicker = signal(false);
   newComment = signal('');
   comments = signal<Comment[]>([]);
-  saving = signal(false);
   activeTab = signal<'comments' | 'activity'>('comments');
 
   readonly statuses = STATUSES;
@@ -70,10 +70,10 @@ export class TicketDetailPanelComponent implements OnInit {
 
   ngOnInit(): void {
     const t = this.ticket();
-    this.subject = t.subject;
-    this.message = t.message ?? '';
+    this.title = t.title;
+    this.description = t.description ?? '';
     this.status = t.status;
-    this.category = t.category ?? '';
+    this.priority = t.priority ?? 'normal';
     if ((t as any).tags) {
       this.selectedTags.set(String((t as any).tags).split(',').map((s: string) => s.trim()).filter(Boolean));
     }
@@ -88,13 +88,16 @@ export class TicketDetailPanelComponent implements OnInit {
   }
 
   saveField(field: string, value: unknown): void {
-    this.saving.set(true);
-    this.api.patch(`/tickets/${this.ticket().id}`, { [field]: value }).subscribe({
+    this.isSaving.set(true);
+    this.api.patch(`/tickets/${this.ticket().id}`, {
+      title: this.title, description: this.description, priority: this.priority, status: this.status
+    }).subscribe({
       next: () => {
-        this.saving.set(false);
-        this.updated.emit({ ...this.ticket(), subject: this.subject, message: this.message, status: this.status, category: this.category });
+        this.isSaving.set(false);
+        this.isEditing = false;
+        this.updated.emit({ ...this.ticket(), title: this.title, description: this.description, status: this.status, priority: this.priority });
       },
-      error: () => this.saving.set(false),
+      error: () => this.isSaving.set(false),
     });
   }
 

@@ -1,5 +1,4 @@
 import { Component, input, output, HostBinding, HostListener, computed, Input } from '@angular/core';
-import { NgIf } from '@angular/common';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '../utils/cn';
 
@@ -32,7 +31,7 @@ export type ButtonSize = VariantProps<typeof buttonVariants>['size'];
 @Component({
   selector: 'button[uiButton], a[uiButton]',
   standalone: true,
-  imports: [NgIf],
+  imports: [],
   template: `
     @if (loading()) {
       <span class="button-spinner"></span>

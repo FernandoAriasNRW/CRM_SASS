@@ -5,6 +5,7 @@ import { RealtimeService } from './core/realtime.service';
 import { NotificationsComponent } from './features/notifications/notifications.component';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import { ApiService } from './core/api.service';
+import { SessionManagerService } from './core/session-manager.service';
 import { ToastContainerComponent } from './shared/ui/toast-container.component';
 import {
   lucideLayoutDashboard, lucideFolderKanban, lucideCheckSquare,
@@ -34,10 +35,10 @@ import {
 })
 export class AppComponent implements OnInit {
   readonly authStore = inject(AuthSignalStore);
-  readonly sidebarOpen = signal(true);
   private readonly router = inject(Router);
   private readonly realtime = inject(RealtimeService);
   private readonly api = inject(ApiService);
+  private readonly sessionManager = inject(SessionManagerService);
 
   readonly navItems = [
     { path: '/',          label: 'Dashboard', icon: 'lucideLayoutDashboard', exact: true },

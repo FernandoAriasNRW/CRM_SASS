@@ -5,7 +5,7 @@ import { AuthSignalStore } from './auth-signal.store';
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
-  private readonly baseUrl = 'http://localhost:5239/api/v1';
+  private readonly baseUrl = 'http://localhost:8080/api/v1';
 
   constructor(
     private readonly http: HttpClient,
@@ -27,9 +27,19 @@ export class ApiService {
     return this.authStore.getAccessToken();
   }
 
-  get<T>(path: string, params?: Record<string, string | number>): Observable<T> {
+  get<T>(path: string, params?: Record<string, string | number | boolean | Date | null | undefined>): Observable<T> {
+    let httpParams: Record<string, any> = {};
+    if (params) {
+      Object.keys(params).forEach(key => {
+        const val = params[key];
+        if (val !== null && val !== undefined && val !== '') {
+          httpParams[key] = val instanceof Date ? val.toISOString() : val;
+        }
+      });
+    }
+
     return this.http.get<T>(`${this.baseUrl}${path}`, {
-      params: params as any,
+      params: httpParams,
       withCredentials: true // Important: sends cookies automatically
     });
   }

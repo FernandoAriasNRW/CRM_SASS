@@ -4,7 +4,7 @@ import { Observable, switchMap } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class GuestApiService {
-  private readonly baseUrl = 'http://localhost:5239/api/v1';
+  private readonly baseUrl = 'http://localhost:8080/api/v1';
   private readonly http = inject(HttpClient);
 
   createTicket(tenantSlug: string, payload: CreateTicketPayload): Observable<unknown> {
@@ -21,11 +21,7 @@ export class GuestApiService {
 }
 
 export interface CreateTicketPayload {
-  subject: string;
-  company: string;
-  contactName: string;
-  contactPhone: string;
-  contactEmail: string;
-  message: string;
-  category: string;
+  title: string;
+  description: string;
+  priority: string;
 }

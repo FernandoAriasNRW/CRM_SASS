@@ -29,44 +29,24 @@
         <form (ngSubmit)="submit()" class="space-y-4">
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div class="space-y-1.5">
-              <label uiLabel for="contactName">Nombre *</label>
-              <input uiInput id="contactName" [(ngModel)]="contactName" name="contactName" placeholder="Tu nombre" />
-            </div>
-            <div class="space-y-1.5">
-              <label uiLabel for="company">Empresa</label>
-              <input uiInput id="company" [(ngModel)]="company" name="company" placeholder="Nombre de empresa" />
-            </div>
-          </div>
-
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div class="space-y-1.5">
-              <label uiLabel for="contactEmail">Email *</label>
-              <input uiInput id="contactEmail" type="email" [(ngModel)]="contactEmail" name="contactEmail" placeholder="tu@email.com" />
-            </div>
-            <div class="space-y-1.5">
-              <label uiLabel for="contactPhone">Teléfono</label>
-              <input uiInput id="contactPhone" [(ngModel)]="contactPhone" name="contactPhone" placeholder="+1 234 567 890" />
+              <label uiLabel for="title">Título *</label>
+              <input uiInput id="title" [(ngModel)]="title" name="title" placeholder="Describe brevemente tu problema" />
             </div>
           </div>
 
           <div class="space-y-1.5">
-            <label uiLabel for="category">Categoría</label>
-            <select id="category" [(ngModel)]="category" name="category"
+            <label uiLabel for="priority">Prioridad</label>
+            <select id="priority" [(ngModel)]="priority" name="priority"
                     class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
-              @for (cat of categories; track cat) {
-                <option [value]="cat">{{ cat }}</option>
+              @for (p of priorities; track p) {
+                <option [value]="p">{{ p }}</option>
               }
             </select>
           </div>
 
           <div class="space-y-1.5">
-            <label uiLabel for="subject">Asunto *</label>
-            <input uiInput id="subject" [(ngModel)]="subject" name="subject" placeholder="Describe brevemente tu problema" />
-          </div>
-
-          <div class="space-y-1.5">
-            <label uiLabel for="message">Mensaje *</label>
-            <textarea id="message" [(ngModel)]="message" name="message"
+            <label uiLabel for="description">Descripción *</label>
+            <textarea id="description" [(ngModel)]="description" name="description"
                       rows="4" placeholder="Describe tu problema con detalle..."
                       class="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring resize-none">
             </textarea>

@@ -4,24 +4,110 @@
     <p class="text-sm text-muted-foreground">Resumen general del workspace</p>
   </div>
 
-  <div class="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+  <!-- KPI Cards Grid -->
+  <div class="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
     @for (card of kpiCards(); track card.label) {
       <ui-card>
         <ui-card-header>
           <div class="flex items-center justify-between">
-            <ui-card-title class="text-sm font-medium text-muted-foreground">
+            <ui-card-title class="text-xs font-medium text-muted-foreground truncate">
               {{ card.label }}
             </ui-card-title>
-            <ng-icon [name]="card.icon" size="16" class="text-muted-foreground" />
+            <ng-icon [name]="card.icon" size="14" class="text-muted-foreground flex-shrink-0" />
           </div>
         </ui-card-header>
-        <ui-card-content>
-          <p class="text-3xl font-bold">{{ card.value }}</p>
+        <ui-card-content class="pt-0">
+          <p class="text-2xl font-bold truncate">{{ card.value }}</p>
           @if (card.sub) {
-            <p class="text-xs text-muted-foreground mt-1">{{ card.sub }}</p>
+            <p class="text-xs text-muted-foreground mt-1 truncate">{{ card.sub }}</p>
           }
         </ui-card-content>
       </ui-card>
     }
   </div>
+
+  <!-- Charts Grid -->
+  <div class="grid gap-6 lg:grid-cols-2">
+    <!-- Task Distribution Chart -->
+    <ui-card>
+      <ui-card-header>
+        <div class="flex items-center justify-between">
+          <ui-card-title class="flex items-center gap-2">
+            <ng-icon name="lucidePieChart" size="18" class="text-muted-foreground" />
+            Distribución de Tareas
+          </ui-card-title>
+        </div>
+      </ui-card-header>
+      <ui-card-content>
+        @if (doughnutData()) {
+          <div class="h-64">
+            <app-doughnut-chart [data]="doughnutData()!" />
+          </div>
+        } @else {
+          <div class="h-64 flex items-center justify-center text-muted-foreground">
+            <p>Sin datos de tareas</p>
+          </div>
+        }
+      </ui-card-content>
+    </ui-card>
+
+    <!-- Project Progress -->
+    <ui-card>
+      <ui-card-header>
+        <div class="flex items-center justify-between">
+          <ui-card-title class="flex items-center gap-2">
+            <ng-icon name="lucideBarChart3" size="18" class="text-muted-foreground" />
+            Progreso de Proyectos
+          </ui-card-title>
+        </div>
+      </ui-card-header>
+      <ui-card-content>
+        <div class="space-y-4 max-h-64 overflow-y-auto">
+          @for (project of projectProgress(); track project.id) {
+            <app-progress-bar
+              [label]="project.name"
+              [value]="project.completionPct"
+              [doneCount]="project.doneTasks"
+              [totalCount]="project.totalTasks" />
+          }
+          @if (projectProgress().length === 0) {
+            <p class="text-center text-muted-foreground py-8">No hay proyectos</p>
+          }
+        </div>
+      </ui-card-content>
+    </ui-card>
+  </div>
+
+  <!-- Burndown Chart -->
+  <ui-card>
+    <ui-card-header>
+      <div class="flex items-center justify-between">
+        <ui-card-title class="flex items-center gap-2">
+          <ng-icon name="lucideActivity" size="18" class="text-muted-foreground" />
+          Burndown del Proyecto
+        </ui-card-title>
+        @if (projectProgress().length > 0) {
+          <select
+            class="h-8 px-3 text-sm rounded-md border border-input bg-background"
+            [value]="selectedProjectId()"
+            (change)="selectProject(($any($event.target)).value)">
+            @for (project of projectProgress(); track project.id) {
+              <option [value]="project.id">{{ project.name }}</option>
+            }
+          </select>
+        }
+      </div>
+    </ui-card-header>
+    <ui-card-content>
+      @if (burndownData().length > 0) {
+        <div class="h-72">
+          <app-line-chart [data]="burndownData()" />
+        </div>
+      } @else {
+        <div class="h-72 flex items-center justify-center text-muted-foreground">
+          <p>Selecciona un proyecto para ver el burndown</p>
+        </div>
+      }
+    </ui-card-content>
+  </ui-card>
 </div>
