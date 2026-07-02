@@ -1,4 +1,5 @@
-import { Component, inject, OnInit, signal, computed } from '@angular/core';
+import { Component, inject, OnInit, signal, computed, ViewChild, TemplateRef } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CdkDragDrop, DragDropModule, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
 import { ApiService } from '../../core/api.service';
@@ -10,8 +11,12 @@ import { TaskDetailPanelComponent } from './task-detail-panel.component';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import {
   lucideRefreshCw, lucidePlus, lucideClock,
-  lucideList, lucideLayoutDashboard, lucideFilter
+  lucideList, lucideLayoutDashboard, lucideFilter, lucideSave
 } from '@ng-icons/lucide';
+import { DataTableComponent, ColumnDef, TableState } from '../../shared/ui/data-table/data-table.component';
+import { AdvancedFiltersComponent, FilterField } from '../../shared/ui/data-table/advanced-filters.component';
+import { ViewsService, SavedView } from '../../shared/services/views.service';
+import { TableColumnService } from '../../shared/services/table-column.service';
 
 export interface Column { key: string; label: string; badge: BadgeVariant; tasks: TaskItem[]; }
 
@@ -30,132 +35,170 @@ const STATUS_BADGE: Record<string, BadgeVariant> = {
   selector: 'app-tasks',
   standalone: true,
   imports: [
-    FormsModule, BadgeComponent, ButtonComponent,
-    NgIconComponent, DragDropModule, TaskCreateModalComponent, TaskDetailPanelComponent
+    CommonModule, FormsModule, BadgeComponent, ButtonComponent,
+    NgIconComponent, DragDropModule, TaskCreateModalComponent, TaskDetailPanelComponent,
+    DataTableComponent, AdvancedFiltersComponent
   ],
   viewProviders: [provideIcons({
     lucideRefreshCw, lucidePlus, lucideClock,
-    lucideList, lucideLayoutDashboard, lucideFilter
+    lucideList, lucideLayoutDashboard, lucideFilter, lucideSave
   })],
   templateUrl: './tasks.component.html',
 })
 export class TasksComponent implements OnInit {
   private readonly api = inject(ApiService);
   private readonly realtime = inject(RealtimeService);
+  private readonly viewsService = inject(ViewsService);
+  private readonly columnService = inject(TableColumnService);
 
   readonly showModal = signal(false);
   readonly selectedTask = signal<TaskItem | null>(null);
   readonly viewMode = signal<'board' | 'list'>('board');
   readonly isLoading = signal(false);
 
-  // Filtros - usando signals para reactivity
-  filterProject = signal('');
-  filterStatus = signal('');
-  filterSearch = signal('');
-
-  // Arrays mutables por columna — necesarios para CDK drag-drop
-  readonly columnTasks: Record<string, TaskItem[]> = {
-    'To Do': [], 'In Progress': [], 'In Review': [], 'Done': []
-  };
-
-  readonly columns: Column[] = COLUMN_DEFS.map(c => ({
-    ...c, get tasks() { return [] as TaskItem[]; }
-  }));
-
-  // Columnas con referencia a los arrays mutables
-  readonly boardColumns: Column[] = COLUMN_DEFS.map(c => ({
-    ...c,
-    get tasks(): TaskItem[] { return [] as TaskItem[]; }
-  }));
-
-  // Usamos un array simple de columnas con tasks como propiedad directa
-  cols: Column[] = COLUMN_DEFS.map(c => ({ ...c, tasks: [] as TaskItem[] }));
-
-  readonly columnIds = COLUMN_DEFS.map(c => c.key);
-
-  // Lista plana para vista lista
-  readonly allTasks = signal<TaskItem[]>([]);
-
-  readonly filteredList = computed(() => {
-    let tasks = this.allTasks();
-    if (this.filterProject()) tasks = tasks.filter(t => t.projectId === this.filterProject());
-    if (this.filterStatus()) tasks = tasks.filter(t => t.status === this.filterStatus());
-    if (this.filterSearch()) {
-      const q = this.filterSearch().toLowerCase();
-      tasks = tasks.filter(t =>
-        t.title.toLowerCase().includes(q) || t.description?.toLowerCase().includes(q)
-      );
-    }
-    return tasks;
+  // Table State
+  tableState = signal<TableState>({
+    page: 1,
+    pageSize: 25,
+    sortDirection: 'asc'
+  });
+  
+  // DataTable columns definition
+  tableColumns: ColumnDef[] = this.columnService.buildColumns<TaskItem>({
+    title: { label: 'Title' },
+    description: { label: 'Description', visible: false },
+    status: { label: 'Status', type: 'custom' },
+    assigneeId: { label: 'Asignado', type: 'user' },
+    estimatedHours: { label: 'Hours', type: 'number' },
+    dueDate: { label: 'Due Date', type: 'date' }
   });
 
-  readonly totalVisible = computed(() => this.filteredList().length);
+  // Advanced Filters definition
+  filterFields = computed<FilterField[]>(() => [
+    { key: 'projectId', label: 'Project', type: 'select', options: this.projectOptions() },
+    { key: 'status', label: 'Status', type: 'select', options: this.statuses.map(s => ({ label: s, value: s })) },
+    { key: 'startDate', label: 'Start Date', type: 'date' },
+    { key: 'endDate', label: 'End Date', type: 'date' }
+  ]);
 
-  // Computed para opciones de proyectos en el filtro
+  // Saved Views
+  savedViews = signal<SavedView[]>([]);
+  activeViewId = signal<string | null>(null);
+
+  // Data
+  readonly allTasks = signal<TaskItem[]>([]);
+  totalItems = signal(0);
+  
+  cols: Column[] = COLUMN_DEFS.map(c => ({ ...c, tasks: [] as TaskItem[] }));
+  readonly columnIds = COLUMN_DEFS.map(c => c.key);
+
   readonly projectOptions = computed(() => {
     const seen = new Set<string>();
     return this.allTasks()
       .filter(t => t.projectId && !seen.has(t.projectId) && (seen.add(t.projectId), true))
-      .map(t => ({ id: t.projectId, name: t.projectId }));
+      .map(t => ({ label: t.projectId, value: t.projectId }));
   });
 
   statusBadge(status: string): BadgeVariant { return STATUS_BADGE[status] ?? 'outline'; }
 
+  @ViewChild('statusTemplate', { static: true }) statusTemplate!: TemplateRef<any>;
+
   ngOnInit(): void {
-    this.load();
+    this.tableColumns.find(c => c.key === 'status')!.template = this.statusTemplate;
+    this.loadViews();
+    this.loadTasks();
+
     this.realtime.taskMoved$.subscribe(({ taskId, status }) => {
-      // Mover localmente en el board
-      for (const col of this.cols) {
-        const idx = col.tasks.findIndex(t => t.id === taskId);
-        if (idx !== -1) {
-          const [task] = col.tasks.splice(idx, 1);
-          const target = this.cols.find(c => c.key === status);
-          if (target) target.tasks.push({ ...task, status });
-          break;
-        }
-      }
-      // Actualizar lista plana
       this.allTasks.update(tasks => tasks.map(t => t.id === taskId ? { ...t, status } : t));
+      this.distributeTasksToColumns();
     });
   }
 
-  load(): void {
+  loadViews(): void {
+    this.viewsService.getViews('Tasks').subscribe({
+      next: (views) => {
+        this.savedViews.set(views);
+        const defaultView = views.find(v => v.isDefault);
+        if (defaultView) {
+          this.applySavedView(defaultView);
+        }
+      }
+    });
+  }
+
+  saveCurrentView(name: string, isDefault: boolean = false): void {
+    const payload = {
+      moduleName: 'Tasks',
+      viewName: name,
+      stateJson: JSON.stringify(this.tableState()),
+      isDefault
+    };
+    this.viewsService.saveView(payload).subscribe({
+      next: (view) => {
+        this.savedViews.update(views => [...views, view]);
+        this.activeViewId.set(view.id);
+      }
+    });
+  }
+
+  applySavedView(view: SavedView): void {
+    this.activeViewId.set(view.id);
+    try {
+      const state = JSON.parse(view.stateJson) as TableState;
+      this.tableState.set(state);
+      this.loadTasks();
+    } catch (e) {
+      console.error('Failed to parse saved view state', e);
+    }
+  }
+
+  onTableStateChange(state: TableState): void {
+    this.tableState.set(state);
+    this.loadTasks();
+  }
+
+  onFiltersChange(filters: Record<string, any>): void {
+    this.tableState.update(s => ({ ...s, filters, page: 1 }));
+    this.loadTasks();
+  }
+
+  loadTasks(): void {
     this.isLoading.set(true);
-    this.api.get<TaskItem[]>('/tasks').subscribe({
-      next: tasks => {
-        // Resetear columnas
-        this.cols = COLUMN_DEFS.map(c => ({ ...c, tasks: [] as TaskItem[] }));
-        tasks.forEach(t => {
-          const col = this.cols.find(c => c.key === t.status) ?? this.cols[0];
-          col.tasks.push(t);
-        });
+    const state = this.tableState();
+    
+    let params: any = {
+      pageNumber: state.page,
+      pageSize: this.viewMode() === 'board' ? 1000 : state.pageSize, // Get all for board view conceptually, or implement lazy loading per column
+      sortColumn: state.sortColumn,
+      sortDirection: state.sortDirection,
+      searchTerm: state.searchTerm
+    };
+
+    if (state.filters) {
+      if (state.filters['startDate']) params.startDate = state.filters['startDate'];
+      if (state.filters['endDate']) params.endDate = state.filters['endDate'];
+      if (state.filters['projectId']) params.projectId = state.filters['projectId'];
+      if (state.filters['status']) params.status = state.filters['status'];
+    }
+
+    this.api.get<{items: TaskItem[], totalCount: number}>('/tasks', params).subscribe({
+      next: res => {
+        const tasks = res.items || [];
+        this.totalItems.set(res.totalCount || 0);
         this.allTasks.set(tasks);
+        this.distributeTasksToColumns();
         this.isLoading.set(false);
       },
       error: () => this.isLoading.set(false),
     });
   }
 
-  applyFilters(): void {
-    const filtered = this.allTasks().filter(t => {
-      if (this.filterProject() && t.projectId !== this.filterProject()) return false;
-      if (this.filterStatus() && t.status !== this.filterStatus()) return false;
-      if (this.filterSearch()) {
-        const q = this.filterSearch().toLowerCase();
-        if (!t.title.toLowerCase().includes(q) && !t.description?.toLowerCase().includes(q)) return false;
-      }
-      return true;
-    });
+  private distributeTasksToColumns() {
+    const tasks = this.allTasks();
     this.cols = COLUMN_DEFS.map(c => ({
-      ...c, tasks: filtered.filter(t => t.status === c.key)
+      ...c,
+      tasks: tasks.filter(t => t.status === c.key)
     }));
-  }
-
-  clearFilters(): void {
-    this.filterProject.set('');
-    this.filterStatus.set('');
-    this.filterSearch.set('');
-    this.load();
   }
 
   openDetail(task: TaskItem): void {
@@ -164,15 +207,12 @@ export class TasksComponent implements OnInit {
 
   onTaskUpdated(updated: TaskItem): void {
     this.allTasks.update(tasks => tasks.map(t => t.id === updated.id ? updated : t));
-    this.cols = this.cols.map(c => ({
-      ...c, tasks: c.tasks.map(t => t.id === updated.id ? updated : t)
-    }));
+    this.distributeTasksToColumns();
   }
 
   onTaskCreated(task: TaskItem): void {
-    const col = this.cols.find(c => c.key === 'To Do');
-    if (col) col.tasks.push(task);
     this.allTasks.update(tasks => [...tasks, task]);
+    this.distributeTasksToColumns();
   }
 
   drop(event: CdkDragDrop<TaskItem[]>, targetKey: string): void {

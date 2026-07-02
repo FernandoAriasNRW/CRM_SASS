@@ -4,7 +4,6 @@
   <div class="flex items-center justify-between">
     <div>
       <h2 class="text-2xl font-semibold tracking-tight">Tickets</h2>
-      <p class="text-sm text-muted-foreground">{{ totalVisible() }} tickets</p>
     </div>
     <div class="flex items-center gap-2">
       <div class="flex rounded-md border border-border overflow-hidden">
@@ -21,8 +20,8 @@
           <ng-icon name="lucideList" size="13" /> Lista
         </button>
       </div>
-      <button uiButton variant="outline" size="sm" (click)="load()">
-        <ng-icon name="lucideRefreshCw" size="14" /> Actualizar
+      <button uiButton variant="outline" size="sm" (click)="loadTickets()">
+        <ng-icon name="lucideRefreshCw" size="16" class="mr-2" /> Actualizar
       </button>
       <button uiButton size="sm" (click)="showModal.set(true)">
         <ng-icon name="lucidePlus" size="14" /> Nuevo ticket
@@ -31,25 +30,22 @@
   </div>
 
   <!-- Filtros -->
-  <div class="flex flex-wrap items-center gap-3 p-3 rounded-lg border border-border bg-muted/30">
-    <ng-icon name="lucideFilter" size="14" class="text-muted-foreground shrink-0" />
-    <input class="h-8 rounded-md border border-input bg-background px-3 text-sm w-48 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-      placeholder="Buscar ticket..." [ngModel]="filterSearch()" (ngModelChange)="filterSearch.set($event); applyFilters()" />
-    <select class="h-8 rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-      [ngModel]="filterStatus()" (ngModelChange)="filterStatus.set($event); applyFilters()">
-      <option value="">Todos los estados</option>
-      @for (s of statuses; track s) { <option [value]="s">{{ s }}</option> }
-    </select>
-    <select class="h-8 rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-      [ngModel]="filterCategory()" (ngModelChange)="filterCategory.set($event); applyFilters()">
-      <option value="">Todas las categorías</option>
-      @for (cat of categories(); track cat) { <option [value]="cat">{{ cat }}</option> }
-    </select>
-    @if (filterStatus() || filterCategory() || filterSearch()) {
-      <button (click)="clearFilters()" class="text-xs text-muted-foreground hover:text-destructive transition-colors">
-        Limpiar filtros
-      </button>
-    }
+  <ui-advanced-filters
+    [fields]="filterFields()"
+    [filters]="tableState().filters || {}"
+    (filtersChange)="onFiltersChange($event)">
+  </ui-advanced-filters>
+
+  <!-- Saved Views Selection -->
+  <div class="flex items-center gap-2 mb-4" *ngIf="savedViews().length > 0">
+    <span class="text-sm font-medium text-slate-500">Saved Views:</span>
+    <button *ngFor="let view of savedViews()"
+            (click)="applySavedView(view)"
+            [class.bg-blue-100]="activeViewId() === view.id"
+            [class.text-blue-700]="activeViewId() === view.id"
+            class="px-3 py-1 text-xs rounded-full border border-slate-200 hover:bg-slate-100 transition-colors">
+      {{ view.viewName }}
+    </button>
   </div>
 
   <!-- VISTA BOARD -->
@@ -72,19 +68,30 @@
               <div cdkDrag [cdkDragData]="ticket"
                 (click)="openDetail(ticket)"
                 class="rounded-lg border border-border bg-card p-3 space-y-2 shadow-sm cursor-pointer hover:shadow-md hover:border-primary/30 transition-all select-none">
-                <div *cdkDragPreview class="rounded-lg border border-primary bg-card p-3 shadow-xl w-52 opacity-90">
-                  <p class="text-sm font-medium truncate">{{ ticket.subject }}</p>
-                  <p class="text-xs text-muted-foreground mt-0.5">{{ ticket.company }}</p>
+                <div *cdkDragPreview class="rounded-lg border border-primary bg-card p-3 shadow-xl w-48 opacity-90">
+                  <p class="text-sm font-medium truncate">{{ ticket.title }}</p>
                 </div>
                 <div *cdkDragPlaceholder class="rounded-lg border-2 border-dashed border-primary/40 bg-primary/5 h-16"></div>
-                <p class="text-sm font-medium leading-snug">{{ ticket.subject }}</p>
-                <div class="flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <ng-icon name="lucideUser" size="11" />
-                  <span class="truncate">{{ ticket.contactName || ticket.company || '—' }}</span>
+                
+                <div class="flex items-start justify-between gap-2">
+                  <p class="text-sm font-medium leading-snug line-clamp-2">{{ ticket.title }}</p>
+                  @if (ticket.priority) {
+                    <ui-badge variant="outline" class="text-[9px] uppercase tracking-wider shrink-0 bg-background">{{ ticket.priority }}</ui-badge>
+                  }
                 </div>
-                <div class="flex items-center justify-between">
-                  <ui-badge variant="outline" class="text-[10px]">{{ ticket.category }}</ui-badge>
-                  <ui-badge [variant]="statusBadge(ticket.status)" class="text-[10px]">{{ ticket.status }}</ui-badge>
+                
+                <div class="flex flex-col gap-1.5 mt-2">
+                  <div class="flex items-center justify-between text-xs text-muted-foreground">
+                    <span class="truncate pr-2">{{ ticket.customerId ?? 'Sin cliente' }}</span>
+                    <span class="shrink-0">{{ ticket.createdAt | date:'MMM d' }}</span>
+                  </div>
+                  <div class="flex justify-between items-center mt-1">
+                    <div class="flex items-center gap-1.5 text-xs text-muted-foreground">
+                      <ng-icon name="lucideUser" size="12" />
+                      <span class="truncate max-w-[100px]">{{ ticket.assignedAgentId ?? 'Sin asignar' }}</span>
+                    </div>
+                    <ui-badge [variant]="statusBadge(ticket.status)" class="text-[10px]">{{ ticket.status }}</ui-badge>
+                  </div>
                 </div>
               </div>
             } @empty {
@@ -98,38 +105,26 @@
 
   <!-- VISTA LISTA -->
   @if (viewMode() === 'list') {
-    <div class="rounded-md border border-border overflow-hidden">
-      <table class="w-full text-sm">
-        <thead class="bg-muted/50">
-          <tr>
-            <th class="px-4 py-3 text-left font-medium text-muted-foreground">Asunto</th>
-            <th class="px-4 py-3 text-left font-medium text-muted-foreground">Empresa</th>
-            <th class="px-4 py-3 text-left font-medium text-muted-foreground">Contacto</th>
-            <th class="px-4 py-3 text-left font-medium text-muted-foreground">Categoría</th>
-            <th class="px-4 py-3 text-left font-medium text-muted-foreground">Estado</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (ticket of filteredList(); track ticket.id) {
-            <tr class="border-t border-border hover:bg-muted/30 transition-colors cursor-pointer"
-                (click)="openDetail(ticket)">
-              <td class="px-4 py-3 font-medium max-w-xs truncate">{{ ticket.subject }}</td>
-              <td class="px-4 py-3 text-muted-foreground">{{ ticket.company }}</td>
-              <td class="px-4 py-3 text-muted-foreground">{{ ticket.contactName }}</td>
-              <td class="px-4 py-3"><ui-badge variant="outline">{{ ticket.category }}</ui-badge></td>
-              <td class="px-4 py-3"><ui-badge [variant]="statusBadge(ticket.status)">{{ ticket.status }}</ui-badge></td>
-            </tr>
-          } @empty {
-            <tr>
-              <td colspan="5" class="px-4 py-8 text-center text-muted-foreground">
-                No hay tickets con los filtros aplicados
-              </td>
-            </tr>
-          }
-        </tbody>
-      </table>
+    <div class="h-[650px]">
+      <ui-data-table
+        [columns]="tableColumns"
+        [data]="allTickets()"
+        [totalItems]="totalItems()"
+        [loading]="isLoading()"
+        [initialState]="tableState()"
+        (stateChange)="onTableStateChange($event)"
+        (onSaveView)="saveCurrentView('Custom View ' + (savedViews().length + 1))">
+      </ui-data-table>
     </div>
   }
+
+  <ng-template #statusTemplate let-item>
+    <ui-badge [variant]="statusBadge(item.status)">{{ item.status }}</ui-badge>
+  </ng-template>
+
+  <ng-template #priorityTemplate let-item>
+    <ui-badge *ngIf="item.priority" variant="outline" class="uppercase tracking-wider shrink-0 bg-background">{{ item.priority }}</ui-badge>
+  </ng-template>
 
 </div>
 

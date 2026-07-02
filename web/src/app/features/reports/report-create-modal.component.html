@@ -1,0 +1,50 @@
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+  <div class="w-full max-w-md rounded-lg border border-border bg-card shadow-xl">
+    <div class="flex items-center justify-between px-6 py-4 border-b border-border">
+      <h3 class="text-base font-semibold">Solicitar Nuevo Reporte</h3>
+      <button (click)="close()" class="text-muted-foreground hover:text-foreground transition-colors text-lg leading-none">&times;</button>
+    </div>
+
+    <div class="px-6 py-4 space-y-4">
+      <div class="space-y-1.5">
+        <label uiLabel for="report-name">Nombre del Reporte *</label>
+        <input uiInput id="report-name" [(ngModel)]="name" placeholder="Ej: Progreso Q3" />
+      </div>
+
+      <div class="space-y-1.5">
+        <label uiLabel for="report-type">Tipo *</label>
+        <select id="report-type" class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background" [(ngModel)]="type">
+          <option value="ProjectProgress">Progreso de Proyectos</option>
+          <option value="TaskBreakdown">Distribución de Tareas</option>
+          <option value="KpiSummary">Resumen de KPIs</option>
+          <option value="Custom">Personalizado</option>
+        </select>
+      </div>
+
+      <div class="space-y-1.5">
+        <label uiLabel for="report-format">Formato *</label>
+        <select id="report-format" class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background" [(ngModel)]="format">
+          <option value="PDF">PDF</option>
+          <option value="Excel">Excel / Spreadsheet</option>
+          <option value="CSV">CSV</option>
+        </select>
+      </div>
+
+      <div class="space-y-1.5">
+        <label uiLabel for="report-params">Parámetros Adicionales (JSON Opcional)</label>
+        <input uiInput id="report-params" [(ngModel)]="parameters" placeholder='{"projectId": "..."}' />
+      </div>
+
+      @if (error()) {
+        <p class="text-sm text-destructive">{{ error() }}</p>
+      }
+    </div>
+
+    <div class="flex justify-end gap-2 px-6 py-4 border-t border-border">
+      <button uiButton variant="outline" (click)="close()">Cancelar</button>
+      <button uiButton (click)="submit()" [disabled]="loading()">
+        {{ loading() ? 'Solicitando...' : 'Solicitar Generación' }}
+      </button>
+    </div>
+  </div>
+</div>

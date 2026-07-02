@@ -1,82 +1,171 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
-import { AsyncPipe, DecimalPipe } from '@angular/common';
+import { Component, inject, OnInit, signal, computed, ViewChild, TemplateRef } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { ApiService } from '../../core/api.service';
 import { BadgeComponent, type BadgeVariant } from '../../shared/ui/badge.component';
-import {
-  CardComponent, CardHeaderComponent, CardTitleComponent, CardContentComponent
-} from '../../shared/ui/card.component';
-import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import {
-  lucideFolderKanban, lucideCheckSquare, lucideTicket,
-  lucideTrendingUp, lucideClock, lucideRefreshCw
-} from '@ng-icons/lucide';
 import { ButtonComponent } from '../../shared/ui/button.component';
+import { ReportCreateModalComponent } from './report-create-modal.component';
+import { NgIconComponent, provideIcons } from '@ng-icons/core';
+import { lucideRefreshCw, lucidePlus, lucideDownload, lucideFileText, lucideFilter, lucideSave } from '@ng-icons/lucide';
+import { DataTableComponent, ColumnDef, TableState } from '../../shared/ui/data-table/data-table.component';
+import { AdvancedFiltersComponent, FilterField } from '../../shared/ui/data-table/advanced-filters.component';
+import { ViewsService, SavedView } from '../../shared/services/views.service';
+import { TableColumnService } from '../../shared/services/table-column.service';
 
-interface KpiDto {
-  totalProjects: number;
-  totalTasks: number;
-  doneTasks: number;
-  throughput: number;
-  openTickets: number;
-  inProgressTickets: number;
-  avgLeadTimeDays: number;
-  avgCycleTimeDays: number;
+interface ReportDto {
+  id: string;
+  name: string;
+  type: string;
+  format: string;
+  parameters: string;
 }
-
-interface TaskBreakdown { status: string; count: number; }
-
-interface ProjectProgress {
-  id: string; name: string; status: string;
-  totalTasks: number; doneTasks: number; completionPct: number;
-}
-
-const STATUS_BADGE: Record<string, BadgeVariant> = {
-  'Planned': 'secondary', 'In Progress': 'default', 'Done': 'success', 'On Hold': 'warning'
-};
 
 @Component({
   selector: 'app-reports',
   standalone: true,
-  imports: [
-    CardComponent, CardHeaderComponent, CardTitleComponent, CardContentComponent,
-    BadgeComponent, ButtonComponent, NgIconComponent, DecimalPipe
-  ],
-  viewProviders: [provideIcons({
-    lucideFolderKanban, lucideCheckSquare, lucideTicket,
-    lucideTrendingUp, lucideClock, lucideRefreshCw
-  })],
+  imports: [CommonModule, BadgeComponent, ButtonComponent, NgIconComponent, ReportCreateModalComponent, DataTableComponent, AdvancedFiltersComponent],
+  viewProviders: [provideIcons({ lucideRefreshCw, lucidePlus, lucideDownload, lucideFileText, lucideFilter, lucideSave })],
   templateUrl: './reports.component.html',
 })
 export class ReportsComponent implements OnInit {
   private readonly api = inject(ApiService);
+  private readonly viewsService = inject(ViewsService);
+  private readonly columnService = inject(TableColumnService);
 
-  readonly kpi = signal<KpiDto | null>(null);
-  readonly breakdown = signal<TaskBreakdown[]>([]);
-  readonly progress = signal<ProjectProgress[]>([]);
+  readonly reports = signal<ReportDto[]>([]);
+  readonly loading = signal(false);
+  readonly showCreateModal = signal(false);
+  totalItems = signal(0);
 
-  totalBreakdown = () => this.breakdown().reduce((sum, b) => sum + b.count, 0);
+  // Table State
+  tableState = signal<TableState>({
+    page: 1,
+    pageSize: 25,
+    sortDirection: 'asc'
+  });
 
-  readonly kpiCards = () => {
-    const k = this.kpi();
-    return [
-      { label: 'Proyectos',        value: k?.totalProjects ?? '—',      icon: 'lucideFolderKanban', sub: 'Total' },
-      { label: 'Tareas',           value: k?.totalTasks ?? '—',         icon: 'lucideCheckSquare',  sub: `${k?.doneTasks ?? 0} completadas` },
-      { label: 'Throughput',       value: k ? `${k.throughput}%` : '—', icon: 'lucideTrendingUp',   sub: 'Tareas completadas' },
-      { label: 'Tickets abiertos', value: k?.openTickets ?? '—',        icon: 'lucideTicket',       sub: `${k?.inProgressTickets ?? 0} en progreso` },
-      { label: 'Lead Time',        value: k ? `${k.avgLeadTimeDays}d` : '—', icon: 'lucideClock',  sub: 'Promedio días' },
-      { label: 'Cycle Time',       value: k ? `${k.avgCycleTimeDays}d` : '—', icon: 'lucideClock', sub: 'Promedio días trabajo' },
-    ];
-  };
+  tableColumns: ColumnDef[] = this.columnService.buildColumns<ReportDto>({
+    name: { label: 'Nombre' },
+    type: { label: 'Tipo' },
+    format: { label: 'Formato', type: 'custom' },
+    parameters: { label: 'Parámetros', sortable: false }
+  }, [
+    { key: 'actions', label: 'Acciones', sortable: false, type: 'custom' }
+  ]);
 
-  statusBadge(status: string): BadgeVariant {
-    return STATUS_BADGE[status] ?? 'outline';
+  filterFields = computed<FilterField[]>(() => [
+    { key: 'type', label: 'Type', type: 'select', options: ['Tasks', 'Tickets', 'Sales', 'Activity'].map(s => ({ label: s, value: s })) },
+    { key: 'format', label: 'Format', type: 'select', options: ['PDF', 'Excel', 'CSV'].map(s => ({ label: s, value: s })) },
+  ]);
+
+  savedViews = signal<SavedView[]>([]);
+  activeViewId = signal<string | null>(null);
+
+  @ViewChild('formatTemplate', { static: true }) formatTemplate!: TemplateRef<any>;
+  @ViewChild('actionsTemplate', { static: true }) actionsTemplate!: TemplateRef<any>;
+
+  ngOnInit(): void {
+    this.tableColumns.find(c => c.key === 'format')!.template = this.formatTemplate;
+    this.tableColumns.find(c => c.key === 'actions')!.template = this.actionsTemplate;
+    this.loadViews();
+    this.load();
   }
 
-  ngOnInit(): void { this.load(); }
+  loadViews(): void {
+    this.viewsService.getViews('Reports').subscribe({
+      next: (views) => {
+        this.savedViews.set(views);
+        const defaultView = views.find(v => v.isDefault);
+        if (defaultView) {
+          this.applySavedView(defaultView);
+        }
+      }
+    });
+  }
+
+  saveCurrentView(name: string, isDefault: boolean = false): void {
+    const payload = {
+      moduleName: 'Reports',
+      viewName: name,
+      stateJson: JSON.stringify(this.tableState()),
+      isDefault
+    };
+    this.viewsService.saveView(payload).subscribe({
+      next: (view) => {
+        this.savedViews.update(views => [...views, view]);
+        this.activeViewId.set(view.id);
+      }
+    });
+  }
+
+  applySavedView(view: SavedView): void {
+    this.activeViewId.set(view.id);
+    try {
+      const state = JSON.parse(view.stateJson) as TableState;
+      this.tableState.set(state);
+      this.load();
+    } catch (e) {
+      console.error('Failed to parse saved view state', e);
+    }
+  }
+
+  onTableStateChange(state: TableState): void {
+    this.tableState.set(state);
+    this.load();
+  }
+
+  onFiltersChange(filters: Record<string, any>): void {
+    this.tableState.update(s => ({ ...s, filters, page: 1 }));
+    this.load();
+  }
 
   load(): void {
-    this.api.get<KpiDto>('/reports/kpi').subscribe({ next: d => this.kpi.set(d), error: () => {} });
-    this.api.get<TaskBreakdown[]>('/reports/tasks/breakdown').subscribe({ next: d => this.breakdown.set(d), error: () => {} });
-    this.api.get<ProjectProgress[]>('/reports/projects/progress').subscribe({ next: d => this.progress.set(d), error: () => {} });
+    this.loading.set(true);
+    const state = this.tableState();
+    
+    let params: any = {
+      pageNumber: state.page,
+      pageSize: state.pageSize,
+      sortColumn: state.sortColumn,
+      sortDirection: state.sortDirection,
+      searchTerm: state.searchTerm
+    };
+
+    if (state.filters) {
+      if (state.filters['type']) params.type = state.filters['type'];
+      if (state.filters['format']) params.format = state.filters['format'];
+    }
+    
+    this.api.get<{items: ReportDto[], totalCount: number}>('/reports', params).subscribe({
+      next: res => {
+        this.reports.set(res.items || []);
+        if (res.totalCount !== undefined) {
+          this.totalItems.set(res.totalCount);
+        } else {
+          this.totalItems.set((res.items || []).length);
+        }
+        this.loading.set(false);
+      },
+      error: () => this.loading.set(false),
+    });
+  }
+
+  openCreateModal(): void { this.showCreateModal.set(true); }
+  closeCreateModal(): void { this.showCreateModal.set(false); }
+  onReportCreated(): void { this.load(); }
+
+  generateReport(id: string, format: string): void {
+    this.api.post(`/reports/${id}/generate`, {}).subscribe({
+      next: () => alert(`Reporte en formato ${format} generado.`),
+      error: () => alert('Error al generar el reporte.'),
+    });
+  }
+
+  getFormatBadge(format: string): BadgeVariant {
+    switch (format) {
+      case 'PDF': return 'destructive';
+      case 'Excel': return 'success';
+      case 'CSV': return 'outline';
+      default: return 'default';
+    }
   }
 }

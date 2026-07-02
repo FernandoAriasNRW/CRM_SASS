@@ -6,9 +6,9 @@
         {{ (projects$ | async)?.length ?? 0 }} proyectos en total
       </p>
     </div>
-    <div class="flex gap-2">
-      <button uiButton variant="outline" size="sm" (click)="load()">
-        <ng-icon name="lucideRefreshCw" size="14" />
+    <div class="flex items-center gap-2">
+      <button uiButton variant="outline" size="sm" (click)="loadProjects()">
+        <ng-icon name="lucideRefreshCw" size="16" class="mr-2" />
         Actualizar
       </button>
       <button uiButton size="sm" (click)="openCreateModal()">
@@ -18,51 +18,47 @@
     </div>
   </div>
 
-  <div class="rounded-md border border-border overflow-hidden">
-    <table class="w-full text-sm">
-      <thead class="bg-muted/50">
-        <tr>
-          <th class="px-4 py-3 text-left font-medium text-muted-foreground">Nombre</th>
-          <th class="px-4 py-3 text-left font-medium text-muted-foreground">Estado</th>
-          <th class="px-4 py-3 text-left font-medium text-muted-foreground">Fecha estimada</th>
-          <th class="px-4 py-3 text-right font-medium text-muted-foreground">Acciones</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (item of projects$ | async; track item.id) {
-          <tr class="border-t border-border hover:bg-muted/30 transition-colors">
-            <td class="px-4 py-3">
-              <div class="font-medium">{{ item.name }}</div>
-              @if (item.description) {
-                <div class="text-xs text-muted-foreground truncate max-w-xs">{{ item.description }}</div>
-              }
-            </td>
-            <td class="px-4 py-3">
-              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
-                    [class]="statusStyle(item.status)">
-                {{ item.status }}
-              </span>
-            </td>
-            <td class="px-4 py-3 text-muted-foreground">{{ item.estimatedEndDate }}</td>
-            <td class="px-4 py-3 text-right">
-              <button (click)="openDetailModal(item)"
-                      class="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-colors"
-                      title="Ver detalle">
-                <ng-icon name="lucideEye" size="16" />
-              </button>
-            </td>
-          </tr>
-        } @empty {
-          <tr>
-            <td colspan="4" class="px-4 py-8 text-center text-muted-foreground">
-              No hay proyectos disponibles. Crea uno nuevo para comenzar.
-            </td>
-          </tr>
-        }
-      </tbody>
-    </table>
+  <ui-advanced-filters
+    [fields]="filterFields()"
+    [filters]="tableState().filters || {}"
+    (filtersChange)="onFiltersChange($event)">
+  </ui-advanced-filters>
+
+  <div class="flex items-center gap-2 mb-4" *ngIf="savedViews().length > 0">
+    <span class="text-sm font-medium text-slate-500">Saved Views:</span>
+    <button *ngFor="let view of savedViews()"
+            (click)="applySavedView(view)"
+            [class.bg-blue-100]="activeViewId() === view.id"
+            [class.text-blue-700]="activeViewId() === view.id"
+            class="px-3 py-1 text-xs rounded-full border border-slate-200 hover:bg-slate-100 transition-colors">
+      {{ view.viewName }}
+    </button>
+  </div>
+
+  <div class="h-[650px]">
+    <ui-data-table
+      [columns]="tableColumns"
+      [data]="projects()"
+      [totalItems]="totalItems()"
+      [loading]="isLoading()"
+      [initialState]="tableState()"
+      (stateChange)="onTableStateChange($event)"
+      (onSaveView)="saveCurrentView('Custom View ' + (savedViews().length + 1))">
+    </ui-data-table>
   </div>
 </div>
+
+<ng-template #statusTemplate let-item>
+  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium" [class]="statusStyle(item.status)">
+    {{ item.status }}
+  </span>
+</ng-template>
+
+<ng-template #actionsTemplate let-item>
+  <button (click)="openDetailModal(item)" class="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-colors" title="Ver detalle">
+    <ng-icon name="lucideEye" size="16" />
+  </button>
+</ng-template>
 
 @if (showCreateModal()) {
   <app-project-create-modal (closed)="closeCreateModal()" />

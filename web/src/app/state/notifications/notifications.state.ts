@@ -5,6 +5,7 @@ export interface Notification {
   userId: string;
   title: string;
   body: string;
+  type: 'info' | 'success' | 'warning' | 'error';
   createdAtUtc: string;
   isRead: boolean;
 }

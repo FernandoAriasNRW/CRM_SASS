@@ -33,8 +33,9 @@ export class ChatComponent implements OnInit, OnDestroy {
   readonly sending = signal(false);
 
   ngOnInit(): void {
-    this.api.get<Channel[]>('/channels').subscribe({
-      next: data => {
+    this.api.get<{items: Channel[]}>('/channels').subscribe({
+      next: res => {
+        const data = res.items || [];
         this.channels.set(data);
         if (data.length > 0) this.selectChannel(data[0]);
       },
@@ -55,8 +56,8 @@ export class ChatComponent implements OnInit, OnDestroy {
   selectChannel(channel: Channel): void {
     this.activeChannel.set(channel);
     this.messages.set([]);
-    this.api.get<Message[]>(`/channels/${channel.id}/messages`).subscribe({
-      next: data => this.messages.set(data),
+    this.api.get<{items: Message[]}>(`/channels/${channel.id}/messages`).subscribe({
+      next: res => this.messages.set(res.items || []),
       error: () => {},
     });
     this.realtime.joinChannel(channel.id);
