@@ -1,0 +1,82 @@
+<div class="fixed inset-0 bg-background/80 backdrop-blur-sm z-[100] animate-in fade-in flex justify-end">
+  <div class="w-full max-w-md h-full bg-card border-l border-border shadow-2xl flex flex-col animate-in slide-in-from-right">
+    
+    <!-- Header -->
+    <div class="h-14 border-b border-border flex items-center justify-between px-6 shrink-0">
+      <h2 class="text-lg font-semibold">Customizar submenú</h2>
+      <button (click)="close.emit()" class="text-muted-foreground hover:text-foreground">
+        <ng-icon name="lucideX" size="20"></ng-icon>
+      </button>
+    </div>
+
+    <!-- Content -->
+    <div class="flex-1 overflow-y-auto p-6 flex flex-col gap-6">
+      
+      <div>
+        <h3 class="text-sm font-medium mb-3 text-muted-foreground uppercase tracking-wider">Opciones del Submenú</h3>
+        <p class="text-xs text-muted-foreground mb-4">Arrastra para reordenar las opciones. Puedes eliminar los accesos rápidos personalizados.</p>
+
+        <div cdkDropList class="space-y-2" (cdkDropListDropped)="drop($event)">
+          @for (item of items; track item.id; let i = $index) {
+            <div cdkDrag class="flex items-center gap-3 bg-muted/50 p-2.5 rounded-md border border-border group cursor-grab active:cursor-grabbing">
+              <ng-icon name="lucideGripVertical" class="text-muted-foreground cursor-grab"></ng-icon>
+              
+              <div class="flex-1 min-w-0">
+                @if (item.isDivider) {
+                  <span class="text-sm font-semibold text-muted-foreground uppercase tracking-wider">{{ item.label || '--- Separador ---' }}</span>
+                } @else {
+                  <span class="text-sm font-medium truncate">{{ item.label }}</span>
+                  @if (item.route) {
+                    <span class="text-xs text-muted-foreground ml-2 truncate">{{ item.route }}</span>
+                  }
+                }
+              </div>
+              
+              @if (item.isCustom) {
+                <button (click)="removeItem(i)" class="text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity" title="Quitar">
+                  <ng-icon name="lucideTrash2" size="16"></ng-icon>
+                </button>
+              }
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Agregar acceso rápido -->
+      <div class="p-4 border border-border rounded-lg bg-muted/30">
+        <h3 class="text-sm font-medium mb-3">Agregar acceso rápido</h3>
+        <div class="space-y-3">
+          <div>
+            <label class="text-xs text-muted-foreground mb-1 block">Opciones comunes</label>
+            <select [(ngModel)]="selectedTemplate" (change)="applyTemplate()" class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+              <option [ngValue]="null">Personalizado...</option>
+              @for (tpl of commonLinks; track tpl.label) {
+                <option [ngValue]="tpl">{{ tpl.label }}</option>
+              }
+            </select>
+          </div>
+          <div>
+            <label class="text-xs text-muted-foreground mb-1 block">Nombre</label>
+            <input type="text" [(ngModel)]="newLabel" placeholder="Ej. Reporte mensual" class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+          </div>
+          <div>
+            <label class="text-xs text-muted-foreground mb-1 block">Ruta (URL interna)</label>
+            <input type="text" [(ngModel)]="newRoute" placeholder="/projects/123" class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+          </div>
+          <button uiButton variant="outline" size="sm" class="w-full" (click)="addCustomLink()" [disabled]="!newLabel || !newRoute">
+            <ng-icon name="lucidePlus" size="16" class="mr-2"></ng-icon>
+            Agregar al menú
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Footer -->
+    <div class="p-4 border-t border-border bg-muted/30 flex justify-end gap-2 shrink-0">
+      <button uiButton variant="outline" (click)="close.emit()">Cancelar</button>
+      <button uiButton variant="default" (click)="save()">Guardar Cambios</button>
+    </div>
+
+  </div>
+</div>

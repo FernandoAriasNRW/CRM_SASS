@@ -133,6 +133,14 @@
           </button>
         }
       </div>
+      <div>
+        <h4 class="text-sm font-medium text-muted-foreground">Space</h4>
+        <p class="mt-1 text-sm text-foreground">{{ project().spaceId }}</p>
+      </div>
+      <div>
+        <h4 class="text-sm font-medium text-muted-foreground">Folder</h4>
+        <p class="mt-1 text-sm text-foreground">{{ project().folderId || 'N/A' }}</p>
+      </div>
     </div>
   </div>
 </div>

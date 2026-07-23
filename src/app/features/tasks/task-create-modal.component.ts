@@ -6,6 +6,7 @@ import { InputComponent } from '../../shared/ui/input.component';
 import { LabelComponent } from '../../shared/ui/label.component';
 import { AsyncPipe } from '@angular/common';
 import { Store } from '@ngrx/store';
+import { DrawerComponent } from '../../shared/ui/drawer.component';
 import { selectProjects } from '../../state/projects/projects.state';
 
 export interface TaskItem {
@@ -22,7 +23,7 @@ export interface TaskItem {
 @Component({
   selector: 'app-task-create-modal',
   standalone: true,
-  imports: [FormsModule, ButtonComponent, InputComponent, LabelComponent, AsyncPipe],
+  imports: [FormsModule, ButtonComponent, InputComponent, LabelComponent, AsyncPipe, DrawerComponent],
   templateUrl: './task-create-modal.component.html',
 })
 export class TaskCreateModalComponent {

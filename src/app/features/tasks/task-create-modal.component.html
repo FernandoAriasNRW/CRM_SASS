@@ -1,49 +1,42 @@
-<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
-  <div class="w-full max-w-md rounded-lg border border-border bg-card shadow-xl">
-    <div class="flex items-center justify-between px-6 py-4 border-b border-border">
-      <h3 class="text-base font-semibold">Nueva tarea</h3>
-      <button (click)="close()" class="text-muted-foreground hover:text-foreground transition-colors text-lg leading-none">&times;</button>
+<app-drawer [isOpen]="true" (isOpenChange)="!$event ? close() : null" title="Nueva tarea" [showFooter]="true">
+  <div class="space-y-4 py-2">
+    <div class="space-y-1.5">
+      <label uiLabel for="task-title">Título *</label>
+      <input uiInput id="task-title" [(ngModel)]="title" placeholder="Título de la tarea" />
     </div>
-
-    <div class="px-6 py-4 space-y-4">
-      <div class="space-y-1.5">
-        <label uiLabel for="task-title">Título *</label>
-        <input uiInput id="task-title" [(ngModel)]="title" placeholder="Título de la tarea" />
-      </div>
-      <div class="space-y-1.5">
-        <label uiLabel for="task-desc">Descripción</label>
-        <input uiInput id="task-desc" [(ngModel)]="description" placeholder="Descripción opcional" />
-      </div>
-      <div class="space-y-1.5">
-        <label uiLabel for="task-project">Proyecto *</label>
-        <select id="task-project" [(ngModel)]="projectId"
-                class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
-          <option value="">Seleccionar proyecto</option>
-          @for (p of projects$ | async; track p.id) {
-            <option [value]="p.id">{{ p.name }}</option>
-          }
-        </select>
-      </div>
-      <div class="grid grid-cols-2 gap-3">
-        <div class="space-y-1.5">
-          <label uiLabel for="task-hours">Horas estimadas</label>
-          <input uiInput id="task-hours" type="number" [(ngModel)]="estimatedHours" min="0.5" step="0.5" />
-        </div>
-        <div class="space-y-1.5">
-          <label uiLabel for="task-due">Fecha límite *</label>
-          <input uiInput id="task-due" type="date" [(ngModel)]="dueDate" />
-        </div>
-      </div>
-      @if (error()) {
-        <p class="text-sm text-destructive">{{ error() }}</p>
-      }
+    <div class="space-y-1.5">
+      <label uiLabel for="task-desc">Descripción</label>
+      <input uiInput id="task-desc" [(ngModel)]="description" placeholder="Descripción opcional" />
     </div>
-
-    <div class="flex justify-end gap-2 px-6 py-4 border-t border-border">
-      <button uiButton variant="outline" (click)="close()">Cancelar</button>
-      <button uiButton (click)="submit()" [disabled]="loading()">
-        {{ loading() ? 'Creando...' : 'Crear tarea' }}
-      </button>
+    <div class="space-y-1.5">
+      <label uiLabel for="task-project">Proyecto *</label>
+      <select id="task-project" [(ngModel)]="projectId"
+              class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+        <option value="">Seleccionar proyecto</option>
+        @for (p of projects$ | async; track p.id) {
+          <option [value]="p.id">{{ p.name }}</option>
+        }
+      </select>
     </div>
+    <div class="grid grid-cols-2 gap-3">
+      <div class="space-y-1.5">
+        <label uiLabel for="task-hours">Horas estimadas</label>
+        <input uiInput id="task-hours" type="number" [(ngModel)]="estimatedHours" min="0.5" step="0.5" />
+      </div>
+      <div class="space-y-1.5">
+        <label uiLabel for="task-due">Fecha límite *</label>
+        <input uiInput id="task-due" type="date" [(ngModel)]="dueDate" />
+      </div>
+    </div>
+    @if (error()) {
+      <p class="text-sm text-destructive">{{ error() }}</p>
+    }
   </div>
-</div>
+
+  <div drawer-footer class="flex justify-end gap-2 w-full">
+    <button uiButton variant="outline" (click)="close()">Cancelar</button>
+    <button uiButton (click)="submit()" [disabled]="loading()">
+      {{ loading() ? 'Creando...' : 'Crear tarea' }}
+    </button>
+  </div>
+</app-drawer>

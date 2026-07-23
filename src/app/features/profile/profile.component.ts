@@ -5,13 +5,15 @@ import { AuthSignalStore } from '../../core/auth-signal.store';
 import { ApiService } from '../../core/api.service';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import { lucideSave, lucideLogOut, lucideLock, lucideUser } from '@ng-icons/lucide';
+import { DrawerComponent } from '../../shared/ui/drawer.component';
 
 @Component({
   selector: 'app-profile',
   standalone: true,
   imports: [
     FormsModule,
-    NgIconComponent
+    NgIconComponent,
+    DrawerComponent
   ],
   viewProviders: [provideIcons({ lucideSave, lucideLogOut, lucideLock, lucideUser })],
   templateUrl: './profile.component.html',
@@ -23,6 +25,14 @@ export class ProfileComponent implements OnInit {
 
   // User info
   readonly user = this.authStore.userInfo;
+  isOpen = signal(true);
+
+  profileName = '';
+  profilePhone = '';
+  profileBio = '';
+  profileSuccess = signal('');
+  profileError = signal('');
+  savingProfile = signal(false);
 
   // Password change
   currentPassword = '';
@@ -38,7 +48,40 @@ export class ProfileComponent implements OnInit {
   ngOnInit(): void {
     if (!this.authStore.isAuthenticated()) {
       this.router.navigate(['/login']);
+      return;
     }
+
+    this.api.get<any>('/users/me').subscribe({
+      next: (userData) => {
+        this.authStore.updateUserInfo(userData);
+        this.profileName = userData.name || '';
+        this.profilePhone = userData.phoneNumber || '';
+        this.profileBio = userData.bio || '';
+      },
+      error: () => {}
+    });
+  }
+
+  saveProfile(): void {
+    this.profileError.set('');
+    this.profileSuccess.set('');
+    this.savingProfile.set(true);
+
+    this.api.put<any>('/users/me/profile', {
+      name: this.profileName,
+      phoneNumber: this.profilePhone,
+      bio: this.profileBio
+    }).subscribe({
+      next: (userData) => {
+        this.profileSuccess.set('Perfil actualizado exitosamente');
+        this.authStore.updateUserInfo(userData);
+        this.savingProfile.set(false);
+      },
+      error: (err) => {
+        this.profileError.set(err.error?.error || 'Error al actualizar perfil');
+        this.savingProfile.set(false);
+      }
+    });
   }
 
   changePassword(): void {
@@ -86,5 +129,11 @@ export class ProfileComponent implements OnInit {
       next: () => this.authStore.logout(),
       error: () => this.authStore.logout()
     });
+  }
+
+  closeDrawer(): void {
+    this.isOpen.set(false);
+    // Navigate back to home or previous page
+    window.history.back();
   }
 }

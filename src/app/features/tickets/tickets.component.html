@@ -1,51 +1,68 @@
 <div class="space-y-4">
 
-  <!-- Header -->
-  <div class="flex items-center justify-between">
-    <div>
-      <h2 class="text-2xl font-semibold tracking-tight">Tickets</h2>
-    </div>
-    <div class="flex items-center gap-2">
-      <div class="flex rounded-md border border-border overflow-hidden">
-        <button (click)="viewMode.set('board')"
-          [class.bg-primary]="viewMode() === 'board'"
-          [class.text-primary-foreground]="viewMode() === 'board'"
-          class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium transition-colors hover:bg-accent">
-          <ng-icon name="lucideLayoutDashboard" size="13" /> Board
+  <!-- Header & Views Tab Bar (ClickUp Style) -->
+  <div class="flex flex-col border-b border-border mb-4 bg-card rounded-t-lg shadow-sm">
+    <div class="flex items-center justify-between px-4 py-3">
+      <h2 class="text-xl font-semibold tracking-tight">Tickets</h2>
+      <div class="flex items-center gap-2">
+        <button uiButton variant="outline" size="sm" (click)="loadTickets()">
+          <ng-icon name="lucideRefreshCw" size="14" class="mr-1.5" /> Actualizar
         </button>
-        <button (click)="viewMode.set('list')"
-          [class.bg-primary]="viewMode() === 'list'"
-          [class.text-primary-foreground]="viewMode() === 'list'"
-          class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium transition-colors hover:bg-accent border-l border-border">
-          <ng-icon name="lucideList" size="13" /> Lista
+        <button uiButton size="sm" (click)="showModal.set(true)" *appHasPermission="'Write'; entityType: 'Ticket'">
+          <ng-icon name="lucidePlus" size="14" class="mr-1.5" /> Nuevo ticket
         </button>
       </div>
-      <button uiButton variant="outline" size="sm" (click)="loadTickets()">
-        <ng-icon name="lucideRefreshCw" size="16" class="mr-2" /> Actualizar
-      </button>
-      <button uiButton size="sm" (click)="showModal.set(true)">
-        <ng-icon name="lucidePlus" size="14" /> Nuevo ticket
-      </button>
     </div>
-  </div>
+    
+    <div class="flex items-center px-2 overflow-x-auto">
+      <!-- Default Views (if none saved) -->
+      @if (savedViews().length === 0) {
+        <button (click)="viewMode.set('board')"
+                [class.border-primary]="viewMode() === 'board'"
+                [class.text-primary]="viewMode() === 'board'"
+                [class.border-transparent]="viewMode() !== 'board'"
+                class="flex items-center gap-2 px-4 py-2.5 border-b-2 font-medium text-sm whitespace-nowrap cursor-pointer transition-colors hover:text-foreground">
+          <ng-icon name="lucideLayoutDashboard" size="14" /> Board
+        </button>
+        <button (click)="viewMode.set('list')"
+                [class.border-primary]="viewMode() === 'list'"
+                [class.text-primary]="viewMode() === 'list'"
+                [class.border-transparent]="viewMode() !== 'list'"
+                class="flex items-center gap-2 px-4 py-2.5 border-b-2 font-medium text-sm whitespace-nowrap cursor-pointer transition-colors hover:text-foreground">
+          <ng-icon name="lucideList" size="14" /> Lista
+        </button>
+      }
 
-  <!-- Filtros -->
-  <ui-advanced-filters
-    [fields]="filterFields()"
-    [filters]="tableState().filters || {}"
-    (filtersChange)="onFiltersChange($event)">
-  </ui-advanced-filters>
+      <!-- Saved Views Tabs -->
+      @for (view of savedViews(); track view.id) {
+        <button (click)="applySavedView(view)"
+                [class.border-primary]="activeViewId() === view.id"
+                [class.text-primary]="activeViewId() === view.id"
+                [class.border-transparent]="activeViewId() !== view.id"
+                class="flex items-center gap-2 px-4 py-2.5 border-b-2 font-medium text-sm whitespace-nowrap cursor-pointer transition-colors hover:text-foreground">
+          <ng-icon [name]="getIconForView(view)" size="14" />
+          {{ view.viewName }}
+        </button>
+      }
 
-  <!-- Saved Views Selection -->
-  <div class="flex items-center gap-2 mb-4" *ngIf="savedViews().length > 0">
-    <span class="text-sm font-medium text-slate-500">Saved Views:</span>
-    <button *ngFor="let view of savedViews()"
-            (click)="applySavedView(view)"
-            [class.bg-blue-100]="activeViewId() === view.id"
-            [class.text-blue-700]="activeViewId() === view.id"
-            class="px-3 py-1 text-xs rounded-full border border-slate-200 hover:bg-slate-100 transition-colors">
-      {{ view.viewName }}
-    </button>
+      <!-- Add View -->
+      <div class="relative group" tabindex="0">
+        <button class="flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+          <ng-icon name="lucidePlus" size="14" /> Vista
+        </button>
+        <div class="absolute top-full left-0 mt-1 w-48 rounded-lg border border-border bg-card shadow-lg z-10 hidden group-focus-within:block focus-within:block">
+          <div class="p-2 space-y-1">
+            <p class="px-2 py-1 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Crear nueva vista</p>
+            <button (click)="createNewView('list')" class="flex items-center gap-2 w-full px-2 py-1.5 text-sm hover:bg-accent rounded-md transition-colors text-left">
+              <ng-icon name="lucideList" size="14" /> Lista
+            </button>
+            <button (click)="createNewView('board')" class="flex items-center gap-2 w-full px-2 py-1.5 text-sm hover:bg-accent rounded-md transition-colors text-left">
+              <ng-icon name="lucideLayoutDashboard" size="14" /> Tablero
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- VISTA BOARD -->
@@ -113,6 +130,7 @@
         [loading]="isLoading()"
         [initialState]="tableState()"
         (stateChange)="onTableStateChange($event)"
+        (rowClick)="openDetail($event)"
         (onSaveView)="saveCurrentView('Custom View ' + (savedViews().length + 1))">
       </ui-data-table>
     </div>

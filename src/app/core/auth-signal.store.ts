@@ -7,6 +7,8 @@ export interface UserInfo {
   email: string;
   tenantId: string;
   role: string;
+  phoneNumber?: string;
+  bio?: string;
 }
 
 @Injectable({ providedIn: 'root' })

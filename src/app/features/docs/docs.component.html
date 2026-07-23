@@ -1,0 +1,710 @@
+<!-- Sidebar Overlay Trigger & Container -->
+<div 
+  class="absolute top-0 bottom-0 left-0 z-30 flex h-full"
+  [class.w-64]="isPinned() || isHovered()"
+  [class.w-4]="!isPinned() && !isHovered()"
+  (mouseenter)="isHovered.set(true)"
+  (mouseleave)="isHovered.set(false)">
+  
+  <div 
+    class="w-64 flex-shrink-0 bg-zinc-50 dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-800 flex flex-col h-full shadow-xl transition-transform duration-300 ease-in-out"
+    [class.-translate-x-full]="!isPinned() && !isHovered()"
+    [class.shadow-none]="isPinned()">
+    
+    <!-- Sidebar Header -->
+    <div class="h-14 flex items-center justify-between px-4 hover:bg-zinc-100 dark:hover:bg-zinc-800/50 cursor-pointer border-b border-zinc-200 dark:border-zinc-800 transition-colors">
+      <div class="flex items-center gap-2 font-medium text-sm text-zinc-900 dark:text-zinc-100">
+        <div class="w-6 h-6 rounded-md bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white text-xs font-bold shadow-sm">
+          D
+        </div>
+        <span class="font-semibold tracking-tight">Docs</span>
+      </div>
+      <div class="flex items-center gap-1">
+        <button (click)="togglePin($event)" class="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 p-1.5 rounded-md hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors" title="Pin Sidebar">
+          <ng-icon [name]="isPinned() ? 'lucidePinOff' : 'lucidePin'" class="w-3.5 h-3.5"></ng-icon>
+        </button>
+      </div>
+    </div>
+
+    <!-- Navigation List (ClickUp Style) -->
+    <div class="px-2 py-3 space-y-0.5 border-b border-zinc-200/80 dark:border-zinc-800/80">
+      <button 
+        (click)="setSidebarTab('all')" 
+        [class.bg-zinc-200/70]="activeSidebarTab() === 'all' && !activeDocument()" 
+        [class.dark:bg-zinc-800/80]="activeSidebarTab() === 'all' && !activeDocument()"
+        [class.font-semibold]="activeSidebarTab() === 'all' && !activeDocument()"
+        class="w-full flex items-center justify-between px-2.5 py-1.5 text-xs text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-md transition-colors">
+        <div class="flex items-center gap-2">
+          <ng-icon name="lucideFileText" class="w-4 h-4 text-zinc-500"></ng-icon>
+          <span>All Docs</span>
+        </div>
+      </button>
+
+      <button 
+        (click)="setSidebarTab('my')" 
+        [class.bg-zinc-200/70]="activeSidebarTab() === 'my' && !activeDocument()" 
+        [class.dark:bg-zinc-800/80]="activeSidebarTab() === 'my' && !activeDocument()"
+        [class.font-semibold]="activeSidebarTab() === 'my' && !activeDocument()"
+        class="w-full flex items-center justify-between px-2.5 py-1.5 text-xs text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-md transition-colors">
+        <div class="flex items-center gap-2">
+          <div class="w-4 h-4 rounded-full bg-zinc-800 text-white dark:bg-zinc-100 dark:text-zinc-900 flex items-center justify-center text-[9px] font-bold">
+            E
+          </div>
+          <span>My Docs</span>
+        </div>
+        <span class="text-[10px] px-1.5 py-0.5 rounded-full bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 font-medium">
+          {{ documents().length }}
+        </span>
+      </button>
+
+      <button 
+        (click)="setSidebarTab('shared')" 
+        [class.bg-zinc-200/70]="activeSidebarTab() === 'shared' && !activeDocument()" 
+        [class.dark:bg-zinc-800/80]="activeSidebarTab() === 'shared' && !activeDocument()"
+        class="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-md transition-colors">
+        <ng-icon name="lucideShare2" class="w-4 h-4 text-zinc-500"></ng-icon>
+        <span>Shared with me</span>
+      </button>
+
+      <button 
+        (click)="setSidebarTab('private')" 
+        [class.bg-zinc-200/70]="activeSidebarTab() === 'private' && !activeDocument()" 
+        [class.dark:bg-zinc-800/80]="activeSidebarTab() === 'private' && !activeDocument()"
+        class="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-md transition-colors">
+        <ng-icon name="lucidePin" class="w-4 h-4 text-zinc-500"></ng-icon>
+        <span>Private</span>
+      </button>
+
+      <button 
+        (click)="setSidebarTab('meeting-notes')" 
+        [class.bg-zinc-200/70]="activeSidebarTab() === 'meeting-notes' && !activeDocument()" 
+        [class.dark:bg-zinc-800/80]="activeSidebarTab() === 'meeting-notes' && !activeDocument()"
+        class="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-md transition-colors">
+        <ng-icon name="lucideCalendar" class="w-4 h-4 text-zinc-500"></ng-icon>
+        <span>Meeting Notes</span>
+      </button>
+
+      <button 
+        (click)="setSidebarTab('archived')" 
+        [class.bg-zinc-200/70]="activeSidebarTab() === 'archived' && !activeDocument()" 
+        [class.dark:bg-zinc-800/80]="activeSidebarTab() === 'archived' && !activeDocument()"
+        class="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-md transition-colors">
+        <ng-icon name="lucideFolder" class="w-4 h-4 text-zinc-500"></ng-icon>
+        <span>Archived</span>
+      </button>
+    </div>
+
+    <!-- Widgets & Document Tree -->
+    <div class="flex-1 overflow-y-auto px-3 py-3 space-y-4">
+      
+      <!-- Favorites Section -->
+      <div>
+        <span class="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider block mb-1.5 px-1">
+          Favorites
+        </span>
+        @if (starredDocuments().length > 0) {
+          <div class="space-y-0.5">
+            @for (doc of starredDocuments(); track doc.id) {
+              <div 
+                (click)="selectDocument(doc)"
+                class="flex items-center gap-2 px-2.5 py-1.5 text-xs text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-md cursor-pointer truncate">
+                <ng-icon name="lucideStar" class="w-3.5 h-3.5 text-amber-500 fill-amber-500"></ng-icon>
+                <span class="truncate">{{ doc.title }}</span>
+              </div>
+            }
+          </div>
+        } @else {
+          <div class="bg-gradient-to-b from-amber-500/5 to-amber-500/0 border border-amber-200/60 dark:border-amber-900/30 rounded-xl p-3 text-center">
+            <div class="w-7 h-7 rounded-full bg-amber-100 dark:bg-amber-950/50 text-amber-500 flex items-center justify-center mx-auto mb-1">
+              <ng-icon name="lucideStar" class="w-3.5 h-3.5 fill-amber-400 text-amber-400"></ng-icon>
+            </div>
+            <p class="text-[11px] font-medium text-zinc-600 dark:text-zinc-400">Star a Doc to see it here</p>
+          </div>
+        }
+      </div>
+
+      <!-- Recent Pages Section -->
+      <div>
+        <span class="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider block mb-1.5 px-1">
+          Recent Pages
+        </span>
+        <div class="space-y-0.5">
+          @for (doc of documents().slice(0, 4); track doc.id) {
+            <div 
+              (click)="selectDocument(doc)"
+              class="flex items-center gap-2 px-2 py-1 text-xs text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-md cursor-pointer truncate">
+              <ng-icon name="lucideBookOpen" class="w-3.5 h-3.5 text-zinc-400"></ng-icon>
+              <span class="truncate">{{ doc.title }}</span>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Popular Wikis Section -->
+      <div>
+        <span class="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider block mb-1.5 px-1">
+          Popular Wikis
+        </span>
+        <div class="bg-gradient-to-b from-blue-500/5 to-blue-500/0 border border-blue-200/60 dark:border-blue-900/30 rounded-xl p-3 text-center">
+          <div class="w-7 h-7 rounded-full bg-blue-100 dark:bg-blue-950/50 text-blue-600 flex items-center justify-center mx-auto mb-1">
+            <ng-icon name="lucideCheckCircle2" class="w-4 h-4 text-pink-500"></ng-icon>
+          </div>
+          <p class="text-[11px] text-zinc-500 dark:text-zinc-400">Most viewed and active Wikis appear here</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Spacer for main content when pinned -->
+<div 
+  class="flex-shrink-0 transition-all duration-300 ease-in-out"
+  [class.w-64]="isPinned()"
+  [class.w-0]="!isPinned()">
+</div>
+
+<!-- Main Area (Dashboard or Document Editor) -->
+<div class="flex-1 flex flex-col h-full bg-white dark:bg-zinc-950 relative min-w-0 z-10">
+  
+  @if (activeDocument() && activePage()) {
+    <!-- Document Editor Mode -->
+    <div class="h-14 flex items-center justify-between px-6 border-b border-zinc-200 dark:border-zinc-800">
+      
+      <!-- Breadcrumb & Back -->
+      <div class="flex items-center gap-2 text-sm">
+        <button (click)="closeEditorView()" class="p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 transition-colors" title="Back to All Docs">
+          <ng-icon name="lucideChevronRight" class="w-4 h-4 rotate-180"></ng-icon>
+        </button>
+        <span (click)="closeEditorView()" class="text-zinc-500 dark:text-zinc-400 font-medium hover:underline cursor-pointer">Docs</span>
+        <span class="text-zinc-300 dark:text-zinc-600">/</span>
+        <span class="text-zinc-900 dark:text-zinc-100 font-semibold">{{ activeDocument()?.title }}</span>
+        <span class="text-zinc-300 dark:text-zinc-600">/</span>
+        <input 
+          type="text" 
+          [ngModel]="activePage()?.title" 
+          (ngModelChange)="updateDocumentTitle($event)"
+          class="bg-transparent border-none outline-none text-zinc-900 dark:text-zinc-100 font-semibold focus:ring-1 focus:ring-blue-500/50 rounded px-1 -ml-1 w-48"
+          placeholder="Page title...">
+      </div>
+
+      <!-- Right Actions -->
+      <div class="flex items-center gap-3">
+        <span class="text-xs text-zinc-400 dark:text-zinc-500 flex items-center gap-1">
+          <ng-icon name="lucideClock" class="w-3.5 h-3.5"></ng-icon>
+          Saved just now
+        </span>
+        <div class="w-px h-4 bg-zinc-200 dark:bg-zinc-700"></div>
+        <button 
+          (click)="openSaveAsTemplateModal(activeDocument()!)"
+          class="text-xs font-medium text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-950/50 hover:bg-purple-100 dark:hover:bg-purple-900/60 px-3 py-1.5 rounded-md border border-purple-200 dark:border-purple-800/50 transition-colors flex items-center gap-1.5">
+          <ng-icon name="lucideLayoutTemplate" class="w-3.5 h-3.5"></ng-icon>
+          Save as Template
+        </button>
+        <app-emoji-picker (emojiSelected)="insertEmoji($event)"></app-emoji-picker>
+        <button class="text-xs font-medium text-zinc-600 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 px-3 py-1.5 rounded-md transition-colors" (click)="exportHtml()">
+          Export HTML
+        </button>
+        <button class="text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 px-3 py-1.5 rounded-md transition-colors" (click)="exportPdf()">
+          Export PDF
+        </button>
+      </div>
+    </div>
+
+    <!-- Editor Content -->
+    <div class="flex-1 overflow-y-auto">
+      <div class="max-w-3xl mx-auto px-8 pt-10 pb-4">
+        <input 
+          type="text" 
+          [ngModel]="activeDocument()?.title" 
+          (ngModelChange)="updateDocumentTitle($event)" 
+          class="w-full text-4xl font-bold bg-transparent outline-none text-zinc-900 dark:text-zinc-100 placeholder-zinc-300 dark:placeholder-zinc-700 tracking-tight" 
+          placeholder="Document Title">
+      </div>
+      <div class="max-w-3xl mx-auto px-8 pb-12 editor-container">
+        <tiptap-editor [editor]="editor"></tiptap-editor>
+      </div>
+    </div>
+
+  } @else {
+    <!-- ClickUp Style Docs Dashboard -->
+    <div class="flex-1 flex flex-col h-full bg-white dark:bg-zinc-950 overflow-y-auto w-full z-10">
+      <div class="max-w-6xl mx-auto w-full px-8 py-8">
+        
+        <!-- Header Controls Row (Title & Main Buttons) -->
+        <div class="flex items-center justify-between mb-8">
+          <div>
+            <h1 class="text-2xl font-bold text-zinc-900 dark:text-white tracking-tight">
+              @if (activeSidebarTab() === 'all') { All Docs }
+              @else if (activeSidebarTab() === 'my') { My Docs }
+              @else if (activeSidebarTab() === 'shared') { Shared Docs }
+              @else if (activeSidebarTab() === 'private') { Private Docs }
+              @else if (activeSidebarTab() === 'meeting-notes') { Meeting Notes }
+              @else { Archived Docs }
+            </h1>
+          </div>
+
+          <!-- Top Right Action Buttons (Import & Split New Doc Dropdown) -->
+          <div class="flex items-center gap-3">
+            
+            <!-- Import Button -->
+            <button 
+              (click)="openImportModal($event)" 
+              class="inline-flex items-center gap-2 px-3.5 py-1.5 text-sm font-medium text-zinc-700 dark:text-zinc-200 bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors shadow-sm">
+              <ng-icon name="lucideUpload" class="w-4 h-4 text-zinc-500"></ng-icon>
+              <span>Import</span>
+            </button>
+
+            <!-- New Doc Dropdown (Matching Image 2) -->
+            <div class="relative dropdown-container">
+              <div class="inline-flex rounded-lg shadow-sm">
+                <button 
+                  (click)="createNewDoc(1, $event)"
+                  class="px-4 py-1.5 bg-pink-600 hover:bg-pink-700 text-white text-sm font-medium rounded-l-lg transition-colors flex items-center gap-1.5">
+                  <span>New Doc</span>
+                </button>
+                <button 
+                  (click)="toggleNewDocDropdown($event)"
+                  class="px-2 py-1.5 bg-pink-600 hover:bg-pink-700 text-white text-sm font-medium rounded-r-lg border-l border-pink-700 transition-colors">
+                  <ng-icon name="lucideChevronDown" class="w-4 h-4"></ng-icon>
+                </button>
+              </div>
+
+              <!-- Dropdown Menu (Image 2 Replica) -->
+              @if (isNewDocDropdownOpen()) {
+                <div class="absolute right-0 mt-2 w-60 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-2xl z-50 py-2 text-sm divide-y divide-zinc-100 dark:divide-zinc-800">
+                  
+                  <div class="py-1">
+                    <button (click)="createNewDoc(1, $event)" class="w-full flex items-center gap-3 px-4 py-2 text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors text-left font-medium">
+                      <div class="w-6 h-6 rounded bg-blue-100 dark:bg-blue-950 text-blue-600 flex items-center justify-center">
+                        <ng-icon name="lucideFileText" class="w-4 h-4"></ng-icon>
+                      </div>
+                      <span>Doc</span>
+                    </button>
+
+                    <button (click)="createNewDoc(2, $event)" class="w-full flex items-center gap-3 px-4 py-2 text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors text-left font-medium">
+                      <div class="w-6 h-6 rounded bg-pink-100 dark:bg-pink-950 text-pink-600 flex items-center justify-center">
+                        <ng-icon name="lucideCheckCircle2" class="w-4 h-4"></ng-icon>
+                      </div>
+                      <span>Wiki</span>
+                    </button>
+                  </div>
+
+                  <div class="py-1">
+                    <button (click)="openImportModal($event)" class="w-full flex items-center gap-3 px-4 py-2 text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors text-left font-medium">
+                      <ng-icon name="lucideUpload" class="w-4 h-4 text-zinc-500"></ng-icon>
+                      <span>Import</span>
+                    </button>
+                  </div>
+
+                  <div class="py-1">
+                    <span class="px-4 py-1.5 text-xs font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider block">
+                      Templates
+                    </span>
+
+                    @for (tmpl of presetTemplates; track tmpl.key) {
+                      <button (click)="createFromPreset(tmpl.key, $event)" class="w-full flex items-center gap-3 px-4 py-2 text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors text-left">
+                        <div class="w-6 h-6 rounded {{ tmpl.iconBg }} flex items-center justify-center text-xs">
+                          <ng-icon [name]="tmpl.icon" class="w-3.5 h-3.5"></ng-icon>
+                        </div>
+                        <span class="truncate">{{ tmpl.title }}</span>
+                      </button>
+                    }
+
+                    <button (click)="isTemplatePickerOpen.set(true); isNewDocDropdownOpen.set(false)" class="w-full flex items-center gap-3 px-4 py-2 text-pink-600 dark:text-pink-400 hover:bg-pink-50 dark:hover:bg-pink-950/30 transition-colors text-left font-medium">
+                      <ng-icon name="lucideWand2" class="w-4 h-4"></ng-icon>
+                      <span>Apply a template</span>
+                    </button>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+
+        <!-- Templates Carousel / Gallery (Image 1 Replica) -->
+        <div class="mb-8">
+          <h2 class="text-sm font-semibold text-zinc-500 dark:text-zinc-400 mb-3">Templates</h2>
+          
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            @for (tmpl of presetTemplates; track tmpl.key) {
+              <div 
+                (click)="createFromPreset(tmpl.key)"
+                class="group relative border {{ tmpl.borderColor }} rounded-2xl p-4 bg-gradient-to-br {{ tmpl.bgGradient }} bg-white dark:bg-zinc-900 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer">
+                
+                <div class="flex items-center gap-3 mb-2">
+                  <div class="w-10 h-10 rounded-xl {{ tmpl.iconBg }} flex items-center justify-center flex-shrink-0 shadow-sm">
+                    <ng-icon [name]="tmpl.icon" class="w-5 h-5"></ng-icon>
+                  </div>
+                  <div class="truncate">
+                    <div class="flex items-center gap-1">
+                      <h3 class="font-semibold text-zinc-900 dark:text-zinc-100 text-sm truncate">{{ tmpl.title }}</h3>
+                      @if (tmpl.badgeText) {
+                        <span class="text-pink-500 text-xs font-bold">{{ tmpl.badgeText }}</span>
+                      }
+                    </div>
+                  </div>
+                </div>
+                <p class="text-xs text-zinc-500 dark:text-zinc-400 line-clamp-2">{{ tmpl.description }}</p>
+              </div>
+            }
+          </div>
+
+          <!-- User Custom Saved Templates Cards (if any exist) -->
+          @if (customTemplates().length > 0) {
+            <div class="mt-4">
+              <span class="text-xs font-semibold text-purple-600 dark:text-purple-400 uppercase tracking-wider block mb-2">My Custom Templates</span>
+              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                @for (customTmpl of customTemplates(); track customTmpl.id) {
+                  <div 
+                    (click)="createFromCustomTemplate(customTmpl.id)"
+                    class="border border-purple-200 dark:border-purple-800/40 rounded-xl p-3 bg-purple-50/50 dark:bg-purple-950/20 hover:bg-purple-100/50 cursor-pointer transition-all">
+                    <div class="flex items-center gap-2 mb-1">
+                      <ng-icon name="lucideLayoutTemplate" class="w-4 h-4 text-purple-600"></ng-icon>
+                      <h4 class="text-xs font-semibold text-zinc-900 dark:text-zinc-100 truncate">{{ customTmpl.title }}</h4>
+                    </div>
+                    <p class="text-[11px] text-zinc-500 truncate">{{ customTmpl.description || 'Custom template' }}</p>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+        </div>
+
+        <!-- Filter, Sort & Search Toolbar (Image 1 Controls Bar) -->
+        <div class="flex flex-wrap items-center justify-between gap-4 mb-4 pt-2">
+          
+          <div class="flex items-center gap-2 flex-wrap">
+            
+            <!-- Filter Selector -->
+            <div class="relative">
+              <select 
+                [ngModel]="selectedTypeFilter()" 
+                (ngModelChange)="selectedTypeFilter.set($event)"
+                class="appearance-none bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-xs font-medium text-zinc-700 dark:text-zinc-300 px-3 py-1.5 pr-8 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer">
+                <option [ngValue]="null">Filters</option>
+                <option [ngValue]="1">Document</option>
+                <option [ngValue]="2">Wiki</option>
+                <option [ngValue]="3">Meeting Note</option>
+                <option [ngValue]="4">Template</option>
+              </select>
+              <ng-icon name="lucideFilter" class="w-3.5 h-3.5 absolute right-2.5 top-2.5 text-zinc-400 pointer-events-none"></ng-icon>
+            </div>
+
+            <!-- Sort Selector -->
+            <div class="relative">
+              <select 
+                [ngModel]="selectedSort()" 
+                (ngModelChange)="selectedSort.set($event)"
+                class="appearance-none bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-xs font-medium text-zinc-700 dark:text-zinc-300 px-3 py-1.5 pr-8 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer">
+                <option value="updated">Sort: Updated</option>
+                <option value="title">Sort: Name</option>
+                <option value="type">Sort: Type</option>
+              </select>
+              <ng-icon name="lucideArrowUpDown" class="w-3.5 h-3.5 absolute right-2.5 top-2.5 text-zinc-400 pointer-events-none"></ng-icon>
+            </div>
+
+            <span class="text-xs text-zinc-400 ml-1">Tags: <span class="text-zinc-300 dark:text-zinc-600">—</span></span>
+          </div>
+
+          <!-- Quick Search Box -->
+          <div class="relative w-64">
+            <ng-icon name="lucideSearch" class="w-3.5 h-3.5 absolute left-3 top-2.5 text-zinc-400"></ng-icon>
+            <input 
+              type="text" 
+              [ngModel]="searchQuery()" 
+              (ngModelChange)="searchQuery.set($event)" 
+              placeholder="Search..." 
+              class="w-full pl-8 pr-3 py-1.5 text-xs bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-1 focus:ring-blue-500">
+          </div>
+        </div>
+
+        <!-- Documents Table (Image 1 Replica) -->
+        <div class="border border-zinc-200 dark:border-zinc-800 rounded-2xl overflow-hidden bg-white dark:bg-zinc-900 shadow-sm">
+          <table class="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr class="border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50 text-zinc-400 font-medium">
+                <th class="py-3 px-4 font-normal">Name</th>
+                <th class="py-3 px-4 font-normal">Location</th>
+                <th class="py-3 px-4 font-normal">Tags</th>
+                <th class="py-3 px-4 font-normal">Date updated</th>
+                <th class="py-3 px-4 text-right font-normal"></th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-zinc-100 dark:divide-zinc-800/60">
+              @for (doc of filteredDocuments(); track doc.id) {
+                <tr 
+                  (click)="selectDocument(doc)"
+                  class="hover:bg-zinc-50/80 dark:hover:bg-zinc-800/40 cursor-pointer transition-colors group">
+                  
+                  <!-- Name column -->
+                  <td class="py-3 px-4">
+                    <div class="flex items-center gap-2.5">
+                      <button (click)="toggleStar(doc.id, $event)" class="text-zinc-300 hover:text-amber-400 transition-colors">
+                        <ng-icon name="lucideStar" [class.text-amber-400]="starredDocIds().has(doc.id)" [class.fill-amber-400]="starredDocIds().has(doc.id)" class="w-3.5 h-3.5"></ng-icon>
+                      </button>
+                      
+                      <div class="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-semibold
+                        {{ doc.type === 2 ? 'bg-pink-100 text-pink-600 dark:bg-pink-950/60 dark:text-pink-400' : 
+                           doc.type === 3 ? 'bg-amber-100 text-amber-600 dark:bg-amber-950/60 dark:text-amber-400' :
+                           doc.type === 4 ? 'bg-purple-100 text-purple-600 dark:bg-purple-950/60 dark:text-purple-400' :
+                           'bg-blue-100 text-blue-600 dark:bg-blue-950/60 dark:text-blue-400' }}">
+                        <ng-icon [name]="doc.type === 2 ? 'lucideBookOpen' : doc.type === 3 ? 'lucideCalendar' : doc.type === 4 ? 'lucideLayoutTemplate' : 'lucideFileText'" class="w-3.5 h-3.5"></ng-icon>
+                      </div>
+
+                      <div>
+                        <span class="font-semibold text-zinc-900 dark:text-zinc-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                          {{ doc.title || 'Untitled' }}
+                        </span>
+                        @if (doc.description) {
+                          <p class="text-[11px] text-zinc-400 truncate max-w-md">{{ doc.description }}</p>
+                        }
+                      </div>
+                    </div>
+                  </td>
+
+                  <!-- Location / Type column -->
+                  <td class="py-3 px-4 text-zinc-500 dark:text-zinc-400">
+                    <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium border {{ getTypeBadgeClass(doc.type) }}">
+                      {{ getTypeLabel(doc.type) }}
+                    </span>
+                  </td>
+
+                  <!-- Tags column -->
+                  <td class="py-3 px-4 text-zinc-400">
+                    —
+                  </td>
+
+                  <!-- Date updated column -->
+                  <td class="py-3 px-4 text-zinc-500 dark:text-zinc-400 whitespace-nowrap">
+                    {{ doc.updatedAtUtc || doc.createdAtUtc | date:'mediumDate' }}
+                  </td>
+
+                  <!-- Actions column -->
+                  <td class="py-3 px-4 text-right relative dropdown-container">
+                    <button 
+                      (click)="toggleRowMenu(doc.id, $event)"
+                      class="p-1 rounded text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors">
+                      <ng-icon name="lucideMoreVertical" class="w-4 h-4"></ng-icon>
+                    </button>
+
+                    @if (activeRowMenuId() === doc.id) {
+                      <div class="absolute right-4 top-8 w-44 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-xl z-40 py-1 text-left">
+                        <button (click)="selectDocument(doc)" class="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800">
+                          <ng-icon name="lucideFileText" class="w-3.5 h-3.5"></ng-icon>
+                          <span>Open</span>
+                        </button>
+                        <button (click)="openSaveAsTemplateModal(doc, $event)" class="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-purple-700 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-950/40">
+                          <ng-icon name="lucideLayoutTemplate" class="w-3.5 h-3.5"></ng-icon>
+                          <span>Save as Template</span>
+                        </button>
+                        <div class="my-1 border-t border-zinc-100 dark:border-zinc-800"></div>
+                        <button (click)="deleteDocument($event, doc.id)" class="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30">
+                          <ng-icon name="lucideTrash" class="w-3.5 h-3.5"></ng-icon>
+                          <span>Delete</span>
+                        </button>
+                      </div>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+
+          @if (filteredDocuments().length === 0 && !isLoading()) {
+            <div class="text-center py-16 px-4">
+              <ng-icon name="lucideFileText" class="w-10 h-10 text-zinc-300 dark:text-zinc-700 mx-auto mb-2"></ng-icon>
+              <h3 class="text-sm font-semibold text-zinc-900 dark:text-zinc-100 mb-1">No documents found</h3>
+              <p class="text-xs text-zinc-500 mb-4">Create a document or pick a template to start writing.</p>
+              <button (click)="createNewDoc(1)" class="inline-flex items-center gap-2 px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-medium transition-colors">
+                <ng-icon name="lucidePlus" class="w-3.5 h-3.5"></ng-icon>
+                Create Document
+              </button>
+            </div>
+          }
+        </div>
+
+      </div>
+    </div>
+  }
+</div>
+
+<!-- Save as Template Modal -->
+@if (isSaveAsTemplateModalOpen()) {
+  <div class="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-2xl max-w-md w-full p-6">
+      <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-lg bg-purple-100 dark:bg-purple-950 text-purple-600 flex items-center justify-center">
+            <ng-icon name="lucideLayoutTemplate" class="w-4 h-4"></ng-icon>
+          </div>
+          <h3 class="text-base font-bold text-zinc-900 dark:text-white">Save as Template</h3>
+        </div>
+        <button (click)="isSaveAsTemplateModalOpen.set(false)" class="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200">
+          <ng-icon name="lucideX" class="w-4 h-4"></ng-icon>
+        </button>
+      </div>
+
+      <p class="text-xs text-zinc-500 mb-4">Convert this document into a reusable template for your workspace.</p>
+
+      <div class="space-y-3">
+        <div>
+          <label class="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1">Template Title</label>
+          <input 
+            type="text" 
+            [ngModel]="saveTemplateTitle()" 
+            (ngModelChange)="saveTemplateTitle.set($event)"
+            class="w-full px-3 py-2 text-sm bg-zinc-50 dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1">Description</label>
+          <textarea 
+            rows="2" 
+            [ngModel]="saveTemplateDescription()" 
+            (ngModelChange)="saveTemplateDescription.set($event)"
+            placeholder="Briefly describe what this template is used for..."
+            class="w-full px-3 py-2 text-sm bg-zinc-50 dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"></textarea>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end gap-2 mt-6">
+        <button (click)="isSaveAsTemplateModalOpen.set(false)" class="px-4 py-2 text-xs font-medium text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg">
+          Cancel
+        </button>
+        <button (click)="submitSaveAsTemplate()" class="px-4 py-2 text-xs font-medium text-white bg-purple-600 hover:bg-purple-700 rounded-lg shadow-sm">
+          Save Template
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Import Modal -->
+@if (isImportModalOpen()) {
+  <div class="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-2xl max-w-lg w-full p-6">
+      <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-950 text-blue-600 flex items-center justify-center">
+            <ng-icon name="lucideUpload" class="w-4 h-4"></ng-icon>
+          </div>
+          <h3 class="text-base font-bold text-zinc-900 dark:text-white">Import Document</h3>
+        </div>
+        <button (click)="isImportModalOpen.set(false)" class="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200">
+          <ng-icon name="lucideX" class="w-4 h-4"></ng-icon>
+        </button>
+      </div>
+
+      <div class="space-y-4">
+        <div>
+          <label class="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1">Select File (.md, .txt, .html)</label>
+          <input 
+            type="file" 
+            accept=".md,.txt,.html"
+            (change)="onImportFileSelected($event)"
+            class="w-full text-xs text-zinc-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer">
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1">Document Title</label>
+          <input 
+            type="text" 
+            [ngModel]="importTitle()" 
+            (ngModelChange)="importTitle.set($event)"
+            placeholder="Document title..."
+            class="w-full px-3 py-2 text-sm bg-zinc-50 dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1">Content Preview / Paste Text</label>
+          <textarea 
+            rows="5" 
+            [ngModel]="importContent()" 
+            (ngModelChange)="importContent.set($event)"
+            placeholder="Paste raw Markdown, HTML, or plain text here..."
+            class="w-full px-3 py-2 text-xs font-mono bg-zinc-50 dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end gap-2 mt-6">
+        <button (click)="isImportModalOpen.set(false)" class="px-4 py-2 text-xs font-medium text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg">
+          Cancel
+        </button>
+        <button (click)="submitImport()" class="px-4 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm">
+          Import Now
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Template Picker Modal -->
+@if (isTemplatePickerOpen()) {
+  <div class="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-2xl max-w-2xl w-full p-6">
+      <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-lg bg-pink-100 dark:bg-pink-950 text-pink-600 flex items-center justify-center">
+            <ng-icon name="lucideWand2" class="w-4 h-4"></ng-icon>
+          </div>
+          <h3 class="text-base font-bold text-zinc-900 dark:text-white">Apply a Template</h3>
+        </div>
+        <button (click)="isTemplatePickerOpen.set(false)" class="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200">
+          <ng-icon name="lucideX" class="w-4 h-4"></ng-icon>
+        </button>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-96 overflow-y-auto pr-1">
+        @for (tmpl of presetTemplates; track tmpl.key) {
+          <div 
+            (click)="createFromPreset(tmpl.key); isTemplatePickerOpen.set(false)"
+            class="border border-zinc-200 dark:border-zinc-800 rounded-xl p-3.5 hover:border-pink-500 cursor-pointer transition-all bg-white dark:bg-zinc-900">
+            <div class="flex items-center gap-2.5 mb-1.5">
+              <div class="w-7 h-7 rounded-md {{ tmpl.iconBg }} flex items-center justify-center text-xs">
+                <ng-icon [name]="tmpl.icon" class="w-3.5 h-3.5"></ng-icon>
+              </div>
+              <h4 class="text-xs font-bold text-zinc-900 dark:text-zinc-100">{{ tmpl.title }}</h4>
+            </div>
+            <p class="text-[11px] text-zinc-500 dark:text-zinc-400">{{ tmpl.description }}</p>
+          </div>
+        }
+
+        @for (customTmpl of customTemplates(); track customTmpl.id) {
+          <div 
+            (click)="createFromCustomTemplate(customTmpl.id)"
+            class="border border-purple-200 dark:border-purple-800/40 rounded-xl p-3.5 hover:border-purple-500 cursor-pointer transition-all bg-purple-50/40 dark:bg-purple-950/20">
+            <div class="flex items-center gap-2.5 mb-1.5">
+              <div class="w-7 h-7 rounded-md bg-purple-600 text-white flex items-center justify-center text-xs">
+                <ng-icon name="lucideLayoutTemplate" class="w-3.5 h-3.5"></ng-icon>
+              </div>
+              <h4 class="text-xs font-bold text-zinc-900 dark:text-zinc-100">{{ customTmpl.title }}</h4>
+            </div>
+            <p class="text-[11px] text-zinc-500 dark:text-zinc-400">{{ customTmpl.description || 'Saved custom template' }}</p>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Bubble Menu Wrapper for Tiptap -->
+<div style="display: none">
+  <div #bubbleMenu class="flex items-center gap-1 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-lg rounded-md p-1">
+    <button (click)="editor.chain().focus().toggleBold().run()" [class.bg-zinc-100]="editor.isActive('bold')" [class.dark:bg-zinc-800]="editor.isActive('bold')" class="p-1.5 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 transition-colors">
+      <ng-icon name="lucideBold" class="w-4 h-4"></ng-icon>
+    </button>
+    <button (click)="editor.chain().focus().toggleItalic().run()" [class.bg-zinc-100]="editor.isActive('italic')" [class.dark:bg-zinc-800]="editor.isActive('italic')" class="p-1.5 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 transition-colors">
+      <ng-icon name="lucideItalic" class="w-4 h-4"></ng-icon>
+    </button>
+    <button (click)="editor.chain().focus().toggleStrike().run()" [class.bg-zinc-100]="editor.isActive('strike')" [class.dark:bg-zinc-800]="editor.isActive('strike')" class="p-1.5 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 transition-colors">
+      <ng-icon name="lucideStrikethrough" class="w-4 h-4"></ng-icon>
+    </button>
+    <div class="w-px h-4 bg-zinc-200 dark:bg-zinc-700 mx-1"></div>
+    <button (click)="editor.chain().focus().toggleHeading({ level: 1 }).run()" [class.bg-zinc-100]="editor.isActive('heading', { level: 1 })" [class.dark:bg-zinc-800]="editor.isActive('heading', { level: 1 })" class="px-2 py-1 text-xs font-semibold rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 transition-colors">
+      H1
+    </button>
+    <button (click)="editor.chain().focus().toggleHeading({ level: 2 }).run()" [class.bg-zinc-100]="editor.isActive('heading', { level: 2 })" [class.dark:bg-zinc-800]="editor.isActive('heading', { level: 2 })" class="px-2 py-1 text-xs font-semibold rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 transition-colors">
+      H2
+    </button>
+  </div>
+</div>

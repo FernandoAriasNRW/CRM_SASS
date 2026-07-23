@@ -21,7 +21,9 @@ export class RealtimeService {
   readonly notification$ = new Subject<RealtimeNotification>();
   readonly taskMoved$ = new Subject<{ taskId: string; status: string }>();
   readonly chatMessage$ = new Subject<any>();
+  readonly ticketMoved$ = new Subject<{ ticketId: string; status: number }>();
   private chatHub: signalR.HubConnection | null = null;
+  private ticketsHub: signalR.HubConnection | null = null;
 
   connect(): void {
     if (this.hub?.state === signalR.HubConnectionState.Connected) return;
@@ -52,6 +54,22 @@ export class RealtimeService {
       .catch(err => console.warn('Board hub failed:', err));
   }
 
+  connectTickets(tenantId: string): void {
+    if (this.ticketsHub?.state === signalR.HubConnectionState.Connected) return;
+
+    this.ticketsHub = new signalR.HubConnectionBuilder()
+      .withUrl('http://localhost:8080/hubs/tickets', {
+        accessTokenFactory: () => this.authStore.getAccessToken() ?? '',
+      })
+      .withAutomaticReconnect()
+      .build();
+
+    this.ticketsHub.on('ticket_moved', (ticket: any) => this.ticketMoved$.next(ticket));
+    this.ticketsHub.start()
+      .then(() => this.ticketsHub?.invoke('JoinTickets', tenantId))
+      .catch(err => console.warn('Tickets hub failed:', err));
+  }
+
   connectChat(): void {
     if (this.chatHub?.state === signalR.HubConnectionState.Connected) return;
     this.chatHub = new signalR.HubConnectionBuilder()
@@ -71,5 +89,6 @@ export class RealtimeService {
   disconnect(): void {
     this.hub?.stop();
     this.chatHub?.stop();
+    this.ticketsHub?.stop();
   }
 }

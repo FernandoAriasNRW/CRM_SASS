@@ -16,7 +16,7 @@ export interface FilterField {
 @Component({
   selector: 'ui-advanced-filters',
   standalone: true,
-  imports: [CommonModule, FormsModule, ButtonComponent, InputComponent, NgIconComponent],
+  imports: [CommonModule, FormsModule, ButtonComponent, NgIconComponent],
   providers: [provideIcons({ lucideX, lucideFilter })],
   template: `
     <div class="relative w-full">

@@ -1,8 +1,35 @@
 <div class="space-y-6">
-  <div>
-    <h2 class="text-2xl font-semibold tracking-tight">Dashboard</h2>
-    <p class="text-sm text-muted-foreground">Resumen general del workspace</p>
+  <div class="flex items-center justify-between">
+    <div>
+      <h2 class="text-2xl font-semibold tracking-tight">
+        @if (viewType() === 'default') {
+          Dashboard General
+        } @else if (viewType() === 'public') {
+          Dashboards Públicos
+        } @else if (viewType() === 'all') {
+          Todos los Dashboards
+        } @else if (viewType() === 'private') {
+          Mis Dashboards Privados
+        } @else {
+          Dashboards Públicos
+        }
+      </h2>
+      <p class="text-sm text-muted-foreground">
+        @if (viewType() === 'default') {
+          Resumen de métricas y estadísticas del workspace
+        } @else {
+          Gestiona tus dashboards personalizados
+        }
+      </p>
+    </div>
+    
+    <button uiButton (click)="openCreateModal()" variant="default" class="flex items-center gap-2">
+      <ng-icon name="lucidePlus" size="16"></ng-icon>
+      Nuevo Dashboard
+    </button>
   </div>
+
+  @if (viewType() === 'default') {
 
   <!-- KPI Cards Grid -->
   <div class="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
@@ -71,7 +98,7 @@
               [totalCount]="project.totalTasks" />
           }
           @if (projectProgress().length === 0) {
-            <p class="text-center text-muted-foreground py-8">No hay proyectos</p>
+            <p class="text-center text-muted-foreground py-8">No hay proyectos activos</p>
           }
         </div>
       </ui-card-content>
@@ -110,4 +137,67 @@
       }
     </ui-card-content>
   </ui-card>
+  } @else {
+    <!-- Custom Dashboards List -->
+    <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      @for (dashboard of customDashboards(); track dashboard.id) {
+        <ui-card class="hover:border-primary/50 transition-colors cursor-pointer" (click)="selectDashboard(dashboard)">
+          <ui-card-content class="p-6">
+            <div class="flex items-center justify-between mb-4">
+              <div class="flex items-center gap-2">
+                <ng-icon [name]="dashboard.isPublic ? 'lucideGlobe' : 'lucideLock'" size="18" class="text-muted-foreground"></ng-icon>
+                <h3 class="font-semibold text-lg">{{ dashboard.title }}</h3>
+              </div>
+            </div>
+            <p class="text-sm text-muted-foreground mb-4">
+              Creado el {{ dashboard.createdById === authStore.userInfo()?.id ? 'Por ti' : 'Por otro usuario' }}
+            </p>
+            <div class="flex items-center justify-between mt-4">
+              <button uiButton variant="outline" size="sm" class="w-full">
+                <ng-icon name="lucideLayout" size="14" class="mr-2"></ng-icon>
+                Ver
+              </button>
+              @if (dashboard.createdById === authStore.userInfo()?.id || authStore.isAdmin()) {
+                <button uiButton variant="ghost" size="sm" class="text-destructive ml-2" (click)="$event.stopPropagation(); deleteDashboard(dashboard.id)">
+                  Eliminar
+                </button>
+              }
+            </div>
+          </ui-card-content>
+        </ui-card>
+      }
+      @if (customDashboards().length === 0) {
+        <div class="col-span-full py-12 text-center text-muted-foreground bg-muted/20 rounded-lg border border-dashed border-border">
+          <ng-icon name="lucideLayout" size="48" class="mx-auto mb-4 opacity-20"></ng-icon>
+          <p class="text-lg font-medium">No hay dashboards para mostrar</p>
+          <p class="text-sm mt-1">Crea uno nuevo para empezar a personalizar tus métricas.</p>
+        </div>
+      }
+    </div>
+  }
 </div>
+
+<!-- Modal para Crear Dashboard -->
+@if (showCreateModal) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+    <div class="bg-card text-foreground rounded-lg shadow-lg w-full max-w-md mx-4 overflow-hidden border border-border">
+      <div class="px-6 py-4 border-b border-border flex justify-between items-center">
+        <h3 class="font-semibold text-lg">Nuevo Dashboard</h3>
+      </div>
+      <div class="p-6 space-y-4">
+        <div>
+          <label class="block text-sm font-medium mb-1">Título</label>
+          <input type="text" [(ngModel)]="newDashboardTitle" placeholder="Ej. Ventas Q3" class="w-full px-3 py-2 border border-input rounded-md bg-background text-sm" />
+        </div>
+        <div class="flex items-center gap-2 mt-4">
+          <input type="checkbox" id="isPublic" [(ngModel)]="newDashboardIsPublic" class="rounded border-input text-primary focus:ring-primary" />
+          <label for="isPublic" class="text-sm">Hacer público (visible para todo el equipo)</label>
+        </div>
+      </div>
+      <div class="px-6 py-4 border-t border-border bg-muted/30 flex justify-end gap-2">
+        <button uiButton variant="outline" (click)="showCreateModal = false">Cancelar</button>
+        <button uiButton variant="default" (click)="createDashboard()" [disabled]="!newDashboardTitle">Crear</button>
+      </div>
+    </div>
+  </div>
+}

@@ -4,6 +4,7 @@ import { ApiService } from '../../core/api.service';
 import { ButtonComponent } from '../../shared/ui/button.component';
 import { InputComponent } from '../../shared/ui/input.component';
 import { LabelComponent } from '../../shared/ui/label.component';
+import { DrawerComponent } from '../../shared/ui/drawer.component';
 
 export interface Ticket {
   id: string;
@@ -21,7 +22,7 @@ const PRIORITIES = ['Low', 'Medium', 'High', 'Urgent'];
 @Component({
   selector: 'app-ticket-create-modal',
   standalone: true,
-  imports: [FormsModule, ButtonComponent, InputComponent, LabelComponent],
+  imports: [FormsModule, ButtonComponent, InputComponent, LabelComponent, DrawerComponent],
   templateUrl: './ticket-create-modal.component.html',
 })
 export class TicketCreateModalComponent {

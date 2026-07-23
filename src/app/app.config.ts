@@ -1,4 +1,5 @@
 import { ApplicationConfig, isDevMode, APP_INITIALIZER } from '@angular/core';
+import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { provideRouter, withComponentInputBinding } from '@angular/router';
 import { provideStore } from '@ngrx/store';
@@ -31,6 +32,7 @@ export function initializeApp(api: ApiService, auth: AuthSignalStore) {
 
 export const appConfig: ApplicationConfig = {
   providers: [
+    provideAnimationsAsync(),
     provideRouter(routes, withComponentInputBinding()),
     provideHttpClient(
       withInterceptors([authInterceptor, errorInterceptor])

@@ -43,6 +43,7 @@
       [loading]="isLoading()"
       [initialState]="tableState()"
       (stateChange)="onTableStateChange($event)"
+      (rowClick)="openDetailModal($event)"
       (onSaveView)="saveCurrentView('Custom View ' + (savedViews().length + 1))">
     </ui-data-table>
   </div>
@@ -55,7 +56,7 @@
 </ng-template>
 
 <ng-template #actionsTemplate let-item>
-  <button (click)="openDetailModal(item)" class="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-colors" title="Ver detalle">
+  <button (click)="$event.stopPropagation(); openDetailModal(item)" class="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-colors" title="Ver detalle">
     <ng-icon name="lucideEye" size="16" />
   </button>
 </ng-template>

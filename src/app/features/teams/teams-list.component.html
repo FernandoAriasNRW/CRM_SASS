@@ -1,0 +1,62 @@
+<div class="h-full flex flex-col p-6 space-y-6">
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-2xl font-bold tracking-tight">Equipos</h1>
+      <p class="text-sm text-muted-foreground mt-1">
+        {{ isAllTeamsView() ? 'Todos los equipos de la organización.' : 'Equipos a los que perteneces.' }}
+      </p>
+    </div>
+    
+    <div class="flex gap-2">
+      <!-- Admin only action, checking through authService -->
+        <button uiButton variant="default" size="sm" (click)="openTeamForm()">
+          <ng-icon name="lucidePlus" class="w-4 h-4 mr-2"></ng-icon>
+          Nuevo Team
+        </button>
+    </div>
+  </div>
+
+  @if (isLoading()) {
+    <div class="flex-1 flex items-center justify-center">
+      <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+    </div>
+  } @else {
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      @for (team of teams(); track team.id) {
+        <div class="bg-card text-card-foreground border rounded-lg shadow-sm hover:border-primary/50 transition-colors p-5">
+          <div class="flex items-start justify-between mb-2">
+            <div class="flex items-center gap-3">
+              <div class="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold">
+                {{ team.name.substring(0,2).toUpperCase() }}
+              </div>
+              <div>
+                <h3 class="font-semibold">{{ team.name }}</h3>
+                <p class="text-xs text-muted-foreground">{{ team.memberCount }} miembros</p>
+              </div>
+            </div>
+          </div>
+          <p class="text-sm text-muted-foreground mt-3 line-clamp-2">{{ team.description || 'Sin descripción' }}</p>
+          <div class="mt-4 flex justify-end">
+            <a [routerLink]="['/teams', team.id]" class="text-sm text-primary hover:underline font-medium inline-flex items-center gap-1">
+              Ver Detalles
+              <ng-icon name="lucideEye" size="14"></ng-icon>
+            </a>
+          </div>
+        </div>
+      }
+      
+      @if (teams().length === 0) {
+        <div class="col-span-full py-12 text-center text-muted-foreground bg-muted/30 rounded-lg border border-dashed">
+          No se encontraron equipos.
+        </div>
+      }
+    </div>
+  }
+
+  @if (showTeamForm()) {
+    <app-team-form 
+      (close)="closeTeamForm()" 
+      (saved)="onTeamSaved()">
+    </app-team-form>
+  }
+</div>

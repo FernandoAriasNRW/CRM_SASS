@@ -1,33 +1,44 @@
-<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
-  <div class="w-full max-w-md rounded-lg border border-border bg-card shadow-xl">
-    <div class="flex items-center justify-between px-6 py-4 border-b border-border">
-      <h3 class="text-base font-semibold">Nuevo proyecto</h3>
-      <button (click)="close()" class="text-muted-foreground hover:text-foreground transition-colors text-lg leading-none">&times;</button>
+<app-drawer [isOpen]="true" (isOpenChange)="!$event ? close() : null" title="Nuevo proyecto" [showFooter]="true">
+  <div class="space-y-4 py-2">
+    <div class="space-y-1.5">
+      <label uiLabel for="proj-name">Nombre *</label>
+      <input uiInput id="proj-name" [(ngModel)]="name" placeholder="Nombre del proyecto" />
     </div>
-
-    <div class="px-6 py-4 space-y-4">
-      <div class="space-y-1.5">
-        <label uiLabel for="proj-name">Nombre *</label>
-        <input uiInput id="proj-name" [(ngModel)]="name" placeholder="Nombre del proyecto" />
-      </div>
-      <div class="space-y-1.5">
-        <label uiLabel for="proj-desc">Descripción</label>
-        <input uiInput id="proj-desc" [(ngModel)]="description" placeholder="Descripción opcional" />
-      </div>
-      <div class="space-y-1.5">
-        <label uiLabel for="proj-date">Fecha estimada de fin *</label>
-        <input uiInput id="proj-date" type="date" [(ngModel)]="estimatedEndDate" />
-      </div>
-      @if (error()) {
-        <p class="text-sm text-destructive">{{ error() }}</p>
-      }
+    <div class="space-y-1.5">
+      <label uiLabel for="proj-desc">Descripción</label>
+      <input uiInput id="proj-desc" [(ngModel)]="description" placeholder="Descripción opcional" />
     </div>
-
-    <div class="flex justify-end gap-2 px-6 py-4 border-t border-border">
-      <button uiButton variant="outline" (click)="close()">Cancelar</button>
-      <button uiButton (click)="submit()" [disabled]="loading()">
-        {{ loading() ? 'Creando...' : 'Crear proyecto' }}
-      </button>
+    <div class="space-y-1.5">
+      <label uiLabel for="proj-date">Fecha estimada de fin *</label>
+      <input uiInput id="proj-date" type="date" [(ngModel)]="estimatedEndDate" />
     </div>
+    <div class="space-y-1.5">
+      <label uiLabel for="proj-space">Space *</label>
+      <select uiInput id="proj-space" [(ngModel)]="spaceId" (change)="onSpaceChange()">
+        <option value="" disabled>Seleccionar Space</option>
+        @for (space of spaces(); track space.id) {
+          <option [value]="space.id">{{ space.name }}</option>
+        }
+      </select>
+    </div>
+    <div class="space-y-1.5">
+      <label uiLabel for="proj-folder">Folder (Opcional)</label>
+      <select uiInput id="proj-folder" [(ngModel)]="folderId" [disabled]="!spaceId">
+        <option value="">Sin Folder</option>
+        @for (folder of folders(); track folder.id) {
+          <option [value]="folder.id">{{ folder.name }}</option>
+        }
+      </select>
+    </div>
+    @if (error()) {
+      <p class="text-sm text-destructive">{{ error() }}</p>
+    }
   </div>
-</div>
+
+  <div drawer-footer class="flex justify-end gap-2 w-full">
+    <button uiButton variant="outline" (click)="close()">Cancelar</button>
+    <button uiButton (click)="submit()" [disabled]="loading()">
+      {{ loading() ? 'Creando...' : 'Crear proyecto' }}
+    </button>
+  </div>
+</app-drawer>

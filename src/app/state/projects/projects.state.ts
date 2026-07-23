@@ -8,6 +8,8 @@ export interface Project {
   startDate: string;
   estimatedEndDate: string;
   ownerId: string;
+  spaceId: string;
+  folderId?: string;
 }
 
 export interface ProjectsState {
