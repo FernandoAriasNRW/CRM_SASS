@@ -13,6 +13,7 @@ import {
   lucideSmile, lucideSend, lucideChevronDown, lucideAlertCircle,
   lucideArrowUp, lucideMinus, lucideArrowDown, lucideLoader2
 } from '@ng-icons/lucide';
+import { DrawerComponent } from '../../shared/ui/drawer.component';
 import type { TaskItem } from './task-create-modal.component';
 import { TASK_TAGS, type Tag } from '../../shared/utils/tags';
 
@@ -40,7 +41,7 @@ const STATUS_BADGE: Record<string, BadgeVariant> = {
 @Component({
   selector: 'app-task-detail-panel',
   standalone: true,
-  imports: [FormsModule, DatePipe, BadgeComponent, AvatarComponent, NgIconComponent, SkeletonComponent],
+  imports: [FormsModule, DatePipe, BadgeComponent, AvatarComponent, NgIconComponent, SkeletonComponent, DrawerComponent],
   viewProviders: [provideIcons({
     lucideX, lucideCheck, lucideCalendar, lucideClock, lucideUser,
     lucideTag, lucideFlag, lucideMessageSquare, lucidePaperclip,

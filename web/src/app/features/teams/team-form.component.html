@@ -1,0 +1,22 @@
+<app-drawer [isOpen]="true" (isOpenChange)="!$event ? close.emit() : null" [title]="team ? 'Editar Equipo' : 'Nuevo Equipo'" [showFooter]="true">
+  <div class="py-2 space-y-4">
+    <div class="space-y-1.5">
+      <label class="text-sm font-medium">Nombre</label>
+      <input type="text" [(ngModel)]="formData.name" placeholder="Ej. Ventas" 
+             class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" />
+    </div>
+
+    <div class="space-y-1.5">
+      <label class="text-sm font-medium">Descripción</label>
+      <textarea [(ngModel)]="formData.description" placeholder="Equipo encargado de..." rows="3"
+                class="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"></textarea>
+    </div>
+  </div>
+
+  <div drawer-footer class="flex justify-end gap-2 w-full">
+    <button class="px-4 py-2 border rounded hover:bg-muted" (click)="close.emit()" [disabled]="isSaving">Cancelar</button>
+    <button class="px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90" (click)="save()" [disabled]="isSaving || !formData.name">
+      {{ isSaving ? 'Guardando...' : 'Guardar' }}
+    </button>
+  </div>
+</app-drawer>

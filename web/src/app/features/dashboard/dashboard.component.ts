@@ -6,11 +6,14 @@ import {
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import {
   lucideFolderKanban, lucideCheckSquare, lucideTicket, lucideTrendingUp,
-  lucideClock, lucideActivity, lucidePieChart, lucideBarChart3
+  lucideClock, lucideActivity, lucidePieChart, lucideBarChart3,
+  lucidePlus, lucideSettings, lucideLayout, lucideGlobe, lucideLock
 } from '@ng-icons/lucide';
 import { DoughnutChartComponent } from '../../shared/ui/charts/doughnut-chart.component';
 import { LineChartComponent, type BurndownDataPoint } from '../../shared/ui/charts/line-chart.component';
 import { ProgressBarComponent } from '../../shared/ui/progress-bar.component';
+import { DashboardsService, Dashboard } from '../../shared/services/dashboards.service';
+import { ActivatedRoute } from '@angular/router';
 
 interface KpiData {
   totalProjects: number;
@@ -44,21 +47,34 @@ interface ProjectBurndown {
   data: Array<{ date: string; remainingTasks: number; idealTasks: number }>;
 }
 
+import { AuthSignalStore } from '../../core/auth-signal.store';
+import { HierarchySignalStore } from '../../core/hierarchy-signal.store';
+
+import { SlicePipe, UpperCasePipe, CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { ButtonComponent } from '../../shared/ui/button.component';
+
 @Component({
   selector: 'app-dashboard',
   standalone: true,
   imports: [
+    CommonModule, FormsModule, ButtonComponent,
     CardComponent, CardHeaderComponent, CardTitleComponent, CardContentComponent,
     NgIconComponent, DoughnutChartComponent, LineChartComponent, ProgressBarComponent
   ],
   viewProviders: [provideIcons({
     lucideFolderKanban, lucideCheckSquare, lucideTicket, lucideTrendingUp,
-    lucideClock, lucideActivity, lucidePieChart, lucideBarChart3
+    lucideClock, lucideActivity, lucidePieChart, lucideBarChart3,
+    lucidePlus, lucideSettings, lucideLayout, lucideGlobe, lucideLock
   })],
   templateUrl: './dashboard.component.html',
 })
 export class DashboardComponent implements OnInit {
   private readonly api = inject(ApiService);
+  private readonly dashboardsService = inject(DashboardsService);
+  private readonly route = inject(ActivatedRoute);
+  readonly authStore = inject(AuthSignalStore);
+  readonly hierarchyStore = inject(HierarchySignalStore);
 
   readonly kpi = signal<KpiData | null>(null);
   readonly taskBreakdown = signal<TaskStatusBreakdown[]>([]);
@@ -66,6 +82,16 @@ export class DashboardComponent implements OnInit {
   readonly selectedProjectBurndown = signal<ProjectBurndown | null>(null);
   readonly selectedProjectId = signal<string | null>(null);
   readonly isLoading = signal(true);
+
+  // Dashboards feature
+  readonly customDashboards = signal<Dashboard[]>([]);
+  readonly selectedDashboard = signal<Dashboard | null>(null);
+  readonly viewType = signal<'default' | 'private' | 'public' | 'all'>('default');
+  
+  // Create Modal
+  showCreateModal = false;
+  newDashboardTitle = '';
+  newDashboardIsPublic = false;
 
   readonly doughnutData = computed(() => {
     const breakdown = this.taskBreakdown();
@@ -100,7 +126,66 @@ export class DashboardComponent implements OnInit {
   };
 
   ngOnInit(): void {
+    this.route.queryParams.subscribe(params => {
+      const type = params['type'];
+      if (type === 'private' || type === 'public' || type === 'all') {
+        this.viewType.set(type);
+      } else {
+        this.viewType.set('default');
+      }
+      this.selectedDashboard.set(null); // Reset selection
+      this.loadDashboards();
+    });
     this.loadAllData();
+  }
+
+  loadDashboards(): void {
+    this.dashboardsService.getAllDashboards().subscribe({
+      next: (dashboards) => {
+        let filtered = dashboards;
+        if (this.viewType() === 'private') {
+          filtered = dashboards.filter(d => !d.isPublic && d.createdById === this.authStore.userInfo()?.id);
+        } else if (this.viewType() === 'public') {
+          filtered = dashboards.filter(d => d.isPublic);
+        } else if (this.viewType() === 'all') {
+          filtered = dashboards;
+        } else {
+          filtered = []; // For default, we don't show custom list
+        }
+        this.customDashboards.set(filtered);
+      },
+      error: () => {}
+    });
+  }
+
+  openCreateModal(): void {
+    this.newDashboardTitle = '';
+    this.newDashboardIsPublic = false;
+    this.showCreateModal = true;
+  }
+
+  createDashboard(): void {
+    if (!this.newDashboardTitle) return;
+    this.dashboardsService.createDashboard({
+      title: this.newDashboardTitle,
+      isPublic: this.newDashboardIsPublic
+    }).subscribe({
+      next: () => {
+        this.showCreateModal = false;
+        this.loadDashboards();
+      }
+    });
+  }
+
+  deleteDashboard(id: string): void {
+    if (!confirm('¿Seguro que deseas eliminar este dashboard?')) return;
+    this.dashboardsService.deleteDashboard(id).subscribe({
+      next: () => this.loadDashboards()
+    });
+  }
+
+  selectDashboard(dashboard: Dashboard): void {
+    this.selectedDashboard.set(dashboard);
   }
 
   loadAllData(): void {

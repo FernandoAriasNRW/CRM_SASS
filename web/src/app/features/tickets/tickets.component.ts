@@ -2,7 +2,10 @@ import { Component, inject, OnInit, signal, computed, ViewChild, TemplateRef } f
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CdkDragDrop, DragDropModule, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
+import { ActivatedRoute } from '@angular/router';
 import { ApiService } from '../../core/api.service';
+import { RealtimeService } from '../../core/realtime.service';
+import { AuthSignalStore } from '../../core/auth-signal.store';
 import { BadgeComponent, type BadgeVariant } from '../../shared/ui/badge.component';
 import { ButtonComponent } from '../../shared/ui/button.component';
 import { TicketCreateModalComponent, type Ticket } from './ticket-create-modal.component';
@@ -14,6 +17,7 @@ import {
 } from '@ng-icons/lucide';
 import { DataTableComponent, ColumnDef, TableState } from '../../shared/ui/data-table/data-table.component';
 import { AdvancedFiltersComponent, FilterField } from '../../shared/ui/data-table/advanced-filters.component';
+import { HasPermissionDirective } from '../../shared/directives/has-permission.directive';
 import { ViewsService, SavedView } from '../../shared/services/views.service';
 import { TableColumnService } from '../../shared/services/table-column.service';
 
@@ -36,7 +40,7 @@ const STATUS_BADGE: Record<string, BadgeVariant> = {
   imports: [
     CommonModule, FormsModule, BadgeComponent, ButtonComponent,
     NgIconComponent, DragDropModule, TicketCreateModalComponent, TicketDetailPanelComponent,
-    DataTableComponent, AdvancedFiltersComponent
+    DataTableComponent, HasPermissionDirective
   ],
   viewProviders: [provideIcons({
     lucideRefreshCw, lucidePlus, lucideList,
@@ -46,8 +50,11 @@ const STATUS_BADGE: Record<string, BadgeVariant> = {
 })
 export class TicketsComponent implements OnInit {
   private readonly api = inject(ApiService);
+  private readonly realtime = inject(RealtimeService);
+  private readonly authStore = inject(AuthSignalStore);
   private readonly viewsService = inject(ViewsService);
   private readonly columnService = inject(TableColumnService);
+  private readonly route = inject(ActivatedRoute);
 
   readonly showModal = signal(false);
   readonly selectedTicket = signal<Ticket | null>(null);
@@ -105,7 +112,33 @@ export class TicketsComponent implements OnInit {
     this.tableColumns.find(c => c.key === 'status')!.template = this.statusTemplate;
     this.tableColumns.find(c => c.key === 'priority')!.template = this.priorityTemplate;
     this.loadViews();
-    this.loadTickets();
+
+    this.route.queryParams.subscribe(params => {
+      if (params['filter']) {
+        this.tableState.update(s => ({ ...s, filters: { ...s.filters, filter: params['filter'] } }));
+      } else {
+        this.tableState.update(s => {
+          const f = { ...s.filters };
+          delete f['filter'];
+          return { ...s, filters: f };
+        });
+      }
+      this.loadTickets();
+    });
+
+    const userInfo = this.authStore.userInfo();
+    if (userInfo?.tenantId) {
+      this.realtime.connectTickets(userInfo.tenantId);
+    }
+
+    this.realtime.ticketMoved$.subscribe(({ ticketId, status }) => {
+      // Map status number to string if necessary, assuming status string comes through.
+      // If it comes as a number (0=Open, 1=InProgress, 2=Resolved, 3=Closed)
+      const statusMap = ['Open', 'InProgress', 'Resolved', 'Closed'];
+      const statusStr = typeof status === 'number' ? statusMap[status] : status;
+      this.allTickets.update(tickets => tickets.map(t => t.id === ticketId ? { ...t, status: statusStr as string } : t));
+      this.distributeTicketsToColumns();
+    });
   }
 
   loadViews(): void {
@@ -121,10 +154,11 @@ export class TicketsComponent implements OnInit {
   }
 
   saveCurrentView(name: string, isDefault: boolean = false): void {
+    const currentState = { ...this.tableState(), viewType: this.viewMode() };
     const payload = {
       moduleName: 'Tickets',
       viewName: name,
-      stateJson: JSON.stringify(this.tableState()),
+      stateJson: JSON.stringify(currentState),
       isDefault
     };
     this.viewsService.saveView(payload).subscribe({
@@ -135,11 +169,50 @@ export class TicketsComponent implements OnInit {
     });
   }
 
+  getIconForView(view: SavedView): string {
+    try {
+      const state = JSON.parse(view.stateJson);
+      return state.viewType === 'board' ? 'lucideLayoutDashboard' : 'lucideList';
+    } catch {
+      return 'lucideList';
+    }
+  }
+
+  createNewView(type: 'list' | 'board'): void {
+    const name = prompt('Nombre de la nueva vista:');
+    if (!name) return;
+    
+    this.viewMode.set(type);
+    
+    const newState = {
+      ...this.tableState(),
+      viewType: type
+    };
+    
+    const payload = {
+      moduleName: 'Tickets',
+      viewName: name,
+      stateJson: JSON.stringify(newState),
+      isDefault: false
+    };
+    
+    this.viewsService.saveView(payload).subscribe({
+      next: (view) => {
+        this.savedViews.update(views => [...views, view]);
+        this.activeViewId.set(view.id);
+        this.tableState.set(newState);
+      }
+    });
+  }
+
   applySavedView(view: SavedView): void {
     this.activeViewId.set(view.id);
     try {
       const state = JSON.parse(view.stateJson) as TableState;
       this.tableState.set(state);
+      if (state.viewType === 'board' || state.viewType === 'list') {
+        this.viewMode.set(state.viewType);
+      }
       this.loadTickets();
     } catch (e) {
       console.error('Failed to parse saved view state', e);
@@ -173,11 +246,27 @@ export class TicketsComponent implements OnInit {
       if (state.filters['endDate']) params.endDate = state.filters['endDate'];
       if (state.filters['priority']) params.priority = state.filters['priority'];
       if (state.filters['status']) params.status = state.filters['status'];
+      if (state.filters['filter']) params.filter = state.filters['filter'];
     }
 
     this.api.get<{items: Ticket[], totalCount: number}>('/tickets', params).subscribe({
       next: res => {
-        const tickets = res.items || [];
+        let tickets = res.items || [];
+        
+        // Filter out "Resolved" or "Closed" tickets older than 3 months for Board view (or always)
+        const threeMonthsAgo = new Date();
+        threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+        
+        tickets = tickets.filter(t => {
+          if (t.status === 'Resolved' || t.status === 'Closed') {
+            const dateStr = t.createdAt; // Usando createdAt porque los tickets no tienen dueDate
+            if (dateStr && new Date(dateStr) < threeMonthsAgo) {
+              return false;
+            }
+          }
+          return true;
+        });
+
         this.totalItems.set(res.totalCount || 0);
         this.allTickets.set(tickets);
         this.distributeTicketsToColumns();

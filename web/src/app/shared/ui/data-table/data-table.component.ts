@@ -27,6 +27,7 @@ export interface TableState {
   filters?: Record<string, any>;
   columns?: string[]; // keys of visible columns in order
   customColumns?: { key: string; label: string; type?: 'text' | 'date' | 'number' | 'custom' | 'badge' | 'user' }[];
+  viewType?: string;
 }
 
 @Component({
@@ -132,7 +133,7 @@ export interface TableState {
           </thead>
           <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
             <ng-container *ngIf="!loading && data.length > 0">
-              <tr *ngFor="let item of data" class="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors group">
+              <tr *ngFor="let item of data" (click)="rowClick.emit(item)" class="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors group cursor-pointer">
                 <td *ngFor="let col of visibleColumns()" class="px-4 py-2 whitespace-nowrap border-b border-slate-100 dark:border-slate-800/50">
                   <ng-container *ngIf="col.template; else defaultCell">
                     <ng-container *ngTemplateOutlet="col.template; context: { $implicit: item, column: col }"></ng-container>
@@ -200,6 +201,7 @@ export class DataTableComponent implements OnInit {
 
   @Output() stateChange = new EventEmitter<TableState>();
   @Output() onSaveView = new EventEmitter<TableState>();
+  @Output() rowClick = new EventEmitter<any>();
 
   state = signal<TableState>({
     page: 1,

@@ -1,0 +1,56 @@
+<div class="bg-card border border-border rounded-xl shadow-sm overflow-hidden">
+  <div class="flex items-center justify-between px-4 py-3 border-b border-border bg-muted/30">
+    <h3 class="font-semibold capitalize text-foreground/90">{{ monthName }} {{ year }}</h3>
+    <div class="flex items-center gap-1">
+      <button (click)="prevMonth()" class="p-1 hover:bg-accent rounded text-muted-foreground transition-colors">
+        <ng-icon name="lucideChevronLeft" size="18"></ng-icon>
+      </button>
+      <button (click)="nextMonth()" class="p-1 hover:bg-accent rounded text-muted-foreground transition-colors">
+        <ng-icon name="lucideChevronRight" size="18"></ng-icon>
+      </button>
+    </div>
+  </div>
+  
+  <div class="p-3">
+    <!-- Week headers -->
+    <div class="grid grid-cols-7 mb-2">
+      @for (day of weekDays; track day) {
+        <div class="text-center text-[10px] font-semibold text-muted-foreground uppercase">{{ day }}</div>
+      }
+    </div>
+    
+    <!-- Days grid -->
+    <div class="grid grid-cols-7 gap-1">
+      @for (week of weeks; track $index) {
+        @for (day of week; track $index) {
+          <div 
+            class="aspect-square relative p-1 flex flex-col items-center justify-start rounded-md border border-transparent transition-colors hover:border-border cursor-pointer group"
+            [class.bg-accent]="isToday(day)"
+            [class.text-accent-foreground]="isToday(day)"
+            [class.opacity-40]="!day"
+          >
+            <!-- Date Number -->
+            @if (isToday(day)) {
+              <span class="text-xs font-medium w-6 h-6 rounded-full flex items-center justify-center bg-primary text-primary-foreground">
+                {{ day ? day.getDate() : '' }}
+              </span>
+            } @else {
+              <span class="text-xs font-medium text-foreground">
+                {{ day ? day.getDate() : '' }}
+              </span>
+            }
+            
+            <!-- Events indicators -->
+            @if (day && getEventsForDate(day).length > 0) {
+              <div class="flex flex-wrap justify-center gap-0.5 mt-1 px-1 w-full">
+                @for (evt of getEventsForDate(day).slice(0,3); track evt.title) {
+                  <div class="w-1.5 h-1.5 rounded-full" [style.backgroundColor]="evt.color || 'var(--primary)'" [title]="evt.title"></div>
+                }
+              </div>
+            }
+          </div>
+        }
+      }
+    </div>
+  </div>
+</div>

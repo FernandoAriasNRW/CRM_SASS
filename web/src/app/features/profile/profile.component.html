@@ -1,108 +1,175 @@
-<div class="max-w-2xl mx-auto p-6 space-y-6">
-  <h1 class="text-2xl font-bold text-gray-900">Mi Perfil</h1>
+<app-drawer [isOpen]="isOpen()" (isOpenChange)="!$event ? closeDrawer() : null" title="Mi Perfil">
+  <div class="p-6 space-y-6 bg-slate-50 dark:bg-zinc-950/50 min-h-full">
+    @if (user()) {
+      <!-- User Info Card -->
+      <div class="bg-white dark:bg-zinc-900 rounded-lg shadow-sm border border-zinc-200 dark:border-zinc-800 overflow-hidden">
+        <div class="p-6">
+          <h2 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-4">Información Personal</h2>
+          
+          @if (profileError()) {
+            <div class="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md text-sm text-red-700 dark:text-red-400">
+              {{ profileError() }}
+            </div>
+          }
+          @if (profileSuccess()) {
+            <div class="mb-4 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-md text-sm text-green-700 dark:text-green-400">
+              {{ profileSuccess() }}
+            </div>
+          }
 
-  @if (user()) {
-    <!-- User Info Card -->
-    <div class="bg-white rounded-lg shadow border border-gray-200 overflow-hidden">
-      <div class="p-6">
-        <h2 class="text-lg font-semibold text-gray-900 mb-4">Información del Usuario</h2>
-        <div class="flex items-center gap-4 mb-6">
-          <div class="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center">
-            <ng-icon name="lucideUser" class="w-8 h-8 text-blue-600" />
+          <div class="flex flex-col sm:flex-row gap-6 mb-6">
+            <div class="flex-shrink-0 flex flex-col items-center gap-2">
+              <div class="w-24 h-24 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center overflow-hidden border-2 border-blue-200 dark:border-blue-800 relative group cursor-pointer">
+                <ng-icon name="lucideUser" class="w-12 h-12 text-blue-600 dark:text-blue-400 group-hover:opacity-20 transition-opacity" />
+                <div class="absolute inset-0 bg-black/50 hidden group-hover:flex items-center justify-center text-white text-xs font-medium">Cambiar</div>
+              </div>
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                [class.bg-purple-100]="user()!.role === 'Admin'"
+                [class.text-purple-800]="user()!.role === 'Admin'"
+                [class.dark:bg-purple-900/30]="user()!.role === 'Admin'"
+                [class.dark:text-purple-300]="user()!.role === 'Admin'"
+                [class.bg-zinc-100]="user()!.role !== 'Admin'"
+                [class.text-zinc-800]="user()!.role !== 'Admin'"
+                [class.dark:bg-zinc-800]="user()!.role !== 'Admin'"
+                [class.dark:text-zinc-300]="user()!.role !== 'Admin'">
+                {{ user()!.role }}
+              </span>
+            </div>
+            
+            <div class="flex-1 space-y-4">
+              <div>
+                <label for="profileName" class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Nombre Completo</label>
+                <input
+                  id="profileName"
+                  type="text"
+                  [(ngModel)]="profileName"
+                  class="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-zinc-900 dark:text-zinc-100" />
+              </div>
+              <div>
+                <label for="profileEmail" class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Correo Electrónico (No editable)</label>
+                <input
+                  id="profileEmail"
+                  type="email"
+                  [value]="user()!.email"
+                  disabled
+                  class="w-full px-3 py-2 border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 text-zinc-500 dark:text-zinc-400 rounded-md cursor-not-allowed" />
+              </div>
+              <div>
+                <label for="profilePhone" class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Teléfono</label>
+                <input
+                  id="profilePhone"
+                  type="text"
+                  [(ngModel)]="profilePhone"
+                  placeholder="+1 234 567 8900"
+                  class="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-zinc-900 dark:text-zinc-100" />
+              </div>
+              <div>
+                <label for="profileBio" class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Biografía</label>
+                <textarea
+                  id="profileBio"
+                  [(ngModel)]="profileBio"
+                  rows="3"
+                  placeholder="Escribe algo sobre ti..."
+                  class="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none text-zinc-900 dark:text-zinc-100"></textarea>
+              </div>
+            </div>
           </div>
-          <div>
-            <p class="text-lg font-medium text-gray-900">{{ user()!.name }}</p>
-            <p class="text-sm text-gray-500">{{ user()!.email }}</p>
-            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium mt-1"
-              [class.bg-purple-100]="user()!.role === 'Admin'"
-              [class.text-purple-800]="user()!.role === 'Admin'"
-              [class.bg-gray-100]="user()!.role !== 'Admin'"
-              [class.text-gray-800]="user()!.role !== 'Admin'">
-              {{ user()!.role }}
-            </span>
+          
+          <div class="flex justify-end pt-4 border-t border-zinc-100 dark:border-zinc-800">
+            <button
+              (click)="saveProfile()"
+              [disabled]="savingProfile()"
+              class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50">
+              @if (savingProfile()) {
+                <span class="mr-2">Guardando...</span>
+              } @else {
+                <ng-icon name="lucideSave" class="w-4 h-4 mr-1" />
+                <span>Guardar Perfil</span>
+              }
+            </button>
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- Change Password Card -->
-    <div class="bg-white rounded-lg shadow border border-gray-200 overflow-hidden">
-      <div class="p-6">
-        <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-          <ng-icon name="lucideLock" class="w-4 h-4" />
-          Cambiar Contraseña
-        </h2>
-        @if (passwordError()) {
-          <div class="mb-4 p-3 bg-red-50 border border-red-200 rounded-md text-sm text-red-700">
-            {{ passwordError() }}
-          </div>
-        }
-        @if (passwordSuccess()) {
-          <div class="mb-4 p-3 bg-green-50 border border-green-200 rounded-md text-sm text-green-700">
-            {{ passwordSuccess() }}
-          </div>
-        }
+      <!-- Change Password Card -->
+      <div class="bg-white dark:bg-zinc-900 rounded-lg shadow-sm border border-zinc-200 dark:border-zinc-800 overflow-hidden">
+        <div class="p-6">
+          <h2 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-4 flex items-center gap-2">
+            <ng-icon name="lucideLock" class="w-4 h-4" />
+            Cambiar Contraseña
+          </h2>
+          @if (passwordError()) {
+            <div class="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md text-sm text-red-700 dark:text-red-400">
+              {{ passwordError() }}
+            </div>
+          }
+          @if (passwordSuccess()) {
+            <div class="mb-4 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-md text-sm text-green-700 dark:text-green-400">
+              {{ passwordSuccess() }}
+            </div>
+          }
 
-        <div class="space-y-4">
-          <div>
-            <label for="currentPassword" class="block text-sm font-medium text-gray-700 mb-1">Contraseña Actual</label>
-            <input
-              id="currentPassword"
-              type="password"
-              [(ngModel)]="currentPassword"
-              placeholder="Ingresa tu contraseña actual"
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          <div class="space-y-4">
+            <div>
+              <label for="currentPassword" class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Contraseña Actual</label>
+              <input
+                id="currentPassword"
+                type="password"
+                [(ngModel)]="currentPassword"
+                placeholder="Ingresa tu contraseña actual"
+                class="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-zinc-900 dark:text-zinc-100" />
+            </div>
+            <div>
+              <label for="newPassword" class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Nueva Contraseña</label>
+              <input
+                id="newPassword"
+                type="password"
+                [(ngModel)]="newPassword"
+                placeholder="Mínimo 6 caracteres"
+                class="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-zinc-900 dark:text-zinc-100" />
+            </div>
+            <div>
+              <label for="confirmPassword" class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Confirmar Nueva Contraseña</label>
+              <input
+                id="confirmPassword"
+                type="password"
+                [(ngModel)]="confirmPassword"
+                placeholder="Repite la nueva contraseña"
+                class="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-zinc-900 dark:text-zinc-100" />
+            </div>
+            <button
+              (click)="changePassword()"
+              [disabled]="savingPassword()"
+              class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50">
+              @if (savingPassword()) {
+                <span class="mr-2">Guardando...</span>
+              } @else {
+                <ng-icon name="lucideSave" class="w-4 h-4 mr-1" />
+                <span>Guardar Nueva Contraseña</span>
+              }
+            </button>
           </div>
-          <div>
-            <label for="newPassword" class="block text-sm font-medium text-gray-700 mb-1">Nueva Contraseña</label>
-            <input
-              id="newPassword"
-              type="password"
-              [(ngModel)]="newPassword"
-              placeholder="Mínimo 6 caracteres"
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
-          </div>
-          <div>
-            <label for="confirmPassword" class="block text-sm font-medium text-gray-700 mb-1">Confirmar Nueva Contraseña</label>
-            <input
-              id="confirmPassword"
-              type="password"
-              [(ngModel)]="confirmPassword"
-              placeholder="Repite la nueva contraseña"
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
-          </div>
-          <button
-            (click)="changePassword()"
-            [disabled]="savingPassword()"
-            class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50">
-            @if (savingPassword()) {
-              <span class="mr-2">Guardando...</span>
-            } @else {
-              <ng-icon name="lucideSave" class="w-4 h-4 mr-1" />
-              <span>Guardar Nueva Contraseña</span>
-            }
-          </button>
         </div>
       </div>
-    </div>
 
-    <!-- Logout -->
-    <div class="bg-white rounded-lg shadow border border-gray-200 overflow-hidden">
-      <div class="p-6">
-        <div class="flex justify-between items-center">
-          <div>
-            <p class="text-sm text-gray-500">Sesión activa</p>
+      <!-- Logout -->
+      <div class="bg-white dark:bg-zinc-900 rounded-lg shadow-sm border border-zinc-200 dark:border-zinc-800 overflow-hidden">
+        <div class="p-6">
+          <div class="flex justify-between items-center">
+            <div>
+              <p class="text-sm text-zinc-500 dark:text-zinc-400">Sesión activa</p>
+            </div>
+            <button
+              (click)="logout()"
+              class="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors">
+              <ng-icon name="lucideLogOut" class="w-4 h-4 mr-1" />
+              Cerrar Sesión
+            </button>
           </div>
-          <button
-            (click)="logout()"
-            class="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors">
-            <ng-icon name="lucideLogOut" class="w-4 h-4 mr-1" />
-            Cerrar Sesión
-          </button>
         </div>
       </div>
-    </div>
-  } @else {
-    <p class="text-gray-500">Cargando información...</p>
-  }
-</div>
+    } @else {
+      <p class="text-zinc-500 dark:text-zinc-400">Cargando información...</p>
+    }
+  </div>
+</app-drawer>

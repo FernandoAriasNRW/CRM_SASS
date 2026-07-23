@@ -1,5 +1,6 @@
-import { Component, inject, OnInit, signal, computed, ViewChild, TemplateRef } from '@angular/core';
+import { Component, inject, OnInit, signal, computed, ViewChild, TemplateRef, effect } from '@angular/core';
 import { AsyncPipe, CommonModule } from '@angular/common';
+import { ActivatedRoute } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { ApiService } from '../../core/api.service';
 import { ProjectCreateModalComponent } from './project-create-modal.component';
@@ -12,6 +13,7 @@ import {
 import { DataTableComponent, ColumnDef, TableState } from '../../shared/ui/data-table/data-table.component';
 import { AdvancedFiltersComponent, FilterField } from '../../shared/ui/data-table/advanced-filters.component';
 import { ButtonComponent } from '../../shared/ui/button.component';
+import { HierarchySignalStore } from '../../core/hierarchy-signal.store';
 import { ViewsService, SavedView } from '../../shared/services/views.service';
 import { TableColumnService } from '../../shared/services/table-column.service';
 
@@ -34,6 +36,8 @@ export class ProjectsComponent implements OnInit {
   private readonly store = inject(Store);
   private readonly viewsService = inject(ViewsService);
   private readonly columnService = inject(TableColumnService);
+  private readonly hierarchyStore = inject(HierarchySignalStore);
+  private readonly route = inject(ActivatedRoute);
 
   readonly projects$ = this.store.select(selectProjects);
   readonly loaded$ = this.store.select(selectProjectsLoaded);
@@ -56,6 +60,8 @@ export class ProjectsComponent implements OnInit {
     description: { label: 'Descripción', sortable: false, visible: false },
     status: { label: 'Estado', type: 'custom' },
     ownerId: { label: 'Propietario', type: 'user' },
+    spaceId: { label: 'Space ID', sortable: false, visible: false },
+    folderId: { label: 'Folder ID', sortable: false, visible: false },
     startDate: { label: 'Inicio', type: 'date' },
     estimatedEndDate: { label: 'Fin Estimado', type: 'date' }
   }, [
@@ -78,17 +84,49 @@ export class ProjectsComponent implements OnInit {
     return STATUS_VARIANT[status] ?? 'bg-gray-100 text-gray-800';
   }
 
+  constructor() {
+    // React to global hierarchy selection
+    effect(() => {
+      const selection = this.hierarchyStore.selectedItem();
+      this.tableState.update(s => {
+         const newFilters = { ...s.filters };
+         delete newFilters['spaceId'];
+         delete newFilters['folderId'];
+         delete newFilters['id'];
+         if (selection) {
+           if (selection.type === 'space') newFilters['spaceId'] = selection.id;
+           if (selection.type === 'folder') newFilters['folderId'] = selection.id;
+           if (selection.type === 'project') newFilters['id'] = selection.id;
+         }
+         return { ...s, filters: newFilters, page: 1 };
+      });
+      // setTimeout is used to wait for the view to initialize if this is the first run
+      setTimeout(() => this.loadProjects(), 0);
+    }, { allowSignalWrites: true });
+  }
+
   ngOnInit(): void { 
     this.tableColumns.find(c => c.key === 'status')!.template = this.statusTemplate;
     this.tableColumns.find(c => c.key === 'actions')!.template = this.actionsTemplate;
 
     this.projects$.subscribe(projects => {
       this.projects.set(projects);
-      // Wait we don't have total items from ngRx store if it only stores items. Let's just use array length for now.
       this.totalItems.set(projects.length);
     });
     this.loadViews();
-    this.loadProjects(); 
+
+    this.route.queryParams.subscribe(params => {
+      if (params['filter']) {
+        this.tableState.update(s => ({ ...s, filters: { ...s.filters, filter: params['filter'] } }));
+      } else {
+        this.tableState.update(s => {
+          const f = { ...s.filters };
+          delete f['filter'];
+          return { ...s, filters: f };
+        });
+      }
+      this.loadProjects();
+    });
   }
 
   loadViews(): void {
@@ -155,11 +193,22 @@ export class ProjectsComponent implements OnInit {
       if (state.filters['startDate']) params.startDate = state.filters['startDate'];
       if (state.filters['endDate']) params.endDate = state.filters['endDate'];
       if (state.filters['status']) params.status = state.filters['status'];
+      if (state.filters['spaceId']) params.spaceId = state.filters['spaceId'];
+      if (state.filters['folderId']) params.folderId = state.filters['folderId'];
+      if (state.filters['filter']) params.filter = state.filters['filter'];
+      if (state.filters['id']) {
+        // A single project is selected, we could use GetById, but GetProjects doesn't filter by Id.
+        // As a workaround, we fetch normally and frontend will filter it out below.
+      }
     }
 
     this.api.get<{items: Project[], totalCount: number}>('/projects', params).subscribe({
       next: res => {
-        this.store.dispatch(projectsLoaded({ items: res.items || [] }));
+        let items = res.items || [];
+        if (state.filters?.['id']) {
+          items = items.filter(p => p.id === state.filters!['id']);
+        }
+        this.store.dispatch(projectsLoaded({ items }));
         if (res.totalCount !== undefined) {
            this.totalItems.set(res.totalCount);
         }

@@ -3,6 +3,9 @@ export { BadgeComponent } from './badge.component';
 export { InputComponent } from './input.component';
 export { LabelComponent } from './label.component';
 export { SeparatorComponent } from './separator.component';
+export * from './drawer.component';
+export * from './modal.component';
+export * from './popover.component';
 export { AvatarComponent } from './avatar.component';
 export {
   CardComponent,
