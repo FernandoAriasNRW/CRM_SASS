@@ -97,7 +97,7 @@
                   <!-- Customizar Submenú -->
                   @if (item.hasCustomizer) {
                     <div class="h-px bg-border my-2"></div>
-                    <a (click)="openSubmenuCustomizer(item.id)" class="block px-2 py-1.5 hover:bg-accent hover:text-accent-foreground rounded text-sm cursor-pointer transition-colors text-muted-foreground flex items-center gap-2">
+                    <a uiClickable (click)="openSubmenuCustomizer(item.id)" class="block px-2 py-1.5 hover:bg-accent hover:text-accent-foreground rounded text-sm cursor-pointer transition-colors text-muted-foreground flex items-center gap-2">
                       <ng-icon name="lucideSettings" size="14"></ng-icon>
                       Customizar submenú
                     </a>
@@ -134,7 +134,7 @@
                   }
                 </div>
                 <div class="h-px bg-border my-2"></div>
-                <a (click)="openSubmenuCustomizer('more')" class="block px-2 py-1.5 hover:bg-accent hover:text-accent-foreground rounded text-sm cursor-pointer transition-colors text-muted-foreground flex items-center gap-2">
+                <a uiClickable (click)="openSubmenuCustomizer('more')" class="block px-2 py-1.5 hover:bg-accent hover:text-accent-foreground rounded text-sm cursor-pointer transition-colors text-muted-foreground flex items-center gap-2">
                   <ng-icon name="lucideSettings" size="14"></ng-icon>
                   Customizar submenú
                 </a>

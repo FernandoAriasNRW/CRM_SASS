@@ -33,11 +33,12 @@ const STATUS_BADGE: Record<string, BadgeVariant> = {
 };
 
 import { DrawerComponent } from '../../shared/ui/drawer.component';
+import { ClickableDirective } from '../../shared/directives/clickable.directive';
 
 @Component({
   selector: 'app-ticket-detail-panel',
   standalone: true,
-  imports: [FormsModule, DatePipe, BadgeComponent, AvatarComponent, NgIconComponent, DrawerComponent],
+  imports: [ClickableDirective, FormsModule, DatePipe, BadgeComponent, AvatarComponent, NgIconComponent, DrawerComponent],
   viewProviders: [provideIcons({
     lucideX, lucideCheck, lucideUser, lucideTag,
     lucideFlag, lucideMessageSquare, lucidePaperclip,

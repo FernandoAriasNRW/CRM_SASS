@@ -9,6 +9,7 @@ import {
 } from '@ng-icons/lucide';
 import { GranularPermissionsModalComponent } from '../permissions/granular-permissions-modal.component';
 import { DrawerComponent } from '../../../shared/ui/drawer.component';
+import { ClickableDirective } from '../../../shared/directives/clickable.directive';
 
 export interface TeamMemberDto {
   userId: string;
@@ -34,7 +35,7 @@ export interface UserOptionDto {
 @Component({
   selector: 'app-admin-teams',
   standalone: true,
-  imports: [
+  imports: [ClickableDirective, 
     CommonModule,
     FormsModule,
     NgIconComponent,

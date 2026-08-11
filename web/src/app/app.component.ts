@@ -23,11 +23,12 @@ import {
 import { HierarchySignalStore } from './core/hierarchy-signal.store';
 import { NavigationSignalStore } from './core/navigation-signal.store';
 import { UpperCasePipe, LowerCasePipe } from '@angular/common';
+import { ClickableDirective } from './shared/directives/clickable.directive';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [
+  imports: [ClickableDirective, 
     RouterOutlet,
     RouterLink,
     RouterLinkActive,

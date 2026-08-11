@@ -82,7 +82,7 @@
             class="flex flex-col gap-2 min-h-28 rounded-lg border border-dashed border-border p-2 transition-colors"
             [class.bg-accent/20]="col.tickets.length === 0">
             @for (ticket of col.tickets; track ticket.id) {
-              <div cdkDrag [cdkDragData]="ticket"
+              <div uiClickable cdkDrag [cdkDragData]="ticket"
                 (click)="openDetail(ticket)"
                 class="rounded-lg border border-border bg-card p-3 space-y-2 shadow-sm cursor-pointer hover:shadow-md hover:border-primary/30 transition-all select-none">
                 <div *cdkDragPreview class="rounded-lg border border-primary bg-card p-3 shadow-xl w-48 opacity-90">

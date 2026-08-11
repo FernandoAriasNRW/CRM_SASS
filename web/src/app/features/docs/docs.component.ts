@@ -30,6 +30,7 @@ import Placeholder from '@tiptap/extension-placeholder';
 import BubbleMenu from '@tiptap/extension-bubble-menu';
 import { EmojiPickerComponent } from './extensions/emoji-picker.component';
 import { Subject, debounceTime } from 'rxjs';
+import { ClickableDirective } from '../../shared/directives/clickable.directive';
 
 export interface PresetTemplate {
   key: string;
@@ -45,7 +46,7 @@ export interface PresetTemplate {
 @Component({
   selector: 'app-docs',
   standalone: true,
-  imports: [CommonModule, FormsModule, NgIconComponent, TiptapEditorDirective, EmojiPickerComponent],
+  imports: [ClickableDirective, CommonModule, FormsModule, NgIconComponent, TiptapEditorDirective, EmojiPickerComponent],
   providers: [
     provideIcons({
       lucideFileText, lucidePlus, lucideFolder, lucideMoreVertical,

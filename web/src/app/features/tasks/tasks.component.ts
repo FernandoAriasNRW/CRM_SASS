@@ -19,6 +19,7 @@ import { AdvancedFiltersComponent, FilterField } from '../../shared/ui/data-tabl
 import { ViewsService, SavedView } from '../../shared/services/views.service';
 import { TableColumnService } from '../../shared/services/table-column.service';
 import { HierarchySignalStore } from '../../core/hierarchy-signal.store';
+import { ClickableDirective } from '../../shared/directives/clickable.directive';
 
 export interface Column { key: string; label: string; badge: BadgeVariant; tasks: TaskItem[]; }
 
@@ -36,7 +37,7 @@ const STATUS_BADGE: Record<string, BadgeVariant> = {
 @Component({
   selector: 'app-tasks',
   standalone: true,
-  imports: [
+  imports: [ClickableDirective, 
     CommonModule, FormsModule, BadgeComponent, ButtonComponent,
     NgIconComponent, DragDropModule, TaskCreateModalComponent, TaskDetailPanelComponent,
     DataTableComponent

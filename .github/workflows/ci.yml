@@ -117,6 +117,10 @@ jobs:
       - name: Build
         run: npm run build
 
+      # ChromeHeadless viene con el runner; no hace falta instalar nada aquí.
+      - name: Tests unitarios de frontend
+        run: npm run test:ci
+
       # Sólo el navegador que usa la suite: instalar los tres multiplicaría por varios
       # minutos un paso que no aporta cobertura adicional.
       - name: Instalar navegador para E2E

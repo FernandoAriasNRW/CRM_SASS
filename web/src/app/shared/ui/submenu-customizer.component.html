@@ -47,8 +47,8 @@
         <h3 class="text-sm font-medium mb-3">Agregar acceso rápido</h3>
         <div class="space-y-3">
           <div>
-            <label class="text-xs text-muted-foreground mb-1 block">Opciones comunes</label>
-            <select [(ngModel)]="selectedTemplate" (change)="applyTemplate()" class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+            <label for="submenu-customizer-opciones-comunes" class="text-xs text-muted-foreground mb-1 block">Opciones comunes</label>
+            <select id="submenu-customizer-opciones-comunes" [(ngModel)]="selectedTemplate" (change)="applyTemplate()" class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
               <option [ngValue]="null">Personalizado...</option>
               @for (tpl of commonLinks; track tpl.label) {
                 <option [ngValue]="tpl">{{ tpl.label }}</option>
@@ -56,12 +56,12 @@
             </select>
           </div>
           <div>
-            <label class="text-xs text-muted-foreground mb-1 block">Nombre</label>
-            <input type="text" [(ngModel)]="newLabel" placeholder="Ej. Reporte mensual" class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+            <label for="submenu-customizer-nombre" class="text-xs text-muted-foreground mb-1 block">Nombre</label>
+            <input id="submenu-customizer-nombre" type="text" [(ngModel)]="newLabel" placeholder="Ej. Reporte mensual" class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
           </div>
           <div>
-            <label class="text-xs text-muted-foreground mb-1 block">Ruta (URL interna)</label>
-            <input type="text" [(ngModel)]="newRoute" placeholder="/projects/123" class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+            <label for="submenu-customizer-ruta-url-interna" class="text-xs text-muted-foreground mb-1 block">Ruta (URL interna)</label>
+            <input id="submenu-customizer-ruta-url-interna" type="text" [(ngModel)]="newRoute" placeholder="/projects/123" class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
           </div>
           <button uiButton variant="outline" size="sm" class="w-full" (click)="addCustomLink()" [disabled]="!newLabel || !newRoute">
             <ng-icon name="lucidePlus" size="16" class="mr-2"></ng-icon>

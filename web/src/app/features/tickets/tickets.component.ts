@@ -20,6 +20,7 @@ import { AdvancedFiltersComponent, FilterField } from '../../shared/ui/data-tabl
 import { HasPermissionDirective } from '../../shared/directives/has-permission.directive';
 import { ViewsService, SavedView } from '../../shared/services/views.service';
 import { TableColumnService } from '../../shared/services/table-column.service';
+import { ClickableDirective } from '../../shared/directives/clickable.directive';
 
 interface Column { key: string; label: string; badge: BadgeVariant; tickets: Ticket[]; }
 
@@ -37,7 +38,7 @@ const STATUS_BADGE: Record<string, BadgeVariant> = {
 @Component({
   selector: 'app-tickets',
   standalone: true,
-  imports: [
+  imports: [ClickableDirective, 
     CommonModule, FormsModule, BadgeComponent, ButtonComponent,
     NgIconComponent, DragDropModule, TicketCreateModalComponent, TicketDetailPanelComponent,
     DataTableComponent, HasPermissionDirective

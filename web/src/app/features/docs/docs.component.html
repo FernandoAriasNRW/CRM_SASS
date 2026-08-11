@@ -105,7 +105,7 @@
         @if (starredDocuments().length > 0) {
           <div class="space-y-0.5">
             @for (doc of starredDocuments(); track doc.id) {
-              <div 
+              <div uiClickable 
                 (click)="selectDocument(doc)"
                 class="flex items-center gap-2 px-2.5 py-1.5 text-xs text-muted-foreground hover:bg-muted rounded-md cursor-pointer truncate">
                 <ng-icon name="lucideStar" class="w-3.5 h-3.5 text-warning fill-amber-500"></ng-icon>
@@ -130,7 +130,7 @@
         </span>
         <div class="space-y-0.5">
           @for (doc of documents().slice(0, 4); track doc.id) {
-            <div 
+            <div uiClickable 
               (click)="selectDocument(doc)"
               class="flex items-center gap-2 px-2 py-1 text-xs text-muted-foreground hover:bg-muted rounded-md cursor-pointer truncate">
               <ng-icon name="lucideBookOpen" class="w-3.5 h-3.5 text-muted-foreground"></ng-icon>
@@ -175,7 +175,7 @@
         <button (click)="closeEditorView()" class="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors" title="Back to All Docs">
           <ng-icon name="lucideChevronRight" class="w-4 h-4 rotate-180"></ng-icon>
         </button>
-        <span (click)="closeEditorView()" class="text-muted-foreground font-medium hover:underline cursor-pointer">Docs</span>
+        <span uiClickable (click)="closeEditorView()" class="text-muted-foreground font-medium hover:underline cursor-pointer">Docs</span>
         <span class="text-muted-foreground">/</span>
         <span class="text-foreground font-semibold">{{ activeDocument()?.title }}</span>
         <span class="text-muted-foreground">/</span>
@@ -327,7 +327,7 @@
           
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             @for (tmpl of presetTemplates; track tmpl.key) {
-              <div 
+              <div uiClickable 
                 (click)="createFromPreset(tmpl.key)"
                 class="group relative border {{ tmpl.borderColor }} rounded-2xl p-4 bg-gradient-to-br {{ tmpl.bgGradient }} bg-white dark:bg-muted shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer">
                 
@@ -355,7 +355,7 @@
               <span class="text-xs font-semibold text-primary uppercase tracking-wider block mb-2">My Custom Templates</span>
               <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 @for (customTmpl of customTemplates(); track customTmpl.id) {
-                  <div 
+                  <div uiClickable 
                     (click)="createFromCustomTemplate(customTmpl.id)"
                     class="border border-primary dark:border-primary/40 rounded-xl p-3 bg-primary-subtle/50 dark:bg-primary-subtle/20 hover:bg-primary-subtle/50 cursor-pointer transition-all">
                     <div class="flex items-center gap-2 mb-1">
@@ -544,8 +544,8 @@
 
       <div class="space-y-3">
         <div>
-          <label class="block text-xs font-medium text-muted-foreground mb-1">Template Title</label>
-          <input 
+          <label for="docs-template-title" class="block text-xs font-medium text-muted-foreground mb-1">Template Title</label>
+          <input id="docs-template-title" 
             type="text" 
             [ngModel]="saveTemplateTitle()" 
             (ngModelChange)="saveTemplateTitle.set($event)"
@@ -553,8 +553,8 @@
         </div>
 
         <div>
-          <label class="block text-xs font-medium text-muted-foreground mb-1">Description</label>
-          <textarea 
+          <label for="docs-description" class="block text-xs font-medium text-muted-foreground mb-1">Description</label>
+          <textarea id="docs-description" 
             rows="2" 
             [ngModel]="saveTemplateDescription()" 
             (ngModelChange)="saveTemplateDescription.set($event)"
@@ -593,8 +593,8 @@
 
       <div class="space-y-4">
         <div>
-          <label class="block text-xs font-medium text-muted-foreground mb-1">Select File (.md, .txt, .html)</label>
-          <input 
+          <label for="docs-select-file-md-txt-html" class="block text-xs font-medium text-muted-foreground mb-1">Select File (.md, .txt, .html)</label>
+          <input id="docs-select-file-md-txt-html" 
             type="file" 
             accept=".md,.txt,.html"
             (change)="onImportFileSelected($event)"
@@ -602,8 +602,8 @@
         </div>
 
         <div>
-          <label class="block text-xs font-medium text-muted-foreground mb-1">Document Title</label>
-          <input 
+          <label for="docs-document-title" class="block text-xs font-medium text-muted-foreground mb-1">Document Title</label>
+          <input id="docs-document-title" 
             type="text" 
             [ngModel]="importTitle()" 
             (ngModelChange)="importTitle.set($event)"
@@ -612,8 +612,8 @@
         </div>
 
         <div>
-          <label class="block text-xs font-medium text-muted-foreground mb-1">Content Preview / Paste Text</label>
-          <textarea 
+          <label for="docs-content-preview-paste-text" class="block text-xs font-medium text-muted-foreground mb-1">Content Preview / Paste Text</label>
+          <textarea id="docs-content-preview-paste-text" 
             rows="5" 
             [ngModel]="importContent()" 
             (ngModelChange)="importContent.set($event)"
@@ -652,7 +652,7 @@
 
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-96 overflow-y-auto pr-1">
         @for (tmpl of presetTemplates; track tmpl.key) {
-          <div 
+          <div uiClickable 
             (click)="createFromPreset(tmpl.key); isTemplatePickerOpen.set(false)"
             class="border border-border rounded-xl p-3.5 hover:border-primary cursor-pointer transition-all bg-white dark:bg-muted">
             <div class="flex items-center gap-2.5 mb-1.5">
@@ -666,7 +666,7 @@
         }
 
         @for (customTmpl of customTemplates(); track customTmpl.id) {
-          <div 
+          <div uiClickable 
             (click)="createFromCustomTemplate(customTmpl.id)"
             class="border border-primary dark:border-primary/40 rounded-xl p-3.5 hover:border-primary cursor-pointer transition-all bg-primary-subtle/40 dark:bg-primary-subtle/20">
             <div class="flex items-center gap-2.5 mb-1.5">

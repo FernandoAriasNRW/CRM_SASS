@@ -129,8 +129,8 @@
 >
   <div class="space-y-4 py-2">
     <div>
-      <label class="block text-xs font-semibold text-muted-foreground mb-1.5">Nombre del Equipo *</label>
-      <input 
+      <label for="admin-teams-nombre-del-equipo" class="block text-xs font-semibold text-muted-foreground mb-1.5">Nombre del Equipo *</label>
+      <input id="admin-teams-nombre-del-equipo" 
         type="text" 
         [(ngModel)]="formName" 
         placeholder="Ej. Equipo de Desarrollo Backend" 
@@ -138,8 +138,8 @@
     </div>
 
     <div>
-      <label class="block text-xs font-semibold text-muted-foreground mb-1.5">Descripción</label>
-      <textarea 
+      <label for="admin-teams-descripcion" class="block text-xs font-semibold text-muted-foreground mb-1.5">Descripción</label>
+      <textarea id="admin-teams-descripcion" 
         rows="3" 
         [(ngModel)]="formDescription" 
         placeholder="Propósito del equipo..." 
@@ -147,12 +147,12 @@
     </div>
 
     <div>
-      <label class="block text-xs font-semibold text-muted-foreground mb-1.5">Seleccionar Miembros del Equipo</label>
+      <label for="admin-teams-seleccionar-miembros-del-equipo" class="block text-xs font-semibold text-muted-foreground mb-1.5">Seleccionar Miembros del Equipo</label>
       <div class="max-h-52 overflow-y-auto space-y-1 border border-border rounded-lg p-2 bg-muted/50 dark:bg-background">
         @for (u of availableUsers(); track u.id) {
-          <label (click)="toggleMemberSelection(u.id)" class="flex items-center justify-between p-2 hover:bg-secondary/60 dark:hover:bg-muted rounded-lg cursor-pointer text-xs transition-colors">
+          <label uiClickable (click)="toggleMemberSelection(u.id)" class="flex items-center justify-between p-2 hover:bg-secondary/60 dark:hover:bg-muted rounded-lg cursor-pointer text-xs transition-colors">
             <span class="font-medium text-foreground">{{ u.name }} ({{ u.email }})</span>
-            <input type="checkbox" [checked]="selectedMemberIds().includes(u.id)" class="rounded text-primary focus:ring-primary">
+            <input id="admin-teams-seleccionar-miembros-del-equipo" type="checkbox" [checked]="selectedMemberIds().includes(u.id)" class="rounded text-primary focus:ring-primary">
           </label>
         }
       </div>
