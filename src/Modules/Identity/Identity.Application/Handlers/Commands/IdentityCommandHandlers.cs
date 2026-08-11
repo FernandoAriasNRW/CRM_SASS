@@ -64,7 +64,8 @@ public sealed class RefreshTokenCommandHandler(IJwtService jwtService, IUserRepo
       if (string.IsNullOrEmpty(userIdStr) || !Guid.TryParse(userIdStr, out var userId))
           return Result<LoginResult>.Failure("Token inválido");
 
-      var user = await _userRepository.GetByIdAsync(userId, false, cancellationToken);
+      // Sin filtrar por tenant: al renovar no hay sesión activa, sólo la cookie.
+      var user = await _userRepository.FindForSessionRenewalAsync(userId, cancellationToken);
       if (user is null)
           return Result<LoginResult>.Failure("Usuario no encontrado");
 

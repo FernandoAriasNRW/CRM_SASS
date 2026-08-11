@@ -112,6 +112,38 @@ informes externos— quedan fuera del filtro y son responsabilidad de quien los 
 **A revisar:** si un cliente exige aislamiento físico por contrato, o si aparecen accesos a
 la base fuera de EF con volumen suficiente para justificar mover el control al motor.
 
+## La autenticación es la excepción, y hay que preverla
+
+Cerrar por defecto tiene una consecuencia que no se anticipó al tomar la decisión y que
+apareció en producción: **la autenticación ocurre antes de que exista un tenant**.
+
+Buscar a un usuario por su correo es precisamente la consulta que descubre a qué tenant
+pertenece. Con el filtro activo no hay tenant con el que filtrar, la consulta no casa con
+ninguna fila y el inicio de sesión devuelve 401 siempre. Lo mismo ocurre al renovar la
+sesión, que sólo lleva la cookie de refresco.
+
+Las consultas previas a la autenticación llevan `IgnoreQueryFilters()` y son tres:
+
+| Consulta | Por qué cruza tenants |
+|---|---|
+| `FindByEmailAsync` | Descubre el tenant; no puede depender de él |
+| `FindForSessionRenewalAsync` | Al renovar no hay sesión activa |
+| `EmailExistsAsync` | La unicidad del correo es global: si se comprobara por tenant, dos organizaciones podrían registrar el mismo y el login dejaría de distinguirlos |
+
+`IgnoreQueryFilters()` desactiva **todos** los filtros globales, incluido el de soft
+delete, así que las tres reponen `!IsDeleted` a mano. Sin eso, un usuario dado de baja
+volvería a poder iniciar sesión.
+
+La renovación usa un método propio en lugar de ensanchar `GetByIdAsync`, que se emplea en
+muchos flujos ya autenticados donde el filtro sí protege. Saltarse el aislamiento debe
+verse en el punto de llamada, no esconderse en un método de uso general.
+
+**Lección sobre las pruebas.** La suite no detectó la regresión porque sólo comprobaba que
+unas credenciales inválidas devolvieran 401, y eso se cumple igual con el login intacto
+que completamente roto. Una prueba que no distingue el éxito del fallo no comprueba nada.
+Ahora hay tres pruebas de inicio de sesión correcto, verificadas revirtiendo el arreglo
+para confirmar que fallan sin él.
+
 ## Riesgo residual conocido
 
 `Page` (de Docs) y `TeamMember` (de Teams) **no tienen `TenantId`**: son entidades hijas y
