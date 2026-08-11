@@ -1,0 +1,89 @@
+# Credenciales vía `.env` (ver .env.example). Nunca incrustarlas aquí.
+services:
+  db:
+    image: mysql:8.0
+    container_name: crm_saas_db
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?falta MYSQL_ROOT_PASSWORD en .env}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-CrmDb}
+      MYSQL_USER: ${MYSQL_USER:?falta MYSQL_USER en .env}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?falta MYSQL_PASSWORD en .env}
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - crm_network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p$$MYSQL_ROOT_PASSWORD"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: crm_saas_rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-guest}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:?falta RABBITMQ_PASSWORD en .env}
+    networks:
+      - crm_network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  api:
+    build:
+      context: .
+      dockerfile: src/Host/ApiHost/Dockerfile
+    container_name: crm_saas_api
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_HTTP_PORTS=8080
+      - ConnectionStrings__DefaultConnection=Server=db;Port=3306;Database=${MYSQL_DATABASE:-CrmDb};Uid=${MYSQL_USER};Pwd=${MYSQL_PASSWORD};
+      - ConnectionStrings__MySql=Server=db;Port=3306;Database=${MYSQL_DATABASE:-CrmDb};Uid=${MYSQL_USER};Pwd=${MYSQL_PASSWORD};
+      - Jwt__Key=${JWT_KEY:?falta JWT_KEY en .env}
+      - Jwt__Issuer=${JWT_ISSUER:-crm-saas-api}
+      - Jwt__Audience=${JWT_AUDIENCE:-crm-saas-web}
+      - RabbitMQ__Host=rabbitmq
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - crm_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health/live"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+    container_name: crm_saas_web
+    ports:
+      - "4200:80" # 4200 local -> 80 del contenedor (nginx)
+    depends_on:
+      - api
+    networks:
+      - crm_network
+
+volumes:
+  db_data:
+
+networks:
+  crm_network:
+    driver: bridge

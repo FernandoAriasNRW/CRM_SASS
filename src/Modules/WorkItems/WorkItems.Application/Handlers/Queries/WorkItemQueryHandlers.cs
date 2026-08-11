@@ -1,0 +1,31 @@
+using BuildingBlocks.Application.Abstractions;
+using BuildingBlocks.Domain;
+using WorkItems.Application.Abstractions.Queries;
+using WorkItems.Application.DTOs;
+using WorkItems.Application.Queries;
+
+namespace WorkItems.Application.Handlers.Queries;
+
+public sealed class GetTasksQueryHandler(ITaskQueries queries)
+    : IQueryHandler<GetTasksQuery, PagedResult<TaskDto>>
+{
+  public async Task<Result<PagedResult<TaskDto>>> Handle(GetTasksQuery request, CancellationToken cancellationToken)
+  {
+    var result = await queries.GetByTenantWithPaginationAsync(
+        request.TenantId, request.ProjectId, request.AssigneeId, request.Status,
+        request.Filter, request.UserId,
+        request.Pagination, cancellationToken);
+
+    return Result<PagedResult<TaskDto>>.Success(result);
+  }
+}
+
+public sealed class GetTaskByIdQueryHandler(ITaskQueries queries)
+    : IQueryHandler<GetTaskByIdQuery, TaskDto?>
+{
+  public async Task<Result<TaskDto?>> Handle(GetTaskByIdQuery request, CancellationToken cancellationToken)
+  {
+    var task = await queries.GetByIdAsync(request.TenantId, request.Id, cancellationToken);
+    return Result<TaskDto?>.Success(task);
+  }
+}

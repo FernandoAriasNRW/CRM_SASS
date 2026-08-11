@@ -1,0 +1,131 @@
+<app-drawer 
+  [isOpen]="true" 
+  (closed)="close()" 
+  [title]="isEditing() ? 'Editar Proyecto' : project().name" 
+  [subtitle]="isEditing() ? 'Modifica los campos del proyecto' : 'Detalles del proyecto y configuración'"
+  size="lg"
+>
+  <!-- Badge Slot -->
+  <span drawer-badge class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
+    {{ project().status }}
+  </span>
+
+  <!-- Action Slot -->
+  <div drawer-actions class="flex items-center gap-2">
+    @if (!isEditing()) {
+      <button (click)="startEdit()" class="px-3 py-1.5 rounded-lg border border-border text-xs font-medium hover:bg-accent transition-colors flex items-center gap-1.5">
+        <ng-icon name="lucideEdit3" size="14" />
+        <span>Editar</span>
+      </button>
+      <button (click)="deleteProject()" [disabled]="deleting()" class="px-3 py-1.5 rounded-lg border border-destructive/30 text-xs font-medium text-destructive hover:bg-destructive/10 transition-colors flex items-center gap-1.5">
+        <ng-icon name="lucideTrash2" size="14" />
+        <span>Eliminar</span>
+      </button>
+    }
+  </div>
+
+  <!-- Body Content -->
+  <div class="space-y-6">
+    @if (!isEditing()) {
+      <!-- View Mode -->
+      <div class="space-y-4">
+        <div class="p-4 rounded-xl border border-border bg-muted/20 space-y-2">
+          <h4 class="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Descripción</h4>
+          <p class="text-sm text-foreground leading-relaxed">{{ project().description || 'Sin descripción ingresada.' }}</p>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div class="p-3.5 rounded-xl border border-border bg-card">
+            <p class="text-xs font-medium text-muted-foreground mb-1">Fecha de Inicio</p>
+            <p class="text-sm font-semibold text-foreground">{{ project().startDate || 'No definida' }}</p>
+          </div>
+          <div class="p-3.5 rounded-xl border border-border bg-card">
+            <p class="text-xs font-medium text-muted-foreground mb-1">Fecha Estimada de Fin</p>
+            <p class="text-sm font-semibold text-foreground">{{ project().estimatedEndDate || 'No definida' }}</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div class="p-3.5 rounded-xl border border-border bg-card">
+            <p class="text-xs font-medium text-muted-foreground mb-1">Space ID</p>
+            <p class="text-xs font-mono text-foreground truncate" [title]="project().spaceId">{{ project().spaceId }}</p>
+          </div>
+          <div class="p-3.5 rounded-xl border border-border bg-card">
+            <p class="text-xs font-medium text-muted-foreground mb-1">Folder ID</p>
+            <p class="text-xs font-mono text-foreground truncate" [title]="project().folderId || 'Sin folder'">{{ project().folderId || 'Sin folder' }}</p>
+          </div>
+        </div>
+      </div>
+    } @else {
+      <!-- Edit Mode -->
+      <div class="space-y-4">
+        <div class="space-y-1.5">
+          <label for="edit-name" class="block text-xs font-semibold text-muted-foreground">Nombre del Proyecto *</label>
+          <input
+            id="edit-name"
+            type="text"
+            [(ngModel)]="editName"
+            class="w-full px-3 py-2 border border-input rounded-md bg-background text-sm focus:ring-2 focus:ring-ring outline-none transition-all"
+            placeholder="Nombre del proyecto" />
+        </div>
+        <div class="space-y-1.5">
+          <label for="edit-desc" class="block text-xs font-semibold text-muted-foreground">Descripción</label>
+          <textarea
+            id="edit-desc"
+            [(ngModel)]="editDescription"
+            rows="4"
+            class="w-full px-3 py-2 border border-input rounded-md bg-background text-sm resize-none focus:ring-2 focus:ring-ring outline-none transition-all"
+            placeholder="Describe los objetivos y alcance del proyecto"></textarea>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div class="space-y-1.5">
+            <label for="edit-status" class="block text-xs font-semibold text-muted-foreground">Estado</label>
+            <select
+              id="edit-status"
+              [(ngModel)]="editStatus"
+              class="w-full px-3 py-2 border border-input rounded-md bg-background text-sm focus:ring-2 focus:ring-ring outline-none transition-all cursor-pointer">
+              @for (s of statuses; track s) {
+                <option [value]="s">{{ s }}</option>
+              }
+            </select>
+          </div>
+          <div class="space-y-1.5">
+            <label for="edit-date" class="block text-xs font-semibold text-muted-foreground">Fecha Estimada</label>
+            <input
+              id="edit-date"
+              type="date"
+              [(ngModel)]="editEstimatedEndDate"
+              class="w-full px-3 py-2 border border-input rounded-md bg-background text-sm focus:ring-2 focus:ring-ring outline-none transition-all" />
+          </div>
+        </div>
+      </div>
+    }
+
+    @if (error()) {
+      <div class="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-xs font-medium text-destructive">
+        {{ error() }}
+      </div>
+    }
+  </div>
+
+  <!-- Drawer Footer Slot -->
+  <div drawer-footer class="flex justify-end gap-2 w-full">
+    @if (isEditing()) {
+      <button (click)="cancelEdit()" [disabled]="loading()" class="px-4 py-2 border border-border rounded-lg text-xs font-medium hover:bg-muted transition-colors">
+        Cancelar
+      </button>
+      <button (click)="saveEdit()" [disabled]="loading()" class="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-xs font-medium hover:bg-primary/90 transition-colors flex items-center gap-2">
+        @if (loading()) {
+          <ng-icon name="lucideLoader2" size="14" class="animate-spin" />
+          <span>Guardando...</span>
+        } @else {
+          <span>Guardar Cambios</span>
+        }
+      </button>
+    } @else {
+      <button (click)="close()" class="px-4 py-2 border border-border rounded-lg text-xs font-medium hover:bg-muted transition-colors">
+        Cerrar
+      </button>
+    }
+  </div>
+</app-drawer>

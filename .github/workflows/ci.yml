@@ -1,0 +1,199 @@
+name: CI
+
+# Un solo repositorio para backend y frontend: cualquier cambio en src/, web/ o
+# tests/ ejercita el pipeline completo. Antes había filtros de ruta que sólo
+# cubrían el backend, así que un cambio de frontend no disparaba nada.
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+env:
+  DOTNET_VERSION: '9.0.x'
+  NODE_VERSION: '20.x'
+
+# Cancela ejecuciones anteriores de la misma rama: en PRs con varios push
+# seguidos no tiene sentido pagar por builds que ya están obsoletos.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend — build y tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET ${{ env.DOTNET_VERSION }}
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Cache NuGet
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj', 'Directory.Build.props') }}
+          restore-keys: nuget-${{ runner.os }}-
+
+      - name: Restore
+        run: dotnet restore CrmSaaS.sln
+
+      - name: Build
+        run: dotnet build CrmSaaS.sln --no-restore --configuration Release
+
+      # Los proyectos de test ya forman parte de la solución, así que --no-build
+      # es correcto: se compilaron en el paso anterior.
+      - name: Tests unitarios
+        run: |
+          dotnet test tests/UnitTests/UnitTests.csproj \
+            --no-build \
+            --configuration Release \
+            --verbosity normal \
+            --collect:"XPlat Code Coverage" \
+            --results-directory ./coverage
+
+      # Sin `continue-on-error`: si hay tests de integración y fallan, el CI
+      # debe ponerse rojo. Hoy el proyecto está vacío y pasa trivialmente.
+      - name: Tests de integración
+        run: |
+          dotnet test tests/IntegrationTests/IntegrationTests.csproj \
+            --no-build \
+            --configuration Release \
+            --verbosity normal
+
+      - name: Publicar cobertura
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage
+          path: ./coverage
+          retention-days: 7
+
+  frontend:
+    name: Frontend — lint, build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+
+      # npm, no pnpm: angular.json declara npm como gestor de paquetes y
+      # package-lock.json es el lockfile de referencia.
+      - name: Setup Node ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      # Sin `|| true`: la línea base es 0 errores. Los ~253 avisos de deuda
+      # heredada no rompen el build, pero un error nuevo sí.
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
+
+      - name: Publicar artefacto
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: web/dist/web/browser
+          retention-days: 7
+
+  seguridad:
+    name: Análisis de seguridad
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET ${{ env.DOTNET_VERSION }}
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore
+        run: dotnet restore CrmSaaS.sln
+
+      - name: Vulnerabilidades en NuGet
+        run: dotnet list CrmSaaS.sln package --vulnerable --include-transitive || true
+
+      - name: Setup Node ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Vulnerabilidades en npm
+        working-directory: web
+        run: npm audit --audit-level=high || true
+
+      # Red de seguridad contra el fallo que ya ocurrió una vez: credenciales
+      # reales versionadas en appsettings.json y docker-compose.yml.
+      - name: Verificar que no hay secretos versionados
+        run: |
+          set -e
+          if grep -rIn --exclude-dir=node_modules --exclude-dir=.git \
+               -E '(Password|Pwd)=[^;"$ ]{3,}' \
+               --include='*.json' --include='*.yml' --include='*.yaml' . \
+             | grep -v '.env.example' \
+             | grep -v 'appsettings.Development.json'; then
+            echo "::error::Se detectaron credenciales en archivos versionados."
+            exit 1
+          fi
+          echo "Sin credenciales versionadas."
+
+  deploy-staging:
+    name: Desplegar a staging
+    runs-on: ubuntu-latest
+    needs: [backend, frontend, seguridad]
+    if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
+    environment:
+      name: staging
+      url: https://staging.crm-saas.example.com
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Descargar artefacto del frontend
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-dist
+          path: web/dist/web/browser
+
+      - name: Desplegar backend
+        run: echo "Pendiente: integrar con el proveedor cloud"
+        env:
+          DEPLOY_TOKEN: ${{ secrets.STAGING_DEPLOY_TOKEN }}
+
+      - name: Desplegar frontend
+        run: echo "Pendiente: integrar con CDN/S3"
+
+  deploy-production:
+    name: Desplegar a producción
+    runs-on: ubuntu-latest
+    needs: [backend, frontend, seguridad]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment:
+      name: production
+      url: https://crm-saas.example.com
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Descargar artefacto del frontend
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-dist
+          path: web/dist/web/browser
+
+      - name: Desplegar backend
+        run: echo "Pendiente: integrar con el proveedor cloud"
+        env:
+          DEPLOY_TOKEN: ${{ secrets.PRODUCTION_DEPLOY_TOKEN }}
+
+      - name: Desplegar frontend
+        run: echo "Pendiente: integrar con CDN/S3"

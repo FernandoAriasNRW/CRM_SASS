@@ -1,0 +1,61 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MediatR" Version="12.5.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.7" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.OpenApi" Version="3.5.3" />
+    <PackageReference Include="Scalar.AspNetCore" Version="2.14.6" />
+    <PackageReference Include="Serilog" Version="4.3.1" />
+    <PackageReference Include="Serilog.AspNetCore" Version="10.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\BuildingBlocks\BuildingBlocks.Application\BuildingBlocks.Application.csproj" />
+    <ProjectReference Include="..\..\BuildingBlocks\BuildingBlocks.Domain\BuildingBlocks.Domain.csproj" />
+    <ProjectReference Include="..\..\BuildingBlocks\BuildingBlocks.Infrastructure\BuildingBlocks.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\Modules\Calendar\Calendar.Application\Calendar.Application.csproj" />
+    <ProjectReference Include="..\..\Modules\Calendar\Calendar.Domain\Calendar.Domain.csproj" />
+    <ProjectReference Include="..\..\Modules\Calendar\Calendar.Infrastructure\Calendar.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\Modules\Calendar\Calendar.Presentation\Calendar.Presentation.csproj" />
+    <ProjectReference Include="..\..\Modules\Communication\Communication.Application\Communication.Application.csproj" />
+    <ProjectReference Include="..\..\Modules\Communication\Communication.Domain\Communication.Domain.csproj" />
+    <ProjectReference Include="..\..\Modules\Communication\Communication.Infrastructure\Communication.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\Modules\Communication\Communication.Presentation\Communication.Presentation.csproj" />
+    <ProjectReference Include="..\..\Modules\Identity\Identity.Application\Identity.Application.csproj" />
+    <ProjectReference Include="..\..\Modules\Identity\Identity.Domain\Identity.Domain.csproj" />
+    <ProjectReference Include="..\..\Modules\Identity\Identity.Infrastructure\Identity.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\Modules\Identity\Identity.Presentation\Identity.Presentation.csproj" />
+    <ProjectReference Include="..\..\Modules\Notifications\Notifications.Application\Notifications.Application.csproj" />
+    <ProjectReference Include="..\..\Modules\Notifications\Notifications.Domain\Notifications.Domain.csproj" />
+    <ProjectReference Include="..\..\Modules\Notifications\Notifications.Infrastructure\Notifications.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\Modules\Notifications\Notifications.Presentation\Notifications.Presentation.csproj" />
+    <ProjectReference Include="..\..\Modules\Projects\Projects.Application\Projects.Application.csproj" />
+    <ProjectReference Include="..\..\Modules\Projects\Projects.Domain\Projects.Domain.csproj" />
+    <ProjectReference Include="..\..\Modules\Projects\Projects.Infrastructure\Projects.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\Modules\Projects\Projects.Presentation\Projects.Presentation.csproj" />
+    <ProjectReference Include="..\..\Modules\Reporting\Reporting.Application\Reporting.Application.csproj" />
+    <ProjectReference Include="..\..\Modules\Reporting\Reporting.Domain\Reporting.Domain.csproj" />
+    <ProjectReference Include="..\..\Modules\Reporting\Reporting.Infrastructure\Reporting.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\Modules\Reporting\Reporting.Presentation\Reporting.Presentation.csproj" />
+    <ProjectReference Include="..\..\Modules\Ticketing\Ticketing.Application\Ticketing.Application.csproj" />
+    <ProjectReference Include="..\..\Modules\Ticketing\Ticketing.Domain\Ticketing.Domain.csproj" />
+    <ProjectReference Include="..\..\Modules\Ticketing\Ticketing.Infrastructure\Ticketing.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\Modules\Ticketing\Ticketing.Presentation\Ticketing.Presentation.csproj" />
+    <ProjectReference Include="..\..\Modules\WorkItems\WorkItems.Application\WorkItems.Application.csproj" />
+    <ProjectReference Include="..\..\Modules\WorkItems\WorkItems.Domain\WorkItems.Domain.csproj" />
+    <ProjectReference Include="..\..\Modules\WorkItems\WorkItems.Infrastructure\WorkItems.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\Modules\WorkItems\WorkItems.Presentation\WorkItems.Presentation.csproj" />
+  </ItemGroup>
+
+</Project>
