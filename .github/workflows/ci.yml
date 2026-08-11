@@ -55,8 +55,8 @@ jobs:
             --collect:"XPlat Code Coverage" \
             --results-directory ./coverage
 
-      # Sin `continue-on-error`: si hay tests de integración y fallan, el CI
-      # debe ponerse rojo. Hoy el proyecto está vacío y pasa trivialmente.
+      # Sin `continue-on-error`: si fallan, el CI debe ponerse rojo.
+      # Levantan un MySQL real vía Testcontainers, que usa el Docker del runner.
       - name: Tests de integración
         run: |
           dotnet test tests/IntegrationTests/IntegrationTests.csproj \
@@ -166,12 +166,12 @@ jobs:
           path: web/dist/web/browser
 
       - name: Desplegar backend
-        run: echo "Pendiente: integrar con el proveedor cloud"
+        run: 'echo "Pendiente: integrar con el proveedor cloud"'
         env:
           DEPLOY_TOKEN: ${{ secrets.STAGING_DEPLOY_TOKEN }}
 
       - name: Desplegar frontend
-        run: echo "Pendiente: integrar con CDN/S3"
+        run: 'echo "Pendiente: integrar con CDN/S3"'
 
   deploy-production:
     name: Desplegar a producción
@@ -191,9 +191,9 @@ jobs:
           path: web/dist/web/browser
 
       - name: Desplegar backend
-        run: echo "Pendiente: integrar con el proveedor cloud"
+        run: 'echo "Pendiente: integrar con el proveedor cloud"'
         env:
           DEPLOY_TOKEN: ${{ secrets.PRODUCTION_DEPLOY_TOKEN }}
 
       - name: Desplegar frontend
-        run: echo "Pendiente: integrar con CDN/S3"
+        run: 'echo "Pendiente: integrar con CDN/S3"'
