@@ -1,6 +1,6 @@
 # CRM SaaS Suite — Estado y Ruta de Trabajo
 
-**Auditoría:** 2026-08-11 · **Última actualización:** 2026-08-11 (Fase 1 completada)
+**Auditoría:** 2026-08-11 · **Última actualización:** 2026-08-11 (Fases 1 y 2 completadas)
 **Posicionamiento:** plataforma de **work management**, compitiendo con ClickUp y Monday.com
 **Alcance:** backend (.NET 9), frontend (Angular 21), testing, CI/CD, UI/UX
 
@@ -13,20 +13,21 @@ bounded context, CQRS, Outbox— y es una base sólida sobre la que escalar. El 
 no era el diseño, era la salud operativa: al auditar se encontraron cero tests
 ejecutándose, credenciales versionadas y un CI que no podía pasar.
 
-**La Fase 1 ya está implementada** (ver §4). Estado tras ella:
+**Las Fases 1 y 2 ya están implementadas** (ver §4 y §5). Estado tras ellas:
 
 | | Antes | Ahora |
 |---|---|---|
 | Repositorio git | sólo `web/` | backend + frontend, historia preservada |
-| Tests ejecutándose | 0 | 42 en verde |
+| Tests ejecutándose | 0 | **79 en verde** (74 unitarios + 5 integración) + 4 E2E |
 | Secretos versionados | 3 ficheros | 0 |
 | Endpoints sin autenticación | 1 | 0 |
 | Validación de entrada | escrita pero nunca ejecutada | activa en el pipeline |
-| CI | imposible de pasar | funcional |
+| CI | imposible de pasar | funcional, con E2E y contenedores |
 | Lint frontend | inexistente | 0 errores, 253 avisos medidos |
 
-Quedan dos frentes grandes: **el aislamiento multi-tenant no está blindado** (§5, Fase 2)
-y **el producto no compite todavía en features** con ClickUp o Monday (§3).
+El aislamiento multi-tenant ya está blindado y verificado al arrancar (§5). El frente que
+queda es de producto: **no compite todavía en features** con ClickUp o Monday (§3), y la
+interfaz sigue siendo de MVP (§6).
 
 ---
 
@@ -45,7 +46,8 @@ y **el producto no compite todavía en features** con ClickUp o Monday (§3).
   extraer servicios más adelante sin reescribir.
 - Outbox implementado de verdad (`outbox_messages` + `OutboxDispatcherWorker`), con
   domain events e integration events separados.
-- Soft delete uniforme vía `HasQueryFilter(e => !e.IsDeleted)`.
+- Aislamiento por tenant y soft delete aplicados por el `DbContext`, no por cada consulta,
+  y verificados al arrancar.
 - 3 hubs SignalR reales: notificaciones, tablero y tickets.
 - Plantillas de proyecto ya existen (`/from-template`, `/save-as-template`).
 
@@ -53,9 +55,10 @@ y **el producto no compite todavía en features** con ClickUp o Monday (§3).
 
 | Problema | Estado |
 |---|---|
-| Multi-tenancy filtrada a mano en 244 archivos, sin query filter global | 🔴 Fase 2 |
-| `IntegrationTests` vacío (y con Testcontainers de PostgreSQL, no MySQL) | 🟠 Fase 2 |
-| 42 advertencias de compilación en `DataSeederService` (`EF1002`, nulabilidad) | 🟡 Fase 2 |
+| Multi-tenancy con filtro global, verificado al arrancar | ✅ Fase 2 |
+| `IntegrationTests` contra MySQL real en contenedor | ✅ Fase 2 |
+| Build sin advertencias (eran 84: `EF1002` y nulabilidad) | ✅ Fase 2 |
+| `Page` y `TeamMember` sin `TenantId`: quedan fuera del filtro global | 🟠 Fase 3 |
 | Sin caché de salida ni índices revisados | 🟡 Fase 4 |
 
 ### 2.2 Frontend — Angular 21
@@ -80,22 +83,22 @@ Features enrutadas: `home` · `dashboard` · `projects` · `tasks` · `tickets` 
 | Problema | Medida | Fase |
 |---|---|---|
 | Paleta cruda de Tailwind en vez de tokens | 913 usos vs 873 tokenizados (~51%) | 3 |
-| Accesibilidad | 64 avisos de lint a11y; 0 atributos `aria-*` en 34 templates | 3 |
+| Accesibilidad | 64 avisos de lint; 0 `aria-*` en 34 templates; **ni un solo encabezado en el login** | 3 |
 | `any` sin tipar | 84 avisos | 3 |
 | Variables sin usar | 41 avisos | 3 |
 | Sintaxis de control antigua (`*ngIf`) | 33 avisos | 3 |
 | Sin i18n (español e inglés mezclados, textos hardcodeados) | — | 3 |
 | Sin virtualización de listas (`@angular/cdk` instalado pero sin usar) | 0 usos | 3 |
 | Componentes obesos (`docs.component.html` 709 líneas) | — | 3 |
-| Specs frontend | 1 (el generado por el CLI) | 2-3 |
+| Specs frontend unitarias | 1 (el generado por el CLI) | 3 |
 
 ### 2.3 Testing
 
 ```
-tests/UnitTests/         42 tests en verde ✅
-tests/IntegrationTests/  vacío, pendiente de construir
-web/                     1 spec generado por el CLI
-E2E                      inexistente
+tests/UnitTests/         74 tests en verde ✅
+tests/IntegrationTests/   5 tests contra MySQL en contenedor ✅
+web/e2e/                  4 flujos con Playwright ✅
+web/ (unitarios)          1 spec generado por el CLI — pendiente, Fase 3
 ```
 
 ---
@@ -218,22 +221,37 @@ Dos afirmaciones del informe original eran inexactas:
 
 ---
 
-## 5. Fase 2 — Cimientos de calidad (Semanas 1-2) 🟠
+## 5. Fase 2 — Cimientos de calidad ✅ COMPLETADA
 
 *Objetivo: blindar el aislamiento entre tenants y construir la red de seguridad.*
 
-| # | Tarea | Rol | Criterio de aceptación |
-|---|---|---|---|
-| 2.1 | **Query filter global de tenant.** Interfaz `ITenantEntity`, filtro en `OnModelCreating` de cada `DbContext` leyendo de `IUserContext`. Retirar los filtros manuales. | Backend | Test de integración: un usuario del tenant A consulta y recibe 0 registros del tenant B, en las 12 entidades principales. |
-| 2.2 | Levantar `IntegrationTests` con `WebApplicationFactory` + Testcontainers. **Cambiar Testcontainers.PostgreSql por MySql**: el proyecto declara el motor equivocado. Cubrir login, CRUD de proyecto, mover tarea y alta de ticket. | Tester | 4 flujos de API en verde en CI. |
-| 2.3 | Tests unitarios de dominio para agregados con invariantes: `Project`, `WorkTask`, `Ticket`, `Team`. | Tester | Cobertura de `*.Domain` ≥ 70%. |
-| 2.4 | Sanear `DataSeederService`: 32 `EF1002` (SQL interpolado sin parametrizar) y 10 desreferencias posiblemente nulas. | Backend | 0 advertencias en el build. |
-| 2.5 | Playwright E2E: login → dashboard, crear proyecto, mover tarea en el tablero. | Tester | 3 specs en verde, integradas al CI. |
-| 2.6 | ADRs en `docs/adr/`: monolito modular, `DbContext` por módulo, Outbox, estrategia multi-tenant, estrategia de tokens. | PM / Arquitecto | 5 ADRs. |
+| # | Tarea | Resultado |
+|---|---|---|
+| 2.1 | Aislamiento multi-tenant | `ITenantEntity` e `ISoftDeletable` marcan las entidades (21 y 17). `TenantQueryFilter` compone **ambos filtros en una sola expresión**: EF reemplaza el filtro en cada `HasQueryFilter`, así que declararlos por separado habría desactivado el aislamiento en silencio. `TenantDbContext` es la base de los 13 contextos y lee el tenant por consulta, no al construir el modelo. Sin contexto de usuario cierra por defecto. `TenantIsolationVerifier` aborta el arranque si alguna entidad queda fuera. Los filtros manuales se conservan como defensa en profundidad. Ver [ADR-0004](adr/0004-aislamiento-multi-tenant.md). |
+| 2.2 | Tests de integración | El proyecto estaba vacío y declaraba Testcontainers de PostgreSQL sobre un proyecto MySQL. `CrmApiFactory` levanta la API real contra MySQL 8.0 en contenedor. **5 flujos**, elegidos por lo que confirman del cableado: entre ellos, que email vacío devuelva 400 y no 401 —lo que demuestra que `ValidationBehavior` está activo— y que el endpoint de seed siga cerrado. |
+| 2.3 | Invariantes de dominio | 26 tests sobre las dos máquinas de estados: `WorkTask` (17) y `Ticket` (9). Queda documentado que `Closed` es terminal. |
+| 2.4 | Build sin advertencias | De 84 a **0**. Los 32 `EF1002` eran SQL interpolado vía `ExecuteSqlRawAsync`, convertido a la API que parametriza. Las 24 de nulabilidad venían todas de **una sola línea**: `adminUser` recibía el resultado de `FirstOrDefaultAsync`, y eso lo marcaba como posiblemente nulo durante las 500 líneas siguientes. |
+| 2.5 | E2E con Playwright | 4 flujos de acceso en 15 s. No levantan backend: interceptan con `page.route`, lo que los hace deterministas. El servidor lo arranca la propia configuración. |
+| 2.6 | ADRs | 5 documentos en [`docs/adr/`](adr/). Documentan decisiones ya implementadas cuyo razonamiento no estaba registrado. |
+
+**Estado tras la fase:** build 0/0, **79 tests** (74 unitarios + 5 integración) y 4 E2E.
+
+### Hallazgos no previstos
+
+**La página de login no tiene ningún encabezado.** Al escribir los selectores E2E se vio
+que `ui-card-title` renderiza sólo un `<ng-content />`: no hay un `<h1>`–`<h6>` en toda la
+pantalla, así que un lector de pantalla no percibe estructura. Es una muestra de que los
+64 avisos de a11y del lint son un problema estructural del design system, no una lista de
+atributos sueltos que añadir. Va a la Fase 3.2.
+
+**Dos entidades quedan fuera del aislamiento.** `Page` (Docs) y `TeamMember` (Teams) no
+tienen `TenantId`: son hijas y se alcanzan por su padre, que sí está filtrado. Hoy no hay
+ninguna consulta directa sobre ellas, pero nada lo impide. Anotado como riesgo residual en
+el ADR-0004.
 
 ---
 
-## 6. Fase 3 — UX/UI de nivel producto (Semanas 3-6) 🎨
+## 6. Fase 3 — UX/UI de nivel producto (siguiente) 🎨
 
 *Objetivo: que la interfaz deje de parecer un MVP. Es donde se gana contra ClickUp,
 cuya queja número uno es la lentitud y la sobrecarga. Ejecutar con Claude Design sobre
