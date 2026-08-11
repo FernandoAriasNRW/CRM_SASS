@@ -30,7 +30,16 @@ export default defineConfig({
   webServer: {
     command: 'npm start',
     url: 'http://localhost:4200',
-    reuseExistingServer: !process.env['CI'],
+
+    // Nunca reutilizar lo que ya escuche en el puerto, ni siquiera en local.
+    //
+    // `reuseExistingServer` sólo comprueba que el puerto responda, no que responda la
+    // aplicación: si otro proceso lo ocupa, la suite se ejecuta contra él y falla entera
+    // sin ninguna pista del motivo. Ocurrió con un contenedor de los tests de
+    // integración, que publica su puerto al azar y se quedó con el 4200.
+    //
+    // Cuesta unos segundos por ejecución y ahorra depurar fallos que no son del código.
+    reuseExistingServer: false,
     timeout: 180_000,
   },
 });

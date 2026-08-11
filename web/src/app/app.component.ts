@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, HostListener, OnInit, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet, NavigationEnd } from '@angular/router';
 import { filter, map } from 'rxjs/operators';
@@ -24,6 +24,8 @@ import { HierarchySignalStore } from './core/hierarchy-signal.store';
 import { NavigationSignalStore } from './core/navigation-signal.store';
 import { UpperCasePipe } from '@angular/common';
 import { ClickableDirective } from './shared/directives/clickable.directive';
+import { CommandPaletteComponent } from './shared/ui/command-palette/command-palette.component';
+import { CommandPaletteService } from './shared/ui/command-palette/command-palette.service';
 
 @Component({
   selector: 'app-root',
@@ -38,7 +40,8 @@ import { ClickableDirective } from './shared/directives/clickable.directive';
     UserAvatarComponent,
     SidebarCustomizerComponent,
     SubmenuCustomizerComponent,
-    UpperCasePipe
+    UpperCasePipe,
+    CommandPaletteComponent
   ],
   viewProviders: [provideIcons({
     lucideLayoutDashboard, lucideFolderKanban, lucideCheckSquare,
@@ -50,6 +53,24 @@ import { ClickableDirective } from './shared/directives/clickable.directive';
   styleUrl: './app.component.scss',
 })
 export class AppComponent implements OnInit {
+  protected readonly paleta = inject(CommandPaletteService);
+
+  /**
+   * Atajo global del paletón. Se escucha en el documento y no en un elemento concreto
+   * para que funcione desde cualquier vista y con el foco donde sea.
+   *
+   * Se atiende Ctrl+K además de Cmd+K: en Windows y Linux no hay tecla Cmd, y limitarlo
+   * a macOS dejaría el atajo inservible para la mayoría. El preventDefault evita que el
+   * navegador se quede con la pulsación, que en Chrome enfoca la barra de direcciones.
+   */
+  @HostListener('document:keydown', ['$event'])
+  protected alPulsarGlobal(evento: KeyboardEvent): void {
+    if ((evento.metaKey || evento.ctrlKey) && evento.key.toLowerCase() === 'k') {
+      evento.preventDefault();
+      this.paleta.alternar();
+    }
+  }
+
   readonly authStore = inject(AuthSignalStore);
   private readonly router = inject(Router);
   private readonly realtime = inject(RealtimeService);
