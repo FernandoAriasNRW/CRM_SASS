@@ -1,26 +1,32 @@
-# CRM SaaS Suite — Estado Actual y Ruta de Trabajo
+# CRM SaaS Suite — Estado y Ruta de Trabajo
 
-**Fecha de auditoría:** 2026-08-11
-**Alcance:** backend (.NET 9 modular monolith), frontend (Angular 21 standalone), testing, CI/CD, UI/UX
-**Método:** inspección estática del repo + compilación real de ambos stacks + ejecución de la suite de tests
+**Auditoría:** 2026-08-11 · **Última actualización:** 2026-08-11 (Fase 1 completada)
+**Posicionamiento:** plataforma de **work management**, compitiendo con ClickUp y Monday.com
+**Alcance:** backend (.NET 9), frontend (Angular 21), testing, CI/CD, UI/UX
 
 ---
 
 ## 1. Resumen ejecutivo
 
-El proyecto tiene **buenos huesos y mala salud operativa**. La arquitectura backend (modular monolith, Clean Architecture por bounded context, CQRS con MediatR, Outbox) está bien planteada y **compila limpia: 0 errores, 0 advertencias**. El frontend compila y produce un bundle de 2.4 MB.
+La arquitectura backend está bien planteada —monolito modular, Clean Architecture por
+bounded context, CQRS, Outbox— y es una base sólida sobre la que escalar. El problema
+no era el diseño, era la salud operativa: al auditar se encontraron cero tests
+ejecutándose, credenciales versionadas y un CI que no podía pasar.
 
-Pero por debajo hay tres problemas que bloquean cualquier ambición de "CRM competitivo":
+**La Fase 1 ya está implementada** (ver §4). Estado tras ella:
 
-| # | Hallazgo | Severidad |
-|---|----------|-----------|
-| 1 | **Cero tests ejecutándose.** Los proyectos de test no están en la solución y `UnitTests` no compila (13 errores CS7036). `IntegrationTests` es un `.csproj` vacío. | 🔴 Crítico |
-| 2 | **Secretos reales versionados** en `appsettings.json` (password de BD, clave JWT). Endpoint `/api/v1/admin/seed-database` **sin autenticación**. | 🔴 Crítico |
-| 3 | **No es un CRM.** El dominio no tiene Contacto, Cuenta, Lead, Oportunidad ni Pipeline. Es una suite de gestión de trabajo tipo ClickUp con nombre de CRM. | 🔴 Estratégico |
+| | Antes | Ahora |
+|---|---|---|
+| Repositorio git | sólo `web/` | backend + frontend, historia preservada |
+| Tests ejecutándose | 0 | 42 en verde |
+| Secretos versionados | 3 ficheros | 0 |
+| Endpoints sin autenticación | 1 | 0 |
+| Validación de entrada | escrita pero nunca ejecutada | activa en el pipeline |
+| CI | imposible de pasar | funcional |
+| Lint frontend | inexistente | 0 errores, 253 avisos medidos |
 
-Además: la validación FluentValidation existe pero **nunca se ejecuta** (no hay `ValidationBehavior` en el pipeline MediatR), el CI está roto de raíz, y ~51% del styling ignora el design system.
-
-**Veredicto:** producto en estado MVP avanzado con deuda de calidad severa. Antes de añadir features hay que estabilizar. La ruta propuesta invierte 4 semanas en cimientos y luego 12 en diferenciación de producto.
+Quedan dos frentes grandes: **el aislamiento multi-tenant no está blindado** (§5, Fase 2)
+y **el producto no compite todavía en features** con ClickUp o Monday (§3).
 
 ---
 
@@ -28,239 +34,337 @@ Además: la validación FluentValidation existe pero **nunca se ejecuta** (no ha
 
 ### 2.1 Backend — .NET 9
 
-**Estructura.** 452 archivos `.cs`. 13 módulos, cada uno con separación física estricta en 4 proyectos (`Domain` / `Application` / `Infrastructure` / `Presentation`):
+452 archivos `.cs`. 13 módulos con separación física estricta en 4 proyectos
+(`Domain` / `Application` / `Infrastructure` / `Presentation`):
 
-`Identity` · `Projects` · `WorkItems` · `Ticketing` · `Notifications` · `Calendar` · `Communication` · `Docs` · `Reporting` · `Tags` · `Teams` · `Webhook`
+`Identity` · `Projects` · `WorkItems` · `Ticketing` · `Notifications` · `Calendar`
+`Communication` · `Docs` · `Reporting` · `Tags` · `Teams` · `Webhook`
 
-**Lo que está bien:**
-- Separación de contextos limpia y consistente. Cada módulo tiene su propio `DbContext` — buena base para extraer microservicios más adelante si hiciera falta.
-- Outbox pattern implementado con `outbox_messages` + `OutboxDispatcherWorker`.
-- Domain events y integration events separados (`BuildingBlocks.Contracts/IntegrationEvents`).
-- Soft delete vía `HasQueryFilter(e => !e.IsDeleted)` aplicado consistentemente.
-- Endpoints agrupados con `RequireAuthorization()` a nivel de grupo — no hay endpoints huérfanos sin proteger salvo los señalados abajo.
-- 3 hubs SignalR reales (notifications, board, tickets), no simulados.
+**Fortalezas reales:**
+- Separación de contextos consistente, con `DbContext` por módulo. Buena base para
+  extraer servicios más adelante sin reescribir.
+- Outbox implementado de verdad (`outbox_messages` + `OutboxDispatcherWorker`), con
+  domain events e integration events separados.
+- Soft delete uniforme vía `HasQueryFilter(e => !e.IsDeleted)`.
+- 3 hubs SignalR reales: notificaciones, tablero y tickets.
+- Plantillas de proyecto ya existen (`/from-template`, `/save-as-template`).
 
-**Lo que está mal:**
+**Pendiente (detalle y plan en §5):**
 
-| Problema | Evidencia | Impacto |
-|---|---|---|
-| Validación muerta | Hay validators FluentValidation en Identity, Projects, etc. Pero el pipeline MediatR sólo registra `AuthorizationBehavior` y `WebhookDispatchBehavior`. No existe `ValidationBehavior` en ningún archivo del repo. | Entrada sin validar llega al dominio. Errores 500 donde debería haber 400. |
-| Secretos en repo | `appsettings.json`: `Password=<redactado>`, `Jwt:Key = "<clave-redactada>"` | Cualquiera con acceso al repo puede firmar JWTs válidos. |
-| Seed sin auth | `Program.cs:290` — `MapPost("/api/v1/admin/seed-database")` sin `.RequireAuthorization()` | Un POST anónimo puede reinicializar datos. |
-| Sin manejo global de errores | No hay `UseExceptionHandler` ni `ProblemDetails` en el pipeline. | Stack traces potencialmente expuestos; respuestas de error inconsistentes. |
-| Sin rate limiting | No hay `AddRateLimiter`. El endpoint público de tickets es abusable. | Vector de DoS y spam. |
-| Sin health checks | No hay `AddHealthChecks`. | No se puede orquestar (K8s liveness/readiness). |
-| Sin compresión ni caché | No hay `UseResponseCompression` ni `OutputCache`. | Latencia y ancho de banda innecesarios. |
-| Multi-tenancy manual | `TenantId` aparece en 244 archivos, filtrado a mano en cada query. No hay query filter global de tenant. | **Un solo `where` olvidado = fuga de datos entre tenants.** Riesgo sistémico. |
-| Deriva de documentación | README dice PostgreSQL; `appsettings.json` configura MySQL (`Provider: "MySql"`, puerto 3306). | Onboarding roto. |
+| Problema | Estado |
+|---|---|
+| Multi-tenancy filtrada a mano en 244 archivos, sin query filter global | 🔴 Fase 2 |
+| `IntegrationTests` vacío (y con Testcontainers de PostgreSQL, no MySQL) | 🟠 Fase 2 |
+| 42 advertencias de compilación en `DataSeederService` (`EF1002`, nulabilidad) | 🟡 Fase 2 |
+| Sin caché de salida ni índices revisados | 🟡 Fase 4 |
 
 ### 2.2 Frontend — Angular 21
 
-**Estructura.** 96 archivos `.ts`, 34 templates HTML, ~15k líneas. Standalone components, lazy routing, NgRx + Signals, PWA con service worker.
+96 archivos `.ts`, 34 templates, ~15k líneas. Standalone components, lazy routing,
+NgRx + Signals, PWA.
 
-Features enrutadas: `home` · `dashboard` · `projects` · `tasks` · `tickets` · `chat` · `calendar` · `reports` · `teams` · `docs` · `profile` · `admin` (+ `login` y `support` público).
+Features enrutadas: `home` · `dashboard` · `projects` · `tasks` · `tickets` · `chat`
+`calendar` · `reports` · `teams` · `docs` · `profile` · `admin` (+ `login`, `support` público).
 
-**Lo que está bien:**
-- Stack moderno y coherente: Angular 21, Tailwind, Spartan-ng (ShadCN para Angular), ng-icons/lucide, TipTap para docs.
-- Lazy loading en todas las rutas. Bundle inicial razonable.
-- Design tokens HSL correctamente definidos en `styles.scss` con modo oscuro (`.dark`), cableados a Tailwind vía `tailwind.config.js`.
-- Token de acceso **en memoria, no en localStorage** (`auth-signal.store.ts:40`) — decisión de seguridad correcta y deliberada.
-- Interceptores de auth y error ya existen.
-- Biblioteca de 25 componentes compartidos en `shared/ui` (button, card, modal, drawer, data-table, skeleton, empty-state, toast...).
+**Fortalezas reales:**
+- Stack moderno y coherente: Angular 21, Tailwind, Spartan-ng (ShadCN para Angular),
+  ng-icons/lucide, TipTap para documentos.
+- Design tokens HSL bien definidos en `styles.scss` con modo oscuro, cableados a Tailwind.
+- **El token de acceso vive en memoria, no en localStorage** (`auth-signal.store.ts:40`).
+  Decisión de seguridad correcta y deliberada.
+- 25 componentes compartidos en `shared/ui` (modal, drawer, data-table, skeleton,
+  empty-state, toast…).
 
-**Lo que está mal:**
+**Pendiente:**
 
-| Problema | Evidencia | Impacto |
+| Problema | Medida | Fase |
 |---|---|---|
-| **Design system a medias** | 913 clases de paleta cruda (`text-slate-400`, `bg-blue-500`...) vs 873 usos de tokens semánticos. ~51% del styling ignora el sistema. | El modo oscuro se rompe donde se usó paleta cruda. Rebranding imposible. Inconsistencia visual. |
-| **Accesibilidad nula** | **0 atributos `aria-*` en los 34 templates.** Sin focus management en modales/drawers, sin `role`, sin skip links. | Incumple WCAG. Bloquea ventas a enterprise y sector público. |
-| Sin i18n | Textos hardcodeados, mezcla de español e inglés en la UI. Sin `@angular/localize` ni librería de traducción. | Bloquea expansión a mercados no hispanohablantes. |
-| Sin virtualización | 0 usos de `cdk-virtual-scroll`. `@angular/cdk` ya está instalado pero sin usar para esto. | Listas grandes (>500 filas) congelarán el navegador. |
-| Test único | 1 solo `.spec.ts` (`app.component.spec.ts`, el generado por el CLI). `angular.json` tiene `skipTests: true` en todos los schematics. | Cero red de seguridad en refactors. |
-| Sin E2E | No hay Playwright, Cypress ni carpeta `e2e`. | Ningún flujo crítico verificado end-to-end. |
-| Componentes obesos | `docs.component.html` 709 líneas, `docs.component.ts` 624 líneas. | Difíciles de testear y mantener. |
-| Sin linter | No existe script `lint` en `package.json` ni configuración ESLint. | Sin control de calidad automatizado. |
+| Paleta cruda de Tailwind en vez de tokens | 913 usos vs 873 tokenizados (~51%) | 3 |
+| Accesibilidad | 64 avisos de lint a11y; 0 atributos `aria-*` en 34 templates | 3 |
+| `any` sin tipar | 84 avisos | 3 |
+| Variables sin usar | 41 avisos | 3 |
+| Sintaxis de control antigua (`*ngIf`) | 33 avisos | 3 |
+| Sin i18n (español e inglés mezclados, textos hardcodeados) | — | 3 |
+| Sin virtualización de listas (`@angular/cdk` instalado pero sin usar) | 0 usos | 3 |
+| Componentes obesos (`docs.component.html` 709 líneas) | — | 3 |
+| Specs frontend | 1 (el generado por el CLI) | 2-3 |
 
-### 2.3 Testing — estado real
+### 2.3 Testing
 
 ```
-tests/UnitTests/        7 archivos .cs  → NO COMPILA (13 errores CS7036)
-tests/IntegrationTests/ solo el .csproj → VACÍO
-Ninguno de los dos está referenciado en CrmSaaS.sln
-web/                    1 spec generado por el CLI
-E2E                     inexistente
+tests/UnitTests/         42 tests en verde ✅
+tests/IntegrationTests/  vacío, pendiente de construir
+web/                     1 spec generado por el CLI
+E2E                      inexistente
 ```
 
-Los errores de `UnitTests` son todos de **firma desactualizada**: el dominio evolucionó (`Project.Create` ganó `estimatedEndDate`, `GetTasksQuery` ganó `UserId`, `RefreshTokenCommandHandler` ganó `IUserRepository`) y los tests nunca se actualizaron. Son tests escritos una vez y abandonados. **Cobertura efectiva: 0%.**
+---
 
-### 2.4 CI/CD
+## 3. Análisis competitivo: el hueco frente a ClickUp y Monday.com
 
-`.github/workflows/dotnet.yml` tiene 3 jobs bien intencionados (backend, frontend, security-scan) pero **ninguno puede pasar**:
+El producto tiene la **infraestructura** de una plataforma de work management pero le
+falta el **modelo de dominio**. La jerarquía `Space → Folder → Project → Task` ya existe
+y es correcta —es la misma de ClickUp—, pero la entidad `WorkTask` es muy delgada:
 
-- `dotnet test tests/UnitTests/UnitTests.csproj --no-build` → falla, el proyecto no compila y además no está en la solución que se construyó.
-- `pnpm install --frozen-lockfile` en `web/` → **no existe `pnpm-lock.yaml`**, el repo usa npm (`package-lock.json`).
-- `pnpm run lint` → no existe el script (mitigado con `|| true`, lo cual también significa que el lint nunca aporta nada).
+```
+WorkTask: TenantId, ProjectId, Title, Description, Status,
+          AssigneeId, CreatedById, EstimatedHours, DueDate, TagIds
+Métodos:  Create, Move, Assign, AddTag, RemoveTag
+```
 
-El repo tiene 3 commits y 20 archivos modificados sin commitear. No hay ramas ni PRs — el workflow nunca se ha ejercitado de verdad.
+Comparado con lo que un usuario espera de ClickUp o Monday en 2026:
+
+| Capacidad | Estado | Impacto competitivo |
+|---|---|---|
+| **Prioridad de tarea** | ❌ no existe | 🔴 Ausencia llamativa: está en todos los competidores |
+| **Subtareas / jerarquía** | ❌ no existe | 🔴 Bloquea desglose de trabajo real |
+| **Dependencias entre tareas** | ❌ no existe | 🔴 Sin esto no hay Gantt ni ruta crítica |
+| **Múltiples responsables** | ❌ `AssigneeId` es un solo Guid | 🔴 Monday y ClickUp permiten varios |
+| **Campos personalizados** | ❌ no existe | 🔴 Bloqueante para enterprise; es *la* feature de Monday |
+| **Time tracking** | ❌ sólo `EstimatedHours` | 🔴 Sin registro real de tiempo |
+| **Automatizaciones** | ❌ no existe | 🔴 Feature #1 en comparativas |
+| **Vista Gantt / timeline** | ❌ no existe | 🟠 Esperada en plan de pago |
+| **Vista tabla / hoja de cálculo** | ❌ no existe | 🟠 Es la vista por defecto de Monday |
+| **Vista carga de trabajo** | ❌ no existe | 🟠 Diferenciador de plan alto |
+| **Checklists** | ❌ no existe | 🟠 |
+| **Tareas recurrentes** | ❌ no existe | 🟠 |
+| **Formularios de captura** | ❌ no existe | 🟠 Entrada de trabajo desde fuera |
+| **Metas / OKRs** | ❌ no existe | 🟡 |
+| Vista tablero (Kanban) | ✅ | |
+| Vista calendario | ✅ | |
+| Documentos colaborativos | ✅ TipTap | Paridad con ClickUp Docs |
+| Chat / conversaciones | ✅ | |
+| Tickets de soporte | ✅ | **Diferenciador**: ninguno lo trae de serie |
+| Dashboards e informes | ✅ parcial | |
+| Plantillas de proyecto | ✅ | |
+| Vistas guardadas | 🟡 `SavedView` existe, a medias | |
+| Acceso de invitado | ✅ `GuestToken` | |
+| Webhooks | ✅ | |
+| Tiempo real | ✅ SignalR | Paridad |
+
+### Dónde se puede ganar
+
+Competir de frente con ClickUp en cantidad de features es una guerra perdida: llevan
+años y cientos de ingenieros. Las dos aperturas reales son:
+
+**1. Soporte integrado en la plataforma de trabajo.** El módulo `Ticketing` ya existe,
+con alta pública y hub propio. Ni ClickUp ni Monday traen un helpdesk de verdad —obligan
+a integrar Zendesk o Intercom. Un ticket que se convierte en tarea, con el hilo del
+cliente enganchado, es una costura que ellos no tienen. **Es el diferenciador más barato
+de construir porque el 70% ya está hecho.**
+
+**2. Velocidad y foco.** ClickUp tiene fama de lento y sobrecargado; es su queja número
+uno. Un producto que haga el 80% de los casos de uso con la mitad de la fricción tiene
+mercado. Esto es una decisión de UX, no de features: se gana en la Fase 3, no añadiendo
+más cosas.
+
+Lo que **no** hay que hacer es perseguir la paridad completa. La Fase 4 prioriza sólo lo
+que es bloqueante para vender (prioridad, subtareas, dependencias, campos personalizados,
+time tracking, automatizaciones) y deja el resto en backlog.
 
 ---
 
-## 3. El problema estratégico: esto no es un CRM
+## 4. Fase 1 — Estabilización ✅ COMPLETADA
 
-Revisando **todas** las entidades de dominio del proyecto, no existe ninguna de estas:
+*Objetivo: que el proyecto sea seguro de tocar.*
 
-`Contact` · `Account` / `Company` · `Lead` · `Deal` / `Opportunity` · `Pipeline` / `Stage` · `Activity` · `Quote` · `Product` · `Campaign`
+| # | Tarea | Resultado |
+|---|---|---|
+| 1.0 | Unificar el control de versiones | El repo git sólo cubría `web/`. La historia del frontend se reescribió bajo el prefijo `web/` (4 commits preservados, remoto intacto) y el backend entró en el mismo repositorio. `.gitignore` y `.gitattributes` nuevos excluyen `bin/`, `obj/`, `node_modules/`, `build.log` (13 MB) y `sidebar_clickup.webm` (4,8 MB). |
+| 1.1 | Retirar secretos | Credenciales fuera de `appsettings.json` y `docker-compose.yml`. Desarrollo → `appsettings.Development.json` (ignorado); Docker → `.env` (ver `.env.example`). |
+| 1.2 | Proteger el seed | `/api/v1/admin/seed-database` estaba **sin autenticación**. Ahora exige rol Admin y no se registra en producción. |
+| 1.3 | Reparar los tests | `UnitTests` no compilaba: 13 firmas desfasadas y 2 mocks apuntando a métodos que los handlers ya no llaman. Ambos proyectos añadidos a la solución. **42 tests en verde.** |
+| 1.4 | Arreglar el CI | `dotnet.yml` → `ci.yml`. El anterior usaba pnpm, ejecutaba un lint inexistente tras `\|\| true` y corría tests que no compilaban. Añadida verificación de secretos versionados. |
+| 1.5 | Activar la validación | `ValidationBehavior` añadido al pipeline de MediatR y validadores registrados. FluentValidation estaba instalado, con validadores escritos, y **no se ejecutaba ninguno**. |
+| 1.6 | Manejo global de errores | `GlobalExceptionHandler` con ProblemDetails (RFC 7807). En producción nunca se expone el detalle interno. |
+| 1.7 | Corregir el README | Documentaba PostgreSQL; el proyecto usa MySQL. Reescrito con el arranque real. |
+| + | Rate limiting, health checks, compresión | Política global, y estricta en login y alta pública de tickets. `/health/live` y `/health/ready`. |
 
-Lo que sí existe: `Project`, `Space`, `Folder`, `WorkTask`, `Ticket`, `Document`, `Page`, `Team`, `Tag`, `CalendarEvent`, `Conversation`, `Message`.
+### Hallazgos no previstos, corregidos sobre la marcha
 
-Eso es un **work management suite** — el commit más reciente lo confirma: *"se ajusta el UI/UX para acercarlo a la fluidez de clickup"*. Es un ClickUp, no un HubSpot.
+**Vulnerabilidad en los tokens JWT.** El refresh token se generaba con **exactamente
+los mismos claims** que el access token. Como está firmado con la misma clave y tiene el
+mismo issuer y audience, el middleware de autenticación lo aceptaba: era una credencial
+de acceso válida durante 7 días, con el rol del usuario. Además, dos llamadas en el mismo
+segundo producían tokens idénticos, porque el único claim variable era `exp` (resolución
+de segundos), lo que hace imposible revocarlos o auditarlos por separado. El propio
+código tenía un `GenerateSecureToken()` privado sin usar: la intención estaba, el cableado
+no. Corregido con claims mínimos, `jti` único y un claim `token_type` verificado en el
+middleware y al renovar sesión. Cubierto con tests.
 
-Esto no es necesariamente malo, pero obliga a una decisión de producto que no puede seguir difiriéndose:
+**El árbol de dependencias del frontend no resolvía con npm.** Los paquetes `@tiptap/*`
+fijan sus peers a versión exacta y estaban desincronizados (`core@3.27.3` contra
+extensiones que exigían `3.27.4`). Por eso convivían dos lockfiles en conflicto
+(`package-lock.json` y `pnpm-lock.yaml`). Unificados en `3.30.0` con una sola copia de
+`@tiptap/core`; eliminado el lockfile de pnpm, ya que `angular.json` declara npm.
 
-**Opción A — Ser un CRM de verdad.** Añadir el bounded context de ventas (Contactos, Cuentas, Leads, Pipeline de Oportunidades con drag & drop, Actividades, Cotizaciones). Es ~8-10 semanas de trabajo y compite en un mercado saturado (Salesforce, HubSpot, Pipedrive, Zoho).
+**Dependencia fantasma.** `@tiptap/extension-link` se importa en `docs.component.ts`
+pero nunca estuvo en `package.json`. Funcionaba por hoisting; una instalación limpia
+rompía el build. Declarada.
 
-**Opción B — Ser un PSA / Client Work Platform.** Aceptar la base actual y posicionarse donde ya se es fuerte: proyectos + tickets + docs + tiempo + facturación para agencias y consultoras. Compite con Teamwork, Scoro, Accelo. Mercado menos saturado, y el 70% del producto ya está construido. Faltaría: time tracking, presupuestos/facturación, portal de cliente.
+**Deriva de versiones en NuGet.** `FluentValidation` estaba en 11.9.0 y 11.11.0 según
+el proyecto. Unificada.
 
-**Opción C — Híbrido "de lead a entrega".** Un pipeline de ventas ligero que al ganarse convierte la oportunidad en proyecto automáticamente. Es el diferenciador real: nadie hace bien la costura entre CRM y ejecución. Coste intermedio (~6 semanas para el módulo Sales mínimo) y narrativa de venta única.
+### Corrección a la auditoría inicial
 
-**Recomendación: Opción C.** Aprovecha lo construido, añade la palabra "CRM" con legitimidad, y el handoff automático lead→proyecto es una feature que ni Salesforce ni ClickUp resuelven bien. Pero esta decisión es del negocio, no técnica — y condiciona todo el roadmap de la Fase 3 en adelante.
+Dos afirmaciones del informe original eran inexactas:
+
+- Dije que faltaba `pnpm-lock.yaml`. **Sí existía.** El problema real era distinto y
+  peor: había dos lockfiles en conflicto porque el árbol no resolvía con npm.
+- Dije «0 advertencias de compilación». Ese build estaba en caché y no recompiló nada.
+  Hay **42 advertencias reales**, todas preexistentes y concentradas en
+  `DataSeederService.cs` (32 `EF1002` por SQL interpolado y 24 de nulabilidad).
+  Pendientes para la Fase 2.
 
 ---
 
-## 4. Ruta de trabajo
+## 5. Fase 2 — Cimientos de calidad (Semanas 1-2) 🟠
 
-Cuatro fases. Las fases 1 y 2 son innegociables y secuenciales. La 3 y la 4 dependen de la decisión estratégica de §3.
-
-### Fase 1 — Estabilización (Semanas 1-2) 🔴
-
-*Objetivo: que el proyecto sea seguro de tocar. Nada de features.*
+*Objetivo: blindar el aislamiento entre tenants y construir la red de seguridad.*
 
 | # | Tarea | Rol | Criterio de aceptación |
-|---|-------|-----|------------------------|
-| 1.1 | Rotar la clave JWT y el password de BD. Mover a User Secrets (dev) y variables de entorno / Key Vault (prod). Purgar del historial git. | Backend | `appsettings.json` sin ningún secreto. Arranque falla explícitamente si falta `Jwt:Key`. |
-| 1.2 | Proteger `/api/v1/admin/seed-database`: `.RequireAuthorization(policy => policy.RequireRole("Admin"))` **y** compilarlo sólo en Development. | Backend | Un POST anónimo devuelve 401. En Release el endpoint no existe. |
-| 1.3 | Reparar `tests/UnitTests`: actualizar las 13 firmas desactualizadas. Añadir ambos proyectos de test a `CrmSaaS.sln`. | Tester | `dotnet test CrmSaaS.sln` verde con los 7 archivos ejecutándose. |
-| 1.4 | Arreglar el CI: sustituir pnpm por npm (o generar `pnpm-lock.yaml`), añadir ESLint + script `lint`, quitar el `|| true`. | Tester / DevOps | Push a una rama → los 3 jobs en verde. |
-| 1.5 | Añadir `ValidationBehavior<TRequest,TResponse>` a `BuildingBlocks.Application/Behaviors` y registrarlo en el pipeline MediatR **antes** de `AuthorizationBehavior`. | Backend | Un comando inválido devuelve 400 con `ValidationProblemDetails`, no 500. |
-| 1.6 | Añadir `UseExceptionHandler` global con `ProblemDetails` (RFC 7807). | Backend | Ninguna excepción no controlada expone stack trace. |
-| 1.7 | Corregir el README: MySQL, no PostgreSQL. Documentar el arranque real. | PM / Docs | Un dev nuevo levanta el entorno siguiendo el README sin preguntar nada. |
-
-**Salida de fase:** build verde, tests verdes, CI verde, cero secretos, cero endpoints abiertos.
+|---|---|---|---|
+| 2.1 | **Query filter global de tenant.** Interfaz `ITenantEntity`, filtro en `OnModelCreating` de cada `DbContext` leyendo de `IUserContext`. Retirar los filtros manuales. | Backend | Test de integración: un usuario del tenant A consulta y recibe 0 registros del tenant B, en las 12 entidades principales. |
+| 2.2 | Levantar `IntegrationTests` con `WebApplicationFactory` + Testcontainers. **Cambiar Testcontainers.PostgreSql por MySql**: el proyecto declara el motor equivocado. Cubrir login, CRUD de proyecto, mover tarea y alta de ticket. | Tester | 4 flujos de API en verde en CI. |
+| 2.3 | Tests unitarios de dominio para agregados con invariantes: `Project`, `WorkTask`, `Ticket`, `Team`. | Tester | Cobertura de `*.Domain` ≥ 70%. |
+| 2.4 | Sanear `DataSeederService`: 32 `EF1002` (SQL interpolado sin parametrizar) y 10 desreferencias posiblemente nulas. | Backend | 0 advertencias en el build. |
+| 2.5 | Playwright E2E: login → dashboard, crear proyecto, mover tarea en el tablero. | Tester | 3 specs en verde, integradas al CI. |
+| 2.6 | ADRs en `docs/adr/`: monolito modular, `DbContext` por módulo, Outbox, estrategia multi-tenant, estrategia de tokens. | PM / Arquitecto | 5 ADRs. |
 
 ---
 
-### Fase 2 — Cimientos de calidad (Semanas 3-4) 🟠
+## 6. Fase 3 — UX/UI de nivel producto (Semanas 3-6) 🎨
 
-*Objetivo: red de seguridad y blindaje multi-tenant antes de escalar features.*
+*Objetivo: que la interfaz deje de parecer un MVP. Es donde se gana contra ClickUp,
+cuya queja número uno es la lentitud y la sobrecarga. Ejecutar con Claude Design sobre
+los tokens ya existentes.*
 
 | # | Tarea | Rol | Criterio de aceptación |
-|---|-------|-----|------------------------|
-| 2.1 | **Query filter global de tenant.** Interfaz `ITenantEntity`, filtro aplicado en `OnModelCreating` de cada `DbContext` leyendo de `IUserContext`. Eliminar los filtros manuales. | Backend | Test de integración: usuario del tenant A consulta y recibe 0 registros del tenant B, en las 12 entidades principales. |
-| 2.2 | Levantar `IntegrationTests` con `WebApplicationFactory` + Testcontainers (MySQL). Cubrir: login, CRUD de proyecto, mover tarea, crear ticket público. | Tester | 4 flujos end-to-end de API en verde en CI. |
-| 2.3 | Tests unitarios de dominio para los agregados con invariantes: `Project`, `WorkTask`, `Ticket`, `Team`. | Tester | Cobertura de `*.Domain` ≥ 70%. |
-| 2.4 | Rate limiting: política global + política estricta en `/api/public/v1/tickets` y `/api/v1/auth/login`. | Backend | Un test verifica 429 tras superar el umbral. |
-| 2.5 | Health checks (`/health/live`, `/health/ready`) con chequeo de BD. Response compression. | Backend | `docker-compose up` → healthcheck pasa. |
-| 2.6 | Playwright E2E: instalar y cubrir 3 flujos críticos (login → dashboard, crear proyecto, mover tarea en el board). | Tester | 3 specs en verde, integrados al CI. |
-| 2.7 | Documentar decisiones arquitectónicas en ADRs (`docs/adr/`): modular monolith, DbContext por módulo, Outbox, estrategia multi-tenant. | PM / Arquitecto | 4 ADRs en formato estándar. |
-
-**Salida de fase:** aislamiento de tenants probado, ~40% de cobertura efectiva, E2E funcionando.
-
----
-
-### Fase 3 — UX / UI de nivel producto (Semanas 5-8) 🎨
-
-*Objetivo: que la interfaz deje de parecer un MVP. Ejecutar con Claude Design sobre los tokens ya existentes.*
-
-| # | Tarea | Rol | Criterio de aceptación |
-|---|-------|-----|------------------------|
-| 3.1 | **Erradicar la paleta cruda.** Migrar las 913 clases `text-slate-*` / `bg-blue-*` a tokens semánticos. Ampliar los tokens donde falten (success, warning, info, surface elevado). | Frontend / UI | `grep` de paleta cruda en `src/app` → 0 resultados. Modo oscuro perfecto en las 12 features. |
-| 3.2 | **Accesibilidad WCAG 2.1 AA.** `aria-*` en todos los controles, focus trap en modales y drawers, navegación completa por teclado, skip link, contraste verificado. | Frontend / UI | Auditoría axe-core sin violaciones críticas ni serias. Test E2E de navegación por teclado. |
-| 3.3 | **Command palette (⌘K).** Navegación, búsqueda global y acciones rápidas. Es la expectativa de mercado en 2026 (Linear, Notion, ClickUp lo tienen todos). | Frontend / UI | Abre en <100ms, busca en proyectos/tareas/tickets/docs, ejecuta 10+ acciones. |
-| 3.4 | **Virtualización + optimista.** `cdk-virtual-scroll` en data-table y listas. Actualizaciones optimistas en el board Kanban con rollback. | Frontend | Lista de 5.000 filas scrollea a 60fps. Mover una tarjeta se siente instantáneo. |
-| 3.5 | Estados vacíos, skeletons y errores consistentes en las 12 features (los componentes ya existen, falta aplicarlos en todas partes). | UI/UX | Ninguna vista muestra pantalla en blanco durante la carga ni ante un error. |
-| 3.6 | Refactor de los componentes obesos (`docs`, `tasks`, `tickets`) en subcomponentes de <200 líneas. | Frontend | Ningún componente supera 250 líneas. |
-| 3.7 | Guía de diseño viva: Storybook o página `/design-system` con los 25 componentes documentados. | UI/UX | Todo componente nuevo se documenta antes de mergear. |
-| 3.8 | i18n con `@angular/localize`. Extraer todos los textos. Español + inglés. | Frontend | Cambio de idioma sin recarga. 0 textos hardcodeados. |
-
-**Salida de fase:** producto visualmente competitivo, accesible, y con la fluidez que el mercado espera.
+|---|---|---|---|
+| 3.1 | **Erradicar la paleta cruda.** Migrar 913 clases `text-slate-*` / `bg-blue-*` a tokens semánticos; ampliar tokens donde falten (success, warning, info, superficie elevada). | Frontend / UI | 0 clases de paleta cruda. Modo oscuro correcto en las 12 features. |
+| 3.2 | **Accesibilidad WCAG 2.1 AA.** Resolver los 64 avisos de a11y, focus trap en modales y drawers, navegación completa por teclado, skip link, contraste verificado. Escalar las reglas a `error` en ESLint. | Frontend / UI | axe-core sin violaciones críticas ni serias. E2E de navegación por teclado. |
+| 3.3 | **Command palette (⌘K).** Navegación, búsqueda global y acciones rápidas. Expectativa de mercado en 2026 (Linear, Notion, ClickUp). | Frontend / UI | Abre en <100 ms; busca en proyectos, tareas, tickets y docs; 10+ acciones. |
+| 3.4 | **Rendimiento percibido.** `cdk-virtual-scroll` en data-table y listas; actualizaciones optimistas en el tablero con rollback. | Frontend | 5.000 filas a 60 fps. Mover una tarjeta se siente instantáneo. |
+| 3.5 | Estados vacíos, skeletons y errores consistentes en las 12 features (los componentes existen, falta aplicarlos). | UI/UX | Ninguna vista en blanco durante carga ni ante error. |
+| 3.6 | Saldar la deuda de lint: 84 `any`, 41 variables sin usar, 33 `*ngIf`. | Frontend | 0 avisos; reglas escaladas a `error`. |
+| 3.7 | Refactor de componentes obesos (`docs`, `tasks`, `tickets`) en subcomponentes. | Frontend | Ningún componente supera 250 líneas. |
+| 3.8 | Guía de diseño viva (Storybook o `/design-system`) con los 25 componentes. | UI/UX | Todo componente nuevo se documenta antes de mergear. |
+| 3.9 | i18n con `@angular/localize`. Español + inglés. | Frontend | Cambio de idioma sin recarga; 0 textos hardcodeados. |
 
 ---
 
-### Fase 4 — Diferenciación de producto (Semanas 9-20) 🚀
+## 7. Fase 4 — Cerrar el hueco competitivo (Semanas 7-18) 🚀
 
-*Condicionado a la decisión de §3. Lo siguiente asume la **Opción C (híbrido)**.*
+*Sólo lo bloqueante para vender. El resto queda en backlog.*
 
-**Bloque 4A — Módulo Sales (semanas 9-14).** Nuevo bounded context `Sales` siguiendo exactamente el patrón de los 13 módulos existentes:
-- Agregados: `Contact`, `Account`, `Lead`, `Opportunity`, `Pipeline`, `Stage`, `Activity`.
-- Pipeline visual con drag & drop (reutilizar el motor del board Kanban de WorkItems).
-- **Conversión Oportunidad→Proyecto**: al marcar `Won`, un integration event vía Outbox crea el proyecto con su plantilla, equipo y tareas iniciales. *Este es el diferenciador.*
-- Timeline unificado de actividad por contacto/cuenta.
+### Bloque 4A — Enriquecer el modelo de tarea (semanas 7-10)
 
-**Bloque 4B — Motor de automatización (semanas 15-17).** Reglas "cuando X, entonces Y" sobre los domain events que ya se emiten. La infraestructura (Outbox + integration events) ya está: falta el motor de reglas y la UI de constructor. Es la feature #1 en las comparativas de CRM de 2026.
+Es el trabajo de mayor retorno: sin esto el producto no entra en una comparativa.
 
-**Bloque 4C — Inteligencia (semanas 18-20).** Sobre los datos ya capturados: lead scoring, resumen de conversaciones e hilos de tickets, redacción asistida de emails, detección de riesgo en proyectos. Diferenciador de precio, no sólo de features.
+- **Prioridad** (`Urgent` / `High` / `Normal` / `Low`) en `WorkTask`.
+- **Subtareas**: `ParentTaskId` autorreferencial, con profundidad limitada y agregación
+  de progreso al padre.
+- **Dependencias**: entidad `TaskDependency` (bloquea / bloqueada por), con detección
+  de ciclos en el dominio. Es el prerrequisito del Gantt.
+- **Múltiples responsables**: `AssigneeId` pasa a colección `TaskAssignee`.
+- **Checklists** dentro de la tarea.
+- **Tareas recurrentes** apoyadas en el worker que ya existe.
 
-**Backlog priorizado tras la fase 4:**
-1. Time tracking + facturación (crítico para el posicionamiento PSA)
-2. Portal de cliente (acceso externo a proyectos y tickets)
-3. Campos personalizados por entidad (bloqueante para enterprise)
-4. Vistas guardadas y compartidas (`SavedView` ya existe en el dominio — está a medias)
-5. API pública + documentación para integraciones
-6. SSO / SAML (bloqueante para enterprise)
-7. Audit log
+Migración de datos: los campos actuales se conservan; `AssigneeId` se migra a una
+colección de un elemento.
+
+### Bloque 4B — Campos personalizados (semanas 11-13)
+
+La feature que define a Monday.com y bloqueante para enterprise. Nuevo módulo
+`CustomFields` siguiendo el patrón de los 13 existentes: definición por tenant y por
+tipo de entidad (texto, número, fecha, selección, selección múltiple, usuario, fórmula),
+con valores tipados y aplicables a tareas y proyectos.
+
+### Bloque 4C — Vistas (semanas 14-16)
+
+- **Vista tabla/hoja de cálculo** con edición en línea. Es la vista por defecto de Monday
+  y la que más se echa en falta. Reutiliza `data-table` y los campos personalizados de 4B.
+- **Vista Gantt/timeline**, apoyada en las dependencias de 4A.
+- **Vista carga de trabajo** por persona.
+- Completar `SavedView`, que ya existe a medias, para que las vistas se guarden y compartan.
+
+### Bloque 4D — Automatizaciones (semanas 17-18)
+
+Motor de reglas «cuando X, entonces Y» sobre los domain events que ya se emiten. La
+infraestructura está: Outbox e integration events funcionan. Falta el motor de reglas y
+la interfaz de construcción.
+
+### Backlog priorizado
+
+1. **Time tracking** con temporizador y partes de horas
+2. **Ticket → tarea**: la costura de soporte que ni ClickUp ni Monday tienen (§3)
+3. Formularios de captura de trabajo
+4. Portal de cliente
+5. Metas / OKRs
+6. API pública documentada
+7. SSO / SAML *(bloqueante para enterprise)*
+8. Audit log
+9. Capa de IA: resumen de hilos, redacción asistida, detección de riesgo en proyectos
 
 ---
 
-## 5. Equilibrio desarrollo / documentación / testing
-
-La regla operativa para las 20 semanas, y la razón por la que las fases 1-2 no se saltan:
+## 8. Equilibrio desarrollo / documentación / testing
 
 | Actividad | % del esfuerzo | Cómo se hace cumplir |
 |---|---|---|
 | Desarrollo | 60% | — |
-| Testing | 25% | Ningún PR entra sin tests. Cobertura no puede bajar. E2E para todo flujo crítico nuevo. |
+| Testing | 25% | Ningún PR entra sin tests. La cobertura no puede bajar. E2E para todo flujo crítico nuevo. |
 | Documentación | 15% | ADR por decisión arquitectónica. README actualizado en el mismo PR. Componente nuevo → entrada en el design system. |
 
-**Definition of Done** (aplicar desde ya):
-- [ ] Código compila sin warnings
+**Definition of Done:**
+- [ ] Compila sin advertencias nuevas
 - [ ] Tests unitarios de la lógica nueva
 - [ ] Test de integración si toca API
 - [ ] E2E si toca un flujo crítico
+- [ ] `npm run lint` sin errores y sin avisos nuevos
 - [ ] Sin clases de paleta cruda de Tailwind
 - [ ] Atributos `aria-*` en todo control interactivo
 - [ ] Textos vía i18n
 - [ ] Documentación actualizada
-- [ ] CI verde
+- [ ] CI en verde
 
 ---
 
-## 6. Métricas de seguimiento
+## 9. Métricas de seguimiento
 
-| Métrica | Hoy | Fin Fase 2 | Fin Fase 3 | Fin Fase 4 |
-|---|---|---|---|---|
-| Cobertura de tests backend | 0% | 40% | 55% | 70% |
-| Specs frontend | 1 | 15 | 40 | 60 |
-| Flujos E2E | 0 | 3 | 10 | 20 |
-| Violaciones a11y (axe) | sin medir | medido | 0 críticas/serias | 0 |
-| Clases de paleta cruda | 913 | 913 | 0 | 0 |
-| Endpoints sin auth | 1 | 0 | 0 | 0 |
-| Secretos en repo | 2 | 0 | 0 | 0 |
-| CI en verde | ❌ | ✅ | ✅ | ✅ |
+| Métrica | Auditoría | Hoy | Fin F2 | Fin F3 | Fin F4 |
+|---|---|---|---|---|---|
+| Tests backend ejecutándose | 0 | **42** | 90 | 120 | 180 |
+| Cobertura backend | 0% | ~15% | 40% | 55% | 70% |
+| Specs frontend | 1 | 1 | 15 | 40 | 60 |
+| Flujos E2E | 0 | 0 | 3 | 10 | 20 |
+| Avisos de lint frontend | sin medir | **253** | 253 | 0 | 0 |
+| Avisos de a11y | sin medir | **64** | 64 | 0 | 0 |
+| Advertencias de compilación | sin medir | **42** | 0 | 0 | 0 |
+| Clases de paleta cruda | 913 | 913 | 913 | 0 | 0 |
+| Endpoints sin auth | 1 | **0** | 0 | 0 | 0 |
+| Secretos versionados | 3 ficheros | **0** | 0 | 0 | 0 |
+| CI en verde | ❌ | **✅** | ✅ | ✅ | ✅ |
 
 ---
 
-## 7. Riesgos
+## 10. Riesgos
 
 | Riesgo | Prob. | Impacto | Mitigación |
 |---|---|---|---|
-| Fuga de datos entre tenants por un `where` olvidado | **Alta** | **Crítico** | Tarea 2.1 (query filter global) — es la tarea individual más importante de todo el plan |
-| Los secretos ya están comprometidos | Media | Crítico | Rotar, no sólo mover. Asumir que la clave JWT actual es pública. |
-| La migración de paleta (3.1) rompe la UI visualmente | Alta | Medio | Migrar feature por feature con revisión visual; los E2E de la fase 2 dan la red |
-| Parálisis por indecisión estratégica (§3) | Media | Alto | Decidir antes de terminar la fase 2. Las fases 1-2 son válidas para cualquier opción. |
-| Deuda de test crece más rápido de lo que se paga | Media | Alto | El 25% de testing no es negociable; bloquear PRs sin tests en CI |
+| Fuga de datos entre tenants por un `where` olvidado | **Alta** | **Crítico** | Tarea 2.1. Es la tarea individual más importante del plan. |
+| Los secretos retirados ya estaban comprometidos | Media | Crítico | Se movieron, **falta rotarlos**. Asumir que la clave JWT anterior es pública. |
+| La migración de paleta (3.1) rompe la UI visualmente | Alta | Medio | Feature por feature con revisión visual; los E2E de la Fase 2 dan la red. |
+| Perseguir paridad total con ClickUp | Media | Alto | La Fase 4 está deliberadamente acotada. Todo lo demás va a backlog. |
+| La deuda de test crece más rápido de lo que se paga | Media | Alto | El 25% de testing no es negociable; bloquear PRs sin tests en CI. |
 
 ---
 
-## 8. Siguiente paso concreto
+## 11. Siguiente paso
 
-Empezar por la **Fase 1, tareas 1.1 y 1.2** — son de horas, no de días, y cierran las dos exposiciones de seguridad activas. En paralelo, la decisión de §3 debe entrar en agenda de producto esta semana, porque condiciona todo lo que se construya a partir de la semana 9.
+1. **Rotar** la clave JWT y el password de base de datos. Retirarlos del código no basta:
+   estuvieron versionados y hay que asumirlos comprometidos.
+2. Revisar y **hacer push** del commit de Fase 1 (§4). La historia del frontend fue
+   reescrita para colgar de `web/`, así que el push a `origin/main` requiere `--force-with-lease`
+   y coordinación con cualquiera que tenga el repo clonado.
+3. Arrancar la **Fase 2** por la tarea 2.1, el query filter global de tenant.
