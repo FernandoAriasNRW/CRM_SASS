@@ -20,7 +20,7 @@
         <span class="font-semibold tracking-tight">Docs</span>
       </div>
       <div class="flex items-center gap-1">
-        <button (click)="togglePin($event)" class="text-muted-foreground hover:text-muted-foreground p-1.5 rounded-md hover:bg-secondary transition-colors" title="Pin Sidebar">
+        <button (click)="togglePin($event)" aria-label="Fijar barra lateral" class="text-muted-foreground hover:text-muted-foreground p-1.5 rounded-md hover:bg-secondary transition-colors" title="Pin Sidebar">
           <ng-icon [name]="isPinned() ? 'lucidePinOff' : 'lucidePin'" class="w-3.5 h-3.5"></ng-icon>
         </button>
       </div>
@@ -95,7 +95,8 @@
     </div>
 
     <!-- Widgets & Document Tree -->
-    <div class="flex-1 overflow-y-auto px-3 py-3 space-y-4">
+    <div tabindex="0" role="region" aria-label="Navegación de documentos"
+         class="flex-1 overflow-y-auto px-3 py-3 space-y-4">
       
       <!-- Favorites Section -->
       <div>
@@ -172,7 +173,7 @@
       
       <!-- Breadcrumb & Back -->
       <div class="flex items-center gap-2 text-sm">
-        <button (click)="closeEditorView()" class="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors" title="Back to All Docs">
+        <button (click)="closeEditorView()" aria-label="Volver a todos los documentos" class="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors" title="Back to All Docs">
           <ng-icon name="lucideChevronRight" class="w-4 h-4 rotate-180"></ng-icon>
         </button>
         <span appClickable (click)="closeEditorView()" class="text-muted-foreground font-medium hover:underline cursor-pointer">Docs</span>
@@ -264,6 +265,8 @@
                 </button>
                 <button 
                   (click)="toggleNewDocDropdown($event)"
+                  aria-label="Más opciones de documento nuevo"
+                  [attr.aria-expanded]="isNewDocDropdownOpen()"
                   class="px-2 py-1.5 bg-primary hover:bg-primary text-white text-sm font-medium rounded-r-lg border-l border-primary transition-colors">
                   <ng-icon name="lucideChevronDown" class="w-4 h-4"></ng-icon>
                 </button>
@@ -378,6 +381,7 @@
             <!-- Filter Selector -->
             <div class="relative">
               <select 
+                aria-label="Filtrar por tipo de documento"
                 [ngModel]="selectedTypeFilter()" 
                 (ngModelChange)="selectedTypeFilter.set($event)"
                 class="appearance-none bg-white dark:bg-muted border border-border text-xs font-medium text-muted-foreground px-3 py-1.5 pr-8 rounded-lg focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer">
@@ -393,6 +397,7 @@
             <!-- Sort Selector -->
             <div class="relative">
               <select 
+                aria-label="Ordenar documentos"
                 [ngModel]="selectedSort()" 
                 (ngModelChange)="selectedSort.set($event)"
                 class="appearance-none bg-white dark:bg-muted border border-border text-xs font-medium text-muted-foreground px-3 py-1.5 pr-8 rounded-lg focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer">
