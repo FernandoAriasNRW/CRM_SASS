@@ -1,6 +1,6 @@
 # CRM SaaS Suite — Estado y Ruta de Trabajo
 
-**Auditoría:** 2026-08-11 · **Última actualización:** 2026-08-11 (Fases 1 y 2 completadas)
+**Auditoría:** 2026-08-11 · **Última actualización:** 2026-08-11 (Fases 1 y 2 completadas; Fase 3 en curso)
 **Posicionamiento:** plataforma de **work management**, compitiendo con ClickUp y Monday.com
 **Alcance:** backend (.NET 9), frontend (Angular 21), testing, CI/CD, UI/UX
 
@@ -18,12 +18,12 @@ ejecutándose, credenciales versionadas y un CI que no podía pasar.
 | | Antes | Ahora |
 |---|---|---|
 | Repositorio git | sólo `web/` | backend + frontend, historia preservada |
-| Tests ejecutándose | 0 | **79 en verde** (74 unitarios + 5 integración) + 4 E2E |
+| Tests ejecutándose | 0 | **79 backend** (74 + 5) + **7 frontend** + **8 E2E** |
 | Secretos versionados | 3 ficheros | 0 |
 | Endpoints sin autenticación | 1 | 0 |
 | Validación de entrada | escrita pero nunca ejecutada | activa en el pipeline |
 | CI | imposible de pasar | funcional, con E2E y contenedores |
-| Lint frontend | inexistente | 0 errores, 253 avisos medidos |
+| Lint frontend | inexistente | 0 errores, 213 avisos medidos |
 
 El aislamiento multi-tenant ya está blindado y verificado al arrancar (§5). El frente que
 queda es de producto: **no compite todavía en features** con ClickUp o Monday (§3), y la
@@ -251,23 +251,39 @@ el ADR-0004.
 
 ---
 
-## 6. Fase 3 — UX/UI de nivel producto (siguiente) 🎨
+## 6. Fase 3 — UX/UI de nivel producto (en curso) 🎨
 
 *Objetivo: que la interfaz deje de parecer un MVP. Es donde se gana contra ClickUp,
-cuya queja número uno es la lentitud y la sobrecarga. Ejecutar con Claude Design sobre
-los tokens ya existentes.*
+cuya queja número uno es la lentitud y la sobrecarga.*
 
-| # | Tarea | Rol | Criterio de aceptación |
-|---|---|---|---|
-| 3.1 | **Erradicar la paleta cruda.** Migrar 913 clases `text-slate-*` / `bg-blue-*` a tokens semánticos; ampliar tokens donde falten (success, warning, info, superficie elevada). | Frontend / UI | 0 clases de paleta cruda. Modo oscuro correcto en las 12 features. |
-| 3.2 | **Accesibilidad WCAG 2.1 AA.** Resolver los 64 avisos de a11y, focus trap en modales y drawers, navegación completa por teclado, skip link, contraste verificado. Escalar las reglas a `error` en ESLint. | Frontend / UI | axe-core sin violaciones críticas ni serias. E2E de navegación por teclado. |
-| 3.3 | **Command palette (⌘K).** Navegación, búsqueda global y acciones rápidas. Expectativa de mercado en 2026 (Linear, Notion, ClickUp). | Frontend / UI | Abre en <100 ms; busca en proyectos, tareas, tickets y docs; 10+ acciones. |
-| 3.4 | **Rendimiento percibido.** `cdk-virtual-scroll` en data-table y listas; actualizaciones optimistas en el tablero con rollback. | Frontend | 5.000 filas a 60 fps. Mover una tarjeta se siente instantáneo. |
-| 3.5 | Estados vacíos, skeletons y errores consistentes en las 12 features (los componentes existen, falta aplicarlos). | UI/UX | Ninguna vista en blanco durante carga ni ante error. |
-| 3.6 | Saldar la deuda de lint: 84 `any`, 41 variables sin usar, 33 `*ngIf`. | Frontend | 0 avisos; reglas escaladas a `error`. |
-| 3.7 | Refactor de componentes obesos (`docs`, `tasks`, `tickets`) en subcomponentes. | Frontend | Ningún componente supera 250 líneas. |
-| 3.8 | Guía de diseño viva (Storybook o `/design-system`) con los 25 componentes. | UI/UX | Todo componente nuevo se documenta antes de mergear. |
-| 3.9 | i18n con `@angular/localize`. Español + inglés. | Frontend | Cambio de idioma sin recarga; 0 textos hardcodeados. |
+### Completado
+
+| # | Tarea | Resultado |
+|---|---|---|
+| 3.1 | Paleta cruda a tokens | **1141 sustituciones en 25 ficheros; 0 clases crudas** fuera de la exclusión deliberada. El sistema no alcanzaba: faltaban `success`, `warning`, `info`, y sobre todo la distinción entre relleno sólido y fondo tenue, sin la cual no había forma de expresar `bg-green-100 text-green-800` y cada pantalla se inventaba los suyos. Ahora cada color tiene cuatro tokens. Había **tres escalas de neutros compitiendo** (zinc, slate, gray); todas colapsan, y con ellas las variantes `dark:` redundantes. Corregido que en oscuro `--card` valía lo mismo que `--background`, así que las tarjetas no se distinguían del lienzo. **Azul confirmado como marca**: los 157 acentos púrpura pasan a `primary`. |
+| 3.2 | Accesibilidad | Directiva `appClickable` para los 20 elementos con `(click)` que no existían para el teclado, y 14 etiquetas asociadas a su control. Auditoría **axe sin violaciones críticas ni graves** en rutas públicas, más pruebas de teclado que axe no puede cubrir: completar el login sin ratón e indicador de foco visible. `ui-card-title` emite encabezado con nivel configurable. |
+| 3.6 | Deuda de lint (parcial) | 28 imports muertos eliminados. **De 253 avisos a 213.** |
+
+### Pendiente
+
+| # | Tarea | Criterio de aceptación |
+|---|---|---|
+| 3.3 | **Command palette (⌘K).** Navegación, búsqueda global y acciones rápidas. Expectativa de mercado en 2026 (Linear, Notion, ClickUp). | Abre en <100 ms; busca en proyectos, tareas, tickets y docs; 10+ acciones. |
+| 3.4 | **Rendimiento percibido.** `cdk-virtual-scroll` en data-table y listas; actualizaciones optimistas en el tablero con rollback. | 5.000 filas a 60 fps. Mover una tarjeta se siente instantáneo. |
+| 3.5 | Estados vacíos, skeletons y errores consistentes en las 12 features (los componentes existen, falta aplicarlos). | Ninguna vista en blanco durante carga ni ante error. |
+| 3.6 | Resto de la deuda de lint: 84 `any`, 26 `*ngIf`, 20 funciones vacías, 13 variables sin usar. | 0 avisos; reglas escaladas a `error`. |
+| 3.7 | Refactor de componentes obesos (`docs`, `tasks`, `tickets`) en subcomponentes. | Ningún componente supera 250 líneas. |
+| 3.8 | Guía de diseño viva (Storybook o `/design-system`) con los 25 componentes. | Todo componente nuevo se documenta antes de mergear. |
+| 3.9 | i18n con `@angular/localize`. Español + inglés. | Cambio de idioma sin recarga; 0 textos hardcodeados. |
+| 3.10 | Auditar con axe las rutas autenticadas. Hoy sólo se cubren las públicas, porque el resto exige sesión y datos sembrados. | E2E autenticados + axe en las 12 features. |
+
+### El linter no puede ver la directiva de teclado
+
+`click-events-have-key-events` analiza la plantilla buscando un `(keydown)` escrito allí,
+así que no ve el que aporta `appClickable` y sigue avisando en los 20 sitios. Es un límite
+de la herramienta, no trabajo pendiente: la verificación real son 6 tests unitarios de la
+directiva y la auditoría axe. Conviene tenerlo presente antes de escalar esas reglas a
+`error` en la tarea 3.6, porque no podrán escalarse sin suprimirlas caso a caso.
 
 ---
 
