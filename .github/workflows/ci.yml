@@ -89,6 +89,23 @@ jobs:
           cache: npm
           cache-dependency-path: web/package-lock.json
 
+      # npm poda las dependencias opcionales a la plataforma anfitriona al escribir el
+      # lockfile (npm/cli#4828). Un `npm install` desde Windows con npm < 11 deja fuera
+      # los binarios de Linux de rollup y esbuild, y `npm ci` aquí instala un árbol sin
+      # ellos: el fallo aparece minutos después, al arrancar el servidor de los E2E, con
+      # un mensaje que no señala la causa. Esta comprobación lo dice al instante.
+      - name: Verificar que el lockfile cubre Linux
+        run: |
+          for pkg in @rollup/rollup-linux-x64-gnu @esbuild/linux-x64; do
+            if ! grep -q "\"node_modules/$pkg\"" package-lock.json; then
+              echo "::error::package-lock.json no incluye $pkg."
+              echo "Se generó con npm < 11, que poda las dependencias opcionales a la"
+              echo "plataforma anfitriona. Regenéralo con:  npx npm@11 install --package-lock-only"
+              exit 1
+            fi
+          done
+          echo "El lockfile incluye los binarios de Linux."
+
       - name: Instalar dependencias
         run: npm ci
 
