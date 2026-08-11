@@ -1,9 +1,12 @@
+using BuildingBlocks.Application.Abstractions;
+using BuildingBlocks.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Teams.Domain.Entities;
 
 namespace Teams.Infrastructure.Persistence;
 
-public sealed class TeamsDbContext(DbContextOptions<TeamsDbContext> options) : DbContext(options)
+public sealed class TeamsDbContext(DbContextOptions<TeamsDbContext> options, IUserContext? userContext)
+    : TenantDbContext(options, userContext)
 {
     public DbSet<Team> Teams => Set<Team>();
     public DbSet<TeamMember> TeamMembers => Set<TeamMember>();
@@ -14,7 +17,8 @@ public sealed class TeamsDbContext(DbContextOptions<TeamsDbContext> options) : D
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(TeamsDbContext).Assembly);
 
         // Soft delete global filters
-        modelBuilder.Entity<Team>().HasQueryFilter(e => !e.IsDeleted);
-        modelBuilder.Entity<TeamMember>().HasQueryFilter(e => !e.IsDeleted);
+
+      // Aislamiento por tenant y soft delete, compuestos en un solo filtro.
+      ApplyTenantFilters(modelBuilder);
     }
 }

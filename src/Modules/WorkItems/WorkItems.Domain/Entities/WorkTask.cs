@@ -5,7 +5,7 @@ using TaskStatus = WorkItems.Domain.ValueObjects.TaskStatus;
 
 namespace WorkItems.Domain.Entities;
 
-public sealed class WorkTask : AggregateRoot
+public sealed class WorkTask : AggregateRoot, ITenantEntity
 {
     public Guid TenantId { get; private set; }
     public Guid ProjectId { get; private set; }

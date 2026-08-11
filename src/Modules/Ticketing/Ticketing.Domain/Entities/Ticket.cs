@@ -5,7 +5,7 @@ using Ticketing.Domain.Events;
 
 namespace Ticketing.Domain.Entities;
 
-public sealed class Ticket : AggregateRoot
+public sealed class Ticket : AggregateRoot, ITenantEntity
 {
     public Guid TenantId { get; private set; }
     public Guid CustomerId { get; private set; }

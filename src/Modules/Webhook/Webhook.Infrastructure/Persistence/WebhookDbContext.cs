@@ -1,10 +1,13 @@
-using Microsoft.EntityFrameworkCore;
+using BuildingBlocks.Application.Abstractions;
+using BuildingBlocks.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Microsoft.EntityFrameworkCore;
 using Webhook.Domain.Entities;
 
 namespace Webhook.Infrastructure.Persistence;
 
-public sealed class WebhookDbContext(DbContextOptions<WebhookDbContext> options) : DbContext(options)
+public sealed class WebhookDbContext(DbContextOptions<WebhookDbContext> options, IUserContext? userContext)
+    : TenantDbContext(options, userContext)
 {
     public DbSet<WebhookSubscription> Subscriptions => Set<WebhookSubscription>();
 
@@ -12,6 +15,9 @@ public sealed class WebhookDbContext(DbContextOptions<WebhookDbContext> options)
     {
         base.OnModelCreating(modelBuilder);
         modelBuilder.ApplyConfiguration(new WebhookSubscriptionConfiguration());
+
+      // Aislamiento por tenant y soft delete, compuestos en un solo filtro.
+      ApplyTenantFilters(modelBuilder);
     }
 }
 

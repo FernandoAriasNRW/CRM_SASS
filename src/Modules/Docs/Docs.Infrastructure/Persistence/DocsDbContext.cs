@@ -1,9 +1,12 @@
+using BuildingBlocks.Application.Abstractions;
+using BuildingBlocks.Infrastructure.Persistence;
 using Docs.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace Docs.Infrastructure.Persistence;
 
-public sealed class DocsDbContext(DbContextOptions<DocsDbContext> options) : DbContext(options)
+public sealed class DocsDbContext(DbContextOptions<DocsDbContext> options, IUserContext? userContext)
+    : TenantDbContext(options, userContext)
 {
     public DbSet<Document> Documents => Set<Document>();
     public DbSet<Page> Pages => Set<Page>();
@@ -15,7 +18,8 @@ public sealed class DocsDbContext(DbContextOptions<DocsDbContext> options) : DbC
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(DocsDbContext).Assembly);
 
         // Soft delete query filters
-        modelBuilder.Entity<Document>().HasQueryFilter(e => !e.IsDeleted);
-        modelBuilder.Entity<Page>().HasQueryFilter(e => !e.IsDeleted);
+
+      // Aislamiento por tenant y soft delete, compuestos en un solo filtro.
+      ApplyTenantFilters(modelBuilder);
     }
 }

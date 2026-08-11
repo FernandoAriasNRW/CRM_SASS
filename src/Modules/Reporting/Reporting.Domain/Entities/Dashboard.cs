@@ -2,7 +2,7 @@ using BuildingBlocks.Domain.Primitives;
 
 namespace Reporting.Domain.Entities;
 
-public sealed class Dashboard : Entity
+public sealed class Dashboard : Entity, ITenantEntity
 {
     public Guid TenantId { get; private set; }
     public string Title { get; private set; } = string.Empty;

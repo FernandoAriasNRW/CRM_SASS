@@ -3,7 +3,7 @@ using BuildingBlocks.Domain.Primitives;
 
 namespace Projects.Domain.Entities;
 
-public sealed class Space : AggregateRoot
+public sealed class Space : AggregateRoot, ITenantEntity, ISoftDeletable
 {
     public Guid TenantId { get; private set; }
     public string Name { get; private set; } = string.Empty;

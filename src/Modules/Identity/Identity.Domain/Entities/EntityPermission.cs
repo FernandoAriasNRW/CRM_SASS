@@ -2,7 +2,7 @@ using BuildingBlocks.Domain.Primitives;
 
 namespace Identity.Domain.Entities;
 
-public sealed class EntityPermission : AggregateRoot
+public sealed class EntityPermission : AggregateRoot, ITenantEntity
 {
     public Guid TenantId { get; private set; }
     public Guid? UserId { get; private set; }

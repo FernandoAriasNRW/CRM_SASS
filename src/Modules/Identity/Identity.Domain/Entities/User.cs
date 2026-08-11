@@ -8,7 +8,7 @@ namespace Identity.Domain.Entities;
 /// <summary>
 /// Entidad de dominio User.
 /// </summary>
-public sealed class User : AggregateRoot
+public sealed class User : AggregateRoot, ITenantEntity, ISoftDeletable
 {
   public Guid TenantId { get; private set; }
   public string Name { get; private set; } = string.Empty;

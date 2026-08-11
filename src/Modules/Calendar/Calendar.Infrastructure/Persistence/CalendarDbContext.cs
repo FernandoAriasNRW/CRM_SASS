@@ -1,3 +1,5 @@
+using BuildingBlocks.Application.Abstractions;
+using BuildingBlocks.Infrastructure.Persistence;
 using Calendar.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
@@ -5,9 +7,9 @@ namespace Calendar.Infrastructure.Persistence;
 
 /// <summary>
 /// DbContext para el módulo Calendar.
-/// Configura el filtro global de soft delete y las configuraciones de entidad.
 /// </summary>
-public sealed class CalendarDbContext(DbContextOptions<CalendarDbContext> options) : DbContext(options)
+public sealed class CalendarDbContext(DbContextOptions<CalendarDbContext> options, IUserContext? userContext)
+    : TenantDbContext(options, userContext)
 {
     public DbSet<CalendarEvent> CalendarEvents => Set<CalendarEvent>();
 
@@ -18,23 +20,8 @@ public sealed class CalendarDbContext(DbContextOptions<CalendarDbContext> option
         // Aplicar configuraciones desde el ensamblado
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(CalendarDbContext).Assembly);
 
-        // Filtro global para soft delete
-        modelBuilder.Entity<CalendarEvent>().HasQueryFilter(e => !e.IsDeleted);
+      // Aislamiento por tenant y soft delete, compuestos en un solo filtro.
+      ApplyTenantFilters(modelBuilder);
     }
 
-    /// <summary>
-    /// Método para desactivar filtros globales (usado en Queries de auditoría).
-    /// </summary>
-    public void DisableGlobalFilters(ModelBuilder modelBuilder)
-    {
-        modelBuilder.Entity<CalendarEvent>().HasQueryFilter(e => true);
-    }
-
-    /// <summary>
-    /// Método para reactivar filtros globales.
-    /// </summary>
-    public void EnableGlobalFilters(ModelBuilder modelBuilder)
-    {
-        modelBuilder.Entity<CalendarEvent>().HasQueryFilter(e => !e.IsDeleted);
-    }
 }

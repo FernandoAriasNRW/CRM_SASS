@@ -2,7 +2,7 @@ using BuildingBlocks.Domain.Primitives;
 
 namespace Docs.Domain.Entities;
 
-public sealed class Document : Entity
+public sealed class Document : Entity, ITenantEntity, ISoftDeletable
 {
     public Guid TenantId { get; private set; }
     public string Title { get; private set; }

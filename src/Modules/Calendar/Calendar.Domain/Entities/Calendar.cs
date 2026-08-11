@@ -5,7 +5,7 @@ using Calendar.Domain.ValueObjects;
 
 namespace Calendar.Domain.Entities;
 
-public sealed class CalendarEvent : AggregateRoot
+public sealed class CalendarEvent : AggregateRoot, ITenantEntity, ISoftDeletable
 {
   public Guid TenantId { get; private set; }
   public Guid OrganizerId { get; private set; }

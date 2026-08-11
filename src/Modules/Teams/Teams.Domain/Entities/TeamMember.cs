@@ -2,7 +2,7 @@ using BuildingBlocks.Domain.Primitives;
 
 namespace Teams.Domain.Entities;
 
-public sealed class TeamMember : Entity
+public sealed class TeamMember : Entity, ISoftDeletable
 {
     public Guid TeamId { get; private set; }
     public Guid UserId { get; private set; }
