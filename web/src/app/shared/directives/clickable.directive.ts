@@ -16,7 +16,7 @@ import { Directive } from '@angular/core';
  * Preferir `<button>` cuando el elemento sea de verdad un botón.
  */
 @Directive({
-  selector: '[uiClickable]',
+  selector: '[appClickable]',
   standalone: true,
   host: {
     'role': 'button',

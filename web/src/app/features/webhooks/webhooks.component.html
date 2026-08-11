@@ -220,11 +220,11 @@
 
 <!-- Secret Modal -->
 @if (showSecretModal() && secretToShow()) {
-  <div uiClickable
+  <div appClickable
     class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4"
     (click)="closeSecretModal()"
   >
-    <div uiClickable
+    <div appClickable
       class="w-full max-w-md rounded-lg border border-border bg-card shadow-xl"
       (click)="$event.stopPropagation()"
     >
@@ -270,11 +270,11 @@
 
 <!-- Delete Confirmation Modal -->
 @if (confirmDeleteId()) {
-  <div uiClickable
+  <div appClickable
     class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4"
     (click)="cancelDelete()"
   >
-    <div uiClickable
+    <div appClickable
       class="w-full max-w-sm rounded-lg border border-border bg-card shadow-xl"
       (click)="$event.stopPropagation()"
     >

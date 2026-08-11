@@ -1,4 +1,4 @@
-import { Component, inject, input, output, signal, OnInit, computed, effect } from '@angular/core';
+import { Component, inject, input, output, signal, OnInit, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DatePipe } from '@angular/common';
 import { ApiService } from '../../core/api.service';

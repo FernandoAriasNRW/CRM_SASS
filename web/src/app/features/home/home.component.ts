@@ -9,7 +9,6 @@ import {
   lucideTicket, lucideMessageSquare, lucideCalendar, lucideChartBar,
   lucideUsers, lucideWebhook, lucideFileText, lucideClock, lucideStar
 } from '@ng-icons/lucide';
-import { UpperCasePipe } from '@angular/common';
 import { RecentViewsService } from '../../core/recent-views.service';
 import { MiniCalendarComponent, CalendarEvent } from '../../shared/ui/mini-calendar.component';
 

@@ -100,7 +100,7 @@
             <div class="flex flex-wrap gap-1.5 flex-1">
               @for (key of selectedTags(); track key) {
                 @if (getTag(key); as tag) {
-                  <span uiClickable [class]="tag.color + ' ' + tag.textColor + ' text-xs px-2 py-0.5 rounded-full flex items-center gap-1 cursor-pointer hover:opacity-80'"
+                  <span appClickable [class]="tag.color + ' ' + tag.textColor + ' text-xs px-2 py-0.5 rounded-full flex items-center gap-1 cursor-pointer hover:opacity-80'"
                         (click)="toggleTag(key)">
                     {{ tag.label }}
                     <span class="text-xs leading-none">&times;</span>

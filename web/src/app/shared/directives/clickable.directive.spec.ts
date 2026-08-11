@@ -11,7 +11,7 @@ import { ClickableDirective } from './clickable.directive';
 @Component({
   standalone: true,
   imports: [ClickableDirective],
-  template: `<div uiClickable (click)="veces = veces + 1">Fila</div>`,
+  template: `<div appClickable (click)="veces = veces + 1">Fila</div>`,
 })
 class AnfitrionComponent {
   veces = 0;

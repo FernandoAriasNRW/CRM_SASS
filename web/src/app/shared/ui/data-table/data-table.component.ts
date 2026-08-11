@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, signal, computed, ViewChild, ElementRef, OnInit, TemplateRef } from '@angular/core';
+import { Component, Input, Output, EventEmitter, signal, computed, OnInit, TemplateRef } from '@angular/core';
 import { CommonModule, NgTemplateOutlet } from '@angular/common';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import { lucideChevronUp, lucideChevronDown, lucideGripVertical, lucideEye, lucideEyeOff, lucideSettings2, lucideSearch, lucideFilter, lucideSave, lucideDownload } from '@ng-icons/lucide';
@@ -6,7 +6,6 @@ import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-
 import { FormsModule } from '@angular/forms';
 import { PaginationComponent } from '../pagination.component';
 import { ButtonComponent } from '../button.component';
-import { InputComponent } from '../input.component';
 import { UserAvatarComponent } from '../user-avatar.component';
 
 export interface ColumnDef {

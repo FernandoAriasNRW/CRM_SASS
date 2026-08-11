@@ -50,7 +50,7 @@ interface ProjectBurndown {
 import { AuthSignalStore } from '../../core/auth-signal.store';
 import { HierarchySignalStore } from '../../core/hierarchy-signal.store';
 
-import { SlicePipe, UpperCasePipe, CommonModule } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ButtonComponent } from '../../shared/ui/button.component';
 import { DrawerComponent } from '../../shared/ui/drawer.component';

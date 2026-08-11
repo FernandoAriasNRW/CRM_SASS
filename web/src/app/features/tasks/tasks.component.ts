@@ -15,7 +15,7 @@ import {
   lucideList, lucideLayoutDashboard, lucideFilter, lucideSave
 } from '@ng-icons/lucide';
 import { DataTableComponent, ColumnDef, TableState } from '../../shared/ui/data-table/data-table.component';
-import { AdvancedFiltersComponent, FilterField } from '../../shared/ui/data-table/advanced-filters.component';
+import { FilterField } from '../../shared/ui/data-table/advanced-filters.component';
 import { ViewsService, SavedView } from '../../shared/services/views.service';
 import { TableColumnService } from '../../shared/services/table-column.service';
 import { HierarchySignalStore } from '../../core/hierarchy-signal.store';

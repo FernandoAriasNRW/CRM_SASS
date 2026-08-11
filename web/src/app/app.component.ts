@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet, NavigationEnd } from '@angular/router';
 import { filter, map } from 'rxjs/operators';
@@ -22,7 +22,7 @@ import {
 } from '@ng-icons/lucide';
 import { HierarchySignalStore } from './core/hierarchy-signal.store';
 import { NavigationSignalStore } from './core/navigation-signal.store';
-import { UpperCasePipe, LowerCasePipe } from '@angular/common';
+import { UpperCasePipe } from '@angular/common';
 import { ClickableDirective } from './shared/directives/clickable.directive';
 
 @Component({

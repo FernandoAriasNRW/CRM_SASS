@@ -16,7 +16,7 @@ import {
   lucideLayoutDashboard, lucideFilter, lucideUser, lucideSave
 } from '@ng-icons/lucide';
 import { DataTableComponent, ColumnDef, TableState } from '../../shared/ui/data-table/data-table.component';
-import { AdvancedFiltersComponent, FilterField } from '../../shared/ui/data-table/advanced-filters.component';
+import { FilterField } from '../../shared/ui/data-table/advanced-filters.component';
 import { HasPermissionDirective } from '../../shared/directives/has-permission.directive';
 import { ViewsService, SavedView } from '../../shared/services/views.service';
 import { TableColumnService } from '../../shared/services/table-column.service';

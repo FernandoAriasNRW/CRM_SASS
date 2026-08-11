@@ -6,13 +6,7 @@ import {
   lucideServer, lucideKey
 } from '@ng-icons/lucide';
 import { WebhookService } from './webhook.service';
-import {
-  WebhookSubscription,
-  CreateWebhookRequest,
-  UpdateWebhookRequest,
-  WEBHOOK_EVENT_TYPES,
-  WebhookEventType,
-} from './webhook.model';
+import { WebhookSubscription, CreateWebhookRequest, UpdateWebhookRequest, WEBHOOK_EVENT_TYPES } from './webhook.model';
 
 import { DrawerComponent } from '../../shared/ui/drawer.component';
 

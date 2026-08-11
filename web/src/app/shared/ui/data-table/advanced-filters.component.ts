@@ -2,7 +2,6 @@ import { Component, EventEmitter, Input, Output, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ButtonComponent } from '../button.component';
-import { InputComponent } from '../input.component';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import { lucideX, lucideFilter } from '@ng-icons/lucide';
 
