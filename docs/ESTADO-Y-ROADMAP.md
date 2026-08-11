@@ -1,6 +1,6 @@
 # CRM SaaS Suite — Estado y Ruta de Trabajo
 
-**Auditoría:** 2026-08-11 · **Última actualización:** 2026-08-11 (Fases 1 y 2 completadas; Fase 3 en curso)
+**Auditoría:** 2026-08-11 · **Última actualización:** 2026-08-11 (Fases 1, 2 y 3)
 **Posicionamiento:** plataforma de **work management**, compitiendo con ClickUp y Monday.com
 **Alcance:** backend (.NET 9), frontend (Angular 21), testing, CI/CD, UI/UX
 
@@ -13,21 +13,28 @@ bounded context, CQRS, Outbox— y es una base sólida sobre la que escalar. El 
 no era el diseño, era la salud operativa: al auditar se encontraron cero tests
 ejecutándose, credenciales versionadas y un CI que no podía pasar.
 
-**Las Fases 1 y 2 ya están implementadas** (ver §4 y §5). Estado tras ellas:
+Estado tras las tres primeras fases:
 
 | | Antes | Ahora |
 |---|---|---|
 | Repositorio git | sólo `web/` | backend + frontend, historia preservada |
-| Tests ejecutándose | 0 | **79 backend** (74 + 5) + **7 frontend** + **8 E2E** |
+| Tests ejecutándose | 0 | **120 backend** (112 + 8) + **17 frontend** + **32 E2E** |
 | Secretos versionados | 3 ficheros | 0 |
 | Endpoints sin autenticación | 1 | 0 |
 | Validación de entrada | escrita pero nunca ejecutada | activa en el pipeline |
 | CI | imposible de pasar | funcional, con E2E y contenedores |
-| Lint frontend | inexistente | 0 errores, 213 avisos medidos |
+| Lint frontend | inexistente | 0 errores, 177 avisos medidos |
 
-El aislamiento multi-tenant ya está blindado y verificado al arrancar (§5). El frente que
-queda es de producto: **no compite todavía en features** con ClickUp o Monday (§3), y la
-interfaz sigue siendo de MVP (§6).
+**Las Fases 1, 2 y 3 están implementadas**, con dos excepciones documentadas en §6: el
+troceado de `docs` y la internacionalización, que necesita una decisión de despliegue
+(§6.1).
+
+El aislamiento multi-tenant está blindado y verificado al arrancar (§5), y la interfaz ya
+no es de MVP: tokens semánticos completos, accesibilidad auditada en 9 vistas, paleta de
+comandos y tableros que no mienten sobre lo que se guardó.
+
+El frente que queda es de producto: **no compite todavía en features** con ClickUp o
+Monday (§3). Ahí es donde entra la Fase 4.
 
 ---
 
@@ -83,23 +90,24 @@ Features enrutadas: `home` · `dashboard` · `projects` · `tasks` · `tickets` 
 | Problema | Medida | Estado |
 |---|---|---|
 | Paleta cruda de Tailwind en vez de tokens | eran 1141 usos | ✅ Fase 3.1 |
-| Accesibilidad: elementos sin teclado y etiquetas sueltas | eran 55 avisos | ✅ Fase 3.2 |
+| Accesibilidad: teclado, etiquetas, contraste, nombres | eran 55 avisos + 7 fallos que sólo destapó axe | ✅ Fases 3.2, 3.8 y 3.10 |
+| Sintaxis de control antigua (`*ngIf`) | eran 33 avisos | ✅ Fase 3.6 |
 | Imports muertos | eran 28 | ✅ Fase 3.6 |
-| `any` sin tipar | 84 avisos | 🟠 Fase 3.6 |
-| Sintaxis de control antigua (`*ngIf`) | 26 avisos | 🟡 Fase 3.6 |
-| Funciones vacías | 20 avisos | 🟡 Fase 3.6 |
-| Sin i18n (español e inglés mezclados, textos hardcodeados) | — | 🟠 Fase 3.9 |
-| Sin virtualización de listas (`@angular/cdk` instalado pero sin usar) | 0 usos | 🟠 Fase 3.4 |
-| Componentes obesos (`docs.component.html` 709 líneas) | — | 🟡 Fase 3.7 |
-| Specs frontend unitarias | 7 (6 de la directiva + 1 del CLI) | 🟠 Fase 3 |
+| Tablero pintando hasta 1000 tarjetas | 25 por columna, con «mostrar más» | ✅ Fase 3.4 |
+| Estados vacíos y de carga sin usar (y rotos) | 2 errores latentes | ✅ Fase 3.5 |
+| `any` sin tipar | 84 avisos; los de `data-table` resueltos con genéricos | 🟡 quedan los de interop |
+| Funciones vacías | 20 avisos | 🟡 |
+| Sin i18n (español e inglés mezclados) | 28 ficheros | 🔴 **necesita decisión**, §6.1 |
+| Componentes obesos (`docs.component.html` 705 líneas) | cubierto con humo, sin trocear | 🟠 §6, tarea 3.7 |
+| Specs frontend unitarias | 17 | 🟡 cobertura aún baja |
 
 ### 2.3 Testing
 
 ```
-tests/UnitTests/         74 tests en verde ✅
-tests/IntegrationTests/   5 tests contra MySQL en contenedor ✅
-web/e2e/                  8 flujos con Playwright, incluida auditoría axe ✅
-web/ (unitarios)          7 specs — cobertura aún mínima, pendiente Fase 3
+tests/UnitTests/        112 tests en verde ✅
+tests/IntegrationTests/   8 tests contra MySQL en contenedor ✅
+web/e2e/                 32 flujos con Playwright, con axe en 9 vistas ✅
+web/ (unitarios)         17 specs — cobertura aún baja fuera de shared/
 ```
 
 ---
@@ -252,7 +260,7 @@ el ADR-0004.
 
 ---
 
-## 6. Fase 3 — UX/UI de nivel producto (en curso) 🎨
+## 6. Fase 3 — UX/UI de nivel producto ✅ COMPLETADA (con dos excepciones)
 
 *Objetivo: que la interfaz deje de parecer un MVP. Es donde se gana contra ClickUp,
 cuya queja número uno es la lentitud y la sobrecarga.*
@@ -265,18 +273,40 @@ cuya queja número uno es la lentitud y la sobrecarga.*
 | 3.2 | Accesibilidad | Directiva `appClickable` para los 20 elementos con `(click)` que no existían para el teclado, y 14 etiquetas asociadas a su control. Auditoría **axe sin violaciones críticas ni graves** en rutas públicas, más pruebas de teclado que axe no puede cubrir: completar el login sin ratón e indicador de foco visible. `ui-card-title` emite encabezado con nivel configurable. |
 | 3.6 | Deuda de lint (parcial) | 28 imports muertos eliminados. **De 253 avisos a 213.** |
 
-### Pendiente
+### Completado en la segunda tanda
 
-| # | Tarea | Criterio de aceptación |
+| # | Tarea | Resultado |
 |---|---|---|
-| 3.3 | **Command palette (⌘K).** Navegación, búsqueda global y acciones rápidas. Expectativa de mercado en 2026 (Linear, Notion, ClickUp). | Abre en <100 ms; busca en proyectos, tareas, tickets y docs; 10+ acciones. |
-| 3.4 | **Rendimiento percibido.** `cdk-virtual-scroll` en data-table y listas; actualizaciones optimistas en el tablero con rollback. | 5.000 filas a 60 fps. Mover una tarjeta se siente instantáneo. |
-| 3.5 | Estados vacíos, skeletons y errores consistentes en las 12 features (los componentes existen, falta aplicarlos). | Ninguna vista en blanco durante carga ni ante error. |
-| 3.6 | Resto de la deuda de lint: 84 `any`, 26 `*ngIf`, 20 funciones vacías, 13 variables sin usar. | 0 avisos; reglas escaladas a `error`. |
-| 3.7 | Refactor de componentes obesos (`docs`, `tasks`, `tickets`) en subcomponentes. | Ningún componente supera 250 líneas. |
-| 3.8 | Guía de diseño viva (Storybook o `/design-system`) con los 25 componentes. | Todo componente nuevo se documenta antes de mergear. |
-| 3.9 | i18n con `@angular/localize`. Español + inglés. | Cambio de idioma sin recarga; 0 textos hardcodeados. |
-| 3.10 | Auditar con axe las rutas autenticadas. Hoy sólo se cubren las públicas, porque el resto exige sesión y datos sembrados. | E2E autenticados + axe en las 12 features. |
+| 3.3 | Paleta de comandos (⌘K) | Navegación, búsqueda en tres módulos y 7 acciones. Los estáticos se filtran en memoria y los remotos se **añaden** en lugar de sustituir, para que la lista nunca parpadee a vacío. Ignora acentos. 10 tests + 5 E2E. |
+| 3.4 | Rendimiento del tablero | Reversión al rechazar el servidor —antes la interfaz mentía— y **paginación por columna** con «mostrar más». El recorte se hace al repartir, no en la plantilla, porque `cdkDropListData` y los índices del arrastre deben apuntar al mismo array. |
+| 3.5 | Estados vacíos y de carga | Los componentes existían **sin usar y rotos**: dos errores que nunca se compilaron. Conectados en los dos tableros. |
+| 3.6 | Deuda de lint | De 253 a **177**. Migración oficial a `@if`/`@for`, 28 imports muertos, y `data-table` pasa a ser **genérica en el tipo de sus filas**. |
+| 3.8 | Guía de diseño viva | Renderiza los componentes reales, así que no puede quedarse desfasada. Al auditarla destapó **tres fallos de contraste** en los rellenos sólidos que ninguna pantalla había expuesto. |
+| 3.10 | axe en rutas autenticadas | Las 6 vistas principales más la paleta y docs. Encontró contraste insuficiente en 6 de 7 —una sola causa en `--muted-foreground`— y botones sin nombre accesible. |
+
+### Lo que queda, y por qué
+
+| # | Tarea | Estado |
+|---|---|---|
+| 3.7 | Partir `docs.component` (705 + 625 líneas) | 🟠 **Sólo la mitad.** Corregidos 4 defectos de accesibilidad y añadido humo. El troceado no se hizo: las pruebas que lo respaldarían exigen reproducir la forma exacta de su API, que no conseguí. Refactorizar sin ellas es cambiar a ciegas. |
+| 3.9 | i18n con `@angular/localize` | 🔴 **No empezada, y necesita una decisión.** Ver §6.1. |
+
+### 6.1 i18n: por qué no se hizo
+
+Toca 28 ficheros y más de un centenar de textos, pero el problema no es el volumen:
+**`@angular/localize` genera un bundle por idioma**, y eso cambia el despliegue. El
+`docker-compose` actual sirve una sola build desde nginx; con dos idiomas hacen falta dos
+artefactos y una regla que elija según la ruta o la cabecera del navegador.
+
+Las opciones no son equivalentes y la elección no es técnica:
+
+- **Build-time (`@angular/localize`)** — sin coste en tiempo de ejecución y es lo que
+  recomienda Angular. A cambio, cada idioma es un despliegue y cambiar de idioma recarga.
+- **Runtime (`ngx-translate` o similar)** — un solo artefacto y cambio de idioma sin
+  recargar. A cambio, los textos viajan en JSON y no hay comprobación en compilación.
+
+Antes de tocar nada hace falta saber **qué idiomas** y si se acepta un artefacto por
+idioma. Sin eso, cualquier decisión es una apuesta que después cuesta deshacer.
 
 ### El linter no puede ver la directiva de teclado
 
