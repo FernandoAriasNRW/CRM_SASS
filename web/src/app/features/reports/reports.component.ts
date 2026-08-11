@@ -1,5 +1,5 @@
 import { Component, inject, OnInit, signal, computed, ViewChild, TemplateRef } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { ApiService } from '../../core/api.service';
 import { BadgeComponent, type BadgeVariant } from '../../shared/ui/badge.component';
 import { ButtonComponent } from '../../shared/ui/button.component';
@@ -22,7 +22,7 @@ interface ReportDto {
 @Component({
   selector: 'app-reports',
   standalone: true,
-  imports: [CommonModule, BadgeComponent, ButtonComponent, NgIconComponent, ReportCreateModalComponent, DataTableComponent, AdvancedFiltersComponent],
+  imports: [BadgeComponent, ButtonComponent, NgIconComponent, ReportCreateModalComponent, DataTableComponent, AdvancedFiltersComponent],
   viewProviders: [provideIcons({ lucideRefreshCw, lucidePlus, lucideDownload, lucideFileText, lucideFilter, lucideSave })],
   templateUrl: './reports.component.html',
 })

@@ -1,29 +1,34 @@
 import { Component, Input, computed, inject, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { UsersService } from '../../core/users.service';
 
 @Component({
   selector: 'app-user-avatar',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   template: `
-    <div class="flex items-center gap-2" *ngIf="user() as u; else loading">
-      <div class="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center text-xs font-medium text-white shadow-sm"
-           [style.backgroundColor]="u.avatarUrl ? 'transparent' : getColor(u.id)">
-        <img *ngIf="u.avatarUrl" [src]="u.avatarUrl" [alt]="u.name" class="w-full h-full object-cover" />
-        <span *ngIf="!u.avatarUrl">{{ getInitials(u.name) }}</span>
+    @if (user(); as u) {
+      <div class="flex items-center gap-2">
+        <div class="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center text-xs font-medium text-white shadow-sm"
+          [style.backgroundColor]="u.avatarUrl ? 'transparent' : getColor(u.id)">
+          @if (u.avatarUrl) {
+            <img [src]="u.avatarUrl" [alt]="u.name" class="w-full h-full object-cover" />
+          }
+          @if (!u.avatarUrl) {
+            <span>{{ getInitials(u.name) }}</span>
+          }
+        </div>
+        <span class="text-sm text-muted-foreground font-medium truncate max-w-[150px]" [title]="u.name">
+          {{ u.name }}
+        </span>
       </div>
-      <span class="text-sm text-muted-foreground font-medium truncate max-w-[150px]" [title]="u.name">
-        {{ u.name }}
-      </span>
-    </div>
-    <ng-template #loading>
+    } @else {
       <div class="flex items-center gap-2 animate-pulse">
         <div class="w-8 h-8 rounded-full bg-secondary"></div>
         <div class="h-4 bg-secondary rounded w-24"></div>
       </div>
-    </ng-template>
-  `
+    }
+    `
 })
 export class UserAvatarComponent implements OnInit {
   @Input({ required: true }) userId!: string;

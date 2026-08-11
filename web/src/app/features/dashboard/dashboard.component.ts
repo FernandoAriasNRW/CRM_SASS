@@ -50,7 +50,7 @@ interface ProjectBurndown {
 import { AuthSignalStore } from '../../core/auth-signal.store';
 import { HierarchySignalStore } from '../../core/hierarchy-signal.store';
 
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { ButtonComponent } from '../../shared/ui/button.component';
 import { DrawerComponent } from '../../shared/ui/drawer.component';
@@ -59,11 +59,18 @@ import { DrawerComponent } from '../../shared/ui/drawer.component';
   selector: 'app-dashboard',
   standalone: true,
   imports: [
-    CommonModule, FormsModule, ButtonComponent,
-    CardComponent, CardHeaderComponent, CardTitleComponent, CardContentComponent,
-    NgIconComponent, DoughnutChartComponent, LineChartComponent, ProgressBarComponent,
+    FormsModule,
+    ButtonComponent,
+    CardComponent,
+    CardHeaderComponent,
+    CardTitleComponent,
+    CardContentComponent,
+    NgIconComponent,
+    DoughnutChartComponent,
+    LineChartComponent,
+    ProgressBarComponent,
     DrawerComponent
-  ],
+],
   viewProviders: [provideIcons({
     lucideFolderKanban, lucideCheckSquare, lucideTicket, lucideTrendingUp,
     lucideClock, lucideActivity, lucidePieChart, lucideBarChart3,

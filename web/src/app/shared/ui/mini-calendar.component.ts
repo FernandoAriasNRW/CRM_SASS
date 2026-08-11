@@ -1,5 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import { lucideChevronLeft, lucideChevronRight } from '@ng-icons/lucide';
 
@@ -12,7 +12,7 @@ export interface CalendarEvent {
 @Component({
   selector: 'app-mini-calendar',
   standalone: true,
-  imports: [CommonModule, NgIconComponent],
+  imports: [NgIconComponent],
   viewProviders: [provideIcons({ lucideChevronLeft, lucideChevronRight })],
   templateUrl: './mini-calendar.component.html'
 })

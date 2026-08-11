@@ -1,5 +1,5 @@
 import { Component, OnInit, TemplateRef, ViewChild, computed, effect, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { CdkDragDrop, DragDropModule, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
 import { ActivatedRoute } from '@angular/router';
@@ -58,11 +58,7 @@ const STATUS_BADGE: Record<string, BadgeVariant> = {
 @Component({
   selector: 'app-tasks',
   standalone: true,
-  imports: [ClickableDirective, 
-    CommonModule, FormsModule, BadgeComponent, ButtonComponent,
-    NgIconComponent, DragDropModule, TaskCreateModalComponent, TaskDetailPanelComponent,
-    DataTableComponent, SkeletonListComponent, EmptyInlineComponent
-  ],
+  imports: [ClickableDirective, FormsModule, BadgeComponent, ButtonComponent, NgIconComponent, DragDropModule, TaskCreateModalComponent, TaskDetailPanelComponent, DataTableComponent, SkeletonListComponent, EmptyInlineComponent],
   viewProviders: [provideIcons({
     lucideRefreshCw, lucidePlus, lucideClock,
     lucideList, lucideLayoutDashboard, lucideFilter, lucideSave

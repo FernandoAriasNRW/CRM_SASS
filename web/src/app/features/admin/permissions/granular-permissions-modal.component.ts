@@ -1,5 +1,5 @@
 import { Component, inject, OnInit, signal, input, output } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../../core/api.service';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
@@ -31,7 +31,7 @@ export interface GranularPermissionDto {
 @Component({
   selector: 'app-granular-permissions-modal',
   standalone: true,
-  imports: [CommonModule, FormsModule, NgIconComponent],
+  imports: [FormsModule, NgIconComponent],
   viewProviders: [
     provideIcons({
       lucideX, lucideShieldCheck, lucideCheck, lucideLock,

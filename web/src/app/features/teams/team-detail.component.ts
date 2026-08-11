@@ -1,5 +1,5 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import { lucideArrowLeft, lucideUsers, lucideBriefcase, lucideActivity } from '@ng-icons/lucide';
@@ -10,7 +10,7 @@ import { ButtonComponent } from '../../shared/ui/button.component';
 @Component({
   selector: 'app-team-detail',
   standalone: true,
-  imports: [CommonModule, RouterModule, NgIconComponent, ButtonComponent],
+  imports: [RouterModule, NgIconComponent, ButtonComponent],
   viewProviders: [provideIcons({ lucideArrowLeft, lucideUsers, lucideBriefcase, lucideActivity })],
   templateUrl: './team-detail.component.html'
 })

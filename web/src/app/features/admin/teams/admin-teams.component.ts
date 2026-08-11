@@ -1,5 +1,5 @@
 import { Component, inject, OnInit, signal, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../../core/api.service';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
@@ -35,13 +35,7 @@ export interface UserOptionDto {
 @Component({
   selector: 'app-admin-teams',
   standalone: true,
-  imports: [ClickableDirective, 
-    CommonModule,
-    FormsModule,
-    NgIconComponent,
-    GranularPermissionsModalComponent,
-    DrawerComponent
-  ],
+  imports: [ClickableDirective, FormsModule, NgIconComponent, GranularPermissionsModalComponent, DrawerComponent],
   viewProviders: [
     provideIcons({
       lucideUsers, lucidePlus, lucideTrash2, lucideEdit3, lucideShieldCheck,

@@ -1,5 +1,5 @@
 import { Component, EventEmitter, inject, Input, Output, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { TeamService } from './team.service';
 import { CreateTeamRequest, UpdateTeamRequest, TeamDto } from './team.model';
@@ -10,7 +10,7 @@ import { lucideX } from '@ng-icons/lucide';
 @Component({
   selector: 'app-team-form',
   standalone: true,
-  imports: [CommonModule, FormsModule, DrawerComponent],
+  imports: [FormsModule, DrawerComponent],
   viewProviders: [provideIcons({ lucideX })],
   templateUrl: './team-form.component.html'
 })

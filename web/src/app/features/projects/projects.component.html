@@ -24,16 +24,20 @@
     (filtersChange)="onFiltersChange($event)">
   </ui-advanced-filters>
 
-  <div class="flex items-center gap-2 mb-4" *ngIf="savedViews().length > 0">
-    <span class="text-sm font-medium text-muted-foreground">Saved Views:</span>
-    <button *ngFor="let view of savedViews()"
-            (click)="applySavedView(view)"
-            [class.bg-primary-subtle]="activeViewId() === view.id"
-            [class.text-primary-subtle-fg]="activeViewId() === view.id"
-            class="px-3 py-1 text-xs rounded-full border border-border hover:bg-muted transition-colors">
-      {{ view.viewName }}
-    </button>
-  </div>
+  @if (savedViews().length > 0) {
+    <div class="flex items-center gap-2 mb-4">
+      <span class="text-sm font-medium text-muted-foreground">Saved Views:</span>
+      @for (view of savedViews(); track view) {
+        <button
+          (click)="applySavedView(view)"
+          [class.bg-primary-subtle]="activeViewId() === view.id"
+          [class.text-primary-subtle-fg]="activeViewId() === view.id"
+          class="px-3 py-1 text-xs rounded-full border border-border hover:bg-muted transition-colors">
+          {{ view.viewName }}
+        </button>
+      }
+    </div>
+  }
 
   <div class="h-[650px]">
     <ui-data-table

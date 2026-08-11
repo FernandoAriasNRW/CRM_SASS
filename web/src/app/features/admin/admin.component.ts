@@ -1,5 +1,5 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { Router, RouterModule, ActivatedRoute } from '@angular/router';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import {
@@ -15,14 +15,13 @@ import { WebhooksComponent } from '../webhooks/webhooks.component';
   selector: 'app-admin',
   standalone: true,
   imports: [
-    CommonModule,
     RouterModule,
     NgIconComponent,
     AdminUsersComponent,
     AdminTeamsComponent,
     AdminPermissionsComponent,
     WebhooksComponent
-  ],
+],
   viewProviders: [
     provideIcons({
       lucideUsers, lucideUserCheck, lucideShieldCheck, lucideWebhook,

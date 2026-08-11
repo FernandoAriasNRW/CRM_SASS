@@ -20,16 +20,18 @@ import { animate, style, transition, trigger } from '@angular/animations';
   template: `
     <div class="relative inline-block" (click)="toggle($event)">
       <ng-content select="[popover-trigger]"></ng-content>
-
-      <div *ngIf="isOpen" 
-           @popoverAnimation
-           class="absolute z-50 mt-2 min-w-[200px] bg-background border border-border rounded-md shadow-md p-1"
-           [ngClass]="positionClass"
-           (click)="$event.stopPropagation()">
-        <ng-content select="[popover-content]"></ng-content>
-      </div>
+    
+      @if (isOpen) {
+        <div
+          @popoverAnimation
+          class="absolute z-50 mt-2 min-w-[200px] bg-background border border-border rounded-md shadow-md p-1"
+          [ngClass]="positionClass"
+          (click)="$event.stopPropagation()">
+          <ng-content select="[popover-content]"></ng-content>
+        </div>
+      }
     </div>
-  `
+    `
 })
 export class PopoverComponent {
   @Input() isOpen = false;

@@ -1,5 +1,5 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../../core/api.service';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
@@ -24,7 +24,7 @@ export interface RoleMatrixRow {
 @Component({
   selector: 'app-admin-permissions',
   standalone: true,
-  imports: [ClickableDirective, CommonModule, FormsModule, NgIconComponent, GranularPermissionsModalComponent],
+  imports: [ClickableDirective, FormsModule, NgIconComponent, GranularPermissionsModalComponent],
   viewProviders: [
     provideIcons({
       lucideShieldCheck, lucideLock, lucideCheck, lucideX,

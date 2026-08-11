@@ -40,16 +40,20 @@
     (filtersChange)="onFiltersChange($event)">
   </ui-advanced-filters>
 
-  <div class="flex items-center gap-2 mb-4" *ngIf="savedViews().length > 0">
-    <span class="text-xs font-medium text-muted-foreground">Vistas Guardadas:</span>
-    <button *ngFor="let view of savedViews()"
-            (click)="applySavedView(view)"
-            [class.bg-primary-subtle]="activeViewId() === view.id"
-            [class.text-primary-subtle-fg]="activeViewId() === view.id"
-            class="px-3 py-1 text-xs rounded-full border border-border hover:bg-muted transition-colors">
-      {{ view.viewName }}
-    </button>
-  </div>
+  @if (savedViews().length > 0) {
+    <div class="flex items-center gap-2 mb-4">
+      <span class="text-xs font-medium text-muted-foreground">Vistas Guardadas:</span>
+      @for (view of savedViews(); track view) {
+        <button
+          (click)="applySavedView(view)"
+          [class.bg-primary-subtle]="activeViewId() === view.id"
+          [class.text-primary-subtle-fg]="activeViewId() === view.id"
+          class="px-3 py-1 text-xs rounded-full border border-border hover:bg-muted transition-colors">
+          {{ view.viewName }}
+        </button>
+      }
+    </div>
+  }
 
   <div class="h-[600px]">
     <ui-data-table
@@ -94,7 +98,7 @@
 
 <ng-template #actionsTemplate let-item>
   <div class="flex justify-end items-center gap-1.5">
-    <button 
+    <button
       (click)="openUserPermissions(item)"
       class="px-2.5 py-1 text-[11px] font-semibold text-primary-subtle-fg bg-primary-subtle dark:bg-primary-subtle/40 hover:bg-primary-subtle border border-primary rounded-md transition-colors inline-flex items-center gap-1">
       <ng-icon name="lucideShieldCheck" class="w-3.5 h-3.5" />
@@ -118,7 +122,7 @@
   [title]="editingUser() ? 'Editar Usuario' : 'Nuevo Usuario'"
   [subtitle]="editingUser() ? 'Modifica los datos del usuario y asigna su rol' : 'Agrega un nuevo miembro a tu espacio de trabajo'"
   size="md"
->
+  >
   <div class="space-y-4 py-2">
     <div>
       <label for="name" class="block text-xs font-semibold text-muted-foreground mb-1.5">Nombre Completo *</label>
