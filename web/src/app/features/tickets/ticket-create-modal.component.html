@@ -1,4 +1,4 @@
-<app-drawer [isOpen]="true" (isOpenChange)="!$event ? close() : null" title="Nuevo ticket" [showFooter]="true">
+<app-drawer [isOpen]="true" (closed)="close()" title="Nuevo Ticket" subtitle="Crea un nuevo ticket de soporte">
   <div class="space-y-4 py-2">
     <div class="space-y-1.5">
       <label uiLabel for="t-title">Título *</label>

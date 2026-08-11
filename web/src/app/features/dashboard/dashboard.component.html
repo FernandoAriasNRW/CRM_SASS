@@ -177,27 +177,27 @@
   }
 </div>
 
-<!-- Modal para Crear Dashboard -->
-@if (showCreateModal) {
-  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-    <div class="bg-card text-foreground rounded-lg shadow-lg w-full max-w-md mx-4 overflow-hidden border border-border">
-      <div class="px-6 py-4 border-b border-border flex justify-between items-center">
-        <h3 class="font-semibold text-lg">Nuevo Dashboard</h3>
-      </div>
-      <div class="p-6 space-y-4">
-        <div>
-          <label class="block text-sm font-medium mb-1">Título</label>
-          <input type="text" [(ngModel)]="newDashboardTitle" placeholder="Ej. Ventas Q3" class="w-full px-3 py-2 border border-input rounded-md bg-background text-sm" />
-        </div>
-        <div class="flex items-center gap-2 mt-4">
-          <input type="checkbox" id="isPublic" [(ngModel)]="newDashboardIsPublic" class="rounded border-input text-primary focus:ring-primary" />
-          <label for="isPublic" class="text-sm">Hacer público (visible para todo el equipo)</label>
-        </div>
-      </div>
-      <div class="px-6 py-4 border-t border-border bg-muted/30 flex justify-end gap-2">
-        <button uiButton variant="outline" (click)="showCreateModal = false">Cancelar</button>
-        <button uiButton variant="default" (click)="createDashboard()" [disabled]="!newDashboardTitle">Crear</button>
-      </div>
+<!-- Drawer para Crear Dashboard Personalizado -->
+<app-drawer
+  [isOpen]="showCreateModal"
+  (closed)="showCreateModal = false"
+  title="Nuevo Dashboard Personalizado"
+  subtitle="Crea un tablero de métricas personalizado para tu equipo"
+  size="md"
+>
+  <div class="space-y-4 py-2">
+    <div class="space-y-1.5">
+      <label class="block text-xs font-semibold text-foreground">Título del Dashboard *</label>
+      <input type="text" [(ngModel)]="newDashboardTitle" placeholder="Ej. Métricas de Ventas Q3" class="w-full px-3 py-2 border border-input rounded-md bg-background text-sm focus:ring-2 focus:ring-ring outline-none" />
+    </div>
+    <div class="flex items-center gap-2 pt-2">
+      <input type="checkbox" id="isPublic" [(ngModel)]="newDashboardIsPublic" class="rounded border-input text-primary focus:ring-primary h-4 w-4 cursor-pointer" />
+      <label for="isPublic" class="text-xs text-foreground cursor-pointer select-none">Hacer público (visible para todo el equipo en la workspace)</label>
     </div>
   </div>
-}
+
+  <div drawer-footer class="flex justify-end gap-2 w-full">
+    <button uiButton variant="outline" (click)="showCreateModal = false">Cancelar</button>
+    <button uiButton variant="default" (click)="createDashboard()" [disabled]="!newDashboardTitle">Crear Dashboard</button>
+  </div>
+</app-drawer>

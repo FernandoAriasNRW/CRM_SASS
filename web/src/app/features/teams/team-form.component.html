@@ -1,4 +1,4 @@
-<app-drawer [isOpen]="true" (isOpenChange)="!$event ? close.emit() : null" [title]="team ? 'Editar Equipo' : 'Nuevo Equipo'" [showFooter]="true">
+<app-drawer [isOpen]="true" (closed)="close.emit()" [title]="team ? 'Editar Equipo' : 'Nuevo Equipo'" subtitle="Configuración de equipo y permisos">
   <div class="py-2 space-y-4">
     <div class="space-y-1.5">
       <label class="text-sm font-medium">Nombre</label>

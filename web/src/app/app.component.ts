@@ -62,10 +62,14 @@ export class AppComponent implements OnInit {
     this.router.events.pipe(
       filter(e => e instanceof NavigationEnd),
       map((e: any) => {
-        console.log("Event: ", e)
-        const path = e.urlAfterRedirects.split('/')[1] || 'Home';
-        const item = this.navStore.allItems().find(i => i.route === `/${path}`) || this.navStore.allItems().find(i => i.route === '/');
-        return item ? item.label : path;
+        const fullUrl = e.urlAfterRedirects || e.url || '';
+        const cleanPath = fullUrl.split('?')[0];
+        const seg = cleanPath.split('/')[1] || '';
+        if (seg.toLowerCase() === 'admin') return 'Admin';
+        const item = this.navStore.allItems().find(i => i.route === `/${seg}`);
+        if (item) return item.label;
+        if (!seg || seg.toLowerCase() === 'home') return 'Home';
+        return seg.charAt(0).toUpperCase() + seg.slice(1);
       })
     ),
     { initialValue: 'Dashboard' }

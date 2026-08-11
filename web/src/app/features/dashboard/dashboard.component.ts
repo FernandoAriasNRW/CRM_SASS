@@ -53,6 +53,7 @@ import { HierarchySignalStore } from '../../core/hierarchy-signal.store';
 import { SlicePipe, UpperCasePipe, CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ButtonComponent } from '../../shared/ui/button.component';
+import { DrawerComponent } from '../../shared/ui/drawer.component';
 
 @Component({
   selector: 'app-dashboard',
@@ -60,7 +61,8 @@ import { ButtonComponent } from '../../shared/ui/button.component';
   imports: [
     CommonModule, FormsModule, ButtonComponent,
     CardComponent, CardHeaderComponent, CardTitleComponent, CardContentComponent,
-    NgIconComponent, DoughnutChartComponent, LineChartComponent, ProgressBarComponent
+    NgIconComponent, DoughnutChartComponent, LineChartComponent, ProgressBarComponent,
+    DrawerComponent
   ],
   viewProviders: [provideIcons({
     lucideFolderKanban, lucideCheckSquare, lucideTicket, lucideTrendingUp,

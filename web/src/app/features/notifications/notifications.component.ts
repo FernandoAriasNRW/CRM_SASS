@@ -202,9 +202,19 @@ export class NotificationsComponent implements OnInit, OnDestroy {
   }
 
   loadNotifications(): void {
-    this.api.get<{items: Notification[]}>('/notifications').subscribe({
+    this.api.get<any>('/notifications').subscribe({
       next: res => {
-        this.store.dispatch(notificationsLoaded({ items: res.items || [] }));
+        const rawList = Array.isArray(res) ? res : (res?.items || []);
+        const items: Notification[] = rawList.map((n: any) => ({
+          id: n.id,
+          userId: n.recipientUserId || n.userId,
+          title: n.subject || n.title || 'Notificación',
+          body: n.body || '',
+          type: n.type || 'info',
+          createdAtUtc: n.createdAt || n.createdAtUtc || n.sentAt || new Date().toISOString(),
+          isRead: n.status === 'Read' || n.isRead === true || !!n.readAt
+        }));
+        this.store.dispatch(notificationsLoaded({ items }));
         this.loading.set(false);
       },
       error: () => {
@@ -243,7 +253,9 @@ export class NotificationsComponent implements OnInit, OnDestroy {
   }
 
   formatTime(dateStr: string): string {
+    if (!dateStr) return 'Hace un momento';
     const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return 'Hace un momento';
     const now = new Date();
     const diff = now.getTime() - date.getTime();
     const minutes = Math.floor(diff / 60000);

@@ -38,8 +38,7 @@ const DEFAULT_NAV_ITEMS: NavItem[] = [
   { id: 'teams', label: 'Teams', icon: 'lucideUsers', route: '/teams', hasSubmenu: true, hasCustomizer: true },
   { id: 'chat', label: 'Chat', icon: 'lucideMessageSquare', route: '/chat' },
   { id: 'calendar', label: 'Calendario', icon: 'lucideCalendar', route: '/calendar' },
-  { id: 'reports', label: 'Reportes', icon: 'lucideChartBar', route: '/reports' },
-  { id: 'webhooks', label: 'Webhooks', icon: 'lucideWebhook', route: '/webhooks' }
+  { id: 'reports', label: 'Reportes', icon: 'lucideChartBar', route: '/reports' }
 ];
 
 const DEFAULT_SUBMENUS: Record<string, SubmenuItem[]> = {

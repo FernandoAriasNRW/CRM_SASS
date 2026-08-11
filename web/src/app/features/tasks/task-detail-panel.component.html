@@ -1,4 +1,4 @@
-<app-drawer [isOpen]="true" (isOpenChange)="!$event ? close() : null">
+<app-drawer [isOpen]="true" (closed)="close()" [title]="title" subtitle="Detalle de tarea y comentarios" size="xl">
   <div drawer-header class="flex items-center gap-2">
     <!-- Status pill -->
     <div class="relative group">

@@ -1,4 +1,4 @@
-<app-drawer [isOpen]="true" (isOpenChange)="!$event ? close() : null" title="Nueva tarea" [showFooter]="true">
+<app-drawer [isOpen]="true" (closed)="close()" title="Nueva Tarea" subtitle="Crea una nueva tarea en tu proyecto">
   <div class="space-y-4 py-2">
     <div class="space-y-1.5">
       <label uiLabel for="task-title">Título *</label>

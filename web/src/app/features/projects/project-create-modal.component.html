@@ -1,15 +1,15 @@
-<app-drawer [isOpen]="true" (isOpenChange)="!$event ? close() : null" title="Nuevo proyecto" [showFooter]="true">
-  <div class="space-y-4 py-2">
+<app-drawer [isOpen]="true" (closed)="close()" title="Nuevo Proyecto" subtitle="Crea un nuevo proyecto en tu espacio de trabajo">
+  <div class="space-y-4">
     <div class="space-y-1.5">
-      <label uiLabel for="proj-name">Nombre *</label>
+      <label uiLabel for="proj-name">Nombre del Proyecto *</label>
       <input uiInput id="proj-name" [(ngModel)]="name" placeholder="Nombre del proyecto" />
     </div>
     <div class="space-y-1.5">
       <label uiLabel for="proj-desc">Descripción</label>
-      <input uiInput id="proj-desc" [(ngModel)]="description" placeholder="Descripción opcional" />
+      <textarea uiInput id="proj-desc" [(ngModel)]="description" rows="3" placeholder="Describe los objetivos del proyecto" class="w-full px-3 py-2 border border-input rounded-md bg-background text-sm resize-none focus:ring-2 focus:ring-ring outline-none transition-all"></textarea>
     </div>
     <div class="space-y-1.5">
-      <label uiLabel for="proj-date">Fecha estimada de fin *</label>
+      <label uiLabel for="proj-date">Fecha Estimada de Fin *</label>
       <input uiInput id="proj-date" type="date" [(ngModel)]="estimatedEndDate" />
     </div>
     <div class="space-y-1.5">
@@ -31,14 +31,14 @@
       </select>
     </div>
     @if (error()) {
-      <p class="text-sm text-destructive">{{ error() }}</p>
+      <p class="text-sm text-destructive font-medium">{{ error() }}</p>
     }
   </div>
 
   <div drawer-footer class="flex justify-end gap-2 w-full">
     <button uiButton variant="outline" (click)="close()">Cancelar</button>
     <button uiButton (click)="submit()" [disabled]="loading()">
-      {{ loading() ? 'Creando...' : 'Crear proyecto' }}
+      {{ loading() ? 'Creando...' : 'Crear Proyecto' }}
     </button>
   </div>
 </app-drawer>

@@ -32,10 +32,12 @@ const STATUS_BADGE: Record<string, BadgeVariant> = {
   'New': 'secondary', 'In Progress': 'default', 'Resolved': 'success', 'Closed': 'outline'
 };
 
+import { DrawerComponent } from '../../shared/ui/drawer.component';
+
 @Component({
   selector: 'app-ticket-detail-panel',
   standalone: true,
-  imports: [FormsModule, DatePipe, BadgeComponent, AvatarComponent, NgIconComponent],
+  imports: [FormsModule, DatePipe, BadgeComponent, AvatarComponent, NgIconComponent, DrawerComponent],
   viewProviders: [provideIcons({
     lucideX, lucideCheck, lucideUser, lucideTag,
     lucideFlag, lucideMessageSquare, lucidePaperclip,

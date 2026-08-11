@@ -14,10 +14,12 @@ import {
   WebhookEventType,
 } from './webhook.model';
 
+import { DrawerComponent } from '../../shared/ui/drawer.component';
+
 @Component({
   selector: 'app-webhook-form-modal',
   standalone: true,
-  imports: [FormsModule, NgIconComponent],
+  imports: [FormsModule, NgIconComponent, DrawerComponent],
   viewProviders: [
     provideIcons({
       lucideX, lucideLoader2, lucideCheck, lucideAlertCircle,

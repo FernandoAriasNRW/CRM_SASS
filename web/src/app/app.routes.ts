@@ -24,9 +24,10 @@ export const routes: Routes = [
         path: 'docs',
         loadChildren: () => import('./features/docs/docs.routes')
       },
-      { path: 'webhooks',     loadComponent: () => import('./features/webhooks/webhooks.component').then(m => m.WebhooksComponent) },
+      { path: 'webhooks',     redirectTo: '/admin' },
       { path: 'profile',      loadComponent: () => import('./features/profile/profile.component').then(m => m.ProfileComponent) },
-      { path: 'admin/users', loadComponent: () => import('./features/admin/users/admin-users.component').then(m => m.AdminUsersComponent), canActivate: [adminGuard] },
+      { path: 'admin',        loadComponent: () => import('./features/admin/admin.component').then(m => m.AdminComponent), canActivate: [adminGuard] },
+      { path: 'admin/users',  loadComponent: () => import('./features/admin/admin.component').then(m => m.AdminComponent), canActivate: [adminGuard] },
     ],
   },
   { path: '**', redirectTo: '' },

@@ -5,20 +5,23 @@ import { Router } from '@angular/router';
 import { ApiService } from '../../../core/api.service';
 import { AuthSignalStore } from '../../../core/auth-signal.store';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import { lucidePlus, lucideTrash2, lucideEdit, lucideUsers, lucideX, lucideDatabase, lucideRefreshCw } from '@ng-icons/lucide';
+import { lucidePlus, lucideTrash2, lucideEdit, lucideUsers, lucideX, lucideDatabase, lucideRefreshCw, lucideShieldCheck } from '@ng-icons/lucide';
 
 import { DataTableComponent, ColumnDef, TableState } from '../../../shared/ui/data-table/data-table.component';
 import { AdvancedFiltersComponent, FilterField } from '../../../shared/ui/data-table/advanced-filters.component';
 import { ViewsService, SavedView } from '../../../shared/services/views.service';
 import { TableColumnService } from '../../../shared/services/table-column.service';
+import { GranularPermissionsModalComponent } from '../permissions/granular-permissions-modal.component';
 
-interface UserDto {
+export interface UserDto {
   id: string;
   name: string;
   email: string;
   tenantId: string;
   role: string;
 }
+
+import { DrawerComponent } from '../../../shared/ui/drawer.component';
 
 @Component({
   selector: 'app-admin-users',
@@ -28,9 +31,11 @@ interface UserDto {
     FormsModule,
     NgIconComponent,
     DataTableComponent,
-    AdvancedFiltersComponent
+    AdvancedFiltersComponent,
+    GranularPermissionsModalComponent,
+    DrawerComponent
   ],
-  viewProviders: [provideIcons({ lucidePlus, lucideTrash2, lucideEdit, lucideUsers, lucideX, lucideDatabase, lucideRefreshCw })],
+  viewProviders: [provideIcons({ lucidePlus, lucideTrash2, lucideEdit, lucideUsers, lucideX, lucideDatabase, lucideRefreshCw, lucideShieldCheck })],
   templateUrl: './admin-users.component.html',
 })
 export class AdminUsersComponent implements OnInit {
@@ -47,6 +52,10 @@ export class AdminUsersComponent implements OnInit {
   readonly editingUser = signal<UserDto | null>(null);
   readonly isSeeding = signal(false);
 
+  // Granular Permissions Modal
+  readonly showPermissionsModal = signal(false);
+  readonly selectedUserForPermissions = signal<UserDto | null>(null);
+
   // Table & Views state
   tableState = signal<TableState>({ page: 1, pageSize: 25, sortDirection: 'asc' });
   savedViews = signal<SavedView[]>([]);
@@ -61,7 +70,7 @@ export class AdminUsersComponent implements OnInit {
   ]);
 
   filterFields = computed<FilterField[]>(() => [
-    { key: 'role', label: 'Role', type: 'select', options: ['Admin', 'Member'].map(r => ({ label: r, value: r })) }
+    { key: 'role', label: 'Rol', type: 'select', options: ['Admin', 'Member', 'Guest'].map(r => ({ label: r, value: r })) }
   ]);
 
   @ViewChild('nameTemplate', { static: true }) nameTemplate!: TemplateRef<any>;
@@ -141,11 +150,10 @@ export class AdminUsersComponent implements OnInit {
 
   loadUsers(): void {
     this.loading.set(true);
-    // Fake endpoint returning me. Imagine a real GET /users
-    this.api.get<{ id: string; name: string; email: string; tenantId: string; role: string }>('/auth/users/me')
+    this.api.get<UserDto[]>('/users')
       .subscribe({
-        next: (user) => {
-          this.users.set([user]);
+        next: (data) => {
+          this.users.set(data || []);
           this.loading.set(false);
         },
         error: () => {
@@ -191,6 +199,7 @@ export class AdminUsersComponent implements OnInit {
         next: (updated) => {
           this.users.update(users => users.map(u => u.id === updated.id ? updated : u));
           this.closeModal();
+          this.loadUsers();
         },
         error: (err) => this.error.set(err.error?.error || 'Error al actualizar usuario')
       });
@@ -202,9 +211,9 @@ export class AdminUsersComponent implements OnInit {
       this.api.post<UserDto>('/users', {
         name: this.formName, email: this.formEmail, password: this.formPassword, role: this.formRole
       }).subscribe({
-        next: (newUser) => {
-          this.users.update(users => [...users, newUser]);
+        next: () => {
           this.closeModal();
+          this.loadUsers();
         },
         error: (err) => this.error.set(err.error?.error || 'Error al crear usuario')
       });
@@ -217,6 +226,16 @@ export class AdminUsersComponent implements OnInit {
       next: () => this.users.update(users => users.filter(u => u.id !== userId)),
       error: () => this.error.set('Error al eliminar usuario')
     });
+  }
+
+  openUserPermissions(user: UserDto): void {
+    this.selectedUserForPermissions.set(user);
+    this.showPermissionsModal.set(true);
+  }
+
+  closeUserPermissions(): void {
+    this.showPermissionsModal.set(false);
+    this.selectedUserForPermissions.set(null);
   }
 
   seedDatabase(): void {
@@ -235,4 +254,3 @@ export class AdminUsersComponent implements OnInit {
     });
   }
 }
-
