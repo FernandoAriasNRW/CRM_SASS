@@ -80,25 +80,26 @@ Features enrutadas: `home` · `dashboard` · `projects` · `tasks` · `tickets` 
 
 **Pendiente:**
 
-| Problema | Medida | Fase |
+| Problema | Medida | Estado |
 |---|---|---|
-| Paleta cruda de Tailwind en vez de tokens | 913 usos vs 873 tokenizados (~51%) | 3 |
-| Accesibilidad | 64 avisos de lint; 0 `aria-*` en 34 templates; **ni un solo encabezado en el login** | 3 |
-| `any` sin tipar | 84 avisos | 3 |
-| Variables sin usar | 41 avisos | 3 |
-| Sintaxis de control antigua (`*ngIf`) | 33 avisos | 3 |
-| Sin i18n (español e inglés mezclados, textos hardcodeados) | — | 3 |
-| Sin virtualización de listas (`@angular/cdk` instalado pero sin usar) | 0 usos | 3 |
-| Componentes obesos (`docs.component.html` 709 líneas) | — | 3 |
-| Specs frontend unitarias | 1 (el generado por el CLI) | 3 |
+| Paleta cruda de Tailwind en vez de tokens | eran 1141 usos | ✅ Fase 3.1 |
+| Accesibilidad: elementos sin teclado y etiquetas sueltas | eran 55 avisos | ✅ Fase 3.2 |
+| Imports muertos | eran 28 | ✅ Fase 3.6 |
+| `any` sin tipar | 84 avisos | 🟠 Fase 3.6 |
+| Sintaxis de control antigua (`*ngIf`) | 26 avisos | 🟡 Fase 3.6 |
+| Funciones vacías | 20 avisos | 🟡 Fase 3.6 |
+| Sin i18n (español e inglés mezclados, textos hardcodeados) | — | 🟠 Fase 3.9 |
+| Sin virtualización de listas (`@angular/cdk` instalado pero sin usar) | 0 usos | 🟠 Fase 3.4 |
+| Componentes obesos (`docs.component.html` 709 líneas) | — | 🟡 Fase 3.7 |
+| Specs frontend unitarias | 7 (6 de la directiva + 1 del CLI) | 🟠 Fase 3 |
 
 ### 2.3 Testing
 
 ```
 tests/UnitTests/         74 tests en verde ✅
 tests/IntegrationTests/   5 tests contra MySQL en contenedor ✅
-web/e2e/                  4 flujos con Playwright ✅
-web/ (unitarios)          1 spec generado por el CLI — pendiente, Fase 3
+web/e2e/                  8 flujos con Playwright, incluida auditoría axe ✅
+web/ (unitarios)          7 specs — cobertura aún mínima, pendiente Fase 3
 ```
 
 ---
