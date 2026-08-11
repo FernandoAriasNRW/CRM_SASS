@@ -55,8 +55,8 @@ jobs:
             --collect:"XPlat Code Coverage" \
             --results-directory ./coverage
 
-      # Sin `continue-on-error`: si hay tests de integración y fallan, el CI
-      # debe ponerse rojo. Hoy el proyecto está vacío y pasa trivialmente.
+      # Sin `continue-on-error`: si fallan, el CI debe ponerse rojo.
+      # Levantan un MySQL real vía Testcontainers, que usa el Docker del runner.
       - name: Tests de integración
         run: |
           dotnet test tests/IntegrationTests/IntegrationTests.csproj \
@@ -89,6 +89,23 @@ jobs:
           cache: npm
           cache-dependency-path: web/package-lock.json
 
+      # npm poda las dependencias opcionales a la plataforma anfitriona al escribir el
+      # lockfile (npm/cli#4828). Un `npm install` desde Windows con npm < 11 deja fuera
+      # los binarios de Linux de rollup y esbuild, y `npm ci` aquí instala un árbol sin
+      # ellos: el fallo aparece minutos después, al arrancar el servidor de los E2E, con
+      # un mensaje que no señala la causa. Esta comprobación lo dice al instante.
+      - name: Verificar que el lockfile cubre Linux
+        run: |
+          for pkg in @rollup/rollup-linux-x64-gnu @esbuild/linux-x64; do
+            if ! grep -q "\"node_modules/$pkg\"" package-lock.json; then
+              echo "::error::package-lock.json no incluye $pkg."
+              echo "Se generó con npm < 11, que poda las dependencias opcionales a la"
+              echo "plataforma anfitriona. Regenéralo con:  npx npm@11 install --package-lock-only"
+              exit 1
+            fi
+          done
+          echo "El lockfile incluye los binarios de Linux."
+
       - name: Instalar dependencias
         run: npm ci
 
@@ -99,6 +116,24 @@ jobs:
 
       - name: Build
         run: npm run build
+
+      # Sólo el navegador que usa la suite: instalar los tres multiplicaría por varios
+      # minutos un paso que no aporta cobertura adicional.
+      - name: Instalar navegador para E2E
+        run: npx playwright install --with-deps chromium
+
+      # playwright.config.ts arranca `npm start` por su cuenta, así que no hace falta
+      # levantar el servidor en un paso previo.
+      - name: Tests E2E
+        run: npm run e2e
+
+      - name: Publicar informe E2E
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: web/playwright-report
+          retention-days: 7
 
       - name: Publicar artefacto
         uses: actions/upload-artifact@v4
@@ -166,12 +201,12 @@ jobs:
           path: web/dist/web/browser
 
       - name: Desplegar backend
-        run: echo "Pendiente: integrar con el proveedor cloud"
+        run: 'echo "Pendiente: integrar con el proveedor cloud"'
         env:
           DEPLOY_TOKEN: ${{ secrets.STAGING_DEPLOY_TOKEN }}
 
       - name: Desplegar frontend
-        run: echo "Pendiente: integrar con CDN/S3"
+        run: 'echo "Pendiente: integrar con CDN/S3"'
 
   deploy-production:
     name: Desplegar a producción
@@ -191,9 +226,9 @@ jobs:
           path: web/dist/web/browser
 
       - name: Desplegar backend
-        run: echo "Pendiente: integrar con el proveedor cloud"
+        run: 'echo "Pendiente: integrar con el proveedor cloud"'
         env:
           DEPLOY_TOKEN: ${{ secrets.PRODUCTION_DEPLOY_TOKEN }}
 
       - name: Desplegar frontend
-        run: echo "Pendiente: integrar con CDN/S3"
+        run: 'echo "Pendiente: integrar con CDN/S3"'

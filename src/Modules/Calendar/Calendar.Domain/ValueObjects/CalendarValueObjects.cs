@@ -10,7 +10,7 @@ public sealed class EventTitle : ValueObject
 {
   public string Value { get; }
 
-  private EventTitle() { }
+  private EventTitle() { Value = null!; } // EF las rellena al materializar.
   private EventTitle(string value) => Value = value;
 
   public static Result<EventTitle> Create(string title)

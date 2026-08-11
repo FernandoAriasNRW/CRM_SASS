@@ -54,3 +54,9 @@ Desktop.ini
 
 # ─────────────────────────────────────────────────────────── Herramientas
 .claude/
+
+# Playwright
+web/test-results/
+web/playwright-report/
+web/blob-report/
+web/.playwright/

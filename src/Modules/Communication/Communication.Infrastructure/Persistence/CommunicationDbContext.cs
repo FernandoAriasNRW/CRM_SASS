@@ -1,12 +1,16 @@
+using BuildingBlocks.Application.Abstractions;
+using BuildingBlocks.Infrastructure.Persistence;
 using Communication.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace Communication.Infrastructure.Persistence;
 
 /// <summary>
-/// DbContext para el módulo Communication. Configura el filtro global de soft delete y las configuraciones de entidad.
+/// DbContext del modulo Communication. Hereda de TenantDbContext: el aislamiento por
+/// tenant y el soft delete se aplican solos a toda entidad marcada.
 /// </summary>
-public sealed class CommunicationsDbContext(DbContextOptions<CommunicationsDbContext> options) : DbContext(options)
+public sealed class CommunicationsDbContext(DbContextOptions<CommunicationsDbContext> options, IUserContext? userContext)
+    : TenantDbContext(options, userContext)
 {
   public DbSet<Conversation> Conversations => Set<Conversation>();
   public DbSet<Message> Messages => Set<Message>();
@@ -19,25 +23,9 @@ public sealed class CommunicationsDbContext(DbContextOptions<CommunicationsDbCon
     modelBuilder.ApplyConfigurationsFromAssembly(typeof(CommunicationsDbContext).Assembly);
 
     // Filtros globales para soft delete
-    modelBuilder.Entity<Conversation>().HasQueryFilter(e => !e.IsDeleted);
-    modelBuilder.Entity<Message>().HasQueryFilter(e => !e.IsDeleted);
+
+    // Aislamiento por tenant y soft delete, compuestos en un solo filtro.
+    ApplyTenantFilters(modelBuilder);
   }
 
-  /// <summary>
-  /// Desactiva los filtros globales para consultas de auditoría.
-  /// </summary>
-  public void DisableGlobalFilters(ModelBuilder modelBuilder)
-  {
-    modelBuilder.Entity<Conversation>().HasQueryFilter(e => true);
-    modelBuilder.Entity<Message>().HasQueryFilter(e => true);
-  }
-
-  /// <summary>
-  /// Reactiva los filtros globales.
-  /// </summary>
-  public void EnableGlobalFilters(ModelBuilder modelBuilder)
-  {
-    modelBuilder.Entity<Conversation>().HasQueryFilter(e => !e.IsDeleted);
-    modelBuilder.Entity<Message>().HasQueryFilter(e => !e.IsDeleted);
-  }
 }

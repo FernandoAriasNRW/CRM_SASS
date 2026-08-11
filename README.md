@@ -17,11 +17,28 @@ frontend en Angular 21.
 |---|---|
 | .NET SDK | 9.0 |
 | Node.js | 20 o superior |
+| npm | **11 o superior** (ver nota abajo) |
 | MySQL | 8.0 |
-| Docker | opcional, para levantar todo con `docker compose` |
+| Docker | opcional, para `docker compose` y para los tests de integración |
 
 El gestor de paquetes del frontend es **npm**. No usar pnpm ni yarn: el lockfile
 de referencia es `web/package-lock.json`.
+
+> **npm 11 o superior es un requisito, no una recomendación.** Las versiones
+> anteriores podan las dependencias opcionales a la plataforma en la que se ejecutan
+> ([npm/cli#4828](https://github.com/npm/cli/issues/4828)): un `npm install` desde
+> Windows con npm 10 deja fuera del lockfile los binarios de Linux de rollup y
+> esbuild, y el CI deja de poder construir. El fallo aparece lejos de su causa, al
+> arrancar el servidor de los E2E.
+>
+> Node 20 trae npm 10. Actualiza con `npm i -g npm@11`. Si el lockfile ya se hubiera
+> podado, se regenera completo con:
+>
+> ```bash
+> cd web && npx npm@11 install --package-lock-only
+> ```
+>
+> El CI comprueba esto antes de instalar y falla con un mensaje explícito.
 
 ---
 

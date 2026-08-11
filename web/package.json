@@ -1,6 +1,11 @@
 {
   "name": "web",
   "version": "0.0.0",
+  "private": true,
+  "engines": {
+    "node": ">=20",
+    "npm": ">=11"
+  },
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
@@ -9,9 +14,10 @@
     "test": "ng test",
     "lint": "ng lint",
     "lint:fix": "ng lint --fix",
-    "test:ci": "ng test --watch=false --browsers=ChromeHeadless"
+    "test:ci": "ng test --watch=false --browsers=ChromeHeadless",
+    "e2e": "playwright test",
+    "e2e:ui": "playwright test --ui"
   },
-  "private": true,
   "dependencies": {
     "@angular/animations": "^21.2.8",
     "@angular/cdk": "^21.2.14",
@@ -63,6 +69,7 @@
     "@angular/cli": "^21.2.7",
     "@angular/compiler-cli": "^21.2.8",
     "@eslint/js": "^9.39.5",
+    "@playwright/test": "^1.62.1",
     "@types/jasmine": "~5.1.0",
     "angular-eslint": "^21.4.0",
     "autoprefixer": "^10.4.27",

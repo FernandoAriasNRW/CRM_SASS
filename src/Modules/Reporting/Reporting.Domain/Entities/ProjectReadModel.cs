@@ -1,6 +1,8 @@
+using BuildingBlocks.Domain.Primitives;
+
 namespace Reporting.Domain.Entities;
 
-public sealed class ProjectReadModel
+public sealed class ProjectReadModel : ITenantEntity, ISoftDeletable
 {
     public Guid Id { get; set; }
     public Guid TenantId { get; set; }

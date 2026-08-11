@@ -8,7 +8,7 @@ namespace Communication.Domain.Entities;
 /// <summary>
 /// Entidad de dominio Conversation.
 /// </summary>
-public sealed class Conversation : AggregateRoot
+public sealed class Conversation : AggregateRoot, ITenantEntity, ISoftDeletable
 {
   public Guid TenantId { get; private set; }
   public string Name { get; private set; } = string.Empty;
@@ -106,7 +106,7 @@ public sealed class Conversation : AggregateRoot
 /// <summary>
 /// Entidad de dominio Message.
 /// </summary>
-public sealed class Message : AggregateRoot
+public sealed class Message : AggregateRoot, ITenantEntity, ISoftDeletable
 {
   public Guid TenantId { get; private set; }
   public Guid ConversationId { get; set; }

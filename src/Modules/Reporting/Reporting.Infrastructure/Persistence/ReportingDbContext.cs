@@ -1,12 +1,16 @@
+using BuildingBlocks.Application.Abstractions;
+using BuildingBlocks.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Reporting.Domain.Entities;
 
 namespace Reporting.Infrastructure.Persistence;
 
 /// <summary>
-/// DbContext para el módulo Reporting. Configura el filtro global de soft delete y las configuraciones de entidad.
+/// DbContext del modulo Reporting. Hereda de TenantDbContext: el aislamiento por
+/// tenant y el soft delete se aplican solos a toda entidad marcada.
 /// </summary>
-public sealed class ReportingDbContext(DbContextOptions<ReportingDbContext> options) : DbContext(options)
+public sealed class ReportingDbContext(DbContextOptions<ReportingDbContext> options, IUserContext? userContext)
+    : TenantDbContext(options, userContext)
 {
   public DbSet<Report> Reports => Set<Report>();
   public DbSet<Dashboard> Dashboards => Set<Dashboard>();
@@ -19,26 +23,8 @@ public sealed class ReportingDbContext(DbContextOptions<ReportingDbContext> opti
     base.OnModelCreating(modelBuilder);
     modelBuilder.ApplyConfigurationsFromAssembly(typeof(ReportingDbContext).Assembly);
 
-    // Filtro global para soft delete
-    modelBuilder.Entity<Report>().HasQueryFilter(e => !e.IsDeleted);
-    modelBuilder.Entity<ProjectReadModel>().HasQueryFilter(e => !e.IsDeleted);
+    // Aislamiento por tenant y soft delete, compuestos en un solo filtro.
+    ApplyTenantFilters(modelBuilder);
   }
 
-  /// <summary>
-  /// Desactiva los filtros globales para consultas de auditoría.
-  /// </summary>
-  public void DisableGlobalFilters(ModelBuilder modelBuilder)
-  {
-    modelBuilder.Entity<Report>().HasQueryFilter(e => true);
-    modelBuilder.Entity<ProjectReadModel>().HasQueryFilter(e => true);
-  }
-
-  /// <summary>
-  /// Reactiva los filtros globales.
-  /// </summary>
-  public void EnableGlobalFilters(ModelBuilder modelBuilder)
-  {
-    modelBuilder.Entity<Report>().HasQueryFilter(e => !e.IsDeleted);
-    modelBuilder.Entity<ProjectReadModel>().HasQueryFilter(e => !e.IsDeleted);
-  }
 }

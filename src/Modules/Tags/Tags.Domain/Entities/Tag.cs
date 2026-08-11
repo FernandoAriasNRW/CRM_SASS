@@ -2,7 +2,7 @@ using BuildingBlocks.Domain.Primitives;
 
 namespace Tags.Domain.Entities;
 
-public sealed class Tag : AggregateRoot
+public sealed class Tag : AggregateRoot, ITenantEntity
 {
     public Guid TenantId { get; private set; }
     public string Name { get; private set; } = string.Empty;

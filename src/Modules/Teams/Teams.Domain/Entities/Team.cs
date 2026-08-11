@@ -3,7 +3,7 @@ using Teams.Domain.Events;
 
 namespace Teams.Domain.Entities;
 
-public sealed class Team : AggregateRoot
+public sealed class Team : AggregateRoot, ITenantEntity, ISoftDeletable
 {
     public Guid TenantId { get; private set; }
     public string Name { get; private set; } = string.Empty;

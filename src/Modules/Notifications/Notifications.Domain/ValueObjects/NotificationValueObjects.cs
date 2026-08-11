@@ -8,7 +8,7 @@ public sealed class NotificationContent : ValueObject
   public string Subject { get; }
   public string Body { get; }
 
-  private NotificationContent() { }
+  private NotificationContent() { Body = null!; Subject = null!; } // EF las rellena al materializar.
   private NotificationContent(string subject, string body)
   {
     Subject = subject;

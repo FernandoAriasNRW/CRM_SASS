@@ -8,7 +8,7 @@ namespace Notifications.Domain.Entities;
 /// <summary>
 /// Entidad de dominio Notification.
 /// </summary>
-public sealed class Notification : AggregateRoot
+public sealed class Notification : AggregateRoot, ITenantEntity, ISoftDeletable
 {
   public Guid TenantId { get; private set; }
   public Guid RecipientUserId { get; private set; }

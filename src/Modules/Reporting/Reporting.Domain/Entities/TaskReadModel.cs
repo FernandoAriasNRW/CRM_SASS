@@ -1,6 +1,8 @@
+using BuildingBlocks.Domain.Primitives;
+
 namespace Reporting.Domain.Entities;
 
-public sealed class TaskReadModel
+public sealed class TaskReadModel : ITenantEntity
 {
     public Guid Id { get; set; }
     public Guid TenantId { get; set; }

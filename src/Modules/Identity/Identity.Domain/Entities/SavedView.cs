@@ -2,7 +2,7 @@ using BuildingBlocks.Domain.Primitives;
 
 namespace Identity.Domain.Entities;
 
-public sealed class SavedView : Entity
+public sealed class SavedView : Entity, ITenantEntity
 {
     public Guid UserId { get; private set; }
     public Guid TenantId { get; private set; }

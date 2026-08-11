@@ -5,7 +5,7 @@ using Reporting.Domain.ValueObjects;
 
 namespace Reporting.Domain.Entities;
 
-public sealed class Report : AggregateRoot
+public sealed class Report : AggregateRoot, ITenantEntity, ISoftDeletable
 {
     public Guid TenantId { get; private set; }
     public Guid CreatedById { get; private set; }

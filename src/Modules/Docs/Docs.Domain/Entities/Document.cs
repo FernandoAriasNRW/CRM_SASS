@@ -2,7 +2,7 @@ using BuildingBlocks.Domain.Primitives;
 
 namespace Docs.Domain.Entities;
 
-public sealed class Document : Entity
+public sealed class Document : Entity, ITenantEntity, ISoftDeletable
 {
     public Guid TenantId { get; private set; }
     public string Title { get; private set; }
@@ -25,7 +25,7 @@ public sealed class Document : Entity
     private readonly List<DocumentPermission> _permissions = new();
     public IReadOnlyCollection<DocumentPermission> Permissions => _permissions.AsReadOnly();
 
-    private Document() { }
+    private Document() { Description = null!; Title = null!; } // EF las rellena al materializar.
 
     public static Document Create(Guid tenantId, string title, string description, ValueObjects.DocumentType type, Guid ownerId, Guid? teamId, Guid? projectId)
     {

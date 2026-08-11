@@ -317,6 +317,22 @@ using (var scope = app.Services.CreateScope())
         services.GetRequiredService<CrmDbContext>()
     };
 
+    // Antes de tocar la base de datos: comprobar que ninguna entidad se ha quedado
+    // fuera del aislamiento por tenant. Una entidad nueva que olvide ITenantEntity, o
+    // un DbContext que olvide ApplyTenantFilters, devolverían filas de todos los
+    // clientes sin lanzar ningún error. Preferimos no arrancar a servir datos cruzados.
+    var isolationViolations = dbContexts
+        .SelectMany(BuildingBlocks.Infrastructure.Persistence.TenantIsolationVerifier.FindViolations)
+        .ToList();
+
+    if (isolationViolations.Count > 0)
+    {
+        throw new InvalidOperationException(
+            "Aislamiento multi-tenant incompleto. La aplicación no arranca para evitar fuga de datos entre clientes:"
+            + Environment.NewLine
+            + string.Join(Environment.NewLine, isolationViolations.Select(v => "  - " + v)));
+    }
+
     foreach (var ctx in dbContexts)
     {
         try 
@@ -453,3 +469,10 @@ app.MapHub<Ticketing.Presentation.Hubs.TicketsHub>("/hubs/tickets");
 await app.RunAsync();
 
 public class DummyNotificationsHub : Microsoft.AspNetCore.SignalR.Hub { }
+
+/// <summary>
+/// Program es implícito al usar instrucciones de nivel superior y queda como internal,
+/// fuera del alcance de WebApplicationFactory. Declararlo parcial y público es lo que
+/// permite a las pruebas de integración arrancar la API real.
+/// </summary>
+public partial class Program { }

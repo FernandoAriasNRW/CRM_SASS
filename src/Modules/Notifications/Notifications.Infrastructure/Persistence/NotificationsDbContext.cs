@@ -1,12 +1,16 @@
+using BuildingBlocks.Application.Abstractions;
+using BuildingBlocks.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Notifications.Domain.Entities;
 
 namespace Notifications.Infrastructure.Persistence;
 
 /// <summary>
-/// DbContext para el módulo Notifications. Configura el filtro global de soft delete y las configuraciones de entidad.
+/// DbContext del modulo Notifications. Hereda de TenantDbContext: el aislamiento por
+/// tenant y el soft delete se aplican solos a toda entidad marcada.
 /// </summary>
-public sealed class NotificationsDbContext(DbContextOptions<NotificationsDbContext> options) : DbContext(options)
+public sealed class NotificationsDbContext(DbContextOptions<NotificationsDbContext> options, IUserContext? userContext)
+    : TenantDbContext(options, userContext)
 {
   public DbSet<Notification> Notifications => Set<Notification>();
 
@@ -17,23 +21,8 @@ public sealed class NotificationsDbContext(DbContextOptions<NotificationsDbConte
     // Aplicar configuraciones desde el ensamblado
     modelBuilder.ApplyConfigurationsFromAssembly(typeof(NotificationsDbContext).Assembly);
 
-    // Filtro global para soft delete
-    modelBuilder.Entity<Notification>().HasQueryFilter(e => !e.IsDeleted);
+    // Aislamiento por tenant y soft delete, compuestos en un solo filtro.
+    ApplyTenantFilters(modelBuilder);
   }
 
-  /// <summary>
-  /// Desactiva los filtros globales para consultas de auditoría.
-  /// </summary>
-  public void DisableGlobalFilters(ModelBuilder modelBuilder)
-  {
-    modelBuilder.Entity<Notification>().HasQueryFilter(e => true);
-  }
-
-  /// <summary>
-  /// Reactiva los filtros globales.
-  /// </summary>
-  public void EnableGlobalFilters(ModelBuilder modelBuilder)
-  {
-    modelBuilder.Entity<Notification>().HasQueryFilter(e => !e.IsDeleted);
-  }
 }

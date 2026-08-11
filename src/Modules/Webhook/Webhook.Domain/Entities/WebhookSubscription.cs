@@ -2,7 +2,7 @@ using BuildingBlocks.Domain.Primitives;
 
 namespace Webhook.Domain.Entities;
 
-public sealed class WebhookSubscription : AggregateRoot
+public sealed class WebhookSubscription : AggregateRoot, ITenantEntity
 {
     public Guid TenantId { get; private set; }
     public string EventName { get; private set; } = string.Empty;

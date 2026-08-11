@@ -8,7 +8,7 @@ namespace Projects.Domain.Entities;
 /// <summary>
 /// Entidad de dominio Project.
 /// </summary>
-public sealed class Project : AggregateRoot
+public sealed class Project : AggregateRoot, ITenantEntity, ISoftDeletable
 {
   public Guid TenantId { get; private set; }
   public Guid SpaceId { get; private set; }
