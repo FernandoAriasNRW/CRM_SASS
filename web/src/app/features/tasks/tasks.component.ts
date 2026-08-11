@@ -1,7 +1,7 @@
-import { Component, inject, OnInit, signal, computed, ViewChild, TemplateRef, effect } from '@angular/core';
+import { Component, OnInit, TemplateRef, ViewChild, computed, effect, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { CdkDragDrop, DragDropModule, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
+import { CdkDrag, CdkDragDrop, DragDropModule, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
 import { ActivatedRoute } from '@angular/router';
 import { ApiService } from '../../core/api.service';
 import { RealtimeService } from '../../core/realtime.service';
@@ -20,6 +20,8 @@ import { ViewsService, SavedView } from '../../shared/services/views.service';
 import { TableColumnService } from '../../shared/services/table-column.service';
 import { HierarchySignalStore } from '../../core/hierarchy-signal.store';
 import { ClickableDirective } from '../../shared/directives/clickable.directive';
+import { puedeMover } from './task-transitions';
+import { ToastService } from '../../shared/services/toast.service';
 
 export interface Column { key: string; label: string; badge: BadgeVariant; tasks: TaskItem[]; }
 
@@ -49,6 +51,7 @@ const STATUS_BADGE: Record<string, BadgeVariant> = {
   templateUrl: './tasks.component.html',
 })
 export class TasksComponent implements OnInit {
+  private readonly toast = inject(ToastService);
   private readonly api = inject(ApiService);
   private readonly realtime = inject(RealtimeService);
   private readonly viewsService = inject(ViewsService);
@@ -320,23 +323,66 @@ export class TasksComponent implements OnInit {
     this.distributeTasksToColumns();
   }
 
+  /**
+   * Mueve la tarjeta al soltarla.
+   *
+   * La tarjeta se mueve en pantalla antes de que conteste el servidor, porque esperar la
+   * respuesta se percibe como que el tablero va lento. La contrapartida es que hay que
+   * poder deshacerlo: si el servidor rechaza el movimiento —una transición no permitida,
+   * un problema de permisos, la red— la tarjeta vuelve a su columna y se avisa.
+   *
+   * Sin esa reversión la interfaz miente: la tarjeta se queda donde el usuario la soltó y
+   * salta a su sitio en la siguiente recarga, sin explicación.
+   */
   drop(event: CdkDragDrop<TaskItem[]>, targetKey: string): void {
     if (event.previousContainer === event.container) {
       moveItemInArray(event.container.data, event.previousIndex, event.currentIndex);
-    } else {
-      const task = event.previousContainer.data[event.previousIndex];
-      transferArrayItem(
-        event.previousContainer.data,
-        event.container.data,
-        event.previousIndex,
-        event.currentIndex
-      );
-      this.allTasks.update(tasks =>
-        tasks.map(t => t.id === task.id ? { ...t, status: targetKey } : t)
-      );
-      this.api.post(`/tasks/${task.id}/move`, { newStatus: targetKey }).subscribe();
+      return;
     }
+
+    const task = event.previousContainer.data[event.previousIndex];
+    const estadoAnterior = task.status;
+
+    transferArrayItem(
+      event.previousContainer.data,
+      event.container.data,
+      event.previousIndex,
+      event.currentIndex
+    );
+    this.allTasks.update(tasks =>
+      tasks.map(t => t.id === task.id ? { ...t, status: targetKey } : t)
+    );
+
+    this.api.post(`/tasks/${task.id}/move`, { newStatus: targetKey }).subscribe({
+      error: () => {
+        // Devolver la tarjeta a su columna. Se mueve entre los mismos arrays que usa el
+        // cdkDropList, no sólo en la señal, o el tablero quedaría descuadrado respecto a
+        // lo que se ve.
+        transferArrayItem(
+          event.container.data,
+          event.previousContainer.data,
+          event.container.data.findIndex(t => t.id === task.id),
+          event.previousIndex
+        );
+        this.allTasks.update(tasks =>
+          tasks.map(t => t.id === task.id ? { ...t, status: estadoAnterior } : t)
+        );
+
+        this.toast.error(
+          'No se pudo mover la tarea',
+          `«${task.title}» sigue en ${estadoAnterior}.`);
+      },
+    });
   }
+
+  /**
+   * Decide si una tarjeta puede soltarse en una columna, mientras se arrastra.
+   *
+   * Da la respuesta en el acto en lugar de dejar caer la tarjeta y devolverla al recibir
+   * el rechazo del servidor. La comprobación de verdad sigue siendo la del servidor.
+   */
+  permiteSoltar = (columna: string) => (drag: CdkDrag<TaskItem>): boolean =>
+    puedeMover(drag.data?.status ?? '', columna);
 
   readonly statuses = ['To Do', 'In Progress', 'In Review', 'Done'];
 }
