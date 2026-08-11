@@ -24,9 +24,20 @@ import { ClickableDirective } from '../../shared/directives/clickable.directive'
 import { ToastService } from '../../shared/services/toast.service';
 import { EmptyInlineComponent } from '../../shared/ui/empty-state.component';
 
-interface Column { key: string; label: string; badge: BadgeVariant; tickets: Ticket[]; }
+interface Column {
+  key: string;
+  label: string;
+  badge: BadgeVariant;
+  /** Lo que se pinta y sobre lo que opera el arrastre. */
+  tickets: Ticket[];
+  /** El resto, aún sin pintar. Se revela por tandas con «mostrar más». */
+  pendientes: Ticket[];
+}
 
-const COLUMN_DEFS: Omit<Column, 'tickets'>[] = [
+/** Tarjetas por columna antes de pedir más. Ver el mismo razonamiento en tasks. */
+const POR_TANDA = 25;
+
+const COLUMN_DEFS: Omit<Column, 'tickets' | 'pendientes'>[] = [
   { key: 'Open',         label: 'Abierto',      badge: 'secondary' },
   { key: 'InProgress',   label: 'En progreso',  badge: 'default'   },
   { key: 'Resolved',     label: 'Resuelto',     badge: 'success'   },
@@ -98,7 +109,7 @@ export class TicketsComponent implements OnInit {
   readonly allTickets = signal<Ticket[]>([]);
   totalItems = signal(0);
   
-  cols: Column[] = COLUMN_DEFS.map(c => ({ ...c, tickets: [] as Ticket[] }));
+  cols: Column[] = COLUMN_DEFS.map(c => ({ ...c, tickets: [] as Ticket[], pendientes: [] as Ticket[] }));
   readonly columnIds = COLUMN_DEFS.map(c => c.key);
 
   readonly priorities = computed(() =>
@@ -280,12 +291,31 @@ export class TicketsComponent implements OnInit {
     });
   }
 
+  /**
+   * Reparte los tickets por columna dejando fuera lo que excede la primera tanda.
+   *
+   * El corte se hace aquí y no en la plantilla: `cdkDropListData` y los índices del
+   * arrastre tienen que referirse al mismo array que se pinta.
+   */
   private distributeTicketsToColumns() {
     const tickets = this.allTickets();
-    this.cols = COLUMN_DEFS.map(c => ({
-      ...c,
-      tickets: tickets.filter(t => t.status === c.key)
-    }));
+    this.cols = COLUMN_DEFS.map(c => {
+      const suyos = tickets.filter(t => t.status === c.key);
+      const yaVisibles = this.cols.find(x => x.key === c.key)?.tickets.length ?? 0;
+      const corte = Math.max(POR_TANDA, yaVisibles);
+      return { ...c, tickets: suyos.slice(0, corte), pendientes: suyos.slice(corte) };
+    });
+  }
+
+  /** Revela la siguiente tanda de una columna. */
+  mostrarMas(col: Column): void {
+    col.tickets = [...col.tickets, ...col.pendientes.slice(0, POR_TANDA)];
+    col.pendientes = col.pendientes.slice(POR_TANDA);
+  }
+
+  /** Total real de la columna, contando lo que aún no se pinta. */
+  totalColumna(col: Column): number {
+    return col.tickets.length + col.pendientes.length;
   }
 
   openDetail(ticket: Ticket): void {

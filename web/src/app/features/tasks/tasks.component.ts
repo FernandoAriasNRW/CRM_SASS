@@ -24,9 +24,27 @@ import { ToastService } from '../../shared/services/toast.service';
 import { SkeletonListComponent } from '../../shared/ui/skeleton.component';
 import { EmptyInlineComponent } from '../../shared/ui/empty-state.component';
 
-export interface Column { key: string; label: string; badge: BadgeVariant; tasks: TaskItem[]; }
+export interface Column {
+  key: string;
+  label: string;
+  badge: BadgeVariant;
+  /** Lo que se pinta y sobre lo que opera el arrastre. */
+  tasks: TaskItem[];
+  /** El resto, aún sin pintar. Se revela por tandas con «mostrar más». */
+  pendientes: TaskItem[];
+}
 
-const COLUMN_DEFS: Omit<Column, 'tasks'>[] = [
+/**
+ * Tarjetas que se pintan por columna antes de pedir más.
+ *
+ * El tablero trae hasta 1000 tareas de una vez; pintarlas todas llenaba el DOM de
+ * tarjetas que nadie llega a mirar, y una columna con cientos de elementos arrastrables
+ * se nota al desplazarse. Un tablero se lee por arriba: lo que no cabe en una pantalla
+ * casi nunca se consulta sin filtrar antes.
+ */
+const POR_TANDA = 25;
+
+const COLUMN_DEFS: Omit<Column, 'tasks' | 'pendientes'>[] = [
   { key: 'To Do',       label: 'Por hacer',  badge: 'secondary' },
   { key: 'In Progress', label: 'En progreso', badge: 'default'   },
   { key: 'In Review',   label: 'En revisión', badge: 'warning'   },
@@ -98,7 +116,7 @@ export class TasksComponent implements OnInit {
   readonly allTasks = signal<TaskItem[]>([]);
   totalItems = signal(0);
   
-  cols: Column[] = COLUMN_DEFS.map(c => ({ ...c, tasks: [] as TaskItem[] }));
+  cols: Column[] = COLUMN_DEFS.map(c => ({ ...c, tasks: [] as TaskItem[], pendientes: [] as TaskItem[] }));
   readonly columnIds = COLUMN_DEFS.map(c => c.key);
 
   readonly projectOptions = computed(() => {
@@ -302,12 +320,36 @@ export class TasksComponent implements OnInit {
     });
   }
 
+  /**
+   * Reparte las tareas por columna, dejando fuera de la vista lo que excede la primera
+   * tanda.
+   *
+   * El corte se hace aquí y no en la plantilla a propósito: `cdkDropListData` y los
+   * índices que maneja el arrastre tienen que referirse al MISMO array que se pinta. Si
+   * la plantilla mostrara un `slice` mientras el arrastre opera sobre la lista completa,
+   * los índices no coincidirían y las tarjetas acabarían en posiciones equivocadas.
+   */
   private distributeTasksToColumns() {
     const tasks = this.allTasks();
-    this.cols = COLUMN_DEFS.map(c => ({
-      ...c,
-      tasks: tasks.filter(t => t.status === c.key)
-    }));
+    this.cols = COLUMN_DEFS.map(c => {
+      const suyas = tasks.filter(t => t.status === c.key);
+      // Se conserva lo ya revelado al recargar: si alguien pulsó «mostrar más» y luego
+      // llega una actualización, volver a esconderlo sería desconcertante.
+      const yaVisibles = this.cols.find(x => x.key === c.key)?.tasks.length ?? 0;
+      const corte = Math.max(POR_TANDA, yaVisibles);
+      return { ...c, tasks: suyas.slice(0, corte), pendientes: suyas.slice(corte) };
+    });
+  }
+
+  /** Revela la siguiente tanda de una columna. */
+  mostrarMas(col: Column): void {
+    col.tasks = [...col.tasks, ...col.pendientes.slice(0, POR_TANDA)];
+    col.pendientes = col.pendientes.slice(POR_TANDA);
+  }
+
+  /** Total real de la columna, contando lo que aún no se pinta. */
+  totalColumna(col: Column): number {
+    return col.tasks.length + col.pendientes.length;
   }
 
   openDetail(task: TaskItem): void {
