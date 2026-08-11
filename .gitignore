@@ -1,0 +1,56 @@
+# ─────────────────────────────────────────────────────────── .NET
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+*.user
+*.suo
+*.userprefs
+project.lock.json
+artifacts/
+
+# Visual Studio / Rider
+.vs/
+.idea/
+*.sln.docstates
+
+# Test / coverage output
+[Tt]est[Rr]esult*/
+coverage/
+*.coverage
+*.trx
+
+# ─────────────────────────────────────────────────────────── Secretos
+# Nunca versionar configuración con credenciales reales.
+appsettings.Development.json
+appsettings.Local.json
+appsettings.*.local.json
+*.pfx
+*.key
+.env
+.env.*
+!.env.example
+
+# ─────────────────────────────────────────────────────────── Node / Angular
+node_modules/
+dist/
+.angular/
+npm-debug.log*
+yarn-error.log*
+
+# ─────────────────────────────────────────────────────────── Logs y artefactos de trabajo
+*.log
+build.log
+error.html
+error.txt
+payload.json
+*.webm
+
+# ─────────────────────────────────────────────────────────── SO
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+.DS_Store
+
+# ─────────────────────────────────────────────────────────── Herramientas
+.claude/

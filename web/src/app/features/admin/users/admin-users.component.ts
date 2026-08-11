@@ -120,7 +120,7 @@ export class AdminUsersComponent implements OnInit {
     });
   }
 
-  saveCurrentView(name: string, isDefault: boolean = false): void {
+  saveCurrentView(name: string, isDefault = false): void {
     const payload = { moduleName: 'Users', viewName: name, stateJson: JSON.stringify(this.tableState()), isDefault };
     this.viewsService.saveView(payload).subscribe({
       next: (view) => {

@@ -1,4 +1,4 @@
-import { Component, inject, output, signal } from '@angular/core';
+import { Component, inject, output, signal, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../core/api.service';
 import { Store } from '@ngrx/store';
@@ -15,7 +15,7 @@ import { DrawerComponent } from '../../shared/ui/drawer.component';
   imports: [FormsModule, ButtonComponent, InputComponent, LabelComponent, DrawerComponent],
   templateUrl: './project-create-modal.component.html',
 })
-export class ProjectCreateModalComponent {
+export class ProjectCreateModalComponent implements OnInit {
   readonly closed = output<void>();
 
   name = '';

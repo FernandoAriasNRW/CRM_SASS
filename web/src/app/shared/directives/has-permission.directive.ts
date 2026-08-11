@@ -10,7 +10,7 @@ export class HasPermissionDirective {
   private templateRef = inject(TemplateRef);
   private vcr = inject(ViewContainerRef);
 
-  private requiredPermission: string = '';
+  private requiredPermission = '';
   private entityType?: string;
   private entityId?: string;
   

@@ -159,7 +159,7 @@ export class TasksComponent implements OnInit {
     });
   }
 
-  saveCurrentView(name: string, isDefault: boolean = false): void {
+  saveCurrentView(name: string, isDefault = false): void {
     const currentState = { ...this.tableState(), viewType: this.viewMode() };
     const payload = {
       moduleName: 'Tasks',
@@ -239,7 +239,7 @@ export class TasksComponent implements OnInit {
     this.isLoading.set(true);
     const state = this.tableState();
     
-    let params: any = {
+    const params: any = {
       pageNumber: state.page,
       pageSize: this.viewMode() === 'board' ? 1000 : state.pageSize, // Get all for board view conceptually, or implement lazy loading per column
       sortColumn: state.sortColumn,

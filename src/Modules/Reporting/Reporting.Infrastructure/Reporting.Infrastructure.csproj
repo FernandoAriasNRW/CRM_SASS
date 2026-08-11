@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Reporting.Application\Reporting.Application.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\BuildingBlocks.Infrastructure\BuildingBlocks.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\Projects\Projects.Domain\Projects.Domain.csproj" />
+    <ProjectReference Include="..\..\Projects\Projects.Infrastructure\Projects.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\WorkItems\WorkItems.Domain\WorkItems.Domain.csproj" />
+    <ProjectReference Include="..\..\WorkItems\WorkItems.Infrastructure\WorkItems.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\Ticketing\Ticketing.Domain\Ticketing.Domain.csproj" />
+    <ProjectReference Include="..\..\Ticketing\Ticketing.Infrastructure\Ticketing.Infrastructure.csproj" />
+  </ItemGroup>
+
+</Project>

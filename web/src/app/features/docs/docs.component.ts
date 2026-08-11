@@ -301,7 +301,7 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
     this.activeRowMenuId.update(current => current === docId ? null : docId);
   }
 
-  createNewDoc(type: number = 1, event?: Event) {
+  createNewDoc(type = 1, event?: Event) {
     if (event) event.stopPropagation();
     this.isNewDocDropdownOpen.set(false);
 
@@ -312,7 +312,7 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
       type
     }).subscribe({
       next: (id: any) => {
-        let cleanId = typeof id === 'string' ? id.replace(/['"]/g, '') : (id?.value || id?.id || id);
+        const cleanId = typeof id === 'string' ? id.replace(/['"]/g, '') : (id?.value || id?.id || id);
         this.docsService.getDocuments().subscribe({
           next: (docs) => {
             this.documents.set(docs);
@@ -335,7 +335,7 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
 
     this.docsService.createFromTemplate({ templateKey: presetKey }).subscribe({
       next: (id: any) => {
-        let cleanId = typeof id === 'string' ? id.replace(/['"]/g, '') : (id?.value || id?.id || id);
+        const cleanId = typeof id === 'string' ? id.replace(/['"]/g, '') : (id?.value || id?.id || id);
         this.docsService.getDocuments().subscribe(docs => {
           this.documents.set(docs);
           this.isLoading.set(false);
@@ -358,7 +358,7 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
 
     this.docsService.createFromTemplate({ templateDocumentId: templateDocId }).subscribe({
       next: (id: any) => {
-        let cleanId = typeof id === 'string' ? id.replace(/['"]/g, '') : (id?.value || id?.id || id);
+        const cleanId = typeof id === 'string' ? id.replace(/['"]/g, '') : (id?.value || id?.id || id);
         this.docsService.getDocuments().subscribe(docs => {
           this.documents.set(docs);
           this.isLoading.set(false);
@@ -439,7 +439,7 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
     }).subscribe({
       next: (id: any) => {
         this.isImportModalOpen.set(false);
-        let cleanId = typeof id === 'string' ? id.replace(/['"]/g, '') : (id?.value || id?.id || id);
+        const cleanId = typeof id === 'string' ? id.replace(/['"]/g, '') : (id?.value || id?.id || id);
         this.docsService.getDocuments().subscribe(docs => {
           this.documents.set(docs);
           const importedDoc = docs.find(d => d.id === cleanId);
@@ -476,9 +476,9 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
     });
   }
 
-  createNewPage(documentId: string, title: string = 'Untitled Page', parentPageId?: string) {
+  createNewPage(documentId: string, title = 'Untitled Page', parentPageId?: string) {
     this.docsService.createPage(documentId, { title, parentPageId }).subscribe(id => {
-      let cleanId = typeof id === 'string' ? id.replace(/['"]/g, '') : (id as any)?.value || id;
+      const cleanId = typeof id === 'string' ? id.replace(/['"]/g, '') : (id as any)?.value || id;
       this.docsService.getPages(documentId).subscribe(pages => {
         this.pagesByDoc.update(dict => ({ ...dict, [documentId]: pages }));
         const newPage = pages.find(p => p.id === cleanId);

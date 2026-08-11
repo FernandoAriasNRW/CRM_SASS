@@ -44,7 +44,7 @@ interface ProjectProgress {
 interface ProjectBurndown {
   projectId: string;
   projectName: string;
-  data: Array<{ date: string; remainingTasks: number; idealTasks: number }>;
+  data: { date: string; remainingTasks: number; idealTasks: number }[];
 }
 
 import { AuthSignalStore } from '../../core/auth-signal.store';

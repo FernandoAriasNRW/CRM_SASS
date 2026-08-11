@@ -28,7 +28,7 @@ export class ApiService {
   }
 
   get<T>(path: string, params?: Record<string, string | number | boolean | Date | null | undefined>): Observable<T> {
-    let httpParams: Record<string, any> = {};
+    const httpParams: Record<string, any> = {};
     if (params) {
       Object.keys(params).forEach(key => {
         const val = params[key];

@@ -141,7 +141,7 @@ export class ProjectsComponent implements OnInit {
     });
   }
 
-  saveCurrentView(name: string, isDefault: boolean = false): void {
+  saveCurrentView(name: string, isDefault = false): void {
     const payload = {
       moduleName: 'Projects',
       viewName: name,
@@ -181,7 +181,7 @@ export class ProjectsComponent implements OnInit {
     this.isLoading.set(true);
     const state = this.tableState();
     
-    let params: any = {
+    const params: any = {
       pageNumber: state.page,
       pageSize: state.pageSize,
       sortColumn: state.sortColumn,

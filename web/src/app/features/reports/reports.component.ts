@@ -82,7 +82,7 @@ export class ReportsComponent implements OnInit {
     });
   }
 
-  saveCurrentView(name: string, isDefault: boolean = false): void {
+  saveCurrentView(name: string, isDefault = false): void {
     const payload = {
       moduleName: 'Reports',
       viewName: name,
@@ -122,7 +122,7 @@ export class ReportsComponent implements OnInit {
     this.loading.set(true);
     const state = this.tableState();
     
-    let params: any = {
+    const params: any = {
       pageNumber: state.page,
       pageSize: state.pageSize,
       sortColumn: state.sortColumn,
