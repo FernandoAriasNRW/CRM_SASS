@@ -11,22 +11,66 @@
   }
 }
 
+/**
+ * Sistema de color.
+ *
+ * Cada color semántico tiene cuatro tokens, porque la interfaz los usa de dos formas
+ * distintas y mezclarlas es lo que llevaba a escribir paleta cruda:
+ *
+ *   --x                    relleno sólido (botón, barra de progreso)
+ *   --x-foreground         texto sobre ese relleno
+ *   --x-subtle             fondo tenue (etiqueta, aviso, fila resaltada)
+ *   --x-subtle-foreground  texto sobre el fondo tenue
+ *
+ * Sin los dos últimos no había forma de expresar `bg-green-100 text-green-800`, así que
+ * cada pantalla se inventaba los suyos. Las variantes tenues llevan par propio de texto
+ * para que el contraste cumpla WCAG AA en ambos temas, en lugar de depender de que
+ * alguien acierte con el tono.
+ */
 @layer base {
   :root {
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
+
+    /* Superficie elevada sobre el fondo: tarjetas, paneles, menús. */
     --card: 0 0% 100%;
     --card-foreground: 222.2 84% 4.9%;
+    --surface: 210 40% 98%;
+    --surface-foreground: 222.2 47.4% 11.2%;
+
     --primary: 221.2 83.2% 53.3%;
     --primary-foreground: 210 40% 98%;
+    --primary-subtle: 214 95% 93%;
+    --primary-subtle-foreground: 226 71% 40%;
+
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
     --accent: 210 40% 96.1%;
     --accent-foreground: 222.2 47.4% 11.2%;
+
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
+    --destructive-subtle: 0 93% 94%;
+    --destructive-subtle-foreground: 0 70% 35%;
+
+    --success: 142 71% 45%;
+    --success-foreground: 0 0% 100%;
+    --success-subtle: 141 84% 93%;
+    --success-subtle-foreground: 142 72% 29%;
+
+    /* El ámbar es demasiado claro para texto blanco: su par lleva texto oscuro. */
+    --warning: 38 92% 50%;
+    --warning-foreground: 26 83% 14%;
+    --warning-subtle: 48 96% 89%;
+    --warning-subtle-foreground: 23 83% 31%;
+
+    --info: 199 89% 48%;
+    --info-foreground: 0 0% 100%;
+    --info-subtle: 204 94% 94%;
+    --info-subtle-foreground: 201 90% 27%;
+
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
     --ring: 221.2 83.2% 53.3%;
@@ -36,18 +80,46 @@
   .dark {
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
+
+    /* En modo oscuro la tarjeta se aclara respecto al fondo. Antes compartían el
+       mismo valor, así que no se distinguían del lienzo y la jerarquía desaparecía. */
+    --card: 222 47% 8%;
     --card-foreground: 210 40% 98%;
+    --surface: 217.2 32.6% 12%;
+    --surface-foreground: 210 40% 98%;
+
     --primary: 217.2 91.2% 59.8%;
     --primary-foreground: 222.2 47.4% 11.2%;
+    --primary-subtle: 224 64% 15%;
+    --primary-subtle-foreground: 213 94% 78%;
+
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
     --muted: 217.2 32.6% 17.5%;
     --muted-foreground: 215 20.2% 65.1%;
     --accent: 217.2 32.6% 17.5%;
     --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
+
+    --destructive: 0 72% 51%;
     --destructive-foreground: 210 40% 98%;
+    --destructive-subtle: 0 63% 14%;
+    --destructive-subtle-foreground: 0 91% 78%;
+
+    --success: 142 70% 45%;
+    --success-foreground: 144 61% 10%;
+    --success-subtle: 145 80% 11%;
+    --success-subtle-foreground: 141 79% 70%;
+
+    --warning: 38 92% 50%;
+    --warning-foreground: 26 83% 14%;
+    --warning-subtle: 26 83% 13%;
+    --warning-subtle-foreground: 48 96% 75%;
+
+    --info: 199 89% 48%;
+    --info-foreground: 204 80% 10%;
+    --info-subtle: 202 80% 13%;
+    --info-subtle-foreground: 199 95% 78%;
+
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 224.3 76.3% 48%;

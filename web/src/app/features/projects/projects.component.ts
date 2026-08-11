@@ -18,10 +18,10 @@ import { ViewsService, SavedView } from '../../shared/services/views.service';
 import { TableColumnService } from '../../shared/services/table-column.service';
 
 const STATUS_VARIANT: Record<string, string> = {
-  'Planned':     'bg-gray-100 text-gray-800',
-  'In Progress': 'bg-blue-100 text-blue-800',
-  'Done':        'bg-green-100 text-green-800',
-  'On Hold':     'bg-yellow-100 text-yellow-800',
+  'Planned':     'bg-muted text-foreground',
+  'In Progress': 'bg-primary-subtle text-primary-subtle-fg',
+  'Done':        'bg-success-subtle text-success-subtle-fg',
+  'On Hold':     'bg-warning-subtle text-warning-subtle-fg',
 };
 
 @Component({
@@ -81,7 +81,7 @@ export class ProjectsComponent implements OnInit {
   @ViewChild('actionsTemplate', { static: true }) actionsTemplate!: TemplateRef<any>;
 
   statusStyle(status: string): string {
-    return STATUS_VARIANT[status] ?? 'bg-gray-100 text-gray-800';
+    return STATUS_VARIANT[status] ?? 'bg-muted text-foreground';
   }
 
   constructor() {

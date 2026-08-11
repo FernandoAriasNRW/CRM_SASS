@@ -35,7 +35,7 @@ export const FileAttachment = Node.create({
       'a',
       mergeAttributes(HTMLAttributes, {
         'data-type': 'file-attachment',
-        class: 'flex items-center gap-3 p-3 border border-zinc-200 dark:border-zinc-700 rounded-lg bg-zinc-50 dark:bg-zinc-800/50 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors no-underline text-zinc-900 dark:text-zinc-100 my-2 cursor-pointer',
+        class: 'flex items-center gap-3 p-3 border border-border dark:border-border rounded-lg bg-muted dark:bg-muted/50 hover:bg-muted dark:hover:bg-muted transition-colors no-underline text-foreground dark:text-foreground my-2 cursor-pointer',
         target: '_blank',
         rel: 'noopener noreferrer'
       }),

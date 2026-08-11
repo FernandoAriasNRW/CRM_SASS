@@ -29,15 +29,15 @@
       </div>
       <div class="rounded-lg border border-border bg-muted/30 px-4 py-3">
         <p class="text-xs text-muted-foreground">Activas</p>
-        <p class="text-2xl font-bold text-green-600">{{ stats().active }}</p>
+        <p class="text-2xl font-bold text-success">{{ stats().active }}</p>
       </div>
       <div class="rounded-lg border border-border bg-muted/30 px-4 py-3">
         <p class="text-xs text-muted-foreground">Entregas Exitosas</p>
-        <p class="text-2xl font-bold text-blue-600">{{ stats().successCount }}</p>
+        <p class="text-2xl font-bold text-primary">{{ stats().successCount }}</p>
       </div>
       <div class="rounded-lg border border-border bg-muted/30 px-4 py-3">
         <p class="text-xs text-muted-foreground">Entregas Fallidas</p>
-        <p class="text-2xl font-bold text-red-600">{{ stats().failureCount }}</p>
+        <p class="text-2xl font-bold text-destructive">{{ stats().failureCount }}</p>
       </div>
     </div>
   </div>
@@ -100,7 +100,7 @@
                   <div class="flex items-center gap-2 mb-1">
                     <h3 class="font-medium truncate">{{ subscription.name }}</h3>
                     @if (subscription.isActive) {
-                      <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">
+                      <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-success-subtle text-success-subtle-fg">
                         <ng-icon name="lucideCheck" size="10" />
                         Activo
                       </span>
@@ -134,11 +134,11 @@
                 <div class="flex flex-col items-end gap-2">
                   <!-- Stats -->
                   <div class="flex items-center gap-3 text-xs text-muted-foreground">
-                    <span class="flex items-center gap-1" [class.text-green-600]="subscription.successCount > 0">
+                    <span class="flex items-center gap-1" [class.text-success]="subscription.successCount > 0">
                       <ng-icon name="lucideCheck" size="12" />
                       {{ subscription.successCount }}
                     </span>
-                    <span class="flex items-center gap-1" [class.text-red-600]="subscription.failureCount > 0">
+                    <span class="flex items-center gap-1" [class.text-destructive]="subscription.failureCount > 0">
                       <ng-icon name="lucideX" size="12" />
                       {{ subscription.failureCount }}
                     </span>
@@ -159,7 +159,7 @@
                         @if (subscription.isActive) {
                           <ng-icon name="lucideEyeOff" size="14" class="text-muted-foreground" />
                         } @else {
-                          <ng-icon name="lucideEye" size="14" class="text-green-600" />
+                          <ng-icon name="lucideEye" size="14" class="text-success" />
                         }
                       </button>
                     }

@@ -24,11 +24,10 @@ test('un usuario no autenticado que entra a la raíz acaba en el login', async (
   await page.goto('/');
 
   await expect(page).toHaveURL(/\/login/);
-  // Se localiza por texto y no por rol de encabezado a propósito: la tarjeta de login
-  // no envuelve su título en ningún <h1>-<h6>, así que no existe rol de heading en la
-  // página. Es un defecto de accesibilidad real, anotado para la Fase 3.2; cuando se
-  // corrija, este localizador debería pasar a getByRole('heading').
-  await expect(page.getByText('Iniciar sesión', { exact: true })).toBeVisible();
+  // Por rol, no por texto: comprueba de paso que la pantalla tiene un encabezado real.
+  // Hasta la Fase 3 no lo tenía —ui-card-title renderizaba un elemento sin semántica—
+  // y un lector de pantalla no percibía ninguna estructura.
+  await expect(page.getByRole('heading', { name: 'Iniciar sesión', level: 1 })).toBeVisible();
 });
 
 test('una ruta protegida no es accesible sin sesión', async ({ page }) => {

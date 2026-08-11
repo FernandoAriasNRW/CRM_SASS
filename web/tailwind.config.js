@@ -34,6 +34,36 @@ module.exports = {
           DEFAULT: 'hsl(var(--card))',
           foreground: 'hsl(var(--card-foreground))',
         },
+        surface: {
+          DEFAULT: 'hsl(var(--surface))',
+          foreground: 'hsl(var(--surface-foreground))',
+        },
+        success: {
+          DEFAULT: 'hsl(var(--success))',
+          foreground: 'hsl(var(--success-foreground))',
+        },
+        warning: {
+          DEFAULT: 'hsl(var(--warning))',
+          foreground: 'hsl(var(--warning-foreground))',
+        },
+        info: {
+          DEFAULT: 'hsl(var(--info))',
+          foreground: 'hsl(var(--info-foreground))',
+        },
+        // Fondos tenues para etiquetas y avisos, con su propio par de texto.
+        // Se declaran como colores planos y no como variante de los anteriores
+        // porque Tailwind no anida dos niveles: `bg-success-subtle` necesita ser
+        // una clave propia para poder emparejarse con `text-success-subtle-fg`.
+        'primary-subtle': 'hsl(var(--primary-subtle))',
+        'primary-subtle-fg': 'hsl(var(--primary-subtle-foreground))',
+        'destructive-subtle': 'hsl(var(--destructive-subtle))',
+        'destructive-subtle-fg': 'hsl(var(--destructive-subtle-foreground))',
+        'success-subtle': 'hsl(var(--success-subtle))',
+        'success-subtle-fg': 'hsl(var(--success-subtle-foreground))',
+        'warning-subtle': 'hsl(var(--warning-subtle))',
+        'warning-subtle-fg': 'hsl(var(--warning-subtle-foreground))',
+        'info-subtle': 'hsl(var(--info-subtle))',
+        'info-subtle-fg': 'hsl(var(--info-subtle-foreground))',
       },
       borderRadius: {
         lg: 'var(--radius)',

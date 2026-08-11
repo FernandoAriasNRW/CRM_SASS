@@ -1,20 +1,20 @@
 <div class="max-w-7xl mx-auto space-y-6">
   
   <!-- Workspace Admin Header -->
-  <div class="bg-gradient-to-r from-purple-900/90 via-indigo-900/90 to-zinc-900 border border-purple-800/40 rounded-2xl p-6 text-white shadow-xl relative overflow-hidden">
-    <div class="absolute -right-6 -top-6 w-44 h-44 rounded-full bg-purple-500/10 blur-2xl pointer-events-none"></div>
+  <div class="bg-gradient-to-r from-purple-900/90 via-indigo-900/90 to-zinc-900 border border-primary/40 rounded-2xl p-6 text-white shadow-xl relative overflow-hidden">
+    <div class="absolute -right-6 -top-6 w-44 h-44 rounded-full bg-primary/10 blur-2xl pointer-events-none"></div>
 
     <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
       <div class="flex items-center gap-4">
         <div class="w-14 h-14 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 text-white flex items-center justify-center font-bold text-xl shadow-inner">
-          <ng-icon name="lucideBuilding2" class="w-7 h-7 text-purple-300"></ng-icon>
+          <ng-icon name="lucideBuilding2" class="w-7 h-7 text-primary-subtle-fg"></ng-icon>
         </div>
         <div>
           <h1 class="text-2xl font-bold tracking-tight flex items-center gap-2">
             <span>Centro de Administración & Ajustes</span>
-            <span class="text-xs px-2 py-0.5 rounded-full bg-purple-500/30 border border-purple-400/40 text-purple-200 font-medium">CRM SASS Admin</span>
+            <span class="text-xs px-2 py-0.5 rounded-full bg-primary/30 border border-primary/40 text-primary-subtle-fg font-medium">CRM SASS Admin</span>
           </h1>
-          <p class="text-xs text-purple-200/80 mt-0.5">Gestión de usuarios, equipos, matriz de permisos granulares y suscripciones a webhooks</p>
+          <p class="text-xs text-primary-subtle-fg/80 mt-0.5">Gestión de usuarios, equipos, matriz de permisos granulares y suscripciones a webhooks</p>
         </div>
       </div>
     </div>
@@ -26,13 +26,13 @@
       <button 
         (click)="setTab('users')"
         [class.bg-white]="activeTab() === 'users'"
-        [class.text-zinc-900]="activeTab() === 'users'"
+        [class.text-foreground]="activeTab() === 'users'"
         [class.font-bold]="activeTab() === 'users'"
         [class.bg-white/10]="activeTab() !== 'users'"
         [class.text-white/80]="activeTab() !== 'users'"
         [class.hover:bg-white/20]="activeTab() !== 'users'"
         class="px-4 py-2 rounded-xl text-xs font-medium transition-all flex items-center gap-2 shadow-sm shrink-0">
-        <ng-icon name="lucideUsers" class="w-4 h-4" [class.text-purple-600]="activeTab() === 'users'"></ng-icon>
+        <ng-icon name="lucideUsers" class="w-4 h-4" [class.text-primary]="activeTab() === 'users'"></ng-icon>
         <span>Gestión de Usuarios</span>
       </button>
 
@@ -40,13 +40,13 @@
       <button 
         (click)="setTab('teams')"
         [class.bg-white]="activeTab() === 'teams'"
-        [class.text-zinc-900]="activeTab() === 'teams'"
+        [class.text-foreground]="activeTab() === 'teams'"
         [class.font-bold]="activeTab() === 'teams'"
         [class.bg-white/10]="activeTab() !== 'teams'"
         [class.text-white/80]="activeTab() !== 'teams'"
         [class.hover:bg-white/20]="activeTab() !== 'teams'"
         class="px-4 py-2 rounded-xl text-xs font-medium transition-all flex items-center gap-2 shadow-sm shrink-0">
-        <ng-icon name="lucideUsers" class="w-4 h-4" [class.text-purple-600]="activeTab() === 'teams'"></ng-icon>
+        <ng-icon name="lucideUsers" class="w-4 h-4" [class.text-primary]="activeTab() === 'teams'"></ng-icon>
         <span>Equipos & Grupos</span>
       </button>
 
@@ -54,13 +54,13 @@
       <button 
         (click)="setTab('permissions')"
         [class.bg-white]="activeTab() === 'permissions'"
-        [class.text-zinc-900]="activeTab() === 'permissions'"
+        [class.text-foreground]="activeTab() === 'permissions'"
         [class.font-bold]="activeTab() === 'permissions'"
         [class.bg-white/10]="activeTab() !== 'permissions'"
         [class.text-white/80]="activeTab() !== 'permissions'"
         [class.hover:bg-white/20]="activeTab() !== 'permissions'"
         class="px-4 py-2 rounded-xl text-xs font-medium transition-all flex items-center gap-2 shadow-sm shrink-0">
-        <ng-icon name="lucideShieldCheck" class="w-4 h-4" [class.text-purple-600]="activeTab() === 'permissions'"></ng-icon>
+        <ng-icon name="lucideShieldCheck" class="w-4 h-4" [class.text-primary]="activeTab() === 'permissions'"></ng-icon>
         <span>Permisos de Roles</span>
       </button>
 
@@ -68,13 +68,13 @@
       <button 
         (click)="setTab('webhooks')"
         [class.bg-white]="activeTab() === 'webhooks'"
-        [class.text-zinc-900]="activeTab() === 'webhooks'"
+        [class.text-foreground]="activeTab() === 'webhooks'"
         [class.font-bold]="activeTab() === 'webhooks'"
         [class.bg-white/10]="activeTab() !== 'webhooks'"
         [class.text-white/80]="activeTab() !== 'webhooks'"
         [class.hover:bg-white/20]="activeTab() !== 'webhooks'"
         class="px-4 py-2 rounded-xl text-xs font-medium transition-all flex items-center gap-2 shadow-sm shrink-0">
-        <ng-icon name="lucideWebhook" class="w-4 h-4" [class.text-purple-600]="activeTab() === 'webhooks'"></ng-icon>
+        <ng-icon name="lucideWebhook" class="w-4 h-4" [class.text-primary]="activeTab() === 'webhooks'"></ng-icon>
         <span>Webhooks e Integraciones</span>
       </button>
 
@@ -82,7 +82,7 @@
   </div>
 
   <!-- Dynamic Active Tab Content -->
-  <div class="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-6 shadow-sm min-h-[500px]">
+  <div class="bg-white dark:bg-background border border-border rounded-2xl p-6 shadow-sm min-h-[500px]">
     @if (activeTab() === 'users') {
       <app-admin-users></app-admin-users>
     } @else if (activeTab() === 'teams') {

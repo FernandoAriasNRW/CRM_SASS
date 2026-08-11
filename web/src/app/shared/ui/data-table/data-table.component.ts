@@ -37,21 +37,21 @@ export interface TableState {
   providers: [provideIcons({ lucideChevronUp, lucideChevronDown, lucideGripVertical, lucideEye, lucideEyeOff, lucideSettings2, lucideSearch, lucideFilter, lucideSave, lucideDownload })],
   host: { class: 'block h-full' },
   template: `
-    <div class="flex flex-col h-full bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
+    <div class="flex flex-col h-full bg-white dark:bg-muted rounded-xl border border-border shadow-sm overflow-hidden">
       
       <!-- Toolbar -->
-      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 border-b border-slate-200 dark:border-slate-700 gap-4">
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 border-b border-border gap-4">
         
         <!-- Search and Filters -->
         <div class="flex items-center gap-3 w-full sm:w-auto">
           <div class="relative w-full sm:w-64">
-            <ng-icon name="lucideSearch" class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></ng-icon>
+            <ng-icon name="lucideSearch" class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"></ng-icon>
             <input 
               type="text" 
               [ngModel]="state().searchTerm" 
               (ngModelChange)="onSearch($event)"
               placeholder="Search..." 
-              class="w-full pl-9 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow"
+              class="w-full pl-9 pr-4 py-2 bg-muted border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary transition-shadow"
             />
           </div>
         </div>
@@ -70,34 +70,34 @@ export interface TableState {
             </button>
             
             <!-- Column Settings Dropdown -->
-            <div *ngIf="showColumnSettings()" class="absolute right-0 mt-2 w-72 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-lg z-50 overflow-hidden flex flex-col max-h-[450px]">
-              <div class="p-3 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 shrink-0">
-                <h4 class="font-medium text-sm text-slate-900 dark:text-white">Visible Columns</h4>
+            <div *ngIf="showColumnSettings()" class="absolute right-0 mt-2 w-72 bg-white dark:bg-muted rounded-xl border border-border shadow-lg z-50 overflow-hidden flex flex-col max-h-[450px]">
+              <div class="p-3 border-b border-border bg-muted dark:bg-muted/50 shrink-0">
+                <h4 class="font-medium text-sm text-foreground dark:text-white">Visible Columns</h4>
               </div>
               <div class="p-2 overflow-y-auto shrink min-h-[100px]" cdkDropList (cdkDropListDropped)="onColumnDrop($event)">
-                <div *ngFor="let col of mutableColumns()" cdkDrag class="flex items-center justify-between p-2 hover:bg-slate-50 dark:hover:bg-slate-700/50 rounded-lg group">
+                <div *ngFor="let col of mutableColumns()" cdkDrag class="flex items-center justify-between p-2 hover:bg-muted dark:hover:bg-secondary/50 rounded-lg group">
                   <div class="flex items-center gap-3">
-                    <div cdkDragHandle class="cursor-grab active:cursor-grabbing text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div cdkDragHandle class="cursor-grab active:cursor-grabbing text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity">
                       <ng-icon name="lucideGripVertical"></ng-icon>
                     </div>
-                    <span class="text-sm font-medium text-slate-700 dark:text-slate-200">{{ col.label }}</span>
+                    <span class="text-sm font-medium text-muted-foreground dark:text-foreground">{{ col.label }}</span>
                   </div>
-                  <button (click)="toggleColumnVisibility(col)" class="text-slate-400 hover:text-blue-500 transition-colors">
+                  <button (click)="toggleColumnVisibility(col)" class="text-muted-foreground hover:text-primary transition-colors">
                     <ng-icon [name]="col.visible !== false ? 'lucideEye' : 'lucideEyeOff'"></ng-icon>
                   </button>
                 </div>
               </div>
 
               <!-- Add Custom Column -->
-              <div class="p-3 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 shrink-0">
-                <h4 class="font-medium text-xs text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wider">Añadir Columna</h4>
+              <div class="p-3 border-t border-border bg-muted dark:bg-muted/50 shrink-0">
+                <h4 class="font-medium text-xs text-muted-foreground mb-2 uppercase tracking-wider">Añadir Columna</h4>
                 <div class="flex flex-col gap-2">
-                  <select [ngModel]="customColumnKey()" (ngModelChange)="customColumnKey.set($event)" class="w-full px-2 py-1.5 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500">
+                  <select [ngModel]="customColumnKey()" (ngModelChange)="customColumnKey.set($event)" class="w-full px-2 py-1.5 text-sm bg-white dark:bg-muted border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary">
                     <option value="">Selecciona Propiedad...</option>
                     <option *ngFor="let key of availableColumns()" [value]="key">{{ key }}</option>
                   </select>
-                  <input type="text" [ngModel]="customColumnLabel()" (ngModelChange)="customColumnLabel.set($event)" placeholder="Etiqueta visible (ej. Cliente)" class="w-full px-2 py-1.5 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500" />
-                  <button (click)="addCustomColumn()" [disabled]="!customColumnKey() || !customColumnLabel()" class="w-full py-1.5 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed mt-1">
+                  <input type="text" [ngModel]="customColumnLabel()" (ngModelChange)="customColumnLabel.set($event)" placeholder="Etiqueta visible (ej. Cliente)" class="w-full px-2 py-1.5 text-sm bg-white dark:bg-muted border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary" />
+                  <button (click)="addCustomColumn()" [disabled]="!customColumnKey() || !customColumnLabel()" class="w-full py-1.5 bg-primary text-white text-sm rounded-md hover:bg-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed mt-1">
                     Añadir Columna
                   </button>
                 </div>
@@ -112,29 +112,29 @@ export interface TableState {
       <div class="flex-1 overflow-auto">
         <table class="w-full text-left border-collapse">
           <thead>
-            <tr class="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700">
+            <tr class="bg-muted dark:bg-muted/50 border-b border-border">
               <th *ngFor="let col of visibleColumns()" 
-                  class="px-4 py-3 text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap sticky top-0 bg-slate-50 dark:bg-slate-800 z-10 shadow-[0_1px_0_0_#e2e8f0] dark:shadow-[0_1px_0_0_#334155]"
+                  class="px-4 py-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider whitespace-nowrap sticky top-0 bg-muted z-10 shadow-[0_1px_0_0_#e2e8f0] dark:shadow-[0_1px_0_0_#334155]"
                   [class.cursor-pointer]="col.sortable"
-                  [class.hover:bg-slate-100]="col.sortable"
-                  [class.dark:hover:bg-slate-700]="col.sortable"
+                  [class.hover:bg-muted]="col.sortable"
+                  [class.dark:hover:bg-secondary]="col.sortable"
                   (click)="col.sortable && handleSort(col.key)">
                 <div class="flex items-center gap-1.5">
                   {{ col.label }}
-                  <div *ngIf="col.sortable && state().sortColumn === col.key" class="flex flex-col text-blue-500">
+                  <div *ngIf="col.sortable && state().sortColumn === col.key" class="flex flex-col text-primary">
                     <ng-icon name="lucideChevronUp" *ngIf="state().sortDirection === 'asc'" class="w-3 h-3"></ng-icon>
                     <ng-icon name="lucideChevronDown" *ngIf="state().sortDirection === 'desc'" class="w-3 h-3"></ng-icon>
                   </div>
                 </div>
               </th>
               <!-- Optional Actions Column -->
-              <th *ngIf="hasActions" class="px-4 py-3 w-1 sticky top-0 bg-slate-50 dark:bg-slate-800 z-10 shadow-[0_1px_0_0_#e2e8f0] dark:shadow-[0_1px_0_0_#334155]"></th>
+              <th *ngIf="hasActions" class="px-4 py-3 w-1 sticky top-0 bg-muted z-10 shadow-[0_1px_0_0_#e2e8f0] dark:shadow-[0_1px_0_0_#334155]"></th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
+          <tbody class="divide-y divide-border">
             <ng-container *ngIf="!loading && data.length > 0">
-              <tr *ngFor="let item of data" (click)="rowClick.emit(item)" class="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors group cursor-pointer">
-                <td *ngFor="let col of visibleColumns()" class="px-4 py-2 whitespace-nowrap border-b border-slate-100 dark:border-slate-800/50">
+              <tr *ngFor="let item of data" (click)="rowClick.emit(item)" class="hover:bg-muted/80 dark:hover:bg-muted/50 transition-colors group cursor-pointer">
+                <td *ngFor="let col of visibleColumns()" class="px-4 py-2 whitespace-nowrap border-b border-border dark:border-border/50">
                   <ng-container *ngIf="col.template; else defaultCell">
                     <ng-container *ngTemplateOutlet="col.template; context: { $implicit: item, column: col }"></ng-container>
                   </ng-container>
@@ -143,30 +143,30 @@ export interface TableState {
                       <app-user-avatar [userId]="item[col.key]"></app-user-avatar>
                     </ng-container>
                     <ng-template #textCell>
-                      <span class="text-[13px] text-slate-700 dark:text-slate-300">
+                      <span class="text-[13px] text-muted-foreground">
                         {{ formatValue(item, col) }}
                       </span>
                     </ng-template>
                   </ng-template>
                 </td>
-                <td *ngIf="hasActions" class="px-4 py-2 whitespace-nowrap text-right border-b border-slate-100 dark:border-slate-800/50">
+                <td *ngIf="hasActions" class="px-4 py-2 whitespace-nowrap text-right border-b border-border dark:border-border/50">
                   <ng-container *ngTemplateOutlet="actionsTemplate; context: { $implicit: item }"></ng-container>
                 </td>
               </tr>
             </ng-container>
             <tr *ngIf="loading">
-              <td [attr.colspan]="visibleColumns().length + (hasActions ? 1 : 0)" class="px-4 py-8 text-center border-b border-slate-100 dark:border-slate-800/50">
+              <td [attr.colspan]="visibleColumns().length + (hasActions ? 1 : 0)" class="px-4 py-8 text-center border-b border-border dark:border-border/50">
                 <div class="flex flex-col items-center justify-center gap-3">
-                  <div class="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-                  <span class="text-sm text-slate-500">Loading data...</span>
+                  <div class="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                  <span class="text-sm text-muted-foreground">Loading data...</span>
                 </div>
               </td>
             </tr>
             <tr *ngIf="!loading && data.length === 0">
               <td [attr.colspan]="visibleColumns().length + (hasActions ? 1 : 0)" class="px-6 py-16 text-center">
-                <div class="flex flex-col items-center justify-center gap-2 text-slate-500 dark:text-slate-400">
+                <div class="flex flex-col items-center justify-center gap-2 text-muted-foreground">
                   <ng-icon name="lucideSearch" class="w-12 h-12 mb-2 opacity-50"></ng-icon>
-                  <p class="text-lg font-medium text-slate-900 dark:text-white">No results found</p>
+                  <p class="text-lg font-medium text-foreground dark:text-white">No results found</p>
                   <p class="text-sm">Try adjusting your filters or search term.</p>
                 </div>
               </td>
@@ -176,7 +176,7 @@ export interface TableState {
       </div>
 
       <!-- Pagination -->
-      <div class="p-4 border-t border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50">
+      <div class="p-4 border-t border-border bg-muted/50">
         <app-pagination
           [state]="paginationState()"
           (pageChange)="onPageChange($event)"

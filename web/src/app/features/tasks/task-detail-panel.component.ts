@@ -26,10 +26,10 @@ interface Comment {
 }
 
 const PRIORITIES = [
-  { key: 'urgent',  label: 'Urgente',  icon: 'lucideAlertCircle', color: 'text-red-500' },
-  { key: 'high',    label: 'Alta',     icon: 'lucideArrowUp',     color: 'text-orange-500' },
-  { key: 'normal',  label: 'Normal',   icon: 'lucideMinus',       color: 'text-blue-500' },
-  { key: 'low',     label: 'Baja',     icon: 'lucideArrowDown',   color: 'text-gray-400' },
+  { key: 'urgent',  label: 'Urgente',  icon: 'lucideAlertCircle', color: 'text-destructive' },
+  { key: 'high',    label: 'Alta',     icon: 'lucideArrowUp',     color: 'text-warning' },
+  { key: 'normal',  label: 'Normal',   icon: 'lucideMinus',       color: 'text-primary' },
+  { key: 'low',     label: 'Baja',     icon: 'lucideArrowDown',   color: 'text-muted-foreground' },
 ];
 
 const STATUSES = ['To Do', 'In Progress', 'In Review', 'Done'];

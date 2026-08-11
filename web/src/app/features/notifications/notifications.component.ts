@@ -84,16 +84,16 @@ import { AuthSignalStore } from '../../core/auth-signal.store';
                     <div class="shrink-0 mt-0.5">
                       @switch (notification.type) {
                         @case ('success') {
-                          <ng-icon name="lucideCheckCircle" size="18" class="text-green-500" />
+                          <ng-icon name="lucideCheckCircle" size="18" class="text-success" />
                         }
                         @case ('warning') {
-                          <ng-icon name="lucideAlertCircle" size="18" class="text-yellow-500" />
+                          <ng-icon name="lucideAlertCircle" size="18" class="text-warning" />
                         }
                         @case ('error') {
-                          <ng-icon name="lucideAlertCircle" size="18" class="text-red-500" />
+                          <ng-icon name="lucideAlertCircle" size="18" class="text-destructive" />
                         }
                         @default {
-                          <ng-icon name="lucideInfo" size="18" class="text-blue-500" />
+                          <ng-icon name="lucideInfo" size="18" class="text-primary" />
                         }
                       }
                     </div>

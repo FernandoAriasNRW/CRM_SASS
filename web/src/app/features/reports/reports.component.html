@@ -23,12 +23,12 @@
   </ui-advanced-filters>
 
   <div class="flex items-center gap-2 mb-4" *ngIf="savedViews().length > 0">
-    <span class="text-sm font-medium text-slate-500">Saved Views:</span>
+    <span class="text-sm font-medium text-muted-foreground">Saved Views:</span>
     <button *ngFor="let view of savedViews()"
             (click)="applySavedView(view)"
-            [class.bg-blue-100]="activeViewId() === view.id"
-            [class.text-blue-700]="activeViewId() === view.id"
-            class="px-3 py-1 text-xs rounded-full border border-slate-200 hover:bg-slate-100 transition-colors">
+            [class.bg-primary-subtle]="activeViewId() === view.id"
+            [class.text-primary-subtle-fg]="activeViewId() === view.id"
+            class="px-3 py-1 text-xs rounded-full border border-border hover:bg-muted transition-colors">
       {{ view.viewName }}
     </button>
   </div>

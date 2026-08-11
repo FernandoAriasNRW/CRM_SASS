@@ -13,14 +13,14 @@ import { UsersService } from '../../core/users.service';
         <img *ngIf="u.avatarUrl" [src]="u.avatarUrl" [alt]="u.name" class="w-full h-full object-cover" />
         <span *ngIf="!u.avatarUrl">{{ getInitials(u.name) }}</span>
       </div>
-      <span class="text-sm text-gray-700 font-medium truncate max-w-[150px]" [title]="u.name">
+      <span class="text-sm text-muted-foreground font-medium truncate max-w-[150px]" [title]="u.name">
         {{ u.name }}
       </span>
     </div>
     <ng-template #loading>
       <div class="flex items-center gap-2 animate-pulse">
-        <div class="w-8 h-8 rounded-full bg-gray-200"></div>
-        <div class="h-4 bg-gray-200 rounded w-24"></div>
+        <div class="w-8 h-8 rounded-full bg-secondary"></div>
+        <div class="h-4 bg-secondary rounded w-24"></div>
       </div>
     </ng-template>
   `
