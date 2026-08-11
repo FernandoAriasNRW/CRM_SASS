@@ -110,6 +110,14 @@ export class CommandPaletteService {
       run: () => void this.router.navigateByUrl('/profile'),
     },
     {
+      id: 'accion-design-system',
+      label: 'Sistema de diseño',
+      group: 'Acciones',
+      icon: 'lucidePalette',
+      keywords: 'componentes guia estilos tokens color',
+      run: () => void this.router.navigateByUrl('/design-system'),
+    },
+    {
       id: 'accion-tema',
       label: 'Cambiar tema claro / oscuro',
       group: 'Acciones',

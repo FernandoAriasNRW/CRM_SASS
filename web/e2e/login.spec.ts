@@ -69,5 +69,5 @@ test('con credenciales válidas se entra a la aplicación', async ({ page }) => 
   await page.getByPlaceholder('••••••••').fill('admin123');
   await page.getByRole('button', { name: /ingresar/i }).click();
 
-  await expect(page).not.toHaveURL(/\/login/, { timeout: 15_000 });
+  await expect(page).not.toHaveURL(/\/login/, { timeout: 30_000 });
 });

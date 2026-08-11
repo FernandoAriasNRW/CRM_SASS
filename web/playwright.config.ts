@@ -17,6 +17,13 @@ export default defineConfig({
   workers: process.env['CI'] ? 1 : undefined,
   reporter: process.env['CI'] ? [['github'], ['html', { open: 'never' }]] : [['list']],
 
+  // El servidor de desarrollo compila cada ruta perezosa la primera vez que se pide.
+  // Con varios workers entrando a la vez, esa compilación se acumula y una espera de 15 s
+  // se queda corta de forma intermitente. Se amplía el margen por defecto en lugar de
+  // reducir la paralelización, que multiplicaría el tiempo total de la suite.
+  timeout: 60_000,
+  expect: { timeout: 10_000 },
+
   use: {
     // Puerto propio, distinto del 4200 que publica docker-compose para la aplicación.
     // Compartirlo hacía que la suite se ejecutara contra el contenedor —una build de

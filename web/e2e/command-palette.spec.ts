@@ -31,7 +31,7 @@ async function entrar(page: Page) {
   await page.getByPlaceholder('admin@acme.com').fill('admin@acme.com');
   await page.getByPlaceholder('••••••••').fill('admin123');
   await page.getByRole('button', { name: /ingresar/i }).click();
-  await expect(page).not.toHaveURL(/\/login/, { timeout: 15_000 });
+  await expect(page).not.toHaveURL(/\/login/, { timeout: 30_000 });
 }
 
 const paleta = (page: Page) => page.getByRole('dialog', { name: 'Paleta de comandos' });

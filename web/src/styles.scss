@@ -57,12 +57,15 @@
     --accent: 210 40% 96.1%;
     --accent-foreground: 222.2 47.4% 11.2%;
 
-    --destructive: 0 84.2% 60.2%;
+    /* Los rellenos sólidos llevan texto blanco, y a los tonos originales no llegaban
+       a 4.5:1: rojo 3.76, verde 2.30 e info 2.85. Se oscurecen lo justo para cumplir.
+       El verde era el más grave, y es el que confirma una acción correcta. */
+    --destructive: 0 84.2% 48%;
     --destructive-foreground: 210 40% 98%;
     --destructive-subtle: 0 93% 94%;
     --destructive-subtle-foreground: 0 70% 35%;
 
-    --success: 142 71% 45%;
+    --success: 142 71% 31%;
     --success-foreground: 0 0% 100%;
     --success-subtle: 141 84% 93%;
     --success-subtle-foreground: 142 72% 29%;
@@ -73,7 +76,7 @@
     --warning-subtle: 48 96% 89%;
     --warning-subtle-foreground: 23 83% 31%;
 
-    --info: 199 89% 48%;
+    --info: 199 89% 36%;
     --info-foreground: 0 0% 100%;
     --info-subtle: 204 94% 94%;
     --info-subtle-foreground: 201 90% 27%;

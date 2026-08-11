@@ -51,7 +51,7 @@ async function entrar(page: Page, retrasoTareas = 0) {
   await page.getByPlaceholder('admin@acme.com').fill('admin@acme.com');
   await page.getByPlaceholder('••••••••').fill('admin123');
   await page.getByRole('button', { name: /ingresar/i }).click();
-  await expect(page).not.toHaveURL(/\/login/, { timeout: 15_000 });
+  await expect(page).not.toHaveURL(/\/login/, { timeout: 30_000 });
 
   // Dentro de la aplicación: un page.goto recargaría y perdería el token, que vive en
   // memoria por decisión de seguridad.

@@ -59,7 +59,7 @@ async function entrarAlTablero(page: Page) {
   await page.getByPlaceholder('admin@acme.com').fill('admin@acme.com');
   await page.getByPlaceholder('••••••••').fill('admin123');
   await page.getByRole('button', { name: /ingresar/i }).click();
-  await expect(page).not.toHaveURL(/\/login/, { timeout: 15_000 });
+  await expect(page).not.toHaveURL(/\/login/, { timeout: 30_000 });
 
   await page.keyboard.press('Control+k');
   await page.keyboard.type('tareas');
