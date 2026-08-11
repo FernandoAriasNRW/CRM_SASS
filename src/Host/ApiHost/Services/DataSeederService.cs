@@ -54,27 +54,36 @@ public sealed class DataSeederService(IServiceProvider serviceProvider, ILogger<
         {
             var identityDb = scope.ServiceProvider.GetRequiredService<IdentityDbContext>();
             
-            adminUser = await identityDb.User.FirstOrDefaultAsync(u => u.Email.Value == "admin@acme.com", cancellationToken)
+            // Se busca en una variable anulable y sólo al final se asigna a adminUser.
+            // Asignar directamente el resultado de FirstOrDefaultAsync dejaba la variable
+            // marcada como posiblemente nula durante el resto del método, que es de donde
+            // salían las 22 advertencias de desreferencia.
+            var existingAdmin = await identityDb.User.FirstOrDefaultAsync(u => u.Email.Value == "admin@acme.com", cancellationToken)
                 ?? await identityDb.User.FirstOrDefaultAsync(cancellationToken);
 
-            if (adminUser == null)
+            if (existingAdmin is null)
             {
                 var adminRole = UserRole.Admin;
                 var email = Email.Create("admin@acme.com").Value!;
                 var pass = PasswordHash.Create("admin123");
-                adminUser = User.Create(Guid.NewGuid(), "Admin Administrator", email, pass, adminRole).Value!;
-                identityDb.User.Add(adminUser);
+                existingAdmin = User.Create(Guid.NewGuid(), "Admin Administrator", email, pass, adminRole).Value
+                    ?? throw new InvalidOperationException("No se pudo crear el usuario administrador del seed.");
+                identityDb.User.Add(existingAdmin);
                 await identityDb.SaveChangesAsync(cancellationToken);
             }
+
+            // Todo el resto del seed cuelga de este usuario: es el propietario de los
+            // proyectos y quien define el tenant.
+            adminUser = existingAdmin;
 
             tenantId = adminUser.TenantId;
 
             // Align any orphaned Users or EntityPermissions to tenantId
             try
             {
-                await identityDb.Database.ExecuteSqlRawAsync($"UPDATE `User` SET `TenantId` = '{tenantId}' WHERE `TenantId` != '{tenantId}'", cancellationToken);
-                await identityDb.Database.ExecuteSqlRawAsync($"UPDATE `EntityPermissions` SET `TenantId` = '{tenantId}' WHERE `TenantId` != '{tenantId}'", cancellationToken);
-                await identityDb.Database.ExecuteSqlRawAsync($"UPDATE `SavedViews` SET `TenantId` = '{tenantId}' WHERE `TenantId` != '{tenantId}'", cancellationToken);
+                await identityDb.Database.ExecuteSqlAsync($"UPDATE `User` SET `TenantId` = {tenantId} WHERE `TenantId` != {tenantId}", cancellationToken);
+                await identityDb.Database.ExecuteSqlAsync($"UPDATE `EntityPermissions` SET `TenantId` = {tenantId} WHERE `TenantId` != {tenantId}", cancellationToken);
+                await identityDb.Database.ExecuteSqlAsync($"UPDATE `SavedViews` SET `TenantId` = {tenantId} WHERE `TenantId` != {tenantId}", cancellationToken);
             }
             catch { }
 
@@ -155,7 +164,7 @@ public sealed class DataSeederService(IServiceProvider serviceProvider, ILogger<
         try
         {
             var teamsDb = scope.ServiceProvider.GetRequiredService<TeamsDbContext>();
-            try { await teamsDb.Database.ExecuteSqlRawAsync($"UPDATE `Teams` SET `TenantId` = '{tenantId}' WHERE `TenantId` != '{tenantId}'", cancellationToken); } catch { }
+            try { await teamsDb.Database.ExecuteSqlAsync($"UPDATE `Teams` SET `TenantId` = {tenantId} WHERE `TenantId` != {tenantId}", cancellationToken); } catch { }
 
             var existingTeams = await teamsDb.Teams.Where(t => t.TenantId == tenantId).ToListAsync(cancellationToken);
             if (existingTeams.Count == 0)
@@ -197,9 +206,9 @@ public sealed class DataSeederService(IServiceProvider serviceProvider, ILogger<
             var projectsDb = scope.ServiceProvider.GetRequiredService<ProjectsDbContext>();
             try
             {
-                await projectsDb.Database.ExecuteSqlRawAsync($"UPDATE `Spaces` SET `TenantId` = '{tenantId}' WHERE `TenantId` != '{tenantId}'", cancellationToken);
-                await projectsDb.Database.ExecuteSqlRawAsync($"UPDATE `Folders` SET `TenantId` = '{tenantId}' WHERE `TenantId` != '{tenantId}'", cancellationToken);
-                await projectsDb.Database.ExecuteSqlRawAsync($"UPDATE `Projects` SET `TenantId` = '{tenantId}' WHERE `TenantId` != '{tenantId}'", cancellationToken);
+                await projectsDb.Database.ExecuteSqlAsync($"UPDATE `Spaces` SET `TenantId` = {tenantId} WHERE `TenantId` != {tenantId}", cancellationToken);
+                await projectsDb.Database.ExecuteSqlAsync($"UPDATE `Folders` SET `TenantId` = {tenantId} WHERE `TenantId` != {tenantId}", cancellationToken);
+                await projectsDb.Database.ExecuteSqlAsync($"UPDATE `Projects` SET `TenantId` = {tenantId} WHERE `TenantId` != {tenantId}", cancellationToken);
             }
             catch { }
 
@@ -258,7 +267,7 @@ public sealed class DataSeederService(IServiceProvider serviceProvider, ILogger<
         try
         {
             var workItemsDb = scope.ServiceProvider.GetRequiredService<WorkItemsDbContext>();
-            try { await workItemsDb.Database.ExecuteSqlRawAsync($"UPDATE `Tasks` SET `TenantId` = '{tenantId}' WHERE `TenantId` != '{tenantId}'", cancellationToken); } catch { }
+            try { await workItemsDb.Database.ExecuteSqlAsync($"UPDATE `Tasks` SET `TenantId` = {tenantId} WHERE `TenantId` != {tenantId}", cancellationToken); } catch { }
 
             var existingTasks = await workItemsDb.Tasks.Where(t => t.TenantId == tenantId).ToListAsync(cancellationToken);
 
@@ -327,7 +336,7 @@ public sealed class DataSeederService(IServiceProvider serviceProvider, ILogger<
             var docsDb = scope.ServiceProvider.GetRequiredService<DocsDbContext>();
             try
             {
-                await docsDb.Database.ExecuteSqlRawAsync($"UPDATE `Documents` SET `TenantId` = '{tenantId}' WHERE `TenantId` != '{tenantId}'", cancellationToken);
+                await docsDb.Database.ExecuteSqlAsync($"UPDATE `Documents` SET `TenantId` = {tenantId} WHERE `TenantId` != {tenantId}", cancellationToken);
             }
             catch { }
 
@@ -365,7 +374,7 @@ public sealed class DataSeederService(IServiceProvider serviceProvider, ILogger<
         try
         {
             var ticketsDb = scope.ServiceProvider.GetRequiredService<TicketingDbContext>();
-            try { await ticketsDb.Database.ExecuteSqlRawAsync($"UPDATE `Tickets` SET `TenantId` = '{tenantId}' WHERE `TenantId` != '{tenantId}'", cancellationToken); } catch { }
+            try { await ticketsDb.Database.ExecuteSqlAsync($"UPDATE `Tickets` SET `TenantId` = {tenantId} WHERE `TenantId` != {tenantId}", cancellationToken); } catch { }
 
             var existingTickets = await ticketsDb.Tickets.Where(t => t.TenantId == tenantId).ToListAsync(cancellationToken);
 
@@ -405,7 +414,7 @@ public sealed class DataSeederService(IServiceProvider serviceProvider, ILogger<
         try
         {
             var calendarDb = scope.ServiceProvider.GetRequiredService<CalendarDbContext>();
-            try { await calendarDb.Database.ExecuteSqlRawAsync($"UPDATE `calendar_events` SET `tenant_id` = '{tenantId}' WHERE `tenant_id` != '{tenantId}'", cancellationToken); } catch { }
+            try { await calendarDb.Database.ExecuteSqlAsync($"UPDATE `calendar_events` SET `tenant_id` = {tenantId} WHERE `tenant_id` != {tenantId}", cancellationToken); } catch { }
 
             var existingEvents = await calendarDb.CalendarEvents.Where(e => e.TenantId == tenantId).ToListAsync(cancellationToken);
 
@@ -438,8 +447,8 @@ public sealed class DataSeederService(IServiceProvider serviceProvider, ILogger<
             var commDb = scope.ServiceProvider.GetRequiredService<CommunicationsDbContext>();
             try
             {
-                await commDb.Database.ExecuteSqlRawAsync($"UPDATE `Conversations` SET `TenantId` = '{tenantId}' WHERE `TenantId` != '{tenantId}'", cancellationToken);
-                await commDb.Database.ExecuteSqlRawAsync($"UPDATE `Messages` SET `TenantId` = '{tenantId}' WHERE `TenantId` != '{tenantId}'", cancellationToken);
+                await commDb.Database.ExecuteSqlAsync($"UPDATE `Conversations` SET `TenantId` = {tenantId} WHERE `TenantId` != {tenantId}", cancellationToken);
+                await commDb.Database.ExecuteSqlAsync($"UPDATE `Messages` SET `TenantId` = {tenantId} WHERE `TenantId` != {tenantId}", cancellationToken);
             }
             catch { }
 
@@ -489,7 +498,7 @@ public sealed class DataSeederService(IServiceProvider serviceProvider, ILogger<
         try
         {
             var notifDb = scope.ServiceProvider.GetRequiredService<NotificationsDbContext>();
-            try { await notifDb.Database.ExecuteSqlRawAsync($"UPDATE `Notifications` SET `TenantId` = '{tenantId}' WHERE `TenantId` != '{tenantId}'", cancellationToken); } catch { }
+            try { await notifDb.Database.ExecuteSqlAsync($"UPDATE `Notifications` SET `TenantId` = {tenantId} WHERE `TenantId` != {tenantId}", cancellationToken); } catch { }
 
             var existingNotifs = await notifDb.Notifications.Where(n => n.TenantId == tenantId && n.RecipientUserId == adminUser.Id).ToListAsync(cancellationToken);
 
@@ -521,7 +530,7 @@ public sealed class DataSeederService(IServiceProvider serviceProvider, ILogger<
         try
         {
             var webhookDb = scope.ServiceProvider.GetRequiredService<WebhookDbContext>();
-            try { await webhookDb.Database.ExecuteSqlRawAsync($"UPDATE `webhook_subscriptions` SET `TenantId` = '{tenantId}' WHERE `TenantId` != '{tenantId}'", cancellationToken); } catch { }
+            try { await webhookDb.Database.ExecuteSqlAsync($"UPDATE `webhook_subscriptions` SET `TenantId` = {tenantId} WHERE `TenantId` != {tenantId}", cancellationToken); } catch { }
 
             var existingWebhooks = await webhookDb.Subscriptions.Where(w => w.TenantId == tenantId).ToListAsync(cancellationToken);
 
@@ -546,7 +555,7 @@ public sealed class DataSeederService(IServiceProvider serviceProvider, ILogger<
         try
         {
             var tagsDb = scope.ServiceProvider.GetRequiredService<TagsDbContext>();
-            try { await tagsDb.Database.ExecuteSqlRawAsync($"UPDATE `Tags` SET `TenantId` = '{tenantId}' WHERE `TenantId` != '{tenantId}'", cancellationToken); } catch { }
+            try { await tagsDb.Database.ExecuteSqlAsync($"UPDATE `Tags` SET `TenantId` = {tenantId} WHERE `TenantId` != {tenantId}", cancellationToken); } catch { }
 
             var existingTags = await tagsDb.Tags.Where(t => t.TenantId == tenantId).ToListAsync(cancellationToken);
 

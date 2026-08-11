@@ -7,7 +7,7 @@ public sealed class MessageContent : ValueObject
 {
   public string Value { get; }
 
-  private MessageContent() { }
+  private MessageContent() { Value = null!; } // EF las rellena al materializar.
   private MessageContent(string value) => Value = value;
 
   public static Result<MessageContent> Create(string content)

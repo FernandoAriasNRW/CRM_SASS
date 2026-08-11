@@ -25,7 +25,7 @@ public sealed class Document : Entity, ITenantEntity, ISoftDeletable
     private readonly List<DocumentPermission> _permissions = new();
     public IReadOnlyCollection<DocumentPermission> Permissions => _permissions.AsReadOnly();
 
-    private Document() { }
+    private Document() { Description = null!; Title = null!; } // EF las rellena al materializar.
 
     public static Document Create(Guid tenantId, string title, string description, ValueObjects.DocumentType type, Guid ownerId, Guid? teamId, Guid? projectId)
     {

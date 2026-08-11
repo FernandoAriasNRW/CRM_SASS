@@ -7,7 +7,7 @@ public sealed class TaskTitle : ValueObject
 {
     public string Value { get; init; }
 
-    private TaskTitle() { }
+    private TaskTitle() { Value = null!; } // EF las rellena al materializar.
     private TaskTitle(string value) => Value = value;
 
     public static Result<TaskTitle> Create(string title)

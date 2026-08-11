@@ -7,7 +7,7 @@ public sealed class TicketTitle : ValueObject
 {
   public string Value { get; }
 
-  private TicketTitle() { }
+  private TicketTitle() { Value = null!; } // EF las rellena al materializar.
   private TicketTitle(string value) => Value = value;
 
   public static Result<TicketTitle> Create(string title)

@@ -18,7 +18,7 @@ public sealed class Page : Entity, ISoftDeletable
     private readonly List<Page> _subPages = new();
     public IReadOnlyCollection<Page> SubPages => _subPages.AsReadOnly();
 
-    private Page() { }
+    private Page() { Content = null!; Title = null!; } // EF las rellena al materializar.
 
     public static Page Create(Guid documentId, Guid? parentPageId, string title, string content, int order)
     {

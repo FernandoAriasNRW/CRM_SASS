@@ -7,7 +7,7 @@ public sealed class ReportName : ValueObject
 {
   public string Value { get; }
 
-  private ReportName() { }
+  private ReportName() { Value = null!; } // EF las rellena al materializar.
   private ReportName(string value) => Value = value;
 
   public static Result<ReportName> Create(string name)

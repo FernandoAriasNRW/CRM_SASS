@@ -7,7 +7,7 @@ public sealed class Email : ValueObject
 {
   public string Value { get; }
 
-  private Email() { }
+  private Email() { Value = null!; } // EF las rellena al materializar.
 
   private Email(string value)
   {
@@ -58,7 +58,7 @@ public sealed class PasswordHash : ValueObject
   public string Value { get; }
   public DateTime CreatedAtUtc { get; }
 
-  private PasswordHash() { }
+  private PasswordHash() { Value = null!; } // EF las rellena al materializar.
 
   public PasswordHash(string value, DateTime createdAtUtc)
   {
@@ -122,7 +122,7 @@ public sealed class RefreshToken : ValueObject
   public bool IsRevoked { get; private set; }
   public DateTime? RevokedAtUtc { get; private set; }
 
-  private RefreshToken() { }
+  private RefreshToken() { Token = null!; } // EF las rellena al materializar.
 
   private RefreshToken(string token, DateTime expiresAtUtc)
   {
