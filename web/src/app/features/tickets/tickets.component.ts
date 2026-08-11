@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal, computed, ViewChild, TemplateRef } from '@angular/core';
+import { Component, OnInit, TemplateRef, ViewChild, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CdkDragDrop, DragDropModule, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
@@ -21,6 +21,7 @@ import { HasPermissionDirective } from '../../shared/directives/has-permission.d
 import { ViewsService, SavedView } from '../../shared/services/views.service';
 import { TableColumnService } from '../../shared/services/table-column.service';
 import { ClickableDirective } from '../../shared/directives/clickable.directive';
+import { ToastService } from '../../shared/services/toast.service';
 
 interface Column { key: string; label: string; badge: BadgeVariant; tickets: Ticket[]; }
 
@@ -50,6 +51,7 @@ const STATUS_BADGE: Record<string, BadgeVariant> = {
   templateUrl: './tickets.component.html',
 })
 export class TicketsComponent implements OnInit {
+  private readonly toast = inject(ToastService);
   private readonly api = inject(ApiService);
   private readonly realtime = inject(RealtimeService);
   private readonly authStore = inject(AuthSignalStore);
@@ -299,21 +301,54 @@ export class TicketsComponent implements OnInit {
     this.distributeTicketsToColumns();
   }
 
+  /**
+   * Mueve el ticket al soltarlo.
+   *
+   * La tarjeta se mueve en pantalla antes de que conteste el servidor, porque esperar la
+   * respuesta se percibe como que el tablero va lento. Eso obliga a poder deshacerlo: si
+   * el servidor rechaza el cambio —permisos, red, un ticket que otro ya modificó— la
+   * tarjeta vuelve a su columna y se avisa.
+   *
+   * Sin la reversión la interfaz miente: la tarjeta se queda donde se soltó y salta a su
+   * sitio en la siguiente recarga, sin explicación.
+   */
   drop(event: CdkDragDrop<Ticket[]>, targetKey: string): void {
     if (event.previousContainer === event.container) {
       moveItemInArray(event.container.data, event.previousIndex, event.currentIndex);
-    } else {
-      const ticket = event.previousContainer.data[event.previousIndex];
-      transferArrayItem(
-        event.previousContainer.data,
-        event.container.data,
-        event.previousIndex,
-        event.currentIndex
-      );
-      this.allTickets.update(tickets =>
-        tickets.map(t => t.id === ticket.id ? { ...t, status: targetKey } : t)
-      );
-      this.api.patch(`/tickets/${ticket.id}`, { status: targetKey }).subscribe();
+      return;
     }
+
+    const ticket = event.previousContainer.data[event.previousIndex];
+    const estadoAnterior = ticket.status;
+
+    transferArrayItem(
+      event.previousContainer.data,
+      event.container.data,
+      event.previousIndex,
+      event.currentIndex
+    );
+    this.allTickets.update(tickets =>
+      tickets.map(t => t.id === ticket.id ? { ...t, status: targetKey } : t)
+    );
+
+    this.api.patch(`/tickets/${ticket.id}`, { status: targetKey }).subscribe({
+      error: () => {
+        // Entre los mismos arrays que usa cdkDropList, no sólo en la señal, o el tablero
+        // quedaría descuadrado respecto a lo que se ve.
+        transferArrayItem(
+          event.container.data,
+          event.previousContainer.data,
+          event.container.data.findIndex(t => t.id === ticket.id),
+          event.previousIndex
+        );
+        this.allTickets.update(tickets =>
+          tickets.map(t => t.id === ticket.id ? { ...t, status: estadoAnterior } : t)
+        );
+
+        this.toast.error(
+          'No se pudo mover el ticket',
+          `«${ticket.title}» sigue en ${estadoAnterior}.`);
+      },
+    });
   }
 }

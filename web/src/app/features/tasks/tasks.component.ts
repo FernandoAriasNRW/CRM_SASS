@@ -1,7 +1,7 @@
 import { Component, OnInit, TemplateRef, ViewChild, computed, effect, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { CdkDrag, CdkDragDrop, DragDropModule, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
+import { CdkDragDrop, DragDropModule, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
 import { ActivatedRoute } from '@angular/router';
 import { ApiService } from '../../core/api.service';
 import { RealtimeService } from '../../core/realtime.service';
@@ -20,7 +20,6 @@ import { ViewsService, SavedView } from '../../shared/services/views.service';
 import { TableColumnService } from '../../shared/services/table-column.service';
 import { HierarchySignalStore } from '../../core/hierarchy-signal.store';
 import { ClickableDirective } from '../../shared/directives/clickable.directive';
-import { puedeMover } from './task-transitions';
 import { ToastService } from '../../shared/services/toast.service';
 
 export interface Column { key: string; label: string; badge: BadgeVariant; tasks: TaskItem[]; }
@@ -375,14 +374,6 @@ export class TasksComponent implements OnInit {
     });
   }
 
-  /**
-   * Decide si una tarjeta puede soltarse en una columna, mientras se arrastra.
-   *
-   * Da la respuesta en el acto en lugar de dejar caer la tarjeta y devolverla al recibir
-   * el rechazo del servidor. La comprobación de verdad sigue siendo la del servidor.
-   */
-  permiteSoltar = (columna: string) => (drag: CdkDrag<TaskItem>): boolean =>
-    puedeMover(drag.data?.status ?? '', columna);
 
   readonly statuses = ['To Do', 'In Progress', 'In Review', 'Done'];
 }

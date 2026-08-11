@@ -35,13 +35,21 @@ public sealed class TaskStatus : Enumeration<string>
     private TaskStatus() : base(string.Empty, string.Empty) { }
     public TaskStatus(string value, string name) : base(value, name) { }
 
-    public static IReadOnlyList<string> GetValidTransitions(string currentStatus) => currentStatus switch
-    {
-        "To Do"       => ["In Progress", "Done"],
-        "In Progress" => ["To Do", "In Review", "Done", "On Hold"],
-        "In Review"   => ["In Progress", "Done"],
-        "Done"        => ["To Do"],
-        "On Hold"     => ["To Do", "In Progress"],
-        _             => []
-    };
+    public static IReadOnlyList<TaskStatus> All() =>
+        [ToDo, InProgress, InReview, Done, OnHold];
+
+    /// <summary>
+    /// Indica si el estado existe.
+    ///
+    /// No hay reglas sobre qué transición es válida: una tarea puede pasar de cualquier
+    /// estado a cualquier otro. Decidir si un movimiento tiene sentido es del equipo que
+    /// gestiona el trabajo, no del sistema, y una máquina de estados rígida acaba
+    /// estorbando en los casos reales —reabrir algo dado por hecho, mandar a espera algo
+    /// que ni se empezó— sin evitar ningún dato incorrecto.
+    ///
+    /// Lo que sí se comprueba es que el estado exista: mover a uno inventado corrompería
+    /// los datos, y eso no es política de flujo sino integridad.
+    /// </summary>
+    public static bool Existe(string status) =>
+        All().Any(s => s.Value == status);
 }
