@@ -46,7 +46,14 @@
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
     --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+
+    /* 44% y no 46.9%: con el valor anterior, texto atenuado sobre fondo atenuado daba
+       4.34:1 y WCAG AA exige 4.5. Es la combinación más repetida del sistema
+       —cabeceras de tabla, etiquetas, texto secundario—, así que fallaba en seis de las
+       siete vistas a la vez. Se baja lo justo para cumplir (4.81) sin que el texto
+       secundario deje de leerse como secundario. */
+    --muted-foreground: 215.4 16.3% 44%;
+
     --accent: 210 40% 96.1%;
     --accent-foreground: 222.2 47.4% 11.2%;
 

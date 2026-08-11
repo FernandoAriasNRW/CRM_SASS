@@ -3,7 +3,7 @@
     <h1 class="text-3xl font-bold tracking-tight">
       ¡Hola, {{ authStore.userInfo()?.name?.split(' ')?.[0] || 'Usuario' }}!
     </h1>
-    <button class="bg-primary/10 text-primary hover:bg-primary/20 px-4 py-2 rounded-md text-sm font-medium transition-colors">
+    <button class="bg-primary-subtle text-primary-subtle-fg hover:bg-primary-subtle px-4 py-2 rounded-md text-sm font-medium transition-colors">
       Administrar tarjetas
     </button>
   </div>
@@ -56,8 +56,8 @@
           </h2>
           <div class="flex items-center gap-2 text-xs">
             <span class="px-2 py-1 rounded bg-muted">3 Por hacer</span>
-            <span class="px-2 py-1 rounded bg-primary/20 text-primary font-medium">1 En curso</span>
-            <span class="px-2 py-1 rounded bg-success/20 text-success-subtle-fg font-medium">5 Hechas</span>
+            <span class="px-2 py-1 rounded bg-primary-subtle text-primary-subtle-fg font-medium">1 En curso</span>
+            <span class="px-2 py-1 rounded bg-success-subtle text-success-subtle-fg font-medium">5 Hechas</span>
           </div>
         </div>
         
@@ -97,7 +97,7 @@
                     <span class="text-[10px] text-muted-foreground">Soporte TI</span>
                   </div>
                 </div>
-                <span class="text-xs text-destructive bg-destructive/10 px-2 py-1 rounded font-medium">Atrasado</span>
+                <span class="text-xs text-destructive-subtle-fg bg-destructive-subtle px-2 py-1 rounded font-medium">Atrasado</span>
               </div>
             </div>
           </ui-card-content>

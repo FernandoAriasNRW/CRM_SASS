@@ -60,7 +60,7 @@
             [placeholder]="'Mensaje en #' + channel.name"
             class="flex-1"
           />
-          <button uiButton size="icon" (click)="send()" [disabled]="sending() || !newMessage().trim()">
+          <button uiButton size="icon" aria-label="Enviar mensaje" (click)="send()" [disabled]="sending() || !newMessage().trim()">
             <ng-icon name="lucideSend" size="15" />
           </button>
         </div>

@@ -6,7 +6,7 @@
   size="lg"
 >
   <!-- Badge Slot -->
-  <span drawer-badge class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
+  <span drawer-badge class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-primary-subtle text-primary-subtle-fg border border-primary/20">
     {{ project().status }}
   </span>
 
@@ -17,7 +17,7 @@
         <ng-icon name="lucideEdit3" size="14" />
         <span>Editar</span>
       </button>
-      <button (click)="deleteProject()" [disabled]="deleting()" class="px-3 py-1.5 rounded-lg border border-destructive/30 text-xs font-medium text-destructive hover:bg-destructive/10 transition-colors flex items-center gap-1.5">
+      <button (click)="deleteProject()" [disabled]="deleting()" class="px-3 py-1.5 rounded-lg border border-destructive/30 text-xs font-medium text-destructive-subtle-fg hover:bg-destructive-subtle transition-colors flex items-center gap-1.5">
         <ng-icon name="lucideTrash2" size="14" />
         <span>Eliminar</span>
       </button>
@@ -102,7 +102,7 @@
     }
 
     @if (error()) {
-      <div class="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-xs font-medium text-destructive">
+      <div class="p-3 rounded-lg bg-destructive-subtle border border-destructive/20 text-xs font-medium text-destructive-subtle-fg">
         {{ error() }}
       </div>
     }

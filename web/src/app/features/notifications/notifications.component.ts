@@ -115,7 +115,7 @@ import { AuthSignalStore } from '../../core/auth-signal.store';
                       @if (!notification.isRead) {
                         <button
                           (click)="markRead(notification.id)"
-                          class="p-1 rounded-md hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors"
+                          class="p-1 rounded-md hover:bg-primary-subtle text-muted-foreground hover:text-primary-subtle-fg transition-colors"
                           title="Marcar como leída"
                         >
                           <ng-icon name="lucideCheck" size="14" />
@@ -123,7 +123,7 @@ import { AuthSignalStore } from '../../core/auth-signal.store';
                       }
                       <button
                         (click)="deleteNotification(notification.id)"
-                        class="p-1 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
+                        class="p-1 rounded-md hover:bg-destructive-subtle text-muted-foreground hover:text-destructive-subtle-fg transition-colors"
                         title="Eliminar"
                       >
                         <ng-icon name="lucideTrash2" size="14" />

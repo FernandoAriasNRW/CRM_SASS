@@ -5,10 +5,10 @@
       <p class="text-sm text-muted-foreground">{{ events().length }} eventos este mes</p>
     </div>
     <div class="flex items-center gap-2">
-      <button uiButton variant="outline" size="icon" (click)="prevMonth()">
+      <button uiButton variant="outline" size="icon" aria-label="Mes anterior" (click)="prevMonth()">
         <ng-icon name="lucideChevronLeft" size="16" />
       </button>
-      <button uiButton variant="outline" size="icon" (click)="nextMonth()">
+      <button uiButton variant="outline" size="icon" aria-label="Mes siguiente" (click)="nextMonth()">
         <ng-icon name="lucideChevronRight" size="16" />
       </button>
       <button uiButton size="sm" (click)="showModal.set(true)">
@@ -35,7 +35,7 @@
             <span class="text-xs font-medium text-muted-foreground">{{ day }}</span>
             <div class="mt-1 space-y-0.5">
               @for (ev of eventsForDay(day); track ev.id) {
-                <div class="rounded px-1.5 py-0.5 bg-primary/10 text-primary text-xs truncate cursor-pointer hover:bg-primary/20 transition-colors"
+                <div class="rounded px-1.5 py-0.5 bg-primary-subtle text-primary-subtle-fg text-xs truncate cursor-pointer hover:bg-primary-subtle transition-colors"
                      [title]="ev.title">
                   {{ ev.title }}
                 </div>
