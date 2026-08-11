@@ -70,7 +70,7 @@ export interface EmptyStateConfig {
       <!-- Ícono -->
       <div class="empty-state-icon">
         @if (config.icon) {
-          <ng-icon [name]="config.icon" [size]="iconSize"></ng-icon>
+          <ng-icon [name]="config.icon" [size]="iconSize + 'px'"></ng-icon>
         }
       </div>
 
@@ -149,7 +149,7 @@ export interface EmptyStateConfig {
     }
 
     .empty-state-action:hover {
-      background: hsl(var(--primary) / 0.9;
+      background: hsl(var(--primary) / 0.9);
     }
 
     .empty-state-action:focus {
@@ -172,6 +172,8 @@ export class EmptyStateComponent {
   @Input() actionLabel?: string;
 
   /** Tamaño del ícono (en px) */
+  /** Tamaño del icono en píxeles. Se convierte a cadena en la plantilla porque
+   *  ng-icon espera una unidad CSS, no un número. */
   @Input() iconSize = 48;
 
   /** Si mostrar el botón de acción */

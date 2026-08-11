@@ -22,6 +22,7 @@ import { ViewsService, SavedView } from '../../shared/services/views.service';
 import { TableColumnService } from '../../shared/services/table-column.service';
 import { ClickableDirective } from '../../shared/directives/clickable.directive';
 import { ToastService } from '../../shared/services/toast.service';
+import { EmptyInlineComponent } from '../../shared/ui/empty-state.component';
 
 interface Column { key: string; label: string; badge: BadgeVariant; tickets: Ticket[]; }
 
@@ -42,7 +43,7 @@ const STATUS_BADGE: Record<string, BadgeVariant> = {
   imports: [ClickableDirective, 
     CommonModule, FormsModule, BadgeComponent, ButtonComponent,
     NgIconComponent, DragDropModule, TicketCreateModalComponent, TicketDetailPanelComponent,
-    DataTableComponent, HasPermissionDirective
+    DataTableComponent, HasPermissionDirective, EmptyInlineComponent
   ],
   viewProviders: [provideIcons({
     lucideRefreshCw, lucidePlus, lucideList,

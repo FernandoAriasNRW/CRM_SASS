@@ -18,7 +18,10 @@ export default defineConfig({
   reporter: process.env['CI'] ? [['github'], ['html', { open: 'never' }]] : [['list']],
 
   use: {
-    baseURL: 'http://localhost:4200',
+    // Puerto propio, distinto del 4200 que publica docker-compose para la aplicación.
+    // Compartirlo hacía que la suite se ejecutara contra el contenedor —una build de
+    // producción, sin los cambios en curso— y fallara por código que sí era correcto.
+    baseURL: 'http://localhost:4300',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
   },
@@ -28,17 +31,18 @@ export default defineConfig({
   ],
 
   webServer: {
-    command: 'npm start',
-    url: 'http://localhost:4200',
+    command: 'npm start -- --port 4300',
+    url: 'http://localhost:4300',
 
     // Nunca reutilizar lo que ya escuche en el puerto, ni siquiera en local.
     //
-    // `reuseExistingServer` sólo comprueba que el puerto responda, no que responda la
+    // `reuseExistingServer` sólo comprueba que el puerto responda, no que responda ESTA
     // aplicación: si otro proceso lo ocupa, la suite se ejecuta contra él y falla entera
-    // sin ninguna pista del motivo. Ocurrió con un contenedor de los tests de
-    // integración, que publica su puerto al azar y se quedó con el 4200.
+    // sin ninguna pista del motivo. Pasó con el contenedor que docker-compose publica en
+    // el 4200, que sirve una build de producción: los E2E fallaban por código correcto.
     //
-    // Cuesta unos segundos por ejecución y ahorra depurar fallos que no son del código.
+    // Con un puerto propio la colisión no debería ocurrir; si ocurre, esto la convierte
+    // en un error explícito en lugar de en horas de depuración.
     reuseExistingServer: false,
     timeout: 180_000,
   },

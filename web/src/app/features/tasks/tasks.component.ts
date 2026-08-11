@@ -21,6 +21,8 @@ import { TableColumnService } from '../../shared/services/table-column.service';
 import { HierarchySignalStore } from '../../core/hierarchy-signal.store';
 import { ClickableDirective } from '../../shared/directives/clickable.directive';
 import { ToastService } from '../../shared/services/toast.service';
+import { SkeletonListComponent } from '../../shared/ui/skeleton.component';
+import { EmptyInlineComponent } from '../../shared/ui/empty-state.component';
 
 export interface Column { key: string; label: string; badge: BadgeVariant; tasks: TaskItem[]; }
 
@@ -41,7 +43,7 @@ const STATUS_BADGE: Record<string, BadgeVariant> = {
   imports: [ClickableDirective, 
     CommonModule, FormsModule, BadgeComponent, ButtonComponent,
     NgIconComponent, DragDropModule, TaskCreateModalComponent, TaskDetailPanelComponent,
-    DataTableComponent
+    DataTableComponent, SkeletonListComponent, EmptyInlineComponent
   ],
   viewProviders: [provideIcons({
     lucideRefreshCw, lucidePlus, lucideClock,

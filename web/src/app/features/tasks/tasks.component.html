@@ -67,6 +67,20 @@
 
   <!-- VISTA BOARD -->
   @if (viewMode() === 'board') {
+    @if (isLoading() && allTasks().length === 0) {
+      <!-- Sólo en la primera carga. Al recargar con datos ya en pantalla, sustituirlos
+           por esqueletos haría parpadear el tablero y se percibe como más lento. -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        @for (col of cols; track col.key) {
+          <div class="flex flex-col gap-3">
+            <div class="flex items-center justify-between px-1">
+              <span class="text-sm font-medium">{{ col.label }}</span>
+            </div>
+            <app-skeleton-list [count]="3" />
+          </div>
+        }
+      </div>
+    } @else {
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       @for (col of cols; track col.key) {
         <div class="flex flex-col gap-3">
@@ -102,12 +116,13 @@
                 </div>
               </div>
             } @empty {
-              <div class="flex items-center justify-center h-16 text-xs text-muted-foreground">Sin tareas</div>
+              <app-empty-inline message="Sin tareas" />
             }
           </div>
         </div>
       }
     </div>
+    }
   }
 
   <!-- VISTA LISTA -->
