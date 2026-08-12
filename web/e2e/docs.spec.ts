@@ -81,6 +81,38 @@ test('muestra los documentos que devuelve la API', async ({ page }) => {
   await expect(page.getByText('Manual de arquitectura').first()).toBeVisible({ timeout: 15_000 });
 });
 
+test('el modal de importar se abre, valida y se cierra', async ({ page }) => {
+  await entrarADocs(page);
+
+  await page.getByRole('button', { name: /^import$/i }).first().click();
+  const modal = page.getByRole('dialog', { name: /import document/i });
+  await expect(modal).toBeVisible();
+
+  // Importar sin contenido no debe crear nada: el aviso sale dentro del modal, no en un
+  // `alert` que bloquea la página y no dice qué falta.
+  await modal.getByRole('button', { name: /import now/i }).click();
+  await expect(modal.getByRole('alert')).toBeVisible();
+  await expect(modal).toBeVisible();
+
+  await modal.getByRole('button', { name: /^cancel$/i }).click();
+  await expect(modal).toBeHidden();
+});
+
+test('el selector de plantillas ofrece las predefinidas y se recorre con teclado', async ({ page }) => {
+  await entrarADocs(page);
+
+  await page.getByRole('button', { name: /más opciones de documento nuevo/i }).click();
+  await page.getByRole('button', { name: /apply a template/i }).first().click();
+
+  const modal = page.getByRole('dialog', { name: /apply a template/i });
+  await expect(modal).toBeVisible();
+
+  // Son <button> nativos, así que reciben foco sin ayuda añadida.
+  const primera = modal.getByRole('button', { name: /project overview/i });
+  await primera.focus();
+  await expect(primera).toBeFocused();
+});
+
 test('no tiene violaciones graves de accesibilidad', async ({ page }) => {
   const { default: AxeBuilder } = await import('@axe-core/playwright');
   await entrarADocs(page);

@@ -536,162 +536,26 @@
 </div>
 
 <!-- Save as Template Modal -->
-@if (isSaveAsTemplateModalOpen()) {
-  <div class="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-white dark:bg-muted border border-border rounded-2xl shadow-2xl max-w-md w-full p-6">
-      <div class="flex items-center justify-between mb-4">
-        <div class="flex items-center gap-2">
-          <div class="w-8 h-8 rounded-lg bg-primary-subtle text-primary flex items-center justify-center">
-            <ng-icon name="lucideLayoutTemplate" class="w-4 h-4"></ng-icon>
-          </div>
-          <h3 class="text-base font-bold text-foreground dark:text-white" i18n>Save as Template</h3>
-        </div>
-        <button (click)="isSaveAsTemplateModalOpen.set(false)" class="text-muted-foreground hover:text-muted-foreground dark:hover:text-foreground">
-          <ng-icon name="lucideX" class="w-4 h-4"></ng-icon>
-        </button>
-      </div>
-
-      <p class="text-xs text-muted-foreground mb-4" i18n>Convert this document into a reusable template for your workspace.</p>
-
-      <div class="space-y-3">
-        <div>
-          <label for="docs-template-title" class="block text-xs font-medium text-muted-foreground mb-1" i18n>Template Title</label>
-          <input id="docs-template-title" 
-            type="text" 
-            [ngModel]="saveTemplateTitle()" 
-            (ngModelChange)="saveTemplateTitle.set($event)"
-            class="w-full px-3 py-2 text-sm bg-muted dark:bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
-        </div>
-
-        <div>
-          <label for="docs-description" class="block text-xs font-medium text-muted-foreground mb-1" i18n>Description</label>
-          <textarea id="docs-description" 
-            rows="2" 
-            [ngModel]="saveTemplateDescription()" 
-            (ngModelChange)="saveTemplateDescription.set($event)"
-            i18n-placeholder placeholder="Briefly describe what this template is used for..."
-            class="w-full px-3 py-2 text-sm bg-muted dark:bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"></textarea>
-        </div>
-      </div>
-
-      <div class="flex items-center justify-end gap-2 mt-6">
-        <button (click)="isSaveAsTemplateModalOpen.set(false)" class="px-4 py-2 text-xs font-medium text-muted-foreground hover:bg-muted rounded-lg" i18n>
-          Cancel
-        </button>
-        <button (click)="submitSaveAsTemplate()" class="px-4 py-2 text-xs font-medium text-white bg-primary hover:bg-primary rounded-lg shadow-sm" i18n>
-          Save Template
-        </button>
-      </div>
-    </div>
-  </div>
+@if (isSaveAsTemplateModalOpen() && selectedDocForTemplate(); as doc) {
+  <app-guardar-plantilla-modal
+    [documento]="doc"
+    (cerrar)="isSaveAsTemplateModalOpen.set(false)"
+    (guardado)="alGuardarPlantilla()" />
 }
 
-<!-- Import Modal -->
 @if (isImportModalOpen()) {
-  <div class="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-white dark:bg-muted border border-border rounded-2xl shadow-2xl max-w-lg w-full p-6">
-      <div class="flex items-center justify-between mb-4">
-        <div class="flex items-center gap-2">
-          <div class="w-8 h-8 rounded-lg bg-primary-subtle text-primary flex items-center justify-center">
-            <ng-icon name="lucideUpload" class="w-4 h-4"></ng-icon>
-          </div>
-          <h3 class="text-base font-bold text-foreground dark:text-white" i18n>Import Document</h3>
-        </div>
-        <button (click)="isImportModalOpen.set(false)" class="text-muted-foreground hover:text-muted-foreground dark:hover:text-foreground">
-          <ng-icon name="lucideX" class="w-4 h-4"></ng-icon>
-        </button>
-      </div>
-
-      <div class="space-y-4">
-        <div>
-          <label for="docs-select-file-md-txt-html" class="block text-xs font-medium text-muted-foreground mb-1" i18n>Select File (.md, .txt, .html)</label>
-          <input id="docs-select-file-md-txt-html" 
-            type="file" 
-            accept=".md,.txt,.html"
-            (change)="onImportFileSelected($event)"
-            class="w-full text-xs text-muted-foreground file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-primary-subtle file:text-primary-subtle-fg hover:file:bg-primary-subtle cursor-pointer">
-        </div>
-
-        <div>
-          <label for="docs-document-title" class="block text-xs font-medium text-muted-foreground mb-1" i18n>Document Title</label>
-          <input id="docs-document-title" 
-            type="text" 
-            [ngModel]="importTitle()" 
-            (ngModelChange)="importTitle.set($event)"
-            i18n-placeholder placeholder="Document title..."
-            class="w-full px-3 py-2 text-sm bg-muted dark:bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
-        </div>
-
-        <div>
-          <label for="docs-content-preview-paste-text" class="block text-xs font-medium text-muted-foreground mb-1" i18n>Content Preview / Paste Text</label>
-          <textarea id="docs-content-preview-paste-text" 
-            rows="5" 
-            [ngModel]="importContent()" 
-            (ngModelChange)="importContent.set($event)"
-            i18n-placeholder placeholder="Paste raw Markdown, HTML, or plain text here..."
-            class="w-full px-3 py-2 text-xs font-mono bg-muted dark:bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"></textarea>
-        </div>
-      </div>
-
-      <div class="flex items-center justify-end gap-2 mt-6">
-        <button (click)="isImportModalOpen.set(false)" class="px-4 py-2 text-xs font-medium text-muted-foreground hover:bg-muted rounded-lg" i18n>
-          Cancel
-        </button>
-        <button (click)="submitImport()" class="px-4 py-2 text-xs font-medium text-white bg-primary hover:bg-primary rounded-lg shadow-sm" i18n>
-          Import Now
-        </button>
-      </div>
-    </div>
-  </div>
+  <app-importar-documento-modal
+    (cerrar)="isImportModalOpen.set(false)"
+    (importado)="alImportar($event)" />
 }
 
-<!-- Template Picker Modal -->
 @if (isTemplatePickerOpen()) {
-  <div class="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-white dark:bg-muted border border-border rounded-2xl shadow-2xl max-w-2xl w-full p-6">
-      <div class="flex items-center justify-between mb-4">
-        <div class="flex items-center gap-2">
-          <div class="w-8 h-8 rounded-lg bg-primary-subtle text-primary flex items-center justify-center">
-            <ng-icon name="lucideWand2" class="w-4 h-4"></ng-icon>
-          </div>
-          <h3 class="text-base font-bold text-foreground dark:text-white" i18n>Apply a Template</h3>
-        </div>
-        <button (click)="isTemplatePickerOpen.set(false)" class="text-muted-foreground hover:text-muted-foreground dark:hover:text-foreground">
-          <ng-icon name="lucideX" class="w-4 h-4"></ng-icon>
-        </button>
-      </div>
-
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-96 overflow-y-auto pr-1">
-        @for (tmpl of presetTemplates; track tmpl.key) {
-          <div appClickable 
-            (click)="createFromPreset(tmpl.key); isTemplatePickerOpen.set(false)"
-            class="border border-border rounded-xl p-3.5 hover:border-primary cursor-pointer transition-all bg-white dark:bg-muted">
-            <div class="flex items-center gap-2.5 mb-1.5">
-              <div class="w-7 h-7 rounded-md {{ tmpl.iconBg }} flex items-center justify-center text-xs">
-                <ng-icon [name]="tmpl.icon" class="w-3.5 h-3.5"></ng-icon>
-              </div>
-              <h4 class="text-xs font-bold text-foreground">{{ tmpl.title }}</h4>
-            </div>
-            <p class="text-[11px] text-muted-foreground">{{ tmpl.description }}</p>
-          </div>
-        }
-
-        @for (customTmpl of customTemplates(); track customTmpl.id) {
-          <div appClickable 
-            (click)="createFromCustomTemplate(customTmpl.id)"
-            class="border border-primary dark:border-primary/40 rounded-xl p-3.5 hover:border-primary cursor-pointer transition-all bg-primary-subtle/40 dark:bg-primary-subtle/20">
-            <div class="flex items-center gap-2.5 mb-1.5">
-              <div class="w-7 h-7 rounded-md bg-primary text-white flex items-center justify-center text-xs">
-                <ng-icon name="lucideLayoutTemplate" class="w-3.5 h-3.5"></ng-icon>
-              </div>
-              <h4 class="text-xs font-bold text-foreground">{{ customTmpl.title }}</h4>
-            </div>
-            <p class="text-[11px] text-muted-foreground">{{ customTmpl.description || 'Saved custom template' }}</p>
-          </div>
-        }
-      </div>
-    </div>
-  </div>
+  <app-selector-plantilla-modal
+    [predefinidas]="presetTemplates"
+    [propias]="customTemplates()"
+    (cerrar)="isTemplatePickerOpen.set(false)"
+    (elegirPredefinida)="createFromPreset($event)"
+    (elegirPropia)="createFromCustomTemplate($event)" />
 }
 
 <!-- Bubble Menu Wrapper for Tiptap -->

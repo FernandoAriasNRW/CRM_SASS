@@ -18,15 +18,15 @@ Estado tras las tres primeras fases:
 | | Antes | Ahora |
 |---|---|---|
 | Repositorio git | sólo `web/` | backend + frontend, historia preservada |
-| Tests ejecutándose | 0 | **120 backend** (112 + 8) + **27 frontend** + **32 E2E** |
+| Tests ejecutándose | 0 | **120 backend** (112 + 8) + **27 frontend** + **35 E2E** |
 | Secretos versionados | 3 ficheros | 0 |
 | Endpoints sin autenticación | 1 | 0 |
 | Validación de entrada | escrita pero nunca ejecutada | activa en el pipeline |
 | CI | imposible de pasar | funcional, con E2E y contenedores |
-| Lint frontend | inexistente | 0 errores, 178 avisos medidos |
+| Lint frontend | inexistente | 0 errores, 171 avisos medidos |
 
-**Las Fases 1, 2 y 3 están implementadas**, con una excepción documentada en §6: el
-troceado de `docs.component`, que necesita cobertura de datos antes de tocarlo.
+**Las Fases 1, 2 y 3 están implementadas por completo.** El frente que queda es de
+producto (§3), no de calidad.
 
 El aislamiento multi-tenant está blindado y verificado al arrancar (§5), y la interfaz ya
 no es de MVP: tokens semánticos completos, accesibilidad auditada en 9 vistas, paleta de
@@ -97,7 +97,7 @@ Features enrutadas: `home` · `dashboard` · `projects` · `tasks` · `tickets` 
 | `any` sin tipar | 84 avisos; los de `data-table` resueltos con genéricos | 🟡 quedan los de interop |
 | Funciones vacías | 20 avisos | 🟡 |
 | i18n | 319 cadenas, español e inglés | ✅ Fase 3.9 |
-| Componentes obesos (`docs.component.html` 705 líneas) | cubierto con humo, sin trocear | 🟠 §6, tarea 3.7 |
+| Componentes obesos | `docs` partido en 3 modales | ✅ Fase 3.7 |
 | Specs frontend unitarias | 17 | 🟡 cobertura aún baja |
 
 ### 2.3 Testing
@@ -105,7 +105,7 @@ Features enrutadas: `home` · `dashboard` · `projects` · `tasks` · `tickets` 
 ```
 tests/UnitTests/        112 tests en verde ✅
 tests/IntegrationTests/   8 tests contra MySQL en contenedor ✅
-web/e2e/                 32 flujos con Playwright, con axe en 9 vistas ✅
+web/e2e/                 35 flujos con Playwright, con axe en 9 vistas ✅
 web/ (unitarios)         27 specs — cobertura aún baja fuera de shared/ y core/
 ```
 
@@ -259,7 +259,7 @@ el ADR-0004.
 
 ---
 
-## 6. Fase 3 — UX/UI de nivel producto ✅ COMPLETADA (con una excepción)
+## 6. Fase 3 — UX/UI de nivel producto ✅ COMPLETADA
 
 *Objetivo: que la interfaz deje de parecer un MVP. Es donde se gana contra ClickUp,
 cuya queja número uno es la lentitud y la sobrecarga.*
@@ -287,7 +287,7 @@ cuya queja número uno es la lentitud y la sobrecarga.*
 
 | # | Tarea | Estado |
 |---|---|---|
-| 3.7 | Partir `docs.component` (705 + 625 líneas) | 🟠 **Pendiente el troceado.** Ya no falta cobertura: se resolvió el contrato de la API —`GET /docs` devuelve un array plano, no `{items, totalCount}` como el resto— y hay 3 E2E que verifican render, datos y accesibilidad. Corregidos 6 defectos de accesibilidad, 2 de ellos sólo visibles con documentos en pantalla. |
+| 3.7 | Partir `docs.component` | ✅ **Hecho.** Tres modales extraídos a `docs/modals/`. La plantilla pasa de 716 a 580 líneas y el componente de 625 a 571. De paso se elimina la duplicación que escondían: dos copias del flujo de creación desde plantilla y tres de la normalización del id. |
 | 3.9 | i18n con `@angular/localize` | ✅ **Hecha.** Español por defecto, inglés como segundo idioma. Ver §6.1. |
 
 ### 6.1 i18n: cómo quedó
