@@ -321,6 +321,19 @@ versión inglesa y nadie lo vería hasta que lo encontrara un usuario.
 
 *Sólo lo bloqueante para vender. El resto queda en backlog.*
 
+### Bloque 4.0 — Migraciones, antes que nada 🔴
+
+**La aplicación no aplica migraciones: crea el esquema con `EnsureCreated()`.** Existen
+migraciones iniciales por módulo pero nunca se ejecutan; `__EFMigrationsHistory` está
+vacía (verificado 2026-08-12).
+
+Toda la Fase 4 añade campos y entidades, y `EnsureCreated` sólo actúa si la base no
+existe: un campo nuevo no llegaría a ninguna base ya creada y la aplicación fallaría con
+«unknown column». Además ambos mecanismos son mutuamente excluyentes, así que cambiar a
+`Migrate()` más tarde, con varios módulos ya modificados, sale mucho más caro.
+
+Detalle y opciones en [`CONTINUACION.md`](CONTINUACION.md).
+
 ### Bloque 4A — Enriquecer el modelo de tarea (semanas 7-10)
 
 Es el trabajo de mayor retorno: sin esto el producto no entra en una comparativa.
