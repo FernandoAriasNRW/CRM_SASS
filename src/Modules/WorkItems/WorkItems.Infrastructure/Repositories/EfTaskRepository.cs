@@ -18,4 +18,7 @@ public sealed class EfTaskRepository(WorkItemsDbContext context) : ITaskReposito
     context.Tasks.Update(task);
     return Task.CompletedTask;
   }
+
+  public async Task<int> CountSubtasksAsync(Guid tenantId, Guid parentTaskId, CancellationToken ct = default)
+      => await context.Tasks.CountAsync(t => t.TenantId == tenantId && t.ParentTaskId == parentTaskId, ct);
 }

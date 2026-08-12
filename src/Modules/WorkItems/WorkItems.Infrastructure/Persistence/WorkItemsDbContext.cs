@@ -33,6 +33,12 @@ public sealed class WorkItemsDbContext(DbContextOptions<WorkItemsDbContext> opti
       p.Property(x => x.Name).HasMaxLength(20).HasDefaultValue(TaskPriority.PorDefecto.Name);
     });
 
+    // Por aquí van todas las consultas de subtareas y las dos subconsultas del progreso del
+    // padre, que se ejecutan por cada tarea de cada listado.
+    modelBuilder.Entity<WorkTask>()
+        .HasIndex(t => new { t.TenantId, t.ParentTaskId })
+        .HasDatabaseName("IX_Tasks_TenantId_ParentTaskId");
+
     // Aislamiento por tenant y soft delete, compuestos en un solo filtro.
     ApplyTenantFilters(modelBuilder);
   }

@@ -12,5 +12,7 @@ public sealed record GetTasksQuery(
     string? Priority,
     string? Filter,
     Guid? UserId,
-    PaginationRequest Pagination
+    PaginationRequest Pagination,
+    Guid? ParentTaskId = null,
+    bool IncluirSubtareas = false
 ) : IQuery<PagedResult<TaskDto>>;

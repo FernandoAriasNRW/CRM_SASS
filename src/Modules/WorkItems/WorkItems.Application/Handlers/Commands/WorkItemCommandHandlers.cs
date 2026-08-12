@@ -13,13 +13,29 @@ public sealed class CreateTaskCommandHandler(
 {
   public async Task<Result<WorkTask>> Handle(CreateTaskCommand request, CancellationToken cancellationToken)
   {
+    // Si nace como subtarea, el padre tiene que existir, ser del mismo proyecto y no ser él
+    // mismo una subtarea. Se comprueba antes de crear para no dejar nada a medias.
+    if (request.ParentTaskId.HasValue)
+    {
+      var padre = await repository.GetByIdAsync(request.TenantId, request.ParentTaskId.Value, cancellationToken);
+
+      if (padre is null)
+        return Result<WorkTask>.Failure(WorkTask.ReglasDeAnidamiento.PadreNoExiste);
+
+      if (padre.EsSubtarea)
+        return Result<WorkTask>.Failure(WorkTask.ReglasDeAnidamiento.PadreEsSubtarea);
+
+      if (padre.ProjectId != request.ProjectId)
+        return Result<WorkTask>.Failure(WorkTask.ReglasDeAnidamiento.PadreDeOtroProyecto);
+    }
+
     WorkTask task;
     try
     {
       task = WorkTask.Create(
           request.TenantId, request.ProjectId, request.Title, request.Description,
           request.AssigneeId, request.CreatedById, request.EstimatedHours, request.DueDate,
-          request.Priority);
+          request.Priority, request.ParentTaskId);
     }
     catch (InvalidOperationException ex) { return Result<WorkTask>.Failure(ex.Message); }
 
@@ -76,6 +92,50 @@ public sealed class PatchTaskCommandHandler(
       try { task.Reprioritize(request.Priority); }
       catch (InvalidOperationException ex) { return Result<bool>.Failure(ex.Message); }
     }
+
+    await repository.UpdateAsync(task, cancellationToken);
+    await unitOfWork.SaveChangesAsync(cancellationToken);
+    return Result<bool>.Success(true);
+  }
+}
+
+/// <summary>
+/// Cuelga una tarea de otra o la desliga.
+///
+/// Aquí viven las dos reglas de anidamiento que el agregado no puede comprobar solo, porque
+/// hablan de otras filas: que el padre no sea ya una subtarea, y que la tarea que se subordina
+/// no tenga subtareas propias. La tercera —no ser su propio padre— la aplica el dominio.
+/// </summary>
+public sealed class ReparentTaskCommandHandler(
+    ITaskRepository repository,
+    IWorkItemsUnitOfWork unitOfWork) : ICommandHandler<ReparentTaskCommand, bool>
+{
+  public async Task<Result<bool>> Handle(ReparentTaskCommand request, CancellationToken cancellationToken)
+  {
+    var task = await repository.GetByIdAsync(request.TenantId, request.Id, cancellationToken);
+    if (task is null)
+      return Result<bool>.Failure("Tarea no encontrada");
+
+    if (request.ParentTaskId.HasValue)
+    {
+      var padre = await repository.GetByIdAsync(request.TenantId, request.ParentTaskId.Value, cancellationToken);
+
+      if (padre is null)
+        return Result<bool>.Failure(WorkTask.ReglasDeAnidamiento.PadreNoExiste);
+
+      if (padre.EsSubtarea)
+        return Result<bool>.Failure(WorkTask.ReglasDeAnidamiento.PadreEsSubtarea);
+
+      if (padre.ProjectId != task.ProjectId)
+        return Result<bool>.Failure(WorkTask.ReglasDeAnidamiento.PadreDeOtroProyecto);
+
+      var subtareasPropias = await repository.CountSubtasksAsync(request.TenantId, task.Id, cancellationToken);
+      if (subtareasPropias > 0)
+        return Result<bool>.Failure(WorkTask.ReglasDeAnidamiento.TieneSubtareas);
+    }
+
+    try { task.Reparent(request.ParentTaskId); }
+    catch (InvalidOperationException ex) { return Result<bool>.Failure(ex.Message); }
 
     await repository.UpdateAsync(task, cancellationToken);
     await unitOfWork.SaveChangesAsync(cancellationToken);

@@ -20,6 +20,11 @@ export interface TaskItem {
   dueDate: string;
   projectId: string;
   assigneeId: string;
+  /** Tarea de la que ésta es subtarea, si lo es. */
+  parentTaskId?: string | null;
+  /** Progreso agregado que calcula el servidor; no se guarda en la tarea. */
+  subtaskCount?: number;
+  completedSubtaskCount?: number;
 }
 
 /**

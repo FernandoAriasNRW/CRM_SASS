@@ -10,6 +10,14 @@
           <context context-type="linenumber">24,25</context>
         </context-group>
       </trans-unit>
+<trans-unit id="4785173853922515848" datatype="html">
+        <source>Mi Workspace</source>
+        <target state="final">My Workspace</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/app.component.html</context>
+          <context context-type="linenumber">24,25</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="660809762116764762" datatype="html">
         <source>Spaces</source>
         <target state="final">Spaces</target>
@@ -2247,7 +2255,7 @@
         <target state="final">Urgent</target>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tasks/task-create-modal.component.ts</context>
-          <context context-type="linenumber">32</context>
+          <context context-type="linenumber">37</context>
         </context-group>
       </trans-unit>
       <trans-unit id="3532023074608212433" datatype="html">
@@ -2255,7 +2263,7 @@
         <target state="final">High</target>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tasks/task-create-modal.component.ts</context>
-          <context context-type="linenumber">33</context>
+          <context context-type="linenumber">38</context>
         </context-group>
       </trans-unit>
       <trans-unit id="3080483882937310852" datatype="html">
@@ -2263,7 +2271,7 @@
         <target state="final">Normal</target>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tasks/task-create-modal.component.ts</context>
-          <context context-type="linenumber">34</context>
+          <context context-type="linenumber">39</context>
         </context-group>
       </trans-unit>
       <trans-unit id="4555461823311221429" datatype="html">
@@ -2271,7 +2279,7 @@
         <target state="final">Low</target>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tasks/task-create-modal.component.ts</context>
-          <context context-type="linenumber">35</context>
+          <context context-type="linenumber">40</context>
         </context-group>
       </trans-unit>
       <trans-unit id="6301627487329960801" datatype="html">
@@ -2310,12 +2318,44 @@
           <context context-type="linenumber">152,153</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="8498121802685624003" datatype="html">
+        <source>Subtareas</source>
+        <target state="final">Subtasks</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/task-detail-panel.component.html</context>
+          <context context-type="linenumber">162,163</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5698420750025501377" datatype="html">
+        <source>Esta tarea es una subtarea, y el anidamiento admite un solo nivel.</source>
+        <target state="final">This task is a subtask, and nesting is limited to one level.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/task-detail-panel.component.html</context>
+          <context context-type="linenumber">171,172</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5187994899613964070" datatype="html">
+        <source>Añadir subtarea y pulsar Enter</source>
+        <target state="final">Add a subtask and press Enter</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/task-detail-panel.component.html</context>
+          <context context-type="linenumber">192,193</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1891702504468412429" datatype="html">
+        <source> Añadir </source>
+        <target state="final"> Add </target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/task-detail-panel.component.html</context>
+          <context context-type="linenumber">196</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="2549948840554240473" datatype="html">
         <source>Adjuntos</source>
         <target state="final">Attachments</target>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tasks/task-detail-panel.component.html</context>
-          <context context-type="linenumber">161,162</context>
+          <context context-type="linenumber">207,208</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tickets/ticket-detail-panel.component.html</context>
@@ -2327,7 +2367,7 @@
         <target state="final">Activity</target>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tasks/task-detail-panel.component.html</context>
-          <context context-type="linenumber">197</context>
+          <context context-type="linenumber">243</context>
         </context-group>
       </trans-unit>
       <trans-unit id="7356224785425927027" datatype="html">
@@ -2335,7 +2375,7 @@
         <target state="final">No comments yet</target>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tasks/task-detail-panel.component.html</context>
-          <context context-type="linenumber">235,236</context>
+          <context context-type="linenumber">281,282</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tickets/ticket-detail-panel.component.html</context>
@@ -2347,7 +2387,7 @@
         <target state="final">Write a comment... (Ctrl+Enter to send)</target>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tasks/task-detail-panel.component.html</context>
-          <context context-type="linenumber">247,248</context>
+          <context context-type="linenumber">293,294</context>
         </context-group>
       </trans-unit>
       <trans-unit id="2452214155769386625" datatype="html">
@@ -2355,7 +2395,7 @@
         <target state="final">Ctrl+Enter to send</target>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tasks/task-detail-panel.component.html</context>
-          <context context-type="linenumber">264,265</context>
+          <context context-type="linenumber">310,311</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tickets/ticket-detail-panel.component.html</context>
@@ -2367,15 +2407,7 @@
         <target state="final">Activity history coming soon</target>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tasks/task-detail-panel.component.html</context>
-          <context context-type="linenumber">272,273</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="3371139445259626077" datatype="html">
-        <source>Prioridad actualizada</source>
-        <target state="final">Priority updated</target>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/tasks/task-detail-panel.component.ts</context>
-          <context context-type="linenumber">162</context>
+          <context context-type="linenumber">318,319</context>
         </context-group>
       </trans-unit>
       <trans-unit id="1519954996184640001" datatype="html">
@@ -2383,7 +2415,51 @@
         <target state="final">Error</target>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tasks/task-detail-panel.component.ts</context>
-          <context context-type="linenumber">167</context>
+          <context context-type="linenumber">123</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/task-detail-panel.component.ts</context>
+          <context context-type="linenumber">154</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/task-detail-panel.component.ts</context>
+          <context context-type="linenumber">175</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/task-detail-panel.component.ts</context>
+          <context context-type="linenumber">260</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4523600021024687467" datatype="html">
+        <source>No se pudieron cargar las subtareas</source>
+        <target state="final">The subtasks could not be loaded</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/task-detail-panel.component.ts</context>
+          <context context-type="linenumber">123</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="9145879043247990150" datatype="html">
+        <source>No se pudo crear la subtarea</source>
+        <target state="final">The subtask could not be created</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/task-detail-panel.component.ts</context>
+          <context context-type="linenumber">154</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6658164493033655720" datatype="html">
+        <source>No se pudo actualizar la subtarea</source>
+        <target state="final">The subtask could not be updated</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/task-detail-panel.component.ts</context>
+          <context context-type="linenumber">175</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3371139445259626077" datatype="html">
+        <source>Prioridad actualizada</source>
+        <target state="final">Priority updated</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/task-detail-panel.component.ts</context>
+          <context context-type="linenumber">255</context>
         </context-group>
       </trans-unit>
       <trans-unit id="2581793359800684739" datatype="html">
@@ -2391,7 +2467,7 @@
         <target state="final">The priority could not be changed</target>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tasks/task-detail-panel.component.ts</context>
-          <context context-type="linenumber">167</context>
+          <context context-type="linenumber">260</context>
         </context-group>
       </trans-unit>
       <trans-unit id="1129880573635334228" datatype="html">
@@ -2412,6 +2488,14 @@
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tickets/tickets.component.html</context>
           <context context-type="linenumber">55,56</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2435365218649977532" datatype="html">
+        <source><x id="PH" equiv-text="task.completedSubtaskCount ?? 0"/> de <x id="PH_1" equiv-text="task.subtaskCount"/> subtareas completadas</source>
+        <target state="final"><x id="PH" equiv-text="task.completedSubtaskCount ?? 0"/> of <x id="PH_1" equiv-text="task.subtaskCount"/> subtasks completed</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/tasks.component.ts</context>
+          <context context-type="linenumber">146</context>
         </context-group>
       </trans-unit>
       <trans-unit id="8124257544094173951" datatype="html">

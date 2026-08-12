@@ -108,9 +108,19 @@
                   <p class="text-xs text-muted-foreground line-clamp-2">{{ task.description }}</p>
                 }
                 <div class="flex items-center justify-between">
-                  <div class="flex items-center gap-1 text-xs text-muted-foreground">
-                    <ng-icon name="lucideClock" size="11" />
-                    <span>{{ task.estimatedHours }}h</span>
+                  <div class="flex items-center gap-2 text-xs text-muted-foreground">
+                    <span class="flex items-center gap-1">
+                      <ng-icon name="lucideClock" size="11" />
+                      {{ task.estimatedHours }}h
+                    </span>
+                    @if (task.subtaskCount) {
+                      <span class="flex items-center gap-1"
+                            [class.text-success]="task.completedSubtaskCount === task.subtaskCount"
+                            [title]="tituloDelProgreso(task)">
+                        <ng-icon name="lucideListChecks" size="11" />
+                        {{ task.completedSubtaskCount ?? 0 }}/{{ task.subtaskCount }}
+                      </span>
+                    }
                   </div>
                   <div class="flex items-center gap-1.5">
                     <!-- La prioridad normal no se marca: si todo lleva distintivo, ninguno

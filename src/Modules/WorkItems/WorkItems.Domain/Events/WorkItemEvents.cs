@@ -9,3 +9,5 @@ public sealed record TaskStatusChangedEvent(Guid TaskId, Guid TenantId, Guid Pro
 public sealed record TaskAssignedEvent(Guid TaskId, Guid TenantId, Guid AssigneeId) : DomainEvent;
 
 public sealed record TaskPriorityChangedEvent(Guid TaskId, Guid TenantId, Guid ProjectId, string OldPriority, string NewPriority) : DomainEvent;
+
+public sealed record TaskParentChangedEvent(Guid TaskId, Guid TenantId, Guid ProjectId, Guid? OldParentTaskId, Guid? NewParentTaskId) : DomainEvent;

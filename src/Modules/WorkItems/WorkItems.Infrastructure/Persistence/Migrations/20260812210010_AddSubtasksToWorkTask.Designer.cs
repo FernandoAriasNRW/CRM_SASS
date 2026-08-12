@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using WorkItems.Infrastructure.Persistence;
 
@@ -12,9 +13,11 @@ using WorkItems.Infrastructure.Persistence;
 namespace WorkItems.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(WorkItemsDbContext))]
-    partial class WorkItemsDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260812210010_AddSubtasksToWorkTask")]
+    partial class AddSubtasksToWorkTask
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

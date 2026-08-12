@@ -266,4 +266,109 @@ public sealed class WorkTaskInvariantsTests
     }
 
     #endregion
+
+    #region Subtareas
+
+    [Fact]
+    public void Una_tarea_nace_de_primer_nivel()
+    {
+        var tarea = NuevaTarea();
+
+        tarea.ParentTaskId.Should().BeNull();
+        tarea.EsSubtarea.Should().BeFalse();
+    }
+
+    [Fact]
+    public void Una_tarea_puede_nacer_como_subtarea()
+    {
+        var padre = Guid.NewGuid();
+
+        var tarea = WorkTask.Create(
+            Guid.NewGuid(), Guid.NewGuid(), "Subtarea", "descripción",
+            Guid.NewGuid(), Guid.NewGuid(), 1m,
+            DateOnly.FromDateTime(DateTime.UtcNow), null, padre);
+
+        tarea.ParentTaskId.Should().Be(padre);
+        tarea.EsSubtarea.Should().BeTrue();
+    }
+
+    [Fact]
+    public void Una_tarea_no_puede_ser_subtarea_de_si_misma()
+    {
+        // La única de las tres reglas de anidamiento que el agregado puede comprobar solo.
+        var tarea = NuevaTarea();
+
+        var colgar = () => tarea.Reparent(tarea.Id);
+
+        colgar.Should().Throw<InvalidOperationException>().WithMessage("*de sí misma*");
+        tarea.ParentTaskId.Should().BeNull();
+    }
+
+    [Fact]
+    public void Colgar_de_otra_emite_el_evento_con_el_padre_anterior_y_el_nuevo()
+    {
+        var tarea = NuevaTarea();
+        var primerPadre = Guid.NewGuid();
+        var segundoPadre = Guid.NewGuid();
+        tarea.Reparent(primerPadre);
+        tarea.ClearDomainEvents();
+
+        tarea.Reparent(segundoPadre);
+
+        var evento = tarea.DomainEvents.Should().ContainSingle()
+            .Which.Should().BeOfType<TaskParentChangedEvent>().Subject;
+        evento.OldParentTaskId.Should().Be(primerPadre);
+        evento.NewParentTaskId.Should().Be(segundoPadre);
+    }
+
+    [Fact]
+    public void Desligar_deja_la_tarea_de_primer_nivel_y_lo_cuenta()
+    {
+        var tarea = NuevaTarea();
+        tarea.Reparent(Guid.NewGuid());
+        tarea.ClearDomainEvents();
+
+        tarea.Reparent(null);
+
+        tarea.EsSubtarea.Should().BeFalse();
+        tarea.DomainEvents.Should().ContainSingle()
+            .Which.Should().BeOfType<TaskParentChangedEvent>()
+            .Which.NewParentTaskId.Should().BeNull();
+    }
+
+    [Fact]
+    public void Colgar_del_padre_que_ya_tiene_no_emite_evento()
+    {
+        var tarea = NuevaTarea();
+        var padre = Guid.NewGuid();
+        tarea.Reparent(padre);
+        tarea.ClearDomainEvents();
+
+        tarea.Reparent(padre);
+
+        tarea.DomainEvents.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void Un_identificador_de_padre_vacio_no_se_acepta()
+    {
+        // Guid.Empty no es «sin padre», es un dato mal formado: sin padre es null. Aceptarlo
+        // dejaría una subtarea colgando de una tarea que no existe.
+        var tarea = NuevaTarea();
+
+        var colgar = () => tarea.Reparent(Guid.Empty);
+
+        colgar.Should().Throw<InvalidOperationException>().WithMessage("*no es válido*");
+    }
+
+    [Fact]
+    public void El_anidamiento_se_limita_a_un_nivel()
+    {
+        // Las reglas viven en un solo sitio para que el handler que las aplica no las
+        // reinvente con otros mensajes.
+        WorkTask.ReglasDeAnidamiento.ProfundidadMaxima.Should().Be(2);
+        WorkTask.ReglasDeAnidamiento.PadreEsSubtarea.Should().Contain("un solo nivel");
+    }
+
+    #endregion
 }

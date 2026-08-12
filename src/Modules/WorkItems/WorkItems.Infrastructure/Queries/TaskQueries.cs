@@ -6,6 +6,8 @@ using WorkItems.Application.DTOs;
 using WorkItems.Domain.Entities;
 using WorkItems.Domain.ValueObjects;
 using WorkItems.Infrastructure.Persistence;
+// Alias: `TaskStatus` choca con System.Threading.Tasks.TaskStatus.
+using EstadoDeTarea = WorkItems.Domain.ValueObjects.TaskStatus;
 
 namespace WorkItems.Infrastructure.Queries;
 
@@ -20,6 +22,9 @@ public sealed class TaskQueries(WorkItemsDbContext context) : ITaskQueries
   /// sitio: añadir o reordenar prioridades no obliga a tocar esta consulta.
   /// </summary>
   private static readonly Expression<Func<WorkTask, int>> RangoDePrioridad = ConstruirRangoDePrioridad();
+
+  /// <summary>El estado que cuenta como subtarea terminada, tomado del dominio.</summary>
+  private static readonly EstadoDeTarea EstadoCompletado = EstadoDeTarea.Done;
 
   private static Expression<Func<WorkTask, int>> ConstruirRangoDePrioridad()
   {
@@ -49,12 +54,20 @@ public sealed class TaskQueries(WorkItemsDbContext context) : ITaskQueries
       Guid tenantId, Guid? projectId, Guid? assigneeId, string? status,
       int page, int pageSize, CancellationToken ct = default)
   {
-      return await GetByTenantWithPaginationAsync(tenantId, projectId, assigneeId, status, null, null, null, new PaginationRequest { Page = page, PageSize = pageSize }, ct);
+      return await GetByTenantWithPaginationAsync(tenantId, projectId, assigneeId, status, null, null, null, null, false, new PaginationRequest { Page = page, PageSize = pageSize }, ct);
   }
 
-  public async Task<PagedResult<TaskDto>> GetByTenantWithPaginationAsync(Guid tenantId, Guid? projectId, Guid? assigneeId, string? status, string? priority, string? filter, Guid? userId, PaginationRequest pagination, CancellationToken ct = default)
+  public async Task<PagedResult<TaskDto>> GetByTenantWithPaginationAsync(Guid tenantId, Guid? projectId, Guid? assigneeId, string? status, string? priority, string? filter, Guid? userId, Guid? parentTaskId, bool incluirSubtareas, PaginationRequest pagination, CancellationToken ct = default)
   {
     var query = context.Tasks.AsNoTracking().Where(t => t.TenantId == tenantId);
+
+    // Las subtareas de una tarea concreta, o —por defecto— sólo las de primer nivel: un
+    // tablero con las subtareas mezcladas entre las tareas es ruido, y la cuenta de la
+    // paginación dejaría de significar «tareas».
+    if (parentTaskId.HasValue)
+      query = query.Where(t => t.ParentTaskId == parentTaskId.Value);
+    else if (!incluirSubtareas)
+      query = query.Where(t => t.ParentTaskId == null);
 
     if (projectId.HasValue) query = query.Where(t => t.ProjectId == projectId.Value);
     if (assigneeId.HasValue) query = query.Where(t => t.AssigneeId == assigneeId.Value);
@@ -101,10 +114,7 @@ public sealed class TaskQueries(WorkItemsDbContext context) : ITaskQueries
         _ => query.OrderByDescending(t => t.DueDate)
     };
 
-    var items = await query
-        .Skip(pagination.Skip).Take(pagination.Take)
-        .Select(t => new TaskDto(t.Id, t.TenantId, t.ProjectId, t.Title.Value, t.Description,
-            t.Status.Value, t.Priority.Value, t.AssigneeId, t.CreatedById, t.EstimatedHours, t.DueDate))
+    var items = await Proyectar(query.Skip(pagination.Skip).Take(pagination.Take), tenantId)
         .ToListAsync(ct);
 
     return PagedResult<TaskDto>.Create(items, totalCount, pagination.Page, pagination.PageSize);
@@ -112,10 +122,31 @@ public sealed class TaskQueries(WorkItemsDbContext context) : ITaskQueries
 
   public async Task<TaskDto?> GetByIdAsync(Guid tenantId, Guid id, CancellationToken ct = default)
   {
-    return await context.Tasks.AsNoTracking()
-        .Where(t => t.TenantId == tenantId && t.Id == id)
-        .Select(t => new TaskDto(t.Id, t.TenantId, t.ProjectId, t.Title.Value, t.Description,
-            t.Status.Value, t.Priority.Value, t.AssigneeId, t.CreatedById, t.EstimatedHours, t.DueDate))
+    return await Proyectar(
+            context.Tasks.AsNoTracking().Where(t => t.TenantId == tenantId && t.Id == id),
+            tenantId)
         .FirstOrDefaultAsync(ct);
+  }
+
+  /// <summary>
+  /// Proyección al DTO, en un solo sitio para que la lista y el detalle no se separen.
+  ///
+  /// El progreso de las subtareas va como dos subconsultas correlacionadas: se calcula en la
+  /// base y no se guarda en la tarea, porque un contador denormalizado se desincroniza en
+  /// cuanto una subtarea se mueve o se borra por otra vía y entonces la interfaz miente sin
+  /// que nada falle.
+  /// </summary>
+  private IQueryable<TaskDto> Proyectar(IQueryable<WorkTask> query, Guid tenantId)
+  {
+    var completado = EstadoCompletado.Value;
+
+    return query.Select(t => new TaskDto(
+        t.Id, t.TenantId, t.ProjectId, t.Title.Value, t.Description,
+        t.Status.Value, t.Priority.Value, t.AssigneeId, t.CreatedById,
+        t.EstimatedHours, t.DueDate,
+        t.ParentTaskId,
+        context.Tasks.Count(s => s.TenantId == tenantId && s.ParentTaskId == t.Id),
+        context.Tasks.Count(s => s.TenantId == tenantId && s.ParentTaskId == t.Id
+                                 && (s.Status.Value == completado || s.Status.Name == completado))));
   }
 }
