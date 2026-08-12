@@ -31,6 +31,9 @@ import BubbleMenu from '@tiptap/extension-bubble-menu';
 import { EmojiPickerComponent } from './extensions/emoji-picker.component';
 import { Subject, debounceTime } from 'rxjs';
 import { ClickableDirective } from '../../shared/directives/clickable.directive';
+import { GuardarPlantillaModalComponent } from './modals/guardar-plantilla-modal.component';
+import { ImportarDocumentoModalComponent } from './modals/importar-documento-modal.component';
+import { SelectorPlantillaModalComponent } from './modals/selector-plantilla-modal.component';
 
 export interface PresetTemplate {
   key: string;
@@ -46,7 +49,8 @@ export interface PresetTemplate {
 @Component({
   selector: 'app-docs',
   standalone: true,
-  imports: [ClickableDirective, CommonModule, FormsModule, NgIconComponent, TiptapEditorDirective, EmojiPickerComponent],
+  imports: [
+    GuardarPlantillaModalComponent, ImportarDocumentoModalComponent, SelectorPlantillaModalComponent,ClickableDirective, CommonModule, FormsModule, NgIconComponent, TiptapEditorDirective, EmojiPickerComponent],
   providers: [
     provideIcons({
       lucideFileText, lucidePlus, lucideFolder, lucideMoreVertical,
@@ -94,12 +98,6 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
 
   // Form states
   selectedDocForTemplate = signal<DocumentDto | null>(null);
-  saveTemplateTitle = signal('');
-  saveTemplateDescription = signal('');
-  
-  importTitle = signal('');
-  importContent = signal('');
-  importType = signal(1);
 
   // Sorting & Filtering
   selectedSort = signal<'updated' | 'title' | 'type'>('updated');
@@ -331,19 +329,27 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
 
   createFromPreset(presetKey: string, event?: Event) {
     if (event) event.stopPropagation();
+    this.crearDesdePlantilla({ templateKey: presetKey });
+  }
+
+  createFromCustomTemplate(templateDocId: string, event?: Event) {
+    if (event) event.stopPropagation();
+    this.crearDesdePlantilla({ templateDocumentId: templateDocId });
+  }
+
+  /**
+   * Crea un documento desde una plantilla, sea predefinida o propia.
+   *
+   * Los dos casos eran copias del mismo flujo y sólo se diferencian en el parámetro que
+   * se envía. Tenerlo una vez evita que uno se arregle y el otro no.
+   */
+  private crearDesdePlantilla(req: { templateKey?: string; templateDocumentId?: string }) {
     this.isNewDocDropdownOpen.set(false);
+    this.isTemplatePickerOpen.set(false);
     this.isLoading.set(true);
 
-    this.docsService.createFromTemplate({ templateKey: presetKey }).subscribe({
-      next: (id: any) => {
-        const cleanId = typeof id === 'string' ? id.replace(/['"]/g, '') : (id?.value || id?.id || id);
-        this.docsService.getDocuments().subscribe(docs => {
-          this.documents.set(docs);
-          this.isLoading.set(false);
-          const newDoc = docs.find(d => d.id === cleanId);
-          if (newDoc) this.selectDocument(newDoc);
-        });
-      },
+    this.docsService.createFromTemplate(req).subscribe({
+      next: (id) => this.abrirDocumentoCreado(id),
       error: (err) => {
         console.error('Error creating from template:', err);
         this.isLoading.set(false);
@@ -351,26 +357,21 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
     });
   }
 
-  createFromCustomTemplate(templateDocId: string, event?: Event) {
-    if (event) event.stopPropagation();
-    this.isNewDocDropdownOpen.set(false);
-    this.isTemplatePickerOpen.set(false);
-    this.isLoading.set(true);
-
-    this.docsService.createFromTemplate({ templateDocumentId: templateDocId }).subscribe({
-      next: (id: any) => {
-        const cleanId = typeof id === 'string' ? id.replace(/['"]/g, '') : (id?.value || id?.id || id);
-        this.docsService.getDocuments().subscribe(docs => {
-          this.documents.set(docs);
-          this.isLoading.set(false);
-          const newDoc = docs.find(d => d.id === cleanId);
-          if (newDoc) this.selectDocument(newDoc);
-        });
-      },
-      error: (err) => {
-        console.error('Error creating from custom template:', err);
+  /**
+   * Recarga el listado y abre el documento recién creado.
+   *
+   * Lo repetían por igual la importación y las dos vías de plantilla. El identificador
+   * llega ya limpio: la normalización vive en DocsService, donde entra el dato.
+   */
+  private abrirDocumentoCreado(id: string) {
+    this.docsService.getDocuments().subscribe({
+      next: (docs) => {
+        this.documents.set(docs);
         this.isLoading.set(false);
-      }
+        const creado = docs.find(d => d.id === id);
+        if (creado) this.selectDocument(creado);
+      },
+      error: () => this.isLoading.set(false)
     });
   }
 
@@ -378,80 +379,25 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
     if (event) event.stopPropagation();
     this.activeRowMenuId.set(null);
     this.selectedDocForTemplate.set(doc);
-    this.saveTemplateTitle.set(`${doc.title} Template`);
-    this.saveTemplateDescription.set(doc.description || '');
     this.isSaveAsTemplateModalOpen.set(true);
   }
 
-  submitSaveAsTemplate() {
-    const doc = this.selectedDocForTemplate();
-    if (!doc) return;
+  /** El modal ya guardó; aquí sólo queda reflejarlo en el listado. */
+  alGuardarPlantilla() {
+    this.isSaveAsTemplateModalOpen.set(false);
+    this.loadDocuments();
+  }
 
-    this.docsService.saveAsTemplate(doc.id, {
-      customTitle: this.saveTemplateTitle(),
-      description: this.saveTemplateDescription()
-    }).subscribe({
-      next: () => {
-        this.isSaveAsTemplateModalOpen.set(false);
-        this.loadDocuments();
-      },
-      error: (err) => {
-        console.error('Error saving template:', err);
-        alert('Error saving template');
-      }
-    });
+  /** El modal ya importó; se abre el documento recién creado. */
+  alImportar(id: string) {
+    this.isImportModalOpen.set(false);
+    this.abrirDocumentoCreado(id);
   }
 
   openImportModal(event?: Event) {
     if (event) event.stopPropagation();
     this.isNewDocDropdownOpen.set(false);
-    this.importTitle.set('');
-    this.importContent.set('');
-    this.importType.set(1);
     this.isImportModalOpen.set(true);
-  }
-
-  onImportFileSelected(event: Event) {
-    const input = event.target as HTMLInputElement;
-    if (input.files && input.files.length > 0) {
-      const file = input.files[0];
-      const fileNameWithoutExt = file.name.replace(/\.[^/.]+$/, "");
-      this.importTitle.set(fileNameWithoutExt);
-
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const text = e.target?.result as string;
-        this.importContent.set(text || '');
-      };
-      reader.readAsText(file);
-    }
-  }
-
-  submitImport() {
-    if (!this.importTitle().trim() || !this.importContent().trim()) {
-      alert('Please provide a title and content to import.');
-      return;
-    }
-
-    this.docsService.importDocument({
-      title: this.importTitle(),
-      content: this.importContent(),
-      type: this.importType()
-    }).subscribe({
-      next: (id: any) => {
-        this.isImportModalOpen.set(false);
-        const cleanId = typeof id === 'string' ? id.replace(/['"]/g, '') : (id?.value || id?.id || id);
-        this.docsService.getDocuments().subscribe(docs => {
-          this.documents.set(docs);
-          const importedDoc = docs.find(d => d.id === cleanId);
-          if (importedDoc) this.selectDocument(importedDoc);
-        });
-      },
-      error: (err) => {
-        console.error('Error importing document:', err);
-        alert('Error importing document');
-      }
-    });
   }
 
   toggleStar(docId: string, event?: Event) {

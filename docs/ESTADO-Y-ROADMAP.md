@@ -18,15 +18,16 @@ Estado tras las tres primeras fases:
 | | Antes | Ahora |
 |---|---|---|
 | Repositorio git | sólo `web/` | backend + frontend, historia preservada |
-| Tests ejecutándose | 0 | **120 backend** (112 + 8) + **27 frontend** + **32 E2E** |
+| Tests ejecutándose | 0 | **120 backend** (112 + 8) + **27 frontend** + **35 E2E** |
 | Secretos versionados | 3 ficheros | 0 |
 | Endpoints sin autenticación | 1 | 0 |
 | Validación de entrada | escrita pero nunca ejecutada | activa en el pipeline |
 | CI | imposible de pasar | funcional, con E2E y contenedores |
-| Lint frontend | inexistente | 0 errores, 178 avisos medidos |
+| Lint frontend | inexistente | 0 errores, 171 avisos medidos |
+| Esquema de base de datos | `EnsureCreated` y `ALTER` crudos al arrancar | migraciones aplicadas y verificadas (§7, bloque 4.0) |
 
-**Las Fases 1, 2 y 3 están implementadas**, con una excepción documentada en §6: el
-troceado de `docs.component`, que necesita cobertura de datos antes de tocarlo.
+**Las Fases 1, 2 y 3 están implementadas por completo.** El frente que queda es de
+producto (§3), no de calidad.
 
 El aislamiento multi-tenant está blindado y verificado al arrancar (§5), y la interfaz ya
 no es de MVP: tokens semánticos completos, accesibilidad auditada en 9 vistas, paleta de
@@ -97,7 +98,7 @@ Features enrutadas: `home` · `dashboard` · `projects` · `tasks` · `tickets` 
 | `any` sin tipar | 84 avisos; los de `data-table` resueltos con genéricos | 🟡 quedan los de interop |
 | Funciones vacías | 20 avisos | 🟡 |
 | i18n | 319 cadenas, español e inglés | ✅ Fase 3.9 |
-| Componentes obesos (`docs.component.html` 705 líneas) | cubierto con humo, sin trocear | 🟠 §6, tarea 3.7 |
+| Componentes obesos | `docs` partido en 3 modales | ✅ Fase 3.7 |
 | Specs frontend unitarias | 17 | 🟡 cobertura aún baja |
 
 ### 2.3 Testing
@@ -105,7 +106,7 @@ Features enrutadas: `home` · `dashboard` · `projects` · `tasks` · `tickets` 
 ```
 tests/UnitTests/        112 tests en verde ✅
 tests/IntegrationTests/   8 tests contra MySQL en contenedor ✅
-web/e2e/                 32 flujos con Playwright, con axe en 9 vistas ✅
+web/e2e/                 35 flujos con Playwright, con axe en 9 vistas ✅
 web/ (unitarios)         27 specs — cobertura aún baja fuera de shared/ y core/
 ```
 
@@ -259,7 +260,7 @@ el ADR-0004.
 
 ---
 
-## 6. Fase 3 — UX/UI de nivel producto ✅ COMPLETADA (con una excepción)
+## 6. Fase 3 — UX/UI de nivel producto ✅ COMPLETADA
 
 *Objetivo: que la interfaz deje de parecer un MVP. Es donde se gana contra ClickUp,
 cuya queja número uno es la lentitud y la sobrecarga.*
@@ -287,7 +288,7 @@ cuya queja número uno es la lentitud y la sobrecarga.*
 
 | # | Tarea | Estado |
 |---|---|---|
-| 3.7 | Partir `docs.component` (705 + 625 líneas) | 🟠 **Sólo la mitad.** Corregidos 4 defectos de accesibilidad y añadido humo. El troceado no se hizo: las pruebas que lo respaldarían exigen reproducir la forma exacta de su API, que no conseguí. Refactorizar sin ellas es cambiar a ciegas. |
+| 3.7 | Partir `docs.component` | ✅ **Hecho.** Tres modales extraídos a `docs/modals/`. La plantilla pasa de 716 a 580 líneas y el componente de 625 a 571. De paso se elimina la duplicación que escondían: dos copias del flujo de creación desde plantilla y tres de la normalización del id. |
 | 3.9 | i18n con `@angular/localize` | ✅ **Hecha.** Español por defecto, inglés como segundo idioma. Ver §6.1. |
 
 ### 6.1 i18n: cómo quedó
@@ -320,6 +321,23 @@ versión inglesa y nadie lo vería hasta que lo encontrara un usuario.
 ## 7. Fase 4 — Cerrar el hueco competitivo (Semanas 7-18) 🚀
 
 *Sólo lo bloqueante para vender. El resto queda en backlog.*
+
+### Bloque 4.0 — Migraciones ✅ COMPLETADO (2026-08-12)
+
+`Program.cs` aplica `Migrate()` en los trece contextos y aborta el arranque si falla, en
+lugar de crear el esquema con `EnsureCreated()` y tragarse los errores. Al hacerlo apareció
+que las migraciones no describían el modelo: **la tabla `EntityPermissions` nunca estuvo en
+ninguna migración** y se mantenía con siete `ALTER TABLE` crudos en cada arranque, uno de
+los cuales había dejado `TagIds` nullable contra lo que dice el modelo. Cerrado con una
+migración de puesta al día y retirados los parches.
+
+Las bases creadas con el mecanismo anterior se ponen al día una sola vez con
+[`scripts/db/sellar-historial-migraciones.sql`](../scripts/db/sellar-historial-migraciones.sql),
+que además corrige la desviación de `TagIds`. Una base vacía no necesita nada.
+
+Verificado con base desde cero, con clon del esquema real sellado, comparando ambos esquemas
+columna a columna, y arrancando la aplicación contra los dos. Detalle en
+[`CONTINUACION.md`](CONTINUACION.md) §1.
 
 ### Bloque 4A — Enriquecer el modelo de tarea (semanas 7-10)
 
@@ -417,7 +435,7 @@ la interfaz de construcción.
 | Riesgo | Prob. | Impacto | Mitigación |
 |---|---|---|---|
 | Fuga de datos entre tenants por un `where` olvidado | **Alta** | **Crítico** | Tarea 2.1. Es la tarea individual más importante del plan. |
-| Los secretos retirados ya estaban comprometidos | Media | Crítico | Se movieron, **falta rotarlos**. Asumir que la clave JWT anterior es pública. |
+| Los secretos retirados ya estaban comprometidos | Baja | Medio | Reevaluado: la clave JWT **nunca llegó al repositorio público**. Lo único publicado fue el password del seed, que coincidía con el de MySQL; ese acoplamiento ya está roto y queda **cambiar el password de MySQL**. Ver `CONTINUACION.md` §3. |
 | La migración de paleta (3.1) rompe la UI visualmente | Alta | Medio | Feature por feature con revisión visual; los E2E de la Fase 2 dan la red. |
 | Perseguir paridad total con ClickUp | Media | Alto | La Fase 4 está deliberadamente acotada. Todo lo demás va a backlog. |
 | La deuda de test crece más rápido de lo que se paga | Media | Alto | El 25% de testing no es negociable; bloquear PRs sin tests en CI. |
@@ -426,9 +444,14 @@ la interfaz de construcción.
 
 ## 11. Siguiente paso
 
-1. **Rotar** la clave JWT y el password de base de datos. Retirarlos del código no basta:
-   estuvieron versionados y hay que asumirlos comprometidos.
-2. Revisar y **hacer push** del commit de Fase 1 (§4). La historia del frontend fue
-   reescrita para colgar de `web/`, así que el push a `origin/main` requiere `--force-with-lease`
-   y coordinación con cualquiera que tenga el repo clonado.
-3. Arrancar la **Fase 2** por la tarea 2.1, el query filter global de tenant.
+*Actualizado 2026-08-12, al cerrar el bloque 4.0. Los pasos anteriores —rotación de
+secretos, push de la Fase 1, arranque de la Fase 2— están hechos o reevaluados; el detalle
+de lo que quedó vivo está en `CONTINUACION.md`.*
+
+1. **Cambiar el password de MySQL.** Es lo único que sigue pendiente de la revisión de
+   secretos, y es una acción manual fuera del repositorio.
+2. **Mergear el PR #3** (Fases 2 y 3) o decidir explícitamente seguir sobre `fase-3-ux-ui`.
+   Cuanto más crezca la Fase 4 encima, más caro es el merge.
+3. Arrancar el **bloque 4A** por la prioridad en `WorkTask`: es la más simple y fija el
+   patrón —dominio, migración, API, interfaz y tests— para subtareas, dependencias y
+   múltiples responsables.

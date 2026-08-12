@@ -6,11 +6,10 @@ import { test, expect, type Page } from '@playwright/test';
  * Es la feature más grande del frontend —705 líneas de plantilla y 625 de componente— y
  * no tenía ninguna cobertura.
  *
- * Cubre lo que se puede comprobar sin conocer la forma exacta de su API: que la vista se
- * construye sin errores y que cumple accesibilidad. Los flujos con datos —listar
- * documentos, importar— quedan sin cubrir: no conseguí reproducir la respuesta que espera
- * el componente, y una prueba que adivina la forma de los datos da verde sin comprobar
- * nada. Es el primer trabajo pendiente si se va a partir este componente en piezas.
+ * El detalle que costó acertar: `GET /api/v1/docs` devuelve un **array plano**, no el
+ * objeto `{items, totalCount}` que usan proyectos, tareas y tickets. Simular la forma
+ * equivocada dejaba la vista vacía sin ningún error, que es la clase de fallo que hace
+ * perder una tarde.
  */
 
 const SESION = {
@@ -19,9 +18,17 @@ const SESION = {
   user: { id: '1', name: 'Admin', email: 'admin@acme.com', role: 'Admin', tenantId: 'ff' },
 };
 
+/** Ajustado a `DocumentDto`: `type` es numérico (1 List, 2 Wiki, 3 MeetingNote, 4 Template). */
 const DOCUMENTOS = [
-  { id: 'd1', title: 'Manual de arquitectura', description: 'Cómo está montado el sistema',
-    type: 'Doc', isStarred: false, updatedAt: new Date().toISOString(), pages: [] },
+  {
+    id: '00000000-0000-0000-0000-0000000000d1',
+    title: 'Manual de arquitectura',
+    description: 'Cómo está montado el sistema',
+    type: 1,
+    ownerId: '00000000-0000-0000-0000-000000000001',
+    createdAtUtc: new Date().toISOString(),
+    updatedAtUtc: new Date().toISOString(),
+  },
 ];
 
 async function entrarADocs(page: Page) {
@@ -34,10 +41,11 @@ async function entrarADocs(page: Page) {
     if (/\/views\//.test(u)) {
       return r.fulfill({ status: 200, contentType: 'application/json', body: '[]' });
     }
-    if (/\/docs/.test(u)) {
+    // Array plano: es lo que devuelve este módulo, a diferencia del resto.
+    if (/\/docs(\?|$)/.test(u)) {
       return r.fulfill({
         status: 200, contentType: 'application/json',
-        body: JSON.stringify({ items: DOCUMENTOS, totalCount: DOCUMENTOS.length }),
+        body: JSON.stringify(DOCUMENTOS),
       });
     }
     return r.fulfill({ status: 200, contentType: 'application/json', body: '{"items":[],"totalCount":0}' });
@@ -66,6 +74,44 @@ test('la sección de documentos carga sin errores de consola', async ({ page }) 
 });
 
 
+
+test('muestra los documentos que devuelve la API', async ({ page }) => {
+  await entrarADocs(page);
+
+  await expect(page.getByText('Manual de arquitectura').first()).toBeVisible({ timeout: 15_000 });
+});
+
+test('el modal de importar se abre, valida y se cierra', async ({ page }) => {
+  await entrarADocs(page);
+
+  await page.getByRole('button', { name: /^import$/i }).first().click();
+  const modal = page.getByRole('dialog', { name: /import document/i });
+  await expect(modal).toBeVisible();
+
+  // Importar sin contenido no debe crear nada: el aviso sale dentro del modal, no en un
+  // `alert` que bloquea la página y no dice qué falta.
+  await modal.getByRole('button', { name: /import now/i }).click();
+  await expect(modal.getByRole('alert')).toBeVisible();
+  await expect(modal).toBeVisible();
+
+  await modal.getByRole('button', { name: /^cancel$/i }).click();
+  await expect(modal).toBeHidden();
+});
+
+test('el selector de plantillas ofrece las predefinidas y se recorre con teclado', async ({ page }) => {
+  await entrarADocs(page);
+
+  await page.getByRole('button', { name: /más opciones de documento nuevo/i }).click();
+  await page.getByRole('button', { name: /apply a template/i }).first().click();
+
+  const modal = page.getByRole('dialog', { name: /apply a template/i });
+  await expect(modal).toBeVisible();
+
+  // Son <button> nativos, así que reciben foco sin ayuda añadida.
+  const primera = modal.getByRole('button', { name: /project overview/i });
+  await primera.focus();
+  await expect(primera).toBeFocused();
+});
 
 test('no tiene violaciones graves de accesibilidad', async ({ page }) => {
   const { default: AxeBuilder } = await import('@axe-core/playwright');

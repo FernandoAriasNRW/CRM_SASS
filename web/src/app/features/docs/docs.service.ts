@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { ApiService } from '../../core/api.service';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 export interface DocumentDto {
   id: string;
@@ -70,7 +71,7 @@ export class DocsService {
   }
 
   createDocument(req: CreateDocumentRequest): Observable<string> {
-    return this.api.post<string>(this.endpoint, req);
+    return this.api.post<string>(this.endpoint, req).pipe(map(idLimpio));
   }
 
   getPages(documentId: string): Observable<PageDto[]> {
@@ -98,10 +99,28 @@ export class DocsService {
   }
 
   createFromTemplate(req: CreateFromTemplateRequest): Observable<string> {
-    return this.api.post<string>(`${this.endpoint}/from-template`, req);
+    return this.api.post<string>(`${this.endpoint}/from-template`, req).pipe(map(idLimpio));
   }
 
   importDocument(req: ImportDocumentRequest): Observable<string> {
-    return this.api.post<string>(`${this.endpoint}/import`, req);
+    return this.api.post<string>(`${this.endpoint}/import`, req).pipe(map(idLimpio));
   }
+}
+
+/**
+ * Normaliza el identificador que devuelve la API al crear un documento.
+ *
+ * Llega como cadena entrecomillada —`"abc-123"` con las comillas dentro del valor— y a
+ * veces envuelto en un objeto. Cada punto de creación repetía la misma limpieza; ahora se
+ * hace una vez, donde entra el dato, y quien lo consume recibe un id ya utilizable.
+ *
+ * Lo correcto sería que la API devolviera JSON bien formado. Mientras no lo haga, este es
+ * el único sitio que hay que cambiar.
+ */
+function idLimpio(valor: unknown): string {
+  if (typeof valor === 'string') {
+    return valor.replace(/["']/g, '');
+  }
+  const obj = valor as { value?: string; id?: string } | null;
+  return obj?.value ?? obj?.id ?? String(valor);
 }

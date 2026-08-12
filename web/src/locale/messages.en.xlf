@@ -1094,8 +1094,8 @@
           <context context-type="linenumber">222,223</context>
         </context-group>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
-          <context context-type="linenumber">610,611</context>
+          <context context-type="sourcefile">src/app/features/docs/modals/importar-documento-modal.component.ts</context>
+          <context context-type="linenumber">56,57</context>
         </context-group>
       </trans-unit>
       <trans-unit id="1071721880474488785" datatype="html">
@@ -1290,12 +1290,28 @@
           <context context-type="linenumber">434,435</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="8856171444954038674" datatype="html">
+        <source>Marcar como favorito</source>
+        <target state="final">Mark as favourite</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">448,449</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1207738347707828993" datatype="html">
+        <source>Acciones del documento</source>
+        <target state="final">Document actions</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">490,491</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="7593555694782789615" datatype="html">
         <source>Open</source>
         <target state="final">Open</target>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
-          <context context-type="linenumber">495,496</context>
+          <context context-type="linenumber">501,502</context>
         </context-group>
       </trans-unit>
       <trans-unit id="526985193195003374" datatype="html">
@@ -1303,11 +1319,11 @@
         <target state="final">Save as Template</target>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
-          <context context-type="linenumber">499,500</context>
+          <context context-type="linenumber">505,506</context>
         </context-group>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
-          <context context-type="linenumber">541,542</context>
+          <context context-type="sourcefile">src/app/features/docs/modals/guardar-plantilla-modal.component.ts</context>
+          <context context-type="linenumber">30,31</context>
         </context-group>
       </trans-unit>
       <trans-unit id="7022070615528435141" datatype="html">
@@ -1315,7 +1331,7 @@
         <target state="final">Delete</target>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
-          <context context-type="linenumber">504,505</context>
+          <context context-type="linenumber">510,511</context>
         </context-group>
       </trans-unit>
       <trans-unit id="6423278459497515329" datatype="html">
@@ -1323,7 +1339,7 @@
         <target state="final">No documents found</target>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
-          <context context-type="linenumber">517,518</context>
+          <context context-type="linenumber">523,524</context>
         </context-group>
       </trans-unit>
       <trans-unit id="3368418423843456539" datatype="html">
@@ -1331,115 +1347,191 @@
         <target state="final">Create a document or pick a template to start writing.</target>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
-          <context context-type="linenumber">518,519</context>
+          <context context-type="linenumber">524,525</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="8521335290217383724" datatype="html">
-        <source>Convert this document into a reusable template for your workspace.</source>
+      <trans-unit id="4798961227159743968" datatype="html">
+        <source>Cerrar</source>
+        <target state="final">Close</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/modals/guardar-plantilla-modal.component.ts</context>
+          <context context-type="linenumber">34</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/modals/importar-documento-modal.component.ts</context>
+          <context context-type="linenumber">37</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/modals/selector-plantilla-modal.component.ts</context>
+          <context context-type="linenumber">43</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4583976121297800559" datatype="html">
+        <source> Convert this document into a reusable template for your workspace. </source>
         <target state="final">Convert this document into a reusable template for your workspace.</target>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
-          <context context-type="linenumber">548,550</context>
+          <context context-type="sourcefile">src/app/features/docs/modals/guardar-plantilla-modal.component.ts</context>
+          <context context-type="linenumber">40,41</context>
         </context-group>
       </trans-unit>
       <trans-unit id="8496679166012942026" datatype="html">
         <source>Template Title</source>
         <target state="final">Template Title</target>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
-          <context context-type="linenumber">552,553</context>
+          <context context-type="sourcefile">src/app/features/docs/modals/guardar-plantilla-modal.component.ts</context>
+          <context context-type="linenumber">45,46</context>
         </context-group>
       </trans-unit>
       <trans-unit id="4902817035128594900" datatype="html">
         <source>Description</source>
         <target state="final">Description</target>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
-          <context context-type="linenumber">561,562</context>
+          <context context-type="sourcefile">src/app/features/docs/modals/guardar-plantilla-modal.component.ts</context>
+          <context context-type="linenumber">52,53</context>
         </context-group>
       </trans-unit>
       <trans-unit id="5095200996423488514" datatype="html">
         <source>Briefly describe what this template is used for...</source>
         <target state="final">Briefly describe what this template is used for...</target>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
-          <context context-type="linenumber">566,567</context>
+          <context context-type="sourcefile">src/app/features/docs/modals/guardar-plantilla-modal.component.ts</context>
+          <context context-type="linenumber">54,55</context>
         </context-group>
       </trans-unit>
       <trans-unit id="2330577642930707695" datatype="html">
         <source> Cancel </source>
         <target state="final">Cancel</target>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
-          <context context-type="linenumber">573</context>
+          <context context-type="sourcefile">src/app/features/docs/modals/guardar-plantilla-modal.component.ts</context>
+          <context context-type="linenumber">68</context>
         </context-group>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
-          <context context-type="linenumber">632</context>
+          <context context-type="sourcefile">src/app/features/docs/modals/importar-documento-modal.component.ts</context>
+          <context context-type="linenumber">82</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="9147192238043774421" datatype="html">
-        <source> Save Template </source>
+      <trans-unit id="3407061818321766940" datatype="html">
+        <source>Saving...</source>
+        <target state="final">Saving...</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/modals/guardar-plantilla-modal.component.ts</context>
+          <context context-type="linenumber">73</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/modals/importar-documento-modal.component.ts</context>
+          <context context-type="linenumber">87</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1036586810617210056" datatype="html">
+        <source>Save Template</source>
         <target state="final">Save Template</target>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
-          <context context-type="linenumber">576</context>
+          <context context-type="sourcefile">src/app/features/docs/modals/guardar-plantilla-modal.component.ts</context>
+          <context context-type="linenumber">74</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8957034767711483875" datatype="html">
+        <source>El título es obligatorio</source>
+        <target state="final">The title is required</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/modals/guardar-plantilla-modal.component.ts</context>
+          <context context-type="linenumber">109</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5651629343841735066" datatype="html">
+        <source>No se pudo guardar la plantilla. Inténtalo de nuevo.</source>
+        <target state="final">The template could not be saved. Please try again.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/modals/guardar-plantilla-modal.component.ts</context>
+          <context context-type="linenumber">128</context>
         </context-group>
       </trans-unit>
       <trans-unit id="3893994986303966321" datatype="html">
         <source>Import Document</source>
         <target state="final">Import Document</target>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
-          <context context-type="linenumber">592,593</context>
+          <context context-type="sourcefile">src/app/features/docs/modals/importar-documento-modal.component.ts</context>
+          <context context-type="linenumber">33,34</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="193958140802508309" datatype="html">
-        <source>Select File (.md, .txt, .html)</source>
+      <trans-unit id="6620361978501757441" datatype="html">
+        <source> Select File (.md, .txt, .html) </source>
         <target state="final">Select File (.md, .txt, .html)</target>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
-          <context context-type="linenumber">601,602</context>
+          <context context-type="sourcefile">src/app/features/docs/modals/importar-documento-modal.component.ts</context>
+          <context context-type="linenumber">45</context>
         </context-group>
       </trans-unit>
       <trans-unit id="3652771791107161042" datatype="html">
         <source>Document title...</source>
         <target state="final">Document title...</target>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
-          <context context-type="linenumber">615,616</context>
+          <context context-type="sourcefile">src/app/features/docs/modals/importar-documento-modal.component.ts</context>
+          <context context-type="linenumber">58,59</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="1291433998219577288" datatype="html">
-        <source>Content Preview / Paste Text</source>
+      <trans-unit id="7493743408678309830" datatype="html">
+        <source> Content Preview / Paste Text </source>
         <target state="final">Content Preview / Paste Text</target>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
-          <context context-type="linenumber">620,621</context>
+          <context context-type="sourcefile">src/app/features/docs/modals/importar-documento-modal.component.ts</context>
+          <context context-type="linenumber">65</context>
         </context-group>
       </trans-unit>
       <trans-unit id="1167256119870125658" datatype="html">
         <source>Paste raw Markdown, HTML, or plain text here...</source>
         <target state="final">Paste raw Markdown, HTML, or plain text here...</target>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
-          <context context-type="linenumber">625,626</context>
+          <context context-type="sourcefile">src/app/features/docs/modals/importar-documento-modal.component.ts</context>
+          <context context-type="linenumber">68,69</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="5491082703305055145" datatype="html">
-        <source> Import Now </source>
+      <trans-unit id="41171508559592647" datatype="html">
+        <source>Import Now</source>
         <target state="final">Import Now</target>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
-          <context context-type="linenumber">635</context>
+          <context context-type="sourcefile">src/app/features/docs/modals/importar-documento-modal.component.ts</context>
+          <context context-type="linenumber">88</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5106210477788225297" datatype="html">
+        <source>No se pudo leer el fichero.</source>
+        <target state="final">The file could not be read.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/modals/importar-documento-modal.component.ts</context>
+          <context context-type="linenumber">117</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6609675708516619955" datatype="html">
+        <source>Hacen falta un título y contenido para importar.</source>
+        <target state="final">A title and content are required to import.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/modals/importar-documento-modal.component.ts</context>
+          <context context-type="linenumber">123</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6794432190581959907" datatype="html">
+        <source>No se pudo importar el documento. Inténtalo de nuevo.</source>
+        <target state="final">The document could not be imported. Please try again.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/modals/importar-documento-modal.component.ts</context>
+          <context context-type="linenumber">137</context>
         </context-group>
       </trans-unit>
       <trans-unit id="3568599725504151027" datatype="html">
         <source>Apply a Template</source>
         <target state="final">Apply a Template</target>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
-          <context context-type="linenumber">651,652</context>
+          <context context-type="sourcefile">src/app/features/docs/modals/selector-plantilla-modal.component.ts</context>
+          <context context-type="linenumber">39,40</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2779221425379497913" datatype="html">
+        <source>Saved custom template</source>
+        <target state="final">Saved custom template</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/modals/selector-plantilla-modal.component.ts</context>
+          <context context-type="linenumber">94</context>
         </context-group>
       </trans-unit>
       <trans-unit id="1551609928546674080" datatype="html">
