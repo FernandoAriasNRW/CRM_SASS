@@ -72,7 +72,7 @@
           </div>
         } @else {
           <div class="h-64 flex items-center justify-center text-muted-foreground">
-            <p>Sin datos de tareas</p>
+            <p i18n>Sin datos de tareas</p>
           </div>
         }
       </ui-card-content>
@@ -98,7 +98,7 @@
               [totalCount]="project.totalTasks" />
           }
           @if (projectProgress().length === 0) {
-            <p class="text-center text-muted-foreground py-8">No hay proyectos activos</p>
+            <p class="text-center text-muted-foreground py-8" i18n>No hay proyectos activos</p>
           }
         </div>
       </ui-card-content>
@@ -132,7 +132,7 @@
         </div>
       } @else {
         <div class="h-72 flex items-center justify-center text-muted-foreground">
-          <p>Selecciona un proyecto para ver el burndown</p>
+          <p i18n>Selecciona un proyecto para ver el burndown</p>
         </div>
       }
     </ui-card-content>
@@ -158,7 +158,7 @@
                 Ver
               </button>
               @if (dashboard.createdById === authStore.userInfo()?.id || authStore.isAdmin()) {
-                <button uiButton variant="ghost" size="sm" class="text-destructive ml-2" (click)="$event.stopPropagation(); deleteDashboard(dashboard.id)">
+                <button uiButton variant="ghost" size="sm" class="text-destructive ml-2" (click)="$event.stopPropagation(); deleteDashboard(dashboard.id)" i18n>
                   Eliminar
                 </button>
               }
@@ -169,8 +169,8 @@
       @if (customDashboards().length === 0) {
         <div class="col-span-full py-12 text-center text-muted-foreground bg-muted/20 rounded-lg border border-dashed border-border">
           <ng-icon name="lucideLayout" size="48" class="mx-auto mb-4 opacity-20"></ng-icon>
-          <p class="text-lg font-medium">No hay dashboards para mostrar</p>
-          <p class="text-sm mt-1">Crea uno nuevo para empezar a personalizar tus métricas.</p>
+          <p class="text-lg font-medium" i18n>No hay dashboards para mostrar</p>
+          <p class="text-sm mt-1" i18n>Crea uno nuevo para empezar a personalizar tus métricas.</p>
         </div>
       }
     </div>
@@ -181,23 +181,23 @@
 <app-drawer
   [isOpen]="showCreateModal"
   (closed)="showCreateModal = false"
-  title="Nuevo Dashboard Personalizado"
+  i18n-title title="Nuevo Dashboard Personalizado"
   subtitle="Crea un tablero de métricas personalizado para tu equipo"
   size="md"
 >
   <div class="space-y-4 py-2">
     <div class="space-y-1.5">
-      <label for="dashboard-titulo-del-dashboard" class="block text-xs font-semibold text-foreground">Título del Dashboard *</label>
-      <input id="dashboard-titulo-del-dashboard" type="text" [(ngModel)]="newDashboardTitle" placeholder="Ej. Métricas de Ventas Q3" class="w-full px-3 py-2 border border-input rounded-md bg-background text-sm focus:ring-2 focus:ring-ring outline-none" />
+      <label for="dashboard-titulo-del-dashboard" class="block text-xs font-semibold text-foreground" i18n>Título del Dashboard *</label>
+      <input id="dashboard-titulo-del-dashboard" type="text" [(ngModel)]="newDashboardTitle" i18n-placeholder placeholder="Ej. Métricas de Ventas Q3" class="w-full px-3 py-2 border border-input rounded-md bg-background text-sm focus:ring-2 focus:ring-ring outline-none" />
     </div>
     <div class="flex items-center gap-2 pt-2">
       <input type="checkbox" id="isPublic" [(ngModel)]="newDashboardIsPublic" class="rounded border-input text-primary focus:ring-primary h-4 w-4 cursor-pointer" />
-      <label for="isPublic" class="text-xs text-foreground cursor-pointer select-none">Hacer público (visible para todo el equipo en la workspace)</label>
+      <label for="isPublic" class="text-xs text-foreground cursor-pointer select-none" i18n>Hacer público (visible para todo el equipo en la workspace)</label>
     </div>
   </div>
 
   <div drawer-footer class="flex justify-end gap-2 w-full">
-    <button uiButton variant="outline" (click)="showCreateModal = false">Cancelar</button>
-    <button uiButton variant="default" (click)="createDashboard()" [disabled]="!newDashboardTitle">Crear Dashboard</button>
+    <button uiButton variant="outline" (click)="showCreateModal = false" i18n>Cancelar</button>
+    <button uiButton variant="default" (click)="createDashboard()" [disabled]="!newDashboardTitle" i18n>Crear Dashboard</button>
   </div>
 </app-drawer>

@@ -2,10 +2,10 @@
   <div class="flex items-center justify-between px-4 py-3 border-b border-border bg-muted/30">
     <h3 class="font-semibold capitalize text-foreground/90">{{ monthName }} {{ year }}</h3>
     <div class="flex items-center gap-1">
-      <button (click)="prevMonth()" aria-label="Mes anterior" class="p-1 hover:bg-accent rounded text-muted-foreground transition-colors">
+      <button (click)="prevMonth()" i18n-aria-label aria-label="Mes anterior" class="p-1 hover:bg-accent rounded text-muted-foreground transition-colors">
         <ng-icon name="lucideChevronLeft" size="18"></ng-icon>
       </button>
-      <button (click)="nextMonth()" aria-label="Mes siguiente" class="p-1 hover:bg-accent rounded text-muted-foreground transition-colors">
+      <button (click)="nextMonth()" i18n-aria-label aria-label="Mes siguiente" class="p-1 hover:bg-accent rounded text-muted-foreground transition-colors">
         <ng-icon name="lucideChevronRight" size="18"></ng-icon>
       </button>
     </div>

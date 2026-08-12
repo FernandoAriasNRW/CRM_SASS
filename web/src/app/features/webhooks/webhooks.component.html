@@ -7,8 +7,8 @@
           <ng-icon name="lucideWebhook" size="22" class="text-primary" />
         </div>
         <div>
-          <h1 class="text-xl font-semibold">Webhooks</h1>
-          <p class="text-sm text-muted-foreground">Gestiona integraciones con sistemas externos</p>
+          <h1 class="text-xl font-semibold" i18n>Webhooks</h1>
+          <p class="text-sm text-muted-foreground" i18n>Gestiona integraciones con sistemas externos</p>
         </div>
       </div>
 
@@ -24,19 +24,19 @@
     <!-- Stats -->
     <div class="mt-4 grid grid-cols-4 gap-4">
       <div class="rounded-lg border border-border bg-muted/30 px-4 py-3">
-        <p class="text-xs text-muted-foreground">Total Suscripciones</p>
+        <p class="text-xs text-muted-foreground" i18n>Total Suscripciones</p>
         <p class="text-2xl font-bold">{{ stats().total }}</p>
       </div>
       <div class="rounded-lg border border-border bg-muted/30 px-4 py-3">
-        <p class="text-xs text-muted-foreground">Activas</p>
+        <p class="text-xs text-muted-foreground" i18n>Activas</p>
         <p class="text-2xl font-bold text-success">{{ stats().active }}</p>
       </div>
       <div class="rounded-lg border border-border bg-muted/30 px-4 py-3">
-        <p class="text-xs text-muted-foreground">Entregas Exitosas</p>
+        <p class="text-xs text-muted-foreground" i18n>Entregas Exitosas</p>
         <p class="text-2xl font-bold text-primary">{{ stats().successCount }}</p>
       </div>
       <div class="rounded-lg border border-border bg-muted/30 px-4 py-3">
-        <p class="text-xs text-muted-foreground">Entregas Fallidas</p>
+        <p class="text-xs text-muted-foreground" i18n>Entregas Fallidas</p>
         <p class="text-2xl font-bold text-destructive">{{ stats().failureCount }}</p>
       </div>
     </div>
@@ -53,7 +53,7 @@
       />
       <input
         type="text"
-        placeholder="Buscar webhooks..."
+        i18n-placeholder placeholder="Buscar webhooks..."
         [ngModel]="searchQuery()"
         (ngModelChange)="searchQuery.set($any($event))"
         class="w-full pl-10 pr-4 py-2 border border-input rounded-md bg-background text-sm focus:ring-2 focus:ring-ring outline-none"
@@ -76,8 +76,8 @@
         <div class="flex h-16 w-16 items-center justify-center rounded-full bg-muted mb-4">
           <ng-icon name="lucideWebhook" size="32" class="text-muted-foreground" />
         </div>
-        <h3 class="text-lg font-medium mb-2">No hay webhooks configurados</h3>
-        <p class="text-sm text-muted-foreground mb-4 max-w-sm">
+        <h3 class="text-lg font-medium mb-2" i18n>No hay webhooks configurados</h3>
+        <p class="text-sm text-muted-foreground mb-4 max-w-sm" i18n>
           Crea tu primer webhook para recibir notificaciones de eventos en tu sistema CRM.
         </p>
         <button
@@ -168,7 +168,7 @@
                       (click)="regenerateSecret(subscription)"
                       [disabled]="regeneratingId() === subscription.id"
                       class="p-2 rounded hover:bg-muted transition-colors disabled:opacity-50"
-                      title="Regenerar Secret"
+                      i18n-title title="Regenerar Secret"
                     >
                       @if (regeneratingId() === subscription.id) {
                         <ng-icon name="lucideLoader2" size="14" class="animate-spin" />
@@ -180,7 +180,7 @@
                     <button
                       (click)="openEditModal(subscription)"
                       class="p-2 rounded hover:bg-muted transition-colors"
-                      title="Editar"
+                      i18n-title title="Editar"
                     >
                       <ng-icon name="lucideEdit3" size="14" class="text-muted-foreground" />
                     </button>
@@ -188,7 +188,7 @@
                     <button
                       (click)="confirmDelete(subscription)"
                       class="p-2 rounded hover:bg-destructive/10 transition-colors"
-                      title="Eliminar"
+                      i18n-title title="Eliminar"
                     >
                       <ng-icon name="lucideTrash2" size="14" class="text-destructive" />
                     </button>
@@ -229,7 +229,7 @@
       (click)="$event.stopPropagation()"
     >
       <div class="flex items-center justify-between px-6 py-4 border-b border-border">
-        <h3 class="text-base font-semibold">Nuevo Secret</h3>
+        <h3 class="text-base font-semibold" i18n>Nuevo Secret</h3>
         <button
           (click)="closeSecretModal()"
           class="text-muted-foreground hover:text-foreground p-1 rounded hover:bg-muted"
@@ -249,7 +249,7 @@
           <button
             (click)="copyToClipboard(secretToShow()!.secret)"
             class="shrink-0 p-2 rounded hover:bg-muted transition-colors"
-            title="Copiar"
+            i18n-title title="Copiar"
           >
             <ng-icon name="lucideLoader2" size="14" />
           </button>
@@ -260,7 +260,7 @@
         <button
           (click)="closeSecretModal()"
           class="px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium hover:bg-primary/90"
-        >
+         i18n>
           Cerrar
         </button>
       </div>
@@ -284,12 +284,12 @@
             <ng-icon name="lucideTrash2" size="20" class="text-destructive" />
           </div>
           <div>
-            <h3 class="font-semibold">Eliminar Webhook</h3>
-            <p class="text-sm text-muted-foreground">Esta acción no se puede deshacer</p>
+            <h3 class="font-semibold" i18n>Eliminar Webhook</h3>
+            <p class="text-sm text-muted-foreground" i18n>Esta acción no se puede deshacer</p>
           </div>
         </div>
 
-        <p class="text-sm text-muted-foreground">
+        <p class="text-sm text-muted-foreground" i18n>
           ¿Estás seguro de que deseas eliminar este webhook? Se perderán todas las configuraciones y estadísticas asociadas.
         </p>
       </div>
@@ -298,13 +298,13 @@
         <button
           (click)="cancelDelete()"
           class="px-4 py-2 border border-border rounded-md text-sm hover:bg-muted/50"
-        >
+         i18n>
           Cancelar
         </button>
         <button
           (click)="deleteSubscription(confirmDeleteId()!)"
           class="px-4 py-2 bg-destructive text-destructive-foreground rounded-md text-sm font-medium hover:bg-destructive/90"
-        >
+         i18n>
           Eliminar
         </button>
       </div>

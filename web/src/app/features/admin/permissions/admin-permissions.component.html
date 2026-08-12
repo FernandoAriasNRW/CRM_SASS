@@ -5,9 +5,9 @@
     <div>
       <h2 class="text-xl font-bold text-foreground dark:text-white tracking-tight flex items-center gap-2">
         <ng-icon name="lucideShieldCheck" class="w-5 h-5 text-primary"></ng-icon>
-        <span>Matriz de Permisos y Seguridad de Roles</span>
+        <span i18n>Matriz de Permisos y Seguridad de Roles</span>
       </h2>
-      <p class="text-xs text-muted-foreground">Configura el comportamiento por defecto de cada rol de usuario en el workspace</p>
+      <p class="text-xs text-muted-foreground" i18n>Configura el comportamiento por defecto de cada rol de usuario en el workspace</p>
     </div>
 
     <div class="flex items-center gap-2">
@@ -17,10 +17,10 @@
         class="px-4 py-2 bg-primary hover:bg-primary text-white rounded-lg text-xs font-semibold shadow-sm transition-colors flex items-center gap-1.5 disabled:opacity-50">
         @if (saving()) {
           <ng-icon name="lucideLoader2" class="w-3.5 h-3.5 animate-spin"></ng-icon>
-          <span>Guardando...</span>
+          <span i18n>Guardando...</span>
         } @else {
           <ng-icon name="lucideCheck" class="w-3.5 h-3.5"></ng-icon>
-          <span>Guardar Matriz</span>
+          <span i18n>Guardar Matriz</span>
         }
       </button>
     </div>
@@ -44,21 +44,21 @@
     <table class="w-full text-left text-xs border-collapse">
       <thead>
         <tr class="border-b border-border bg-muted/70 dark:bg-muted/60 text-muted-foreground font-semibold">
-          <th class="py-3.5 px-4 font-semibold text-muted-foreground">Recurso / Módulo</th>
+          <th class="py-3.5 px-4 font-semibold text-muted-foreground" i18n>Recurso / Módulo</th>
           <th class="py-3.5 px-4 text-center font-semibold text-primary">
             <div class="flex items-center justify-center gap-1">
               <ng-icon name="lucideLock" class="w-3.5 h-3.5"></ng-icon>
-              <span>Workspace Owner / Admin</span>
+              <span i18n>Workspace Owner / Admin</span>
             </div>
           </th>
           <th class="py-3.5 px-4 text-center font-semibold text-primary">
             <div appClickable class="flex items-center justify-center gap-1 cursor-pointer hover:underline" (click)="openRoleModal('Member')">
-              <span>Member (Miembro)</span>
+              <span i18n>Member (Miembro)</span>
             </div>
           </th>
           <th class="py-3.5 px-4 text-center font-semibold text-warning">
             <div appClickable class="flex items-center justify-center gap-1 cursor-pointer hover:underline" (click)="openRoleModal('Guest')">
-              <span>Guest (Invitado)</span>
+              <span i18n>Guest (Invitado)</span>
             </div>
           </th>
         </tr>
@@ -83,7 +83,7 @@
 
             <!-- Admin Column: Always Full -->
             <td class="py-4 px-4 text-center whitespace-nowrap">
-              <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-primary-subtle text-primary-subtle-fg border border-primary dark:border-primary/60">
+              <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-primary-subtle text-primary-subtle-fg border border-primary dark:border-primary/60" i18n>
                 Full Control
               </span>
             </td>
@@ -94,10 +94,10 @@
                 [ngModel]="row.memberLevel" 
                 (ngModelChange)="updateLevel(row.key, 'Member', $event)"
                 class="bg-muted dark:bg-muted/80 border border-border text-xs font-semibold text-foreground px-2.5 py-1 rounded-lg focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer">
-                <option value="Full">Full Control</option>
-                <option value="Edit">Can Edit</option>
-                <option value="View">Can View</option>
-                <option value="None">No Access</option>
+                <option value="Full" i18n>Full Control</option>
+                <option value="Edit" i18n>Can Edit</option>
+                <option value="View" i18n>Can View</option>
+                <option value="None" i18n>No Access</option>
               </select>
             </td>
 
@@ -107,10 +107,10 @@
                 [ngModel]="row.guestLevel" 
                 (ngModelChange)="updateLevel(row.key, 'Guest', $event)"
                 class="bg-muted dark:bg-muted/80 border border-border text-xs font-semibold text-foreground px-2.5 py-1 rounded-lg focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer">
-                <option value="Full">Full Control</option>
-                <option value="Edit">Can Edit</option>
-                <option value="View">Can View</option>
-                <option value="None">No Access</option>
+                <option value="Full" i18n>Full Control</option>
+                <option value="Edit" i18n>Can Edit</option>
+                <option value="View" i18n>Can View</option>
+                <option value="None" i18n>No Access</option>
               </select>
             </td>
 

@@ -3,7 +3,7 @@
   <!-- Header & Views Tab Bar (ClickUp Style) -->
   <div class="flex flex-col border-b border-border mb-4 bg-card rounded-t-lg shadow-sm">
     <div class="flex items-center justify-between px-4 py-3">
-      <h2 class="text-xl font-semibold tracking-tight">Tickets</h2>
+      <h2 class="text-xl font-semibold tracking-tight" i18n>Tickets</h2>
       <div class="flex items-center gap-2">
         <button uiButton variant="outline" size="sm" (click)="loadTickets()">
           <ng-icon name="lucideRefreshCw" size="14" class="mr-1.5" /> Actualizar
@@ -52,7 +52,7 @@
         </button>
         <div class="absolute top-full left-0 mt-1 w-48 rounded-lg border border-border bg-card shadow-lg z-10 hidden group-focus-within:block focus-within:block">
           <div class="p-2 space-y-1">
-            <p class="px-2 py-1 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Crear nueva vista</p>
+            <p class="px-2 py-1 text-xs font-semibold text-muted-foreground uppercase tracking-wider" i18n>Crear nueva vista</p>
             <button (click)="createNewView('list')" class="flex items-center gap-2 w-full px-2 py-1.5 text-sm hover:bg-accent rounded-md transition-colors text-left">
               <ng-icon name="lucideList" size="14" /> Lista
             </button>

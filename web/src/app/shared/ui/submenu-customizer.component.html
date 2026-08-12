@@ -3,7 +3,7 @@
     
     <!-- Header -->
     <div class="h-14 border-b border-border flex items-center justify-between px-6 shrink-0">
-      <h2 class="text-lg font-semibold">Customizar submenú</h2>
+      <h2 class="text-lg font-semibold" i18n>Customizar submenú</h2>
       <button (click)="close.emit()" class="text-muted-foreground hover:text-foreground">
         <ng-icon name="lucideX" size="20"></ng-icon>
       </button>
@@ -13,8 +13,8 @@
     <div class="flex-1 overflow-y-auto p-6 flex flex-col gap-6">
       
       <div>
-        <h3 class="text-sm font-medium mb-3 text-muted-foreground uppercase tracking-wider">Opciones del Submenú</h3>
-        <p class="text-xs text-muted-foreground mb-4">Arrastra para reordenar las opciones. Puedes eliminar los accesos rápidos personalizados.</p>
+        <h3 class="text-sm font-medium mb-3 text-muted-foreground uppercase tracking-wider" i18n>Opciones del Submenú</h3>
+        <p class="text-xs text-muted-foreground mb-4" i18n>Arrastra para reordenar las opciones. Puedes eliminar los accesos rápidos personalizados.</p>
 
         <div cdkDropList class="space-y-2" (cdkDropListDropped)="drop($event)">
           @for (item of items; track item.id; let i = $index) {
@@ -33,7 +33,7 @@
               </div>
               
               @if (item.isCustom) {
-                <button (click)="removeItem(i)" class="text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity" title="Quitar">
+                <button (click)="removeItem(i)" class="text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity" i18n-title title="Quitar">
                   <ng-icon name="lucideTrash2" size="16"></ng-icon>
                 </button>
               }
@@ -44,24 +44,24 @@
 
       <!-- Agregar acceso rápido -->
       <div class="p-4 border border-border rounded-lg bg-muted/30">
-        <h3 class="text-sm font-medium mb-3">Agregar acceso rápido</h3>
+        <h3 class="text-sm font-medium mb-3" i18n>Agregar acceso rápido</h3>
         <div class="space-y-3">
           <div>
-            <label for="submenu-customizer-opciones-comunes" class="text-xs text-muted-foreground mb-1 block">Opciones comunes</label>
+            <label for="submenu-customizer-opciones-comunes" class="text-xs text-muted-foreground mb-1 block" i18n>Opciones comunes</label>
             <select id="submenu-customizer-opciones-comunes" [(ngModel)]="selectedTemplate" (change)="applyTemplate()" class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
-              <option [ngValue]="null">Personalizado...</option>
+              <option [ngValue]="null" i18n>Personalizado...</option>
               @for (tpl of commonLinks; track tpl.label) {
                 <option [ngValue]="tpl">{{ tpl.label }}</option>
               }
             </select>
           </div>
           <div>
-            <label for="submenu-customizer-nombre" class="text-xs text-muted-foreground mb-1 block">Nombre</label>
-            <input id="submenu-customizer-nombre" type="text" [(ngModel)]="newLabel" placeholder="Ej. Reporte mensual" class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+            <label for="submenu-customizer-nombre" class="text-xs text-muted-foreground mb-1 block" i18n>Nombre</label>
+            <input id="submenu-customizer-nombre" type="text" [(ngModel)]="newLabel" i18n-placeholder placeholder="Ej. Reporte mensual" class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
           </div>
           <div>
-            <label for="submenu-customizer-ruta-url-interna" class="text-xs text-muted-foreground mb-1 block">Ruta (URL interna)</label>
-            <input id="submenu-customizer-ruta-url-interna" type="text" [(ngModel)]="newRoute" placeholder="/projects/123" class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+            <label for="submenu-customizer-ruta-url-interna" class="text-xs text-muted-foreground mb-1 block" i18n>Ruta (URL interna)</label>
+            <input id="submenu-customizer-ruta-url-interna" type="text" [(ngModel)]="newRoute" i18n-placeholder placeholder="/projects/123" class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
           </div>
           <button uiButton variant="outline" size="sm" class="w-full" (click)="addCustomLink()" [disabled]="!newLabel || !newRoute">
             <ng-icon name="lucidePlus" size="16" class="mr-2"></ng-icon>
@@ -74,8 +74,8 @@
 
     <!-- Footer -->
     <div class="p-4 border-t border-border bg-muted/30 flex justify-end gap-2 shrink-0">
-      <button uiButton variant="outline" (click)="close.emit()">Cancelar</button>
-      <button uiButton variant="default" (click)="save()">Guardar Cambios</button>
+      <button uiButton variant="outline" (click)="close.emit()" i18n>Cancelar</button>
+      <button uiButton variant="default" (click)="save()" i18n>Guardar Cambios</button>
     </div>
 
   </div>

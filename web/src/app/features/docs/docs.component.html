@@ -17,10 +17,10 @@
         <div class="w-6 h-6 rounded-md bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white text-xs font-bold shadow-sm">
           D
         </div>
-        <span class="font-semibold tracking-tight">Docs</span>
+        <span class="font-semibold tracking-tight" i18n>Docs</span>
       </div>
       <div class="flex items-center gap-1">
-        <button (click)="togglePin($event)" aria-label="Fijar barra lateral" class="text-muted-foreground hover:text-muted-foreground p-1.5 rounded-md hover:bg-secondary transition-colors" title="Pin Sidebar">
+        <button (click)="togglePin($event)" i18n-aria-label aria-label="Fijar barra lateral" class="text-muted-foreground hover:text-muted-foreground p-1.5 rounded-md hover:bg-secondary transition-colors" i18n-title title="Pin Sidebar">
           <ng-icon [name]="isPinned() ? 'lucidePinOff' : 'lucidePin'" class="w-3.5 h-3.5"></ng-icon>
         </button>
       </div>
@@ -36,7 +36,7 @@
         class="w-full flex items-center justify-between px-2.5 py-1.5 text-xs text-muted-foreground hover:bg-muted rounded-md transition-colors">
         <div class="flex items-center gap-2">
           <ng-icon name="lucideFileText" class="w-4 h-4 text-muted-foreground"></ng-icon>
-          <span>All Docs</span>
+          <span i18n>All Docs</span>
         </div>
       </button>
 
@@ -50,7 +50,7 @@
           <div class="w-4 h-4 rounded-full bg-muted text-white dark:text-foreground flex items-center justify-center text-[9px] font-bold">
             E
           </div>
-          <span>My Docs</span>
+          <span i18n>My Docs</span>
         </div>
         <span class="text-[10px] px-1.5 py-0.5 rounded-full bg-secondary dark:bg-muted text-muted-foreground font-medium">
           {{ documents().length }}
@@ -63,7 +63,7 @@
         [class.dark:bg-muted/80]="activeSidebarTab() === 'shared' && !activeDocument()"
         class="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-muted-foreground hover:bg-muted rounded-md transition-colors">
         <ng-icon name="lucideShare2" class="w-4 h-4 text-muted-foreground"></ng-icon>
-        <span>Shared with me</span>
+        <span i18n>Shared with me</span>
       </button>
 
       <button 
@@ -72,7 +72,7 @@
         [class.dark:bg-muted/80]="activeSidebarTab() === 'private' && !activeDocument()"
         class="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-muted-foreground hover:bg-muted rounded-md transition-colors">
         <ng-icon name="lucidePin" class="w-4 h-4 text-muted-foreground"></ng-icon>
-        <span>Private</span>
+        <span i18n>Private</span>
       </button>
 
       <button 
@@ -81,7 +81,7 @@
         [class.dark:bg-muted/80]="activeSidebarTab() === 'meeting-notes' && !activeDocument()"
         class="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-muted-foreground hover:bg-muted rounded-md transition-colors">
         <ng-icon name="lucideCalendar" class="w-4 h-4 text-muted-foreground"></ng-icon>
-        <span>Meeting Notes</span>
+        <span i18n>Meeting Notes</span>
       </button>
 
       <button 
@@ -90,17 +90,17 @@
         [class.dark:bg-muted/80]="activeSidebarTab() === 'archived' && !activeDocument()"
         class="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-muted-foreground hover:bg-muted rounded-md transition-colors">
         <ng-icon name="lucideFolder" class="w-4 h-4 text-muted-foreground"></ng-icon>
-        <span>Archived</span>
+        <span i18n>Archived</span>
       </button>
     </div>
 
     <!-- Widgets & Document Tree -->
-    <div tabindex="0" role="region" aria-label="Navegación de documentos"
+    <div tabindex="0" role="region" i18n-aria-label aria-label="Navegación de documentos"
          class="flex-1 overflow-y-auto px-3 py-3 space-y-4">
       
       <!-- Favorites Section -->
       <div>
-        <span class="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5 px-1">
+        <span class="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5 px-1" i18n>
           Favorites
         </span>
         @if (starredDocuments().length > 0) {
@@ -119,14 +119,14 @@
             <div class="w-7 h-7 rounded-full bg-warning-subtle dark:bg-warning-subtle/50 text-warning flex items-center justify-center mx-auto mb-1">
               <ng-icon name="lucideStar" class="w-3.5 h-3.5 fill-amber-400 text-warning"></ng-icon>
             </div>
-            <p class="text-[11px] font-medium text-muted-foreground">Star a Doc to see it here</p>
+            <p class="text-[11px] font-medium text-muted-foreground" i18n>Star a Doc to see it here</p>
           </div>
         }
       </div>
 
       <!-- Recent Pages Section -->
       <div>
-        <span class="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5 px-1">
+        <span class="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5 px-1" i18n>
           Recent Pages
         </span>
         <div class="space-y-0.5">
@@ -143,14 +143,14 @@
 
       <!-- Popular Wikis Section -->
       <div>
-        <span class="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5 px-1">
+        <span class="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5 px-1" i18n>
           Popular Wikis
         </span>
         <div class="bg-gradient-to-b from-blue-500/5 to-blue-500/0 border border-primary/60 dark:border-primary/30 rounded-xl p-3 text-center">
           <div class="w-7 h-7 rounded-full bg-primary-subtle dark:bg-primary-subtle/50 text-primary flex items-center justify-center mx-auto mb-1">
             <ng-icon name="lucideCheckCircle2" class="w-4 h-4 text-primary"></ng-icon>
           </div>
-          <p class="text-[11px] text-muted-foreground">Most viewed and active Wikis appear here</p>
+          <p class="text-[11px] text-muted-foreground" i18n>Most viewed and active Wikis appear here</p>
         </div>
       </div>
     </div>
@@ -173,10 +173,10 @@
       
       <!-- Breadcrumb & Back -->
       <div class="flex items-center gap-2 text-sm">
-        <button (click)="closeEditorView()" aria-label="Volver a todos los documentos" class="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors" title="Back to All Docs">
+        <button (click)="closeEditorView()" i18n-aria-label aria-label="Volver a todos los documentos" class="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors" i18n-title title="Back to All Docs">
           <ng-icon name="lucideChevronRight" class="w-4 h-4 rotate-180"></ng-icon>
         </button>
-        <span appClickable (click)="closeEditorView()" class="text-muted-foreground font-medium hover:underline cursor-pointer">Docs</span>
+        <span appClickable (click)="closeEditorView()" class="text-muted-foreground font-medium hover:underline cursor-pointer" i18n>Docs</span>
         <span class="text-muted-foreground">/</span>
         <span class="text-foreground font-semibold">{{ activeDocument()?.title }}</span>
         <span class="text-muted-foreground">/</span>
@@ -185,7 +185,7 @@
           [ngModel]="activePage()?.title" 
           (ngModelChange)="updateDocumentTitle($event)"
           class="bg-transparent border-none outline-none text-foreground font-semibold focus:ring-1 focus:ring-primary/50 rounded px-1 -ml-1 w-48"
-          placeholder="Page title...">
+          i18n-placeholder placeholder="Page title...">
       </div>
 
       <!-- Right Actions -->
@@ -202,10 +202,10 @@
           Save as Template
         </button>
         <app-emoji-picker (emojiSelected)="insertEmoji($event)"></app-emoji-picker>
-        <button class="text-xs font-medium text-muted-foreground bg-muted hover:bg-secondary px-3 py-1.5 rounded-md transition-colors" (click)="exportHtml()">
+        <button class="text-xs font-medium text-muted-foreground bg-muted hover:bg-secondary px-3 py-1.5 rounded-md transition-colors" (click)="exportHtml()" i18n>
           Export HTML
         </button>
-        <button class="text-xs font-medium text-white bg-primary hover:bg-primary px-3 py-1.5 rounded-md transition-colors" (click)="exportPdf()">
+        <button class="text-xs font-medium text-white bg-primary hover:bg-primary px-3 py-1.5 rounded-md transition-colors" (click)="exportPdf()" i18n>
           Export PDF
         </button>
       </div>
@@ -219,7 +219,7 @@
           [ngModel]="activeDocument()?.title" 
           (ngModelChange)="updateDocumentTitle($event)" 
           class="w-full text-4xl font-bold bg-transparent outline-none text-foreground placeholder-zinc-300 dark:placeholder-zinc-700 tracking-tight" 
-          placeholder="Document Title">
+          i18n-placeholder placeholder="Document Title">
       </div>
       <div class="max-w-3xl mx-auto px-8 pb-12 editor-container">
         <tiptap-editor [editor]="editor"></tiptap-editor>
@@ -252,7 +252,7 @@
               (click)="openImportModal($event)" 
               class="inline-flex items-center gap-2 px-3.5 py-1.5 text-sm font-medium text-muted-foreground dark:text-foreground bg-white dark:bg-muted border border-border rounded-lg hover:bg-muted transition-colors shadow-sm">
               <ng-icon name="lucideUpload" class="w-4 h-4 text-muted-foreground"></ng-icon>
-              <span>Import</span>
+              <span i18n>Import</span>
             </button>
 
             <!-- New Doc Dropdown (Matching Image 2) -->
@@ -261,11 +261,11 @@
                 <button 
                   (click)="createNewDoc(1, $event)"
                   class="px-4 py-1.5 bg-primary hover:bg-primary text-white text-sm font-medium rounded-l-lg transition-colors flex items-center gap-1.5">
-                  <span>New Doc</span>
+                  <span i18n>New Doc</span>
                 </button>
                 <button 
                   (click)="toggleNewDocDropdown($event)"
-                  aria-label="Más opciones de documento nuevo"
+                  i18n-aria-label aria-label="Más opciones de documento nuevo"
                   [attr.aria-expanded]="isNewDocDropdownOpen()"
                   class="px-2 py-1.5 bg-primary hover:bg-primary text-white text-sm font-medium rounded-r-lg border-l border-primary transition-colors">
                   <ng-icon name="lucideChevronDown" class="w-4 h-4"></ng-icon>
@@ -281,26 +281,26 @@
                       <div class="w-6 h-6 rounded bg-primary-subtle text-primary flex items-center justify-center">
                         <ng-icon name="lucideFileText" class="w-4 h-4"></ng-icon>
                       </div>
-                      <span>Doc</span>
+                      <span i18n>Doc</span>
                     </button>
 
                     <button (click)="createNewDoc(2, $event)" class="w-full flex items-center gap-3 px-4 py-2 text-muted-foreground dark:text-foreground hover:bg-muted transition-colors text-left font-medium">
                       <div class="w-6 h-6 rounded bg-primary-subtle text-primary flex items-center justify-center">
                         <ng-icon name="lucideCheckCircle2" class="w-4 h-4"></ng-icon>
                       </div>
-                      <span>Wiki</span>
+                      <span i18n>Wiki</span>
                     </button>
                   </div>
 
                   <div class="py-1">
                     <button (click)="openImportModal($event)" class="w-full flex items-center gap-3 px-4 py-2 text-muted-foreground dark:text-foreground hover:bg-muted transition-colors text-left font-medium">
                       <ng-icon name="lucideUpload" class="w-4 h-4 text-muted-foreground"></ng-icon>
-                      <span>Import</span>
+                      <span i18n>Import</span>
                     </button>
                   </div>
 
                   <div class="py-1">
-                    <span class="px-4 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
+                    <span class="px-4 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider block" i18n>
                       Templates
                     </span>
 
@@ -315,7 +315,7 @@
 
                     <button (click)="isTemplatePickerOpen.set(true); isNewDocDropdownOpen.set(false)" class="w-full flex items-center gap-3 px-4 py-2 text-primary hover:bg-primary-subtle dark:hover:bg-primary-subtle/30 transition-colors text-left font-medium">
                       <ng-icon name="lucideWand2" class="w-4 h-4"></ng-icon>
-                      <span>Apply a template</span>
+                      <span i18n>Apply a template</span>
                     </button>
                   </div>
                 </div>
@@ -326,7 +326,7 @@
 
         <!-- Templates Carousel / Gallery (Image 1 Replica) -->
         <div class="mb-8">
-          <h2 class="text-sm font-semibold text-muted-foreground mb-3">Templates</h2>
+          <h2 class="text-sm font-semibold text-muted-foreground mb-3" i18n>Templates</h2>
           
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             @for (tmpl of presetTemplates; track tmpl.key) {
@@ -355,7 +355,7 @@
           <!-- User Custom Saved Templates Cards (if any exist) -->
           @if (customTemplates().length > 0) {
             <div class="mt-4">
-              <span class="text-xs font-semibold text-primary uppercase tracking-wider block mb-2">My Custom Templates</span>
+              <span class="text-xs font-semibold text-primary uppercase tracking-wider block mb-2" i18n>My Custom Templates</span>
               <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 @for (customTmpl of customTemplates(); track customTmpl.id) {
                   <div appClickable 
@@ -381,15 +381,15 @@
             <!-- Filter Selector -->
             <div class="relative">
               <select 
-                aria-label="Filtrar por tipo de documento"
+                i18n-aria-label aria-label="Filtrar por tipo de documento"
                 [ngModel]="selectedTypeFilter()" 
                 (ngModelChange)="selectedTypeFilter.set($event)"
                 class="appearance-none bg-white dark:bg-muted border border-border text-xs font-medium text-muted-foreground px-3 py-1.5 pr-8 rounded-lg focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer">
-                <option [ngValue]="null">Filters</option>
-                <option [ngValue]="1">Document</option>
-                <option [ngValue]="2">Wiki</option>
-                <option [ngValue]="3">Meeting Note</option>
-                <option [ngValue]="4">Template</option>
+                <option [ngValue]="null" i18n>Filters</option>
+                <option [ngValue]="1" i18n>Document</option>
+                <option [ngValue]="2" i18n>Wiki</option>
+                <option [ngValue]="3" i18n>Meeting Note</option>
+                <option [ngValue]="4" i18n>Template</option>
               </select>
               <ng-icon name="lucideFilter" class="w-3.5 h-3.5 absolute right-2.5 top-2.5 text-muted-foreground pointer-events-none"></ng-icon>
             </div>
@@ -397,13 +397,13 @@
             <!-- Sort Selector -->
             <div class="relative">
               <select 
-                aria-label="Ordenar documentos"
+                i18n-aria-label aria-label="Ordenar documentos"
                 [ngModel]="selectedSort()" 
                 (ngModelChange)="selectedSort.set($event)"
                 class="appearance-none bg-white dark:bg-muted border border-border text-xs font-medium text-muted-foreground px-3 py-1.5 pr-8 rounded-lg focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer">
-                <option value="updated">Sort: Updated</option>
-                <option value="title">Sort: Name</option>
-                <option value="type">Sort: Type</option>
+                <option value="updated" i18n>Sort: Updated</option>
+                <option value="title" i18n>Sort: Name</option>
+                <option value="type" i18n>Sort: Type</option>
               </select>
               <ng-icon name="lucideArrowUpDown" class="w-3.5 h-3.5 absolute right-2.5 top-2.5 text-muted-foreground pointer-events-none"></ng-icon>
             </div>
@@ -418,7 +418,7 @@
               type="text" 
               [ngModel]="searchQuery()" 
               (ngModelChange)="searchQuery.set($event)" 
-              placeholder="Search..." 
+              i18n-placeholder placeholder="Search..." 
               class="w-full pl-8 pr-3 py-1.5 text-xs bg-white dark:bg-muted border border-border rounded-lg text-foreground focus:outline-none focus:ring-1 focus:ring-primary">
           </div>
         </div>
@@ -428,10 +428,10 @@
           <table class="w-full text-left text-xs border-collapse">
             <thead>
               <tr class="border-b border-border bg-muted/50 text-muted-foreground font-medium">
-                <th class="py-3 px-4 font-normal">Name</th>
-                <th class="py-3 px-4 font-normal">Location</th>
-                <th class="py-3 px-4 font-normal">Tags</th>
-                <th class="py-3 px-4 font-normal">Date updated</th>
+                <th class="py-3 px-4 font-normal" i18n>Name</th>
+                <th class="py-3 px-4 font-normal" i18n>Location</th>
+                <th class="py-3 px-4 font-normal" i18n>Tags</th>
+                <th class="py-3 px-4 font-normal" i18n>Date updated</th>
                 <th class="py-3 px-4 text-right font-normal"></th>
               </tr>
             </thead>
@@ -492,16 +492,16 @@
                       <div class="absolute right-4 top-8 w-44 bg-white dark:bg-muted border border-border rounded-xl shadow-xl z-40 py-1 text-left">
                         <button (click)="selectDocument(doc)" class="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-muted-foreground dark:text-foreground hover:bg-muted">
                           <ng-icon name="lucideFileText" class="w-3.5 h-3.5"></ng-icon>
-                          <span>Open</span>
+                          <span i18n>Open</span>
                         </button>
                         <button (click)="openSaveAsTemplateModal(doc, $event)" class="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-primary-subtle-fg dark:text-primary hover:bg-primary-subtle dark:hover:bg-primary-subtle/40">
                           <ng-icon name="lucideLayoutTemplate" class="w-3.5 h-3.5"></ng-icon>
-                          <span>Save as Template</span>
+                          <span i18n>Save as Template</span>
                         </button>
                         <div class="my-1 border-t border-border"></div>
                         <button (click)="deleteDocument($event, doc.id)" class="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-destructive hover:bg-destructive-subtle dark:hover:bg-destructive-subtle/30">
                           <ng-icon name="lucideTrash" class="w-3.5 h-3.5"></ng-icon>
-                          <span>Delete</span>
+                          <span i18n>Delete</span>
                         </button>
                       </div>
                     }
@@ -514,8 +514,8 @@
           @if (filteredDocuments().length === 0 && !isLoading()) {
             <div class="text-center py-16 px-4">
               <ng-icon name="lucideFileText" class="w-10 h-10 text-muted-foreground mx-auto mb-2"></ng-icon>
-              <h3 class="text-sm font-semibold text-foreground mb-1">No documents found</h3>
-              <p class="text-xs text-muted-foreground mb-4">Create a document or pick a template to start writing.</p>
+              <h3 class="text-sm font-semibold text-foreground mb-1" i18n>No documents found</h3>
+              <p class="text-xs text-muted-foreground mb-4" i18n>Create a document or pick a template to start writing.</p>
               <button (click)="createNewDoc(1)" class="inline-flex items-center gap-2 px-3.5 py-1.5 bg-primary hover:bg-primary text-white rounded-lg text-xs font-medium transition-colors">
                 <ng-icon name="lucidePlus" class="w-3.5 h-3.5"></ng-icon>
                 Create Document
@@ -538,18 +538,18 @@
           <div class="w-8 h-8 rounded-lg bg-primary-subtle text-primary flex items-center justify-center">
             <ng-icon name="lucideLayoutTemplate" class="w-4 h-4"></ng-icon>
           </div>
-          <h3 class="text-base font-bold text-foreground dark:text-white">Save as Template</h3>
+          <h3 class="text-base font-bold text-foreground dark:text-white" i18n>Save as Template</h3>
         </div>
         <button (click)="isSaveAsTemplateModalOpen.set(false)" class="text-muted-foreground hover:text-muted-foreground dark:hover:text-foreground">
           <ng-icon name="lucideX" class="w-4 h-4"></ng-icon>
         </button>
       </div>
 
-      <p class="text-xs text-muted-foreground mb-4">Convert this document into a reusable template for your workspace.</p>
+      <p class="text-xs text-muted-foreground mb-4" i18n>Convert this document into a reusable template for your workspace.</p>
 
       <div class="space-y-3">
         <div>
-          <label for="docs-template-title" class="block text-xs font-medium text-muted-foreground mb-1">Template Title</label>
+          <label for="docs-template-title" class="block text-xs font-medium text-muted-foreground mb-1" i18n>Template Title</label>
           <input id="docs-template-title" 
             type="text" 
             [ngModel]="saveTemplateTitle()" 
@@ -558,21 +558,21 @@
         </div>
 
         <div>
-          <label for="docs-description" class="block text-xs font-medium text-muted-foreground mb-1">Description</label>
+          <label for="docs-description" class="block text-xs font-medium text-muted-foreground mb-1" i18n>Description</label>
           <textarea id="docs-description" 
             rows="2" 
             [ngModel]="saveTemplateDescription()" 
             (ngModelChange)="saveTemplateDescription.set($event)"
-            placeholder="Briefly describe what this template is used for..."
+            i18n-placeholder placeholder="Briefly describe what this template is used for..."
             class="w-full px-3 py-2 text-sm bg-muted dark:bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"></textarea>
         </div>
       </div>
 
       <div class="flex items-center justify-end gap-2 mt-6">
-        <button (click)="isSaveAsTemplateModalOpen.set(false)" class="px-4 py-2 text-xs font-medium text-muted-foreground hover:bg-muted rounded-lg">
+        <button (click)="isSaveAsTemplateModalOpen.set(false)" class="px-4 py-2 text-xs font-medium text-muted-foreground hover:bg-muted rounded-lg" i18n>
           Cancel
         </button>
-        <button (click)="submitSaveAsTemplate()" class="px-4 py-2 text-xs font-medium text-white bg-primary hover:bg-primary rounded-lg shadow-sm">
+        <button (click)="submitSaveAsTemplate()" class="px-4 py-2 text-xs font-medium text-white bg-primary hover:bg-primary rounded-lg shadow-sm" i18n>
           Save Template
         </button>
       </div>
@@ -589,7 +589,7 @@
           <div class="w-8 h-8 rounded-lg bg-primary-subtle text-primary flex items-center justify-center">
             <ng-icon name="lucideUpload" class="w-4 h-4"></ng-icon>
           </div>
-          <h3 class="text-base font-bold text-foreground dark:text-white">Import Document</h3>
+          <h3 class="text-base font-bold text-foreground dark:text-white" i18n>Import Document</h3>
         </div>
         <button (click)="isImportModalOpen.set(false)" class="text-muted-foreground hover:text-muted-foreground dark:hover:text-foreground">
           <ng-icon name="lucideX" class="w-4 h-4"></ng-icon>
@@ -598,7 +598,7 @@
 
       <div class="space-y-4">
         <div>
-          <label for="docs-select-file-md-txt-html" class="block text-xs font-medium text-muted-foreground mb-1">Select File (.md, .txt, .html)</label>
+          <label for="docs-select-file-md-txt-html" class="block text-xs font-medium text-muted-foreground mb-1" i18n>Select File (.md, .txt, .html)</label>
           <input id="docs-select-file-md-txt-html" 
             type="file" 
             accept=".md,.txt,.html"
@@ -607,31 +607,31 @@
         </div>
 
         <div>
-          <label for="docs-document-title" class="block text-xs font-medium text-muted-foreground mb-1">Document Title</label>
+          <label for="docs-document-title" class="block text-xs font-medium text-muted-foreground mb-1" i18n>Document Title</label>
           <input id="docs-document-title" 
             type="text" 
             [ngModel]="importTitle()" 
             (ngModelChange)="importTitle.set($event)"
-            placeholder="Document title..."
+            i18n-placeholder placeholder="Document title..."
             class="w-full px-3 py-2 text-sm bg-muted dark:bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
         </div>
 
         <div>
-          <label for="docs-content-preview-paste-text" class="block text-xs font-medium text-muted-foreground mb-1">Content Preview / Paste Text</label>
+          <label for="docs-content-preview-paste-text" class="block text-xs font-medium text-muted-foreground mb-1" i18n>Content Preview / Paste Text</label>
           <textarea id="docs-content-preview-paste-text" 
             rows="5" 
             [ngModel]="importContent()" 
             (ngModelChange)="importContent.set($event)"
-            placeholder="Paste raw Markdown, HTML, or plain text here..."
+            i18n-placeholder placeholder="Paste raw Markdown, HTML, or plain text here..."
             class="w-full px-3 py-2 text-xs font-mono bg-muted dark:bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"></textarea>
         </div>
       </div>
 
       <div class="flex items-center justify-end gap-2 mt-6">
-        <button (click)="isImportModalOpen.set(false)" class="px-4 py-2 text-xs font-medium text-muted-foreground hover:bg-muted rounded-lg">
+        <button (click)="isImportModalOpen.set(false)" class="px-4 py-2 text-xs font-medium text-muted-foreground hover:bg-muted rounded-lg" i18n>
           Cancel
         </button>
-        <button (click)="submitImport()" class="px-4 py-2 text-xs font-medium text-white bg-primary hover:bg-primary rounded-lg shadow-sm">
+        <button (click)="submitImport()" class="px-4 py-2 text-xs font-medium text-white bg-primary hover:bg-primary rounded-lg shadow-sm" i18n>
           Import Now
         </button>
       </div>
@@ -648,7 +648,7 @@
           <div class="w-8 h-8 rounded-lg bg-primary-subtle text-primary flex items-center justify-center">
             <ng-icon name="lucideWand2" class="w-4 h-4"></ng-icon>
           </div>
-          <h3 class="text-base font-bold text-foreground dark:text-white">Apply a Template</h3>
+          <h3 class="text-base font-bold text-foreground dark:text-white" i18n>Apply a Template</h3>
         </div>
         <button (click)="isTemplatePickerOpen.set(false)" class="text-muted-foreground hover:text-muted-foreground dark:hover:text-foreground">
           <ng-icon name="lucideX" class="w-4 h-4"></ng-icon>

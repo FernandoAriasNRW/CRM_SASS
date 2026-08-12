@@ -16,7 +16,7 @@
   @if (open()) {
     <div class="absolute right-0 top-10 z-50 w-80 rounded-lg border border-border bg-card shadow-lg">
       <div class="flex items-center justify-between px-4 py-3 border-b border-border">
-        <span class="text-sm font-medium">Notificaciones</span>
+        <span class="text-sm font-medium" i18n>Notificaciones</span>
         @if ((unreadCount$ | async) ?? 0; as count) {
           @if (count > 0) {
             <span class="text-xs text-muted-foreground">{{ count }} sin leer</span>
@@ -38,14 +38,14 @@
               <button
                 (click)="markRead(n.id)"
                 class="shrink-0 p-1 rounded hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
-                title="Marcar como leída"
+                i18n-title title="Marcar como leída"
               >
                 <ng-icon name="lucideCheck" size="13" />
               </button>
             }
           </div>
         } @empty {
-          <div class="px-4 py-8 text-center text-sm text-muted-foreground">
+          <div class="px-4 py-8 text-center text-sm text-muted-foreground" i18n>
             Sin notificaciones
           </div>
         }

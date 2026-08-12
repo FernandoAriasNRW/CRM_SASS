@@ -4,6 +4,7 @@ import { Observable, of, forkJoin } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { ApiService } from '../../../core/api.service';
 import { DEFAULT_NAV_ITEMS, type NavItem } from '../../../core/navigation-signal.store';
+import { IDIOMAS, idiomaActual, urlEnIdioma } from '../../../core/idioma';
 
 export type CommandGroup = 'Ir a' | 'Acciones' | 'Proyectos' | 'Tareas' | 'Tickets';
 
@@ -117,6 +118,17 @@ export class CommandPaletteService {
       keywords: 'componentes guia estilos tokens color',
       run: () => void this.router.navigateByUrl('/design-system'),
     },
+    // Un comando por idioma disponible, salvo el que ya se está usando.
+    ...IDIOMAS.filter(i => i.codigo !== idiomaActual()).map(i => ({
+      id: `accion-idioma-${i.codigo}`,
+      label: $localize`Cambiar idioma a ${i.nombre}:idioma:`,
+      group: 'Acciones' as const,
+      icon: 'lucideLanguages',
+      keywords: `language idioma ${i.codigo} ${i.nombre}`,
+      // Navegación del navegador, no del router: cada idioma es una aplicación distinta
+      // servida bajo su propio prefijo, así que hay que salir de esta.
+      run: () => { window.location.href = urlEnIdioma(i.codigo); },
+    })),
     {
       id: 'accion-tema',
       label: 'Cambiar tema claro / oscuro',

@@ -260,7 +260,7 @@ el ADR-0004.
 
 ---
 
-## 6. Fase 3 — UX/UI de nivel producto ✅ COMPLETADA (con dos excepciones)
+## 6. Fase 3 — UX/UI de nivel producto ✅ COMPLETADA (con una excepción)
 
 *Objetivo: que la interfaz deje de parecer un MVP. Es donde se gana contra ClickUp,
 cuya queja número uno es la lentitud y la sobrecarga.*
@@ -289,32 +289,32 @@ cuya queja número uno es la lentitud y la sobrecarga.*
 | # | Tarea | Estado |
 |---|---|---|
 | 3.7 | Partir `docs.component` (705 + 625 líneas) | 🟠 **Sólo la mitad.** Corregidos 4 defectos de accesibilidad y añadido humo. El troceado no se hizo: las pruebas que lo respaldarían exigen reproducir la forma exacta de su API, que no conseguí. Refactorizar sin ellas es cambiar a ciegas. |
-| 3.9 | i18n con `@angular/localize` | 🔴 **No empezada, y necesita una decisión.** Ver §6.1. |
+| 3.9 | i18n con `@angular/localize` | ✅ **Hecha.** Español por defecto, inglés como segundo idioma. Ver §6.1. |
 
-### 6.1 i18n: por qué no se hizo
+### 6.1 i18n: cómo quedó
 
-Toca 28 ficheros y más de un centenar de textos, pero el problema no es el volumen:
-**`@angular/localize` genera un bundle por idioma**, y eso cambia el despliegue. El
-`docker-compose` actual sirve una sola build desde nginx; con dos idiomas hacen falta dos
-artefactos y una regla que elija según la ruta o la cabecera del navegador.
+**Traducción en tiempo de compilación con `@angular/localize`.** Español es el idioma de
+origen; inglés se traduce desde `src/locale/messages.en.xlf`. **319 cadenas, ninguna
+pendiente.**
 
-Las opciones no son equivalentes y la elección no es técnica:
+`ng build` produce una copia completa por idioma en `dist/web/browser/{es,en}`. Eso es lo
+que obligaba a decidir antes de escribir código: cambia el despliegue.
 
-- **Build-time (`@angular/localize`)** — sin coste en tiempo de ejecución y es lo que
-  recomienda Angular. A cambio, cada idioma es un despliegue y cambiar de idioma recarga.
-- **Runtime (`ngx-translate` o similar)** — un solo artefacto y cambio de idioma sin
-  recargar. A cambio, los textos viajan en JSON y no hay comprobación en compilación.
+**Qué se gana:** ningún catálogo viaja al navegador y ningún texto puede faltar en
+ejecución, porque la traducción se resuelve al compilar.
 
-Antes de tocar nada hace falta saber **qué idiomas** y si se acepta un artefacto por
-idioma. Sin eso, cualquier decisión es una apuesta que después cuesta deshacer.
+**Qué se paga:** cada idioma es un artefacto, y cambiar de idioma recarga la página. Como
+el token de acceso vive en memoria por seguridad, **cambiar de idioma obliga a iniciar
+sesión de nuevo**. Es la consecuencia directa de la opción elegida, no un descuido.
 
-### El linter no puede ver la directiva de teclado
+**Cómo se elige.** nginx redirige `/` según `Accept-Language`, con español por defecto.
+La redirección es 302 y no 301 a propósito: un permanente se cachea para siempre y dejaría
+clavado en `/en/` a quien entrara una vez con el navegador en inglés. Desde la aplicación
+se cambia con la paleta de comandos, conservando la ruta.
 
-`click-events-have-key-events` analiza la plantilla buscando un `(keydown)` escrito allí,
-así que no ve el que aporta `appClickable` y sigue avisando en los 20 sitios. Es un límite
-de la herramienta, no trabajo pendiente: la verificación real son 6 tests unitarios de la
-directiva y la auditoría axe. Conviene tenerlo presente antes de escalar esas reglas a
-`error` en la tarea 3.6, porque no podrán escalarse sin suprimirlas caso a caso.
+**Cómo no se pudre.** El CI comprueba que el catálogo esté al día con el código y que no
+quede ninguna cadena sin traducir. Sin eso, un texto nuevo saldría en español dentro de la
+versión inglesa y nadie lo vería hasta que lo encontrara un usuario.
 
 ---
 

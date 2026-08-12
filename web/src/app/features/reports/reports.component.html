@@ -1,8 +1,8 @@
 <div class="space-y-6">
   <div class="flex items-center justify-between">
     <div>
-      <h2 class="text-2xl font-semibold tracking-tight">Gestor de Reportes</h2>
-      <p class="text-sm text-muted-foreground">Administra y genera reportes personalizados de tu workspace</p>
+      <h2 class="text-2xl font-semibold tracking-tight" i18n>Gestor de Reportes</h2>
+      <p class="text-sm text-muted-foreground" i18n>Administra y genera reportes personalizados de tu workspace</p>
     </div>
     <div class="flex items-center gap-2">
       <button uiButton variant="outline" size="sm" (click)="load()" [disabled]="loading()">
@@ -24,7 +24,7 @@
 
   @if (savedViews().length > 0) {
     <div class="flex items-center gap-2 mb-4">
-      <span class="text-sm font-medium text-muted-foreground">Saved Views:</span>
+      <span class="text-sm font-medium text-muted-foreground" i18n>Saved Views:</span>
       @for (view of savedViews(); track view) {
         <button
           (click)="applySavedView(view)"

@@ -3,7 +3,7 @@
   <!-- Sidebar canales -->
   <aside class="w-56 shrink-0 border-r border-border bg-card flex flex-col">
     <div class="px-4 py-3 border-b border-border flex items-center justify-between">
-      <span class="text-sm font-semibold">Canales</span>
+      <span class="text-sm font-semibold" i18n>Canales</span>
     </div>
     <nav class="flex-1 overflow-y-auto py-2 px-2 space-y-0.5">
       @for (ch of channels(); track ch.id) {
@@ -17,7 +17,7 @@
           <span class="truncate">{{ ch.name }}</span>
         </button>
       } @empty {
-        <p class="px-3 py-4 text-xs text-muted-foreground">Sin canales</p>
+        <p class="px-3 py-4 text-xs text-muted-foreground" i18n>Sin canales</p>
       }
     </nav>
   </aside>
@@ -47,7 +47,7 @@
           </div>
         } @empty {
           <div class="flex items-center justify-center h-full">
-            <p class="text-sm text-muted-foreground">Sin mensajes aún. ¡Sé el primero!</p>
+            <p class="text-sm text-muted-foreground" i18n>Sin mensajes aún. ¡Sé el primero!</p>
           </div>
         }
       </div>
@@ -60,14 +60,14 @@
             [placeholder]="'Mensaje en #' + channel.name"
             class="flex-1"
           />
-          <button uiButton size="icon" aria-label="Enviar mensaje" (click)="send()" [disabled]="sending() || !newMessage().trim()">
+          <button uiButton size="icon" i18n-aria-label aria-label="Enviar mensaje" (click)="send()" [disabled]="sending() || !newMessage().trim()">
             <ng-icon name="lucideSend" size="15" />
           </button>
         </div>
       </div>
     } @else {
       <div class="flex-1 flex items-center justify-center">
-        <p class="text-sm text-muted-foreground">Selecciona un canal para comenzar</p>
+        <p class="text-sm text-muted-foreground" i18n>Selecciona un canal para comenzar</p>
       </div>
     }
   </div>

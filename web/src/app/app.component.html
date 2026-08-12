@@ -21,12 +21,12 @@
                 {{ (authStore.userInfo()?.name?.charAt(0) || 'W') | uppercase }}
               </div>
               <div class="flex flex-col">
-                <span class="text-sm font-bold truncate">Mi Workspace</span>
+                <span class="text-sm font-bold truncate" i18n>Mi Workspace</span>
                 <span class="text-xs text-muted-foreground truncate">{{ authStore.userInfo()?.email }}</span>
               </div>
             </div>
             
-            <div class="px-2 py-1 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Spaces</div>
+            <div class="px-2 py-1 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1" i18n>Spaces</div>
             <div class="space-y-0.5 overflow-y-auto flex-1">
               @for (space of hierarchyStore.spaces(); track space.id) {
                 <div class="block px-2 py-1.5 hover:bg-accent hover:text-accent-foreground rounded text-sm cursor-pointer transition-colors flex items-center gap-2">
@@ -35,13 +35,13 @@
                 </div>
               }
               @if (hierarchyStore.spaces().length === 0) {
-                <div class="px-2 py-1 text-xs text-muted-foreground">No hay spaces</div>
+                <div class="px-2 py-1 text-xs text-muted-foreground" i18n>No hay spaces</div>
               }
             </div>
             
             <div class="h-px bg-border my-2"></div>
             <a class="block px-2 py-1.5 hover:bg-accent hover:text-accent-foreground rounded text-sm cursor-pointer text-primary transition-colors flex items-center justify-between group/add">
-              <span>Crear nuevo Space</span>
+              <span i18n>Crear nuevo Space</span>
               <ng-icon name="lucidePlus" size="14" class="opacity-0 group-hover/add:opacity-100 transition-opacity"></ng-icon>
             </a>
           </div>
@@ -115,7 +115,7 @@
               class="flex flex-col items-center justify-center w-12 h-12 rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground transition-colors cursor-pointer"
             >
               <ng-icon name="lucideMoreHorizontal" size="22"></ng-icon>
-              <span class="text-[10px] mt-0.5 scale-90">Más</span>
+              <span class="text-[10px] mt-0.5 scale-90" i18n>Más</span>
             </a>
 
             <!-- Submenu Popover -->
@@ -124,7 +124,7 @@
               <div class="absolute -left-1 bottom-4 w-3 h-3 bg-card border-l border-b border-border rotate-45 z-10"></div>
               <!-- Contenedor -->
               <div class="bg-card text-foreground border border-border shadow-xl rounded-md p-2 w-56 z-50 relative">
-                <div class="text-sm font-bold mb-2 px-2">Más Módulos</div>
+                <div class="text-sm font-bold mb-2 px-2" i18n>Más Módulos</div>
                 <div class="space-y-0.5">
                   @for (unp of navStore.unpinnedItems(); track unp.route) {
                     <a [routerLink]="unp.route" class="block px-2 py-1.5 hover:bg-accent hover:text-accent-foreground rounded text-sm cursor-pointer transition-colors flex items-center gap-2">
@@ -153,7 +153,7 @@
               class="flex flex-col items-center justify-center w-12 h-12 rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground transition-colors cursor-pointer"
             >
               <ng-icon name="lucideSettings" size="22"></ng-icon>
-              <span class="text-[10px] mt-0.5 scale-90">Admin</span>
+              <span class="text-[10px] mt-0.5 scale-90" i18n>Admin</span>
             </a>
           </div>
         }
@@ -164,14 +164,14 @@
         <button
           (click)="openCustomizer()"
           class="flex items-center justify-center w-12 h-12 rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-          title="Customizar menú"
+          i18n-title title="Customizar menú"
         >
           <ng-icon name="lucideSettings" size="22" />
         </button>
         <button
           (click)="logout()"
           class="flex items-center justify-center w-12 h-12 rounded-lg text-muted-foreground hover:bg-destructive-subtle hover:text-destructive-subtle-fg transition-colors"
-          title="Cerrar sesión"
+          i18n-title title="Cerrar sesión"
         >
           <ng-icon name="lucideLogOut" size="22" />
         </button>

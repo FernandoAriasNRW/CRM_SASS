@@ -1,7 +1,7 @@
 <div class="space-y-6">
   <div class="flex items-center justify-between">
     <div>
-      <h2 class="text-2xl font-semibold tracking-tight">Proyectos</h2>
+      <h2 class="text-2xl font-semibold tracking-tight" i18n>Proyectos</h2>
       <p class="text-sm text-muted-foreground">
         {{ (projects$ | async)?.length ?? 0 }} proyectos en total
       </p>
@@ -26,7 +26,7 @@
 
   @if (savedViews().length > 0) {
     <div class="flex items-center gap-2 mb-4">
-      <span class="text-sm font-medium text-muted-foreground">Saved Views:</span>
+      <span class="text-sm font-medium text-muted-foreground" i18n>Saved Views:</span>
       @for (view of savedViews(); track view) {
         <button
           (click)="applySavedView(view)"
@@ -60,7 +60,7 @@
 </ng-template>
 
 <ng-template #actionsTemplate let-item>
-  <button (click)="$event.stopPropagation(); openDetailModal(item)" class="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-colors" title="Ver detalle">
+  <button (click)="$event.stopPropagation(); openDetailModal(item)" class="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-colors" i18n-title title="Ver detalle">
     <ng-icon name="lucideEye" size="16" />
   </button>
 </ng-template>

@@ -129,9 +129,53 @@ cd web && npm run lint
 cd web && npm run build
 ```
 
-La línea base de lint es **0 errores**. Hay ~253 avisos de deuda heredada
-(`any`, variables sin usar, accesibilidad) que se reducen por fases; están
-documentados en `web/eslint.config.js`.
+La línea base de lint es **0 errores**. Quedan ~178 avisos de deuda heredada
+(`any`, funciones vacías) que se reducen por fases; están documentados en
+`web/eslint.config.js`.
+
+### Idiomas
+
+La aplicación se traduce en **tiempo de compilación** con `@angular/localize`.
+Español es el idioma de origen; inglés se traduce desde `src/locale/messages.en.xlf`.
+
+`ng build` produce **una copia completa por idioma**:
+
+```
+dist/web/browser/
+├── es/    ← idioma por defecto
+└── en/
+```
+
+Esa es la contrapartida de traducir al compilar: no se descarga ningún catálogo en el
+navegador y ningún texto puede faltar en ejecución, pero cada idioma es un artefacto y
+cambiar de idioma recarga la página. Como el token de acceso vive en memoria por
+seguridad, cambiar de idioma obliga a iniciar sesión de nuevo.
+
+En desarrollo `npm start` sirve el idioma de origen (español) sin prefijo de ruta.
+
+#### Al añadir o cambiar textos
+
+```bash
+cd web && npm run i18n:extract
+```
+
+Eso actualiza `src/locale/messages.xlf`. Después hay que **traducir las cadenas nuevas**
+en `src/locale/messages.en.xlf`, que las marca con `state="needs-translation"`.
+
+El CI comprueba las dos cosas: que el catálogo esté al día con el código y que no quede
+ninguna cadena sin traducir. Sin esas comprobaciones, un texto nuevo aparecería en
+español dentro de la versión inglesa y nadie lo notaría hasta que lo viera un usuario.
+
+Para compilar un solo idioma mientras se desarrolla: `npm run build:es` o `npm run build:en`.
+
+#### Cómo se elige el idioma
+
+nginx redirige `/` al idioma que pide el navegador en `Accept-Language`, con español por
+defecto. La redirección es **302 y no 301** a propósito: un permanente se cachea para
+siempre y dejaría clavado en `/en/` a quien entrara una vez con el navegador en inglés.
+
+Desde la aplicación se cambia con la paleta de comandos (`Ctrl/Cmd + K` → «Cambiar
+idioma»), que conserva la ruta actual.
 
 ---
 

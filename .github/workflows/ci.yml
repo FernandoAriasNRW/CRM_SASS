@@ -109,13 +109,51 @@ jobs:
       - name: Instalar dependencias
         run: npm ci
 
-      # Sin `|| true`: la línea base es 0 errores. Los ~253 avisos de deuda
+      # El catálogo de traducción tiene que estar al día con el código. Si alguien añade
+      # un texto y no re-extrae, el idioma inglés se queda con ese texto en español y
+      # nadie lo nota hasta que un usuario lo ve. Comprobarlo aquí cuesta segundos.
+      - name: Comprobar que el catálogo i18n está al día
+        run: |
+          cp src/locale/messages.xlf /tmp/messages.antes.xlf
+          npm run i18n:extract --silent
+          if ! diff -q /tmp/messages.antes.xlf src/locale/messages.xlf > /dev/null; then
+            echo "::error::El catálogo de traducción está desfasado respecto al código."
+            echo "Ejecuta 'npm run i18n:extract' y traduce las cadenas nuevas en"
+            echo "src/locale/messages.en.xlf antes de subir."
+            diff /tmp/messages.antes.xlf src/locale/messages.xlf | head -40
+            exit 1
+          fi
+          echo "El catálogo está al día."
+
+      # Una cadena sin traducir sale en español dentro de la versión inglesa.
+      - name: Comprobar que no quedan cadenas sin traducir
+        run: |
+          pendientes=$(grep -c 'state="needs-translation"' src/locale/messages.en.xlf || true)
+          if [ "$pendientes" != "0" ]; then
+            echo "::error::Hay $pendientes cadenas sin traducir en messages.en.xlf."
+            grep -B3 'state="needs-translation"' src/locale/messages.en.xlf | head -30
+            exit 1
+          fi
+          echo "Todas las cadenas están traducidas."
+
+      # Sin `|| true`: la línea base es 0 errores. Los ~180 avisos de deuda
       # heredada no rompen el build, pero un error nuevo sí.
       - name: Lint
         run: npm run lint
 
+      # `ng build` compila los dos idiomas a la vez: dist/web/browser/{es,en}.
       - name: Build
         run: npm run build
+
+      - name: Comprobar que se generaron los dos idiomas
+        run: |
+          for idioma in es en; do
+            if [ ! -f "dist/web/browser/$idioma/index.html" ]; then
+              echo "::error::Falta el bundle del idioma $idioma."
+              exit 1
+            fi
+          done
+          echo "Bundles de es y en generados."
 
       # ChromeHeadless viene con el runner; no hace falta instalar nada aquí.
       - name: Tests unitarios de frontend

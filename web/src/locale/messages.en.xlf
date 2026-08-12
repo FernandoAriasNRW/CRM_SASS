@@ -1,0 +1,2823 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
+  <file source-language="es" target-language="en" datatype="plaintext" original="ng2.template">
+    <body>
+      <trans-unit id="4785173853922515848" datatype="html">
+        <source>Mi Workspace</source>
+        <target state="final">My Workspace</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/app.component.html</context>
+          <context context-type="linenumber">24,25</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="660809762116764762" datatype="html">
+        <source>Spaces</source>
+        <target state="final">Spaces</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/app.component.html</context>
+          <context context-type="linenumber">29,30</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2481474364212415682" datatype="html">
+        <source>No hay spaces</source>
+        <target state="final">No spaces</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/app.component.html</context>
+          <context context-type="linenumber">38,39</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3244509670206610798" datatype="html">
+        <source>Crear nuevo Space</source>
+        <target state="final">Create new Space</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/app.component.html</context>
+          <context context-type="linenumber">44,45</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7788153793591040859" datatype="html">
+        <source>Más</source>
+        <target state="final">More</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/app.component.html</context>
+          <context context-type="linenumber">118,119</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7243702623823161239" datatype="html">
+        <source>Más Módulos</source>
+        <target state="final">More Modules</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/app.component.html</context>
+          <context context-type="linenumber">127,128</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5041354590769758251" datatype="html">
+        <source>Admin</source>
+        <target state="final">Admin</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/app.component.html</context>
+          <context context-type="linenumber">156,157</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5058571364925161209" datatype="html">
+        <source>Customizar menú</source>
+        <target state="final">Customize menu</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/app.component.html</context>
+          <context context-type="linenumber">167,168</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1294390259244223882" datatype="html">
+        <source>Cerrar sesión</source>
+        <target state="final">Log out</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/app.component.html</context>
+          <context context-type="linenumber">174,175</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4812048704963584995" datatype="html">
+        <source>Centro de Administración &amp; Ajustes</source>
+        <target state="final">Administration &amp; Settings Center</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/admin.component.html</context>
+          <context context-type="linenumber">14,15</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7359444061441205805" datatype="html">
+        <source>CRM SASS Admin</source>
+        <target state="final">CRM SASS Admin</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/admin.component.html</context>
+          <context context-type="linenumber">15,16</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2822317418159533776" datatype="html">
+        <source>Gestión de usuarios, equipos, matriz de permisos granulares y suscripciones a webhooks</source>
+        <target state="final">User and team management, granular permission matrix and webhook subscriptions</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/admin.component.html</context>
+          <context context-type="linenumber">17,18</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8090560096892762934" datatype="html">
+        <source>Gestión de Usuarios</source>
+        <target state="final">User Management</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/admin.component.html</context>
+          <context context-type="linenumber">36,37</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/users/admin-users.component.html</context>
+          <context context-type="linenumber">6,7</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4573342498737594100" datatype="html">
+        <source>Equipos &amp; Grupos</source>
+        <target state="final">Teams &amp; Groups</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/admin.component.html</context>
+          <context context-type="linenumber">50,51</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3777343606430840952" datatype="html">
+        <source>Permisos de Roles</source>
+        <target state="final">Role Permissions</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/admin.component.html</context>
+          <context context-type="linenumber">64,65</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="839996873384935727" datatype="html">
+        <source>Webhooks e Integraciones</source>
+        <target state="final">Webhooks and Integrations</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/admin.component.html</context>
+          <context context-type="linenumber">78,79</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4810516250747154868" datatype="html">
+        <source>Matriz de Permisos y Seguridad de Roles</source>
+        <target state="final">Permission Matrix and Role Security</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/permissions/admin-permissions.component.html</context>
+          <context context-type="linenumber">8,9</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="407326018402287505" datatype="html">
+        <source>Configura el comportamiento por defecto de cada rol de usuario en el workspace</source>
+        <target state="final">Configure the default behaviour of each user role in the workspace</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/permissions/admin-permissions.component.html</context>
+          <context context-type="linenumber">10,11</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="9133210348019131902" datatype="html">
+        <source>Guardando...</source>
+        <target state="final">Saving...</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/permissions/admin-permissions.component.html</context>
+          <context context-type="linenumber">20,21</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/permissions/granular-permissions-modal.component.html</context>
+          <context context-type="linenumber">131,132</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/profile/profile.component.html</context>
+          <context context-type="linenumber">84,85</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/profile/profile.component.html</context>
+          <context context-type="linenumber">145,146</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/projects/project-detail-modal.component.html</context>
+          <context context-type="linenumber">120,121</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhook-form-modal.component.html</context>
+          <context context-type="linenumber">162,163</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="952050989755366985" datatype="html">
+        <source>Guardar Matriz</source>
+        <target state="final">Save Matrix</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/permissions/admin-permissions.component.html</context>
+          <context context-type="linenumber">23,24</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4456194219882981414" datatype="html">
+        <source>Recurso / Módulo</source>
+        <target state="final">Resource / Module</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/permissions/admin-permissions.component.html</context>
+          <context context-type="linenumber">47,48</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7632930282631120652" datatype="html">
+        <source>Workspace Owner / Admin</source>
+        <target state="final">Workspace Owner / Admin</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/permissions/admin-permissions.component.html</context>
+          <context context-type="linenumber">51,52</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8273906001959116305" datatype="html">
+        <source>Member (Miembro)</source>
+        <target state="final">Member</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/permissions/admin-permissions.component.html</context>
+          <context context-type="linenumber">56,57</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="536030268648104286" datatype="html">
+        <source>Guest (Invitado)</source>
+        <target state="final">Guest</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/permissions/admin-permissions.component.html</context>
+          <context context-type="linenumber">61,62</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/users/admin-users.component.html</context>
+          <context context-type="linenumber">146,147</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6181625306981139166" datatype="html">
+        <source> Full Control </source>
+        <target state="final">Full Control</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/permissions/admin-permissions.component.html</context>
+          <context context-type="linenumber">87</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1727687257396477687" datatype="html">
+        <source>Full Control</source>
+        <target state="final">Full Control</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/permissions/admin-permissions.component.html</context>
+          <context context-type="linenumber">97,98</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/permissions/admin-permissions.component.html</context>
+          <context context-type="linenumber">110,111</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8046276907065949264" datatype="html">
+        <source>Can Edit</source>
+        <target state="final">Can Edit</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/permissions/admin-permissions.component.html</context>
+          <context context-type="linenumber">98,99</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/permissions/admin-permissions.component.html</context>
+          <context context-type="linenumber">111,112</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2089073950748531945" datatype="html">
+        <source>Can View</source>
+        <target state="final">Can View</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/permissions/admin-permissions.component.html</context>
+          <context context-type="linenumber">99,100</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/permissions/admin-permissions.component.html</context>
+          <context context-type="linenumber">112,113</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4872240598809215880" datatype="html">
+        <source>No Access</source>
+        <target state="final">No Access</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/permissions/admin-permissions.component.html</context>
+          <context context-type="linenumber">100,101</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/permissions/admin-permissions.component.html</context>
+          <context context-type="linenumber">113,114</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8086805518669153502" datatype="html">
+        <source>Ajuste de Permisos Granulares</source>
+        <target state="final">Granular Permission Settings</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/permissions/granular-permissions-modal.component.html</context>
+          <context context-type="linenumber">12,13</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4174705216554494100" datatype="html">
+        <source>Cargando permisos granulares...</source>
+        <target state="final">Loading granular permissions...</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/permissions/granular-permissions-modal.component.html</context>
+          <context context-type="linenumber">45,46</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3302458363931158751" datatype="html">
+        <source> Full </source>
+        <target state="final">Full</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/permissions/granular-permissions-modal.component.html</context>
+          <context context-type="linenumber">73</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5377078063439833222" datatype="html">
+        <source> Edit </source>
+        <target state="final">Edit</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/permissions/granular-permissions-modal.component.html</context>
+          <context context-type="linenumber">84</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7101514678290864976" datatype="html">
+        <source> View </source>
+        <target state="final">View</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/permissions/granular-permissions-modal.component.html</context>
+          <context context-type="linenumber">95</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="491995769371858733" datatype="html">
+        <source> None </source>
+        <target state="final">None</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/permissions/granular-permissions-modal.component.html</context>
+          <context context-type="linenumber">106</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="827326654118352138" datatype="html">
+        <source>Los cambios aplicarán inmediatamente tras guardar.</source>
+        <target state="final">Changes apply immediately after saving.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/permissions/granular-permissions-modal.component.html</context>
+          <context context-type="linenumber">116,117</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6060080757060540228" datatype="html">
+        <source> Cancelar </source>
+        <target state="final">Cancel</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/permissions/granular-permissions-modal.component.html</context>
+          <context context-type="linenumber">122</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/teams/admin-teams.component.html</context>
+          <context context-type="linenumber">164,165</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/projects/project-detail-modal.component.html</context>
+          <context context-type="linenumber">115,116</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhook-form-modal.component.html</context>
+          <context context-type="linenumber">153,154</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhooks.component.html</context>
+          <context context-type="linenumber">302</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/sidebar-customizer.component.html</context>
+          <context context-type="linenumber">85,86</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="816928996472339221" datatype="html">
+        <source>Guardar Permisos</source>
+        <target state="final">Save Permissions</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/permissions/granular-permissions-modal.component.html</context>
+          <context context-type="linenumber">134,135</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5015298841778807266" datatype="html">
+        <source>Gestión de Equipos y Grupos</source>
+        <target state="final">Teams and Groups Management</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/teams/admin-teams.component.html</context>
+          <context context-type="linenumber">8,9</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1998519201672493042" datatype="html">
+        <source>Organiza usuarios en equipos y asigna permisos colectivos</source>
+        <target state="final">Organise users into teams and assign collective permissions</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/teams/admin-teams.component.html</context>
+          <context context-type="linenumber">10,11</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1643718663822950141" datatype="html">
+        <source>Actualizar</source>
+        <target state="final">Refresh</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/teams/admin-teams.component.html</context>
+          <context context-type="linenumber">16,17</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2664404709646277394" datatype="html">
+        <source>Nuevo Equipo</source>
+        <target state="final">New Team</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/teams/admin-teams.component.html</context>
+          <context context-type="linenumber">21,22</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8906229514826222032" datatype="html">
+        <source>Buscar equipos...</source>
+        <target state="final">Search teams...</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/teams/admin-teams.component.html</context>
+          <context context-type="linenumber">34,35</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6991887326403063487" datatype="html">
+        <source>Editar Equipo</source>
+        <target state="final">Edit Team</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/teams/admin-teams.component.html</context>
+          <context context-type="linenumber">66,67</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4107331963850356250" datatype="html">
+        <source>Eliminar Equipo</source>
+        <target state="final">Delete Team</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/teams/admin-teams.component.html</context>
+          <context context-type="linenumber">69,70</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="267296013945654916" datatype="html">
+        <source>Permisos</source>
+        <target state="final">Permissions</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/teams/admin-teams.component.html</context>
+          <context context-type="linenumber">102,103</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/users/admin-users.component.html</context>
+          <context context-type="linenumber">105,106</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1980836839305000650" datatype="html">
+        <source>No hay equipos creados</source>
+        <target state="final">No teams created</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/teams/admin-teams.component.html</context>
+          <context context-type="linenumber">112,113</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2692256062374228921" datatype="html">
+        <source>Crea tu primer equipo para organizar miembros y delegar permisos.</source>
+        <target state="final">Create your first team to organise members and delegate permissions.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/teams/admin-teams.component.html</context>
+          <context context-type="linenumber">113,114</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3177282742817239749" datatype="html">
+        <source>Nombre del Equipo *</source>
+        <target state="final">Team Name *</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/teams/admin-teams.component.html</context>
+          <context context-type="linenumber">132,133</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2429897824495004570" datatype="html">
+        <source>Ej. Equipo de Desarrollo Backend</source>
+        <target state="final">e.g. Backend Development Team</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/teams/admin-teams.component.html</context>
+          <context context-type="linenumber">136,137</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2702769239797460498" datatype="html">
+        <source>Descripción</source>
+        <target state="final">Description</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/teams/admin-teams.component.html</context>
+          <context context-type="linenumber">141,142</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/calendar/calendar.component.html</context>
+          <context context-type="linenumber">93,94</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/projects/project-create-modal.component.html</context>
+          <context context-type="linenumber">8,9</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/projects/project-detail-modal.component.html</context>
+          <context context-type="linenumber">33,34</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/projects/project-detail-modal.component.html</context>
+          <context context-type="linenumber">72,73</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/task-create-modal.component.html</context>
+          <context context-type="linenumber">8,9</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/task-detail-panel.component.html</context>
+          <context context-type="linenumber">145,146</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/teams/team-detail.component.html</context>
+          <context context-type="linenumber">30,31</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/teams/team-form.component.html</context>
+          <context context-type="linenumber">10,11</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3285168185261347849" datatype="html">
+        <source>Propósito del equipo...</source>
+        <target state="final">Team purpose...</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/teams/admin-teams.component.html</context>
+          <context context-type="linenumber">145,146</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="442535966115849639" datatype="html">
+        <source>Seleccionar Miembros del Equipo</source>
+        <target state="final">Select Team Members</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/teams/admin-teams.component.html</context>
+          <context context-type="linenumber">150,151</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2042583211598753699" datatype="html">
+        <source>Administra los miembros del workspace y asigna roles</source>
+        <target state="final">Manage workspace members and assign roles</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/users/admin-users.component.html</context>
+          <context context-type="linenumber">8,9</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5345387715177502292" datatype="html">
+        <source>Vistas Guardadas:</source>
+        <target state="final">Saved Views:</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/users/admin-users.component.html</context>
+          <context context-type="linenumber">45,46</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="386418174269630265" datatype="html">
+        <source>Editar Rol / Perfil</source>
+        <target state="final">Edit Role / Profile</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/users/admin-users.component.html</context>
+          <context context-type="linenumber">107,108</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2527672449617828424" datatype="html">
+        <source>Eliminar Usuario</source>
+        <target state="final">Delete User</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/users/admin-users.component.html</context>
+          <context context-type="linenumber">111,112</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5539425950176031037" datatype="html">
+        <source>Nombre Completo *</source>
+        <target state="final">Full Name *</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/users/admin-users.component.html</context>
+          <context context-type="linenumber">128,129</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3010685430195702518" datatype="html">
+        <source>Nombre completo</source>
+        <target state="final">Full name</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/users/admin-users.component.html</context>
+          <context context-type="linenumber">129</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4204057296855702131" datatype="html">
+        <source>Correo Electrónico *</source>
+        <target state="final">Email *</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/users/admin-users.component.html</context>
+          <context context-type="linenumber">132,133</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1138649215018620444" datatype="html">
+        <source>email@ejemplo.com</source>
+        <target state="final">email@example.com</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/users/admin-users.component.html</context>
+          <context context-type="linenumber">133</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8629774670916872745" datatype="html">
+        <source>Contraseña *</source>
+        <target state="final">Password *</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/users/admin-users.component.html</context>
+          <context context-type="linenumber">137,138</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="12913686162822139" datatype="html">
+        <source>Mínimo 6 caracteres</source>
+        <target state="final">Minimum 6 characters</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/users/admin-users.component.html</context>
+          <context context-type="linenumber">138</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/profile/profile.component.html</context>
+          <context context-type="linenumber">128,129</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8233490665721375579" datatype="html">
+        <source>Rol de Sistema *</source>
+        <target state="final">System Role *</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/users/admin-users.component.html</context>
+          <context context-type="linenumber">142,143</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4530497491030846104" datatype="html">
+        <source>Admin (Workspace Admin)</source>
+        <target state="final">Admin (Workspace Admin)</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/users/admin-users.component.html</context>
+          <context context-type="linenumber">144,145</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2346185125908704825" datatype="html">
+        <source>Member (Miembro Estándar)</source>
+        <target state="final">Member (Standard)</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/users/admin-users.component.html</context>
+          <context context-type="linenumber">145,146</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6402951927316857780" datatype="html">
+        <source>Cancelar</source>
+        <target state="final">Cancel</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/users/admin-users.component.html</context>
+          <context context-type="linenumber">156,157</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/calendar/calendar.component.html</context>
+          <context context-type="linenumber">108,109</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/dashboard/dashboard.component.html</context>
+          <context context-type="linenumber">200,201</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/projects/project-create-modal.component.html</context>
+          <context context-type="linenumber">39,40</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/reports/report-create-modal.component.html</context>
+          <context context-type="linenumber">44,45</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/task-create-modal.component.html</context>
+          <context context-type="linenumber">37,38</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/teams/team-form.component.html</context>
+          <context context-type="linenumber">17,18</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tickets/ticket-create-modal.component.html</context>
+          <context context-type="linenumber">32,33</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/submenu-customizer.component.html</context>
+          <context context-type="linenumber">77,78</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1404571879946943597" datatype="html">
+        <source>Mes anterior</source>
+        <target state="final">Previous month</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/calendar/calendar.component.html</context>
+          <context context-type="linenumber">8</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/mini-calendar.component.html</context>
+          <context context-type="linenumber">5</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7261993040521781115" datatype="html">
+        <source>Mes siguiente</source>
+        <target state="final">Next month</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/calendar/calendar.component.html</context>
+          <context context-type="linenumber">11</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/mini-calendar.component.html</context>
+          <context context-type="linenumber">8</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3871601823827231528" datatype="html">
+        <source>Próximos eventos</source>
+        <target state="final">Upcoming events</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/calendar/calendar.component.html</context>
+          <context context-type="linenumber">53,54</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7502903705822100458" datatype="html">
+        <source>Nuevo evento</source>
+        <target state="final">New event</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/calendar/calendar.component.html</context>
+          <context context-type="linenumber">84,85</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1564904091856127171" datatype="html">
+        <source>×</source>
+        <target state="final">×</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/calendar/calendar.component.html</context>
+          <context context-type="linenumber">85</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/reports/report-create-modal.component.html</context>
+          <context context-type="linenumber">5</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/task-detail-panel.component.html</context>
+          <context context-type="linenumber">106</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tickets/ticket-detail-panel.component.html</context>
+          <context context-type="linenumber">66</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6807259748193755846" datatype="html">
+        <source>Título *</source>
+        <target state="final">Title *</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/calendar/calendar.component.html</context>
+          <context context-type="linenumber">89,90</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/task-create-modal.component.html</context>
+          <context context-type="linenumber">4,5</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tickets/public-ticket-form.component.html</context>
+          <context context-type="linenumber">32,33</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tickets/ticket-create-modal.component.html</context>
+          <context context-type="linenumber">4,5</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3242998675380528574" datatype="html">
+        <source>Título del evento</source>
+        <target state="final">Event title</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/calendar/calendar.component.html</context>
+          <context context-type="linenumber">90,91</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5144212412749523715" datatype="html">
+        <source>Descripción opcional</source>
+        <target state="final">Optional description</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/calendar/calendar.component.html</context>
+          <context context-type="linenumber">94,95</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/task-create-modal.component.html</context>
+          <context context-type="linenumber">9,10</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1105388097038691207" datatype="html">
+        <source>Inicio *</source>
+        <target state="final">Start *</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/calendar/calendar.component.html</context>
+          <context context-type="linenumber">98,99</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7490630938104543576" datatype="html">
+        <source>Fin *</source>
+        <target state="final">End *</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/calendar/calendar.component.html</context>
+          <context context-type="linenumber">102,103</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2054609818419433933" datatype="html">
+        <source>Canales</source>
+        <target state="final">Channels</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/chat/chat.component.html</context>
+          <context context-type="linenumber">6,7</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6547272397003707940" datatype="html">
+        <source>Sin canales</source>
+        <target state="final">No channels</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/chat/chat.component.html</context>
+          <context context-type="linenumber">20,21</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="312119053094970879" datatype="html">
+        <source>Sin mensajes aún. ¡Sé el primero!</source>
+        <target state="final">No messages yet. Be the first!</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/chat/chat.component.html</context>
+          <context context-type="linenumber">50,51</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3121276732294063548" datatype="html">
+        <source>Enviar mensaje</source>
+        <target state="final">Send message</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/chat/chat.component.html</context>
+          <context context-type="linenumber">63</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4724914803768577830" datatype="html">
+        <source>Selecciona un canal para comenzar</source>
+        <target state="final">Select a channel to get started</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/chat/chat.component.html</context>
+          <context context-type="linenumber">70,71</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4307934383628887905" datatype="html">
+        <source>Sin datos de tareas</source>
+        <target state="final">No task data</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/dashboard/dashboard.component.html</context>
+          <context context-type="linenumber">75,76</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6332825769284857992" datatype="html">
+        <source>No hay proyectos activos</source>
+        <target state="final">No active projects</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/dashboard/dashboard.component.html</context>
+          <context context-type="linenumber">101,102</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="9135653332465872896" datatype="html">
+        <source>Selecciona un proyecto para ver el burndown</source>
+        <target state="final">Select a project to see the burndown</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/dashboard/dashboard.component.html</context>
+          <context context-type="linenumber">135,136</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3003917280198562456" datatype="html">
+        <source> Eliminar </source>
+        <target state="final">Delete</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/dashboard/dashboard.component.html</context>
+          <context context-type="linenumber">162</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhooks.component.html</context>
+          <context context-type="linenumber">308</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1815124712361394770" datatype="html">
+        <source>No hay dashboards para mostrar</source>
+        <target state="final">No dashboards to show</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/dashboard/dashboard.component.html</context>
+          <context context-type="linenumber">172,173</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7414825579807835227" datatype="html">
+        <source>Crea uno nuevo para empezar a personalizar tus métricas.</source>
+        <target state="final">Create a new one to start customising your metrics.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/dashboard/dashboard.component.html</context>
+          <context context-type="linenumber">173,174</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8776285942576635088" datatype="html">
+        <source>Nuevo Dashboard Personalizado</source>
+        <target state="final">New Custom Dashboard</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/dashboard/dashboard.component.html</context>
+          <context context-type="linenumber">184,185</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6910733157225964955" datatype="html">
+        <source>Título del Dashboard *</source>
+        <target state="final">Dashboard Title *</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/dashboard/dashboard.component.html</context>
+          <context context-type="linenumber">190,191</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4992641437687071029" datatype="html">
+        <source>Ej. Métricas de Ventas Q3</source>
+        <target state="final">e.g. Q3 Sales Metrics</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/dashboard/dashboard.component.html</context>
+          <context context-type="linenumber">191</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6631724535024623536" datatype="html">
+        <source>Hacer público (visible para todo el equipo en la workspace)</source>
+        <target state="final">Make public (visible to the whole team in the workspace)</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/dashboard/dashboard.component.html</context>
+          <context context-type="linenumber">195,196</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8809484986009125784" datatype="html">
+        <source>Crear Dashboard</source>
+        <target state="final">Create Dashboard</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/dashboard/dashboard.component.html</context>
+          <context context-type="linenumber">201,202</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4447668871712407032" datatype="html">
+        <source>Docs</source>
+        <target state="final">Docs</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">20,21</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">179,180</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6790094714252133678" datatype="html">
+        <source>Fijar barra lateral</source>
+        <target state="final">Pin sidebar</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">23</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3006941675565490420" datatype="html">
+        <source>Pin Sidebar</source>
+        <target state="final">Pin Sidebar</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">23,24</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6142549232828035752" datatype="html">
+        <source>All Docs</source>
+        <target state="final">All Docs</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">39,40</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2717442516216711595" datatype="html">
+        <source>My Docs</source>
+        <target state="final">My Docs</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">53,54</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="231920238966427751" datatype="html">
+        <source>Shared with me</source>
+        <target state="final">Shared with me</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">66,67</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3686284950598311784" datatype="html">
+        <source>Private</source>
+        <target state="final">Private</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">75,76</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3873634969521374069" datatype="html">
+        <source>Meeting Notes</source>
+        <target state="final">Meeting Notes</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">84,85</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1562584780596394495" datatype="html">
+        <source>Archived</source>
+        <target state="final">Archived</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">93,94</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6100114981218325067" datatype="html">
+        <source>Navegación de documentos</source>
+        <target state="final">Document navigation</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">98,99</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7404285152683564503" datatype="html">
+        <source> Favorites </source>
+        <target state="final">Favorites</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">104</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5851911772269703602" datatype="html">
+        <source>Star a Doc to see it here</source>
+        <target state="final">Star a Doc to see it here</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">122,123</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7856663682853221736" datatype="html">
+        <source> Recent Pages </source>
+        <target state="final">Recent Pages</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">130</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1619146941220159347" datatype="html">
+        <source> Popular Wikis </source>
+        <target state="final">Popular Wikis</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">147</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5735787597060405220" datatype="html">
+        <source>Most viewed and active Wikis appear here</source>
+        <target state="final">Most viewed and active Wikis appear here</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">153,154</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7591437006230930569" datatype="html">
+        <source>Volver a todos los documentos</source>
+        <target state="final">Back to all documents</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">176</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5754570857503931559" datatype="html">
+        <source>Back to All Docs</source>
+        <target state="final">Back to All Docs</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">176,177</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7634393710258669738" datatype="html">
+        <source>Page title...</source>
+        <target state="final">Page title...</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">188,189</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1232424221342559266" datatype="html">
+        <source> Export HTML </source>
+        <target state="final">Export HTML</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">206</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1183490736564333693" datatype="html">
+        <source> Export PDF </source>
+        <target state="final">Export PDF</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">209</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="808224684930071116" datatype="html">
+        <source>Document Title</source>
+        <target state="final">Document Title</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">222,223</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">610,611</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1071721880474488785" datatype="html">
+        <source>Import</source>
+        <target state="final">Import</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">255,256</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">298,299</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1210626102535819653" datatype="html">
+        <source>New Doc</source>
+        <target state="final">New Doc</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">264,265</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="773626985542889304" datatype="html">
+        <source>Más opciones de documento nuevo</source>
+        <target state="final">More new document options</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">268,269</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="9060315961358518131" datatype="html">
+        <source>Doc</source>
+        <target state="final">Doc</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">284,285</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="9108179050199310445" datatype="html">
+        <source>Wiki</source>
+        <target state="final">Wiki</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">291,292</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">390,391</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5062076936007817864" datatype="html">
+        <source> Templates </source>
+        <target state="final">Templates</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">304</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2628975957386252583" datatype="html">
+        <source>Apply a template</source>
+        <target state="final">Apply a template</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">318,319</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5433675495457939071" datatype="html">
+        <source>Templates</source>
+        <target state="final">Templates</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">329,330</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1588257999227709640" datatype="html">
+        <source>My Custom Templates</source>
+        <target state="final">My Custom Templates</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">358,359</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3194209665086038276" datatype="html">
+        <source>Filtrar por tipo de documento</source>
+        <target state="final">Filter by document type</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">384,385</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4163272119298020373" datatype="html">
+        <source>Filters</source>
+        <target state="final">Filters</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">388,389</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="894965666917873756" datatype="html">
+        <source>Document</source>
+        <target state="final">Document</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">389,390</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7949475837423126309" datatype="html">
+        <source>Meeting Note</source>
+        <target state="final">Meeting Note</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">391,392</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5610425955750546094" datatype="html">
+        <source>Template</source>
+        <target state="final">Template</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">392,393</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3843853901321994702" datatype="html">
+        <source>Ordenar documentos</source>
+        <target state="final">Sort documents</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">400,401</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="587743010582947771" datatype="html">
+        <source>Sort: Updated</source>
+        <target state="final">Sort: Updated</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">404,405</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2609475298025228522" datatype="html">
+        <source>Sort: Name</source>
+        <target state="final">Sort: Name</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">405,406</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6062446125024875223" datatype="html">
+        <source>Sort: Type</source>
+        <target state="final">Sort: Type</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">406,407</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8854094932942190741" datatype="html">
+        <source>Search...</source>
+        <target state="final">Search...</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">421,422</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8953033926734869941" datatype="html">
+        <source>Name</source>
+        <target state="final">Name</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">431,432</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="471816275243265264" datatype="html">
+        <source>Location</source>
+        <target state="final">Location</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">432,433</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7886570921510760899" datatype="html">
+        <source>Tags</source>
+        <target state="final">Tags</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">433,434</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8377999250629078601" datatype="html">
+        <source>Date updated</source>
+        <target state="final">Date updated</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">434,435</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7593555694782789615" datatype="html">
+        <source>Open</source>
+        <target state="final">Open</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">495,496</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="526985193195003374" datatype="html">
+        <source>Save as Template</source>
+        <target state="final">Save as Template</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">499,500</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">541,542</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7022070615528435141" datatype="html">
+        <source>Delete</source>
+        <target state="final">Delete</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">504,505</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6423278459497515329" datatype="html">
+        <source>No documents found</source>
+        <target state="final">No documents found</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">517,518</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3368418423843456539" datatype="html">
+        <source>Create a document or pick a template to start writing.</source>
+        <target state="final">Create a document or pick a template to start writing.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">518,519</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8521335290217383724" datatype="html">
+        <source>Convert this document into a reusable template for your workspace.</source>
+        <target state="final">Convert this document into a reusable template for your workspace.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">548,550</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8496679166012942026" datatype="html">
+        <source>Template Title</source>
+        <target state="final">Template Title</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">552,553</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4902817035128594900" datatype="html">
+        <source>Description</source>
+        <target state="final">Description</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">561,562</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5095200996423488514" datatype="html">
+        <source>Briefly describe what this template is used for...</source>
+        <target state="final">Briefly describe what this template is used for...</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">566,567</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2330577642930707695" datatype="html">
+        <source> Cancel </source>
+        <target state="final">Cancel</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">573</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">632</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="9147192238043774421" datatype="html">
+        <source> Save Template </source>
+        <target state="final">Save Template</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">576</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3893994986303966321" datatype="html">
+        <source>Import Document</source>
+        <target state="final">Import Document</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">592,593</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="193958140802508309" datatype="html">
+        <source>Select File (.md, .txt, .html)</source>
+        <target state="final">Select File (.md, .txt, .html)</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">601,602</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3652771791107161042" datatype="html">
+        <source>Document title...</source>
+        <target state="final">Document title...</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">615,616</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1291433998219577288" datatype="html">
+        <source>Content Preview / Paste Text</source>
+        <target state="final">Content Preview / Paste Text</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">620,621</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1167256119870125658" datatype="html">
+        <source>Paste raw Markdown, HTML, or plain text here...</source>
+        <target state="final">Paste raw Markdown, HTML, or plain text here...</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">625,626</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5491082703305055145" datatype="html">
+        <source> Import Now </source>
+        <target state="final">Import Now</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">635</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3568599725504151027" datatype="html">
+        <source>Apply a Template</source>
+        <target state="final">Apply a Template</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">651,652</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1551609928546674080" datatype="html">
+        <source> Administrar tarjetas </source>
+        <target state="final">Manage cards</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/home/home.component.html</context>
+          <context context-type="linenumber">7,8</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5131294055241059394" datatype="html">
+        <source>No has visitado otros módulos recientemente.</source>
+        <target state="final">You haven't visited other modules recently.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/home/home.component.html</context>
+          <context context-type="linenumber">29,30</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7157085402836101873" datatype="html">
+        <source>3 Por hacer</source>
+        <target state="final">3 To do</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/home/home.component.html</context>
+          <context context-type="linenumber">58,59</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3538559664034093546" datatype="html">
+        <source>1 En curso</source>
+        <target state="final">1 In progress</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/home/home.component.html</context>
+          <context context-type="linenumber">59,60</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7586805235798950212" datatype="html">
+        <source>5 Hechas</source>
+        <target state="final">5 Done</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/home/home.component.html</context>
+          <context context-type="linenumber">60,61</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="507148990182840436" datatype="html">
+        <source>Revisar planificación de sprints</source>
+        <target state="final">Review sprint planning</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/home/home.component.html</context>
+          <context context-type="linenumber">74,75</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3085119828586410582" datatype="html">
+        <source>Proyecto: Desarrollo CRM</source>
+        <target state="final">Project: CRM Development</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/home/home.component.html</context>
+          <context context-type="linenumber">75,76</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4156337392876515105" datatype="html">
+        <source>Hoy</source>
+        <target state="final">Today</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/home/home.component.html</context>
+          <context context-type="linenumber">78,79</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8289589781632371256" datatype="html">
+        <source>Actualizar dependencias Frontend</source>
+        <target state="final">Update Frontend dependencies</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/home/home.component.html</context>
+          <context context-type="linenumber">85,86</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3610681480272377302" datatype="html">
+        <source>Proyecto: Refactor UI</source>
+        <target state="final">Project: UI Refactor</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/home/home.component.html</context>
+          <context context-type="linenumber">86,87</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2943057790587196092" datatype="html">
+        <source>Mañana</source>
+        <target state="final">Tomorrow</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/home/home.component.html</context>
+          <context context-type="linenumber">89,90</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6984395057400793666" datatype="html">
+        <source>Resolver ticket de soporte #34</source>
+        <target state="final">Resolve support ticket #34</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/home/home.component.html</context>
+          <context context-type="linenumber">96,97</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="967478069217791500" datatype="html">
+        <source>Soporte TI</source>
+        <target state="final">IT Support</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/home/home.component.html</context>
+          <context context-type="linenumber">97,98</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6668995289038716127" datatype="html">
+        <source>Atrasado</source>
+        <target state="final">Overdue</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/home/home.component.html</context>
+          <context context-type="linenumber">100,101</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4311569858228721961" datatype="html">
+        <source>Iniciar sesión</source>
+        <target state="final">Sign in</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/login/login.component.html</context>
+          <context context-type="linenumber">4</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1347862954321083509" datatype="html">
+        <source>Ingresa tus credenciales para continuar</source>
+        <target state="final">Enter your credentials to continue</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/login/login.component.html</context>
+          <context context-type="linenumber">5</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4768749765465246664" datatype="html">
+        <source>Email</source>
+        <target state="final">Email</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/login/login.component.html</context>
+          <context context-type="linenumber">11,12</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1955307960850323388" datatype="html">
+        <source>admin@acme.com</source>
+        <target state="final">admin@acme.com</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/login/login.component.html</context>
+          <context context-type="linenumber">13,14</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7132730488496169673" datatype="html">
+        <source>Contraseña</source>
+        <target state="final">Password</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/login/login.component.html</context>
+          <context context-type="linenumber">16,17</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7286231060710166297" datatype="html">
+        <source>Demo: admin@acme.com / admin123</source>
+        <target state="final">Demo: admin@acme.com / admin123</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/login/login.component.html</context>
+          <context context-type="linenumber">32,33</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5901803137426162802" datatype="html">
+        <source>Mi Perfil</source>
+        <target state="final">My Profile</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/profile/profile.component.html</context>
+          <context context-type="linenumber">1,2</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7125597008144650612" datatype="html">
+        <source>Información Personal</source>
+        <target state="final">Personal Information</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/profile/profile.component.html</context>
+          <context context-type="linenumber">7,8</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8242485735462684029" datatype="html">
+        <source>Cambiar</source>
+        <target state="final">Change</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/profile/profile.component.html</context>
+          <context context-type="linenumber">24,25</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8632383814220706354" datatype="html">
+        <source>Nombre Completo</source>
+        <target state="final">Full Name</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/profile/profile.component.html</context>
+          <context context-type="linenumber">41,42</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5004185807040850075" datatype="html">
+        <source>Correo Electrónico (No editable)</source>
+        <target state="final">Email (Not editable)</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/profile/profile.component.html</context>
+          <context context-type="linenumber">49,50</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8437243144618493917" datatype="html">
+        <source>Teléfono</source>
+        <target state="final">Phone</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/profile/profile.component.html</context>
+          <context context-type="linenumber">58,59</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="513965213223315940" datatype="html">
+        <source>Biografía</source>
+        <target state="final">Biography</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/profile/profile.component.html</context>
+          <context context-type="linenumber">67,68</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="9070852492754844880" datatype="html">
+        <source>Escribe algo sobre ti...</source>
+        <target state="final">Write something about yourself...</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/profile/profile.component.html</context>
+          <context context-type="linenumber">72,73</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3654186465864637466" datatype="html">
+        <source>Guardar Perfil</source>
+        <target state="final">Save Profile</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/profile/profile.component.html</context>
+          <context context-type="linenumber">87,88</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5891976946993604105" datatype="html">
+        <source>Contraseña Actual</source>
+        <target state="final">Current Password</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/profile/profile.component.html</context>
+          <context context-type="linenumber">114,115</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6512083804812997545" datatype="html">
+        <source>Ingresa tu contraseña actual</source>
+        <target state="final">Enter your current password</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/profile/profile.component.html</context>
+          <context context-type="linenumber">119,120</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7070418494109729236" datatype="html">
+        <source>Nueva Contraseña</source>
+        <target state="final">New Password</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/profile/profile.component.html</context>
+          <context context-type="linenumber">123,124</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8106519115026909876" datatype="html">
+        <source>Confirmar Nueva Contraseña</source>
+        <target state="final">Confirm New Password</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/profile/profile.component.html</context>
+          <context context-type="linenumber">132,133</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8945585181989040938" datatype="html">
+        <source>Repite la nueva contraseña</source>
+        <target state="final">Repeat the new password</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/profile/profile.component.html</context>
+          <context context-type="linenumber">137,138</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="484663357831444309" datatype="html">
+        <source>Guardar Nueva Contraseña</source>
+        <target state="final">Save New Password</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/profile/profile.component.html</context>
+          <context context-type="linenumber">148,149</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5842042519165412428" datatype="html">
+        <source>Sesión activa</source>
+        <target state="final">Active session</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/profile/profile.component.html</context>
+          <context context-type="linenumber">160,161</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1362998884032157765" datatype="html">
+        <source>Cargando información...</source>
+        <target state="final">Loading information...</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/profile/profile.component.html</context>
+          <context context-type="linenumber">172,173</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7973037551936211628" datatype="html">
+        <source>Nuevo Proyecto</source>
+        <target state="final">New Project</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/projects/project-create-modal.component.html</context>
+          <context context-type="linenumber">1</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="626941696110610454" datatype="html">
+        <source>Nombre del Proyecto *</source>
+        <target state="final">Project Name *</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/projects/project-create-modal.component.html</context>
+          <context context-type="linenumber">4,5</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/projects/project-detail-modal.component.html</context>
+          <context context-type="linenumber">63,64</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2889833717485118378" datatype="html">
+        <source>Nombre del proyecto</source>
+        <target state="final">Project name</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/projects/project-create-modal.component.html</context>
+          <context context-type="linenumber">5,6</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/projects/project-detail-modal.component.html</context>
+          <context context-type="linenumber">69,70</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="908238246372780842" datatype="html">
+        <source>Describe los objetivos del proyecto</source>
+        <target state="final">Describe the project goals</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/projects/project-create-modal.component.html</context>
+          <context context-type="linenumber">9</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="788971336646334116" datatype="html">
+        <source>Fecha Estimada de Fin *</source>
+        <target state="final">Estimated End Date *</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/projects/project-create-modal.component.html</context>
+          <context context-type="linenumber">12,13</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7327253341018757963" datatype="html">
+        <source>Space *</source>
+        <target state="final">Space *</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/projects/project-create-modal.component.html</context>
+          <context context-type="linenumber">16,17</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8143155242876052635" datatype="html">
+        <source>Seleccionar Space</source>
+        <target state="final">Select Space</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/projects/project-create-modal.component.html</context>
+          <context context-type="linenumber">18,19</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="211962665774082636" datatype="html">
+        <source>Folder (Opcional)</source>
+        <target state="final">Folder (Optional)</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/projects/project-create-modal.component.html</context>
+          <context context-type="linenumber">25,26</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="878305648537642846" datatype="html">
+        <source>Sin Folder</source>
+        <target state="final">No Folder</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/projects/project-create-modal.component.html</context>
+          <context context-type="linenumber">27,28</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2153980152639237955" datatype="html">
+        <source>Editar</source>
+        <target state="final">Edit</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/projects/project-detail-modal.component.html</context>
+          <context context-type="linenumber">18,19</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhooks.component.html</context>
+          <context context-type="linenumber">184</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6665903341931535342" datatype="html">
+        <source>Eliminar</source>
+        <target state="final">Delete</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/projects/project-detail-modal.component.html</context>
+          <context context-type="linenumber">22,23</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhooks.component.html</context>
+          <context context-type="linenumber">191,192</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2469826925352615042" datatype="html">
+        <source>Fecha de Inicio</source>
+        <target state="final">Start Date</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/projects/project-detail-modal.component.html</context>
+          <context context-type="linenumber">39,40</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="875331323555632734" datatype="html">
+        <source>Fecha Estimada de Fin</source>
+        <target state="final">Estimated End Date</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/projects/project-detail-modal.component.html</context>
+          <context context-type="linenumber">43,44</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4569941118089834187" datatype="html">
+        <source>Space ID</source>
+        <target state="final">Space ID</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/projects/project-detail-modal.component.html</context>
+          <context context-type="linenumber">50,51</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1550466224106251455" datatype="html">
+        <source>Folder ID</source>
+        <target state="final">Folder ID</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/projects/project-detail-modal.component.html</context>
+          <context context-type="linenumber">54,55</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4042970596417145153" datatype="html">
+        <source>Describe los objetivos y alcance del proyecto</source>
+        <target state="final">Describe the project goals and scope</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/projects/project-detail-modal.component.html</context>
+          <context context-type="linenumber">78</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4963172891871550734" datatype="html">
+        <source>Estado</source>
+        <target state="final">Status</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/projects/project-detail-modal.component.html</context>
+          <context context-type="linenumber">82,83</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4027353857976937795" datatype="html">
+        <source>Fecha Estimada</source>
+        <target state="final">Estimated Date</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/projects/project-detail-modal.component.html</context>
+          <context context-type="linenumber">93,94</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7161179299593805966" datatype="html">
+        <source>Guardar Cambios</source>
+        <target state="final">Save Changes</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/projects/project-detail-modal.component.html</context>
+          <context context-type="linenumber">122,123</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/submenu-customizer.component.html</context>
+          <context context-type="linenumber">78,79</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1474143840599769159" datatype="html">
+        <source> Cerrar </source>
+        <target state="final">Close</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/projects/project-detail-modal.component.html</context>
+          <context context-type="linenumber">127,128</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tickets/ticket-detail-panel.component.html</context>
+          <context context-type="linenumber">184,185</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhooks.component.html</context>
+          <context context-type="linenumber">264</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1872099000671699527" datatype="html">
+        <source>Proyectos</source>
+        <target state="final">Projects</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/projects/projects.component.html</context>
+          <context context-type="linenumber">4,5</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8132054402277874760" datatype="html">
+        <source>Saved Views:</source>
+        <target state="final">Saved Views:</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/projects/projects.component.html</context>
+          <context context-type="linenumber">29,30</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/reports/reports.component.html</context>
+          <context context-type="linenumber">27,28</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7607208936794683365" datatype="html">
+        <source>Ver detalle</source>
+        <target state="final">View detail</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/projects/projects.component.html</context>
+          <context context-type="linenumber">63,64</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7382126769107886475" datatype="html">
+        <source>Solicitar Nuevo Reporte</source>
+        <target state="final">Request New Report</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/reports/report-create-modal.component.html</context>
+          <context context-type="linenumber">4,5</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4222561288088925257" datatype="html">
+        <source>Nombre del Reporte *</source>
+        <target state="final">Report Name *</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/reports/report-create-modal.component.html</context>
+          <context context-type="linenumber">10,11</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7647323698454401060" datatype="html">
+        <source>Ej: Progreso Q3</source>
+        <target state="final">e.g. Q3 Progress</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/reports/report-create-modal.component.html</context>
+          <context context-type="linenumber">11,12</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7087940809518363449" datatype="html">
+        <source>Tipo *</source>
+        <target state="final">Type *</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/reports/report-create-modal.component.html</context>
+          <context context-type="linenumber">15,16</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6708133199454301528" datatype="html">
+        <source>Progreso de Proyectos</source>
+        <target state="final">Project Progress</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/reports/report-create-modal.component.html</context>
+          <context context-type="linenumber">17,18</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2860710698585448932" datatype="html">
+        <source>Distribución de Tareas</source>
+        <target state="final">Task Distribution</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/reports/report-create-modal.component.html</context>
+          <context context-type="linenumber">18,19</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6956367057876984652" datatype="html">
+        <source>Resumen de KPIs</source>
+        <target state="final">KPI Summary</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/reports/report-create-modal.component.html</context>
+          <context context-type="linenumber">19,20</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4279983526507037094" datatype="html">
+        <source>Personalizado</source>
+        <target state="final">Custom</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/reports/report-create-modal.component.html</context>
+          <context context-type="linenumber">20,21</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3573908860874287076" datatype="html">
+        <source>Formato *</source>
+        <target state="final">Format *</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/reports/report-create-modal.component.html</context>
+          <context context-type="linenumber">25,26</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6437441283465569103" datatype="html">
+        <source>PDF</source>
+        <target state="final">PDF</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/reports/report-create-modal.component.html</context>
+          <context context-type="linenumber">27,28</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8713939171234289820" datatype="html">
+        <source>Excel / Spreadsheet</source>
+        <target state="final">Excel / Spreadsheet</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/reports/report-create-modal.component.html</context>
+          <context context-type="linenumber">28,29</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7926143511350598250" datatype="html">
+        <source>CSV</source>
+        <target state="final">CSV</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/reports/report-create-modal.component.html</context>
+          <context context-type="linenumber">29,30</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1789190072350334394" datatype="html">
+        <source>Parámetros Adicionales (JSON Opcional)</source>
+        <target state="final">Additional Parameters (Optional JSON)</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/reports/report-create-modal.component.html</context>
+          <context context-type="linenumber">34,35</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="31862895031881565" datatype="html">
+        <source>Gestor de Reportes</source>
+        <target state="final">Report Manager</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/reports/reports.component.html</context>
+          <context context-type="linenumber">4,5</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5651346961113032357" datatype="html">
+        <source>Administra y genera reportes personalizados de tu workspace</source>
+        <target state="final">Manage and generate custom reports for your workspace</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/reports/reports.component.html</context>
+          <context context-type="linenumber">5,6</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8228050757083294372" datatype="html">
+        <source>Nueva Tarea</source>
+        <target state="final">New Task</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/task-create-modal.component.html</context>
+          <context context-type="linenumber">1</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4177631825889672799" datatype="html">
+        <source>Título de la tarea</source>
+        <target state="final">Task title</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/task-create-modal.component.html</context>
+          <context context-type="linenumber">5,6</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6899746139892178376" datatype="html">
+        <source>Proyecto *</source>
+        <target state="final">Project *</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/task-create-modal.component.html</context>
+          <context context-type="linenumber">12,13</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5844050860989768086" datatype="html">
+        <source>Seleccionar proyecto</source>
+        <target state="final">Select project</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/task-create-modal.component.html</context>
+          <context context-type="linenumber">15,16</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8261745538419246170" datatype="html">
+        <source>Horas estimadas</source>
+        <target state="final">Estimated hours</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/task-create-modal.component.html</context>
+          <context context-type="linenumber">23,24</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6372313618056980138" datatype="html">
+        <source>Fecha límite *</source>
+        <target state="final">Due date *</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/task-create-modal.component.html</context>
+          <context context-type="linenumber">27,28</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6301627487329960801" datatype="html">
+        <source>Nombre de la tarea</source>
+        <target state="final">Task name</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/task-detail-panel.component.html</context>
+          <context context-type="linenumber">43,44</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7217134779505400506" datatype="html">
+        <source> + Etiqueta </source>
+        <target state="final">+ Label</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/task-detail-panel.component.html</context>
+          <context context-type="linenumber">112</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tickets/ticket-detail-panel.component.html</context>
+          <context context-type="linenumber">72</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4607014822863092335" datatype="html">
+        <source>Agrega una descripción detallada, instrucciones, links o lo que necesites...</source>
+        <target state="final">Add a detailed description, instructions, links or whatever you need...</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/task-detail-panel.component.html</context>
+          <context context-type="linenumber">150,151</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2549948840554240473" datatype="html">
+        <source>Adjuntos</source>
+        <target state="final">Attachments</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/task-detail-panel.component.html</context>
+          <context context-type="linenumber">159,160</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tickets/ticket-detail-panel.component.html</context>
+          <context context-type="linenumber">106,107</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1528062290910297811" datatype="html">
+        <source> Actividad </source>
+        <target state="final">Activity</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/task-detail-panel.component.html</context>
+          <context context-type="linenumber">195</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7356224785425927027" datatype="html">
+        <source>Sin comentarios aún</source>
+        <target state="final">No comments yet</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/task-detail-panel.component.html</context>
+          <context context-type="linenumber">233,234</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tickets/ticket-detail-panel.component.html</context>
+          <context context-type="linenumber">153,154</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="9169114692033307395" datatype="html">
+        <source>Escribe un comentario... (Ctrl+Enter para enviar)</source>
+        <target state="final">Write a comment... (Ctrl+Enter to send)</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/task-detail-panel.component.html</context>
+          <context context-type="linenumber">245,246</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2452214155769386625" datatype="html">
+        <source>Ctrl+Enter para enviar</source>
+        <target state="final">Ctrl+Enter to send</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/task-detail-panel.component.html</context>
+          <context context-type="linenumber">262,263</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tickets/ticket-detail-panel.component.html</context>
+          <context context-type="linenumber">175,176</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5557203759396013489" datatype="html">
+        <source>Historial de actividad próximamente</source>
+        <target state="final">Activity history coming soon</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/task-detail-panel.component.html</context>
+          <context context-type="linenumber">270,271</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1129880573635334228" datatype="html">
+        <source>Tareas</source>
+        <target state="final">Tasks</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/tasks.component.html</context>
+          <context context-type="linenumber">6,7</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8147313447959333554" datatype="html">
+        <source>Crear nueva vista</source>
+        <target state="final">Create new view</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/tasks.component.html</context>
+          <context context-type="linenumber">55,56</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tickets/tickets.component.html</context>
+          <context context-type="linenumber">55,56</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8124257544094173951" datatype="html">
+        <source>Detalles del Equipo</source>
+        <target state="final">Team Details</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/teams/team-detail.component.html</context>
+          <context context-type="linenumber">7,8</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7600728698216861297" datatype="html">
+        <source>Proyectos Activos</source>
+        <target state="final">Active Projects</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/teams/team-detail.component.html</context>
+          <context context-type="linenumber">45,46</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="14026792806794461" datatype="html">
+        <source>Productividad</source>
+        <target state="final">Productivity</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/teams/team-detail.component.html</context>
+          <context context-type="linenumber">55,56</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3595035808673246927" datatype="html">
+        <source>Miembros Recientes</source>
+        <target state="final">Recent Members</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/teams/team-detail.component.html</context>
+          <context context-type="linenumber">62,63</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2976488661620771153" datatype="html">
+        <source> No hay información detallada de los miembros todavía. </source>
+        <target state="final">No detailed member information yet.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/teams/team-detail.component.html</context>
+          <context context-type="linenumber">64</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7635650308619401506" datatype="html">
+        <source>Equipo no encontrado</source>
+        <target state="final">Team not found</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/teams/team-detail.component.html</context>
+          <context context-type="linenumber">72,73</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1203954232991985856" datatype="html">
+        <source>Volver a equipos</source>
+        <target state="final">Back to teams</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/teams/team-detail.component.html</context>
+          <context context-type="linenumber">73,74</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5357661269973482487" datatype="html">
+        <source>Nombre</source>
+        <target state="final">Name</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/teams/team-form.component.html</context>
+          <context context-type="linenumber">4,5</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/submenu-customizer.component.html</context>
+          <context context-type="linenumber">59,60</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5897537854022778551" datatype="html">
+        <source>Ej. Ventas</source>
+        <target state="final">e.g. Sales</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/teams/team-form.component.html</context>
+          <context context-type="linenumber">5,6</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6850282333361650075" datatype="html">
+        <source>Equipo encargado de...</source>
+        <target state="final">Team in charge of...</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/teams/team-form.component.html</context>
+          <context context-type="linenumber">11</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1704927142412128979" datatype="html">
+        <source>Equipos</source>
+        <target state="final">Teams</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/teams/teams-list.component.html</context>
+          <context context-type="linenumber">4,5</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6276376058135759539" datatype="html">
+        <source> No se encontraron equipos. </source>
+        <target state="final">No teams found.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/teams/teams-list.component.html</context>
+          <context context-type="linenumber">50</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4531372279467575442" datatype="html">
+        <source>Ticket enviado</source>
+        <target state="final">Ticket sent</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tickets/public-ticket-form.component.html</context>
+          <context context-type="linenumber">10</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3244890821105576446" datatype="html">
+        <source> Hemos recibido tu solicitud. Recibirás un email de confirmación pronto. </source>
+        <target state="final">We've received your request. You'll get a confirmation email soon.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tickets/public-ticket-form.component.html</context>
+          <context context-type="linenumber">12</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6313194474051044764" datatype="html">
+        <source> Enviar otro ticket </source>
+        <target state="final">Send another ticket</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tickets/public-ticket-form.component.html</context>
+          <context context-type="linenumber">17</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8591064715277983358" datatype="html">
+        <source>Formulario de soporte</source>
+        <target state="final">Support form</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tickets/public-ticket-form.component.html</context>
+          <context context-type="linenumber">24</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7422026495452323405" datatype="html">
+        <source>Completa el formulario y te contactaremos a la brevedad</source>
+        <target state="final">Fill in the form and we'll get back to you shortly</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tickets/public-ticket-form.component.html</context>
+          <context context-type="linenumber">25</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4879873155595882798" datatype="html">
+        <source>Describe brevemente tu problema</source>
+        <target state="final">Briefly describe your problem</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tickets/public-ticket-form.component.html</context>
+          <context context-type="linenumber">33,34</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6945482597041095036" datatype="html">
+        <source>Prioridad</source>
+        <target state="final">Priority</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tickets/public-ticket-form.component.html</context>
+          <context context-type="linenumber">38,39</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tickets/ticket-create-modal.component.html</context>
+          <context context-type="linenumber">9,10</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="9097402100251448765" datatype="html">
+        <source>Descripción *</source>
+        <target state="final">Description *</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tickets/public-ticket-form.component.html</context>
+          <context context-type="linenumber">48,49</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tickets/ticket-create-modal.component.html</context>
+          <context context-type="linenumber">19,20</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3998865593215981733" datatype="html">
+        <source>Describe tu problema con detalle...</source>
+        <target state="final">Describe your problem in detail...</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tickets/public-ticket-form.component.html</context>
+          <context context-type="linenumber">50,51</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6579548534668273971" datatype="html">
+        <source>Nuevo Ticket</source>
+        <target state="final">New Ticket</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tickets/ticket-create-modal.component.html</context>
+          <context context-type="linenumber">1</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4556468022922401156" datatype="html">
+        <source>Ej: Problema con facturación</source>
+        <target state="final">e.g. Billing problem</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tickets/ticket-create-modal.component.html</context>
+          <context context-type="linenumber">5,6</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1818146198009548181" datatype="html">
+        <source>Describe el problema en detalle...</source>
+        <target state="final">Describe the problem in detail...</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tickets/ticket-create-modal.component.html</context>
+          <context context-type="linenumber">21,22</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7739497999065481402" datatype="html">
+        <source>Título del ticket</source>
+        <target state="final">Ticket title</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tickets/ticket-detail-panel.component.html</context>
+          <context context-type="linenumber">25,26</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3177239092503877686" datatype="html">
+        <source>Descripción del Problema</source>
+        <target state="final">Problem Description</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tickets/ticket-detail-panel.component.html</context>
+          <context context-type="linenumber">94,95</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7622826179151575840" datatype="html">
+        <source>Descripción del problema...</source>
+        <target state="final">Problem description...</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tickets/ticket-detail-panel.component.html</context>
+          <context context-type="linenumber">99,100</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7593111171054406662" datatype="html">
+        <source>Adjuntar archivo, captura o documento</source>
+        <target state="final">Attach a file, screenshot or document</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tickets/ticket-detail-panel.component.html</context>
+          <context context-type="linenumber">109,110</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3855353884246003882" datatype="html">
+        <source>Comentarios</source>
+        <target state="final">Comments</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tickets/ticket-detail-panel.component.html</context>
+          <context context-type="linenumber">126,127</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6773381300174703400" datatype="html">
+        <source>Escribe un comentario...</source>
+        <target state="final">Write a comment...</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tickets/ticket-detail-panel.component.html</context>
+          <context context-type="linenumber">163,164</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8265500184685762525" datatype="html">
+        <source>Tickets</source>
+        <target state="final">Tickets</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tickets/tickets.component.html</context>
+          <context context-type="linenumber">6,7</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3672287793640783844" datatype="html">
+        <source>Ej: Notificaciones de Tareas</source>
+        <target state="final">e.g. Task Notifications</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhook-form-modal.component.html</context>
+          <context context-type="linenumber">19,20</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6008150472753808193" datatype="html">
+        <source>https://api.tu-sistema.com/webhooks</source>
+        <target state="final">https://api.tu-sistema.com/webhooks</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhook-form-modal.component.html</context>
+          <context context-type="linenumber">47,48</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1660971623082592868" datatype="html">
+        <source> La URL donde se enviarán los eventos vía HTTP POST </source>
+        <target state="final">The URL where events will be sent via HTTP POST</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhook-form-modal.component.html</context>
+          <context context-type="linenumber">53,54</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5977464828292971816" datatype="html">
+        <source> Selecciona los eventos que activarán este webhook </source>
+        <target state="final">Select the events that will trigger this webhook</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhook-form-modal.component.html</context>
+          <context context-type="linenumber">69,70</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6842713977476943969" datatype="html">
+        <source>Opciones Avanzadas</source>
+        <target state="final">Advanced Options</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhook-form-modal.component.html</context>
+          <context context-type="linenumber">108,109</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1607150620781172504" datatype="html">
+        <source> Reintentos Máximos </source>
+        <target state="final">Max Retries</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhook-form-modal.component.html</context>
+          <context context-type="linenumber">112</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1128394497176053002" datatype="html">
+        <source> Timeout (segundos) </source>
+        <target state="final">Timeout (seconds)</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhook-form-modal.component.html</context>
+          <context context-type="linenumber">126</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4081062193464316485" datatype="html">
+        <source>El secret de firma HMAC se genera automáticamente</source>
+        <target state="final">The HMAC signing secret is generated automatically</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhook-form-modal.component.html</context>
+          <context context-type="linenumber">145,146</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3888993997380000721" datatype="html">
+        <source>Webhooks</source>
+        <target state="final">Webhooks</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhooks.component.html</context>
+          <context context-type="linenumber">10,11</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6539506510994777958" datatype="html">
+        <source>Gestiona integraciones con sistemas externos</source>
+        <target state="final">Manage integrations with external systems</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhooks.component.html</context>
+          <context context-type="linenumber">11,12</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7699552570261484743" datatype="html">
+        <source>Total Suscripciones</source>
+        <target state="final">Total Subscriptions</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhooks.component.html</context>
+          <context context-type="linenumber">27,28</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4399632250790946900" datatype="html">
+        <source>Activas</source>
+        <target state="final">Active</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhooks.component.html</context>
+          <context context-type="linenumber">31,32</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6866920634836994660" datatype="html">
+        <source>Entregas Exitosas</source>
+        <target state="final">Successful Deliveries</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhooks.component.html</context>
+          <context context-type="linenumber">35,36</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1193437937657912923" datatype="html">
+        <source>Entregas Fallidas</source>
+        <target state="final">Failed Deliveries</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhooks.component.html</context>
+          <context context-type="linenumber">39,40</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3796362566271262704" datatype="html">
+        <source>Buscar webhooks...</source>
+        <target state="final">Search webhooks...</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhooks.component.html</context>
+          <context context-type="linenumber">56,57</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1035028334032386153" datatype="html">
+        <source>No hay webhooks configurados</source>
+        <target state="final">No webhooks configured</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhooks.component.html</context>
+          <context context-type="linenumber">79,80</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="959377290033772529" datatype="html">
+        <source> Crea tu primer webhook para recibir notificaciones de eventos en tu sistema CRM. </source>
+        <target state="final">Create your first webhook to receive event notifications in your CRM system.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhooks.component.html</context>
+          <context context-type="linenumber">81</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2436598525808150988" datatype="html">
+        <source>Regenerar Secret</source>
+        <target state="final">Regenerate Secret</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhooks.component.html</context>
+          <context context-type="linenumber">171,172</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6803250755403333149" datatype="html">
+        <source>Nuevo Secret</source>
+        <target state="final">New Secret</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhooks.component.html</context>
+          <context context-type="linenumber">232,233</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="732313523368003935" datatype="html">
+        <source>Copiar</source>
+        <target state="final">Copy</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhooks.component.html</context>
+          <context context-type="linenumber">253</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1443388441773210046" datatype="html">
+        <source>Eliminar Webhook</source>
+        <target state="final">Delete Webhook</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhooks.component.html</context>
+          <context context-type="linenumber">287,288</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2803776179671908342" datatype="html">
+        <source>Esta acción no se puede deshacer</source>
+        <target state="final">This action cannot be undone</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhooks.component.html</context>
+          <context context-type="linenumber">288,289</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="9068692550704780441" datatype="html">
+        <source> ¿Estás seguro de que deseas eliminar este webhook? Se perderán todas las configuraciones y estadísticas asociadas. </source>
+        <target state="final">Are you sure you want to delete this webhook? All associated settings and statistics will be lost.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhooks.component.html</context>
+          <context context-type="linenumber">293</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7337528189751824652" datatype="html">
+        <source>Cambiar idioma a <x id="idioma" equiv-text="i.nombre"/></source>
+        <target state="final">Switch language to <x id="idioma" equiv-text="i.nombre"/></target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/command-palette/command-palette.service.ts</context>
+          <context context-type="linenumber">124</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3341002993832944373" datatype="html">
+        <source>Customizar Menú</source>
+        <target state="final">Customize Menu</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/sidebar-customizer.component.html</context>
+          <context context-type="linenumber">7,8</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8813589068309331380" datatype="html">
+        <source>Arrastra para ordenar (máx 6 anclados)</source>
+        <target state="final">Drag to reorder (max 6 pinned)</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/sidebar-customizer.component.html</context>
+          <context context-type="linenumber">8,9</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8114712560025447399" datatype="html">
+        <source>¡Supera el límite!</source>
+        <target state="final">Over the limit!</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/sidebar-customizer.component.html</context>
+          <context context-type="linenumber">23,24</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5615155888196471649" datatype="html">
+        <source>Desanclar</source>
+        <target state="final">Unpin</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/sidebar-customizer.component.html</context>
+          <context context-type="linenumber">42,43</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3820896433680091838" datatype="html">
+        <source>Arrastra aquí para anclar</source>
+        <target state="final">Drag here to pin</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/sidebar-customizer.component.html</context>
+          <context context-type="linenumber">48,49</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="320889035733027225" datatype="html">
+        <source>Módulos Disponibles</source>
+        <target state="final">Available Modules</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/sidebar-customizer.component.html</context>
+          <context context-type="linenumber">55,56</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4789607632169601759" datatype="html">
+        <source>Anclar</source>
+        <target state="final">Pin</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/sidebar-customizer.component.html</context>
+          <context context-type="linenumber">72,73</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8382160621233276004" datatype="html">
+        <source>Customizar submenú</source>
+        <target state="final">Customize submenu</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/submenu-customizer.component.html</context>
+          <context context-type="linenumber">6,7</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7923058206826191657" datatype="html">
+        <source>Opciones del Submenú</source>
+        <target state="final">Submenu Options</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/submenu-customizer.component.html</context>
+          <context context-type="linenumber">16,17</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="616424995465449538" datatype="html">
+        <source>Arrastra para reordenar las opciones. Puedes eliminar los accesos rápidos personalizados.</source>
+        <target state="final">Drag to reorder the options. You can remove custom shortcuts.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/submenu-customizer.component.html</context>
+          <context context-type="linenumber">17,19</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="476379910919387856" datatype="html">
+        <source>Quitar</source>
+        <target state="final">Remove</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/submenu-customizer.component.html</context>
+          <context context-type="linenumber">36,37</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4276482197750576317" datatype="html">
+        <source>Agregar acceso rápido</source>
+        <target state="final">Add shortcut</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/submenu-customizer.component.html</context>
+          <context context-type="linenumber">47,48</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8003395959396249856" datatype="html">
+        <source>Opciones comunes</source>
+        <target state="final">Common options</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/submenu-customizer.component.html</context>
+          <context context-type="linenumber">50,51</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6998407950975290020" datatype="html">
+        <source>Personalizado...</source>
+        <target state="final">Custom...</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/submenu-customizer.component.html</context>
+          <context context-type="linenumber">52,53</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5890278540086734178" datatype="html">
+        <source>Ej. Reporte mensual</source>
+        <target state="final">e.g. Monthly report</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/submenu-customizer.component.html</context>
+          <context context-type="linenumber">60</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1942018954850694649" datatype="html">
+        <source>Ruta (URL interna)</source>
+        <target state="final">Path (internal URL)</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/submenu-customizer.component.html</context>
+          <context context-type="linenumber">63,64</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4516335814287016113" datatype="html">
+        <source>/projects/123</source>
+        <target state="final">/projects/123</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/submenu-customizer.component.html</context>
+          <context context-type="linenumber">64</context>
+        </context-group>
+      </trans-unit>
+    </body>
+  </file>
+</xliff>

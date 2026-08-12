@@ -7,13 +7,13 @@
             <span class="text-success text-2xl">✓</span>
           </div>
         </div>
-        <ui-card-title>Ticket enviado</ui-card-title>
-        <ui-card-description>
+        <ui-card-title i18n>Ticket enviado</ui-card-title>
+        <ui-card-description i18n>
           Hemos recibido tu solicitud. Recibirás un email de confirmación pronto.
         </ui-card-description>
       </ui-card-header>
       <ui-card-footer>
-        <button uiButton variant="outline" class="w-full" (click)="success.set(false)">
+        <button uiButton variant="outline" class="w-full" (click)="success.set(false)" i18n>
           Enviar otro ticket
         </button>
       </ui-card-footer>
@@ -21,21 +21,21 @@
   } @else {
     <ui-card class="w-full max-w-lg">
       <ui-card-header>
-        <ui-card-title>Formulario de soporte</ui-card-title>
-        <ui-card-description>Completa el formulario y te contactaremos a la brevedad</ui-card-description>
+        <ui-card-title i18n>Formulario de soporte</ui-card-title>
+        <ui-card-description i18n>Completa el formulario y te contactaremos a la brevedad</ui-card-description>
       </ui-card-header>
 
       <ui-card-content>
         <form (ngSubmit)="submit()" class="space-y-4">
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div class="space-y-1.5">
-              <label uiLabel for="title">Título *</label>
-              <input uiInput id="title" [(ngModel)]="title" name="title" placeholder="Describe brevemente tu problema" />
+              <label uiLabel for="title" i18n>Título *</label>
+              <input uiInput id="title" [(ngModel)]="title" name="title" i18n-placeholder placeholder="Describe brevemente tu problema" />
             </div>
           </div>
 
           <div class="space-y-1.5">
-            <label uiLabel for="priority">Prioridad</label>
+            <label uiLabel for="priority" i18n>Prioridad</label>
             <select id="priority" [(ngModel)]="priority" name="priority"
                     class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
               @for (p of priorities; track p) {
@@ -45,9 +45,9 @@
           </div>
 
           <div class="space-y-1.5">
-            <label uiLabel for="description">Descripción *</label>
+            <label uiLabel for="description" i18n>Descripción *</label>
             <textarea id="description" [(ngModel)]="description" name="description"
-                      rows="4" placeholder="Describe tu problema con detalle..."
+                      rows="4" i18n-placeholder placeholder="Describe tu problema con detalle..."
                       class="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring resize-none">
             </textarea>
           </div>
