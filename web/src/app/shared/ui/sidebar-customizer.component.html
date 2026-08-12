@@ -4,8 +4,8 @@
     <!-- Header -->
     <div class="flex items-center justify-between p-4 border-b border-border">
       <div>
-        <h2 class="text-lg font-semibold">Customizar Menú</h2>
-        <p class="text-xs text-muted-foreground">Arrastra para ordenar (máx 6 anclados)</p>
+        <h2 class="text-lg font-semibold" i18n>Customizar Menú</h2>
+        <p class="text-xs text-muted-foreground" i18n>Arrastra para ordenar (máx 6 anclados)</p>
       </div>
       <button (click)="close.emit()" class="text-muted-foreground hover:bg-accent p-2 rounded-md transition-colors">
         <ng-icon name="lucideX" size="20"></ng-icon>
@@ -20,7 +20,7 @@
         <div class="text-sm font-semibold mb-3 flex items-center justify-between">
           <span>Anclados ({{ pinnedItems.length }}/6)</span>
           @if (pinnedItems.length > 6) {
-            <span class="text-xs text-destructive">¡Supera el límite!</span>
+            <span class="text-xs text-destructive" i18n>¡Supera el límite!</span>
           }
         </div>
         
@@ -39,20 +39,20 @@
                 <ng-icon [name]="item.icon" size="18"></ng-icon>
                 <span class="text-sm font-medium">{{ item.label }}</span>
               </div>
-              <button (click)="moveToUnpinned(item, i)" class="text-muted-foreground hover:text-destructive hover:bg-destructive/10 p-1.5 rounded transition-colors" title="Desanclar">
+              <button (click)="moveToUnpinned(item, i)" class="text-muted-foreground hover:text-destructive-subtle-fg hover:bg-destructive-subtle p-1.5 rounded transition-colors" i18n-title title="Desanclar">
                 <ng-icon name="lucideMinus" size="14"></ng-icon>
               </button>
             </div>
           }
           @if (pinnedItems.length === 0) {
-            <div class="text-center text-xs text-muted-foreground py-4">Arrastra aquí para anclar</div>
+            <div class="text-center text-xs text-muted-foreground py-4" i18n>Arrastra aquí para anclar</div>
           }
         </div>
       </div>
 
       <!-- Unpinned -->
       <div>
-        <div class="text-sm font-semibold mb-3">Módulos Disponibles</div>
+        <div class="text-sm font-semibold mb-3" i18n>Módulos Disponibles</div>
         
         <div 
           cdkDropList
@@ -69,7 +69,7 @@
                 <ng-icon [name]="item.icon" size="18"></ng-icon>
                 <span class="text-sm font-medium">{{ item.label }}</span>
               </div>
-              <button (click)="moveToPinned(item, i)" class="text-muted-foreground hover:text-primary hover:bg-primary/10 p-1.5 rounded transition-colors" title="Anclar">
+              <button (click)="moveToPinned(item, i)" class="text-muted-foreground hover:text-primary-subtle-fg hover:bg-primary-subtle p-1.5 rounded transition-colors" i18n-title title="Anclar">
                 <ng-icon name="lucidePlus" size="14"></ng-icon>
               </button>
             </div>
@@ -81,7 +81,7 @@
 
     <!-- Footer -->
     <div class="p-4 border-t border-border flex justify-end gap-3 bg-card shrink-0">
-      <button (click)="close.emit()" class="px-4 py-2 text-sm font-medium text-foreground hover:bg-accent rounded-md transition-colors">
+      <button (click)="close.emit()" class="px-4 py-2 text-sm font-medium text-foreground hover:bg-accent rounded-md transition-colors" i18n>
         Cancelar
       </button>
       <button (click)="save()" [disabled]="pinnedItems.length > 6" class="px-4 py-2 text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed">

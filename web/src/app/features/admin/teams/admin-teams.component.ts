@@ -1,5 +1,5 @@
 import { Component, inject, OnInit, signal, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../../core/api.service';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
@@ -9,6 +9,7 @@ import {
 } from '@ng-icons/lucide';
 import { GranularPermissionsModalComponent } from '../permissions/granular-permissions-modal.component';
 import { DrawerComponent } from '../../../shared/ui/drawer.component';
+import { ClickableDirective } from '../../../shared/directives/clickable.directive';
 
 export interface TeamMemberDto {
   userId: string;
@@ -34,13 +35,7 @@ export interface UserOptionDto {
 @Component({
   selector: 'app-admin-teams',
   standalone: true,
-  imports: [
-    CommonModule,
-    FormsModule,
-    NgIconComponent,
-    GranularPermissionsModalComponent,
-    DrawerComponent
-  ],
+  imports: [ClickableDirective, FormsModule, NgIconComponent, GranularPermissionsModalComponent, DrawerComponent],
   viewProviders: [
     provideIcons({
       lucideUsers, lucidePlus, lucideTrash2, lucideEdit3, lucideShieldCheck,

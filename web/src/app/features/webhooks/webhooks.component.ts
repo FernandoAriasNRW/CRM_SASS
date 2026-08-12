@@ -10,11 +10,12 @@ import { WebhookService } from './webhook.service';
 import { WebhookSubscription, WEBHOOK_EVENT_TYPES } from './webhook.model';
 import { WebhookFormModalComponent } from './webhook-form-modal.component';
 import { AuthSignalStore } from '../../core/auth-signal.store';
+import { ClickableDirective } from '../../shared/directives/clickable.directive';
 
 @Component({
   selector: 'app-webhooks',
   standalone: true,
-  imports: [
+  imports: [ClickableDirective, 
     NgIconComponent,
     WebhookFormModalComponent,
     FormsModule

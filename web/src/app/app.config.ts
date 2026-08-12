@@ -13,7 +13,7 @@ import { authInterceptor } from './core/interceptors/auth.interceptor';
 import { errorInterceptor } from './core/interceptors/error.interceptor';
 import { ApiService } from './core/api.service';
 import { AuthSignalStore } from './core/auth-signal.store';
-import { catchError, map, of, tap } from 'rxjs';
+import { catchError, of, tap } from 'rxjs';
 
 export function initializeApp(api: ApiService, auth: AuthSignalStore) {
   return () => {

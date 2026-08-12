@@ -30,6 +30,7 @@ import Placeholder from '@tiptap/extension-placeholder';
 import BubbleMenu from '@tiptap/extension-bubble-menu';
 import { EmojiPickerComponent } from './extensions/emoji-picker.component';
 import { Subject, debounceTime } from 'rxjs';
+import { ClickableDirective } from '../../shared/directives/clickable.directive';
 
 export interface PresetTemplate {
   key: string;
@@ -45,7 +46,7 @@ export interface PresetTemplate {
 @Component({
   selector: 'app-docs',
   standalone: true,
-  imports: [CommonModule, FormsModule, NgIconComponent, TiptapEditorDirective, EmojiPickerComponent],
+  imports: [ClickableDirective, CommonModule, FormsModule, NgIconComponent, TiptapEditorDirective, EmojiPickerComponent],
   providers: [
     provideIcons({
       lucideFileText, lucidePlus, lucideFolder, lucideMoreVertical,
@@ -59,7 +60,7 @@ export interface PresetTemplate {
   ],
   templateUrl: './docs.component.html',
   host: {
-    class: 'flex h-full w-full bg-white dark:bg-zinc-950 overflow-hidden relative',
+    class: 'flex h-full w-full bg-white dark:bg-background overflow-hidden relative',
     '(document:click)': 'onGlobalClick($event)'
   }
 })
@@ -112,8 +113,8 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
       title: 'Project Overview',
       description: 'Summarize goals, scope, and milestones',
       bgGradient: 'from-amber-500/10 via-orange-500/5 to-transparent dark:from-amber-500/20 dark:via-orange-500/10',
-      borderColor: 'border-amber-200 dark:border-amber-800/50 hover:border-amber-400 dark:hover:border-amber-600',
-      iconBg: 'bg-amber-500 text-white shadow-amber-500/30',
+      borderColor: 'border-warning dark:border-warning/50 hover:border-warning dark:hover:border-warning',
+      iconBg: 'bg-warning text-white shadow-amber-500/30',
       icon: 'lucideFileText',
       badgeText: null
     },
@@ -122,8 +123,8 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
       title: 'Meeting Notes',
       description: 'Capture an agenda, notes, and action items',
       bgGradient: 'from-yellow-500/10 via-amber-500/5 to-transparent dark:from-yellow-500/20 dark:via-amber-500/10',
-      borderColor: 'border-yellow-200 dark:border-yellow-800/50 hover:border-yellow-400 dark:hover:border-yellow-600',
-      iconBg: 'bg-yellow-500 text-white shadow-yellow-500/30',
+      borderColor: 'border-warning dark:border-warning/50 hover:border-warning dark:hover:border-warning',
+      iconBg: 'bg-warning text-white shadow-yellow-500/30',
       icon: 'lucideCalendar',
       badgeText: null
     },
@@ -132,8 +133,8 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
       title: 'Wiki',
       description: 'Organize information in one place',
       bgGradient: 'from-blue-500/10 via-indigo-500/5 to-transparent dark:from-blue-500/20 dark:via-indigo-500/10',
-      borderColor: 'border-blue-200 dark:border-blue-800/50 hover:border-blue-400 dark:hover:border-blue-600',
-      iconBg: 'bg-blue-600 text-white shadow-blue-600/30',
+      borderColor: 'border-primary dark:border-primary/50 hover:border-primary dark:hover:border-primary',
+      iconBg: 'bg-primary text-white shadow-blue-600/30',
       icon: 'lucideBookOpen',
       badgeText: '✓'
     },
@@ -142,8 +143,8 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
       title: 'Client Onboarding',
       description: 'Client summary, requirements, and handover',
       bgGradient: 'from-purple-500/10 via-pink-500/5 to-transparent dark:from-purple-500/20 dark:via-pink-500/10',
-      borderColor: 'border-purple-200 dark:border-purple-800/50 hover:border-purple-400 dark:hover:border-purple-600',
-      iconBg: 'bg-purple-600 text-white shadow-purple-600/30',
+      borderColor: 'border-primary dark:border-primary/50 hover:border-primary dark:hover:border-primary',
+      iconBg: 'bg-primary text-white shadow-purple-600/30',
       icon: 'lucideBriefcase',
       badgeText: null
     }
@@ -616,10 +617,10 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
 
   getTypeBadgeClass(type: number): string {
     switch (type) {
-      case 2: return 'bg-pink-100 text-pink-700 dark:bg-pink-950/40 dark:text-pink-300 border-pink-200 dark:border-pink-800/50';
-      case 3: return 'bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300 border-amber-200 dark:border-amber-800/50';
-      case 4: return 'bg-purple-100 text-purple-700 dark:bg-purple-950/40 dark:text-purple-300 border-purple-200 dark:border-purple-800/50';
-      default: return 'bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700';
+      case 2: return 'bg-primary-subtle text-primary-subtle-fg dark:bg-primary-subtle/40 dark:text-primary-subtle-fg border-primary dark:border-primary/50';
+      case 3: return 'bg-warning-subtle text-warning-subtle-fg dark:bg-warning-subtle/40 dark:text-warning-subtle-fg border-warning dark:border-warning/50';
+      case 4: return 'bg-primary-subtle text-primary-subtle-fg dark:bg-primary-subtle/40 dark:text-primary-subtle-fg border-primary dark:border-primary/50';
+      default: return 'bg-muted text-muted-foreground dark:bg-muted dark:text-muted-foreground border-border dark:border-border';
     }
   }
 }

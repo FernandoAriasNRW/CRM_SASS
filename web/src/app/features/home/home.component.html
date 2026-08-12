@@ -3,7 +3,7 @@
     <h1 class="text-3xl font-bold tracking-tight">
       ¡Hola, {{ authStore.userInfo()?.name?.split(' ')?.[0] || 'Usuario' }}!
     </h1>
-    <button class="bg-primary/10 text-primary hover:bg-primary/20 px-4 py-2 rounded-md text-sm font-medium transition-colors">
+    <button class="bg-primary-subtle text-primary-subtle-fg hover:bg-primary-subtle px-4 py-2 rounded-md text-sm font-medium transition-colors" i18n>
       Administrar tarjetas
     </button>
   </div>
@@ -26,7 +26,7 @@
           }
         </div>
         @if (recentViewsStore.views().length === 0) {
-          <p class="text-sm text-muted-foreground italic mt-2">No has visitado otros módulos recientemente.</p>
+          <p class="text-sm text-muted-foreground italic mt-2" i18n>No has visitado otros módulos recientemente.</p>
         } @else {
           <ui-card>
             <ui-card-content class="p-0">
@@ -55,9 +55,9 @@
             Mi Trabajo
           </h2>
           <div class="flex items-center gap-2 text-xs">
-            <span class="px-2 py-1 rounded bg-muted">3 Por hacer</span>
-            <span class="px-2 py-1 rounded bg-primary/20 text-primary font-medium">1 En curso</span>
-            <span class="px-2 py-1 rounded bg-green-500/20 text-green-700 font-medium">5 Hechas</span>
+            <span class="px-2 py-1 rounded bg-muted" i18n>3 Por hacer</span>
+            <span class="px-2 py-1 rounded bg-primary-subtle text-primary-subtle-fg font-medium" i18n>1 En curso</span>
+            <span class="px-2 py-1 rounded bg-success-subtle text-success-subtle-fg font-medium" i18n>5 Hechas</span>
           </div>
         </div>
         
@@ -71,33 +71,33 @@
                     <ng-icon name="lucideCheckSquare" size="10" class="opacity-0 group-hover:opacity-100 text-primary"></ng-icon>
                   </div>
                   <div>
-                    <span class="text-sm font-medium group-hover:text-primary transition-colors block">Revisar planificación de sprints</span>
-                    <span class="text-[10px] text-muted-foreground">Proyecto: Desarrollo CRM</span>
+                    <span class="text-sm font-medium group-hover:text-primary transition-colors block" i18n>Revisar planificación de sprints</span>
+                    <span class="text-[10px] text-muted-foreground" i18n>Proyecto: Desarrollo CRM</span>
                   </div>
                 </div>
-                <span class="text-xs text-muted-foreground bg-accent px-2 py-1 rounded font-medium">Hoy</span>
+                <span class="text-xs text-muted-foreground bg-accent px-2 py-1 rounded font-medium" i18n>Hoy</span>
               </div>
               
               <div class="p-4 flex items-center justify-between hover:bg-accent/50 transition-colors cursor-pointer group">
                 <div class="flex items-center gap-3">
                   <div class="w-4 h-4 rounded border border-muted-foreground/50 group-hover:border-primary transition-colors"></div>
                   <div>
-                    <span class="text-sm font-medium group-hover:text-primary transition-colors block">Actualizar dependencias Frontend</span>
-                    <span class="text-[10px] text-muted-foreground">Proyecto: Refactor UI</span>
+                    <span class="text-sm font-medium group-hover:text-primary transition-colors block" i18n>Actualizar dependencias Frontend</span>
+                    <span class="text-[10px] text-muted-foreground" i18n>Proyecto: Refactor UI</span>
                   </div>
                 </div>
-                <span class="text-xs text-muted-foreground bg-accent px-2 py-1 rounded font-medium">Mañana</span>
+                <span class="text-xs text-muted-foreground bg-accent px-2 py-1 rounded font-medium" i18n>Mañana</span>
               </div>
               
               <div class="p-4 flex items-center justify-between hover:bg-accent/50 transition-colors cursor-pointer group">
                 <div class="flex items-center gap-3">
                   <div class="w-4 h-4 rounded border border-muted-foreground/50 group-hover:border-primary transition-colors"></div>
                   <div>
-                    <span class="text-sm font-medium group-hover:text-primary transition-colors block">Resolver ticket de soporte #34</span>
-                    <span class="text-[10px] text-muted-foreground">Soporte TI</span>
+                    <span class="text-sm font-medium group-hover:text-primary transition-colors block" i18n>Resolver ticket de soporte #34</span>
+                    <span class="text-[10px] text-muted-foreground" i18n>Soporte TI</span>
                   </div>
                 </div>
-                <span class="text-xs text-destructive bg-destructive/10 px-2 py-1 rounded font-medium">Atrasado</span>
+                <span class="text-xs text-destructive-subtle-fg bg-destructive-subtle px-2 py-1 rounded font-medium" i18n>Atrasado</span>
               </div>
             </div>
           </ui-card-content>

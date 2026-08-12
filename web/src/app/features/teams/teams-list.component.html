@@ -1,7 +1,7 @@
 <div class="h-full flex flex-col p-6 space-y-6">
   <div class="flex items-center justify-between">
     <div>
-      <h1 class="text-2xl font-bold tracking-tight">Equipos</h1>
+      <h1 class="text-2xl font-bold tracking-tight" i18n>Equipos</h1>
       <p class="text-sm text-muted-foreground mt-1">
         {{ isAllTeamsView() ? 'Todos los equipos de la organización.' : 'Equipos a los que perteneces.' }}
       </p>
@@ -26,7 +26,7 @@
         <div class="bg-card text-card-foreground border rounded-lg shadow-sm hover:border-primary/50 transition-colors p-5">
           <div class="flex items-start justify-between mb-2">
             <div class="flex items-center gap-3">
-              <div class="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold">
+              <div class="h-10 w-10 rounded-full bg-primary-subtle flex items-center justify-center text-primary-subtle-fg font-semibold">
                 {{ team.name.substring(0,2).toUpperCase() }}
               </div>
               <div>
@@ -46,7 +46,7 @@
       }
       
       @if (teams().length === 0) {
-        <div class="col-span-full py-12 text-center text-muted-foreground bg-muted/30 rounded-lg border border-dashed">
+        <div class="col-span-full py-12 text-center text-muted-foreground bg-muted/30 rounded-lg border border-dashed" i18n>
           No se encontraron equipos.
         </div>
       }

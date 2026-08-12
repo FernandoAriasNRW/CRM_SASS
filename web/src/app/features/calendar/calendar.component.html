@@ -5,10 +5,10 @@
       <p class="text-sm text-muted-foreground">{{ events().length }} eventos este mes</p>
     </div>
     <div class="flex items-center gap-2">
-      <button uiButton variant="outline" size="icon" (click)="prevMonth()">
+      <button uiButton variant="outline" size="icon" i18n-aria-label aria-label="Mes anterior" (click)="prevMonth()">
         <ng-icon name="lucideChevronLeft" size="16" />
       </button>
-      <button uiButton variant="outline" size="icon" (click)="nextMonth()">
+      <button uiButton variant="outline" size="icon" i18n-aria-label aria-label="Mes siguiente" (click)="nextMonth()">
         <ng-icon name="lucideChevronRight" size="16" />
       </button>
       <button uiButton size="sm" (click)="showModal.set(true)">
@@ -35,7 +35,7 @@
             <span class="text-xs font-medium text-muted-foreground">{{ day }}</span>
             <div class="mt-1 space-y-0.5">
               @for (ev of eventsForDay(day); track ev.id) {
-                <div class="rounded px-1.5 py-0.5 bg-primary/10 text-primary text-xs truncate cursor-pointer hover:bg-primary/20 transition-colors"
+                <div class="rounded px-1.5 py-0.5 bg-primary-subtle text-primary-subtle-fg text-xs truncate cursor-pointer hover:bg-primary-subtle transition-colors"
                      [title]="ev.title">
                   {{ ev.title }}
                 </div>
@@ -50,7 +50,7 @@
   <!-- Lista de eventos del mes -->
   @if (events().length > 0) {
     <div class="space-y-2">
-      <h3 class="text-sm font-medium text-muted-foreground">Próximos eventos</h3>
+      <h3 class="text-sm font-medium text-muted-foreground" i18n>Próximos eventos</h3>
       @for (ev of events(); track ev.id) {
         <div class="flex items-start gap-3 rounded-lg border border-border p-3 hover:bg-muted/30 transition-colors">
           <div class="shrink-0 text-center bg-primary/10 rounded-md px-2 py-1 min-w-12">
@@ -81,31 +81,31 @@
   <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
     <div class="w-full max-w-md rounded-lg border border-border bg-card shadow-xl">
       <div class="flex items-center justify-between px-6 py-4 border-b border-border">
-        <h3 class="text-base font-semibold">Nuevo evento</h3>
-        <button (click)="showModal.set(false)" class="text-muted-foreground hover:text-foreground text-lg leading-none">&times;</button>
+        <h3 class="text-base font-semibold" i18n>Nuevo evento</h3>
+        <button (click)="showModal.set(false)" class="text-muted-foreground hover:text-foreground text-lg leading-none" i18n>&times;</button>
       </div>
       <div class="px-6 py-4 space-y-4">
         <div class="space-y-1.5">
-          <label uiLabel for="ev-title">Título *</label>
-          <input uiInput id="ev-title" [(ngModel)]="newTitle" placeholder="Título del evento" />
+          <label uiLabel for="ev-title" i18n>Título *</label>
+          <input uiInput id="ev-title" [(ngModel)]="newTitle" i18n-placeholder placeholder="Título del evento" />
         </div>
         <div class="space-y-1.5">
-          <label uiLabel for="ev-desc">Descripción</label>
-          <input uiInput id="ev-desc" [(ngModel)]="newDescription" placeholder="Descripción opcional" />
+          <label uiLabel for="ev-desc" i18n>Descripción</label>
+          <input uiInput id="ev-desc" [(ngModel)]="newDescription" i18n-placeholder placeholder="Descripción opcional" />
         </div>
         <div class="grid grid-cols-2 gap-3">
           <div class="space-y-1.5">
-            <label uiLabel for="ev-start">Inicio *</label>
+            <label uiLabel for="ev-start" i18n>Inicio *</label>
             <input uiInput id="ev-start" type="datetime-local" [(ngModel)]="newStartsAt" />
           </div>
           <div class="space-y-1.5">
-            <label uiLabel for="ev-end">Fin *</label>
+            <label uiLabel for="ev-end" i18n>Fin *</label>
             <input uiInput id="ev-end" type="datetime-local" [(ngModel)]="newEndsAt" />
           </div>
         </div>
       </div>
       <div class="flex justify-end gap-2 px-6 py-4 border-t border-border">
-        <button uiButton variant="outline" (click)="showModal.set(false)">Cancelar</button>
+        <button uiButton variant="outline" (click)="showModal.set(false)" i18n>Cancelar</button>
         <button uiButton (click)="createEvent()" [disabled]="saving()">
           {{ saving() ? 'Guardando...' : 'Crear evento' }}
         </button>

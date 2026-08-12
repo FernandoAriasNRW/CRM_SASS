@@ -31,48 +31,51 @@ public sealed class WorkTaskInvariantsTests
         tarea.DomainEvents.Should().ContainSingle().Which.Should().BeOfType<TaskCreatedEvent>();
     }
 
+    /// <summary>
+    /// Cualquier estado existente es alcanzable desde cualquier otro.
+    ///
+    /// El dominio tuvo una máquina de estados que restringía las transiciones y se
+    /// retiró a propósito: qué movimiento tiene sentido lo decide quien gestiona el
+    /// trabajo, y las reglas estorbaban en casos reales —reabrir algo dado por hecho,
+    /// mandar a espera algo que ni se empezó— sin evitar ningún dato incorrecto.
+    ///
+    /// Se recorren todas las combinaciones en lugar de una muestra: si alguien reintroduce
+    /// una restricción, este test la detecta sea cual sea.
+    /// </summary>
     [Theory]
-    [InlineData("To Do", "In Progress")]
-    [InlineData("To Do", "Done")]
-    [InlineData("In Progress", "In Review")]
-    [InlineData("In Progress", "On Hold")]
-    [InlineData("In Review", "Done")]
-    [InlineData("Done", "To Do")]
-    public void Las_transiciones_permitidas_cambian_el_estado(string desde, string hasta)
+    [MemberData(nameof(TodasLasCombinaciones))]
+    public void Cualquier_estado_es_alcanzable_desde_cualquier_otro(string desde, string hasta)
     {
         var tarea = NuevaTarea();
-        LlevarA(tarea, desde);
+        tarea.Move(desde);
 
         tarea.Move(hasta);
 
         tarea.Status.Value.ToString().Should().Be(hasta);
     }
 
-    [Theory]
-    [InlineData("To Do", "In Review")]
-    [InlineData("To Do", "On Hold")]
-    [InlineData("In Review", "On Hold")]
-    [InlineData("Done", "In Progress")]
-    [InlineData("On Hold", "Done")]
-    public void Las_transiciones_no_permitidas_se_rechazan(string desde, string hasta)
+    public static TheoryData<string, string> TodasLasCombinaciones()
     {
-        var tarea = NuevaTarea();
-        LlevarA(tarea, desde);
-
-        var mover = () => tarea.Move(hasta);
-
-        mover.Should().Throw<InvalidOperationException>()
-            .WithMessage($"*'{hasta}'*");
+        var estados = new[] { "To Do", "In Progress", "In Review", "Done", "On Hold" };
+        var datos = new TheoryData<string, string>();
+        foreach (var desde in estados)
+            foreach (var hasta in estados)
+                datos.Add(desde, hasta);
+        return datos;
     }
 
     [Fact]
     public void Un_estado_inexistente_no_se_acepta()
     {
+        // Lo único que sigue rechazándose. No es política de flujo: un estado que no
+        // existe es un dato corrupto, y aceptarlo dejaría la tarea en un limbo que
+        // ninguna vista sabría representar.
         var tarea = NuevaTarea();
 
         var mover = () => tarea.Move("Archivada");
 
-        mover.Should().Throw<InvalidOperationException>();
+        mover.Should().Throw<InvalidOperationException>()
+            .WithMessage("*no existe*");
     }
 
     [Fact]
@@ -125,26 +128,4 @@ public sealed class WorkTaskInvariantsTests
         tarea.TagIds.Should().BeEmpty();
     }
 
-    /// <summary>
-    /// Recorre la máquina de estados hasta el estado pedido. No se puede construir una
-    /// tarea directamente en un estado distinto de To Do, que es precisamente la
-    /// invariante que se está protegiendo.
-    /// </summary>
-    private static void LlevarA(WorkTask tarea, string estado)
-    {
-        var camino = estado switch
-        {
-            "To Do" => Array.Empty<string>(),
-            "In Progress" => ["In Progress"],
-            "In Review" => new[] { "In Progress", "In Review" },
-            "Done" => ["Done"],
-            "On Hold" => ["In Progress", "On Hold"],
-            _ => throw new ArgumentException($"Estado no contemplado: {estado}", nameof(estado))
-        };
-
-        foreach (var paso in camino)
-            tarea.Move(paso);
-
-        tarea.ClearDomainEvents();
-    }
 }

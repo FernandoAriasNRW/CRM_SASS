@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal, computed, ViewChild, TemplateRef } from '@angular/core';
+import { Component, OnInit, TemplateRef, ViewChild, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CdkDragDrop, DragDropModule, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
@@ -16,14 +16,28 @@ import {
   lucideLayoutDashboard, lucideFilter, lucideUser, lucideSave
 } from '@ng-icons/lucide';
 import { DataTableComponent, ColumnDef, TableState } from '../../shared/ui/data-table/data-table.component';
-import { AdvancedFiltersComponent, FilterField } from '../../shared/ui/data-table/advanced-filters.component';
+import { FilterField } from '../../shared/ui/data-table/advanced-filters.component';
 import { HasPermissionDirective } from '../../shared/directives/has-permission.directive';
 import { ViewsService, SavedView } from '../../shared/services/views.service';
 import { TableColumnService } from '../../shared/services/table-column.service';
+import { ClickableDirective } from '../../shared/directives/clickable.directive';
+import { ToastService } from '../../shared/services/toast.service';
+import { EmptyInlineComponent } from '../../shared/ui/empty-state.component';
 
-interface Column { key: string; label: string; badge: BadgeVariant; tickets: Ticket[]; }
+interface Column {
+  key: string;
+  label: string;
+  badge: BadgeVariant;
+  /** Lo que se pinta y sobre lo que opera el arrastre. */
+  tickets: Ticket[];
+  /** El resto, aún sin pintar. Se revela por tandas con «mostrar más». */
+  pendientes: Ticket[];
+}
 
-const COLUMN_DEFS: Omit<Column, 'tickets'>[] = [
+/** Tarjetas por columna antes de pedir más. Ver el mismo razonamiento en tasks. */
+const POR_TANDA = 25;
+
+const COLUMN_DEFS: Omit<Column, 'tickets' | 'pendientes'>[] = [
   { key: 'Open',         label: 'Abierto',      badge: 'secondary' },
   { key: 'InProgress',   label: 'En progreso',  badge: 'default'   },
   { key: 'Resolved',     label: 'Resuelto',     badge: 'success'   },
@@ -37,10 +51,10 @@ const STATUS_BADGE: Record<string, BadgeVariant> = {
 @Component({
   selector: 'app-tickets',
   standalone: true,
-  imports: [
+  imports: [ClickableDirective, 
     CommonModule, FormsModule, BadgeComponent, ButtonComponent,
     NgIconComponent, DragDropModule, TicketCreateModalComponent, TicketDetailPanelComponent,
-    DataTableComponent, HasPermissionDirective
+    DataTableComponent, HasPermissionDirective, EmptyInlineComponent
   ],
   viewProviders: [provideIcons({
     lucideRefreshCw, lucidePlus, lucideList,
@@ -49,6 +63,7 @@ const STATUS_BADGE: Record<string, BadgeVariant> = {
   templateUrl: './tickets.component.html',
 })
 export class TicketsComponent implements OnInit {
+  private readonly toast = inject(ToastService);
   private readonly api = inject(ApiService);
   private readonly realtime = inject(RealtimeService);
   private readonly authStore = inject(AuthSignalStore);
@@ -94,7 +109,7 @@ export class TicketsComponent implements OnInit {
   readonly allTickets = signal<Ticket[]>([]);
   totalItems = signal(0);
   
-  cols: Column[] = COLUMN_DEFS.map(c => ({ ...c, tickets: [] as Ticket[] }));
+  cols: Column[] = COLUMN_DEFS.map(c => ({ ...c, tickets: [] as Ticket[], pendientes: [] as Ticket[] }));
   readonly columnIds = COLUMN_DEFS.map(c => c.key);
 
   readonly priorities = computed(() =>
@@ -276,12 +291,31 @@ export class TicketsComponent implements OnInit {
     });
   }
 
+  /**
+   * Reparte los tickets por columna dejando fuera lo que excede la primera tanda.
+   *
+   * El corte se hace aquí y no en la plantilla: `cdkDropListData` y los índices del
+   * arrastre tienen que referirse al mismo array que se pinta.
+   */
   private distributeTicketsToColumns() {
     const tickets = this.allTickets();
-    this.cols = COLUMN_DEFS.map(c => ({
-      ...c,
-      tickets: tickets.filter(t => t.status === c.key)
-    }));
+    this.cols = COLUMN_DEFS.map(c => {
+      const suyos = tickets.filter(t => t.status === c.key);
+      const yaVisibles = this.cols.find(x => x.key === c.key)?.tickets.length ?? 0;
+      const corte = Math.max(POR_TANDA, yaVisibles);
+      return { ...c, tickets: suyos.slice(0, corte), pendientes: suyos.slice(corte) };
+    });
+  }
+
+  /** Revela la siguiente tanda de una columna. */
+  mostrarMas(col: Column): void {
+    col.tickets = [...col.tickets, ...col.pendientes.slice(0, POR_TANDA)];
+    col.pendientes = col.pendientes.slice(POR_TANDA);
+  }
+
+  /** Total real de la columna, contando lo que aún no se pinta. */
+  totalColumna(col: Column): number {
+    return col.tickets.length + col.pendientes.length;
   }
 
   openDetail(ticket: Ticket): void {
@@ -298,21 +332,54 @@ export class TicketsComponent implements OnInit {
     this.distributeTicketsToColumns();
   }
 
+  /**
+   * Mueve el ticket al soltarlo.
+   *
+   * La tarjeta se mueve en pantalla antes de que conteste el servidor, porque esperar la
+   * respuesta se percibe como que el tablero va lento. Eso obliga a poder deshacerlo: si
+   * el servidor rechaza el cambio —permisos, red, un ticket que otro ya modificó— la
+   * tarjeta vuelve a su columna y se avisa.
+   *
+   * Sin la reversión la interfaz miente: la tarjeta se queda donde se soltó y salta a su
+   * sitio en la siguiente recarga, sin explicación.
+   */
   drop(event: CdkDragDrop<Ticket[]>, targetKey: string): void {
     if (event.previousContainer === event.container) {
       moveItemInArray(event.container.data, event.previousIndex, event.currentIndex);
-    } else {
-      const ticket = event.previousContainer.data[event.previousIndex];
-      transferArrayItem(
-        event.previousContainer.data,
-        event.container.data,
-        event.previousIndex,
-        event.currentIndex
-      );
-      this.allTickets.update(tickets =>
-        tickets.map(t => t.id === ticket.id ? { ...t, status: targetKey } : t)
-      );
-      this.api.patch(`/tickets/${ticket.id}`, { status: targetKey }).subscribe();
+      return;
     }
+
+    const ticket = event.previousContainer.data[event.previousIndex];
+    const estadoAnterior = ticket.status;
+
+    transferArrayItem(
+      event.previousContainer.data,
+      event.container.data,
+      event.previousIndex,
+      event.currentIndex
+    );
+    this.allTickets.update(tickets =>
+      tickets.map(t => t.id === ticket.id ? { ...t, status: targetKey } : t)
+    );
+
+    this.api.patch(`/tickets/${ticket.id}`, { status: targetKey }).subscribe({
+      error: () => {
+        // Entre los mismos arrays que usa cdkDropList, no sólo en la señal, o el tablero
+        // quedaría descuadrado respecto a lo que se ve.
+        transferArrayItem(
+          event.container.data,
+          event.previousContainer.data,
+          event.container.data.findIndex(t => t.id === ticket.id),
+          event.previousIndex
+        );
+        this.allTickets.update(tickets =>
+          tickets.map(t => t.id === ticket.id ? { ...t, status: estadoAnterior } : t)
+        );
+
+        this.toast.error(
+          'No se pudo mover el ticket',
+          `«${ticket.title}» sigue en ${estadoAnterior}.`);
+      },
+    });
   }
 }

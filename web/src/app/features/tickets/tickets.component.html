@@ -3,7 +3,7 @@
   <!-- Header & Views Tab Bar (ClickUp Style) -->
   <div class="flex flex-col border-b border-border mb-4 bg-card rounded-t-lg shadow-sm">
     <div class="flex items-center justify-between px-4 py-3">
-      <h2 class="text-xl font-semibold tracking-tight">Tickets</h2>
+      <h2 class="text-xl font-semibold tracking-tight" i18n>Tickets</h2>
       <div class="flex items-center gap-2">
         <button uiButton variant="outline" size="sm" (click)="loadTickets()">
           <ng-icon name="lucideRefreshCw" size="14" class="mr-1.5" /> Actualizar
@@ -13,22 +13,22 @@
         </button>
       </div>
     </div>
-    
+
     <div class="flex items-center px-2 overflow-x-auto">
       <!-- Default Views (if none saved) -->
       @if (savedViews().length === 0) {
         <button (click)="viewMode.set('board')"
-                [class.border-primary]="viewMode() === 'board'"
-                [class.text-primary]="viewMode() === 'board'"
-                [class.border-transparent]="viewMode() !== 'board'"
-                class="flex items-center gap-2 px-4 py-2.5 border-b-2 font-medium text-sm whitespace-nowrap cursor-pointer transition-colors hover:text-foreground">
+          [class.border-primary]="viewMode() === 'board'"
+          [class.text-primary]="viewMode() === 'board'"
+          [class.border-transparent]="viewMode() !== 'board'"
+          class="flex items-center gap-2 px-4 py-2.5 border-b-2 font-medium text-sm whitespace-nowrap cursor-pointer transition-colors hover:text-foreground">
           <ng-icon name="lucideLayoutDashboard" size="14" /> Board
         </button>
         <button (click)="viewMode.set('list')"
-                [class.border-primary]="viewMode() === 'list'"
-                [class.text-primary]="viewMode() === 'list'"
-                [class.border-transparent]="viewMode() !== 'list'"
-                class="flex items-center gap-2 px-4 py-2.5 border-b-2 font-medium text-sm whitespace-nowrap cursor-pointer transition-colors hover:text-foreground">
+          [class.border-primary]="viewMode() === 'list'"
+          [class.text-primary]="viewMode() === 'list'"
+          [class.border-transparent]="viewMode() !== 'list'"
+          class="flex items-center gap-2 px-4 py-2.5 border-b-2 font-medium text-sm whitespace-nowrap cursor-pointer transition-colors hover:text-foreground">
           <ng-icon name="lucideList" size="14" /> Lista
         </button>
       }
@@ -36,10 +36,10 @@
       <!-- Saved Views Tabs -->
       @for (view of savedViews(); track view.id) {
         <button (click)="applySavedView(view)"
-                [class.border-primary]="activeViewId() === view.id"
-                [class.text-primary]="activeViewId() === view.id"
-                [class.border-transparent]="activeViewId() !== view.id"
-                class="flex items-center gap-2 px-4 py-2.5 border-b-2 font-medium text-sm whitespace-nowrap cursor-pointer transition-colors hover:text-foreground">
+          [class.border-primary]="activeViewId() === view.id"
+          [class.text-primary]="activeViewId() === view.id"
+          [class.border-transparent]="activeViewId() !== view.id"
+          class="flex items-center gap-2 px-4 py-2.5 border-b-2 font-medium text-sm whitespace-nowrap cursor-pointer transition-colors hover:text-foreground">
           <ng-icon [name]="getIconForView(view)" size="14" />
           {{ view.viewName }}
         </button>
@@ -52,7 +52,7 @@
         </button>
         <div class="absolute top-full left-0 mt-1 w-48 rounded-lg border border-border bg-card shadow-lg z-10 hidden group-focus-within:block focus-within:block">
           <div class="p-2 space-y-1">
-            <p class="px-2 py-1 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Crear nueva vista</p>
+            <p class="px-2 py-1 text-xs font-semibold text-muted-foreground uppercase tracking-wider" i18n>Crear nueva vista</p>
             <button (click)="createNewView('list')" class="flex items-center gap-2 w-full px-2 py-1.5 text-sm hover:bg-accent rounded-md transition-colors text-left">
               <ng-icon name="lucideList" size="14" /> Lista
             </button>
@@ -72,7 +72,7 @@
         <div class="flex flex-col gap-3">
           <div class="flex items-center justify-between px-1">
             <span class="text-sm font-medium">{{ col.label }}</span>
-            <ui-badge [variant]="col.badge">{{ col.tickets.length }}</ui-badge>
+            <ui-badge [variant]="col.badge">{{ totalColumna(col) }}</ui-badge>
           </div>
           <div cdkDropList
             [id]="col.key"
@@ -82,21 +82,21 @@
             class="flex flex-col gap-2 min-h-28 rounded-lg border border-dashed border-border p-2 transition-colors"
             [class.bg-accent/20]="col.tickets.length === 0">
             @for (ticket of col.tickets; track ticket.id) {
-              <div cdkDrag [cdkDragData]="ticket"
+              <div appClickable cdkDrag [cdkDragData]="ticket"
                 (click)="openDetail(ticket)"
                 class="rounded-lg border border-border bg-card p-3 space-y-2 shadow-sm cursor-pointer hover:shadow-md hover:border-primary/30 transition-all select-none">
                 <div *cdkDragPreview class="rounded-lg border border-primary bg-card p-3 shadow-xl w-48 opacity-90">
                   <p class="text-sm font-medium truncate">{{ ticket.title }}</p>
                 </div>
                 <div *cdkDragPlaceholder class="rounded-lg border-2 border-dashed border-primary/40 bg-primary/5 h-16"></div>
-                
+
                 <div class="flex items-start justify-between gap-2">
                   <p class="text-sm font-medium leading-snug line-clamp-2">{{ ticket.title }}</p>
                   @if (ticket.priority) {
                     <ui-badge variant="outline" class="text-[9px] uppercase tracking-wider shrink-0 bg-background">{{ ticket.priority }}</ui-badge>
                   }
                 </div>
-                
+
                 <div class="flex flex-col gap-1.5 mt-2">
                   <div class="flex items-center justify-between text-xs text-muted-foreground">
                     <span class="truncate pr-2">{{ ticket.customerId ?? 'Sin cliente' }}</span>
@@ -111,10 +111,19 @@
                   </div>
                 </div>
               </div>
-            } @empty {
-              <div class="flex items-center justify-center h-16 text-xs text-muted-foreground">Sin tickets</div>
+              } @empty {
+              <app-empty-inline message="Sin tickets" />
             }
           </div>
+          @if (col.pendientes.length) {
+            <button type="button" (click)="mostrarMas(col)"
+              class="w-full rounded-lg border border-dashed border-border py-2 text-xs
+                     text-muted-foreground hover:bg-accent hover:text-accent-foreground
+                     focus:outline-none focus:ring-2 focus:ring-ring transition-colors">
+              Mostrar {{ col.pendientes.length < 25 ? col.pendientes.length : 25 }} más
+              <span class="text-muted-foreground">({{ col.pendientes.length }} sin mostrar)</span>
+            </button>
+          }
         </div>
       }
     </div>
@@ -141,7 +150,9 @@
   </ng-template>
 
   <ng-template #priorityTemplate let-item>
-    <ui-badge *ngIf="item.priority" variant="outline" class="uppercase tracking-wider shrink-0 bg-background">{{ item.priority }}</ui-badge>
+    @if (item.priority) {
+      <ui-badge variant="outline" class="uppercase tracking-wider shrink-0 bg-background">{{ item.priority }}</ui-badge>
+    }
   </ng-template>
 
 </div>
@@ -155,5 +166,5 @@
     [ticket]="selectedTicket()!"
     (closed)="selectedTicket.set(null)"
     (updated)="onTicketUpdated($event)"
-  />
-}
+    />
+  }

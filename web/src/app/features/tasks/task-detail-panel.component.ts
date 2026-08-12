@@ -1,4 +1,4 @@
-import { Component, inject, input, output, signal, OnInit, computed, effect } from '@angular/core';
+import { Component, inject, input, output, signal, OnInit, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DatePipe } from '@angular/common';
 import { ApiService } from '../../core/api.service';
@@ -16,6 +16,7 @@ import {
 import { DrawerComponent } from '../../shared/ui/drawer.component';
 import type { TaskItem } from './task-create-modal.component';
 import { TASK_TAGS, type Tag } from '../../shared/utils/tags';
+import { ClickableDirective } from '../../shared/directives/clickable.directive';
 
 interface Comment {
   id: string;
@@ -26,10 +27,10 @@ interface Comment {
 }
 
 const PRIORITIES = [
-  { key: 'urgent',  label: 'Urgente',  icon: 'lucideAlertCircle', color: 'text-red-500' },
-  { key: 'high',    label: 'Alta',     icon: 'lucideArrowUp',     color: 'text-orange-500' },
-  { key: 'normal',  label: 'Normal',   icon: 'lucideMinus',       color: 'text-blue-500' },
-  { key: 'low',     label: 'Baja',     icon: 'lucideArrowDown',   color: 'text-gray-400' },
+  { key: 'urgent',  label: 'Urgente',  icon: 'lucideAlertCircle', color: 'text-destructive' },
+  { key: 'high',    label: 'Alta',     icon: 'lucideArrowUp',     color: 'text-warning' },
+  { key: 'normal',  label: 'Normal',   icon: 'lucideMinus',       color: 'text-primary' },
+  { key: 'low',     label: 'Baja',     icon: 'lucideArrowDown',   color: 'text-muted-foreground' },
 ];
 
 const STATUSES = ['To Do', 'In Progress', 'In Review', 'Done'];
@@ -41,7 +42,7 @@ const STATUS_BADGE: Record<string, BadgeVariant> = {
 @Component({
   selector: 'app-task-detail-panel',
   standalone: true,
-  imports: [FormsModule, DatePipe, BadgeComponent, AvatarComponent, NgIconComponent, SkeletonComponent, DrawerComponent],
+  imports: [ClickableDirective, FormsModule, DatePipe, BadgeComponent, AvatarComponent, NgIconComponent, SkeletonComponent, DrawerComponent],
   viewProviders: [provideIcons({
     lucideX, lucideCheck, lucideCalendar, lucideClock, lucideUser,
     lucideTag, lucideFlag, lucideMessageSquare, lucidePaperclip,

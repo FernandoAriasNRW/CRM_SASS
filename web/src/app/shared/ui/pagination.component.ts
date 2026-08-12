@@ -1,6 +1,5 @@
 import { Component, input, output, computed } from '@angular/core';
 import { NgIconComponent } from '@ng-icons/core';
-import { lucideChevronLeft, lucideChevronRight, lucideChevronsLeft, lucideChevronsRight } from '@ng-icons/lucide';
 
 export interface PaginationState {
   page: number;

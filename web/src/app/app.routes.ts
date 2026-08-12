@@ -25,6 +25,9 @@ export const routes: Routes = [
         loadChildren: () => import('./features/docs/docs.routes')
       },
       { path: 'webhooks',     redirectTo: '/admin' },
+      // Guía de diseño viva. Va detrás de la sesión como el resto de la aplicación:
+      // no es documentación pública, es una herramienta del equipo.
+      { path: 'design-system', loadComponent: () => import('./features/design-system/design-system.component').then(m => m.DesignSystemComponent) },
       { path: 'profile',      loadComponent: () => import('./features/profile/profile.component').then(m => m.ProfileComponent) },
       { path: 'admin',        loadComponent: () => import('./features/admin/admin.component').then(m => m.AdminComponent), canActivate: [adminGuard] },
       { path: 'admin/users',  loadComponent: () => import('./features/admin/admin.component').then(m => m.AdminComponent), canActivate: [adminGuard] },

@@ -1,5 +1,5 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../../core/api.service';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
@@ -9,6 +9,7 @@ import {
   lucideWebhook, lucideUsers, lucideBarChart3, lucideSettings, lucideLoader2
 } from '@ng-icons/lucide';
 import { GranularPermissionsModalComponent } from './granular-permissions-modal.component';
+import { ClickableDirective } from '../../../shared/directives/clickable.directive';
 
 export interface RoleMatrixRow {
   key: string;
@@ -23,7 +24,7 @@ export interface RoleMatrixRow {
 @Component({
   selector: 'app-admin-permissions',
   standalone: true,
-  imports: [CommonModule, FormsModule, NgIconComponent, GranularPermissionsModalComponent],
+  imports: [ClickableDirective, FormsModule, NgIconComponent, GranularPermissionsModalComponent],
   viewProviders: [
     provideIcons({
       lucideShieldCheck, lucideLock, lucideCheck, lucideX,

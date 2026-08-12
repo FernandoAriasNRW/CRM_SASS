@@ -1,30 +1,30 @@
-<app-drawer [isOpen]="true" (closed)="close()" title="Nuevo Proyecto" subtitle="Crea un nuevo proyecto en tu espacio de trabajo">
+<app-drawer [isOpen]="true" (closed)="close()" i18n-title title="Nuevo Proyecto" subtitle="Crea un nuevo proyecto en tu espacio de trabajo">
   <div class="space-y-4">
     <div class="space-y-1.5">
-      <label uiLabel for="proj-name">Nombre del Proyecto *</label>
-      <input uiInput id="proj-name" [(ngModel)]="name" placeholder="Nombre del proyecto" />
+      <label uiLabel for="proj-name" i18n>Nombre del Proyecto *</label>
+      <input uiInput id="proj-name" [(ngModel)]="name" i18n-placeholder placeholder="Nombre del proyecto" />
     </div>
     <div class="space-y-1.5">
-      <label uiLabel for="proj-desc">Descripción</label>
-      <textarea uiInput id="proj-desc" [(ngModel)]="description" rows="3" placeholder="Describe los objetivos del proyecto" class="w-full px-3 py-2 border border-input rounded-md bg-background text-sm resize-none focus:ring-2 focus:ring-ring outline-none transition-all"></textarea>
+      <label uiLabel for="proj-desc" i18n>Descripción</label>
+      <textarea uiInput id="proj-desc" [(ngModel)]="description" rows="3" i18n-placeholder placeholder="Describe los objetivos del proyecto" class="w-full px-3 py-2 border border-input rounded-md bg-background text-sm resize-none focus:ring-2 focus:ring-ring outline-none transition-all"></textarea>
     </div>
     <div class="space-y-1.5">
-      <label uiLabel for="proj-date">Fecha Estimada de Fin *</label>
+      <label uiLabel for="proj-date" i18n>Fecha Estimada de Fin *</label>
       <input uiInput id="proj-date" type="date" [(ngModel)]="estimatedEndDate" />
     </div>
     <div class="space-y-1.5">
-      <label uiLabel for="proj-space">Space *</label>
+      <label uiLabel for="proj-space" i18n>Space *</label>
       <select uiInput id="proj-space" [(ngModel)]="spaceId" (change)="onSpaceChange()">
-        <option value="" disabled>Seleccionar Space</option>
+        <option value="" disabled i18n>Seleccionar Space</option>
         @for (space of spaces(); track space.id) {
           <option [value]="space.id">{{ space.name }}</option>
         }
       </select>
     </div>
     <div class="space-y-1.5">
-      <label uiLabel for="proj-folder">Folder (Opcional)</label>
+      <label uiLabel for="proj-folder" i18n>Folder (Opcional)</label>
       <select uiInput id="proj-folder" [(ngModel)]="folderId" [disabled]="!spaceId">
-        <option value="">Sin Folder</option>
+        <option value="" i18n>Sin Folder</option>
         @for (folder of folders(); track folder.id) {
           <option [value]="folder.id">{{ folder.name }}</option>
         }
@@ -36,7 +36,7 @@
   </div>
 
   <div drawer-footer class="flex justify-end gap-2 w-full">
-    <button uiButton variant="outline" (click)="close()">Cancelar</button>
+    <button uiButton variant="outline" (click)="close()" i18n>Cancelar</button>
     <button uiButton (click)="submit()" [disabled]="loading()">
       {{ loading() ? 'Creando...' : 'Crear Proyecto' }}
     </button>

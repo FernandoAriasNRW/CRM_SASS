@@ -58,21 +58,22 @@ public sealed class TicketStatus : Enumeration
   {
   }
 
-  public bool CanTransitionTo(TicketStatus newStatus)
-  {
-    return (this, newStatus) switch
-    {
-      (var s, var n) when s == Open && (n == InProgress || n == PendingInfo || n == Resolved || n == Closed) => true,
-
-      (var s, var n) when s == InProgress && (n == PendingInfo || n == Resolved || n == Open || n == Closed) => true,
-
-      (var s, var n) when s == PendingInfo && (n == InProgress || n == Closed || n == Resolved || n == Open) => true,
-
-      (var s, var n) when s == Resolved && (n == Closed || n == InProgress || n == PendingInfo || n == Open) => true,
-
-      _ => false
-    };
-  }
+  /// <summary>
+  /// Indica si se puede pasar a otro estado. Siempre se puede.
+  ///
+  /// Antes había una máquina de estados en la que <c>Closed</c> era terminal. Se retiró
+  /// junto con la de las tareas y por el mismo motivo: qué movimiento tiene sentido lo
+  /// decide quien gestiona el trabajo, no el sistema, y en un tablero la regla se
+  /// traducía en tarjetas que no se dejaban arrastrar sin explicar por qué.
+  ///
+  /// Reabrir un ticket cerrado es la consecuencia más visible. Algunos helpdesks lo
+  /// bloquean a propósito; si aquí se quisiera bloquear, este es el único sitio donde
+  /// habría que volver a decidirlo.
+  ///
+  /// Se conserva el método en lugar de borrarlo para no cambiar las llamadas existentes,
+  /// que siguen comprobando el resultado.
+  /// </summary>
+  public bool CanTransitionTo(TicketStatus newStatus) => true;
 
   public static IReadOnlyList<TicketStatus> All() => GetAll<TicketStatus>();
 }

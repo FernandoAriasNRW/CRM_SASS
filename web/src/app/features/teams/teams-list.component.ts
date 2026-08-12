@@ -1,5 +1,5 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import { lucideUsers, lucidePlus, lucideEye } from '@ng-icons/lucide';
@@ -11,7 +11,7 @@ import { TeamFormComponent } from './team-form.component';
 @Component({
   selector: 'app-teams-list',
   standalone: true,
-  imports: [CommonModule, RouterModule, NgIconComponent, ButtonComponent, TeamFormComponent],
+  imports: [RouterModule, NgIconComponent, ButtonComponent, TeamFormComponent],
   viewProviders: [provideIcons({ lucideUsers, lucidePlus, lucideEye })],
   templateUrl: './teams-list.component.html'
 })

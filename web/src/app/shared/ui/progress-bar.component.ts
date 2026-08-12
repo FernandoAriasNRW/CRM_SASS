@@ -31,9 +31,9 @@ export class ProgressBarComponent {
 
   colorClass(): string {
     const pct = this.value();
-    if (pct >= 80) return 'bg-green-500';
-    if (pct >= 50) return 'bg-blue-500';
-    if (pct >= 25) return 'bg-amber-500';
-    return 'bg-slate-400';
+    if (pct >= 80) return 'bg-success';
+    if (pct >= 50) return 'bg-primary';
+    if (pct >= 25) return 'bg-warning';
+    return 'bg-muted-foreground';
   }
 }

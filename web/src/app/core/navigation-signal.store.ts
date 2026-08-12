@@ -28,7 +28,11 @@ export interface SidebarPreferences {
   recentViews?: any[]; // We use any[] here to avoid circular dependency, typed in the service
 }
 
-const DEFAULT_NAV_ITEMS: NavItem[] = [
+/**
+ * Secciones de la aplicación. Se exporta para que la paleta de comandos ofrezca las
+ * mismas y no una copia que se desincronice al añadir o quitar una sección.
+ */
+export const DEFAULT_NAV_ITEMS: NavItem[] = [
   { id: 'home', label: 'Home', icon: 'lucideHome', route: '/', hasSubmenu: true, isHome: true, hasCustomizer: true },
   { id: 'dashboard', label: 'Dashboard', icon: 'lucideLayoutDashboard', route: '/dashboard', hasSubmenu: true, hasCustomizer: true },
   { id: 'docs', label: 'Docs', icon: 'lucideFileText', route: '/docs', hasSubmenu: true, hasCustomizer: true },

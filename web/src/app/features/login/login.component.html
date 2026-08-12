@@ -1,19 +1,19 @@
 <div class="min-h-screen flex items-center justify-center bg-background px-4">
   <ui-card class="w-full max-w-sm">
     <ui-card-header>
-      <ui-card-title>Iniciar sesión</ui-card-title>
-      <ui-card-description>Ingresa tus credenciales para continuar</ui-card-description>
+      <ui-card-title [level]="1" i18n>Iniciar sesión</ui-card-title>
+      <ui-card-description i18n>Ingresa tus credenciales para continuar</ui-card-description>
     </ui-card-header>
 
     <ui-card-content>
       <form (ngSubmit)="login()" class="space-y-4">
         <div class="space-y-1.5">
-          <label uiLabel for="email">Email</label>
+          <label uiLabel for="email" i18n>Email</label>
           <input uiInput id="email" type="email" [(ngModel)]="email" name="email"
-                 placeholder="admin@acme.com" />
+                 i18n-placeholder placeholder="admin@acme.com" />
         </div>
         <div class="space-y-1.5">
-          <label uiLabel for="password">Contraseña</label>
+          <label uiLabel for="password" i18n>Contraseña</label>
           <input uiInput id="password" type="password" [(ngModel)]="password" name="password"
                  placeholder="••••••••" />
         </div>
@@ -29,7 +29,7 @@
     </ui-card-content>
 
     <ui-card-footer>
-      <p class="text-xs text-muted-foreground">Demo: admin&#64;acme.com / admin123</p>
+      <p class="text-xs text-muted-foreground" i18n>Demo: admin&#64;acme.com / admin123</p>
     </ui-card-footer>
   </ui-card>
 </div>

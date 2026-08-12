@@ -51,30 +51,41 @@ public sealed class TicketInvariantsTests
     }
 
     [Fact]
-    public void Cerrado_es_terminal()
+    public void Un_ticket_cerrado_puede_reabrirse()
     {
         var ticket = NuevoTicket();
         ticket.ChangeStatus(TicketStatus.Closed).Should().BeTrue();
 
-        // Desde Closed no hay ninguna transición definida. Se comprueba explícitamente
-        // porque reabrir un ticket cerrado es una petición habitual: si algún día se
-        // permite, debe ser una decisión consciente y este test tendrá que cambiar.
-        ticket.ChangeStatus(TicketStatus.Open).Should().BeFalse();
-        ticket.ChangeStatus(TicketStatus.InProgress).Should().BeFalse();
-        ticket.StatusValue.Should().Be(TicketStatus.Closed.Value);
+        // Closed fue terminal y dejó de serlo con la retirada de la máquina de estados:
+        // en un tablero, esa regla se traducía en una tarjeta que no se dejaba arrastrar
+        // sin explicar por qué. Si algún día vuelve a bloquearse, será una decisión
+        // consciente y este test tendrá que cambiar.
+        ticket.ChangeStatus(TicketStatus.Open).Should().BeTrue();
+
+        ticket.StatusValue.Should().Be(TicketStatus.Open.Value);
     }
 
-    [Fact]
-    public void Una_transicion_rechazada_no_altera_el_estado_ni_emite_evento()
+    [Theory]
+    [MemberData(nameof(TodasLasCombinaciones))]
+    public void Cualquier_estado_es_alcanzable_desde_cualquier_otro(int desde, int hasta)
     {
+        var origen = TicketStatus.All().Single(s => s.Value == desde);
+        var destino = TicketStatus.All().Single(s => s.Value == hasta);
         var ticket = NuevoTicket();
-        ticket.ChangeStatus(TicketStatus.Closed);
-        ticket.ClearDomainEvents();
+        ticket.ChangeStatus(origen);
 
-        ticket.ChangeStatus(TicketStatus.Resolved).Should().BeFalse();
+        ticket.ChangeStatus(destino).Should().BeTrue();
 
-        ticket.StatusValue.Should().Be(TicketStatus.Closed.Value);
-        ticket.DomainEvents.Should().BeEmpty();
+        ticket.StatusValue.Should().Be(destino.Value);
+    }
+
+    public static TheoryData<int, int> TodasLasCombinaciones()
+    {
+        var datos = new TheoryData<int, int>();
+        foreach (var desde in TicketStatus.All())
+            foreach (var hasta in TicketStatus.All())
+                datos.Add(desde.Value, hasta.Value);
+        return datos;
     }
 
     [Fact]

@@ -17,8 +17,18 @@ export default defineConfig({
   workers: process.env['CI'] ? 1 : undefined,
   reporter: process.env['CI'] ? [['github'], ['html', { open: 'never' }]] : [['list']],
 
+  // El servidor de desarrollo compila cada ruta perezosa la primera vez que se pide.
+  // Con varios workers entrando a la vez, esa compilación se acumula y una espera de 15 s
+  // se queda corta de forma intermitente. Se amplía el margen por defecto en lugar de
+  // reducir la paralelización, que multiplicaría el tiempo total de la suite.
+  timeout: 60_000,
+  expect: { timeout: 10_000 },
+
   use: {
-    baseURL: 'http://localhost:4200',
+    // Puerto propio, distinto del 4200 que publica docker-compose para la aplicación.
+    // Compartirlo hacía que la suite se ejecutara contra el contenedor —una build de
+    // producción, sin los cambios en curso— y fallara por código que sí era correcto.
+    baseURL: 'http://localhost:4300',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
   },
@@ -28,9 +38,19 @@ export default defineConfig({
   ],
 
   webServer: {
-    command: 'npm start',
-    url: 'http://localhost:4200',
-    reuseExistingServer: !process.env['CI'],
+    command: 'npm start -- --port 4300',
+    url: 'http://localhost:4300',
+
+    // Nunca reutilizar lo que ya escuche en el puerto, ni siquiera en local.
+    //
+    // `reuseExistingServer` sólo comprueba que el puerto responda, no que responda ESTA
+    // aplicación: si otro proceso lo ocupa, la suite se ejecuta contra él y falla entera
+    // sin ninguna pista del motivo. Pasó con el contenedor que docker-compose publica en
+    // el 4200, que sirve una build de producción: los E2E fallaban por código correcto.
+    //
+    // Con un puerto propio la colisión no debería ocurrir; si ocurre, esto la convierte
+    // en un error explícito en lugar de en horas de depuración.
+    reuseExistingServer: false,
     timeout: 180_000,
   },
 });

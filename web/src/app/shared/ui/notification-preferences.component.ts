@@ -80,7 +80,7 @@ import { WebPushService, NotificationPreferences } from '../../shared/services/w
                       </button>
                       <button
                         (click)="unsubscribePush()"
-                        class="text-xs px-3 py-1.5 rounded-md border border-destructive/50 text-destructive hover:bg-destructive/10 transition-colors"
+                        class="text-xs px-3 py-1.5 rounded-md border border-destructive/50 text-destructive-subtle-fg hover:bg-destructive-subtle transition-colors"
                       >
                         Desactivar
                       </button>

@@ -1,5 +1,5 @@
-import { Component, inject, OnInit, signal, computed, ViewChild, TemplateRef, effect } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, TemplateRef, ViewChild, computed, effect, inject, signal } from '@angular/core';
+
 import { FormsModule } from '@angular/forms';
 import { CdkDragDrop, DragDropModule, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
 import { ActivatedRoute } from '@angular/router';
@@ -15,14 +15,36 @@ import {
   lucideList, lucideLayoutDashboard, lucideFilter, lucideSave
 } from '@ng-icons/lucide';
 import { DataTableComponent, ColumnDef, TableState } from '../../shared/ui/data-table/data-table.component';
-import { AdvancedFiltersComponent, FilterField } from '../../shared/ui/data-table/advanced-filters.component';
+import { FilterField } from '../../shared/ui/data-table/advanced-filters.component';
 import { ViewsService, SavedView } from '../../shared/services/views.service';
 import { TableColumnService } from '../../shared/services/table-column.service';
 import { HierarchySignalStore } from '../../core/hierarchy-signal.store';
+import { ClickableDirective } from '../../shared/directives/clickable.directive';
+import { ToastService } from '../../shared/services/toast.service';
+import { SkeletonListComponent } from '../../shared/ui/skeleton.component';
+import { EmptyInlineComponent } from '../../shared/ui/empty-state.component';
 
-export interface Column { key: string; label: string; badge: BadgeVariant; tasks: TaskItem[]; }
+export interface Column {
+  key: string;
+  label: string;
+  badge: BadgeVariant;
+  /** Lo que se pinta y sobre lo que opera el arrastre. */
+  tasks: TaskItem[];
+  /** El resto, aún sin pintar. Se revela por tandas con «mostrar más». */
+  pendientes: TaskItem[];
+}
 
-const COLUMN_DEFS: Omit<Column, 'tasks'>[] = [
+/**
+ * Tarjetas que se pintan por columna antes de pedir más.
+ *
+ * El tablero trae hasta 1000 tareas de una vez; pintarlas todas llenaba el DOM de
+ * tarjetas que nadie llega a mirar, y una columna con cientos de elementos arrastrables
+ * se nota al desplazarse. Un tablero se lee por arriba: lo que no cabe en una pantalla
+ * casi nunca se consulta sin filtrar antes.
+ */
+const POR_TANDA = 25;
+
+const COLUMN_DEFS: Omit<Column, 'tasks' | 'pendientes'>[] = [
   { key: 'To Do',       label: 'Por hacer',  badge: 'secondary' },
   { key: 'In Progress', label: 'En progreso', badge: 'default'   },
   { key: 'In Review',   label: 'En revisión', badge: 'warning'   },
@@ -36,11 +58,7 @@ const STATUS_BADGE: Record<string, BadgeVariant> = {
 @Component({
   selector: 'app-tasks',
   standalone: true,
-  imports: [
-    CommonModule, FormsModule, BadgeComponent, ButtonComponent,
-    NgIconComponent, DragDropModule, TaskCreateModalComponent, TaskDetailPanelComponent,
-    DataTableComponent
-  ],
+  imports: [ClickableDirective, FormsModule, BadgeComponent, ButtonComponent, NgIconComponent, DragDropModule, TaskCreateModalComponent, TaskDetailPanelComponent, DataTableComponent, SkeletonListComponent, EmptyInlineComponent],
   viewProviders: [provideIcons({
     lucideRefreshCw, lucidePlus, lucideClock,
     lucideList, lucideLayoutDashboard, lucideFilter, lucideSave
@@ -48,6 +66,7 @@ const STATUS_BADGE: Record<string, BadgeVariant> = {
   templateUrl: './tasks.component.html',
 })
 export class TasksComponent implements OnInit {
+  private readonly toast = inject(ToastService);
   private readonly api = inject(ApiService);
   private readonly realtime = inject(RealtimeService);
   private readonly viewsService = inject(ViewsService);
@@ -93,7 +112,7 @@ export class TasksComponent implements OnInit {
   readonly allTasks = signal<TaskItem[]>([]);
   totalItems = signal(0);
   
-  cols: Column[] = COLUMN_DEFS.map(c => ({ ...c, tasks: [] as TaskItem[] }));
+  cols: Column[] = COLUMN_DEFS.map(c => ({ ...c, tasks: [] as TaskItem[], pendientes: [] as TaskItem[] }));
   readonly columnIds = COLUMN_DEFS.map(c => c.key);
 
   readonly projectOptions = computed(() => {
@@ -297,12 +316,36 @@ export class TasksComponent implements OnInit {
     });
   }
 
+  /**
+   * Reparte las tareas por columna, dejando fuera de la vista lo que excede la primera
+   * tanda.
+   *
+   * El corte se hace aquí y no en la plantilla a propósito: `cdkDropListData` y los
+   * índices que maneja el arrastre tienen que referirse al MISMO array que se pinta. Si
+   * la plantilla mostrara un `slice` mientras el arrastre opera sobre la lista completa,
+   * los índices no coincidirían y las tarjetas acabarían en posiciones equivocadas.
+   */
   private distributeTasksToColumns() {
     const tasks = this.allTasks();
-    this.cols = COLUMN_DEFS.map(c => ({
-      ...c,
-      tasks: tasks.filter(t => t.status === c.key)
-    }));
+    this.cols = COLUMN_DEFS.map(c => {
+      const suyas = tasks.filter(t => t.status === c.key);
+      // Se conserva lo ya revelado al recargar: si alguien pulsó «mostrar más» y luego
+      // llega una actualización, volver a esconderlo sería desconcertante.
+      const yaVisibles = this.cols.find(x => x.key === c.key)?.tasks.length ?? 0;
+      const corte = Math.max(POR_TANDA, yaVisibles);
+      return { ...c, tasks: suyas.slice(0, corte), pendientes: suyas.slice(corte) };
+    });
+  }
+
+  /** Revela la siguiente tanda de una columna. */
+  mostrarMas(col: Column): void {
+    col.tasks = [...col.tasks, ...col.pendientes.slice(0, POR_TANDA)];
+    col.pendientes = col.pendientes.slice(POR_TANDA);
+  }
+
+  /** Total real de la columna, contando lo que aún no se pinta. */
+  totalColumna(col: Column): number {
+    return col.tasks.length + col.pendientes.length;
   }
 
   openDetail(task: TaskItem): void {
@@ -319,23 +362,58 @@ export class TasksComponent implements OnInit {
     this.distributeTasksToColumns();
   }
 
+  /**
+   * Mueve la tarjeta al soltarla.
+   *
+   * La tarjeta se mueve en pantalla antes de que conteste el servidor, porque esperar la
+   * respuesta se percibe como que el tablero va lento. La contrapartida es que hay que
+   * poder deshacerlo: si el servidor rechaza el movimiento —una transición no permitida,
+   * un problema de permisos, la red— la tarjeta vuelve a su columna y se avisa.
+   *
+   * Sin esa reversión la interfaz miente: la tarjeta se queda donde el usuario la soltó y
+   * salta a su sitio en la siguiente recarga, sin explicación.
+   */
   drop(event: CdkDragDrop<TaskItem[]>, targetKey: string): void {
     if (event.previousContainer === event.container) {
       moveItemInArray(event.container.data, event.previousIndex, event.currentIndex);
-    } else {
-      const task = event.previousContainer.data[event.previousIndex];
-      transferArrayItem(
-        event.previousContainer.data,
-        event.container.data,
-        event.previousIndex,
-        event.currentIndex
-      );
-      this.allTasks.update(tasks =>
-        tasks.map(t => t.id === task.id ? { ...t, status: targetKey } : t)
-      );
-      this.api.post(`/tasks/${task.id}/move`, { newStatus: targetKey }).subscribe();
+      return;
     }
+
+    const task = event.previousContainer.data[event.previousIndex];
+    const estadoAnterior = task.status;
+
+    transferArrayItem(
+      event.previousContainer.data,
+      event.container.data,
+      event.previousIndex,
+      event.currentIndex
+    );
+    this.allTasks.update(tasks =>
+      tasks.map(t => t.id === task.id ? { ...t, status: targetKey } : t)
+    );
+
+    this.api.post(`/tasks/${task.id}/move`, { newStatus: targetKey }).subscribe({
+      error: () => {
+        // Devolver la tarjeta a su columna. Se mueve entre los mismos arrays que usa el
+        // cdkDropList, no sólo en la señal, o el tablero quedaría descuadrado respecto a
+        // lo que se ve.
+        transferArrayItem(
+          event.container.data,
+          event.previousContainer.data,
+          event.container.data.findIndex(t => t.id === task.id),
+          event.previousIndex
+        );
+        this.allTasks.update(tasks =>
+          tasks.map(t => t.id === task.id ? { ...t, status: estadoAnterior } : t)
+        );
+
+        this.toast.error(
+          'No se pudo mover la tarea',
+          `«${task.title}» sigue en ${estadoAnterior}.`);
+      },
+    });
   }
+
 
   readonly statuses = ['To Do', 'In Progress', 'In Review', 'Done'];
 }

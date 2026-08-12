@@ -49,12 +49,17 @@ public sealed class WorkTask : AggregateRoot, ITenantEntity
         return task;
     }
 
+    /// <summary>
+    /// Cambia el estado de la tarea.
+    ///
+    /// Se admite cualquier estado existente, sin restringir desde cuál se viene: qué
+    /// movimiento tiene sentido lo decide quien gestiona el trabajo. Sólo se rechaza un
+    /// estado que no exista, que sería un dato corrupto.
+    /// </summary>
     public void Move(string newStatus)
     {
-        var validTransitions = TaskStatus.GetValidTransitions(Status.Value.ToString());
-
-        if (!validTransitions.Contains(newStatus))
-            throw new InvalidOperationException($"Transición inválida de '{Status.Value}' a '{newStatus}'");
+        if (!TaskStatus.Existe(newStatus))
+            throw new InvalidOperationException($"El estado '{newStatus}' no existe");
 
         var oldStatus = Status;
         Status = new TaskStatus(newStatus, newStatus);

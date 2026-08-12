@@ -1,5 +1,5 @@
 import { Component, inject, OnInit, signal, computed, ViewChild, TemplateRef } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ApiService } from '../../../core/api.service';
@@ -27,14 +27,13 @@ import { DrawerComponent } from '../../../shared/ui/drawer.component';
   selector: 'app-admin-users',
   standalone: true,
   imports: [
-    CommonModule,
     FormsModule,
     NgIconComponent,
     DataTableComponent,
     AdvancedFiltersComponent,
     GranularPermissionsModalComponent,
     DrawerComponent
-  ],
+],
   viewProviders: [provideIcons({ lucidePlus, lucideTrash2, lucideEdit, lucideUsers, lucideX, lucideDatabase, lucideRefreshCw, lucideShieldCheck })],
   templateUrl: './admin-users.component.html',
 })
