@@ -302,7 +302,7 @@
         <source> Cancelar </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/admin/permissions/granular-permissions-modal.component.html</context>
-          <context context-type="linenumber">122</context>
+          <context context-type="linenumber">122,123</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/admin/teams/admin-teams.component.html</context>
@@ -318,7 +318,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/webhooks/webhooks.component.html</context>
-          <context context-type="linenumber">302</context>
+          <context context-type="linenumber">302,303</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/ui/sidebar-customizer.component.html</context>
@@ -777,7 +777,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/webhooks/webhooks.component.html</context>
-          <context context-type="linenumber">308</context>
+          <context context-type="linenumber">308,309</context>
         </context-group>
       </trans-unit>
       <trans-unit id="1815124712361394770" datatype="html">
@@ -907,7 +907,7 @@
         <source> Favorites </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
-          <context context-type="linenumber">104</context>
+          <context context-type="linenumber">104,105</context>
         </context-group>
       </trans-unit>
       <trans-unit id="5851911772269703602" datatype="html">
@@ -921,14 +921,14 @@
         <source> Recent Pages </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
-          <context context-type="linenumber">130</context>
+          <context context-type="linenumber">130,131</context>
         </context-group>
       </trans-unit>
       <trans-unit id="1619146941220159347" datatype="html">
         <source> Popular Wikis </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
-          <context context-type="linenumber">147</context>
+          <context context-type="linenumber">147,148</context>
         </context-group>
       </trans-unit>
       <trans-unit id="5735787597060405220" datatype="html">
@@ -963,14 +963,14 @@
         <source> Export HTML </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
-          <context context-type="linenumber">206</context>
+          <context context-type="linenumber">206,207</context>
         </context-group>
       </trans-unit>
       <trans-unit id="1183490736564333693" datatype="html">
         <source> Export PDF </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
-          <context context-type="linenumber">209</context>
+          <context context-type="linenumber">209,210</context>
         </context-group>
       </trans-unit>
       <trans-unit id="808224684930071116" datatype="html">
@@ -1625,7 +1625,7 @@
         <source>Cargando información...</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/profile/profile.component.html</context>
-          <context context-type="linenumber">172,173</context>
+          <context context-type="linenumber">172,174</context>
         </context-group>
       </trans-unit>
       <trans-unit id="7973037551936211628" datatype="html">
@@ -1793,7 +1793,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/webhooks/webhooks.component.html</context>
-          <context context-type="linenumber">264</context>
+          <context context-type="linenumber">264,265</context>
         </context-group>
       </trans-unit>
       <trans-unit id="1872099000671699527" datatype="html">
@@ -2136,7 +2136,7 @@
         <source>Equipo encargado de...</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/teams/team-form.component.html</context>
-          <context context-type="linenumber">11</context>
+          <context context-type="linenumber">11,12</context>
         </context-group>
       </trans-unit>
       <trans-unit id="1704927142412128979" datatype="html">
@@ -2150,7 +2150,7 @@
         <source> No se encontraron equipos. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/teams/teams-list.component.html</context>
-          <context context-type="linenumber">50</context>
+          <context context-type="linenumber">50,51</context>
         </context-group>
       </trans-unit>
       <trans-unit id="4531372279467575442" datatype="html">
@@ -2164,14 +2164,14 @@
         <source> Hemos recibido tu solicitud. Recibirás un email de confirmación pronto. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tickets/public-ticket-form.component.html</context>
-          <context context-type="linenumber">12</context>
+          <context context-type="linenumber">12,13</context>
         </context-group>
       </trans-unit>
       <trans-unit id="6313194474051044764" datatype="html">
         <source> Enviar otro ticket </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tickets/public-ticket-form.component.html</context>
-          <context context-type="linenumber">17</context>
+          <context context-type="linenumber">17,18</context>
         </context-group>
       </trans-unit>
       <trans-unit id="8591064715277983358" datatype="html">
@@ -2410,7 +2410,7 @@
         <source> Crea tu primer webhook para recibir notificaciones de eventos en tu sistema CRM. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/webhooks/webhooks.component.html</context>
-          <context context-type="linenumber">81</context>
+          <context context-type="linenumber">81,82</context>
         </context-group>
       </trans-unit>
       <trans-unit id="2436598525808150988" datatype="html">
@@ -2452,7 +2452,7 @@
         <source> ¿Estás seguro de que deseas eliminar este webhook? Se perderán todas las configuraciones y estadísticas asociadas. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/webhooks/webhooks.component.html</context>
-          <context context-type="linenumber">293</context>
+          <context context-type="linenumber">293,294</context>
         </context-group>
       </trans-unit>
       <trans-unit id="7337528189751824652" datatype="html">
@@ -2508,7 +2508,7 @@
         <source>Anclar</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/ui/sidebar-customizer.component.html</context>
-          <context context-type="linenumber">72,73</context>
+          <context context-type="linenumber">73</context>
         </context-group>
       </trans-unit>
       <trans-unit id="8382160621233276004" datatype="html">
@@ -2536,7 +2536,7 @@
         <source>Quitar</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/ui/submenu-customizer.component.html</context>
-          <context context-type="linenumber">36,37</context>
+          <context context-type="linenumber">37</context>
         </context-group>
       </trans-unit>
       <trans-unit id="4276482197750576317" datatype="html">

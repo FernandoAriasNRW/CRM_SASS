@@ -126,6 +126,15 @@ cambios en curso— y fallaba por código correcto. Si el 4300 aparece ocupado,
 **identificar el proceso antes de matarlo**: una vez resultaron ser procesos de Docker y
 tumbé Docker Desktop entero.
 
+**`ng extract-i18n` da resultados distintos según los finales de línea**, y eso tuvo el CI
+en rojo. El catálogo guarda la línea de cada cadena, y el mismo botón sale como `122`
+leyendo un template CRLF y como `122,123` leyendo el mismo template en LF. Con
+`core.autocrlf=true` en Windows, un catálogo generado en local **nunca** coincide con el que
+genera el CI en Linux, así que la comprobación fallaba en cualquier PR aunque nadie hubiera
+tocado una cadena. Resuelto forzando LF en el working tree para `*.html`, `*.ts` y `*.xlf`
+en `.gitattributes`. Si vuelve a aparecer: comprobar los finales de línea **antes** de
+sospechar del catálogo, porque el diff sólo muestra `linenumber` y engaña.
+
 **`GET /api/v1/docs` devuelve un array plano**, no `{items, totalCount}` como el resto de
 módulos. Simular la forma equivocada deja la vista vacía **sin ningún error en consola**.
 
