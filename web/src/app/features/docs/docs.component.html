@@ -444,7 +444,10 @@
                   <!-- Name column -->
                   <td class="py-3 px-4">
                     <div class="flex items-center gap-2.5">
-                      <button (click)="toggleStar(doc.id, $event)" class="text-muted-foreground hover:text-warning transition-colors">
+                      <button (click)="toggleStar(doc.id, $event)"
+                              i18n-aria-label aria-label="Marcar como favorito"
+                              [attr.aria-pressed]="starredDocIds().has(doc.id)"
+                              class="text-muted-foreground hover:text-warning transition-colors">
                         <ng-icon name="lucideStar" [class.text-warning]="starredDocIds().has(doc.id)" [class.fill-amber-400]="starredDocIds().has(doc.id)" class="w-3.5 h-3.5"></ng-icon>
                       </button>
                       
@@ -484,6 +487,9 @@
                   <td class="py-3 px-4 text-right relative dropdown-container">
                     <button 
                       (click)="toggleRowMenu(doc.id, $event)"
+                      i18n-aria-label aria-label="Acciones del documento"
+                      aria-haspopup="menu"
+                      [attr.aria-expanded]="activeRowMenuId() === doc.id"
                       class="p-1 rounded text-muted-foreground hover:text-muted-foreground dark:hover:text-foreground hover:bg-secondary transition-colors">
                       <ng-icon name="lucideMoreVertical" class="w-4 h-4"></ng-icon>
                     </button>

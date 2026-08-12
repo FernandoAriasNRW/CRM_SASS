@@ -287,7 +287,7 @@ cuya queja número uno es la lentitud y la sobrecarga.*
 
 | # | Tarea | Estado |
 |---|---|---|
-| 3.7 | Partir `docs.component` (705 + 625 líneas) | 🟠 **Sólo la mitad.** Corregidos 4 defectos de accesibilidad y añadido humo. El troceado no se hizo: las pruebas que lo respaldarían exigen reproducir la forma exacta de su API, que no conseguí. Refactorizar sin ellas es cambiar a ciegas. |
+| 3.7 | Partir `docs.component` (705 + 625 líneas) | 🟠 **Pendiente el troceado.** Ya no falta cobertura: se resolvió el contrato de la API —`GET /docs` devuelve un array plano, no `{items, totalCount}` como el resto— y hay 3 E2E que verifican render, datos y accesibilidad. Corregidos 6 defectos de accesibilidad, 2 de ellos sólo visibles con documentos en pantalla. |
 | 3.9 | i18n con `@angular/localize` | ✅ **Hecha.** Español por defecto, inglés como segundo idioma. Ver §6.1. |
 
 ### 6.1 i18n: cómo quedó

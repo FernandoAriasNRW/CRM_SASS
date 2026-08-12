@@ -981,7 +981,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
-          <context context-type="linenumber">610,611</context>
+          <context context-type="linenumber">616,617</context>
         </context-group>
       </trans-unit>
       <trans-unit id="1071721880474488785" datatype="html">
@@ -1153,138 +1153,152 @@
           <context context-type="linenumber">434,435</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="8856171444954038674" datatype="html">
+        <source>Marcar como favorito</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">448,449</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1207738347707828993" datatype="html">
+        <source>Acciones del documento</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">490,491</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="7593555694782789615" datatype="html">
         <source>Open</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
-          <context context-type="linenumber">495,496</context>
+          <context context-type="linenumber">501,502</context>
         </context-group>
       </trans-unit>
       <trans-unit id="526985193195003374" datatype="html">
         <source>Save as Template</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
-          <context context-type="linenumber">499,500</context>
+          <context context-type="linenumber">505,506</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
-          <context context-type="linenumber">541,542</context>
+          <context context-type="linenumber">547,548</context>
         </context-group>
       </trans-unit>
       <trans-unit id="7022070615528435141" datatype="html">
         <source>Delete</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
-          <context context-type="linenumber">504,505</context>
+          <context context-type="linenumber">510,511</context>
         </context-group>
       </trans-unit>
       <trans-unit id="6423278459497515329" datatype="html">
         <source>No documents found</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
-          <context context-type="linenumber">517,518</context>
+          <context context-type="linenumber">523,524</context>
         </context-group>
       </trans-unit>
       <trans-unit id="3368418423843456539" datatype="html">
         <source>Create a document or pick a template to start writing.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
-          <context context-type="linenumber">518,519</context>
+          <context context-type="linenumber">524,525</context>
         </context-group>
       </trans-unit>
       <trans-unit id="8521335290217383724" datatype="html">
         <source>Convert this document into a reusable template for your workspace.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
-          <context context-type="linenumber">548,550</context>
+          <context context-type="linenumber">554,556</context>
         </context-group>
       </trans-unit>
       <trans-unit id="8496679166012942026" datatype="html">
         <source>Template Title</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
-          <context context-type="linenumber">552,553</context>
+          <context context-type="linenumber">558,559</context>
         </context-group>
       </trans-unit>
       <trans-unit id="4902817035128594900" datatype="html">
         <source>Description</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
-          <context context-type="linenumber">561,562</context>
+          <context context-type="linenumber">567,568</context>
         </context-group>
       </trans-unit>
       <trans-unit id="5095200996423488514" datatype="html">
         <source>Briefly describe what this template is used for...</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
-          <context context-type="linenumber">566,567</context>
+          <context context-type="linenumber">572,573</context>
         </context-group>
       </trans-unit>
       <trans-unit id="2330577642930707695" datatype="html">
         <source> Cancel </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
-          <context context-type="linenumber">573</context>
+          <context context-type="linenumber">579</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
-          <context context-type="linenumber">632</context>
+          <context context-type="linenumber">638</context>
         </context-group>
       </trans-unit>
       <trans-unit id="9147192238043774421" datatype="html">
         <source> Save Template </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
-          <context context-type="linenumber">576</context>
+          <context context-type="linenumber">582</context>
         </context-group>
       </trans-unit>
       <trans-unit id="3893994986303966321" datatype="html">
         <source>Import Document</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
-          <context context-type="linenumber">592,593</context>
+          <context context-type="linenumber">598,599</context>
         </context-group>
       </trans-unit>
       <trans-unit id="193958140802508309" datatype="html">
         <source>Select File (.md, .txt, .html)</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
-          <context context-type="linenumber">601,602</context>
+          <context context-type="linenumber">607,608</context>
         </context-group>
       </trans-unit>
       <trans-unit id="3652771791107161042" datatype="html">
         <source>Document title...</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
-          <context context-type="linenumber">615,616</context>
+          <context context-type="linenumber">621,622</context>
         </context-group>
       </trans-unit>
       <trans-unit id="1291433998219577288" datatype="html">
         <source>Content Preview / Paste Text</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
-          <context context-type="linenumber">620,621</context>
+          <context context-type="linenumber">626,627</context>
         </context-group>
       </trans-unit>
       <trans-unit id="1167256119870125658" datatype="html">
         <source>Paste raw Markdown, HTML, or plain text here...</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
-          <context context-type="linenumber">625,626</context>
+          <context context-type="linenumber">631,632</context>
         </context-group>
       </trans-unit>
       <trans-unit id="5491082703305055145" datatype="html">
         <source> Import Now </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
-          <context context-type="linenumber">635</context>
+          <context context-type="linenumber">641</context>
         </context-group>
       </trans-unit>
       <trans-unit id="3568599725504151027" datatype="html">
         <source>Apply a Template</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
-          <context context-type="linenumber">651,652</context>
+          <context context-type="linenumber">657,658</context>
         </context-group>
       </trans-unit>
       <trans-unit id="1551609928546674080" datatype="html">
