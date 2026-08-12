@@ -333,45 +333,32 @@ using (var scope = app.Services.CreateScope())
             + string.Join(Environment.NewLine, isolationViolations.Select(v => "  - " + v)));
     }
 
+    // Las migraciones son la única vía por la que cambia el esquema. Hasta agosto de 2026
+    // aquí se llamaba a EnsureCreated() y a CreateTables() tragándose el error 1050: el
+    // esquema se creaba, pero __EFMigrationsHistory quedaba vacía, así que un campo nuevo
+    // no llegaba nunca a una base ya existente. Ver docs/CONTINUACION.md §1.
+    //
+    // Si esto falla, no se sirve nada: arrancar con el esquema a medias es peor que no
+    // arrancar. La causa habitual es una base creada por el mecanismo anterior, cuyo
+    // historial hay que sellar una vez.
     foreach (var ctx in dbContexts)
     {
-        try 
+        try
         {
-            // If the database doesn't exist, EnsureCreated creates it and all tables.
-            // If it already exists, EnsureCreated does nothing, so we also call CreateTables and swallow the 'table already exists' error.
-            ctx.Database.EnsureCreated();
-            
-            var dbCreator = Microsoft.EntityFrameworkCore.Infrastructure.AccessorExtensions.GetService<Microsoft.EntityFrameworkCore.Storage.IRelationalDatabaseCreator>(ctx.Database);
-            if (dbCreator != null)
-            {
-                dbCreator.CreateTables();
-            }
-        } 
-        catch (MySqlConnector.MySqlException ex) when (ex.Number == 1050)
-        {
-            // 1050 = Table already exists, ignore
+            ctx.Database.Migrate();
         }
-        catch (Exception ex) 
+        catch (Exception ex)
         {
-            var logger = services.GetRequiredService<Microsoft.Extensions.Logging.ILogger<Program>>();
-            // We only log if it's not a "Table already exists" exception (which can sometimes be wrapped)
-            if (!ex.Message.Contains("already exists"))
-            {
-                logger.LogError(ex, "Error asegurando la base de datos para el contexto {ContextType}", ctx.GetType().Name);
-            }
+            throw new InvalidOperationException(
+                $"No se pudieron aplicar las migraciones de {ctx.GetType().Name}. "
+                + "Si esta base se creó con el mecanismo anterior (EnsureCreated), su historial de "
+                + "migraciones está vacío y hay que sellarlo una sola vez: ejecutar "
+                + "scripts/db/sellar-historial-migraciones.sql. Detalle en docs/CONTINUACION.md §1.",
+                ex);
         }
     }
 
     var identityCtx = services.GetRequiredService<Identity.Infrastructure.Persistence.IdentityDbContext>();
-    
-    // Migración dinámica de columnas para EntityPermissions y TagIds en base de datos existente
-    try { identityCtx.Database.ExecuteSqlRaw("ALTER TABLE `EntityPermissions` MODIFY COLUMN `UserId` char(36) NULL;"); } catch { }
-    try { identityCtx.Database.ExecuteSqlRaw("ALTER TABLE `EntityPermissions` ADD COLUMN `TargetType` varchar(20) NOT NULL DEFAULT 'User';"); } catch { }
-    try { identityCtx.Database.ExecuteSqlRaw("ALTER TABLE `EntityPermissions` ADD COLUMN `TeamId` char(36) NULL;"); } catch { }
-    try { identityCtx.Database.ExecuteSqlRaw("ALTER TABLE `EntityPermissions` ADD COLUMN `RoleName` varchar(50) NULL;"); } catch { }
-    try { identityCtx.Database.ExecuteSqlRaw("ALTER TABLE `Tasks` ADD COLUMN `TagIds` longtext NULL;"); } catch { }
-    try { identityCtx.Database.ExecuteSqlRaw("ALTER TABLE `Projects` ADD COLUMN `TagIds` longtext NULL;"); } catch { }
-    try { identityCtx.Database.ExecuteSqlRaw("ALTER TABLE `Tickets` ADD COLUMN `TagIds` longtext NULL;"); } catch { }
 
     if (!identityCtx.User.Any())
     {
