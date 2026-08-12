@@ -20,9 +20,7 @@ public static class ReportingInfrastructureExtensions
             options.UseMySql(configuration.GetConnectionString("DefaultConnection"), Microsoft.EntityFrameworkCore.ServerVersion.Parse("8.0.32-mysql")));
 
         services.AddScoped<IOutboxService, OutboxService>();
-        services.AddScoped<IUnitOfWork>(sp => new UnitOfWork<ReportingDbContext>(
-            sp.GetRequiredService<ReportingDbContext>(),
-            sp.GetRequiredService<IOutboxService>()));
+        services.AddScoped<IReportingUnitOfWork, ReportingModuleUnitOfWork>();
 
         services.AddScoped<IReportRepository, EfReportRepository>();
         services.AddScoped<IDashboardRepository, DashboardRepository>();

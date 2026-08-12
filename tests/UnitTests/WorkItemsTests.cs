@@ -1,4 +1,5 @@
 using FluentAssertions;
+using WorkItems.Application.Abstractions;
 using Xunit;
 using NSubstitute;
 using WorkItems.Application.Commands;
@@ -18,7 +19,7 @@ namespace UnitTests;
 public class WorkItemsTests
 {
     private readonly ITaskRepository _repositoryMock;
-    private readonly IUnitOfWork _unitOfWorkMock;
+    private readonly IWorkItemsUnitOfWork _unitOfWorkMock;
     private readonly ITaskQueries _queriesMock;
     private readonly Guid _tenantId = Guid.NewGuid();
     private readonly Guid _projectId = Guid.NewGuid();
@@ -28,7 +29,7 @@ public class WorkItemsTests
     public WorkItemsTests()
     {
         _repositoryMock = Substitute.For<ITaskRepository>();
-        _unitOfWorkMock = Substitute.For<IUnitOfWork>();
+        _unitOfWorkMock = Substitute.For<IWorkItemsUnitOfWork>();
         _queriesMock = Substitute.For<ITaskQueries>();
     }
 
@@ -175,19 +176,19 @@ public class WorkItemsTests
         var pagedResult = PagedResult<TaskDto>.Create(
             new List<TaskDto>
             {
-                new TaskDto(t1.Id, t1.TenantId, t1.ProjectId, t1.Title.Value, t1.Description, t1.Status.Value.ToString(), t1.AssigneeId, t1.CreatedById, t1.EstimatedHours, t1.DueDate)
+                new TaskDto(t1.Id, t1.TenantId, t1.ProjectId, t1.Title.Value, t1.Description, t1.Status.Value.ToString(), t1.Priority.Value, t1.AssigneeId, t1.CreatedById, t1.EstimatedHours, t1.DueDate)
             },
             1, 1, 10
         );
 
         // El handler usa GetByTenantWithPaginationAsync, no GetByTenantAsync.
         _queriesMock.GetByTenantWithPaginationAsync(
-                _tenantId, null, null, null, null, null,
+                _tenantId, null, null, null, null, null, null,
                 Arg.Any<PaginationRequest>(), Arg.Any<CancellationToken>())
             .Returns(pagedResult);
 
         var getHandler = new GetTasksQueryHandler(_queriesMock);
-        var query = new GetTasksQuery(_tenantId, null, null, null, null, null, new PaginationRequest { Page = 1, PageSize = 10 });
+        var query = new GetTasksQuery(_tenantId, null, null, null, null, null, null, new PaginationRequest { Page = 1, PageSize = 10 });
 
         // Act
         var result = await getHandler.Handle(query, CancellationToken.None);

@@ -1,4 +1,5 @@
 using FluentAssertions;
+using Webhook.Application.Abstractions;
 using Xunit;
 using NSubstitute;
 using Webhook.Application.Commands;
@@ -16,14 +17,14 @@ namespace UnitTests;
 public class WebhooksTests
 {
     private readonly IWebhookSubscriptionRepository _repositoryMock;
-    private readonly IUnitOfWork _unitOfWorkMock;
+    private readonly IWebhookUnitOfWork _unitOfWorkMock;
     private readonly Guid _tenantId = Guid.NewGuid();
     private readonly Guid _subscriptionId = Guid.NewGuid();
 
     public WebhooksTests()
     {
         _repositoryMock = Substitute.For<IWebhookSubscriptionRepository>();
-        _unitOfWorkMock = Substitute.For<IUnitOfWork>();
+        _unitOfWorkMock = Substitute.For<IWebhookUnitOfWork>();
     }
 
     #region WebhookSubscription Domain Tests

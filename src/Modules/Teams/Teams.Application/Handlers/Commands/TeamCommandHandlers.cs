@@ -1,4 +1,5 @@
 using BuildingBlocks.Application.Abstractions;
+using Teams.Application.Abstractions;
 using BuildingBlocks.Domain;
 using Teams.Application.Abstractions.Repositories;
 using Teams.Application.Commands;
@@ -9,7 +10,7 @@ namespace Teams.Application.Handlers.Commands;
 
 public sealed class CreateTeamCommandHandler(
     ITeamRepository repository,
-    IUnitOfWork unitOfWork) : ICommandHandler<CreateTeamCommand, Guid>
+    ITeamsUnitOfWork unitOfWork) : ICommandHandler<CreateTeamCommand, Guid>
 {
     public async Task<Result<Guid>> Handle(CreateTeamCommand request, CancellationToken cancellationToken)
     {
@@ -29,7 +30,7 @@ public sealed class CreateTeamCommandHandler(
 
 public sealed class UpdateTeamCommandHandler(
     ITeamRepository repository,
-    IUnitOfWork unitOfWork) : ICommandHandler<UpdateTeamCommand, bool>
+    ITeamsUnitOfWork unitOfWork) : ICommandHandler<UpdateTeamCommand, bool>
 {
     public async Task<Result<bool>> Handle(UpdateTeamCommand request, CancellationToken cancellationToken)
     {
@@ -46,7 +47,7 @@ public sealed class UpdateTeamCommandHandler(
 
 public sealed class DeleteTeamCommandHandler(
     ITeamRepository repository,
-    IUnitOfWork unitOfWork) : ICommandHandler<DeleteTeamCommand, bool>
+    ITeamsUnitOfWork unitOfWork) : ICommandHandler<DeleteTeamCommand, bool>
 {
     public async Task<Result<bool>> Handle(DeleteTeamCommand request, CancellationToken cancellationToken)
     {

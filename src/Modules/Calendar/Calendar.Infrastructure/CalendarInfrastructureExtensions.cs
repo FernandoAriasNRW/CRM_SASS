@@ -1,4 +1,5 @@
 using BuildingBlocks.Domain;
+using Calendar.Application.Abstractions;
 using BuildingBlocks.Infrastructure.Outbox;
 using BuildingBlocks.Infrastructure.Persistence;
 using Calendar.Application.Abstractions.Queries;
@@ -31,9 +32,7 @@ public static class CalendarInfrastructureExtensions
     services.AddScoped<IOutboxService, OutboxService>();
 
     // 3. UnitOfWork con OutboxService inyectado
-    services.AddScoped<IUnitOfWork>(sp => new UnitOfWork<CalendarDbContext>(
-        sp.GetRequiredService<CalendarDbContext>(),
-        sp.GetRequiredService<IOutboxService>()));
+    services.AddScoped<Calendar.Application.Abstractions.ICalendarUnitOfWork, CalendarModuleUnitOfWork>();
 
     // Repository para escritura (Commands)
     services.AddScoped<ICalendarEventRepository, EfCalendarEventRepository>();

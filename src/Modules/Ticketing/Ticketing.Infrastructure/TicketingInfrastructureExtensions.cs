@@ -1,4 +1,5 @@
 using BuildingBlocks.Domain;
+using Ticketing.Application.Abstractions;
 using BuildingBlocks.Infrastructure.Outbox;
 using BuildingBlocks.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -24,9 +25,7 @@ public static class TicketingInfrastructureExtensions
     services.AddScoped<IOutboxService, OutboxService>();
 
     // 2. UnitOfWork con OutboxService inyectado
-    services.AddScoped<IUnitOfWork>(sp => new UnitOfWork<TicketingDbContext>(
-        sp.GetRequiredService<TicketingDbContext>(),
-        sp.GetRequiredService<IOutboxService>()));
+    services.AddScoped<ITicketingUnitOfWork, TicketingModuleUnitOfWork>();
 
     services.AddScoped<ITicketRepository, EfTicketRepository>();
     services.AddScoped<ITicketQueries, TicketQueries>();

@@ -343,7 +343,12 @@ columna a columna, y arrancando la aplicación contra los dos. Detalle en
 
 Es el trabajo de mayor retorno: sin esto el producto no entra en una comparativa.
 
-- **Prioridad** (`Urgent` / `High` / `Normal` / `Low`) en `WorkTask`.
+- ✅ **Prioridad** (`Urgent` / `High` / `Normal` / `Low`) en `WorkTask` *(hecho 2026-08-12)*.
+  Dominio, migración con relleno de las filas existentes, API con filtro y orden de negocio
+  —no alfabético—, interfaz y 26 pruebas nuevas. Al verificarla contra la API real
+  aparecieron y se arreglaron dos defectos que la hacían inservible: el tenant del filtro
+  global era siempre vacío y las escrituras por handler no llegaban a la base. Detalle en
+  [`CONTINUACION.md`](CONTINUACION.md) §4.
 - **Subtareas**: `ParentTaskId` autorreferencial, con profundidad limitada y agregación
   de progreso al padre.
 - **Dependencias**: entidad `TaskDependency` (bloquea / bloqueada por), con detección
@@ -452,6 +457,7 @@ de lo que quedó vivo está en `CONTINUACION.md`.*
    secretos, y es una acción manual fuera del repositorio.
 2. **Mergear el PR #3** (Fases 2 y 3) o decidir explícitamente seguir sobre `fase-3-ux-ui`.
    Cuanto más crezca la Fase 4 encima, más caro es el merge.
-3. Arrancar el **bloque 4A** por la prioridad en `WorkTask`: es la más simple y fija el
-   patrón —dominio, migración, API, interfaz y tests— para subtareas, dependencias y
-   múltiples responsables.
+3. Seguir el **bloque 4A** por las **subtareas** (`ParentTaskId`). La prioridad ya está y dejó
+   el patrón hecho: dominio → migración → API → interfaz → pruebas, y **verificación contra
+   la API real levantada**, que es lo que destapó los dos defectos de §4 de
+   `CONTINUACION.md`.

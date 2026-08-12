@@ -13,7 +13,9 @@ public sealed record CreateTaskCommand(
     string Description,
     Guid AssigneeId,
     decimal EstimatedHours,
-        DateOnly DueDate
+        DateOnly DueDate,
+        // Opcional: sin prioridad explícita, la tarea nace en la de por defecto.
+        string? Priority = null
     ) : ICommand<WorkTask>, IWebhookTriggered
 {
     public string WebhookEventName => "workitem.created";

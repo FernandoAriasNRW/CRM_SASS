@@ -1,4 +1,5 @@
 using FluentAssertions;
+using Projects.Application.Abstractions;
 using Xunit;
 using NSubstitute;
 using Projects.Application.Commands;
@@ -19,7 +20,7 @@ namespace UnitTests;
 public class ProjectsTests
 {
     private readonly IProjectRepository _repositoryMock;
-    private readonly IUnitOfWork _unitOfWorkMock;
+    private readonly IProjectsUnitOfWork _unitOfWorkMock;
     private readonly IProjectQueries _queriesMock;
     private readonly Guid _tenantId = Guid.NewGuid();
     private readonly Guid _ownerId = Guid.NewGuid();
@@ -28,7 +29,7 @@ public class ProjectsTests
     public ProjectsTests()
     {
         _repositoryMock = Substitute.For<IProjectRepository>();
-        _unitOfWorkMock = Substitute.For<IUnitOfWork>();
+        _unitOfWorkMock = Substitute.For<IProjectsUnitOfWork>();
         _queriesMock = Substitute.For<IProjectQueries>();
     }
 

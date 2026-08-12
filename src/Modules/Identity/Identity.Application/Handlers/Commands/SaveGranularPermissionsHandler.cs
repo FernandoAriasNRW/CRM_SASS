@@ -1,4 +1,5 @@
 using BuildingBlocks.Domain;
+using Identity.Application.Abstractions;
 using Identity.Application.Abstractions.Repositories;
 using Identity.Application.Commands;
 using Identity.Domain.Entities;
@@ -8,7 +9,7 @@ namespace Identity.Application.Handlers.Commands;
 
 public class SaveGranularPermissionsHandler(
     IEntityPermissionRepository permissionRepository,
-    IUnitOfWork unitOfWork)
+    IIdentityUnitOfWork unitOfWork)
     : IRequestHandler<SaveGranularPermissionsCommand, Result>
 {
     public async Task<Result> Handle(SaveGranularPermissionsCommand request, CancellationToken cancellationToken)

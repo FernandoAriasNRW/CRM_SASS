@@ -7,12 +7,13 @@ import { ApiService } from '../../core/api.service';
 import { RealtimeService } from '../../core/realtime.service';
 import { BadgeComponent, type BadgeVariant } from '../../shared/ui/badge.component';
 import { ButtonComponent } from '../../shared/ui/button.component';
-import { TaskCreateModalComponent, type TaskItem } from './task-create-modal.component';
+import { PRIORIDADES, PRIORIDAD_POR_DEFECTO, TaskCreateModalComponent, type TaskItem } from './task-create-modal.component';
 import { TaskDetailPanelComponent } from './task-detail-panel.component';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import {
   lucideRefreshCw, lucidePlus, lucideClock,
-  lucideList, lucideLayoutDashboard, lucideFilter, lucideSave
+  lucideList, lucideLayoutDashboard, lucideFilter, lucideSave,
+  lucideAlertCircle, lucideArrowUp, lucideMinus, lucideArrowDown
 } from '@ng-icons/lucide';
 import { DataTableComponent, ColumnDef, TableState } from '../../shared/ui/data-table/data-table.component';
 import { FilterField } from '../../shared/ui/data-table/advanced-filters.component';
@@ -61,7 +62,8 @@ const STATUS_BADGE: Record<string, BadgeVariant> = {
   imports: [ClickableDirective, FormsModule, BadgeComponent, ButtonComponent, NgIconComponent, DragDropModule, TaskCreateModalComponent, TaskDetailPanelComponent, DataTableComponent, SkeletonListComponent, EmptyInlineComponent],
   viewProviders: [provideIcons({
     lucideRefreshCw, lucidePlus, lucideClock,
-    lucideList, lucideLayoutDashboard, lucideFilter, lucideSave
+    lucideList, lucideLayoutDashboard, lucideFilter, lucideSave,
+    lucideAlertCircle, lucideArrowUp, lucideMinus, lucideArrowDown
   })],
   templateUrl: './tasks.component.html',
 })
@@ -91,6 +93,7 @@ export class TasksComponent implements OnInit {
     title: { label: 'Title' },
     description: { label: 'Description', visible: false },
     status: { label: 'Status', type: 'custom' },
+    priority: { label: $localize`Prioridad`, type: 'custom' },
     assigneeId: { label: 'Asignado', type: 'user' },
     estimatedHours: { label: 'Hours', type: 'number' },
     dueDate: { label: 'Due Date', type: 'date' }
@@ -100,6 +103,7 @@ export class TasksComponent implements OnInit {
   filterFields = computed<FilterField[]>(() => [
     { key: 'projectId', label: 'Project', type: 'select', options: this.projectOptions() },
     { key: 'status', label: 'Status', type: 'select', options: this.statuses.map(s => ({ label: s, value: s })) },
+    { key: 'priority', label: $localize`Prioridad`, type: 'select', options: PRIORIDADES.map(p => ({ label: p.label, value: p.key })) },
     { key: 'startDate', label: 'Start Date', type: 'date' },
     { key: 'endDate', label: 'End Date', type: 'date' }
   ]);
@@ -124,7 +128,25 @@ export class TasksComponent implements OnInit {
 
   statusBadge(status: string): BadgeVariant { return STATUS_BADGE[status] ?? 'outline'; }
 
-  @ViewChild('statusTemplate', { static: true }) statusTemplate!: TemplateRef<any>;
+  /** La prioridad tal como se pinta. Ante un valor desconocido, cae en la normal. */
+  prioridadDe(priority: string) {
+    return PRIORIDADES.find(p => p.key === priority)
+      ?? PRIORIDADES.find(p => p.key === PRIORIDAD_POR_DEFECTO)!;
+  }
+
+  /**
+   * Si la prioridad merece distintivo en la tarjeta.
+   *
+   * Sólo lo que se sale de lo normal. Marcar las cuatro llenaría el tablero de etiquetas
+   * equivalentes y no señalaría nada; y una prioridad vacía —fila anterior a que existieran—
+   * tampoco es una señal.
+   */
+  esPrioridadDestacable(priority: string): boolean {
+    return !!priority && priority !== PRIORIDAD_POR_DEFECTO && PRIORIDADES.some(p => p.key === priority);
+  }
+
+  @ViewChild('statusTemplate', { static: true }) statusTemplate!: TemplateRef<unknown>;
+  @ViewChild('priorityTemplate', { static: true }) priorityTemplate!: TemplateRef<unknown>;
 
   constructor() {
     effect(() => {
@@ -145,6 +167,7 @@ export class TasksComponent implements OnInit {
 
   ngOnInit(): void {
     this.tableColumns.find(c => c.key === 'status')!.template = this.statusTemplate;
+    this.tableColumns.find(c => c.key === 'priority')!.template = this.priorityTemplate;
     this.loadViews();
 
     this.route.queryParams.subscribe(params => {
@@ -271,6 +294,7 @@ export class TasksComponent implements OnInit {
       if (state.filters['endDate']) params.endDate = state.filters['endDate'];
       if (state.filters['projectId']) params.projectId = state.filters['projectId'];
       if (state.filters['status']) params.status = state.filters['status'];
+      if (state.filters['priority']) params.priority = state.filters['priority'];
       if (state.filters['filter']) params.filter = state.filters['filter'];
       if (state.filters['hierarchy_type'] === 'project') params.projectId = state.filters['hierarchy_id'];
     }

@@ -1,4 +1,5 @@
 using BuildingBlocks.Domain;
+using Identity.Application.Abstractions;
 using BuildingBlocks.Application.Abstractions;
 using Identity.Application.Abstractions.Repositories;
 using Identity.Application.Abstractions.Services;
@@ -94,10 +95,10 @@ public sealed class GuestTokenCommandHandler(IJwtService jwtService)
 /// </summary>
 public sealed class CreateUserCommandHandler(
     IUserRepository userRepository,
-    IUnitOfWork unitOfWork) : ICommandHandler<CreateUserCommand, UserDto>
+    IIdentityUnitOfWork unitOfWork) : ICommandHandler<CreateUserCommand, UserDto>
 {
   private readonly IUserRepository _userRepository = userRepository;
-  private readonly IUnitOfWork _unitOfWork = unitOfWork;
+  private readonly IIdentityUnitOfWork _unitOfWork = unitOfWork;
 
   public async Task<Result<UserDto>> Handle(CreateUserCommand request, CancellationToken cancellationToken)
   {
@@ -131,10 +132,10 @@ public sealed class CreateUserCommandHandler(
 /// </summary>
 public sealed class UpdateUserCommandHandler(
     IUserRepository userRepository,
-    IUnitOfWork unitOfWork) : ICommandHandler<UpdateUserCommand, UserDto>
+    IIdentityUnitOfWork unitOfWork) : ICommandHandler<UpdateUserCommand, UserDto>
 {
   private readonly IUserRepository _userRepository = userRepository;
-  private readonly IUnitOfWork _unitOfWork = unitOfWork;
+  private readonly IIdentityUnitOfWork _unitOfWork = unitOfWork;
 
   public async Task<Result<UserDto>> Handle(UpdateUserCommand request, CancellationToken cancellationToken)
   {
@@ -181,10 +182,10 @@ public sealed class UpdateUserCommandHandler(
 /// </summary>
 public sealed class UpdateProfileCommandHandler(
     IUserRepository userRepository,
-    IUnitOfWork unitOfWork) : ICommandHandler<UpdateProfileCommand, UserDto>
+    IIdentityUnitOfWork unitOfWork) : ICommandHandler<UpdateProfileCommand, UserDto>
 {
   private readonly IUserRepository _userRepository = userRepository;
-  private readonly IUnitOfWork _unitOfWork = unitOfWork;
+  private readonly IIdentityUnitOfWork _unitOfWork = unitOfWork;
 
   public async Task<Result<UserDto>> Handle(UpdateProfileCommand request, CancellationToken cancellationToken)
   {
@@ -223,10 +224,10 @@ public sealed class UpdateProfileCommandHandler(
 /// </summary>
 public sealed class DeleteUserCommandHandler(
     IUserRepository userRepository,
-    IUnitOfWork unitOfWork) : ICommandHandler<DeleteUserCommand, bool>
+    IIdentityUnitOfWork unitOfWork) : ICommandHandler<DeleteUserCommand, bool>
 {
   private readonly IUserRepository _userRepository = userRepository;
-  private readonly IUnitOfWork _unitOfWork = unitOfWork;
+  private readonly IIdentityUnitOfWork _unitOfWork = unitOfWork;
 
   public async Task<Result<bool>> Handle(DeleteUserCommand request, CancellationToken cancellationToken)
   {
@@ -260,10 +261,10 @@ public sealed class DeleteUserCommandHandler(
 /// </summary>
 public sealed class RestoreUserCommandHandler(
     IUserRepository userRepository,
-    IUnitOfWork unitOfWork) : ICommandHandler<RestoreUserCommand, UserDto>
+    IIdentityUnitOfWork unitOfWork) : ICommandHandler<RestoreUserCommand, UserDto>
 {
   private readonly IUserRepository _userRepository = userRepository;
-  private readonly IUnitOfWork _unitOfWork = unitOfWork;
+  private readonly IIdentityUnitOfWork _unitOfWork = unitOfWork;
 
   public async Task<Result<UserDto>> Handle(RestoreUserCommand request, CancellationToken cancellationToken)
   {
@@ -289,10 +290,10 @@ public sealed class RestoreUserCommandHandler(
 /// </summary>
 public sealed class ChangePasswordCommandHandler(
     IUserRepository userRepository,
-    IUnitOfWork unitOfWork) : ICommandHandler<ChangePasswordCommand, bool>
+    IIdentityUnitOfWork unitOfWork) : ICommandHandler<ChangePasswordCommand, bool>
 {
   private readonly IUserRepository _userRepository = userRepository;
-  private readonly IUnitOfWork _unitOfWork = unitOfWork;
+  private readonly IIdentityUnitOfWork _unitOfWork = unitOfWork;
 
   public async Task<Result<bool>> Handle(ChangePasswordCommand request, CancellationToken cancellationToken)
   {

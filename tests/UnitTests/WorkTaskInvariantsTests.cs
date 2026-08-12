@@ -1,6 +1,7 @@
 using FluentAssertions;
 using WorkItems.Domain.Entities;
 using WorkItems.Domain.Events;
+using WorkItems.Domain.ValueObjects;
 using Xunit;
 
 namespace UnitTests;
@@ -128,4 +129,141 @@ public sealed class WorkTaskInvariantsTests
         tarea.TagIds.Should().BeEmpty();
     }
 
+    #region Prioridad
+
+    [Fact]
+    public void Una_tarea_sin_prioridad_explicita_nace_en_Normal()
+    {
+        var tarea = NuevaTarea();
+
+        tarea.Priority.Value.Should().Be("Normal");
+    }
+
+    [Fact]
+    public void Una_tarea_puede_nacer_con_la_prioridad_que_se_le_indique()
+    {
+        var tarea = WorkTask.Create(
+            Guid.NewGuid(), Guid.NewGuid(), "Urgente", "descripción",
+            Guid.NewGuid(), Guid.NewGuid(), 4m,
+            DateOnly.FromDateTime(DateTime.UtcNow), "Urgent");
+
+        tarea.Priority.Value.Should().Be("Urgent");
+    }
+
+    /// <summary>
+    /// Igual que con el estado, cualquier prioridad existente es alcanzable desde cualquier
+    /// otra, y en los dos sentidos. Subir o bajar una tarea es de quien gestiona el trabajo:
+    /// si alguien introduce una regla de «no se puede bajar de Urgente», este test la caza.
+    /// </summary>
+    [Theory]
+    [MemberData(nameof(TodasLasCombinacionesDePrioridad))]
+    public void Cualquier_prioridad_es_alcanzable_desde_cualquier_otra(string desde, string hasta)
+    {
+        var tarea = NuevaTarea();
+        tarea.Reprioritize(desde);
+
+        tarea.Reprioritize(hasta);
+
+        tarea.Priority.Value.Should().Be(hasta);
+    }
+
+    public static TheoryData<string, string> TodasLasCombinacionesDePrioridad()
+    {
+        var prioridades = TaskPriority.All().Select(p => p.Value).ToArray();
+        var datos = new TheoryData<string, string>();
+        foreach (var desde in prioridades)
+            foreach (var hasta in prioridades)
+                datos.Add(desde, hasta);
+        return datos;
+    }
+
+    [Fact]
+    public void Una_prioridad_inexistente_no_se_acepta_al_repriorizar()
+    {
+        var tarea = NuevaTarea();
+
+        var repriorizar = () => tarea.Reprioritize("Crítica");
+
+        repriorizar.Should().Throw<InvalidOperationException>().WithMessage("*no existe*");
+        tarea.Priority.Value.Should().Be("Normal", "una prioridad inválida no debe dejar la tarea a medias");
+    }
+
+    [Fact]
+    public void Una_prioridad_inexistente_no_se_acepta_al_crear()
+    {
+        var crear = () => WorkTask.Create(
+            Guid.NewGuid(), Guid.NewGuid(), "Tarea", "descripción",
+            Guid.NewGuid(), Guid.NewGuid(), 1m,
+            DateOnly.FromDateTime(DateTime.UtcNow), "Altísima");
+
+        crear.Should().Throw<InvalidOperationException>().WithMessage("*no existe*");
+    }
+
+    [Fact]
+    public void Repriorizar_emite_el_evento_con_la_anterior_y_la_nueva()
+    {
+        var tarea = NuevaTarea();
+        tarea.ClearDomainEvents();
+
+        tarea.Reprioritize("Urgent");
+
+        var evento = tarea.DomainEvents.Should().ContainSingle()
+            .Which.Should().BeOfType<TaskPriorityChangedEvent>().Subject;
+        evento.OldPriority.Should().Be("Normal");
+        evento.NewPriority.Should().Be("Urgent");
+    }
+
+    [Fact]
+    public void Repriorizar_a_la_que_ya_tiene_no_emite_evento()
+    {
+        // Sin cambio real no hay nada que contar. Un evento vacío haría trabajar de más a
+        // las automatizaciones que se apoyarán en él.
+        var tarea = NuevaTarea();
+        tarea.ClearDomainEvents();
+
+        tarea.Reprioritize("Normal");
+
+        tarea.DomainEvents.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void La_prioridad_conserva_su_nombre_en_español()
+    {
+        // TaskStatus construye el estado desde su valor al mover, y deja el nombre igual que
+        // el valor: una tarea movida a «Done» acaba con nombre «Done» en lugar de
+        // «Completado». La prioridad usa la instancia canónica para no repetirlo.
+        var tarea = NuevaTarea();
+
+        tarea.Reprioritize("Urgent");
+
+        tarea.Priority.Name.Should().Be("Urgente");
+    }
+
+    /// <summary>
+    /// El orden es el de negocio, no el alfabético.
+    ///
+    /// Alfabéticamente sería High, Low, Normal, Urgent, que no significa nada. Este test fija
+    /// el orden porque de él depende la ordenación de listas y tableros: el rango que usa la
+    /// consulta se construye a partir de <c>TaskPriority.All()</c>, así que si alguien
+    /// reordena o añade una prioridad, aquí se ve.
+    /// </summary>
+    [Fact]
+    public void El_orden_de_las_prioridades_es_de_negocio()
+    {
+        TaskPriority.All().Select(p => p.Value)
+            .Should().ContainInOrder("Urgent", "High", "Normal", "Low")
+            .And.HaveCount(4);
+
+        TaskPriority.OrdenDe("Urgent").Should().BeLessThan(TaskPriority.OrdenDe("Low"));
+    }
+
+    [Fact]
+    public void Una_prioridad_desconocida_se_ordena_al_final()
+    {
+        // Cubre las filas antiguas que pudieran tener la columna vacía: deben caer al fondo,
+        // no colarse en la cabecera como si fueran lo más urgente.
+        TaskPriority.OrdenDe("").Should().BeGreaterThan(TaskPriority.OrdenDe("Low"));
+    }
+
+    #endregion
 }

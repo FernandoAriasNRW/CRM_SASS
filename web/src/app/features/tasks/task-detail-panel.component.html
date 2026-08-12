@@ -62,9 +62,11 @@
           <!-- Prioridad -->
           <div class="flex items-center gap-3">
             <span class="text-muted-foreground w-28 shrink-0 flex items-center gap-1.5">
-              <ng-icon name="lucideFlag" size="13" /> Prioridad
+              <ng-icon name="lucideFlag" size="13" /> <span i18n>Prioridad</span>
             </span>
-            <select [(ngModel)]="priority"
+            <ng-icon [name]="currentPriority().icon" size="13" [class]="currentPriority().color" />
+            <select [ngModel]="priority" (ngModelChange)="changePriority($event)"
+                    i18n-aria-label aria-label="Prioridad de la tarea"
                     class="bg-transparent border-none outline-none text-sm cursor-pointer hover:text-primary transition-colors">
               @for (p of priorities; track p.key) {
                 <option [value]="p.key">{{ p.label }}</option>

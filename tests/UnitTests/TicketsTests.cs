@@ -1,4 +1,5 @@
 using FluentAssertions;
+using Ticketing.Application.Abstractions;
 using Xunit;
 using NSubstitute;
 using Ticketing.Application.Commands;
@@ -19,7 +20,7 @@ namespace UnitTests;
 public class TicketsTests
 {
     private readonly ITicketRepository _repositoryMock;
-    private readonly IUnitOfWork _unitOfWorkMock;
+    private readonly ITicketingUnitOfWork _unitOfWorkMock;
     private readonly ITicketQueries _queriesMock;
     private readonly Guid _tenantId = Guid.NewGuid();
     private readonly Guid _agentId = Guid.NewGuid();
@@ -28,7 +29,7 @@ public class TicketsTests
     public TicketsTests()
     {
         _repositoryMock = Substitute.For<ITicketRepository>();
-        _unitOfWorkMock = Substitute.For<IUnitOfWork>();
+        _unitOfWorkMock = Substitute.For<ITicketingUnitOfWork>();
         _queriesMock = Substitute.For<ITicketQueries>();
     }
 
