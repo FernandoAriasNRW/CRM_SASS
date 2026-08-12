@@ -18,20 +18,19 @@ Estado tras las tres primeras fases:
 | | Antes | Ahora |
 |---|---|---|
 | Repositorio git | sólo `web/` | backend + frontend, historia preservada |
-| Tests ejecutándose | 0 | **120 backend** (112 + 8) + **17 frontend** + **32 E2E** |
+| Tests ejecutándose | 0 | **120 backend** (112 + 8) + **27 frontend** + **32 E2E** |
 | Secretos versionados | 3 ficheros | 0 |
 | Endpoints sin autenticación | 1 | 0 |
 | Validación de entrada | escrita pero nunca ejecutada | activa en el pipeline |
 | CI | imposible de pasar | funcional, con E2E y contenedores |
-| Lint frontend | inexistente | 0 errores, 177 avisos medidos |
+| Lint frontend | inexistente | 0 errores, 178 avisos medidos |
 
-**Las Fases 1, 2 y 3 están implementadas**, con dos excepciones documentadas en §6: el
-troceado de `docs` y la internacionalización, que necesita una decisión de despliegue
-(§6.1).
+**Las Fases 1, 2 y 3 están implementadas**, con una excepción documentada en §6: el
+troceado de `docs.component`, que necesita cobertura de datos antes de tocarlo.
 
 El aislamiento multi-tenant está blindado y verificado al arrancar (§5), y la interfaz ya
 no es de MVP: tokens semánticos completos, accesibilidad auditada en 9 vistas, paleta de
-comandos y tableros que no mienten sobre lo que se guardó.
+comandos, tableros que no mienten sobre lo que se guardó, y español e inglés.
 
 El frente que queda es de producto: **no compite todavía en features** con ClickUp o
 Monday (§3). Ahí es donde entra la Fase 4.
@@ -97,7 +96,7 @@ Features enrutadas: `home` · `dashboard` · `projects` · `tasks` · `tickets` 
 | Estados vacíos y de carga sin usar (y rotos) | 2 errores latentes | ✅ Fase 3.5 |
 | `any` sin tipar | 84 avisos; los de `data-table` resueltos con genéricos | 🟡 quedan los de interop |
 | Funciones vacías | 20 avisos | 🟡 |
-| Sin i18n (español e inglés mezclados) | 28 ficheros | 🔴 **necesita decisión**, §6.1 |
+| i18n | 319 cadenas, español e inglés | ✅ Fase 3.9 |
 | Componentes obesos (`docs.component.html` 705 líneas) | cubierto con humo, sin trocear | 🟠 §6, tarea 3.7 |
 | Specs frontend unitarias | 17 | 🟡 cobertura aún baja |
 
@@ -107,7 +106,7 @@ Features enrutadas: `home` · `dashboard` · `projects` · `tasks` · `tickets` 
 tests/UnitTests/        112 tests en verde ✅
 tests/IntegrationTests/   8 tests contra MySQL en contenedor ✅
 web/e2e/                 32 flujos con Playwright, con axe en 9 vistas ✅
-web/ (unitarios)         17 specs — cobertura aún baja fuera de shared/
+web/ (unitarios)         27 specs — cobertura aún baja fuera de shared/ y core/
 ```
 
 ---
