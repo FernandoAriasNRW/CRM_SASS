@@ -1,4 +1,5 @@
 using BuildingBlocks.Application.Abstractions;
+using Projects.Application.Abstractions;
 using BuildingBlocks.Domain;
 using Projects.Application.Abstractions.Repositories;
 using Projects.Application.Commands;
@@ -9,7 +10,7 @@ namespace Projects.Application.Handlers.Commands;
 
 public sealed class CreateProjectCommandHandler(
     IProjectRepository repository,
-    IUnitOfWork unitOfWork) : ICommandHandler<CreateProjectCommand, Project>
+    IProjectsUnitOfWork unitOfWork) : ICommandHandler<CreateProjectCommand, Project>
 {
   public async Task<Result<Project>> Handle(CreateProjectCommand request, CancellationToken cancellationToken)
   {
@@ -26,7 +27,7 @@ public sealed class CreateProjectCommandHandler(
 
 public sealed class PatchProjectCommandHandler(
     IProjectRepository repository,
-    IUnitOfWork unitOfWork) : ICommandHandler<PatchProjectCommand, bool>
+    IProjectsUnitOfWork unitOfWork) : ICommandHandler<PatchProjectCommand, bool>
 {
   public async Task<Result<bool>> Handle(PatchProjectCommand request, CancellationToken cancellationToken)
   {
@@ -47,7 +48,7 @@ public sealed class PatchProjectCommandHandler(
 
 public sealed class DeleteProjectCommandHandler(
     IProjectRepository repository,
-    IUnitOfWork unitOfWork) : ICommandHandler<DeleteProjectCommand, bool>
+    IProjectsUnitOfWork unitOfWork) : ICommandHandler<DeleteProjectCommand, bool>
 {
   public async Task<Result<bool>> Handle(DeleteProjectCommand request, CancellationToken cancellationToken)
   {
@@ -68,7 +69,7 @@ public sealed class DeleteProjectCommandHandler(
 
 public sealed class RestoreProjectCommandHandler(
     IProjectRepository repository,
-    IUnitOfWork unitOfWork) : ICommandHandler<RestoreProjectCommand, Project>
+    IProjectsUnitOfWork unitOfWork) : ICommandHandler<RestoreProjectCommand, Project>
 {
   public async Task<Result<Project>> Handle(RestoreProjectCommand request, CancellationToken cancellationToken)
   {

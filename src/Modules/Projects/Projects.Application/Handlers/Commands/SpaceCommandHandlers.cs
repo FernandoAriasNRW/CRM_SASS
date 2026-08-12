@@ -1,4 +1,5 @@
 using BuildingBlocks.Application.Abstractions;
+using Projects.Application.Abstractions;
 using BuildingBlocks.Domain;
 using Projects.Application.Abstractions.Repositories;
 using Projects.Application.Commands;
@@ -6,7 +7,7 @@ using Projects.Domain.Entities;
 
 namespace Projects.Application.Handlers.Commands;
 
-public sealed class CreateSpaceCommandHandler(ISpaceRepository repository, IUnitOfWork unitOfWork) : ICommandHandler<CreateSpaceCommand, Space>
+public sealed class CreateSpaceCommandHandler(ISpaceRepository repository, IProjectsUnitOfWork unitOfWork) : ICommandHandler<CreateSpaceCommand, Space>
 {
     public async Task<Result<Space>> Handle(CreateSpaceCommand request, CancellationToken cancellationToken)
     {
@@ -17,7 +18,7 @@ public sealed class CreateSpaceCommandHandler(ISpaceRepository repository, IUnit
     }
 }
 
-public sealed class UpdateSpaceCommandHandler(ISpaceRepository repository, IUnitOfWork unitOfWork) : ICommandHandler<UpdateSpaceCommand, bool>
+public sealed class UpdateSpaceCommandHandler(ISpaceRepository repository, IProjectsUnitOfWork unitOfWork) : ICommandHandler<UpdateSpaceCommand, bool>
 {
     public async Task<Result<bool>> Handle(UpdateSpaceCommand request, CancellationToken cancellationToken)
     {
@@ -31,7 +32,7 @@ public sealed class UpdateSpaceCommandHandler(ISpaceRepository repository, IUnit
     }
 }
 
-public sealed class DeleteSpaceCommandHandler(ISpaceRepository repository, IUnitOfWork unitOfWork) : ICommandHandler<DeleteSpaceCommand, bool>
+public sealed class DeleteSpaceCommandHandler(ISpaceRepository repository, IProjectsUnitOfWork unitOfWork) : ICommandHandler<DeleteSpaceCommand, bool>
 {
     public async Task<Result<bool>> Handle(DeleteSpaceCommand request, CancellationToken cancellationToken)
     {

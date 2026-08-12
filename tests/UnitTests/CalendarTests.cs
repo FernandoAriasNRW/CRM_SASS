@@ -1,4 +1,5 @@
 using FluentAssertions;
+using Calendar.Application.Abstractions;
 using Xunit;
 using NSubstitute;
 using Calendar.Application.Commands;
@@ -19,7 +20,7 @@ namespace UnitTests;
 public class CalendarTests
 {
     private readonly ICalendarEventRepository _repositoryMock;
-    private readonly IUnitOfWork _unitOfWorkMock;
+    private readonly Calendar.Application.Abstractions.ICalendarUnitOfWork _unitOfWorkMock;
     private readonly ICalendarEventQueries _queriesMock;
     private readonly Guid _tenantId = Guid.NewGuid();
     private readonly Guid _userId = Guid.NewGuid();
@@ -27,7 +28,7 @@ public class CalendarTests
     public CalendarTests()
     {
         _repositoryMock = Substitute.For<ICalendarEventRepository>();
-        _unitOfWorkMock = Substitute.For<IUnitOfWork>();
+        _unitOfWorkMock = Substitute.For<Calendar.Application.Abstractions.ICalendarUnitOfWork>();
         _queriesMock = Substitute.For<ICalendarEventQueries>();
 
         _unitOfWorkMock.SaveChangesAsync(Arg.Any<CancellationToken>()).Returns(1);

@@ -7,6 +7,7 @@ public sealed record TaskDto(
     string Title,
     string Description,
     string Status,
+    string Priority,
     Guid AssigneeId,
     Guid CreatedById,
     decimal EstimatedHours,

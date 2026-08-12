@@ -1,4 +1,5 @@
 using BuildingBlocks.Application.Abstractions;
+using Communication.Application.Abstractions;
 using BuildingBlocks.Domain;
 using Communication.Application.Abstractions.Repositories;
 using Communication.Application.Commands;
@@ -13,10 +14,10 @@ namespace Communication.Application.Handlers.Commands;
 /// </summary>
 public sealed class CreateConversationHandler(
     IConversationRepository repository,
-    IUnitOfWork unitOfWork) : ICommandHandler<CreateConversationCommand, ConversationDto>
+    ICommunicationUnitOfWork unitOfWork) : ICommandHandler<CreateConversationCommand, ConversationDto>
 {
   private readonly IConversationRepository _repository = repository;
-  private readonly IUnitOfWork _unitOfWork = unitOfWork;
+  private readonly ICommunicationUnitOfWork _unitOfWork = unitOfWork;
 
   public async Task<Result<ConversationDto>> Handle(CreateConversationCommand request, CancellationToken cancellationToken)
   {
@@ -39,10 +40,10 @@ public sealed class CreateConversationHandler(
 /// </summary>
 public sealed class DeleteConversationHandler(
     IConversationRepository repository,
-    IUnitOfWork unitOfWork) : ICommandHandler<DeleteConversationCommand, bool>
+    ICommunicationUnitOfWork unitOfWork) : ICommandHandler<DeleteConversationCommand, bool>
 {
   private readonly IConversationRepository _repository = repository;
-  private readonly IUnitOfWork _unitOfWork = unitOfWork;
+  private readonly ICommunicationUnitOfWork _unitOfWork = unitOfWork;
 
   public async Task<Result<bool>> Handle(DeleteConversationCommand request, CancellationToken cancellationToken)
   {
@@ -68,10 +69,10 @@ public sealed class DeleteConversationHandler(
 /// </summary>
 public sealed class RestoreConversationHandler(
     IConversationRepository repository,
-    IUnitOfWork unitOfWork) : ICommandHandler<RestoreConversationCommand, ConversationDto>
+    ICommunicationUnitOfWork unitOfWork) : ICommandHandler<RestoreConversationCommand, ConversationDto>
 {
   private readonly IConversationRepository _repository = repository;
-  private readonly IUnitOfWork _unitOfWork = unitOfWork;
+  private readonly ICommunicationUnitOfWork _unitOfWork = unitOfWork;
 
   public async Task<Result<ConversationDto>> Handle(RestoreConversationCommand request, CancellationToken cancellationToken)
   {
@@ -102,11 +103,11 @@ public sealed class RestoreConversationHandler(
 public sealed class SendMessageHandler(
     IMessageRepository messageRepository,
     IConversationRepository conversationRepository,
-    IUnitOfWork unitOfWork) : ICommandHandler<SendMessageCommand, MessageDto>
+    ICommunicationUnitOfWork unitOfWork) : ICommandHandler<SendMessageCommand, MessageDto>
 {
   private readonly IMessageRepository _messageRepository = messageRepository;
   private readonly IConversationRepository _conversationRepository = conversationRepository;
-  private readonly IUnitOfWork _unitOfWork = unitOfWork;
+  private readonly ICommunicationUnitOfWork _unitOfWork = unitOfWork;
 
   public async Task<Result<MessageDto>> Handle(SendMessageCommand request, CancellationToken cancellationToken)
   {
@@ -138,10 +139,10 @@ public sealed class SendMessageHandler(
 /// </summary>
 public sealed class EditMessageHandler(
     IMessageRepository repository,
-    IUnitOfWork unitOfWork) : ICommandHandler<EditMessageCommand, MessageDto>
+    ICommunicationUnitOfWork unitOfWork) : ICommandHandler<EditMessageCommand, MessageDto>
 {
   private readonly IMessageRepository _repository = repository;
-  private readonly IUnitOfWork _unitOfWork = unitOfWork;
+  private readonly ICommunicationUnitOfWork _unitOfWork = unitOfWork;
 
   public async Task<Result<MessageDto>> Handle(EditMessageCommand request, CancellationToken cancellationToken)
   {
@@ -167,10 +168,10 @@ public sealed class EditMessageHandler(
 /// </summary>
 public sealed class DeleteMessageHandler(
     IMessageRepository repository,
-    IUnitOfWork unitOfWork) : ICommandHandler<DeleteMessageCommand, bool>
+    ICommunicationUnitOfWork unitOfWork) : ICommandHandler<DeleteMessageCommand, bool>
 {
   private readonly IMessageRepository _repository = repository;
-  private readonly IUnitOfWork _unitOfWork = unitOfWork;
+  private readonly ICommunicationUnitOfWork _unitOfWork = unitOfWork;
 
   public async Task<Result<bool>> Handle(DeleteMessageCommand request, CancellationToken cancellationToken)
   {
@@ -196,10 +197,10 @@ public sealed class DeleteMessageHandler(
 /// </summary>
 public sealed class RestoreMessageHandler(
     IMessageRepository repository,
-    IUnitOfWork unitOfWork) : ICommandHandler<RestoreMessageCommand, MessageDto>
+    ICommunicationUnitOfWork unitOfWork) : ICommandHandler<RestoreMessageCommand, MessageDto>
 {
   private readonly IMessageRepository _repository = repository;
-  private readonly IUnitOfWork _unitOfWork = unitOfWork;
+  private readonly ICommunicationUnitOfWork _unitOfWork = unitOfWork;
 
   public async Task<Result<MessageDto>> Handle(RestoreMessageCommand request, CancellationToken ct)
   {

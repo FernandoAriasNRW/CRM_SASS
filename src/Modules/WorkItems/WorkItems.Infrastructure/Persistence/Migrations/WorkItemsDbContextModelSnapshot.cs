@@ -55,6 +55,25 @@ namespace WorkItems.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("TenantId")
                         .HasColumnType("char(36)");
 
+                    b.ComplexProperty<Dictionary<string, object>>("Priority", "WorkItems.Domain.Entities.WorkTask.Priority#TaskPriority", b1 =>
+                        {
+                            b1.IsRequired();
+
+                            b1.Property<string>("Name")
+                                .IsRequired()
+                                .ValueGeneratedOnAdd()
+                                .HasMaxLength(20)
+                                .HasColumnType("varchar(20)")
+                                .HasDefaultValue("Normal");
+
+                            b1.Property<string>("Value")
+                                .IsRequired()
+                                .ValueGeneratedOnAdd()
+                                .HasMaxLength(20)
+                                .HasColumnType("varchar(20)")
+                                .HasDefaultValue("Normal");
+                        });
+
                     b.ComplexProperty<Dictionary<string, object>>("Status", "WorkItems.Domain.Entities.WorkTask.Status#TaskStatus", b1 =>
                         {
                             b1.IsRequired();

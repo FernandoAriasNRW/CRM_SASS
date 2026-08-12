@@ -1,4 +1,5 @@
 using BuildingBlocks.Application.Abstractions;
+using Notifications.Application.Abstractions;
 using BuildingBlocks.Domain;
 using Notifications.Application.Abstractions.Repositories;
 using Notifications.Application.Commands;
@@ -8,10 +9,10 @@ namespace Notifications.Application.Handlers.Commands;
 
 public sealed class CreateNotificationHandler(
     INotificationRepository repository,
-    IUnitOfWork unitOfWork) : ICommandHandler<CreateNotificationCommand, Notification>
+    INotificationsUnitOfWork unitOfWork) : ICommandHandler<CreateNotificationCommand, Notification>
 {
   private readonly INotificationRepository _repository = repository;
-  private readonly IUnitOfWork _unitOfWork = unitOfWork;
+  private readonly INotificationsUnitOfWork _unitOfWork = unitOfWork;
 
   public async Task<Result<Notification>> Handle(CreateNotificationCommand request, CancellationToken ct)
   {
@@ -40,10 +41,10 @@ public sealed class CreateNotificationHandler(
 
 public sealed class MarkNotificationAsReadHandler(
     INotificationRepository repository,
-    IUnitOfWork unitOfWork) : ICommandHandler<MarkNotificationAsReadCommand, bool>
+    INotificationsUnitOfWork unitOfWork) : ICommandHandler<MarkNotificationAsReadCommand, bool>
 {
   private readonly INotificationRepository _repository = repository;
-  private readonly IUnitOfWork _unitOfWork = unitOfWork;
+  private readonly INotificationsUnitOfWork _unitOfWork = unitOfWork;
 
   public async Task<Result<bool>> Handle(MarkNotificationAsReadCommand request, CancellationToken cancellationToken)
   {

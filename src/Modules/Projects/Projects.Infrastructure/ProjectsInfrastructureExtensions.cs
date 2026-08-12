@@ -1,4 +1,5 @@
 using BuildingBlocks.Domain;
+using Projects.Application.Abstractions;
 using BuildingBlocks.Infrastructure.Outbox;
 using BuildingBlocks.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -24,9 +25,7 @@ public static class ProjectsInfrastructureExtensions
     services.AddScoped<IOutboxService, OutboxService>();
 
     // 2. UnitOfWork con OutboxService inyectado
-    services.AddScoped<IUnitOfWork>(sp => new UnitOfWork<ProjectsDbContext>(
-        sp.GetRequiredService<ProjectsDbContext>(),
-        sp.GetRequiredService<IOutboxService>()));
+    services.AddScoped<IProjectsUnitOfWork, ProjectsModuleUnitOfWork>();
 
     services.AddScoped<IProjectRepository, EfProjectRepository>();
     services.AddScoped<ISpaceRepository, EfSpaceRepository>();

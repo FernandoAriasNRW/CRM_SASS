@@ -1,4 +1,5 @@
 using BuildingBlocks.Domain;
+using Notifications.Application.Abstractions;
 using BuildingBlocks.Infrastructure.Outbox;
 using BuildingBlocks.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -25,9 +26,7 @@ public static class NotificationsInfrastructureExtensions
     services.AddScoped<IOutboxService, OutboxService>();
 
     // 3. UnitOfWork con OutboxService inyectado
-    services.AddScoped<IUnitOfWork>(sp => new UnitOfWork<NotificationsDbContext>(
-        sp.GetRequiredService<NotificationsDbContext>(),
-        sp.GetRequiredService<IOutboxService>()));
+    services.AddScoped<INotificationsUnitOfWork, NotificationsModuleUnitOfWork>();
 
     services.AddScoped<INotificationRepository, EfNotificationRepository>();
     services.AddScoped<INotificationQueries, NotificationQueries>();

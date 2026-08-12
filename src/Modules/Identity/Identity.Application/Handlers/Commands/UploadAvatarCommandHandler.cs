@@ -1,4 +1,5 @@
 using BuildingBlocks.Application.Abstractions;
+using Identity.Application.Abstractions;
 using BuildingBlocks.Domain;
 using Identity.Application.Abstractions.Repositories;
 using Identity.Application.Commands;
@@ -13,9 +14,9 @@ public sealed class UploadAvatarCommandHandler : ICommandHandler<UploadAvatarCom
 {
     private readonly IUserRepository _userRepository;
     private readonly IStorageService _storageService;
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IIdentityUnitOfWork _unitOfWork;
 
-    public UploadAvatarCommandHandler(IUserRepository userRepository, IStorageService storageService, IUnitOfWork unitOfWork)
+    public UploadAvatarCommandHandler(IUserRepository userRepository, IStorageService storageService, IIdentityUnitOfWork unitOfWork)
     {
         _userRepository = userRepository;
         _storageService = storageService;

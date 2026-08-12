@@ -1,4 +1,5 @@
 using BuildingBlocks.Application.Abstractions;
+using Ticketing.Application.Abstractions;
 using BuildingBlocks.Domain;
 using Ticketing.Application.Abstractions.Repositories;
 using Ticketing.Application.Commands;
@@ -9,7 +10,7 @@ namespace Ticketing.Application.Handlers.Commands;
 
 public sealed class CreateTicketHandler(
     ITicketRepository repository,
-    IUnitOfWork unitOfWork) : ICommandHandler<CreateTicketCommand, Ticket>
+    ITicketingUnitOfWork unitOfWork) : ICommandHandler<CreateTicketCommand, Ticket>
 {
   public async Task<Result<Ticket>> Handle(CreateTicketCommand request, CancellationToken cancellationToken)
   {
@@ -33,7 +34,7 @@ public sealed class CreateTicketHandler(
 
 public sealed class ChangeTicketStatusHandler(
     ITicketRepository repository,
-    IUnitOfWork unitOfWork) : ICommandHandler<ChangeTicketStatusCommand, bool>
+    ITicketingUnitOfWork unitOfWork) : ICommandHandler<ChangeTicketStatusCommand, bool>
 {
   public async Task<Result<bool>> Handle(ChangeTicketStatusCommand request, CancellationToken cancellationToken)
   {
@@ -57,7 +58,7 @@ public sealed class ChangeTicketStatusHandler(
 
 public sealed class AssignTicketHandler(
     ITicketRepository repository,
-    IUnitOfWork unitOfWork) : ICommandHandler<AssignTicketCommand, bool>
+    ITicketingUnitOfWork unitOfWork) : ICommandHandler<AssignTicketCommand, bool>
 {
   public async Task<Result<bool>> Handle(AssignTicketCommand request, CancellationToken cancellationToken)
   {
@@ -76,7 +77,7 @@ public sealed class AssignTicketHandler(
 
 public sealed class CloseTicketHandler(
     ITicketRepository repository,
-    IUnitOfWork unitOfWork) : ICommandHandler<CloseTicketCommand, bool>
+    ITicketingUnitOfWork unitOfWork) : ICommandHandler<CloseTicketCommand, bool>
 {
   public async Task<Result<bool>> Handle(CloseTicketCommand request, CancellationToken cancellationToken)
   {

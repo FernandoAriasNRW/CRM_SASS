@@ -10,7 +10,7 @@ namespace Webhook.Application.Handlers.Commands;
 
 public sealed class CreateWebhookSubscriptionHandler(
     IWebhookSubscriptionRepository repository,
-    IUnitOfWork unitOfWork) : ICommandHandler<CreateWebhookCommand, WebhookSubscriptionDto>
+    IWebhookUnitOfWork unitOfWork) : ICommandHandler<CreateWebhookCommand, WebhookSubscriptionDto>
 {
     public async Task<Result<WebhookSubscriptionDto>> Handle(CreateWebhookCommand request, CancellationToken ct)
     {
@@ -26,7 +26,7 @@ public sealed class CreateWebhookSubscriptionHandler(
 
 public sealed class UpdateWebhookSubscriptionHandler(
     IWebhookSubscriptionRepository repository,
-    IUnitOfWork unitOfWork) : ICommandHandler<UpdateWebhookSubscriptionCommand, WebhookSubscriptionDto>
+    IWebhookUnitOfWork unitOfWork) : ICommandHandler<UpdateWebhookSubscriptionCommand, WebhookSubscriptionDto>
 {
     public async Task<Result<WebhookSubscriptionDto>> Handle(UpdateWebhookSubscriptionCommand request, CancellationToken ct)
     {
@@ -44,7 +44,7 @@ public sealed class UpdateWebhookSubscriptionHandler(
 
 public sealed class DeleteWebhookSubscriptionHandler(
     IWebhookSubscriptionRepository repository,
-    IUnitOfWork unitOfWork) : ICommandHandler<DeleteWebhookSubscriptionCommand, bool>
+    IWebhookUnitOfWork unitOfWork) : ICommandHandler<DeleteWebhookSubscriptionCommand, bool>
 {
     public async Task<Result<bool>> Handle(DeleteWebhookSubscriptionCommand request, CancellationToken ct)
     {
@@ -61,7 +61,7 @@ public sealed class DeleteWebhookSubscriptionHandler(
 
 public sealed class ToggleWebhookSubscriptionHandler(
     IWebhookSubscriptionRepository repository,
-    IUnitOfWork unitOfWork) : ICommandHandler<ToggleWebhookSubscriptionCommand, WebhookSubscriptionDto>
+    IWebhookUnitOfWork unitOfWork) : ICommandHandler<ToggleWebhookSubscriptionCommand, WebhookSubscriptionDto>
 {
     public async Task<Result<WebhookSubscriptionDto>> Handle(ToggleWebhookSubscriptionCommand request, CancellationToken ct)
     {

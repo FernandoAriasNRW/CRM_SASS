@@ -1,4 +1,5 @@
 using BuildingBlocks.Application.Abstractions;
+using Reporting.Application.Abstractions;
 using BuildingBlocks.Domain;
 using Reporting.Application.Abstractions.Repositories;
 using Reporting.Application.Commands;
@@ -9,7 +10,7 @@ namespace Reporting.Application.Handlers.Commands;
 
 public sealed class CreateReportHandler(
     IReportRepository repository,
-    IUnitOfWork unitOfWork) : ICommandHandler<CreateReportCommand, Report>
+    IReportingUnitOfWork unitOfWork) : ICommandHandler<CreateReportCommand, Report>
 {
     public async Task<Result<Report>> Handle(CreateReportCommand request, CancellationToken ct)
     {
@@ -31,7 +32,7 @@ public sealed class CreateReportHandler(
 
 public sealed class GenerateReportHandler(
     IReportRepository repository,
-    IUnitOfWork unitOfWork) : ICommandHandler<GenerateReportCommand, bool>
+    IReportingUnitOfWork unitOfWork) : ICommandHandler<GenerateReportCommand, bool>
 {
     public async Task<Result<bool>> Handle(GenerateReportCommand request, CancellationToken ct)
     {

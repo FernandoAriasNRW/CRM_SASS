@@ -8,6 +8,18 @@
 Dockerfile  text eol=lf
 *.conf      text eol=lf
 
+# Fuentes del frontend y catálogos de traducción: LF también en el working tree.
+#
+# No es cosmético. `ng extract-i18n` escribe en el catálogo la línea de cada cadena, y
+# calcula spans distintos según los finales de línea del template: el mismo botón sale como
+# «122» leyendo CRLF y como «122,123» leyendo LF. Con el working tree nativo, un catálogo
+# generado en Windows no coincide nunca con el que genera el CI en Linux, y la comprobación
+# de i18n falla en cualquier PR aunque nadie haya tocado una cadena. Forzando LF, extraer da
+# el mismo resultado en las dos plataformas.
+*.html      text eol=lf
+*.ts        text eol=lf
+*.xlf       text eol=lf
+
 # Archivos que deben conservar CRLF (herramientas Windows)
 *.ps1       text eol=crlf
 *.cmd       text eol=crlf

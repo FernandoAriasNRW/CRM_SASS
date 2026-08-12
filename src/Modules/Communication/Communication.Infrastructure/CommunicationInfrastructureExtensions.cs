@@ -1,4 +1,5 @@
 using BuildingBlocks.Domain;
+using Communication.Application.Abstractions;
 using BuildingBlocks.Infrastructure.Outbox;
 using BuildingBlocks.Infrastructure.Persistence;
 using Communication.Infrastructure.Persistence;
@@ -23,9 +24,7 @@ public static class CommunicationInfrastructureExtensions
         services.AddScoped<IOutboxService, OutboxService>();
 
         // 3. UnitOfWork con OutboxService inyectado
-        services.AddScoped<IUnitOfWork>(sp => new UnitOfWork<CommunicationsDbContext>(
-            sp.GetRequiredService<CommunicationsDbContext>(),
-            sp.GetRequiredService<IOutboxService>()));
+        services.AddScoped<ICommunicationUnitOfWork, CommunicationModuleUnitOfWork>();
 
         services.AddScoped<IConversationRepository, EfConversationRepository>();
         services.AddScoped<IMessageRepository, EfMessageRepository>();

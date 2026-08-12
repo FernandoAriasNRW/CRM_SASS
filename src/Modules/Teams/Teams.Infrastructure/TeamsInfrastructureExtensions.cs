@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Configuration;
+using Teams.Application.Abstractions;
 using Microsoft.Extensions.DependencyInjection;
 using Teams.Infrastructure.Persistence;
 using BuildingBlocks.Application.Abstractions;
@@ -25,10 +26,7 @@ public static class TeamsInfrastructureExtensions
             }
         });
 
-        services.AddScoped<IUnitOfWork<TeamsDbContext>>(sp => new UnitOfWork<TeamsDbContext>(
-            sp.GetRequiredService<TeamsDbContext>(),
-            sp.GetRequiredService<BuildingBlocks.Infrastructure.Outbox.IOutboxService>()
-        ));
+        services.AddScoped<ITeamsUnitOfWork, TeamsModuleUnitOfWork>();
 
         services.AddScoped<Teams.Application.Abstractions.Repositories.ITeamRepository, Teams.Infrastructure.Repositories.TeamRepository>();
 

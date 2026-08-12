@@ -126,6 +126,34 @@ cambios en curso— y fallaba por código correcto. Si el 4300 aparece ocupado,
 **identificar el proceso antes de matarlo**: una vez resultaron ser procesos de Docker y
 tumbé Docker Desktop entero.
 
+**Dos defectos que dejaban la aplicación inservible sin dar un solo error**, encontrados al
+verificar la prioridad contra la API real el 2026-08-12. Los dos están arreglados, y la
+lección es la misma: aquí no basta con que compile y pasen los tests.
+
+1. **El tenant del filtro global era siempre `Guid.Empty`, así que ninguna consulta filtrada
+   devolvía una fila.** `UserContext` buscaba el claim como `TenantId` y el token lo emite
+   como `tenantId`; las identidades de JWT de este stack son `CaseSensitiveClaimsIdentity`
+   (Microsoft.IdentityModel 8) y **distinguen mayúsculas**, al contrario que un
+   `ClaimsIdentity` normal. `GET /api/v1/tasks` daba 0 con 15 filas en la base.
+2. **Las escrituras por handler no llegaban a la base.** Nueve módulos registraban
+   `IUnitOfWork` en el mismo contenedor: ganaba el último —Reporting— y todos los handlers
+   guardaban en el `DbContext` de Reporting. `POST /api/v1/tasks` respondía 201 y no creaba
+   nada. Ahora cada módulo tiene su interfaz propia y equivocarse no compila.
+
+Sobrevivieron porque las pruebas no podían verlos: **los E2E simulan la API**, y los
+unitarios de aislamiento crean unas opciones de EF por contexto, de modo que cada uno tiene
+su propio modelo y su propio tenant. Si algo sale vacío o un guardado no se nota, sospechar
+de estos dos antes que del código nuevo.
+
+**`ng extract-i18n` da resultados distintos según los finales de línea**, y eso tuvo el CI
+en rojo. El catálogo guarda la línea de cada cadena, y el mismo botón sale como `122`
+leyendo un template CRLF y como `122,123` leyendo el mismo template en LF. Con
+`core.autocrlf=true` en Windows, un catálogo generado en local **nunca** coincide con el que
+genera el CI en Linux, así que la comprobación fallaba en cualquier PR aunque nadie hubiera
+tocado una cadena. Resuelto forzando LF en el working tree para `*.html`, `*.ts` y `*.xlf`
+en `.gitattributes`. Si vuelve a aparecer: comprobar los finales de línea **antes** de
+sospechar del catálogo, porque el diff sólo muestra `linenumber` y engaña.
+
 **`GET /api/v1/docs` devuelve un array plano**, no `{items, totalCount}` como el resto de
 módulos. Simular la forma equivocada deja la vista vacía **sin ningún error en consola**.
 

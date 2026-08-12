@@ -13,6 +13,7 @@ public sealed record PatchTaskCommand(
     string? Title,
     string? Description,
     string? Status,
+    string? Priority,
     Guid? AssigneeId,
     DateOnly? DueDate
 ) : ICommand<bool>, IWebhookTriggered, IAuthorizeEntity

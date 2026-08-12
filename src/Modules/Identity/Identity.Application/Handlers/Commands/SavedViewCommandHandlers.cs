@@ -1,4 +1,5 @@
 using BuildingBlocks.Application.Abstractions;
+using Identity.Application.Abstractions;
 using BuildingBlocks.Domain;
 using Identity.Application.Abstractions.Repositories;
 using Identity.Application.Commands;
@@ -7,7 +8,7 @@ using Identity.Domain.Entities;
 
 namespace Identity.Application.Handlers.Commands;
 
-public sealed class SaveViewCommandHandler(ISavedViewRepository repository, IUnitOfWork unitOfWork)
+public sealed class SaveViewCommandHandler(ISavedViewRepository repository, IIdentityUnitOfWork unitOfWork)
     : ICommandHandler<SaveViewCommand, SavedViewDto>
 {
     public async Task<Result<SavedViewDto>> Handle(SaveViewCommand request, CancellationToken cancellationToken)
@@ -22,7 +23,7 @@ public sealed class SaveViewCommandHandler(ISavedViewRepository repository, IUni
     }
 }
 
-public sealed class DeleteSavedViewCommandHandler(ISavedViewRepository repository, IUnitOfWork unitOfWork)
+public sealed class DeleteSavedViewCommandHandler(ISavedViewRepository repository, IIdentityUnitOfWork unitOfWork)
     : ICommandHandler<DeleteSavedViewCommand, bool>
 {
     public async Task<Result<bool>> Handle(DeleteSavedViewCommand request, CancellationToken cancellationToken)

@@ -112,7 +112,19 @@
                     <ng-icon name="lucideClock" size="11" />
                     <span>{{ task.estimatedHours }}h</span>
                   </div>
-                  <ui-badge [variant]="statusBadge(task.status)" class="text-[10px]">{{ task.status }}</ui-badge>
+                  <div class="flex items-center gap-1.5">
+                    <!-- La prioridad normal no se marca: si todo lleva distintivo, ninguno
+                         destaca y el tablero deja de decir dónde mirar. -->
+                    @if (esPrioridadDestacable(task.priority)) {
+                      <span class="flex items-center gap-0.5 text-[10px] font-medium"
+                            [class]="prioridadDe(task.priority).color"
+                            [title]="prioridadDe(task.priority).label">
+                        <ng-icon [name]="prioridadDe(task.priority).icon" size="11" />
+                        {{ prioridadDe(task.priority).label }}
+                      </span>
+                    }
+                    <ui-badge [variant]="statusBadge(task.status)" class="text-[10px]">{{ task.status }}</ui-badge>
+                  </div>
                 </div>
               </div>
             } @empty {
@@ -158,6 +170,13 @@
 
   <ng-template #statusTemplate let-item>
     <ui-badge [variant]="statusBadge(item.status)">{{ item.status }}</ui-badge>
+  </ng-template>
+
+  <ng-template #priorityTemplate let-item>
+    <span class="flex items-center gap-1 text-xs font-medium" [class]="prioridadDe(item.priority).color">
+      <ng-icon [name]="prioridadDe(item.priority).icon" size="12" />
+      {{ prioridadDe(item.priority).label }}
+    </span>
   </ng-template>
 
 </div>
