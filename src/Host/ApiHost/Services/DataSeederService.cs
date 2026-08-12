@@ -109,7 +109,11 @@ public sealed class DataSeederService(IServiceProvider serviceProvider, ILogger<
                     if (!existingUsers.Any(u => u.Email.Value == item.email))
                     {
                         var emailVal = Email.Create(item.email).Value!;
-                        var passVal = PasswordHash.Create("Secure123*");
+                        // Password de los usuarios de demostración. Está en el repositorio a la
+                        // vista, así que no puede coincidir con ninguna credencial de
+                        // infraestructura: hasta agosto de 2026 era el mismo que el de MySQL en
+                        // desarrollo, y eso convertía un dato de demo en una credencial filtrada.
+                        var passVal = PasswordHash.Create("DemoAcme2026!");
                         var uRes = User.Create(tenantId, item.name, emailVal, passVal, item.role);
                         if (uRes.IsSuccess && uRes.Value != null)
                         {
