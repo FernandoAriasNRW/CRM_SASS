@@ -1,4 +1,5 @@
 using BuildingBlocks.Application.Abstractions;
+using Projects.Application.Abstractions;
 using BuildingBlocks.Domain;
 using Projects.Application.Abstractions.Repositories;
 using Projects.Application.Commands;
@@ -6,7 +7,7 @@ using Projects.Domain.Entities;
 
 namespace Projects.Application.Handlers.Commands;
 
-public sealed class CreateFolderCommandHandler(IFolderRepository repository, IUnitOfWork unitOfWork) : ICommandHandler<CreateFolderCommand, Folder>
+public sealed class CreateFolderCommandHandler(IFolderRepository repository, IProjectsUnitOfWork unitOfWork) : ICommandHandler<CreateFolderCommand, Folder>
 {
     public async Task<Result<Folder>> Handle(CreateFolderCommand request, CancellationToken cancellationToken)
     {
@@ -17,7 +18,7 @@ public sealed class CreateFolderCommandHandler(IFolderRepository repository, IUn
     }
 }
 
-public sealed class UpdateFolderCommandHandler(IFolderRepository repository, IUnitOfWork unitOfWork) : ICommandHandler<UpdateFolderCommand, bool>
+public sealed class UpdateFolderCommandHandler(IFolderRepository repository, IProjectsUnitOfWork unitOfWork) : ICommandHandler<UpdateFolderCommand, bool>
 {
     public async Task<Result<bool>> Handle(UpdateFolderCommand request, CancellationToken cancellationToken)
     {
@@ -31,7 +32,7 @@ public sealed class UpdateFolderCommandHandler(IFolderRepository repository, IUn
     }
 }
 
-public sealed class DeleteFolderCommandHandler(IFolderRepository repository, IUnitOfWork unitOfWork) : ICommandHandler<DeleteFolderCommand, bool>
+public sealed class DeleteFolderCommandHandler(IFolderRepository repository, IProjectsUnitOfWork unitOfWork) : ICommandHandler<DeleteFolderCommand, bool>
 {
     public async Task<Result<bool>> Handle(DeleteFolderCommand request, CancellationToken cancellationToken)
     {

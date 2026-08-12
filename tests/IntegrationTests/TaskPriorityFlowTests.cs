@@ -24,21 +24,6 @@ public sealed class TaskPriorityFlowTests(CrmApiFactory factory)
     private const string Email = "admin@acme.com";
     private const string Password = "admin123";
 
-    /// <summary>
-    /// Estas pruebas necesitan que crear una tarea por la API la guarde, y hoy no la guarda.
-    ///
-    /// Nueve módulos registran <c>IUnitOfWork</c> en el mismo contenedor, así que gana el
-    /// último —Reporting— y todos los handlers acaban guardando en el <c>DbContext</c> de
-    /// Reporting: el POST responde 201 y la fila no llega nunca a la base, sin ningún error.
-    /// Medido el 2026-08-12. Afecta a toda escritura que pase por un handler, no sólo a la
-    /// prioridad.
-    ///
-    /// Se quedan escritas y saltadas en lugar de borrarlas: son el guardián de ese arreglo, y
-    /// quitar esta línea es todo lo que hará falta para comprobarlo.
-    /// </summary>
-    private const string BloqueadasPorElUnitOfWork =
-        "Crear por la API no persiste: IUnitOfWork lo registran 9 módulos y gana el último (Reporting). Ver el comentario de la clase.";
-
     private async Task<(HttpClient cliente, Guid tenantId)> AutenticarAsync()
     {
         var login = await factory.CreateClient().PostAsJsonAsync("/api/v1/auth/login", new { Email, Password });
@@ -88,7 +73,7 @@ public sealed class TaskPriorityFlowTests(CrmApiFactory factory)
         return await respuesta.Content.ReadFromJsonAsync<JsonElement>();
     }
 
-    [Fact(Skip = BloqueadasPorElUnitOfWork)]
+    [Fact]
     public async Task Una_tarea_creada_con_prioridad_la_conserva_al_recuperarla()
     {
         var (cliente, tenantId) = await AutenticarAsync();
@@ -101,7 +86,7 @@ public sealed class TaskPriorityFlowTests(CrmApiFactory factory)
         recuperada.GetProperty("priority").GetString().Should().Be("Urgent");
     }
 
-    [Fact(Skip = BloqueadasPorElUnitOfWork)]
+    [Fact]
     public async Task Una_tarea_sin_prioridad_se_guarda_como_Normal()
     {
         var (cliente, tenantId) = await AutenticarAsync();
@@ -115,7 +100,7 @@ public sealed class TaskPriorityFlowTests(CrmApiFactory factory)
             "una prioridad vacía no la pintaría ninguna vista ni la encontraría ningún filtro");
     }
 
-    [Fact(Skip = BloqueadasPorElUnitOfWork)]
+    [Fact]
     public async Task La_prioridad_se_puede_cambiar_y_el_cambio_persiste()
     {
         var (cliente, tenantId) = await AutenticarAsync();
@@ -139,7 +124,7 @@ public sealed class TaskPriorityFlowTests(CrmApiFactory factory)
         respuesta.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
-    [Fact(Skip = BloqueadasPorElUnitOfWork)]
+    [Fact]
     public async Task Se_puede_filtrar_por_prioridad()
     {
         var (cliente, tenantId) = await AutenticarAsync();
@@ -164,7 +149,7 @@ public sealed class TaskPriorityFlowTests(CrmApiFactory factory)
     /// justo lo que no se quiere. Se comprueba con las cuatro prioridades creadas en orden
     /// inverso, para que un orden de inserción no pueda dar el resultado por casualidad.
     /// </summary>
-    [Fact(Skip = BloqueadasPorElUnitOfWork)]
+    [Fact]
     public async Task Ordenar_por_prioridad_devuelve_de_mas_urgente_a_menos()
     {
         var (cliente, tenantId) = await AutenticarAsync();

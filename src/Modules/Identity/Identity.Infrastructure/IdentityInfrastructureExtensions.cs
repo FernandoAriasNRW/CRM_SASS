@@ -1,4 +1,5 @@
 using BuildingBlocks.Domain;
+using Identity.Application.Abstractions;
 using BuildingBlocks.Infrastructure.Outbox;
 using BuildingBlocks.Infrastructure.Persistence;
 using Identity.Application.Abstractions.Queries;
@@ -27,9 +28,7 @@ public static class IdentityInfrastructureExtensions
         services.AddScoped<IOutboxService, OutboxService>();
 
         // 3. UnitOfWork con OutboxService inyectado
-        services.AddScoped<IUnitOfWork>(sp => new UnitOfWork<IdentityDbContext>(
-            sp.GetRequiredService<IdentityDbContext>(),
-            sp.GetRequiredService<IOutboxService>()));
+        services.AddScoped<IIdentityUnitOfWork, IdentityModuleUnitOfWork>();
 
         services.AddScoped<IUserRepository, EfUserRepository>();
         services.AddScoped<ISavedViewRepository, EfSavedViewRepository>();

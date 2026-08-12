@@ -21,9 +21,7 @@ public static class WebhookInfrastructureExtensions
             options.UseMySql(configuration.GetConnectionString("DefaultConnection"), Microsoft.EntityFrameworkCore.ServerVersion.Parse("8.0.32-mysql")));
 
         services.AddScoped<IOutboxService, OutboxService>();
-        services.AddScoped<IUnitOfWork>(sp => new UnitOfWork<WebhookDbContext>(
-            sp.GetRequiredService<WebhookDbContext>(),
-            sp.GetRequiredService<IOutboxService>()));
+        services.AddScoped<IWebhookUnitOfWork, WebhookModuleUnitOfWork>();
 
         services.AddScoped<IWebhookSubscriptionRepository, EfWebhookSubscriptionRepository>();
         services.AddScoped<IWebhookDispatchService, WebhookDispatchService>();

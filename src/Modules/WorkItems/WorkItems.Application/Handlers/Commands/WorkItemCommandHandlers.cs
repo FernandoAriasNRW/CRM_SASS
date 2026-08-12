@@ -1,4 +1,5 @@
 using BuildingBlocks.Application.Abstractions;
+using WorkItems.Application.Abstractions;
 using BuildingBlocks.Domain;
 using WorkItems.Application.Abstractions.Repositories;
 using WorkItems.Application.Commands;
@@ -8,7 +9,7 @@ namespace WorkItems.Application.Handlers.Commands;
 
 public sealed class CreateTaskCommandHandler(
     ITaskRepository repository,
-    IUnitOfWork unitOfWork) : ICommandHandler<CreateTaskCommand, WorkTask>
+    IWorkItemsUnitOfWork unitOfWork) : ICommandHandler<CreateTaskCommand, WorkTask>
 {
   public async Task<Result<WorkTask>> Handle(CreateTaskCommand request, CancellationToken cancellationToken)
   {
@@ -31,7 +32,7 @@ public sealed class CreateTaskCommandHandler(
 
 public sealed class MoveTaskCommandHandler(
     ITaskRepository repository,
-    IUnitOfWork unitOfWork) : ICommandHandler<MoveTaskCommand, bool>
+    IWorkItemsUnitOfWork unitOfWork) : ICommandHandler<MoveTaskCommand, bool>
 {
   public async Task<Result<bool>> Handle(MoveTaskCommand request, CancellationToken cancellationToken)
   {
@@ -53,7 +54,7 @@ public sealed class MoveTaskCommandHandler(
 
 public sealed class PatchTaskCommandHandler(
     ITaskRepository repository,
-    IUnitOfWork unitOfWork) : ICommandHandler<PatchTaskCommand, bool>
+    IWorkItemsUnitOfWork unitOfWork) : ICommandHandler<PatchTaskCommand, bool>
 {
   public async Task<Result<bool>> Handle(PatchTaskCommand request, CancellationToken cancellationToken)
   {
@@ -84,7 +85,7 @@ public sealed class PatchTaskCommandHandler(
 
 public sealed class DeleteTaskCommandHandler(
     ITaskRepository repository,
-    IUnitOfWork unitOfWork) : ICommandHandler<DeleteTaskCommand, bool>
+    IWorkItemsUnitOfWork unitOfWork) : ICommandHandler<DeleteTaskCommand, bool>
 {
   public async Task<Result<bool>> Handle(DeleteTaskCommand request, CancellationToken cancellationToken)
   {

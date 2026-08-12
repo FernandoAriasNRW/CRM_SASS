@@ -1,4 +1,5 @@
 using FluentAssertions;
+using WorkItems.Application.Abstractions;
 using Xunit;
 using NSubstitute;
 using WorkItems.Application.Commands;
@@ -18,7 +19,7 @@ namespace UnitTests;
 public class WorkItemsTests
 {
     private readonly ITaskRepository _repositoryMock;
-    private readonly IUnitOfWork _unitOfWorkMock;
+    private readonly IWorkItemsUnitOfWork _unitOfWorkMock;
     private readonly ITaskQueries _queriesMock;
     private readonly Guid _tenantId = Guid.NewGuid();
     private readonly Guid _projectId = Guid.NewGuid();
@@ -28,7 +29,7 @@ public class WorkItemsTests
     public WorkItemsTests()
     {
         _repositoryMock = Substitute.For<ITaskRepository>();
-        _unitOfWorkMock = Substitute.For<IUnitOfWork>();
+        _unitOfWorkMock = Substitute.For<IWorkItemsUnitOfWork>();
         _queriesMock = Substitute.For<ITaskQueries>();
     }
 

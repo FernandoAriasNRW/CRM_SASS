@@ -1,4 +1,5 @@
 using FluentAssertions;
+using Identity.Application.Abstractions;
 using Xunit;
 using NSubstitute;
 using Identity.Application.Commands;
@@ -20,7 +21,7 @@ public class IdentityTests
 {
     private readonly IUserRepository _userRepositoryMock;
     private readonly IJwtService _jwtServiceMock;
-    private readonly IUnitOfWork _unitOfWorkMock;
+    private readonly IIdentityUnitOfWork _unitOfWorkMock;
     private readonly IUserQueries _userQueriesMock;
     private readonly Guid _tenantId = Guid.NewGuid();
     private readonly Guid _userId = Guid.NewGuid();
@@ -29,7 +30,7 @@ public class IdentityTests
     {
         _userRepositoryMock = Substitute.For<IUserRepository>();
         _jwtServiceMock = Substitute.For<IJwtService>();
-        _unitOfWorkMock = Substitute.For<IUnitOfWork>();
+        _unitOfWorkMock = Substitute.For<IIdentityUnitOfWork>();
         _userQueriesMock = Substitute.For<IUserQueries>();
     }
 

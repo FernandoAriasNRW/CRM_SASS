@@ -1,4 +1,5 @@
 using BuildingBlocks.Application.Abstractions;
+using Calendar.Application.Abstractions;
 using BuildingBlocks.Domain;
 using Calendar.Application.Abstractions.Repositories;
 using Calendar.Application.Commands;
@@ -13,10 +14,10 @@ namespace Calendar.Application.Handlers.Commands;
 /// </summary>
 public sealed class CreateCalendarEventHandler(
     ICalendarEventRepository repository,
-    IUnitOfWork unitOfWork) : ICommandHandler<CreateCalendarEventCommand, CalendarEventDto>
+    ICalendarUnitOfWork unitOfWork) : ICommandHandler<CreateCalendarEventCommand, CalendarEventDto>
 {
     private readonly ICalendarEventRepository _repository = repository;
-    private readonly IUnitOfWork _unitOfWork = unitOfWork;
+    private readonly ICalendarUnitOfWork _unitOfWork = unitOfWork;
 
     public async Task<Result<CalendarEventDto>> Handle(CreateCalendarEventCommand request, CancellationToken ct)
     {
@@ -57,10 +58,10 @@ public sealed class CreateCalendarEventHandler(
 /// </summary>
 public sealed class UpdateCalendarEventHandler(
     ICalendarEventRepository repository,
-    IUnitOfWork unitOfWork) : ICommandHandler<UpdateCalendarEventCommand, CalendarEventDto>
+    ICalendarUnitOfWork unitOfWork) : ICommandHandler<UpdateCalendarEventCommand, CalendarEventDto>
 {
     private readonly ICalendarEventRepository _repository = repository;
-    private readonly IUnitOfWork _unitOfWork = unitOfWork;
+    private readonly ICalendarUnitOfWork _unitOfWork = unitOfWork;
 
     public async Task<Result<CalendarEventDto>> Handle(UpdateCalendarEventCommand request, CancellationToken ct)
     {
@@ -97,10 +98,10 @@ public sealed class UpdateCalendarEventHandler(
 /// </summary>
 public sealed class RescheduleEventHandler(
     ICalendarEventRepository repository,
-    IUnitOfWork unitOfWork) : ICommandHandler<RescheduleEventCommand, CalendarEventDto>
+    ICalendarUnitOfWork unitOfWork) : ICommandHandler<RescheduleEventCommand, CalendarEventDto>
 {
     private readonly ICalendarEventRepository _repository = repository;
-    private readonly IUnitOfWork _unitOfWork = unitOfWork;
+    private readonly ICalendarUnitOfWork _unitOfWork = unitOfWork;
 
     public async Task<Result<CalendarEventDto>> Handle(RescheduleEventCommand request, CancellationToken ct)
     {
@@ -126,10 +127,10 @@ public sealed class RescheduleEventHandler(
 /// </summary>
 public sealed class CancelEventHandler(
     ICalendarEventRepository repository,
-    IUnitOfWork unitOfWork) : ICommandHandler<CancelEventCommand, bool>
+    ICalendarUnitOfWork unitOfWork) : ICommandHandler<CancelEventCommand, bool>
 {
     private readonly ICalendarEventRepository _repository = repository;
-    private readonly IUnitOfWork _unitOfWork = unitOfWork;
+    private readonly ICalendarUnitOfWork _unitOfWork = unitOfWork;
 
     public async Task<Result<bool>> Handle(CancelEventCommand request, CancellationToken ct)
     {
@@ -156,10 +157,10 @@ public sealed class CancelEventHandler(
 /// </summary>
 public sealed class RestoreEventHandler(
     ICalendarEventRepository repository,
-    IUnitOfWork unitOfWork) : ICommandHandler<RestoreEventCommand, CalendarEventDto>
+    ICalendarUnitOfWork unitOfWork) : ICommandHandler<RestoreEventCommand, CalendarEventDto>
 {
     private readonly ICalendarEventRepository _repository = repository;
-    private readonly IUnitOfWork _unitOfWork = unitOfWork;
+    private readonly ICalendarUnitOfWork _unitOfWork = unitOfWork;
 
     public async Task<Result<CalendarEventDto>> Handle(RestoreEventCommand request, CancellationToken ct)
     {
@@ -190,10 +191,10 @@ public sealed class RestoreEventHandler(
 /// </summary>
 public sealed class PermanentDeleteEventHandler(
     ICalendarEventRepository repository,
-    IUnitOfWork unitOfWork) : ICommandHandler<PermanentDeleteEventCommand, bool>
+    ICalendarUnitOfWork unitOfWork) : ICommandHandler<PermanentDeleteEventCommand, bool>
 {
     private readonly ICalendarEventRepository _repository = repository;
-    private readonly IUnitOfWork _unitOfWork = unitOfWork;
+    private readonly ICalendarUnitOfWork _unitOfWork = unitOfWork;
 
     public async Task<Result<bool>> Handle(PermanentDeleteEventCommand request, CancellationToken ct)
     {
