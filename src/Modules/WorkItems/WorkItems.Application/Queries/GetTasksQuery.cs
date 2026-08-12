@@ -9,6 +9,7 @@ public sealed record GetTasksQuery(
     Guid? ProjectId,
     Guid? AssigneeId,
     string? Status,
+    string? Priority,
     string? Filter,
     Guid? UserId,
     PaginationRequest Pagination

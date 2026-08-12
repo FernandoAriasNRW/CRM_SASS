@@ -14,7 +14,7 @@ import {
   lucideArrowUp, lucideMinus, lucideArrowDown, lucideLoader2
 } from '@ng-icons/lucide';
 import { DrawerComponent } from '../../shared/ui/drawer.component';
-import type { TaskItem } from './task-create-modal.component';
+import { PRIORIDADES, PRIORIDAD_POR_DEFECTO, type TaskItem } from './task-create-modal.component';
 import { TASK_TAGS, type Tag } from '../../shared/utils/tags';
 import { ClickableDirective } from '../../shared/directives/clickable.directive';
 
@@ -25,13 +25,6 @@ interface Comment {
   content: string;
   createdAtUtc: string;
 }
-
-const PRIORITIES = [
-  { key: 'urgent',  label: 'Urgente',  icon: 'lucideAlertCircle', color: 'text-destructive' },
-  { key: 'high',    label: 'Alta',     icon: 'lucideArrowUp',     color: 'text-warning' },
-  { key: 'normal',  label: 'Normal',   icon: 'lucideMinus',       color: 'text-primary' },
-  { key: 'low',     label: 'Baja',     icon: 'lucideArrowDown',   color: 'text-muted-foreground' },
-];
 
 const STATUSES = ['To Do', 'In Progress', 'In Review', 'Done'];
 
@@ -63,7 +56,7 @@ export class TaskDetailPanelComponent implements OnInit {
   title = '';
   description = '';
   status = '';
-  priority = 'normal';
+  priority: string = PRIORIDAD_POR_DEFECTO;
   dueDate = '';
   estimatedHours = 0;
   selectedTags = signal<string[]>([]);
@@ -75,12 +68,12 @@ export class TaskDetailPanelComponent implements OnInit {
   sendingComment = signal(false);
   activeTab = signal<'comments' | 'activity'>('comments');
 
-  readonly priorities = PRIORITIES;
+  readonly priorities = PRIORIDADES;
   readonly statuses = STATUSES;
   readonly availableTags = TASK_TAGS;
 
   readonly currentPriority = computed(() =>
-    PRIORITIES.find(p => p.key === this.priority) ?? PRIORITIES[2]
+    PRIORIDADES.find(p => p.key === this.priority) ?? PRIORIDADES[2]
   );
 
   statusBadge(s: string): BadgeVariant { return STATUS_BADGE[s] ?? 'outline'; }
@@ -90,6 +83,7 @@ export class TaskDetailPanelComponent implements OnInit {
     this.title = t.title;
     this.description = t.description ?? '';
     this.status = t.status;
+    this.priority = t.priority ?? PRIORIDAD_POR_DEFECTO;
     this.dueDate = t.dueDate ?? '';
     this.estimatedHours = t.estimatedHours ?? 0;
     // Parsear etiquetas guardadas como string separado por comas
@@ -120,7 +114,7 @@ export class TaskDetailPanelComponent implements OnInit {
     this.api.patch(`/tasks/${this.task().id}`, payload).subscribe({
       next: () => {
         this.saving.set(false);
-        this.updated.emit({ ...this.task(), title: this.title, description: this.description, status: this.status, dueDate: this.dueDate, estimatedHours: this.estimatedHours });
+        this.updated.emit({ ...this.task(), title: this.title, description: this.description, status: this.status, priority: this.priority, dueDate: this.dueDate, estimatedHours: this.estimatedHours });
         if (field === 'title') {
           this.toast.success('Guardado', 'Título actualizado');
         }
@@ -145,6 +139,34 @@ export class TaskDetailPanelComponent implements OnInit {
 
   getTag(key: string): Tag | undefined {
     return TASK_TAGS.find(t => t.key === key);
+  }
+
+  /**
+   * Cambia la prioridad y la guarda.
+   *
+   * Si el servidor la rechaza, se revierte a la anterior. Es la misma decisión que en los
+   * tableros: dejar en pantalla un valor que no se guardó es peor que no aceptar el cambio,
+   * porque el usuario se va creyendo que la tarea quedó priorizada.
+   */
+  changePriority(nuevaPrioridad: string): void {
+    const anterior = this.priority;
+    if (nuevaPrioridad === anterior) return;
+
+    this.priority = nuevaPrioridad;
+    this.saving.set(true);
+
+    this.api.patch(`/tasks/${this.task().id}`, { priority: nuevaPrioridad }).subscribe({
+      next: () => {
+        this.saving.set(false);
+        this.updated.emit({ ...this.task(), priority: nuevaPrioridad });
+        this.toast.success($localize`Prioridad actualizada`, this.currentPriority().label);
+      },
+      error: () => {
+        this.priority = anterior;
+        this.saving.set(false);
+        this.toast.error($localize`Error`, $localize`No se pudo cambiar la prioridad`);
+      },
+    });
   }
 
   changeStatus(newStatus: string): void {

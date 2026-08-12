@@ -7,3 +7,5 @@ public sealed record TaskCreatedEvent(Guid TaskId, Guid TenantId, Guid ProjectId
 public sealed record TaskStatusChangedEvent(Guid TaskId, Guid TenantId, Guid ProjectId, string OldStatus, string NewStatus) : DomainEvent;
 
 public sealed record TaskAssignedEvent(Guid TaskId, Guid TenantId, Guid AssigneeId) : DomainEvent;
+
+public sealed record TaskPriorityChangedEvent(Guid TaskId, Guid TenantId, Guid ProjectId, string OldPriority, string NewPriority) : DomainEvent;

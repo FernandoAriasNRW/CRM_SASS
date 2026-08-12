@@ -14,7 +14,7 @@ public interface ITaskQueries
       int pageSize,
       CancellationToken ct = default);
 
-  Task<PagedResult<TaskDto>> GetByTenantWithPaginationAsync(Guid tenantId, Guid? projectId, Guid? assigneeId, string? status, string? filter, Guid? userId, PaginationRequest pagination, CancellationToken ct = default);
+  Task<PagedResult<TaskDto>> GetByTenantWithPaginationAsync(Guid tenantId, Guid? projectId, Guid? assigneeId, string? status, string? priority, string? filter, Guid? userId, PaginationRequest pagination, CancellationToken ct = default);
 
   Task<TaskDto?> GetByIdAsync(Guid tenantId, Guid id, CancellationToken ct = default);
 }

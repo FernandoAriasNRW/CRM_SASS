@@ -12,9 +12,15 @@ public sealed class CreateTaskCommandHandler(
 {
   public async Task<Result<WorkTask>> Handle(CreateTaskCommand request, CancellationToken cancellationToken)
   {
-    var task = WorkTask.Create(
-        request.TenantId, request.ProjectId, request.Title, request.Description,
-        request.AssigneeId, request.CreatedById, request.EstimatedHours, request.DueDate);
+    WorkTask task;
+    try
+    {
+      task = WorkTask.Create(
+          request.TenantId, request.ProjectId, request.Title, request.Description,
+          request.AssigneeId, request.CreatedById, request.EstimatedHours, request.DueDate,
+          request.Priority);
+    }
+    catch (InvalidOperationException ex) { return Result<WorkTask>.Failure(ex.Message); }
 
     await repository.AddAsync(task, cancellationToken);
     await unitOfWork.SaveChangesAsync(cancellationToken);
@@ -61,6 +67,12 @@ public sealed class PatchTaskCommandHandler(
     if (!string.IsNullOrEmpty(request.Status))
     {
       try { task.Move(request.Status); }
+      catch (InvalidOperationException ex) { return Result<bool>.Failure(ex.Message); }
+    }
+
+    if (!string.IsNullOrEmpty(request.Priority))
+    {
+      try { task.Reprioritize(request.Priority); }
       catch (InvalidOperationException ex) { return Result<bool>.Failure(ex.Message); }
     }
 
