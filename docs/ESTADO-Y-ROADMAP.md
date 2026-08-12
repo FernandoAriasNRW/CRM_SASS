@@ -24,6 +24,7 @@ Estado tras las tres primeras fases:
 | Validación de entrada | escrita pero nunca ejecutada | activa en el pipeline |
 | CI | imposible de pasar | funcional, con E2E y contenedores |
 | Lint frontend | inexistente | 0 errores, 171 avisos medidos |
+| Esquema de base de datos | `EnsureCreated` y `ALTER` crudos al arrancar | migraciones aplicadas y verificadas (§7, bloque 4.0) |
 
 **Las Fases 1, 2 y 3 están implementadas por completo.** El frente que queda es de
 producto (§3), no de calidad.
@@ -321,18 +322,22 @@ versión inglesa y nadie lo vería hasta que lo encontrara un usuario.
 
 *Sólo lo bloqueante para vender. El resto queda en backlog.*
 
-### Bloque 4.0 — Migraciones, antes que nada 🔴
+### Bloque 4.0 — Migraciones ✅ COMPLETADO (2026-08-12)
 
-**La aplicación no aplica migraciones: crea el esquema con `EnsureCreated()`.** Existen
-migraciones iniciales por módulo pero nunca se ejecutan; `__EFMigrationsHistory` está
-vacía (verificado 2026-08-12).
+`Program.cs` aplica `Migrate()` en los trece contextos y aborta el arranque si falla, en
+lugar de crear el esquema con `EnsureCreated()` y tragarse los errores. Al hacerlo apareció
+que las migraciones no describían el modelo: **la tabla `EntityPermissions` nunca estuvo en
+ninguna migración** y se mantenía con siete `ALTER TABLE` crudos en cada arranque, uno de
+los cuales había dejado `TagIds` nullable contra lo que dice el modelo. Cerrado con una
+migración de puesta al día y retirados los parches.
 
-Toda la Fase 4 añade campos y entidades, y `EnsureCreated` sólo actúa si la base no
-existe: un campo nuevo no llegaría a ninguna base ya creada y la aplicación fallaría con
-«unknown column». Además ambos mecanismos son mutuamente excluyentes, así que cambiar a
-`Migrate()` más tarde, con varios módulos ya modificados, sale mucho más caro.
+Las bases creadas con el mecanismo anterior se ponen al día una sola vez con
+[`scripts/db/sellar-historial-migraciones.sql`](../scripts/db/sellar-historial-migraciones.sql),
+que además corrige la desviación de `TagIds`. Una base vacía no necesita nada.
 
-Detalle y opciones en [`CONTINUACION.md`](CONTINUACION.md).
+Verificado con base desde cero, con clon del esquema real sellado, comparando ambos esquemas
+columna a columna, y arrancando la aplicación contra los dos. Detalle en
+[`CONTINUACION.md`](CONTINUACION.md) §1.
 
 ### Bloque 4A — Enriquecer el modelo de tarea (semanas 7-10)
 
@@ -430,7 +435,7 @@ la interfaz de construcción.
 | Riesgo | Prob. | Impacto | Mitigación |
 |---|---|---|---|
 | Fuga de datos entre tenants por un `where` olvidado | **Alta** | **Crítico** | Tarea 2.1. Es la tarea individual más importante del plan. |
-| Los secretos retirados ya estaban comprometidos | Media | Crítico | Se movieron, **falta rotarlos**. Asumir que la clave JWT anterior es pública. |
+| Los secretos retirados ya estaban comprometidos | Baja | Medio | Reevaluado: la clave JWT **nunca llegó al repositorio público**. Lo único publicado fue el password del seed, que coincidía con el de MySQL; ese acoplamiento ya está roto y queda **cambiar el password de MySQL**. Ver `CONTINUACION.md` §3. |
 | La migración de paleta (3.1) rompe la UI visualmente | Alta | Medio | Feature por feature con revisión visual; los E2E de la Fase 2 dan la red. |
 | Perseguir paridad total con ClickUp | Media | Alto | La Fase 4 está deliberadamente acotada. Todo lo demás va a backlog. |
 | La deuda de test crece más rápido de lo que se paga | Media | Alto | El 25% de testing no es negociable; bloquear PRs sin tests en CI. |
@@ -439,9 +444,14 @@ la interfaz de construcción.
 
 ## 11. Siguiente paso
 
-1. **Rotar** la clave JWT y el password de base de datos. Retirarlos del código no basta:
-   estuvieron versionados y hay que asumirlos comprometidos.
-2. Revisar y **hacer push** del commit de Fase 1 (§4). La historia del frontend fue
-   reescrita para colgar de `web/`, así que el push a `origin/main` requiere `--force-with-lease`
-   y coordinación con cualquiera que tenga el repo clonado.
-3. Arrancar la **Fase 2** por la tarea 2.1, el query filter global de tenant.
+*Actualizado 2026-08-12, al cerrar el bloque 4.0. Los pasos anteriores —rotación de
+secretos, push de la Fase 1, arranque de la Fase 2— están hechos o reevaluados; el detalle
+de lo que quedó vivo está en `CONTINUACION.md`.*
+
+1. **Cambiar el password de MySQL.** Es lo único que sigue pendiente de la revisión de
+   secretos, y es una acción manual fuera del repositorio.
+2. **Mergear el PR #3** (Fases 2 y 3) o decidir explícitamente seguir sobre `fase-3-ux-ui`.
+   Cuanto más crezca la Fase 4 encima, más caro es el merge.
+3. Arrancar el **bloque 4A** por la prioridad en `WorkTask`: es la más simple y fija el
+   patrón —dominio, migración, API, interfaz y tests— para subtareas, dependencias y
+   múltiples responsables.
