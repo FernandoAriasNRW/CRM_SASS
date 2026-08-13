@@ -12,12 +12,13 @@ import {
   lucideTag, lucideFlag, lucideMessageSquare, lucidePaperclip,
   lucideSmile, lucideSend, lucideChevronDown, lucideAlertCircle,
   lucideArrowUp, lucideMinus, lucideArrowDown, lucideLoader2,
-  lucideBan, lucideArrowRight
+  lucideBan, lucideArrowRight, lucideRepeat
 } from '@ng-icons/lucide';
 import { DrawerComponent } from '../../shared/ui/drawer.component';
 import {
   PRIORIDADES, PRIORIDAD_POR_DEFECTO,
-  type TaskItem, type TaskDependencies, type TaskDependencyRef, type ChecklistItem,
+  FRECUENCIAS,
+  type TaskItem, type TaskDependencies, type TaskDependencyRef, type ChecklistItem, type Recurrence,
 } from './task-create-modal.component';
 import { TASK_TAGS, type Tag } from '../../shared/utils/tags';
 import { UsersService, type TenantUser } from '../../core/users.service';
@@ -50,7 +51,7 @@ const STATUS_BADGE: Record<string, BadgeVariant> = {
     lucideTag, lucideFlag, lucideMessageSquare, lucidePaperclip,
     lucideSmile, lucideSend, lucideChevronDown, lucideAlertCircle,
     lucideArrowUp, lucideMinus, lucideArrowDown, lucideLoader2,
-    lucideBan, lucideArrowRight
+    lucideBan, lucideArrowRight, lucideRepeat
   })],
   templateUrl: './task-detail-panel.component.html',
 })
@@ -87,6 +88,10 @@ export class TaskDetailPanelComponent implements OnInit {
   cargandoSubtareas = signal(false);
   creandoSubtarea = signal(false);
   tituloNuevaSubtarea = '';
+  readonly frecuencias = FRECUENCIAS;
+  recurrencia = signal<Recurrence | null>(null);
+  frecuenciaElegida = '';
+  intervaloElegido = 1;
   checklist = signal<ChecklistItem[]>([]);
   cargandoChecklist = signal(false);
   textoNuevoPunto = '';
@@ -126,7 +131,62 @@ export class TaskDetailPanelComponent implements OnInit {
     if (!this.esSubtarea()) this.cargarSubtareas();
     this.cargarDependencias();
     this.cargarChecklist();
+    this.recurrencia.set(t.recurrence ?? null);
+    this.frecuenciaElegida = t.recurrence?.frecuencia ?? '';
+    this.intervaloElegido = t.recurrence?.intervalo ?? 1;
     if (!this.usuarios.users().length) this.usuarios.loadTenantUsers().subscribe();
+  }
+
+  /**
+   * Pone o cambia la repetición.
+   *
+   * No se manda fecha de arranque: el servidor toma la fecha límite de la tarea, que es la que
+   * el usuario ya eligió. Preguntarla otra vez sería preguntar dos veces lo mismo.
+   */
+  guardarRecurrencia(): void {
+    if (!this.frecuenciaElegida) return;
+
+    const intervalo = Math.max(1, Math.floor(this.intervaloElegido || 1));
+
+    this.api.put(`/tasks/${this.task().id}/recurrence`, {
+      frecuencia: this.frecuenciaElegida,
+      intervalo,
+    }).subscribe({
+      next: () => {
+        // Se relee para mostrar la próxima ocurrencia que calculó el servidor, en lugar de
+        // adivinarla aquí y arriesgarse a pintar una fecha distinta de la guardada.
+        this.releerRecurrencia();
+        this.toast.success($localize`Repetición guardada`, this.textoDeRecurrencia(this.frecuenciaElegida, intervalo));
+      },
+      error: respuesta => this.toast.error(
+        $localize`No se pudo guardar la repetición`, this.mensajeDelServidor(respuesta)),
+    });
+  }
+
+  quitarRecurrencia(): void {
+    this.api.delete(`/tasks/${this.task().id}/recurrence`).subscribe({
+      next: () => {
+        this.recurrencia.set(null);
+        this.frecuenciaElegida = '';
+        this.intervaloElegido = 1;
+        this.updated.emit({ ...this.task(), recurrence: null });
+      },
+      error: () => this.toast.error($localize`Error`, $localize`No se pudo quitar la repetición`),
+    });
+  }
+
+  private releerRecurrencia(): void {
+    this.api.get<TaskItem>(`/tasks/${this.task().id}`).subscribe({
+      next: tarea => {
+        this.recurrencia.set(tarea.recurrence ?? null);
+        this.updated.emit({ ...this.task(), recurrence: tarea.recurrence ?? null });
+      },
+    });
+  }
+
+  textoDeRecurrencia(frecuencia: string, intervalo: number): string {
+    const etiqueta = FRECUENCIAS.find(f => f.key === frecuencia)?.label ?? frecuencia;
+    return intervalo > 1 ? `${etiqueta} × ${intervalo}` : etiqueta;
   }
 
   readonly puntosHechos = computed(() => this.checklist().filter(p => p.hecho).length);

@@ -160,7 +160,11 @@ public sealed class TaskQueries(WorkItemsDbContext context) : ITaskQueries
         context.TaskDependencies.Count(d => d.TenantId == tenantId && d.DependsOnTaskId == t.Id),
         t.Assignees.Select(a => a.UserId).ToList(),
         t.Checklist.Count,
-        t.Checklist.Count(i => i.Hecho)));
+        t.Checklist.Count(i => i.Hecho),
+        t.Recurrence == null
+            ? null
+            : new RecurrenceDto(t.Recurrence.Frecuencia, t.Recurrence.Intervalo,
+                                t.Recurrence.ProximaOcurrencia, t.Recurrence.FechaFin)));
   }
 
   public async Task<TaskDependenciesDto> GetDependenciesAsync(Guid tenantId, Guid taskId, CancellationToken ct = default)

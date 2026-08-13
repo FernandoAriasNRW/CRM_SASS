@@ -33,7 +33,23 @@ export interface TaskItem {
   /** Progreso de la checklist; los puntos se piden aparte. */
   checklistTotal?: number;
   checklistDone?: number;
+  /** Patrón de repetición, si la tarea es la plantilla de una serie. */
+  recurrence?: Recurrence | null;
 }
+
+/** Cada cuánto se repite una tarea. Las frecuencias las define el backend. */
+export interface Recurrence {
+  frecuencia: string;
+  intervalo: number;
+  proximaOcurrencia: string;
+  fechaFin?: string | null;
+}
+
+export const FRECUENCIAS = [
+  { key: 'Diaria', label: $localize`Cada día` },
+  { key: 'Semanal', label: $localize`Cada semana` },
+  { key: 'Mensual', label: $localize`Cada mes` },
+] as const;
 
 /** Un punto de la checklist. Llega ordenado por posición desde la API. */
 export interface ChecklistItem {

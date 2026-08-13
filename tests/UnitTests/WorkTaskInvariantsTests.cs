@@ -659,4 +659,116 @@ public sealed class WorkTaskInvariantsTests
     }
 
     #endregion
+
+    #region Recurrencia
+
+    private static WorkTask TareaQueSeRepite(string frecuencia, int intervalo, DateOnly desde, DateOnly? fin = null)
+    {
+        var tarea = NuevaTarea();
+        tarea.Repetir(frecuencia, intervalo, desde, fin);
+        return tarea;
+    }
+
+    [Fact]
+    public void Una_tarea_no_se_repite_por_defecto()
+    {
+        NuevaTarea().Recurrence.Should().BeNull();
+    }
+
+    [Fact]
+    public void Sin_llegar_la_fecha_no_se_genera_nada()
+    {
+        var tarea = TareaQueSeRepite(PatronDeRecurrencia.Frecuencias.Diaria, 1, new DateOnly(2026, 8, 20));
+
+        tarea.GenerarOcurrenciasHasta(new DateOnly(2026, 8, 19)).Should().BeEmpty();
+    }
+
+    [Fact]
+    public void Se_generan_todas_las_atrasadas_de_una_vez()
+    {
+        // Si la aplicación estuvo parada, saltarse las atrasadas dejaría huecos que nadie va a
+        // reclamar pero que falsean cualquier informe.
+        var tarea = TareaQueSeRepite(PatronDeRecurrencia.Frecuencias.Diaria, 1, new DateOnly(2026, 8, 10));
+
+        var generadas = tarea.GenerarOcurrenciasHasta(new DateOnly(2026, 8, 13));
+
+        generadas.Should().HaveCount(4);
+        generadas.Select(t => t.DueDate).Should().ContainInOrder(
+            new DateOnly(2026, 8, 10), new DateOnly(2026, 8, 11),
+            new DateOnly(2026, 8, 12), new DateOnly(2026, 8, 13));
+        tarea.Recurrence!.ProximaOcurrencia.Should().Be(new DateOnly(2026, 8, 14));
+    }
+
+    [Fact]
+    public void Las_ocurrencias_no_heredan_la_recurrencia()
+    {
+        // Si la heredaran, cada ocurrencia empezaría a generar las suyas y la serie se
+        // multiplicaría sola hasta llenar el tablero.
+        var tarea = TareaQueSeRepite(PatronDeRecurrencia.Frecuencias.Diaria, 1, new DateOnly(2026, 8, 12));
+
+        var generadas = tarea.GenerarOcurrenciasHasta(new DateOnly(2026, 8, 12));
+
+        generadas.Should().ContainSingle().Which.Recurrence.Should().BeNull();
+    }
+
+    [Fact]
+    public void La_fecha_de_fin_corta_la_serie()
+    {
+        var tarea = TareaQueSeRepite(
+            PatronDeRecurrencia.Frecuencias.Diaria, 1,
+            new DateOnly(2026, 8, 10), fin: new DateOnly(2026, 8, 11));
+
+        var generadas = tarea.GenerarOcurrenciasHasta(new DateOnly(2026, 8, 31));
+
+        generadas.Should().HaveCount(2);
+        tarea.Recurrence!.Agotado.Should().BeTrue();
+        tarea.GenerarOcurrenciasHasta(new DateOnly(2026, 9, 30)).Should().BeEmpty();
+    }
+
+    [Fact]
+    public void Cada_ocurrencia_copia_el_trabajo_de_la_plantilla()
+    {
+        var tarea = NuevaTarea();
+        var companero = Guid.NewGuid();
+        tarea.AddAssignee(companero);
+        tarea.AddChecklistItem("Preparar sala");
+        var punto = tarea.AddChecklistItem("Enviar acta");
+        tarea.UpdateChecklistItem(punto.Id, hecho: true, texto: null);
+        tarea.Reprioritize("High");
+        tarea.Repetir(PatronDeRecurrencia.Frecuencias.Semanal, 1, new DateOnly(2026, 8, 12), null);
+
+        var ocurrencia = tarea.GenerarOcurrenciasHasta(new DateOnly(2026, 8, 12)).Single();
+
+        ocurrencia.Title.Value.Should().Be(tarea.Title.Value);
+        ocurrencia.Priority.Value.Should().Be("High");
+        ocurrencia.Assignees.Select(a => a.UserId).Should().BeEquivalentTo(tarea.Assignees.Select(a => a.UserId));
+        ocurrencia.Checklist.Select(p => p.Texto).Should().BeEquivalentTo(["Preparar sala", "Enviar acta"]);
+        ocurrencia.Checklist.Should().OnlyContain(p => !p.Hecho,
+            "la copia empieza sin marcar; heredar lo hecho daría por completado trabajo que no se ha tocado");
+    }
+
+    [Fact]
+    public void Las_ocurrencias_no_copian_el_padre_ni_quedan_colgadas()
+    {
+        var tarea = NuevaTarea();
+        tarea.Reparent(Guid.NewGuid());
+        tarea.Repetir(PatronDeRecurrencia.Frecuencias.Diaria, 1, new DateOnly(2026, 8, 12), null);
+
+        var ocurrencia = tarea.GenerarOcurrenciasHasta(new DateOnly(2026, 8, 12)).Single();
+
+        ocurrencia.ParentTaskId.Should().BeNull();
+    }
+
+    [Fact]
+    public void Dejar_de_repetir_para_la_serie()
+    {
+        var tarea = TareaQueSeRepite(PatronDeRecurrencia.Frecuencias.Diaria, 1, new DateOnly(2026, 8, 10));
+
+        tarea.DejarDeRepetir();
+
+        tarea.Recurrence.Should().BeNull();
+        tarea.GenerarOcurrenciasHasta(new DateOnly(2026, 12, 31)).Should().BeEmpty();
+    }
+
+    #endregion
 }
