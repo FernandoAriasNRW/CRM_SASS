@@ -1,0 +1,191 @@
+<div class="space-y-6">
+
+  <!-- Cabecera -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+      <h2 class="text-xl font-bold text-foreground dark:text-white tracking-tight flex items-center gap-2">
+        <ng-icon name="lucideListPlus" class="w-5 h-5 text-primary"></ng-icon>
+        <span i18n>Campos personalizados</span>
+      </h2>
+      <p class="text-xs text-muted-foreground" i18n>Define qué se pregunta en cada tarea o proyecto, de qué tipo y en qué orden</p>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <button (click)="cargar()"
+              class="px-3 py-1.5 border border-border rounded-lg text-xs font-medium text-muted-foreground hover:bg-muted transition-colors flex items-center gap-1.5">
+        <ng-icon name="lucideRefreshCw" class="w-3.5 h-3.5"></ng-icon>
+        <span i18n>Actualizar</span>
+      </button>
+
+      <button (click)="nuevo()" [disabled]="esNuevo()"
+              class="px-3.5 py-1.5 bg-primary hover:bg-primary text-white rounded-lg text-xs font-semibold shadow-sm transition-colors flex items-center gap-1.5 disabled:opacity-50">
+        <ng-icon name="lucidePlus" class="w-3.5 h-3.5"></ng-icon>
+        <span i18n>Nuevo campo</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Sobre qué entidad -->
+  <div class="flex items-center gap-2">
+    @for (opcion of entidades; track opcion.key) {
+      <button (click)="cambiarEntidad(opcion.key)"
+              [attr.aria-pressed]="entidad() === opcion.key"
+              [class.bg-primary-subtle]="entidad() === opcion.key"
+              [class.text-primary-subtle-fg]="entidad() === opcion.key"
+              [class.border-primary]="entidad() === opcion.key"
+              [class.border-border]="entidad() !== opcion.key"
+              [class.text-muted-foreground]="entidad() !== opcion.key"
+              class="px-3 py-1.5 border rounded-lg text-xs font-medium transition-colors">
+        {{ opcion.label }}
+      </button>
+    }
+  </div>
+
+  @if (error()) {
+    <div class="p-3 bg-destructive-subtle dark:bg-destructive-subtle/40 border border-destructive rounded-xl text-xs text-destructive-subtle-fg flex items-start gap-2" role="alert">
+      <ng-icon name="lucideCircleAlert" class="w-3.5 h-3.5 mt-0.5 shrink-0"></ng-icon>
+      {{ error() }}
+    </div>
+  }
+
+  <!-- Formulario de alta o edición -->
+  @if (editando() !== null) {
+    <div class="border border-border rounded-2xl p-5 bg-white dark:bg-muted shadow-sm space-y-4">
+      <div class="flex items-center justify-between">
+        <h3 class="text-sm font-bold text-foreground">
+          @if (esNuevo()) { <span i18n>Nuevo campo</span> } @else { <span i18n>Editar campo</span> }
+        </h3>
+        <button (click)="cerrarFormulario()" i18n-aria-label aria-label="Cerrar el formulario"
+                class="text-muted-foreground hover:text-foreground transition-colors">
+          <ng-icon name="lucideX" class="w-4 h-4"></ng-icon>
+        </button>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <label class="space-y-1 block">
+          <span class="text-xs font-medium text-muted-foreground" i18n>Nombre</span>
+          <input type="text" [(ngModel)]="nombre" [maxlength]="largoMaximoDelNombre"
+                 i18n-placeholder placeholder="Cliente facturable"
+                 class="w-full px-3 py-1.5 text-xs bg-white dark:bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-1 focus:ring-primary" />
+        </label>
+
+        <label class="space-y-1 block">
+          <span class="text-xs font-medium text-muted-foreground" i18n>Tipo</span>
+          <select [(ngModel)]="tipo" [disabled]="!esNuevo()"
+                  class="w-full px-3 py-1.5 text-xs bg-white dark:bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-60">
+            @for (opcion of tipos; track opcion.key) {
+              <option [value]="opcion.key">{{ opcion.label }}</option>
+            }
+          </select>
+          @if (!esNuevo()) {
+            <!-- No es una limitación de la pantalla: cambiar el tipo dejaría sin validez todo lo
+                 ya escrito en ese campo, así que el dominio no lo permite. -->
+            <span class="text-[11px] text-muted-foreground" i18n>El tipo no se puede cambiar. Para cambiarlo hay que borrar el campo y crear otro, y los valores ya guardados se pierden.</span>
+          }
+        </label>
+
+        <label class="space-y-1 block">
+          <span class="text-xs font-medium text-muted-foreground" i18n>Posición</span>
+          <input type="number" [(ngModel)]="posicion" min="0"
+                 class="w-full px-3 py-1.5 text-xs bg-white dark:bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-1 focus:ring-primary" />
+        </label>
+
+        <label class="flex items-center gap-2 pt-5">
+          <input type="checkbox" [(ngModel)]="obligatorio" class="rounded border-border" />
+          <span class="text-xs font-medium text-muted-foreground" i18n>Obligatorio</span>
+        </label>
+
+        @if (usaOpciones) {
+          <label class="space-y-1 block md:col-span-2">
+            <span class="text-xs font-medium text-muted-foreground" i18n>Opciones, una por línea</span>
+            <textarea [(ngModel)]="opciones" rows="5"
+                      i18n-placeholder placeholder="Sí&#10;No&#10;Pendiente"
+                      class="w-full px-3 py-1.5 text-xs bg-white dark:bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-1 focus:ring-primary resize-y"></textarea>
+            <span class="text-[11px] text-muted-foreground" i18n>Se muestran en este orden. Las repetidas y las líneas vacías se descartan.</span>
+          </label>
+        }
+      </div>
+
+      <div class="flex items-center justify-end gap-2">
+        @if (impedimento; as motivo) {
+          <span class="text-xs text-muted-foreground mr-auto">{{ motivo }}</span>
+        }
+        <button (click)="cerrarFormulario()"
+                class="px-3 py-1.5 border border-border rounded-lg text-xs font-medium text-muted-foreground hover:bg-muted transition-colors" i18n>
+          Cancelar
+        </button>
+        <button (click)="guardar()" [disabled]="!!impedimento || guardando()"
+                class="px-3.5 py-1.5 bg-primary text-white rounded-lg text-xs font-semibold shadow-sm transition-colors flex items-center gap-1.5 disabled:opacity-50">
+          @if (guardando()) {
+            <ng-icon name="lucideLoader2" class="w-3.5 h-3.5 animate-spin"></ng-icon>
+          }
+          <span i18n>Guardar</span>
+        </button>
+      </div>
+    </div>
+  }
+
+  <!-- Los campos ya definidos -->
+  @if (cargando()) {
+    <p class="text-xs text-muted-foreground" i18n>Cargando…</p>
+  } @else if (ordenadas().length) {
+    <div class="border border-border rounded-2xl overflow-hidden">
+      <table class="w-full text-xs">
+        <thead class="bg-muted/50 text-muted-foreground">
+          <tr>
+            <th class="text-left font-medium px-4 py-2" i18n>Posición</th>
+            <th class="text-left font-medium px-4 py-2" i18n>Nombre</th>
+            <th class="text-left font-medium px-4 py-2" i18n>Tipo</th>
+            <th class="text-left font-medium px-4 py-2" i18n>Obligatorio</th>
+            <th class="text-left font-medium px-4 py-2" i18n>Opciones</th>
+            <th class="px-4 py-2"><span class="sr-only" i18n>Acciones</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (definicion of ordenadas(); track definicion.id) {
+            <tr class="border-t border-border">
+              <td class="px-4 py-2 text-muted-foreground">{{ definicion.posicion }}</td>
+              <td class="px-4 py-2 font-medium text-foreground">{{ definicion.nombre }}</td>
+              <td class="px-4 py-2 text-muted-foreground">{{ etiquetaDelTipo(definicion.tipo) }}</td>
+              <td class="px-4 py-2 text-muted-foreground">
+                @if (definicion.obligatorio) { <span i18n>Sí</span> } @else { <span i18n>No</span> }
+              </td>
+              <td class="px-4 py-2 text-muted-foreground max-w-xs truncate" [title]="definicion.opciones.join(', ')">
+                {{ definicion.opciones.join(', ') }}
+              </td>
+              <td class="px-4 py-2">
+                @if (borrando() === definicion.id) {
+                  <div class="flex items-center justify-end gap-2">
+                    <span class="text-destructive" i18n>¿Borrar el campo y todos sus valores?</span>
+                    <button (click)="borrar(definicion)" [disabled]="guardando()"
+                            class="px-2 py-1 rounded-lg bg-destructive text-white font-semibold disabled:opacity-50" i18n>
+                      Borrar
+                    </button>
+                    <button (click)="borrando.set(null)"
+                            class="px-2 py-1 rounded-lg border border-border text-muted-foreground" i18n>
+                      Cancelar
+                    </button>
+                  </div>
+                } @else {
+                  <div class="flex items-center justify-end gap-2">
+                    <button (click)="editar(definicion)" i18n-aria-label aria-label="Editar el campo"
+                            class="text-muted-foreground hover:text-primary transition-colors">
+                      <ng-icon name="lucideEdit3" class="w-3.5 h-3.5"></ng-icon>
+                    </button>
+                    <button (click)="borrando.set(definicion.id)" i18n-aria-label aria-label="Borrar el campo"
+                            class="text-muted-foreground hover:text-destructive transition-colors">
+                      <ng-icon name="lucideTrash2" class="w-3.5 h-3.5"></ng-icon>
+                    </button>
+                  </div>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  } @else {
+    <p class="text-xs text-muted-foreground" i18n>Todavía no hay campos definidos para esta entidad.</p>
+  }
+
+</div>

@@ -13,6 +13,12 @@ namespace WorkItems.Presentation.Endpoints;
 
 public static class WorkItemsEndpoints
 {
+  /// <summary>
+  /// El mensaje con el que los handlers dicen que la tarea no existe. Es lo único que separa un
+  /// 404 de un 400, así que se nombra en lugar de repetir la cadena.
+  /// </summary>
+  private const string TareaNoEncontrada = "Tarea no encontrada";
+
   public static IServiceCollection AddWorkItemsPresentation(this IServiceCollection services, IConfiguration configuration)
   {
     services.AddWorkItemsInfrastructure(configuration);
@@ -60,9 +66,26 @@ public static class WorkItemsEndpoints
       var actorId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var _uid) ? _uid : Guid.Empty;
       var actorRole = principal.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Role)?.Value ?? string.Empty;
       
-      var actualCommand = new PatchTaskCommand(tenantId, id, actorId, actorRole, command.Title, command.Description, command.Status, command.Priority, command.AssigneeId, command.DueDate);
+      // `with` en lugar de reconstruir el comando campo a campo: la lista posicional se quedó
+      // corta al añadir las horas, y un campo olvidado aquí no da error de compilación —llega
+      // como nulo y el cambio se pierde sin que nadie se entere—.
+      var actualCommand = command with
+      {
+        TenantId = tenantId,
+        Id = id,
+        ActorId = actorId,
+        ActorRole = actorRole
+      };
+
       var result = await mediator.Send(actualCommand);
-      return result.IsSuccess ? Results.Ok() : Results.NotFound(result.Error);
+
+      if (result.IsSuccess) return Results.Ok();
+
+      // Un valor que el dominio rechaza no es un 404: quien lo lea entendería que la tarea no
+      // existe y buscaría el fallo donde no está.
+      return result.Error == TareaNoEncontrada
+          ? Results.NotFound(result.Error)
+          : Results.BadRequest(result.Error);
     });
 
     // Las subtareas de una tarea. Es el mismo listado con el filtro puesto, para que la

@@ -17,7 +17,9 @@ public sealed record CreateTaskCommand(
         // Opcional: sin prioridad explícita, la tarea nace en la de por defecto.
         string? Priority = null,
         // Opcional: si viene, la tarea nace como subtarea de ésa.
-        Guid? ParentTaskId = null
+        Guid? ParentTaskId = null,
+        // Opcional: sin ella, la tarea no tiene inicio y el Gantt la pinta como un hito.
+        DateOnly? StartDate = null
     ) : ICommand<WorkTask>, IWebhookTriggered
 {
     public string WebhookEventName => "workitem.created";

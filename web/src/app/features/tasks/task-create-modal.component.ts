@@ -18,6 +18,11 @@ export interface TaskItem {
   priority: string;
   estimatedHours: number;
   dueDate: string;
+  /**
+   * Cuándo empieza el trabajo, o nulo si no se ha dicho. El servidor no la deduce: una tarea
+   * sin inicio se pinta en el Gantt como un hito en su vencimiento, no como una barra inventada.
+   */
+  startDate?: string | null;
   projectId: string;
   assigneeId: string;
   /** Tarea de la que ésta es subtarea, si lo es. */
@@ -80,7 +85,11 @@ export interface TaskDependencies {
  */
 export const PRIORIDADES = [
   { key: 'Urgent', label: $localize`Urgente`, icon: 'lucideAlertCircle', color: 'text-destructive' },
-  { key: 'High',   label: $localize`Alta`,    icon: 'lucideArrowUp',     color: 'text-warning' },
+  // `text-warning` es el ámbar sólido (#f59f0a): sobre blanco da 2,13:1, menos de la mitad del
+  // 4,5:1 que exige la WCAG, y aquí se pinta a 10 px. El tono «subtle-fg» es el que el sistema de
+  // diseño reserva para texto sobre fondo claro, y va acompañado del icono, así que el color no es
+  // lo único que distingue la prioridad. Lo detectó axe en el tablero.
+  { key: 'High',   label: $localize`Alta`,    icon: 'lucideArrowUp',     color: 'text-warning-subtle-fg' },
   { key: 'Normal', label: $localize`Normal`,  icon: 'lucideMinus',       color: 'text-primary' },
   { key: 'Low',    label: $localize`Baja`,    icon: 'lucideArrowDown',   color: 'text-muted-foreground' },
 ] as const;

@@ -207,11 +207,98 @@ elegida, no un fallo.
 
 ---
 
+## 6.bis Dónde se dejó la Fase 4 (última revisión: 2026-08-13, tarde)
+
+**Los bloques 4A y 4B están completos.** La cadena de PRs que había pendiente ya está
+mergeada y sus ramas borradas.
+
+| Bloque | Estado |
+|---|---|
+| 4.0 migraciones · 4A completo (prioridad, subtareas, dependencias, responsables, checklists, recurrentes) | ✅ en `main` |
+| 4B campos personalizados | ✅ backend, interfaz, traducciones y pruebas; verificado contra la API levantada |
+| 4C vistas (tabla editable, Gantt, carga de trabajo) | ⬜ sin empezar |
+| 4D motor de automatizaciones | ⬜ sin empezar |
+| Campos calculados | ⬜ fuera del 4B a propósito; ver `TipoDeCampo` |
+
+El 4B vive en la rama `fase-4b-campos-personalizados`, pendiente de mergear a `main`.
+
+### Qué quedó hecho en el 4B
+
+- `core/custom-fields.service.ts` — definiciones cacheadas por entidad, valores por entidad,
+  y `mensajeDeError`, que contempla las dos formas en que este backend rechaza: la cadena
+  suelta de `BadRequest(result.Error)` y el `ProblemDetails` del manejador global.
+- `shared/ui/custom-fields-form.component.*` — el formulario dinámico, colgado del panel de
+  detalle de tarea. No pinta ni encabezado si el inquilino no ha definido campos.
+- `features/admin/custom-fields/*` — la pestaña de definiciones: alta, edición, borrado en
+  dos pasos y cambio de entidad. El tipo y la entidad se bloquean al editar.
+- 36 pruebas unitarias de front nuevas (58 en total) y 10 de extremo a extremo (45 en total).
+- **Verificado contra la API levantada**, que es el paso que en este proyecto encuentra lo
+  que las pruebas no ven. Esta vez no apareció ningún defecto nuevo en la ruta del 4B: se
+  comprobaron los seis tipos, la normalización de la coma decimal en el servidor, el borrado
+  de un valor con `null`, el borrado de una definición con valores y las cuatro reglas que
+  rechazan. Sí quedó a la vista uno **ajeno**: `GET /tasks/{id}/comments` devuelve 404 y el
+  panel de detalle saca dos avisos de error cada vez que se abre una tarea.
+
+### Cómo se ha trabajado cada campo, y por qué conviene seguir igual
+
+**dominio → migración → API → interfaz → pruebas → verificación contra la API levantada.**
+
+Ese último paso no es ceremonia: destapó **tres defectos** que ninguna prueba veía —el claim
+del tenant, los `IUnitOfWork` que perdían las escrituras, y el orden no garantizado de los
+responsables—. Levantar la aplicación y mirar lo que devuelve de verdad es lo que separa
+«compila y los tests pasan» de «funciona».
+
+Y la lógica que más caro sale equivocar va como **función pura en el dominio**, para poder
+probarla exhaustivamente sin base de datos: `DetectorDeCiclos`, `CalendarioDeRecurrencia` y
+`ValidadorDeValor` son los tres casos.
+
+### Trampas nuevas descubiertas en esta fase
+
+- **`dotnet ef` con `--no-build` engaña.** El snapshot del modelo es código compilado: sin
+  recompilar antes, `has-pending-model-changes` inventa deriva y `database update` dice
+  «Done» sin aplicar nada. Recompilar siempre antes de comprobar o aplicar.
+- **Una colección propiedad de un agregado no vuelve ordenada** de la base. Si el orden
+  importa —la checklist— hay que guardar la posición; si hay un «principal» —los
+  responsables— se identifica por su campo, nunca por la posición.
+- **MySQL no admite `DEFAULT` en `TEXT`** (error 1101): las columnas con valor por defecto
+  necesitan longitud para ser `varchar`.
+- **El lexer de plantillas de Angular no admite `ñ`** en identificadores.
+- **Un módulo nuevo no funciona hasta registrar su ensamblado en MediatR**; si falta, el
+  handler no se encuentra y sale un 409 desconcertante.
+- **`computed()` sobre un campo atado con `ngModel` no se recalcula nunca.** Un `computed()`
+  sólo reacciona a señales; si lee una propiedad normal, el primer valor se queda congelado y
+  el formulario deja de responder sin dar ningún error. Tiene que ser un `get`.
+
+### Trampas del entorno de pruebas de extremo a extremo
+
+Las tres cuestan horas porque el fallo aparece lejos de la causa:
+
+- **`page.goto` a una ruta con sesión devuelve al login.** El token vive en memoria (§5), así
+  que hay que navegar por dentro de la aplicación: la paleta de comandos o los enlaces.
+- **El rol sale de `GET /auth/users/me`, no del token.** Sin simular esa llamada `isAdmin()`
+  es falso, no aparece el enlace de administración y el guard deja fuera la pantalla.
+- **Varios endpoints devuelven un array, no un objeto paginado**: `/users/tenant`,
+  `/notifications`, subtareas, checklist y comentarios. Contestarles con `{items: []}` deja un
+  objeto donde la plantilla espera una lista; el `@for` revienta el ciclo de detección de
+  cambios y la pantalla se queda a medio pintar, con el error apuntando a otro sitio.
+
+---
+
 ## 7. Por dónde seguir
 
-La tarea 4.0 (migraciones) está cerrada, así que el camino está despejado: **el bloque 4A del
-roadmap en su orden** —prioridad → subtareas → dependencias → múltiples responsables—. La
-prioridad es la más simple y establece el patrón para el resto, migración incluida (§1).
+El 4A y el 4B están cerrados (§6.bis). Lo inmediato, por orden:
+
+1. **Mergear `fase-4b-campos-personalizados`.** Es la única rama viva.
+2. El **4C** —tabla editable, Gantt apoyado en las dependencias que ya existen, y carga de
+   trabajo— y después el **4D**, el motor de automatizaciones sobre los domain events que los
+   módulos ya emiten.
+3. Los **campos calculados** quedaron fuera del 4B a propósito: necesitan un motor de
+   expresiones —analizador, referencias entre campos, detección de ciclos, recálculo— y eso es
+   un proyecto en sí mismo, no un tipo más de la lista.
+
+Y sigue pendiente, desde hace varias sesiones y del lado de quien administra la máquina,
+**cambiar la contraseña de MySQL**: `src/Host/ApiHost/appsettings.Development.json` la lleva
+escrita en claro.
 
 El argumento competitivo sigue siendo el de §3 del roadmap: **el helpdesk integrado**
 —`Ticketing` ya existe— es el diferenciador más barato, porque ni ClickUp ni Monday lo

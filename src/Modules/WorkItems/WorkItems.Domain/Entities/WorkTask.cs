@@ -60,6 +60,16 @@ public sealed class WorkTask : AggregateRoot, ITenantEntity
     public Guid CreatedById { get; private set; }
     public decimal EstimatedHours { get; private set; }
     public DateOnly DueDate { get; private set; }
+
+    /// <summary>
+    /// Cuándo empieza el trabajo, o <c>null</c> si no se ha dicho.
+    ///
+    /// **Es opcional a propósito.** Las tareas que ya existían no tienen fecha de inicio, y
+    /// deducirla —de la fecha de creación, o restando las horas estimadas al vencimiento— sería
+    /// pintar en un diagrama de Gantt una barra que nadie ha decidido. Una tarea sin inicio se
+    /// dibuja como un hito en su vencimiento, que es lo único que de verdad se sabe.
+    /// </summary>
+    public DateOnly? StartDate { get; private set; }
     public List<Guid> TagIds { get; private set; } = new();
 
     private WorkTask() { }
@@ -74,13 +84,17 @@ public sealed class WorkTask : AggregateRoot, ITenantEntity
         decimal estimatedHours,
         DateOnly dueDate,
         string? priority = null,
-        Guid? parentTaskId = null)
+        Guid? parentTaskId = null,
+        DateOnly? startDate = null)
     {
         if (priority is not null && !TaskPriority.Existe(priority))
             throw new InvalidOperationException($"La prioridad '{priority}' no existe");
 
         if (parentTaskId == Guid.Empty)
             throw new InvalidOperationException("El identificador de la tarea padre no es válido");
+
+        if (startDate.HasValue && startDate.Value > dueDate)
+            throw new InvalidOperationException(ReglasDeDetalle.InicioDespuesDelVencimiento);
 
         var task = new WorkTask
         {
@@ -95,7 +109,8 @@ public sealed class WorkTask : AggregateRoot, ITenantEntity
             AssigneeId = assigneeId,
             CreatedById = createdById,
             EstimatedHours = estimatedHours,
-            DueDate = dueDate
+            DueDate = dueDate,
+            StartDate = startDate
         };
 
         // Una tarea que nace asignada aparece ya en el conjunto de responsables, no sólo en el
@@ -149,6 +164,83 @@ public sealed class WorkTask : AggregateRoot, ITenantEntity
         Priority = TaskPriority.Desde(newPriority);
 
         RaiseDomainEvent(new TaskPriorityChangedEvent(Id, TenantId, ProjectId, oldPriority.Value, newPriority));
+    }
+
+    /// <summary>
+    /// Cambia los datos descriptivos de la tarea: título, descripción, horas estimadas y fecha
+    /// límite. Lo que llegue como <c>null</c> se deja como está.
+    ///
+    /// Van juntos porque son los campos que se editan sueltos desde la pantalla —el detalle de
+    /// tarea y la tabla— y ninguno tiene reglas propias más allá de su propio formato. El estado
+    /// y la prioridad no entran aquí: tienen su método porque emiten evento de dominio, y las
+    /// automatizaciones de la 4D dependen de eso.
+    ///
+    /// **Las horas negativas se rechazan.** No existe media jornada en contra, y aceptarlas
+    /// envenenaría cualquier suma de carga de trabajo sin que nadie lo notase.
+    /// </summary>
+    public void ActualizarDetalles(
+        string? titulo = null,
+        string? descripcion = null,
+        decimal? horasEstimadas = null,
+        DateOnly? fechaLimite = null,
+        DateOnly? fechaInicio = null,
+        bool quitarFechaInicio = false)
+    {
+        if (titulo is not null)
+        {
+            var nuevo = TaskTitle.Create(titulo);
+            if (!nuevo.IsSuccess)
+                throw new InvalidOperationException(nuevo.Error);
+
+            Title = nuevo.Value!;
+        }
+
+        if (descripcion is not null)
+            Description = descripcion;
+
+        if (horasEstimadas.HasValue)
+        {
+            if (horasEstimadas.Value < 0)
+                throw new InvalidOperationException(ReglasDeDetalle.HorasNegativas);
+
+            EstimatedHours = horasEstimadas.Value;
+        }
+
+        // El orden importa: la fecha límite se aplica antes de comprobar el inicio, para que
+        // mandar las dos a la vez se valide contra los valores nuevos y no contra los viejos.
+        if (fechaLimite.HasValue)
+            DueDate = fechaLimite.Value;
+
+        // Quitar la fecha de inicio y ponerla son dos intenciones distintas, y `null` sólo puede
+        // decir una. Sin el interruptor no habría forma de vaciarla: `null` significa «no la
+        // toques», que es lo que necesita una pantalla que manda sólo el campo que cambió.
+        if (quitarFechaInicio)
+        {
+            StartDate = null;
+        }
+        else if (fechaInicio.HasValue)
+        {
+            if (fechaInicio.Value > DueDate)
+                throw new InvalidOperationException(ReglasDeDetalle.InicioDespuesDelVencimiento);
+
+            StartDate = fechaInicio.Value;
+        }
+        else if (StartDate.HasValue && StartDate.Value > DueDate)
+        {
+            // Adelantar el vencimiento por detrás del inicio dejaría una barra de longitud
+            // negativa en el Gantt. Se rechaza el cambio entero en lugar de recolocar fechas por
+            // cuenta propia: mover la planificación de alguien sin decírselo es peor.
+            throw new InvalidOperationException(ReglasDeDetalle.VencimientoAntesDelInicio);
+        }
+    }
+
+    public static class ReglasDeDetalle
+    {
+        public const string HorasNegativas = "Las horas estimadas no pueden ser negativas";
+        public const string InicioDespuesDelVencimiento =
+            "La fecha de inicio no puede ser posterior a la fecha límite";
+        public const string VencimientoAntesDelInicio =
+            "La fecha límite no puede ser anterior a la fecha de inicio";
     }
 
     /// <summary>Si esta tarea es subtarea de otra.</summary>
@@ -348,10 +440,19 @@ public sealed class WorkTask : AggregateRoot, ITenantEntity
 
         while (Recurrence.TocaGenerar(hoy))
         {
+            // La ocurrencia conserva la duración planificada, no la fecha de inicio literal: si
+            // la plantilla dura tres días, cada repetición dura tres días contra su propio
+            // vencimiento. Copiar el inicio tal cual dejaría ocurrencias que empiezan meses antes
+            // de vencer, y en el Gantt saldrían como barras absurdas.
+            var inicioDeLaOcurrencia = StartDate.HasValue
+                ? Recurrence.ProximaOcurrencia.AddDays(-DueDate.DayNumber + StartDate.Value.DayNumber)
+                : (DateOnly?)null;
+
             var ocurrencia = Create(
                 TenantId, ProjectId, Title.Value, Description,
                 AssigneeId, CreatedById, EstimatedHours,
-                Recurrence.ProximaOcurrencia, Priority.Value);
+                Recurrence.ProximaOcurrencia, Priority.Value,
+                parentTaskId: null, startDate: inicioDeLaOcurrencia);
 
             foreach (var responsable in _assignees.Where(a => a.UserId != AssigneeId))
                 ocurrencia.AddAssignee(responsable.UserId);

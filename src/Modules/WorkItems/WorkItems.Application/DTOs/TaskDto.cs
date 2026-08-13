@@ -42,7 +42,12 @@ public sealed record TaskDto(
     int ChecklistTotal = 0,
     int ChecklistDone = 0,
     /// <summary>Cada cuánto se repite, si se repite. Sólo lo lleva la tarea plantilla.</summary>
-    RecurrenceDto? Recurrence = null
+    RecurrenceDto? Recurrence = null,
+    /// <summary>
+    /// Cuándo empieza el trabajo, o null si no se ha dicho. Sin ella el diagrama de Gantt pinta
+    /// la tarea como un hito en su vencimiento en lugar de inventarle una barra.
+    /// </summary>
+    DateOnly? StartDate = null
 );
 
 /// <summary>El patrón de repetición tal como lo ve la interfaz.</summary>

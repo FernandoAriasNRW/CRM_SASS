@@ -33,7 +33,10 @@ export class TableColumnService {
             sortable: def.sortable ?? true,
             visible: def.visible ?? true,
             type: def.type ?? 'text',
-            template: def.template
+            template: def.template,
+            editable: def.editable,
+            editor: def.editor,
+            options: def.options
           });
         }
       }

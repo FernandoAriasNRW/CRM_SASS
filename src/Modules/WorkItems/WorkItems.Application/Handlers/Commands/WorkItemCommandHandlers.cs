@@ -35,7 +35,7 @@ public sealed class CreateTaskCommandHandler(
       task = WorkTask.Create(
           request.TenantId, request.ProjectId, request.Title, request.Description,
           request.AssigneeId, request.CreatedById, request.EstimatedHours, request.DueDate,
-          request.Priority, request.ParentTaskId);
+          request.Priority, request.ParentTaskId, request.StartDate);
     }
     catch (InvalidOperationException ex) { return Result<WorkTask>.Failure(ex.Message); }
 
@@ -92,6 +92,17 @@ public sealed class PatchTaskCommandHandler(
       try { task.Reprioritize(request.Priority); }
       catch (InvalidOperationException ex) { return Result<bool>.Failure(ex.Message); }
     }
+
+    // El título, la descripción, las horas y la fecha se aplicaban... a ninguna parte: el
+    // handler los ignoraba y devolvía éxito igual, así que la pantalla decía «guardado» y al
+    // recargar volvía el valor viejo. Un cambio que no se guarda tiene que fallar, no callarse.
+    try
+    {
+      task.ActualizarDetalles(
+          request.Title, request.Description, request.EstimatedHours, request.DueDate,
+          request.StartDate, request.QuitarFechaInicio);
+    }
+    catch (InvalidOperationException ex) { return Result<bool>.Failure(ex.Message); }
 
     await repository.UpdateAsync(task, cancellationToken);
     await unitOfWork.SaveChangesAsync(cancellationToken);

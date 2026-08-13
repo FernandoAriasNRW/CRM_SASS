@@ -3478,6 +3478,446 @@
           <context context-type="linenumber">64</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="3907031641186192255" datatype="html">
+        <source>Texto</source>
+        <target state="final">Text</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/core/custom-fields.service.ts</context>
+          <context context-type="linenumber">7</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5129898699442968363" datatype="html">
+        <source>Número</source>
+        <target state="final">Number</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/core/custom-fields.service.ts</context>
+          <context context-type="linenumber">8</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7944442845393176638" datatype="html">
+        <source>Fecha</source>
+        <target state="final">Date</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/core/custom-fields.service.ts</context>
+          <context context-type="linenumber">9</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3855287465523002354" datatype="html">
+        <source>Selección</source>
+        <target state="final">Select</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/core/custom-fields.service.ts</context>
+          <context context-type="linenumber">10</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3722752789264378209" datatype="html">
+        <source>Selección múltiple</source>
+        <target state="final">Multi-select</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/core/custom-fields.service.ts</context>
+          <context context-type="linenumber">11</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="9016536884183098576" datatype="html">
+        <source>Usuario</source>
+        <target state="final">User</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/core/custom-fields.service.ts</context>
+          <context context-type="linenumber">12</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2811990106356695977" datatype="html">
+        <source>Campos Personalizados</source>
+        <target state="final">Custom Fields</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/admin.component.html</context>
+          <context context-type="linenumber">78,79</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2428792632593255966" datatype="html">
+        <source>Campos personalizados</source>
+        <target state="final">Custom fields</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/custom-fields/admin-custom-fields.component.html</context>
+          <context context-type="linenumber">8,9</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/custom-fields-form.component.html</context>
+          <context context-type="linenumber">7,9</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6466834452982744399" datatype="html">
+        <source>Define qué se pregunta en cada tarea o proyecto, de qué tipo y en qué orden</source>
+        <target state="final">Define what each task or project asks for, of what type and in what order</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/custom-fields/admin-custom-fields.component.html</context>
+          <context context-type="linenumber">10,11</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5960762267656163965" datatype="html">
+        <source>Nuevo campo</source>
+        <target state="final">New field</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/custom-fields/admin-custom-fields.component.html</context>
+          <context context-type="linenumber">23,24</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/custom-fields/admin-custom-fields.component.html</context>
+          <context context-type="linenumber">56</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="801500363802939955" datatype="html">
+        <source>Editar campo</source>
+        <target state="final">Edit field</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/custom-fields/admin-custom-fields.component.html</context>
+          <context context-type="linenumber">56,57</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8489104561125589220" datatype="html">
+        <source>Cerrar el formulario</source>
+        <target state="final">Close the form</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/custom-fields/admin-custom-fields.component.html</context>
+          <context context-type="linenumber">58,59</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5583723433676790805" datatype="html">
+        <source>Cliente facturable</source>
+        <target state="final">Billable client</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/custom-fields/admin-custom-fields.component.html</context>
+          <context context-type="linenumber">68,69</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2759773909798147145" datatype="html">
+        <source>Tipo</source>
+        <target state="final">Type</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/custom-fields/admin-custom-fields.component.html</context>
+          <context context-type="linenumber">73,74</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/custom-fields/admin-custom-fields.component.html</context>
+          <context context-type="linenumber">138,139</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4398421562861096268" datatype="html">
+        <source>El tipo no se puede cambiar. Para cambiarlo hay que borrar el campo y crear otro, y los valores ya guardados se pierden.</source>
+        <target state="final">The type cannot be changed. To change it you have to delete the field and create another one, and the values already saved are lost.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/custom-fields/admin-custom-fields.component.html</context>
+          <context context-type="linenumber">83,84</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6352302430462399711" datatype="html">
+        <source>Posición</source>
+        <target state="final">Position</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/custom-fields/admin-custom-fields.component.html</context>
+          <context context-type="linenumber">88,89</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/custom-fields/admin-custom-fields.component.html</context>
+          <context context-type="linenumber">136,137</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1921333671188385461" datatype="html">
+        <source>Obligatorio</source>
+        <target state="final">Required</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/custom-fields/admin-custom-fields.component.html</context>
+          <context context-type="linenumber">95,96</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/custom-fields/admin-custom-fields.component.html</context>
+          <context context-type="linenumber">139,140</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="273982953093131420" datatype="html">
+        <source>Opciones, una por línea</source>
+        <target state="final">Options, one per line</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/custom-fields/admin-custom-fields.component.html</context>
+          <context context-type="linenumber">100,101</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5189892898552726629" datatype="html">
+        <source>Sí
+No
+Pendiente</source>
+        <target state="final">Yes
+No
+Pending</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/custom-fields/admin-custom-fields.component.html</context>
+          <context context-type="linenumber">102,103</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1301066178405590895" datatype="html">
+        <source>Se muestran en este orden. Las repetidas y las líneas vacías se descartan.</source>
+        <target state="final">They are shown in this order. Duplicates and blank lines are discarded.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/custom-fields/admin-custom-fields.component.html</context>
+          <context context-type="linenumber">104,105</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1372173599787735409" datatype="html">
+        <source>Guardar</source>
+        <target state="final">Save</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/custom-fields/admin-custom-fields.component.html</context>
+          <context context-type="linenumber">122,123</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6231488788918865804" datatype="html">
+        <source>Cargando…</source>
+        <target state="final">Loadingâ€¦</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/custom-fields/admin-custom-fields.component.html</context>
+          <context context-type="linenumber">130,131</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4680306916977333293" datatype="html">
+        <source>Opciones</source>
+        <target state="final">Options</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/custom-fields/admin-custom-fields.component.html</context>
+          <context context-type="linenumber">140,141</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2656760189624669010" datatype="html">
+        <source>Acciones</source>
+        <target state="final">Actions</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/custom-fields/admin-custom-fields.component.html</context>
+          <context context-type="linenumber">141</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="382224285571054578" datatype="html">
+        <source>Sí</source>
+        <target state="final">Yes</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/custom-fields/admin-custom-fields.component.html</context>
+          <context context-type="linenumber">151</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3542042671420335679" datatype="html">
+        <source>No</source>
+        <target state="final">No</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/custom-fields/admin-custom-fields.component.html</context>
+          <context context-type="linenumber">151,152</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6558296895386063048" datatype="html">
+        <source>¿Borrar el campo y todos sus valores?</source>
+        <target state="final">Delete the field and all its values?</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/custom-fields/admin-custom-fields.component.html</context>
+          <context context-type="linenumber">159,160</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="729070192376227757" datatype="html">
+        <source> Borrar </source>
+        <target state="final"> Delete </target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/custom-fields/admin-custom-fields.component.html</context>
+          <context context-type="linenumber">162</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8110911654446155507" datatype="html">
+        <source>Editar el campo</source>
+        <target state="final">Edit the field</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/custom-fields/admin-custom-fields.component.html</context>
+          <context context-type="linenumber">171,172</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1536832090694406856" datatype="html">
+        <source>Borrar el campo</source>
+        <target state="final">Delete the field</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/custom-fields/admin-custom-fields.component.html</context>
+          <context context-type="linenumber">175,176</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2307554988769523501" datatype="html">
+        <source>Todavía no hay campos definidos para esta entidad.</source>
+        <target state="final">No fields have been defined for this entity yet.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/custom-fields/admin-custom-fields.component.html</context>
+          <context context-type="linenumber">188,191</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6261493017569141229" datatype="html">
+        <source>No se pudieron cargar los campos</source>
+        <target state="final">The fields could not be loaded</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/custom-fields/admin-custom-fields.component.ts</context>
+          <context context-type="linenumber">102</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8156903609303913311" datatype="html">
+        <source>El campo necesita un nombre</source>
+        <target state="final">The field needs a name</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/custom-fields/admin-custom-fields.component.ts</context>
+          <context context-type="linenumber">157</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3788663778868855463" datatype="html">
+        <source>El nombre del campo no puede pasar de <x id="PH" equiv-text="LARGO_MAXIMO_DEL_NOMBRE" xmlns="urn:oasis:names:tc:xliff:document:1.2" /> caracteres</source>
+        <target state="final">The field name cannot be longer than <x id="PH" equiv-text="LARGO_MAXIMO_DEL_NOMBRE"/> characters</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/custom-fields/admin-custom-fields.component.ts</context>
+          <context context-type="linenumber">159</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5901205096238771849" datatype="html">
+        <source>Un campo de selección necesita al menos una opción</source>
+        <target state="final">A select field needs at least one option</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/custom-fields/admin-custom-fields.component.ts</context>
+          <context context-type="linenumber">164</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6660759049865551823" datatype="html">
+        <source>Un campo de selección no puede tener más de <x id="PH" equiv-text="MAXIMO_DE_OPCIONES" xmlns="urn:oasis:names:tc:xliff:document:1.2" /> opciones</source>
+        <target state="final">A select field cannot have more than <x id="PH" equiv-text="MAXIMO_DE_OPCIONES"/> options</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/custom-fields/admin-custom-fields.component.ts</context>
+          <context context-type="linenumber">166</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2956903097893657122" datatype="html">
+        <source>No se pudo guardar el campo</source>
+        <target state="final">The field could not be saved</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/custom-fields/admin-custom-fields.component.ts</context>
+          <context context-type="linenumber">203</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5104739441511916189" datatype="html">
+        <source>No se pudo borrar el campo</source>
+        <target state="final">The field could not be deleted</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/custom-fields/admin-custom-fields.component.ts</context>
+          <context context-type="linenumber">221</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2587801187258995084" datatype="html">
+        <source>Sin valor</source>
+        <target state="final">No value</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/custom-fields-form.component.html</context>
+          <context context-type="linenumber">42,43</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="190908139717272186" datatype="html">
+        <source>No se pudo guardar el valor</source>
+        <target state="final">The value could not be saved</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/custom-fields-form.component.ts</context>
+          <context context-type="linenumber">101</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5641593368923605260" datatype="html">
+        <source>No se pudo guardar</source>
+        <target state="final">Could not save</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/tasks.component.ts</context>
+          <context context-type="linenumber">502</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7646590756920030055" datatype="html">
+        <source>«<x id="PH" equiv-text="valor" xmlns="urn:oasis:names:tc:xliff:document:1.2" />» no es un número de horas.</source>
+        <target state="final">"<x id="PH" equiv-text="valor"/>" is not a number of hours.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/tasks.component.ts</context>
+          <context context-type="linenumber">503</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="388306122432231988" datatype="html">
+        <source>«<x id="PH" equiv-text="item.title" xmlns="urn:oasis:names:tc:xliff:document:1.2" />» se queda como estaba</source>
+        <target state="final">"<x id="PH" equiv-text="item.title"/>" stays as it was</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/tasks.component.ts</context>
+          <context context-type="linenumber">514</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="475463244606901658" datatype="html">
+        <source>No se pudo guardar el cambio.</source>
+        <target state="final">The change could not be saved.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/tasks.component.ts</context>
+          <context context-type="linenumber">515</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5324892388519202446" datatype="html">
+        <source>Editar <x id="PH" equiv-text="col.label" xmlns="urn:oasis:names:tc:xliff:document:1.2" /></source>
+        <target state="final">Edit <x id="PH" equiv-text="col.label"/></target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/data-table/data-table.component.ts</context>
+          <context context-type="linenumber">502</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4687555512793994131" datatype="html">
+        <source>Nada que planificar todavía</source>
+        <target state="final">Nothing to plan yet</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/gantt.component.html</context>
+          <context context-type="linenumber">3,4</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8913741394364765979" datatype="html">
+        <source>El diagrama necesita tareas con fecha límite.</source>
+        <target state="final">The chart needs tasks with a due date.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/gantt.component.html</context>
+          <context context-type="linenumber">4,5</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="647617620745219975" datatype="html">
+        <source>Tarea</source>
+        <target state="final">Task</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/gantt.component.html</context>
+          <context context-type="linenumber">13,14</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="9189691318137542612" datatype="html">
+        <source>La bloquea otra tarea</source>
+        <target state="final">Another task is blocking it</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/gantt.component.html</context>
+          <context context-type="linenumber">20,21</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6750806246252725770" datatype="html">
+        <source> Las tareas sin fecha de inicio se marcan con un rombo en su fecha límite. Las que no tienen fecha límite no aparecen. </source>
+        <target state="final"> Tasks with no start date are marked with a diamond on their due date. Tasks with no due date do not appear. </target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/gantt.component.html</context>
+          <context context-type="linenumber">79,81</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2061641499271155136" datatype="html">
+        <source><x id="PH" equiv-text="barra.tarea.title" xmlns="urn:oasis:names:tc:xliff:document:1.2" />, vence el <x id="PH_1" equiv-text="vence" xmlns="urn:oasis:names:tc:xliff:document:1.2" /></source>
+        <target state="final"><x id="PH" equiv-text="barra.tarea.title"/>, due on <x id="PH_1" equiv-text="vence"/></target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/gantt.component.ts</context>
+          <context context-type="linenumber">79</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7114553271619331265" datatype="html">
+        <source><x id="PH" equiv-text="barra.tarea.title" xmlns="urn:oasis:names:tc:xliff:document:1.2" />, del <x id="PH_1" equiv-text="empieza" xmlns="urn:oasis:names:tc:xliff:document:1.2" /> al <x id="PH_2" equiv-text="vence" xmlns="urn:oasis:names:tc:xliff:document:1.2" /></source>
+        <target state="final"><x id="PH" equiv-text="barra.tarea.title"/>, from <x id="PH_1" equiv-text="empieza"/> to <x id="PH_2" equiv-text="vence"/></target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/gantt.component.ts</context>
+          <context context-type="linenumber">84</context>
+        </context-group>
+      </trans-unit>
     </body>
   </file>
 </xliff>

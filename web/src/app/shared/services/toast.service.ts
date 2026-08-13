@@ -1,4 +1,5 @@
 import { Injectable, signal, computed } from '@angular/core';
+import { mensajeDeError } from '../utils/mensaje-de-error';
 
 /**
  * Tipos de toast disponibles
@@ -149,13 +150,12 @@ export class ToastService {
     } else if (error?.status >= 500) {
       title = 'Error del servidor';
       message = 'Ocurrió un error en el servidor. Intenta más tarde.';
-    } else if (error?.error?.message) {
-      // Error con mensaje del servidor
-      message = error.error.message;
-    } else if (error?.message) {
-      message = error.message;
     } else {
-      message = 'Ocurrió un error inesperado.';
+      // Un 400 trae la explicación del dominio —«las horas estimadas no pueden ser negativas»—,
+      // que es lo único aprovechable de todo el error. Antes se caía a `error.message`, que es
+      // la cadena de Angular «Http failure response for http://localhost:8080/…: 400 Bad
+      // Request»: enseñaba la dirección interna de la API y no decía nada útil.
+      message = mensajeDeError(error, 'Ocurrió un error inesperado.');
     }
 
     this.error(title, message);

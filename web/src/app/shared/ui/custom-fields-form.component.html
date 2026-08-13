@@ -1,0 +1,96 @@
+@if (cargando()) {
+  <app-skeleton class="h-8 w-full" />
+} @else if (campos().length) {
+  <!-- El encabezado va dentro y bajo la misma condición que la lista: un inquilino sin campos
+       definidos no debe ver un título con nada debajo. -->
+  <div class="space-y-3">
+    <p class="text-xs font-medium text-muted-foreground uppercase tracking-wide" i18n>Campos personalizados</p>
+
+    @for (campo of campos(); track campo.definitionId) {
+      <div class="flex items-start gap-3 text-sm">
+        <span class="text-muted-foreground w-28 shrink-0 pt-1 truncate" [title]="campo.nombre">
+          {{ campo.nombre }}
+          @if (campo.obligatorio) {
+            <span class="text-destructive" aria-hidden="true">*</span>
+          }
+        </span>
+
+        <div class="flex-1 min-w-0">
+          @switch (campo.tipo) {
+            @case ('Texto') {
+              <input type="text" [ngModel]="campo.valor" (blur)="guardar(campo, $any($event.target).value)"
+                     [attr.aria-label]="campo.nombre"
+                     class="w-full bg-transparent border border-transparent hover:border-border focus:border-border rounded-md px-2 py-1 outline-none transition-colors focus:ring-1 focus:ring-ring" />
+            }
+            @case ('Numero') {
+              <!-- El texto se manda tal cual: la coma decimal la normaliza el servidor, y
+                   hacerlo también aquí sería tener dos reglas que algún día discreparán. -->
+              <input type="text" inputmode="decimal" [ngModel]="campo.valor"
+                     (blur)="guardar(campo, $any($event.target).value)"
+                     [attr.aria-label]="campo.nombre"
+                     class="w-full bg-transparent border border-transparent hover:border-border focus:border-border rounded-md px-2 py-1 outline-none transition-colors focus:ring-1 focus:ring-ring" />
+            }
+            @case ('Fecha') {
+              <input type="date" [ngModel]="campo.valor" (change)="guardar(campo, $any($event.target).value)"
+                     [attr.aria-label]="campo.nombre"
+                     class="bg-transparent border border-border rounded-md px-2 py-1 outline-none focus:ring-1 focus:ring-ring" />
+            }
+            @case ('Seleccion') {
+              <select [ngModel]="campo.valor" (ngModelChange)="guardar(campo, $event)"
+                      [attr.aria-label]="campo.nombre"
+                      class="w-full bg-transparent border border-border rounded-md px-2 py-1 outline-none focus:ring-1 focus:ring-ring">
+                <option value="" i18n>Sin valor</option>
+                @for (opcion of campo.opciones; track opcion) {
+                  <option [value]="opcion">{{ opcion }}</option>
+                }
+              </select>
+            }
+            @case ('SeleccionMultiple') {
+              <div class="flex flex-wrap gap-1.5">
+                @for (opcion of campo.opciones; track opcion) {
+                  <button type="button" (click)="alternarOpcion(campo, opcion)"
+                          [attr.aria-pressed]="estaMarcada(campo, opcion)"
+                          class="text-xs px-2 py-0.5 rounded-full border transition-colors"
+                          [class.border-primary]="estaMarcada(campo, opcion)"
+                          [class.bg-primary-subtle]="estaMarcada(campo, opcion)"
+                          [class.text-primary-subtle-fg]="estaMarcada(campo, opcion)"
+                          [class.border-border]="!estaMarcada(campo, opcion)"
+                          [class.text-muted-foreground]="!estaMarcada(campo, opcion)">
+                    {{ opcion }}
+                  </button>
+                }
+              </div>
+            }
+            @case ('Usuario') {
+              <select [ngModel]="campo.valor" (ngModelChange)="guardar(campo, $event)"
+                      [attr.aria-label]="campo.nombre"
+                      class="w-full bg-transparent border border-border rounded-md px-2 py-1 outline-none focus:ring-1 focus:ring-ring">
+                <option value="" i18n>Sin asignar</option>
+                @for (persona of personas; track persona.id) {
+                  <option [value]="persona.id">{{ persona.name }}</option>
+                }
+              </select>
+            }
+            @default {
+              <!-- Un tipo que el backend conoce y esta versión del frontend no. Se muestra el
+                   valor en crudo en lugar de esconder el campo: es preferible enseñarlo sin
+                   editor a que alguien crea que su dato se ha perdido. -->
+              <span class="text-muted-foreground">{{ campo.valor }}</span>
+            }
+          }
+
+          @if (errores()[campo.definitionId]; as error) {
+            <p class="mt-1 flex items-start gap-1 text-xs text-destructive" role="alert">
+              <ng-icon name="lucideCircleAlert" size="12" class="mt-0.5 shrink-0" />
+              {{ error }}
+            </p>
+          }
+        </div>
+
+        @if (guardando() === campo.definitionId) {
+          <ng-icon name="lucideLoader2" size="12" class="animate-spin text-muted-foreground mt-1.5" />
+        }
+      </div>
+    }
+  </div>
+}

@@ -31,6 +31,13 @@
                 class="flex items-center gap-2 px-4 py-2.5 border-b-2 font-medium text-sm whitespace-nowrap cursor-pointer transition-colors hover:text-foreground">
           <ng-icon name="lucideList" size="14" /> Lista
         </button>
+        <button (click)="viewMode.set('gantt')"
+                [class.border-primary]="viewMode() === 'gantt'"
+                [class.text-primary]="viewMode() === 'gantt'"
+                [class.border-transparent]="viewMode() !== 'gantt'"
+                class="flex items-center gap-2 px-4 py-2.5 border-b-2 font-medium text-sm whitespace-nowrap cursor-pointer transition-colors hover:text-foreground">
+          <ng-icon name="lucideChartGantt" size="14" /> Gantt
+        </button>
       }
 
       <!-- Saved Views Tabs -->
@@ -190,6 +197,7 @@
         [initialState]="tableState()"
         (stateChange)="onTableStateChange($event)"
         (rowClick)="openDetail($event)"
+        (cellEdit)="onCellEdit($event)"
         (onSaveView)="saveCurrentView('Custom View ' + (savedViews().length + 1))">
         
         <!-- Define column templates via structural directive or we can pass a dictionary of templates, 
@@ -199,6 +207,11 @@
              
       </ui-data-table>
     </div>
+  }
+
+  <!-- VISTA GANTT -->
+  @if (viewMode() === 'gantt') {
+    <app-gantt [tareas]="allTasks()" (abrir)="openDetail($event)" />
   }
 
   <ng-template #statusTemplate let-item>
