@@ -28,6 +28,10 @@ interface Comment {
 
 const STATUSES = ['To Do', 'In Progress', 'In Review', 'Done'];
 
+/** Los dos estados entre los que alterna el check de una subtarea. Los define el backend. */
+const ESTADO_COMPLETADO = 'Done';
+const ESTADO_INICIAL = 'To Do';
+
 const STATUS_BADGE: Record<string, BadgeVariant> = {
   'To Do': 'secondary', 'In Progress': 'default', 'In Review': 'warning', 'Done': 'success'
 };
@@ -64,6 +68,10 @@ export class TaskDetailPanelComponent implements OnInit {
   newComment = signal('');
   comments = signal<Comment[]>([]);
   saving = signal(false);
+  subtareas = signal<TaskItem[]>([]);
+  cargandoSubtareas = signal(false);
+  creandoSubtarea = signal(false);
+  tituloNuevaSubtarea = '';
   loadingComments = signal(false);
   sendingComment = signal(false);
   activeTab = signal<'comments' | 'activity'>('comments');
@@ -91,6 +99,91 @@ export class TaskDetailPanelComponent implements OnInit {
       this.selectedTags.set(String((t as any).tags).split(',').map((s: string) => s.trim()).filter(Boolean));
     }
     this.loadComments();
+    if (!this.esSubtarea()) this.cargarSubtareas();
+  }
+
+  /** Si esta tarea cuelga de otra. El anidamiento admite un solo nivel. */
+  esSubtarea(): boolean { return !!this.task().parentTaskId; }
+
+  readonly subtareasCompletadas = computed(
+    () => this.subtareas().filter(s => this.estaCompletada(s)).length
+  );
+
+  estaCompletada(sub: TaskItem): boolean { return sub.status === ESTADO_COMPLETADO; }
+
+  cargarSubtareas(): void {
+    this.cargandoSubtareas.set(true);
+    this.api.get<{ items: TaskItem[] }>(`/tasks/${this.task().id}/subtasks`).subscribe({
+      next: pagina => {
+        this.subtareas.set(pagina.items ?? []);
+        this.cargandoSubtareas.set(false);
+      },
+      error: () => {
+        this.cargandoSubtareas.set(false);
+        this.toast.error($localize`Error`, $localize`No se pudieron cargar las subtareas`);
+      },
+    });
+  }
+
+  crearSubtarea(): void {
+    const titulo = this.tituloNuevaSubtarea.trim();
+    if (!titulo || this.creandoSubtarea()) return;
+
+    const padre = this.task();
+    this.creandoSubtarea.set(true);
+
+    // Hereda proyecto y responsable del padre: el servidor exige que la subtarea sea del mismo
+    // proyecto, y pedirlo otra vez en un alta rápida sobra.
+    this.api.post<TaskItem>('/tasks', {
+      title: titulo,
+      description: '',
+      projectId: padre.projectId,
+      assigneeId: padre.assigneeId,
+      estimatedHours: 1,
+      dueDate: padre.dueDate,
+      parentTaskId: padre.id,
+    }).subscribe({
+      next: creada => {
+        this.subtareas.update(actuales => [...actuales, creada]);
+        this.tituloNuevaSubtarea = '';
+        this.creandoSubtarea.set(false);
+        this.avisarDelProgreso();
+      },
+      error: () => {
+        this.creandoSubtarea.set(false);
+        this.toast.error($localize`Error`, $localize`No se pudo crear la subtarea`);
+      },
+    });
+  }
+
+  /**
+   * Marca o desmarca una subtarea como completada.
+   *
+   * Se pinta el cambio antes de que responda el servidor, y se revierte si lo rechaza: es la
+   * misma decisión que en los tableros y en la prioridad.
+   */
+  alternarSubtarea(sub: TaskItem): void {
+    const anterior = sub.status;
+    const nuevo = this.estaCompletada(sub) ? ESTADO_INICIAL : ESTADO_COMPLETADO;
+
+    this.subtareas.update(actuales => actuales.map(s => s.id === sub.id ? { ...s, status: nuevo } : s));
+
+    this.api.patch(`/tasks/${sub.id}`, { status: nuevo }).subscribe({
+      next: () => this.avisarDelProgreso(),
+      error: () => {
+        this.subtareas.update(actuales => actuales.map(s => s.id === sub.id ? { ...s, status: anterior } : s));
+        this.toast.error($localize`Error`, $localize`No se pudo actualizar la subtarea`);
+      },
+    });
+  }
+
+  /** Refresca el progreso que muestra la tarjeta del tablero sin recargar la lista entera. */
+  private avisarDelProgreso(): void {
+    this.updated.emit({
+      ...this.task(),
+      subtaskCount: this.subtareas().length,
+      completedSubtaskCount: this.subtareasCompletadas(),
+    });
   }
 
   loadComments(): void {

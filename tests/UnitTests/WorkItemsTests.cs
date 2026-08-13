@@ -165,6 +165,104 @@ public class WorkItemsTests
 
     #endregion
 
+    #region ReparentTaskCommandHandler Tests
+
+    /// <summary>
+    /// Las dos reglas de anidamiento que el agregado no puede comprobar solo, porque hablan de
+    /// otras filas. La tercera —no ser su propio padre— la cubre WorkTaskInvariantsTests.
+    /// </summary>
+    private WorkTask TareaDePrueba(string titulo = "Tarea", Guid? padre = null) => WorkTask.Create(
+        _tenantId, _projectId, titulo, "Descripción", _userId, _adminId, 4,
+        DateOnly.FromDateTime(DateTime.UtcNow.AddDays(3)), null, padre);
+
+    [Fact]
+    public async Task Reparent_NoSePuedeColgarDeUnaSubtarea()
+    {
+        var subtarea = TareaDePrueba("Subtarea", padre: Guid.NewGuid());
+        var tarea = TareaDePrueba();
+        _repositoryMock.GetByIdAsync(_tenantId, tarea.Id, Arg.Any<CancellationToken>()).Returns(tarea);
+        _repositoryMock.GetByIdAsync(_tenantId, subtarea.Id, Arg.Any<CancellationToken>()).Returns(subtarea);
+
+        var handler = new ReparentTaskCommandHandler(_repositoryMock, _unitOfWorkMock);
+        var result = await handler.Handle(
+            new ReparentTaskCommand(_tenantId, tarea.Id, _adminId, "Admin", subtarea.Id), CancellationToken.None);
+
+        result.IsSuccess.Should().BeFalse();
+        result.Error.Should().Be(WorkTask.ReglasDeAnidamiento.PadreEsSubtarea);
+        tarea.ParentTaskId.Should().BeNull("un rechazo no debe dejar la tarea a medio colgar");
+        await _unitOfWorkMock.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Reparent_UnaTareaConSubtareasNoPuedeVolverseSubtarea()
+    {
+        var tarea = TareaDePrueba("Con subtareas");
+        var futuroPadre = TareaDePrueba("Padre");
+        _repositoryMock.GetByIdAsync(_tenantId, tarea.Id, Arg.Any<CancellationToken>()).Returns(tarea);
+        _repositoryMock.GetByIdAsync(_tenantId, futuroPadre.Id, Arg.Any<CancellationToken>()).Returns(futuroPadre);
+        _repositoryMock.CountSubtasksAsync(_tenantId, tarea.Id, Arg.Any<CancellationToken>()).Returns(3);
+
+        var handler = new ReparentTaskCommandHandler(_repositoryMock, _unitOfWorkMock);
+        var result = await handler.Handle(
+            new ReparentTaskCommand(_tenantId, tarea.Id, _adminId, "Admin", futuroPadre.Id), CancellationToken.None);
+
+        result.IsSuccess.Should().BeFalse();
+        result.Error.Should().Be(WorkTask.ReglasDeAnidamiento.TieneSubtareas);
+    }
+
+    [Fact]
+    public async Task Reparent_ElPadreTieneQueSerDelMismoProyecto()
+    {
+        var tarea = TareaDePrueba();
+        var deOtroProyecto = WorkTask.Create(
+            _tenantId, Guid.NewGuid(), "De otro proyecto", "x", _userId, _adminId, 1,
+            DateOnly.FromDateTime(DateTime.UtcNow));
+        _repositoryMock.GetByIdAsync(_tenantId, tarea.Id, Arg.Any<CancellationToken>()).Returns(tarea);
+        _repositoryMock.GetByIdAsync(_tenantId, deOtroProyecto.Id, Arg.Any<CancellationToken>()).Returns(deOtroProyecto);
+
+        var handler = new ReparentTaskCommandHandler(_repositoryMock, _unitOfWorkMock);
+        var result = await handler.Handle(
+            new ReparentTaskCommand(_tenantId, tarea.Id, _adminId, "Admin", deOtroProyecto.Id), CancellationToken.None);
+
+        result.IsSuccess.Should().BeFalse();
+        result.Error.Should().Be(WorkTask.ReglasDeAnidamiento.PadreDeOtroProyecto);
+    }
+
+    [Fact]
+    public async Task Reparent_DesligarNoConsultaNadaYGuarda()
+    {
+        var tarea = TareaDePrueba("Subtarea", padre: Guid.NewGuid());
+        _repositoryMock.GetByIdAsync(_tenantId, tarea.Id, Arg.Any<CancellationToken>()).Returns(tarea);
+
+        var handler = new ReparentTaskCommandHandler(_repositoryMock, _unitOfWorkMock);
+        var result = await handler.Handle(
+            new ReparentTaskCommand(_tenantId, tarea.Id, _adminId, "Admin", null), CancellationToken.None);
+
+        result.IsSuccess.Should().BeTrue();
+        tarea.EsSubtarea.Should().BeFalse();
+        await _unitOfWorkMock.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task CrearSubtarea_DeUnPadreQueNoExisteSeRechaza()
+    {
+        _repositoryMock.GetByIdAsync(_tenantId, Arg.Any<Guid>(), Arg.Any<CancellationToken>())
+            .Returns((WorkTask?)null);
+
+        var handler = new CreateTaskCommandHandler(_repositoryMock, _unitOfWorkMock);
+        var result = await handler.Handle(new CreateTaskCommand(
+            TenantId: _tenantId, CreatedById: _adminId, ProjectId: _projectId,
+            Title: "Subtarea huérfana", Description: "x", AssigneeId: _userId,
+            EstimatedHours: 1, DueDate: DateOnly.FromDateTime(DateTime.UtcNow),
+            Priority: null, ParentTaskId: Guid.NewGuid()), CancellationToken.None);
+
+        result.IsSuccess.Should().BeFalse();
+        result.Error.Should().Be(WorkTask.ReglasDeAnidamiento.PadreNoExiste);
+        await _repositoryMock.DidNotReceive().AddAsync(Arg.Any<WorkTask>(), Arg.Any<CancellationToken>());
+    }
+
+    #endregion
+
     #region GetTasksQueryHandler Tests
 
     [Fact]
@@ -183,7 +281,7 @@ public class WorkItemsTests
 
         // El handler usa GetByTenantWithPaginationAsync, no GetByTenantAsync.
         _queriesMock.GetByTenantWithPaginationAsync(
-                _tenantId, null, null, null, null, null, null,
+                _tenantId, null, null, null, null, null, null, null, false,
                 Arg.Any<PaginationRequest>(), Arg.Any<CancellationToken>())
             .Returns(pagedResult);
 

@@ -13,7 +13,7 @@ import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import {
   lucideRefreshCw, lucidePlus, lucideClock,
   lucideList, lucideLayoutDashboard, lucideFilter, lucideSave,
-  lucideAlertCircle, lucideArrowUp, lucideMinus, lucideArrowDown
+  lucideAlertCircle, lucideArrowUp, lucideMinus, lucideArrowDown, lucideListChecks
 } from '@ng-icons/lucide';
 import { DataTableComponent, ColumnDef, TableState } from '../../shared/ui/data-table/data-table.component';
 import { FilterField } from '../../shared/ui/data-table/advanced-filters.component';
@@ -63,7 +63,7 @@ const STATUS_BADGE: Record<string, BadgeVariant> = {
   viewProviders: [provideIcons({
     lucideRefreshCw, lucidePlus, lucideClock,
     lucideList, lucideLayoutDashboard, lucideFilter, lucideSave,
-    lucideAlertCircle, lucideArrowUp, lucideMinus, lucideArrowDown
+    lucideAlertCircle, lucideArrowUp, lucideMinus, lucideArrowDown, lucideListChecks
   })],
   templateUrl: './tasks.component.html',
 })
@@ -141,6 +141,11 @@ export class TasksComponent implements OnInit {
    * equivalentes y no señalaría nada; y una prioridad vacía —fila anterior a que existieran—
    * tampoco es una señal.
    */
+  /** Texto del progreso de subtareas para el `title` de la tarjeta. */
+  tituloDelProgreso(task: TaskItem): string {
+    return $localize`${task.completedSubtaskCount ?? 0} de ${task.subtaskCount} subtareas completadas`;
+  }
+
   esPrioridadDestacable(priority: string): boolean {
     return !!priority && priority !== PRIORIDAD_POR_DEFECTO && PRIORIDADES.some(p => p.key === priority);
   }
