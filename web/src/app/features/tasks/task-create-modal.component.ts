@@ -18,6 +18,11 @@ export interface TaskItem {
   priority: string;
   estimatedHours: number;
   dueDate: string;
+  /**
+   * Cuándo empieza el trabajo, o nulo si no se ha dicho. El servidor no la deduce: una tarea
+   * sin inicio se pinta en el Gantt como un hito en su vencimiento, no como una barra inventada.
+   */
+  startDate?: string | null;
   projectId: string;
   assigneeId: string;
   /** Tarea de la que ésta es subtarea, si lo es. */

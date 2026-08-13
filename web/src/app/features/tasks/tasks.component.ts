@@ -13,8 +13,10 @@ import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import {
   lucideRefreshCw, lucidePlus, lucideClock,
   lucideList, lucideLayoutDashboard, lucideFilter, lucideSave,
-  lucideAlertCircle, lucideArrowUp, lucideMinus, lucideArrowDown, lucideListChecks, lucideUsers, lucideSquareCheck
+  lucideAlertCircle, lucideArrowUp, lucideMinus, lucideArrowDown, lucideListChecks, lucideUsers, lucideSquareCheck,
+  lucideChartGantt
 } from '@ng-icons/lucide';
+import { GanttComponent } from './gantt.component';
 import { DataTableComponent, ColumnDef, TableState, type CellEdit } from '../../shared/ui/data-table/data-table.component';
 import { FilterField } from '../../shared/ui/data-table/advanced-filters.component';
 import { ViewsService, SavedView } from '../../shared/services/views.service';
@@ -69,11 +71,12 @@ const ESTADOS = COLUMN_DEFS.map(c => c.key);
 @Component({
   selector: 'app-tasks',
   standalone: true,
-  imports: [ClickableDirective, FormsModule, BadgeComponent, ButtonComponent, NgIconComponent, DragDropModule, TaskCreateModalComponent, TaskDetailPanelComponent, DataTableComponent, SkeletonListComponent, EmptyInlineComponent],
+  imports: [ClickableDirective, FormsModule, BadgeComponent, ButtonComponent, NgIconComponent, DragDropModule, TaskCreateModalComponent, TaskDetailPanelComponent, DataTableComponent, SkeletonListComponent, EmptyInlineComponent, GanttComponent],
   viewProviders: [provideIcons({
     lucideRefreshCw, lucidePlus, lucideClock,
     lucideList, lucideLayoutDashboard, lucideFilter, lucideSave,
-    lucideAlertCircle, lucideArrowUp, lucideMinus, lucideArrowDown, lucideListChecks, lucideUsers, lucideSquareCheck
+    lucideAlertCircle, lucideArrowUp, lucideMinus, lucideArrowDown, lucideListChecks, lucideUsers, lucideSquareCheck,
+    lucideChartGantt
   })],
   templateUrl: './tasks.component.html',
 })
@@ -88,7 +91,7 @@ export class TasksComponent implements OnInit {
 
   readonly showModal = signal(false);
   readonly selectedTask = signal<TaskItem | null>(null);
-  readonly viewMode = signal<'board' | 'list'>('board');
+  readonly viewMode = signal<'board' | 'list' | 'gantt'>('board');
   readonly isLoading = signal(false);
 
   // Table State
@@ -327,7 +330,9 @@ export class TasksComponent implements OnInit {
     
     const params: any = {
       pageNumber: state.page,
-      pageSize: this.viewMode() === 'board' ? 1000 : state.pageSize, // Get all for board view conceptually, or implement lazy loading per column
+      // El tablero y el Gantt piden todo: los dos colocan cada tarea en su sitio —columna o
+      // fecha— y una página suelta dejaría huecos que parecerían trabajo inexistente.
+      pageSize: this.viewMode() === 'list' ? state.pageSize : 1000,
       sortColumn: state.sortColumn,
       sortDirection: state.sortDirection,
       searchTerm: state.searchTerm

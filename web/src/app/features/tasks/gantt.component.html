@@ -1,0 +1,82 @@
+@if (!rango()) {
+  <div class="flex flex-col items-center justify-center gap-2 py-16 text-muted-foreground">
+    <p class="text-sm font-medium text-foreground" i18n>Nada que planificar todavía</p>
+    <p class="text-xs" i18n>El diagrama necesita tareas con fecha límite.</p>
+  </div>
+} @else {
+  <div class="flex border border-border rounded-xl overflow-hidden bg-white dark:bg-muted">
+
+    <!-- Los nombres, fuera del área que se desplaza: si se van con el desplazamiento, a media
+         pantalla ya no se sabe de qué tarea es cada barra. -->
+    <div class="shrink-0 w-56 border-r border-border">
+      <div class="h-10 border-b border-border px-3 flex items-center">
+        <span class="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider" i18n>Tarea</span>
+      </div>
+      @for (barra of barras(); track barra.tarea.id) {
+        <button type="button" (click)="abrir.emit(barra.tarea)"
+                class="w-full h-9 px-3 flex items-center gap-1.5 text-left border-b border-border/50 hover:bg-muted/60 transition-colors">
+          @if (barra.bloqueada) {
+            <ng-icon name="lucideBan" size="11" class="text-destructive shrink-0"
+                     i18n-title title="La bloquea otra tarea" />
+          }
+          <span class="text-[13px] truncate">{{ barra.tarea.title }}</span>
+        </button>
+      }
+    </div>
+
+    <div class="flex-1 overflow-x-auto">
+      <div class="relative" [style.width.px]="anchoTotal()">
+
+        <!-- Eje -->
+        <div class="h-10 border-b border-border relative">
+          @for (marca of marcas(); track marca.dia) {
+            <span class="absolute top-0 h-10 flex items-center pl-1 text-[11px] font-medium text-muted-foreground border-l border-border"
+                  [style.left.px]="posicionDe(marca)">
+              {{ marca.etiqueta }}
+            </span>
+          }
+        </div>
+
+        <!-- Fondo: fines de semana y el día de hoy -->
+        <div class="absolute inset-0 top-10 flex pointer-events-none">
+          @for (dia of dias(); track dia.dia) {
+            <div class="h-full shrink-0" [style.width.px]="anchoDeDia"
+                 [class.bg-muted]="dia.finDeSemana"
+                 [class.bg-primary]="dia.esHoy"
+                 [class.opacity-40]="dia.finDeSemana"
+                 [class.opacity-10]="dia.esHoy"></div>
+          }
+        </div>
+
+        @for (barra of barras(); track barra.tarea.id) {
+          <div class="h-9 border-b border-border/50 relative">
+            @if (barra.esHito) {
+              <!-- Sin fecha de inicio no hay barra que dibujar: se marca el vencimiento y ya. -->
+              <button type="button" (click)="abrir.emit(barra.tarea)"
+                      [attr.aria-label]="descripcionDe(barra)"
+                      [title]="descripcionDe(barra)"
+                      class="absolute top-1/2 -translate-y-1/2 flex items-center justify-center"
+                      [style.left.px]="barra.desplazamiento * anchoDeDia"
+                      [style.width.px]="anchoDeDia">
+                <ng-icon name="lucideDiamond" size="12" [class]="colorDe(barra.tarea)" />
+              </button>
+            } @else {
+              <button type="button" (click)="abrir.emit(barra.tarea)"
+                      [attr.aria-label]="descripcionDe(barra)"
+                      [title]="descripcionDe(barra)"
+                      class="absolute top-1/2 -translate-y-1/2 h-5 rounded-md bg-primary-subtle border border-primary hover:brightness-95 transition-all"
+                      [class.border-destructive]="barra.bloqueada"
+                      [style.left.px]="barra.desplazamiento * anchoDeDia + 2"
+                      [style.width.px]="barra.duracion * anchoDeDia - 4"></button>
+            }
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+
+  <p class="mt-2 text-[11px] text-muted-foreground" i18n>
+    Las tareas sin fecha de inicio se marcan con un rombo en su fecha límite. Las que no tienen
+    fecha límite no aparecen.
+  </p>
+}

@@ -2260,6 +2260,55 @@ Pendiente</source>
           <context context-type="linenumber">5,6</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="4687555512793994131" datatype="html">
+        <source>Nada que planificar todavía</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/gantt.component.html</context>
+          <context context-type="linenumber">3,4</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8913741394364765979" datatype="html">
+        <source>El diagrama necesita tareas con fecha límite.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/gantt.component.html</context>
+          <context context-type="linenumber">4,5</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="647617620745219975" datatype="html">
+        <source>Tarea</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/gantt.component.html</context>
+          <context context-type="linenumber">13,14</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="9189691318137542612" datatype="html">
+        <source>La bloquea otra tarea</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/gantt.component.html</context>
+          <context context-type="linenumber">20,21</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6750806246252725770" datatype="html">
+        <source> Las tareas sin fecha de inicio se marcan con un rombo en su fecha límite. Las que no tienen fecha límite no aparecen. </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/gantt.component.html</context>
+          <context context-type="linenumber">79,81</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2061641499271155136" datatype="html">
+        <source><x id="PH" equiv-text="barra.tarea.title"/>, vence el <x id="PH_1" equiv-text="vence"/></source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/gantt.component.ts</context>
+          <context context-type="linenumber">79</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7114553271619331265" datatype="html">
+        <source><x id="PH" equiv-text="barra.tarea.title"/>, del <x id="PH_1" equiv-text="empieza"/> al <x id="PH_2" equiv-text="vence"/></source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/gantt.component.ts</context>
+          <context context-type="linenumber">84</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="8228050757083294372" datatype="html">
         <source>Nueva Tarea</source>
         <context-group purpose="location">
@@ -2300,11 +2349,11 @@ Pendiente</source>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tasks/tasks.component.ts</context>
-          <context context-type="linenumber">118</context>
+          <context context-type="linenumber">121</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tasks/tasks.component.ts</context>
-          <context context-type="linenumber">130</context>
+          <context context-type="linenumber">133</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tickets/public-ticket-form.component.html</context>
@@ -2333,49 +2382,49 @@ Pendiente</source>
         <source>Cada día</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tasks/task-create-modal.component.ts</context>
-          <context context-type="linenumber">49</context>
+          <context context-type="linenumber">54</context>
         </context-group>
       </trans-unit>
       <trans-unit id="6732926244621616212" datatype="html">
         <source>Cada semana</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tasks/task-create-modal.component.ts</context>
-          <context context-type="linenumber">50</context>
+          <context context-type="linenumber">55</context>
         </context-group>
       </trans-unit>
       <trans-unit id="1869786485469210142" datatype="html">
         <source>Cada mes</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tasks/task-create-modal.component.ts</context>
-          <context context-type="linenumber">51</context>
+          <context context-type="linenumber">56</context>
         </context-group>
       </trans-unit>
       <trans-unit id="1710291788104963302" datatype="html">
         <source>Urgente</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tasks/task-create-modal.component.ts</context>
-          <context context-type="linenumber">82</context>
+          <context context-type="linenumber">87</context>
         </context-group>
       </trans-unit>
       <trans-unit id="3532023074608212433" datatype="html">
         <source>Alta</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tasks/task-create-modal.component.ts</context>
-          <context context-type="linenumber">87</context>
+          <context context-type="linenumber">92</context>
         </context-group>
       </trans-unit>
       <trans-unit id="3080483882937310852" datatype="html">
         <source>Normal</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tasks/task-create-modal.component.ts</context>
-          <context context-type="linenumber">88</context>
+          <context context-type="linenumber">93</context>
         </context-group>
       </trans-unit>
       <trans-unit id="4555461823311221429" datatype="html">
         <source>Baja</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tasks/task-create-modal.component.ts</context>
-          <context context-type="linenumber">89</context>
+          <context context-type="linenumber">94</context>
         </context-group>
       </trans-unit>
       <trans-unit id="6301627487329960801" datatype="html">
@@ -2842,7 +2891,7 @@ Pendiente</source>
         <source>Crear nueva vista</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tasks/tasks.component.html</context>
-          <context context-type="linenumber">55,56</context>
+          <context context-type="linenumber">62,63</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tickets/tickets.component.html</context>
@@ -2853,56 +2902,56 @@ Pendiente</source>
         <source><x id="PH" equiv-text="task.checklistDone ?? 0"/> de <x id="PH_1" equiv-text="task.checklistTotal"/> puntos hechos</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tasks/tasks.component.ts</context>
-          <context context-type="linenumber">163</context>
+          <context context-type="linenumber">166</context>
         </context-group>
       </trans-unit>
       <trans-unit id="3963746112432770684" datatype="html">
         <source><x id="PH" equiv-text="task.assignees?.length ?? 0"/> personas responsables</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tasks/tasks.component.ts</context>
-          <context context-type="linenumber">168</context>
+          <context context-type="linenumber">171</context>
         </context-group>
       </trans-unit>
       <trans-unit id="171937729494075993" datatype="html">
         <source>Bloqueada por <x id="PH" equiv-text="task.blockedByCount"/> tarea(s)</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tasks/tasks.component.ts</context>
-          <context context-type="linenumber">173</context>
+          <context context-type="linenumber">176</context>
         </context-group>
       </trans-unit>
       <trans-unit id="2435365218649977532" datatype="html">
         <source><x id="PH" equiv-text="task.completedSubtaskCount ?? 0"/> de <x id="PH_1" equiv-text="task.subtaskCount"/> subtareas completadas</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tasks/tasks.component.ts</context>
-          <context context-type="linenumber">178</context>
+          <context context-type="linenumber">181</context>
         </context-group>
       </trans-unit>
       <trans-unit id="5641593368923605260" datatype="html">
         <source>No se pudo guardar</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tasks/tasks.component.ts</context>
-          <context context-type="linenumber">502</context>
+          <context context-type="linenumber">507</context>
         </context-group>
       </trans-unit>
       <trans-unit id="7646590756920030055" datatype="html">
         <source>«<x id="PH" equiv-text="valor"/>» no es un número de horas.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tasks/tasks.component.ts</context>
-          <context context-type="linenumber">503</context>
+          <context context-type="linenumber">508</context>
         </context-group>
       </trans-unit>
       <trans-unit id="388306122432231988" datatype="html">
         <source>«<x id="PH" equiv-text="item.title"/>» se queda como estaba</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tasks/tasks.component.ts</context>
-          <context context-type="linenumber">514</context>
+          <context context-type="linenumber">519</context>
         </context-group>
       </trans-unit>
       <trans-unit id="475463244606901658" datatype="html">
         <source>No se pudo guardar el cambio.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tasks/tasks.component.ts</context>
-          <context context-type="linenumber">515</context>
+          <context context-type="linenumber">520</context>
         </context-group>
       </trans-unit>
       <trans-unit id="8124257544094173951" datatype="html">
@@ -3298,7 +3347,7 @@ Pendiente</source>
         <source>Editar <x id="PH" equiv-text="col.label"/></source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/ui/data-table/data-table.component.ts</context>
-          <context context-type="linenumber">502</context>
+          <context context-type="linenumber">506</context>
         </context-group>
       </trans-unit>
       <trans-unit id="3341002993832944373" datatype="html">

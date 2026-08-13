@@ -3862,6 +3862,62 @@ Pending</target>
           <context context-type="linenumber">502</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="4687555512793994131" datatype="html">
+        <source>Nada que planificar todavía</source>
+        <target state="final">Nothing to plan yet</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/gantt.component.html</context>
+          <context context-type="linenumber">3,4</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8913741394364765979" datatype="html">
+        <source>El diagrama necesita tareas con fecha límite.</source>
+        <target state="final">The chart needs tasks with a due date.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/gantt.component.html</context>
+          <context context-type="linenumber">4,5</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="647617620745219975" datatype="html">
+        <source>Tarea</source>
+        <target state="final">Task</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/gantt.component.html</context>
+          <context context-type="linenumber">13,14</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="9189691318137542612" datatype="html">
+        <source>La bloquea otra tarea</source>
+        <target state="final">Another task is blocking it</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/gantt.component.html</context>
+          <context context-type="linenumber">20,21</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6750806246252725770" datatype="html">
+        <source> Las tareas sin fecha de inicio se marcan con un rombo en su fecha límite. Las que no tienen fecha límite no aparecen. </source>
+        <target state="final"> Tasks with no start date are marked with a diamond on their due date. Tasks with no due date do not appear. </target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/gantt.component.html</context>
+          <context context-type="linenumber">79,81</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2061641499271155136" datatype="html">
+        <source><x id="PH" equiv-text="barra.tarea.title" xmlns="urn:oasis:names:tc:xliff:document:1.2" />, vence el <x id="PH_1" equiv-text="vence" xmlns="urn:oasis:names:tc:xliff:document:1.2" /></source>
+        <target state="final"><x id="PH" equiv-text="barra.tarea.title"/>, due on <x id="PH_1" equiv-text="vence"/></target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/gantt.component.ts</context>
+          <context context-type="linenumber">79</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7114553271619331265" datatype="html">
+        <source><x id="PH" equiv-text="barra.tarea.title" xmlns="urn:oasis:names:tc:xliff:document:1.2" />, del <x id="PH_1" equiv-text="empieza" xmlns="urn:oasis:names:tc:xliff:document:1.2" /> al <x id="PH_2" equiv-text="vence" xmlns="urn:oasis:names:tc:xliff:document:1.2" /></source>
+        <target state="final"><x id="PH" equiv-text="barra.tarea.title"/>, from <x id="PH_1" equiv-text="empieza"/> to <x id="PH_2" equiv-text="vence"/></target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/gantt.component.ts</context>
+          <context context-type="linenumber">84</context>
+        </context-group>
+      </trans-unit>
     </body>
   </file>
 </xliff>
