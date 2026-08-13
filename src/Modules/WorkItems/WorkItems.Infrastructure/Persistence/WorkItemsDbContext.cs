@@ -10,6 +10,7 @@ public sealed class WorkItemsDbContext(DbContextOptions<WorkItemsDbContext> opti
     : TenantDbContext(options, userContext)
 {
   public DbSet<WorkTask> Tasks => Set<WorkTask>();
+  public DbSet<TaskDependency> TaskDependencies => Set<TaskDependency>();
 
   protected override void OnModelCreating(ModelBuilder modelBuilder)
   {
@@ -38,6 +39,18 @@ public sealed class WorkItemsDbContext(DbContextOptions<WorkItemsDbContext> opti
     modelBuilder.Entity<WorkTask>()
         .HasIndex(t => new { t.TenantId, t.ParentTaskId })
         .HasDatabaseName("IX_Tasks_TenantId_ParentTaskId");
+
+    // La unicidad la garantiza la base y no sólo el handler: dos peticiones simultáneas
+    // pasarían las dos la comprobación previa y dejarían la arista duplicada.
+    modelBuilder.Entity<TaskDependency>()
+        .HasIndex(d => new { d.TenantId, d.TaskId, d.DependsOnTaskId })
+        .IsUnique()
+        .HasDatabaseName("UX_TaskDependencies_Tenant_Task_DependsOn");
+
+    // Por aquí se consulta «quién me bloquea» y «a quién bloqueo».
+    modelBuilder.Entity<TaskDependency>()
+        .HasIndex(d => new { d.TenantId, d.DependsOnTaskId })
+        .HasDatabaseName("IX_TaskDependencies_Tenant_DependsOn");
 
     // Aislamiento por tenant y soft delete, compuestos en un solo filtro.
     ApplyTenantFilters(modelBuilder);

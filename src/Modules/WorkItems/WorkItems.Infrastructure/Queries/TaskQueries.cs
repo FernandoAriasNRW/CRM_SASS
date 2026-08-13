@@ -147,6 +147,31 @@ public sealed class TaskQueries(WorkItemsDbContext context) : ITaskQueries
         t.ParentTaskId,
         context.Tasks.Count(s => s.TenantId == tenantId && s.ParentTaskId == t.Id),
         context.Tasks.Count(s => s.TenantId == tenantId && s.ParentTaskId == t.Id
-                                 && (s.Status.Value == completado || s.Status.Name == completado))));
+                                 && (s.Status.Value == completado || s.Status.Name == completado)),
+        context.TaskDependencies.Count(d => d.TenantId == tenantId && d.TaskId == t.Id),
+        context.TaskDependencies.Count(d => d.TenantId == tenantId && d.DependsOnTaskId == t.Id)));
   }
+
+  public async Task<TaskDependenciesDto> GetDependenciesAsync(Guid tenantId, Guid taskId, CancellationToken ct = default)
+  {
+    // Dos consultas y no una: son dos conjuntos distintos, y unirlos obligaría a etiquetar
+    // cada fila con su dirección para volver a separarlas en memoria.
+    var bloqueadaPor = await ReferenciasAsync(
+        context.TaskDependencies.Where(d => d.TenantId == tenantId && d.TaskId == taskId)
+            .Select(d => d.DependsOnTaskId), tenantId, ct);
+
+    var bloqueaA = await ReferenciasAsync(
+        context.TaskDependencies.Where(d => d.TenantId == tenantId && d.DependsOnTaskId == taskId)
+            .Select(d => d.TaskId), tenantId, ct);
+
+    return new TaskDependenciesDto(bloqueadaPor, bloqueaA);
+  }
+
+  private async Task<IReadOnlyList<TaskDependencyRefDto>> ReferenciasAsync(
+      IQueryable<Guid> ids, Guid tenantId, CancellationToken ct)
+      => await context.Tasks.AsNoTracking()
+          .Where(t => t.TenantId == tenantId && ids.Contains(t.Id))
+          .OrderBy(t => t.Title.Value)
+          .Select(t => new TaskDependencyRefDto(t.Id, t.Title.Value, t.Status.Value, t.Priority.Value))
+          .ToListAsync(ct);
 }

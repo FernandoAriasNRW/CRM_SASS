@@ -22,5 +22,12 @@ public sealed record TaskDto(
     /// y entonces la interfaz miente sin que nada falle.
     /// </summary>
     int SubtaskCount = 0,
-    int CompletedSubtaskCount = 0
+    int CompletedSubtaskCount = 0,
+    /// <summary>
+    /// Cuántas tareas bloquean a ésta y a cuántas bloquea ella. Igual que el progreso de las
+    /// subtareas, se cuentan en la consulta: es lo que permite marcar una tarjeta como bloqueada
+    /// sin pedir las dependencias tarea por tarea.
+    /// </summary>
+    int BlockedByCount = 0,
+    int BlocksCount = 0
 );

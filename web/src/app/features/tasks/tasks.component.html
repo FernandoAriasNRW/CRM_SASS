@@ -113,6 +113,13 @@
                       <ng-icon name="lucideClock" size="11" />
                       {{ task.estimatedHours }}h
                     </span>
+                    @if (task.blockedByCount) {
+                      <span class="flex items-center gap-1 text-destructive"
+                            [title]="tituloDelBloqueo(task)">
+                        <ng-icon name="lucideBan" size="11" />
+                        {{ task.blockedByCount }}
+                      </span>
+                    }
                     @if (task.subtaskCount) {
                       <span class="flex items-center gap-1"
                             [class.text-success]="task.completedSubtaskCount === task.subtaskCount"

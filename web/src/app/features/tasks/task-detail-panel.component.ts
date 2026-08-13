@@ -11,10 +11,14 @@ import {
   lucideX, lucideCheck, lucideCalendar, lucideClock, lucideUser,
   lucideTag, lucideFlag, lucideMessageSquare, lucidePaperclip,
   lucideSmile, lucideSend, lucideChevronDown, lucideAlertCircle,
-  lucideArrowUp, lucideMinus, lucideArrowDown, lucideLoader2
+  lucideArrowUp, lucideMinus, lucideArrowDown, lucideLoader2,
+  lucideBan, lucideArrowRight
 } from '@ng-icons/lucide';
 import { DrawerComponent } from '../../shared/ui/drawer.component';
-import { PRIORIDADES, PRIORIDAD_POR_DEFECTO, type TaskItem } from './task-create-modal.component';
+import {
+  PRIORIDADES, PRIORIDAD_POR_DEFECTO,
+  type TaskItem, type TaskDependencies, type TaskDependencyRef,
+} from './task-create-modal.component';
 import { TASK_TAGS, type Tag } from '../../shared/utils/tags';
 import { ClickableDirective } from '../../shared/directives/clickable.directive';
 
@@ -44,7 +48,8 @@ const STATUS_BADGE: Record<string, BadgeVariant> = {
     lucideX, lucideCheck, lucideCalendar, lucideClock, lucideUser,
     lucideTag, lucideFlag, lucideMessageSquare, lucidePaperclip,
     lucideSmile, lucideSend, lucideChevronDown, lucideAlertCircle,
-    lucideArrowUp, lucideMinus, lucideArrowDown, lucideLoader2
+    lucideArrowUp, lucideMinus, lucideArrowDown, lucideLoader2,
+    lucideBan, lucideArrowRight
   })],
   templateUrl: './task-detail-panel.component.html',
 })
@@ -72,6 +77,10 @@ export class TaskDetailPanelComponent implements OnInit {
   cargandoSubtareas = signal(false);
   creandoSubtarea = signal(false);
   tituloNuevaSubtarea = '';
+  dependencias = signal<TaskDependencies>({ bloqueadaPor: [], bloqueaA: [] });
+  cargandoDependencias = signal(false);
+  candidatasABloquear = signal<TaskItem[]>([]);
+  bloqueanteElegido = '';
   loadingComments = signal(false);
   sendingComment = signal(false);
   activeTab = signal<'comments' | 'activity'>('comments');
@@ -100,6 +109,89 @@ export class TaskDetailPanelComponent implements OnInit {
     }
     this.loadComments();
     if (!this.esSubtarea()) this.cargarSubtareas();
+    this.cargarDependencias();
+  }
+
+  cargarDependencias(): void {
+    this.cargandoDependencias.set(true);
+    this.api.get<TaskDependencies>(`/tasks/${this.task().id}/dependencies`).subscribe({
+      next: datos => {
+        this.dependencias.set({
+          bloqueadaPor: datos.bloqueadaPor ?? [],
+          bloqueaA: datos.bloqueaA ?? [],
+        });
+        this.cargandoDependencias.set(false);
+      },
+      error: () => {
+        this.cargandoDependencias.set(false);
+        this.toast.error($localize`Error`, $localize`No se pudieron cargar las dependencias`);
+      },
+    });
+  }
+
+  /**
+   * Carga las candidatas a bloquear: las tareas del mismo proyecto, que es la única
+   * combinación que el servidor acepta. Se piden al abrir el selector y no antes, porque en la
+   * mayoría de las visitas al panel nadie toca las dependencias.
+   */
+  cargarCandidatas(): void {
+    if (this.candidatasABloquear().length) return;
+
+    this.api.get<{ items: TaskItem[] }>('/tasks', { projectId: this.task().projectId, pageSize: 200, includeSubtasks: true })
+      .subscribe({
+        next: pagina => {
+          const yaBloquean = new Set(this.dependencias().bloqueadaPor.map(t => t.id));
+          this.candidatasABloquear.set(
+            (pagina.items ?? []).filter(t => t.id !== this.task().id && !yaBloquean.has(t.id))
+          );
+        },
+        error: () => this.toast.error($localize`Error`, $localize`No se pudieron cargar las tareas del proyecto`),
+      });
+  }
+
+  agregarBloqueo(): void {
+    const elegida = this.bloqueanteElegido;
+    if (!elegida) return;
+
+    this.api.post(`/tasks/${this.task().id}/dependencies`, { dependsOnTaskId: elegida }).subscribe({
+      next: () => {
+        this.bloqueanteElegido = '';
+        this.candidatasABloquear.set([]);
+        this.cargarDependencias();
+        this.avisarDeLosBloqueos(1);
+      },
+      error: respuesta => {
+        // El servidor explica por qué: ciclo, ya existe, otro proyecto. Se muestra su mensaje
+        // en lugar de uno genérico, porque cada caso se corrige de forma distinta.
+        this.toast.error($localize`No se pudo añadir la dependencia`, this.mensajeDelServidor(respuesta));
+      },
+    });
+  }
+
+  quitarBloqueo(bloqueante: TaskDependencyRef): void {
+    this.api.delete(`/tasks/${this.task().id}/dependencies/${bloqueante.id}`).subscribe({
+      next: () => {
+        this.dependencias.update(d => ({ ...d, bloqueadaPor: d.bloqueadaPor.filter(t => t.id !== bloqueante.id) }));
+        this.candidatasABloquear.set([]);
+        this.avisarDeLosBloqueos(-1);
+      },
+      error: () => this.toast.error($localize`Error`, $localize`No se pudo quitar la dependencia`),
+    });
+  }
+
+  private mensajeDelServidor(respuesta: unknown): string {
+    const cuerpo = (respuesta as { error?: unknown })?.error;
+    return typeof cuerpo === 'string' && cuerpo.trim()
+      ? cuerpo
+      : $localize`Inténtalo de nuevo`;
+  }
+
+  /** Mantiene al día el distintivo de bloqueada de la tarjeta sin recargar la lista. */
+  private avisarDeLosBloqueos(delta: number): void {
+    this.updated.emit({
+      ...this.task(),
+      blockedByCount: Math.max(0, (this.task().blockedByCount ?? 0) + delta),
+    });
   }
 
   /** Si esta tarea cuelga de otra. El anidamiento admite un solo nivel. */

@@ -141,6 +141,11 @@ export class TasksComponent implements OnInit {
    * equivalentes y no señalaría nada; y una prioridad vacía —fila anterior a que existieran—
    * tampoco es una señal.
    */
+  /** Texto del distintivo de bloqueada para el `title` de la tarjeta. */
+  tituloDelBloqueo(task: TaskItem): string {
+    return $localize`Bloqueada por ${task.blockedByCount} tarea(s)`;
+  }
+
   /** Texto del progreso de subtareas para el `title` de la tarjeta. */
   tituloDelProgreso(task: TaskItem): string {
     return $localize`${task.completedSubtaskCount ?? 0} de ${task.subtaskCount} subtareas completadas`;

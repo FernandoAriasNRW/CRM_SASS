@@ -28,6 +28,7 @@ public static class WorkItemsInfrastructureExtensions
     services.AddScoped<IWorkItemsUnitOfWork, WorkItemsModuleUnitOfWork>();
 
     services.AddScoped<ITaskRepository, EfTaskRepository>();
+    services.AddScoped<ITaskDependencyRepository, EfTaskDependencyRepository>();
     services.AddScoped<ITaskQueries, TaskQueries>();
     return services;
   }
