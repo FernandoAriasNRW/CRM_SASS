@@ -207,40 +207,37 @@ elegida, no un fallo.
 
 ---
 
-## 6.bis Dónde se dejó la Fase 4 (traspaso del 2026-08-13)
+## 6.bis Dónde se dejó la Fase 4 (última revisión: 2026-08-13, tarde)
 
-**El bloque 4A está completo** y el 4B a medias. Nada de esto está todavía en `main`.
+**Los bloques 4A y 4B están completos.** La cadena de PRs que había pendiente ya está
+mergeada y sus ramas borradas.
 
 | Bloque | Estado |
 |---|---|
-| 4.0 migraciones · 4A prioridad · 4A subtareas | ✅ en `main` |
-| 4A dependencias, responsables, checklists, recurrentes | ✅ hecho, **en PRs sin mergear** |
-| 4B campos personalizados | 🟡 backend hecho; **interfaz a medias** |
-| 4C vistas (tabla, Gantt, carga) · 4D automatizaciones | ⬜ sin empezar |
+| 4.0 migraciones · 4A completo (prioridad, subtareas, dependencias, responsables, checklists, recurrentes) | ✅ en `main` |
+| 4B campos personalizados | ✅ backend, interfaz, traducciones y pruebas; verificado contra la API levantada |
+| 4C vistas (tabla editable, Gantt, carga de trabajo) | ⬜ sin empezar |
+| 4D motor de automatizaciones | ⬜ sin empezar |
+| Campos calculados | ⬜ fuera del 4B a propósito; ver `TipoDeCampo` |
 
-### La cadena de PRs, en este orden
+El 4B vive en la rama `fase-4b-campos-personalizados`, pendiente de mergear a `main`.
 
-`#13` → `#14` → `#16` → `#17` → rama `fase-4b-campos-personalizados`
+### Qué quedó hecho en el 4B
 
-Cada uno sale del anterior. **Mergear de abajo arriba**; si se mergea #13, los siguientes se
-pueden reapuntar a `main` desde la interfaz de GitHub con un clic.
-
-- **#13** — dependencias y responsables. Es sólo el merge que faltó al colapsar la pila: el
-  trabajo ya se revisó en #10 y #11.
-- **#14** — checklists. **#16** — tareas recurrentes (cierra el 4A). **#17** — módulo
-  `CustomFields` (backend).
-
-### Lo que queda del 4B
-
-El backend está entero y probado. Falta la interfaz, empezada en la rama:
-
-- ✅ `web/src/app/core/custom-fields.service.ts` y
-  `web/src/app/shared/ui/custom-fields-form.component.*` — el formulario dinámico que pinta
-  cada tipo y guarda campo a campo. Compila; **sin probar contra la API todavía**.
-- ⬜ Colgarlo del panel de detalle de tarea (`task-detail-panel.component.html`).
-- ⬜ Pestaña de administración de definiciones en `features/admin` (el componente ya tiene
-  pestañas: `activeTab` con users/teams/permissions/webhooks).
-- ⬜ Extraer y traducir las cadenas nuevas, y pasar lint y build.
+- `core/custom-fields.service.ts` — definiciones cacheadas por entidad, valores por entidad,
+  y `mensajeDeError`, que contempla las dos formas en que este backend rechaza: la cadena
+  suelta de `BadRequest(result.Error)` y el `ProblemDetails` del manejador global.
+- `shared/ui/custom-fields-form.component.*` — el formulario dinámico, colgado del panel de
+  detalle de tarea. No pinta ni encabezado si el inquilino no ha definido campos.
+- `features/admin/custom-fields/*` — la pestaña de definiciones: alta, edición, borrado en
+  dos pasos y cambio de entidad. El tipo y la entidad se bloquean al editar.
+- 36 pruebas unitarias de front nuevas (58 en total) y 10 de extremo a extremo (45 en total).
+- **Verificado contra la API levantada**, que es el paso que en este proyecto encuentra lo
+  que las pruebas no ven. Esta vez no apareció ningún defecto nuevo en la ruta del 4B: se
+  comprobaron los seis tipos, la normalización de la coma decimal en el servidor, el borrado
+  de un valor con `null`, el borrado de una definición con valores y las cuatro reglas que
+  rechazan. Sí quedó a la vista uno **ajeno**: `GET /tasks/{id}/comments` devuelve 404 y el
+  panel de detalle saca dos avisos de error cada vez que se abre una tarea.
 
 ### Cómo se ha trabajado cada campo, y por qué conviene seguir igual
 
@@ -268,19 +265,40 @@ probarla exhaustivamente sin base de datos: `DetectorDeCiclos`, `CalendarioDeRec
 - **El lexer de plantillas de Angular no admite `ñ`** en identificadores.
 - **Un módulo nuevo no funciona hasta registrar su ensamblado en MediatR**; si falta, el
   handler no se encuentra y sale un 409 desconcertante.
+- **`computed()` sobre un campo atado con `ngModel` no se recalcula nunca.** Un `computed()`
+  sólo reacciona a señales; si lee una propiedad normal, el primer valor se queda congelado y
+  el formulario deja de responder sin dar ningún error. Tiene que ser un `get`.
+
+### Trampas del entorno de pruebas de extremo a extremo
+
+Las tres cuestan horas porque el fallo aparece lejos de la causa:
+
+- **`page.goto` a una ruta con sesión devuelve al login.** El token vive en memoria (§5), así
+  que hay que navegar por dentro de la aplicación: la paleta de comandos o los enlaces.
+- **El rol sale de `GET /auth/users/me`, no del token.** Sin simular esa llamada `isAdmin()`
+  es falso, no aparece el enlace de administración y el guard deja fuera la pantalla.
+- **Varios endpoints devuelven un array, no un objeto paginado**: `/users/tenant`,
+  `/notifications`, subtareas, checklist y comentarios. Contestarles con `{items: []}` deja un
+  objeto donde la plantilla espera una lista; el `@for` revienta el ciclo de detección de
+  cambios y la pantalla se queda a medio pintar, con el error apuntando a otro sitio.
 
 ---
 
 ## 7. Por dónde seguir
 
-El 4A está cerrado y el 4B a medias (§6.bis). Lo inmediato, por orden:
+El 4A y el 4B están cerrados (§6.bis). Lo inmediato, por orden:
 
-1. **Bajar la cadena de PRs** (#13 → #14 → #16 → #17). Crece una rama por tanda, y cuanto más
-   larga, más caro sale el merge.
-2. **Terminar la interfaz del 4B**: colgar el formulario dinámico del detalle de tarea y añadir
-   la pestaña de administración de campos.
-3. Después el **4C** —tabla editable, Gantt apoyado en las dependencias, carga de trabajo— y el
-   **4D**, el motor de automatizaciones sobre los domain events que ya se emiten.
+1. **Mergear `fase-4b-campos-personalizados`.** Es la única rama viva.
+2. El **4C** —tabla editable, Gantt apoyado en las dependencias que ya existen, y carga de
+   trabajo— y después el **4D**, el motor de automatizaciones sobre los domain events que los
+   módulos ya emiten.
+3. Los **campos calculados** quedaron fuera del 4B a propósito: necesitan un motor de
+   expresiones —analizador, referencias entre campos, detección de ciclos, recálculo— y eso es
+   un proyecto en sí mismo, no un tipo más de la lista.
+
+Y sigue pendiente, desde hace varias sesiones y del lado de quien administra la máquina,
+**cambiar la contraseña de MySQL**: `src/Host/ApiHost/appsettings.Development.json` la lleva
+escrita en claro.
 
 El argumento competitivo sigue siendo el de §3 del roadmap: **el helpdesk integrado**
 —`Ticketing` ya existe— es el diferenciador más barato, porque ni ClickUp ni Monday lo
