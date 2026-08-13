@@ -20,6 +20,7 @@ import {
   type TaskItem, type TaskDependencies, type TaskDependencyRef,
 } from './task-create-modal.component';
 import { TASK_TAGS, type Tag } from '../../shared/utils/tags';
+import { UsersService, type TenantUser } from '../../core/users.service';
 import { ClickableDirective } from '../../shared/directives/clickable.directive';
 
 interface Comment {
@@ -60,6 +61,15 @@ export class TaskDetailPanelComponent implements OnInit {
 
   private readonly api = inject(ApiService);
   private readonly toast = inject(ToastService);
+  private readonly usuarios = inject(UsersService);
+
+  /**
+   * Responsables de la tarea. El orden que llega de la API no significa nada, así que quién es
+   * el principal se sabe comparando con `principal`, no por la posición.
+   */
+  responsables = signal<string[]>([]);
+  principal = signal('');
+  usuarioElegido = '';
 
   // Estado editable local
   title = '';
@@ -107,9 +117,86 @@ export class TaskDetailPanelComponent implements OnInit {
     if ((t as any).tags) {
       this.selectedTags.set(String((t as any).tags).split(',').map((s: string) => s.trim()).filter(Boolean));
     }
+    this.responsables.set(t.assignees ?? (t.assigneeId ? [t.assigneeId] : []));
+    this.principal.set(t.assigneeId ?? '');
     this.loadComments();
     if (!this.esSubtarea()) this.cargarSubtareas();
     this.cargarDependencias();
+    if (!this.usuarios.users().length) this.usuarios.loadTenantUsers().subscribe();
+  }
+
+  /** Nombre de una persona, o su identificador recortado si aún no está cargada. */
+  nombreDe(userId: string): string {
+    return this.usuarios.getUser(userId)?.name ?? `${userId.slice(0, 8)}…`;
+  }
+
+  avatarDe(userId: string): string {
+    return this.usuarios.getUser(userId)?.avatarUrl ?? '';
+  }
+
+  esPrincipal(userId: string): boolean { return userId === this.principal(); }
+
+  /** Quien todavía no es responsable. Sólo esas personas se pueden añadir. */
+  readonly candidatosAResponsable = computed<TenantUser[]>(() => {
+    const yaEstan = new Set(this.responsables());
+    return this.usuarios.users().filter(u => !yaEstan.has(u.id));
+  });
+
+  agregarResponsable(): void {
+    const quien = this.usuarioElegido;
+    if (!quien) return;
+
+    this.api.post(`/tasks/${this.task().id}/assignees`, { userId: quien }).subscribe({
+      next: () => {
+        this.responsables.update(actuales => [...actuales, quien]);
+        this.usuarioElegido = '';
+        this.avisarDeLosResponsables();
+      },
+      error: respuesta => this.toast.error(
+        $localize`No se pudo añadir el responsable`, this.mensajeDelServidor(respuesta)),
+    });
+  }
+
+  /**
+   * Quita a una persona de los responsables.
+   *
+   * Si era la principal, el servidor promueve a la siguiente. Se recarga la tarea en lugar de
+   * adivinar a quién promovió: inventarlo aquí sería arriesgarse a pintar un principal que no
+   * es el que quedó guardado.
+   */
+  quitarResponsable(userId: string): void {
+    this.api.delete(`/tasks/${this.task().id}/assignees/${userId}`).subscribe({
+      next: () => {
+        this.responsables.update(actuales => actuales.filter(u => u !== userId));
+
+        // Si se quitó al principal, el servidor promovió a otro. Se relee en lugar de adivinar
+        // a quién: inventarlo aquí sería pintar un principal que no es el que quedó guardado.
+        if (userId === this.principal()) this.releerResponsables();
+
+        this.avisarDeLosResponsables();
+      },
+      error: respuesta => this.toast.error(
+        $localize`No se pudo quitar el responsable`, this.mensajeDelServidor(respuesta)),
+    });
+  }
+
+  /** Vuelve a leer la tarea para saber a quién promovió el servidor. */
+  private releerResponsables(): void {
+    this.api.get<TaskItem>(`/tasks/${this.task().id}`).subscribe({
+      next: tarea => {
+        this.responsables.set(tarea.assignees ?? []);
+        this.principal.set(tarea.assigneeId ?? '');
+        this.avisarDeLosResponsables();
+      },
+    });
+  }
+
+  private avisarDeLosResponsables(): void {
+    this.updated.emit({
+      ...this.task(),
+      assignees: this.responsables(),
+      assigneeId: this.principal(),
+    });
   }
 
   cargarDependencias(): void {

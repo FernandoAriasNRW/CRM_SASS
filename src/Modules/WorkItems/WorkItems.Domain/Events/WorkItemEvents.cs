@@ -15,3 +15,7 @@ public sealed record TaskParentChangedEvent(Guid TaskId, Guid TenantId, Guid Pro
 public sealed record TaskDependencyAddedEvent(Guid DependencyId, Guid TenantId, Guid TaskId, Guid DependsOnTaskId) : DomainEvent;
 
 public sealed record TaskDependencyRemovedEvent(Guid DependencyId, Guid TenantId, Guid TaskId, Guid DependsOnTaskId) : DomainEvent;
+
+public sealed record TaskAssigneeAddedEvent(Guid TaskId, Guid TenantId, Guid UserId) : DomainEvent;
+
+public sealed record TaskAssigneeRemovedEvent(Guid TaskId, Guid TenantId, Guid UserId) : DomainEvent;

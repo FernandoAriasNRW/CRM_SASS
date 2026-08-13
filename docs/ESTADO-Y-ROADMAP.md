@@ -359,7 +359,12 @@ Es el trabajo de mayor retorno: sin esto el producto no entra en una comparativa
   probarla exhaustivamente sin base de datos, y recorrido iterativo para que un grafo que ya
   tuviera un ciclo no cuelgue la petición. La unicidad la garantiza la base, no sólo el handler.
   Prerrequisito del Gantt de la 4C, ya cubierto.
-- **Múltiples responsables**: `AssigneeId` pasa a colección `TaskAssignee`.
+- ✅ **Múltiples responsables** *(hecho 2026-08-12)*: `TaskAssignee` es una colección **propiedad
+  del agregado**, no una entidad suelta, para que las invariantes —sin duplicados, el principal
+  siempre dentro del conjunto, promoción automática al quitar al principal— las garantice la
+  tarea. `AssigneeId` se conserva como principal y la migración traspasó los datos existentes.
+  Cuidado con el orden: la colección **no vuelve ordenada** de la base, así que quién es el
+  principal se sabe comparando con `AssigneeId`, nunca por la posición.
 - **Checklists** dentro de la tarea.
 - **Tareas recurrentes** apoyadas en el worker que ya existe.
 
@@ -463,8 +468,8 @@ de lo que quedó vivo está en `CONTINUACION.md`.*
    secretos, y es una acción manual fuera del repositorio.
 2. **Mergear el PR #3** (Fases 2 y 3) o decidir explícitamente seguir sobre `fase-3-ux-ui`.
    Cuanto más crezca la Fase 4 encima, más caro es el merge.
-3. Seguir el **bloque 4A** por los **múltiples responsables** (`AssigneeId` pasa a colección
-   `TaskAssignee`), y después checklists y tareas recurrentes. Prioridad, subtareas y
-   dependencias ya están, y dejaron el patrón hecho: dominio → migración → API → interfaz →
+3. Seguir el **bloque 4A** por las **checklists** dentro de la tarea y las **tareas
+   recurrentes**, que son lo que queda. Prioridad, subtareas, dependencias y múltiples
+   responsables ya están, y dejaron el patrón hecho: dominio → migración → API → interfaz →
    pruebas, y **verificación contra la API real levantada**, que es lo que destapó los dos
-   defectos de §4 de `CONTINUACION.md`.
+   defectos de §4 de `CONTINUACION.md` y el orden no garantizado de los responsables.

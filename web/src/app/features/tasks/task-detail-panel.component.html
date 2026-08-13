@@ -130,12 +130,41 @@
             </div>
           }
 
-          <!-- Asignado -->
-          <div class="flex items-center gap-3">
-            <span class="text-muted-foreground w-28 shrink-0 flex items-center gap-1.5">
-              <ng-icon name="lucideUser" size="13" /> Asignado
+          <!-- Responsables -->
+          <div class="flex items-start gap-3 col-span-2">
+            <span class="text-muted-foreground w-28 shrink-0 flex items-center gap-1.5 pt-1">
+              <ng-icon name="lucideUser" size="13" /> <span i18n>Responsables</span>
             </span>
-            <span class="text-sm text-muted-foreground">{{ task().assigneeId ? task().assigneeId.slice(0,8) + '...' : 'Sin asignar' }}</span>
+            <div class="flex flex-wrap items-center gap-1.5 flex-1">
+              @for (responsable of responsables(); track responsable) {
+                <span class="flex items-center gap-1.5 rounded-full border border-border pl-1 pr-2 py-0.5 text-xs"
+                      [class.border-primary]="esPrincipal(responsable)">
+                  <ui-avatar [src]="avatarDe(responsable)" [name]="nombreDe(responsable)" class="h-5 w-5" />
+                  {{ nombreDe(responsable) }}
+                  @if (esPrincipal(responsable)) {
+                    <span class="text-[10px] text-primary" i18n>principal</span>
+                  }
+                  <button (click)="quitarResponsable(responsable)"
+                          i18n-aria-label aria-label="Quitar responsable"
+                          class="text-muted-foreground hover:text-destructive transition-colors">
+                    <ng-icon name="lucideX" size="11" />
+                  </button>
+                </span>
+              } @empty {
+                <span class="text-sm text-muted-foreground" i18n>Sin asignar</span>
+              }
+
+              @if (candidatosAResponsable().length) {
+                <select [(ngModel)]="usuarioElegido" (change)="agregarResponsable()"
+                        i18n-aria-label aria-label="Añadir responsable"
+                        class="bg-transparent border border-dashed border-border rounded-full px-2 py-0.5 text-xs outline-none hover:border-primary transition-colors">
+                  <option value="" i18n>+ Responsable</option>
+                  @for (candidato of candidatosAResponsable(); track candidato.id) {
+                    <option [value]="candidato.id">{{ candidato.name }}</option>
+                  }
+                </select>
+              }
+            </div>
           </div>
 
         </div>

@@ -371,4 +371,164 @@ public sealed class WorkTaskInvariantsTests
     }
 
     #endregion
+
+    #region Responsables
+
+    [Fact]
+    public void Una_tarea_creada_con_responsable_lo_tiene_tambien_en_la_coleccion()
+    {
+        // La invariante que sostiene todo lo demás: el principal siempre figura entre los
+        // responsables. Si no, ninguna vista de las nuevas encontraría la tarea.
+        var responsable = Guid.NewGuid();
+
+        var tarea = WorkTask.Create(
+            Guid.NewGuid(), Guid.NewGuid(), "Con responsable", "x",
+            responsable, Guid.NewGuid(), 1m, DateOnly.FromDateTime(DateTime.UtcNow));
+
+        tarea.AssigneeId.Should().Be(responsable);
+        tarea.Assignees.Select(a => a.UserId).Should().ContainSingle().Which.Should().Be(responsable);
+        tarea.EsResponsable(responsable).Should().BeTrue();
+    }
+
+    [Fact]
+    public void Una_tarea_sin_asignar_no_tiene_responsables()
+    {
+        var tarea = WorkTask.Create(
+            Guid.NewGuid(), Guid.NewGuid(), "Sin asignar", "x",
+            Guid.Empty, Guid.NewGuid(), 1m, DateOnly.FromDateTime(DateTime.UtcNow));
+
+        tarea.AssigneeId.Should().Be(Guid.Empty);
+        tarea.Assignees.Should().BeEmpty("el Guid vacío significa «sin asignar», no una persona");
+    }
+
+    [Fact]
+    public void Añadir_responsables_no_cambia_quien_es_el_principal()
+    {
+        var tarea = NuevaTarea();
+        var principal = tarea.AssigneeId;
+        var otro = Guid.NewGuid();
+
+        tarea.AddAssignee(otro);
+
+        tarea.AssigneeId.Should().Be(principal);
+        tarea.Assignees.Select(a => a.UserId).Should().BeEquivalentTo([principal, otro]);
+    }
+
+    [Fact]
+    public void La_primera_persona_de_una_tarea_sin_asignar_pasa_a_ser_la_principal()
+    {
+        // Lo contrario dejaría el campo del principal vacío con responsables dentro, que es
+        // exactamente la incoherencia que la colección viene a evitar.
+        var tarea = WorkTask.Create(
+            Guid.NewGuid(), Guid.NewGuid(), "Sin asignar", "x",
+            Guid.Empty, Guid.NewGuid(), 1m, DateOnly.FromDateTime(DateTime.UtcNow));
+        var alguien = Guid.NewGuid();
+
+        tarea.AddAssignee(alguien);
+
+        tarea.AssigneeId.Should().Be(alguien);
+    }
+
+    [Fact]
+    public void La_misma_persona_no_se_puede_añadir_dos_veces()
+    {
+        var tarea = NuevaTarea();
+
+        var repetir = () => tarea.AddAssignee(tarea.AssigneeId);
+
+        repetir.Should().Throw<InvalidOperationException>().WithMessage("*ya es responsable*");
+        tarea.Assignees.Should().HaveCount(1);
+    }
+
+    [Fact]
+    public void Quitar_al_principal_promueve_al_siguiente()
+    {
+        // Sin promoción, la tarea quedaría con un principal que ya no es responsable.
+        var tarea = NuevaTarea();
+        var principal = tarea.AssigneeId;
+        var segundo = Guid.NewGuid();
+        tarea.AddAssignee(segundo);
+
+        tarea.RemoveAssignee(principal);
+
+        tarea.AssigneeId.Should().Be(segundo);
+        tarea.Assignees.Select(a => a.UserId).Should().ContainSingle().Which.Should().Be(segundo);
+    }
+
+    [Fact]
+    public void Quitar_al_ultimo_responsable_deja_la_tarea_sin_asignar()
+    {
+        var tarea = NuevaTarea();
+
+        tarea.RemoveAssignee(tarea.AssigneeId);
+
+        tarea.AssigneeId.Should().Be(Guid.Empty);
+        tarea.Assignees.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void Quitar_a_quien_no_es_responsable_se_rechaza()
+    {
+        var tarea = NuevaTarea();
+
+        var quitar = () => tarea.RemoveAssignee(Guid.NewGuid());
+
+        quitar.Should().Throw<InvalidOperationException>().WithMessage("*no es responsable*");
+        tarea.Assignees.Should().HaveCount(1);
+    }
+
+    [Fact]
+    public void Cambiar_el_principal_lo_mete_en_la_coleccion_y_lo_pone_primero()
+    {
+        var tarea = NuevaTarea();
+        var nuevo = Guid.NewGuid();
+
+        tarea.Assign(nuevo);
+
+        tarea.AssigneeId.Should().Be(nuevo);
+        tarea.EsResponsable(nuevo).Should().BeTrue("el principal figura siempre entre los responsables");
+        tarea.Assignees.Should().HaveCount(2, "el anterior sigue siendo responsable, sólo deja de ser el principal");
+    }
+
+    [Fact]
+    public void Ascender_a_un_responsable_que_ya_estaba_no_lo_duplica()
+    {
+        var tarea = NuevaTarea();
+        var segundo = Guid.NewGuid();
+        tarea.AddAssignee(segundo);
+
+        tarea.Assign(segundo);
+
+        tarea.Assignees.Select(a => a.UserId).Should().HaveCount(2).And.OnlyHaveUniqueItems();
+        tarea.AssigneeId.Should().Be(segundo);
+    }
+
+    [Fact]
+    public void Desasignar_del_todo_vacia_la_coleccion()
+    {
+        var tarea = NuevaTarea();
+        tarea.AddAssignee(Guid.NewGuid());
+
+        tarea.Assign(Guid.Empty);
+
+        tarea.AssigneeId.Should().Be(Guid.Empty);
+        tarea.Assignees.Should().BeEmpty("«sin asignar» no puede convivir con responsables dentro");
+    }
+
+    [Fact]
+    public void Añadir_y_quitar_responsables_emite_sus_eventos()
+    {
+        var tarea = NuevaTarea();
+        var alguien = Guid.NewGuid();
+        tarea.ClearDomainEvents();
+
+        tarea.AddAssignee(alguien);
+        tarea.RemoveAssignee(alguien);
+
+        tarea.DomainEvents.Should().HaveCount(2);
+        tarea.DomainEvents.First().Should().BeOfType<TaskAssigneeAddedEvent>();
+        tarea.DomainEvents.Last().Should().BeOfType<TaskAssigneeRemovedEvent>();
+    }
+
+    #endregion
 }

@@ -19,7 +19,28 @@ public sealed class WorkTask : AggregateRoot, ITenantEntity
     /// </summary>
     public Guid? ParentTaskId { get; private set; }
 
+    /// <summary>
+    /// Responsable principal, o <see cref="Guid.Empty"/> si la tarea no tiene a nadie.
+    ///
+    /// No es una segunda fuente de verdad: quien esté aquí **figura siempre** en
+    /// <see cref="Assignees"/>, y el agregado mantiene esa equivalencia. Se conserva el campo
+    /// porque media aplicación lo usa —tableros, filtros, la vista de tabla— y porque «quién
+    /// responde de esto» sigue siendo una pregunta con una sola respuesta útil.
+    ///
+    /// Ojo con el orden: en memoria el principal queda primero, pero al recargar desde la base
+    /// la colección **no tiene orden garantizado**. Quien necesite saber quién es el principal
+    /// compara con este campo, no con la posición.
+    /// </summary>
     public Guid AssigneeId { get; private set; }
+
+    private readonly List<TaskAssignee> _assignees = [];
+
+    /// <summary>
+    /// Todas las personas responsables, el principal incluido. Sin orden significativo al venir
+    /// de la base: ver <see cref="AssigneeId"/>.
+    /// </summary>
+    public IReadOnlyList<TaskAssignee> Assignees => _assignees;
+
     public Guid CreatedById { get; private set; }
     public decimal EstimatedHours { get; private set; }
     public DateOnly DueDate { get; private set; }
@@ -60,6 +81,12 @@ public sealed class WorkTask : AggregateRoot, ITenantEntity
             EstimatedHours = estimatedHours,
             DueDate = dueDate
         };
+
+        // Una tarea que nace asignada aparece ya en el conjunto de responsables, no sólo en el
+        // campo del principal: si no, la tarea tendría un principal que no figura entre sus
+        // responsables y ninguna vista de las nuevas la encontraría.
+        if (assigneeId != Guid.Empty)
+            task._assignees.Add(new TaskAssignee(assigneeId));
 
         task.RaiseDomainEvent(new TaskCreatedEvent(task.Id, tenantId, projectId, assigneeId));
 
@@ -156,10 +183,80 @@ public sealed class WorkTask : AggregateRoot, ITenantEntity
         public const string PadreDeOtroProyecto = "La tarea padre pertenece a otro proyecto";
     }
 
+    /// <summary>
+    /// Cambia el responsable principal.
+    ///
+    /// Quien pasa a ser principal entra también en el conjunto si no estaba: es la invariante
+    /// que sostiene que <see cref="AssigneeId"/> sea el primero de <see cref="Assignees"/> y no
+    /// un dato paralelo. Asignar a <see cref="Guid.Empty"/> deja la tarea sin principal y vacía
+    /// el conjunto, que es lo que significa «sin asignar».
+    /// </summary>
     public void Assign(Guid assigneeId)
     {
+        if (assigneeId == Guid.Empty)
+        {
+            _assignees.Clear();
+            AssigneeId = Guid.Empty;
+            RaiseDomainEvent(new TaskAssignedEvent(Id, TenantId, Guid.Empty));
+            return;
+        }
+
+        _assignees.RemoveAll(a => a.UserId == assigneeId);
+        _assignees.Insert(0, new TaskAssignee(assigneeId));
         AssigneeId = assigneeId;
+
         RaiseDomainEvent(new TaskAssignedEvent(Id, TenantId, assigneeId));
+    }
+
+    /// <summary>
+    /// Añade una persona responsable sin tocar quién es el principal.
+    ///
+    /// Si la tarea no tenía a nadie, la primera que entra pasa a ser la principal: dejar el
+    /// campo vacío con responsables dentro rompería la equivalencia.
+    /// </summary>
+    public void AddAssignee(Guid userId)
+    {
+        if (userId == Guid.Empty)
+            throw new InvalidOperationException(ReglasDeResponsables.IdentificadorInvalido);
+
+        if (_assignees.Any(a => a.UserId == userId))
+            throw new InvalidOperationException(ReglasDeResponsables.YaEsResponsable);
+
+        _assignees.Add(new TaskAssignee(userId));
+
+        if (AssigneeId == Guid.Empty)
+            AssigneeId = userId;
+
+        RaiseDomainEvent(new TaskAssigneeAddedEvent(Id, TenantId, userId));
+    }
+
+    /// <summary>
+    /// Quita a una persona de los responsables.
+    ///
+    /// Si era la principal, **promociona a la siguiente** en lugar de dejar la tarea con un
+    /// principal que ya no es responsable. Si era la última, la tarea queda sin asignar, que es
+    /// un estado que el sistema ya admite.
+    /// </summary>
+    public void RemoveAssignee(Guid userId)
+    {
+        var quitados = _assignees.RemoveAll(a => a.UserId == userId);
+        if (quitados == 0)
+            throw new InvalidOperationException(ReglasDeResponsables.NoEsResponsable);
+
+        if (AssigneeId == userId)
+            AssigneeId = _assignees.Count > 0 ? _assignees[0].UserId : Guid.Empty;
+
+        RaiseDomainEvent(new TaskAssigneeRemovedEvent(Id, TenantId, userId));
+    }
+
+    /// <summary>Si una persona figura entre los responsables.</summary>
+    public bool EsResponsable(Guid userId) => _assignees.Any(a => a.UserId == userId);
+
+    public static class ReglasDeResponsables
+    {
+        public const string IdentificadorInvalido = "El identificador de la persona no es válido";
+        public const string YaEsResponsable = "Esa persona ya es responsable de la tarea";
+        public const string NoEsResponsable = "Esa persona no es responsable de la tarea";
     }
 
     public void AddTag(Guid tagId)
