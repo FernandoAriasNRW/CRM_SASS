@@ -70,7 +70,13 @@ public sealed class TaskQueries(WorkItemsDbContext context) : ITaskQueries
       query = query.Where(t => t.ParentTaskId == null);
 
     if (projectId.HasValue) query = query.Where(t => t.ProjectId == projectId.Value);
-    if (assigneeId.HasValue) query = query.Where(t => t.AssigneeId == assigneeId.Value);
+    // Se mira el conjunto de responsables y además el campo del principal. Con los datos al día
+    // el segundo es redundante, pero una fila que se hubiera quedado sin traspasar desaparecería
+    // del filtro sin dar ningún error, y eso es justo la clase de silencio que este proyecto ya
+    // ha pagado dos veces.
+    if (assigneeId.HasValue)
+      query = query.Where(t => t.AssigneeId == assigneeId.Value
+                               || t.Assignees.Any(a => a.UserId == assigneeId.Value));
     if (!string.IsNullOrEmpty(status)) query = query.Where(t => t.Status.Value == status || t.Status.Name == status);
     if (!string.IsNullOrEmpty(priority)) query = query.Where(t => t.Priority.Value == priority || t.Priority.Name == priority);
 
@@ -78,7 +84,9 @@ public sealed class TaskQueries(WorkItemsDbContext context) : ITaskQueries
     {
         if (filter.Equals("mine", StringComparison.OrdinalIgnoreCase))
         {
-            query = query.Where(t => t.AssigneeId == userId.Value);
+            // «Mis tareas» son las que respondo, sea como principal o como uno más.
+            query = query.Where(t => t.AssigneeId == userId.Value
+                                     || t.Assignees.Any(a => a.UserId == userId.Value));
         }
         else if (filter.Equals("team", StringComparison.OrdinalIgnoreCase))
         {
@@ -147,6 +155,32 @@ public sealed class TaskQueries(WorkItemsDbContext context) : ITaskQueries
         t.ParentTaskId,
         context.Tasks.Count(s => s.TenantId == tenantId && s.ParentTaskId == t.Id),
         context.Tasks.Count(s => s.TenantId == tenantId && s.ParentTaskId == t.Id
-                                 && (s.Status.Value == completado || s.Status.Name == completado))));
+                                 && (s.Status.Value == completado || s.Status.Name == completado)),
+        context.TaskDependencies.Count(d => d.TenantId == tenantId && d.TaskId == t.Id),
+        context.TaskDependencies.Count(d => d.TenantId == tenantId && d.DependsOnTaskId == t.Id),
+        t.Assignees.Select(a => a.UserId).ToList()));
   }
+
+  public async Task<TaskDependenciesDto> GetDependenciesAsync(Guid tenantId, Guid taskId, CancellationToken ct = default)
+  {
+    // Dos consultas y no una: son dos conjuntos distintos, y unirlos obligaría a etiquetar
+    // cada fila con su dirección para volver a separarlas en memoria.
+    var bloqueadaPor = await ReferenciasAsync(
+        context.TaskDependencies.Where(d => d.TenantId == tenantId && d.TaskId == taskId)
+            .Select(d => d.DependsOnTaskId), tenantId, ct);
+
+    var bloqueaA = await ReferenciasAsync(
+        context.TaskDependencies.Where(d => d.TenantId == tenantId && d.DependsOnTaskId == taskId)
+            .Select(d => d.TaskId), tenantId, ct);
+
+    return new TaskDependenciesDto(bloqueadaPor, bloqueaA);
+  }
+
+  private async Task<IReadOnlyList<TaskDependencyRefDto>> ReferenciasAsync(
+      IQueryable<Guid> ids, Guid tenantId, CancellationToken ct)
+      => await context.Tasks.AsNoTracking()
+          .Where(t => t.TenantId == tenantId && ids.Contains(t.Id))
+          .OrderBy(t => t.Title.Value)
+          .Select(t => new TaskDependencyRefDto(t.Id, t.Title.Value, t.Status.Value, t.Priority.Value))
+          .ToListAsync(ct);
 }

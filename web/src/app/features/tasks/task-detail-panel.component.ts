@@ -11,11 +11,16 @@ import {
   lucideX, lucideCheck, lucideCalendar, lucideClock, lucideUser,
   lucideTag, lucideFlag, lucideMessageSquare, lucidePaperclip,
   lucideSmile, lucideSend, lucideChevronDown, lucideAlertCircle,
-  lucideArrowUp, lucideMinus, lucideArrowDown, lucideLoader2
+  lucideArrowUp, lucideMinus, lucideArrowDown, lucideLoader2,
+  lucideBan, lucideArrowRight
 } from '@ng-icons/lucide';
 import { DrawerComponent } from '../../shared/ui/drawer.component';
-import { PRIORIDADES, PRIORIDAD_POR_DEFECTO, type TaskItem } from './task-create-modal.component';
+import {
+  PRIORIDADES, PRIORIDAD_POR_DEFECTO,
+  type TaskItem, type TaskDependencies, type TaskDependencyRef,
+} from './task-create-modal.component';
 import { TASK_TAGS, type Tag } from '../../shared/utils/tags';
+import { UsersService, type TenantUser } from '../../core/users.service';
 import { ClickableDirective } from '../../shared/directives/clickable.directive';
 
 interface Comment {
@@ -44,7 +49,8 @@ const STATUS_BADGE: Record<string, BadgeVariant> = {
     lucideX, lucideCheck, lucideCalendar, lucideClock, lucideUser,
     lucideTag, lucideFlag, lucideMessageSquare, lucidePaperclip,
     lucideSmile, lucideSend, lucideChevronDown, lucideAlertCircle,
-    lucideArrowUp, lucideMinus, lucideArrowDown, lucideLoader2
+    lucideArrowUp, lucideMinus, lucideArrowDown, lucideLoader2,
+    lucideBan, lucideArrowRight
   })],
   templateUrl: './task-detail-panel.component.html',
 })
@@ -55,6 +61,15 @@ export class TaskDetailPanelComponent implements OnInit {
 
   private readonly api = inject(ApiService);
   private readonly toast = inject(ToastService);
+  private readonly usuarios = inject(UsersService);
+
+  /**
+   * Responsables de la tarea. El orden que llega de la API no significa nada, así que quién es
+   * el principal se sabe comparando con `principal`, no por la posición.
+   */
+  responsables = signal<string[]>([]);
+  principal = signal('');
+  usuarioElegido = '';
 
   // Estado editable local
   title = '';
@@ -72,6 +87,10 @@ export class TaskDetailPanelComponent implements OnInit {
   cargandoSubtareas = signal(false);
   creandoSubtarea = signal(false);
   tituloNuevaSubtarea = '';
+  dependencias = signal<TaskDependencies>({ bloqueadaPor: [], bloqueaA: [] });
+  cargandoDependencias = signal(false);
+  candidatasABloquear = signal<TaskItem[]>([]);
+  bloqueanteElegido = '';
   loadingComments = signal(false);
   sendingComment = signal(false);
   activeTab = signal<'comments' | 'activity'>('comments');
@@ -98,8 +117,168 @@ export class TaskDetailPanelComponent implements OnInit {
     if ((t as any).tags) {
       this.selectedTags.set(String((t as any).tags).split(',').map((s: string) => s.trim()).filter(Boolean));
     }
+    this.responsables.set(t.assignees ?? (t.assigneeId ? [t.assigneeId] : []));
+    this.principal.set(t.assigneeId ?? '');
     this.loadComments();
     if (!this.esSubtarea()) this.cargarSubtareas();
+    this.cargarDependencias();
+    if (!this.usuarios.users().length) this.usuarios.loadTenantUsers().subscribe();
+  }
+
+  /** Nombre de una persona, o su identificador recortado si aún no está cargada. */
+  nombreDe(userId: string): string {
+    return this.usuarios.getUser(userId)?.name ?? `${userId.slice(0, 8)}…`;
+  }
+
+  avatarDe(userId: string): string {
+    return this.usuarios.getUser(userId)?.avatarUrl ?? '';
+  }
+
+  esPrincipal(userId: string): boolean { return userId === this.principal(); }
+
+  /** Quien todavía no es responsable. Sólo esas personas se pueden añadir. */
+  readonly candidatosAResponsable = computed<TenantUser[]>(() => {
+    const yaEstan = new Set(this.responsables());
+    return this.usuarios.users().filter(u => !yaEstan.has(u.id));
+  });
+
+  agregarResponsable(): void {
+    const quien = this.usuarioElegido;
+    if (!quien) return;
+
+    this.api.post(`/tasks/${this.task().id}/assignees`, { userId: quien }).subscribe({
+      next: () => {
+        this.responsables.update(actuales => [...actuales, quien]);
+        this.usuarioElegido = '';
+        this.avisarDeLosResponsables();
+      },
+      error: respuesta => this.toast.error(
+        $localize`No se pudo añadir el responsable`, this.mensajeDelServidor(respuesta)),
+    });
+  }
+
+  /**
+   * Quita a una persona de los responsables.
+   *
+   * Si era la principal, el servidor promueve a la siguiente. Se recarga la tarea en lugar de
+   * adivinar a quién promovió: inventarlo aquí sería arriesgarse a pintar un principal que no
+   * es el que quedó guardado.
+   */
+  quitarResponsable(userId: string): void {
+    this.api.delete(`/tasks/${this.task().id}/assignees/${userId}`).subscribe({
+      next: () => {
+        this.responsables.update(actuales => actuales.filter(u => u !== userId));
+
+        // Si se quitó al principal, el servidor promovió a otro. Se relee en lugar de adivinar
+        // a quién: inventarlo aquí sería pintar un principal que no es el que quedó guardado.
+        if (userId === this.principal()) this.releerResponsables();
+
+        this.avisarDeLosResponsables();
+      },
+      error: respuesta => this.toast.error(
+        $localize`No se pudo quitar el responsable`, this.mensajeDelServidor(respuesta)),
+    });
+  }
+
+  /** Vuelve a leer la tarea para saber a quién promovió el servidor. */
+  private releerResponsables(): void {
+    this.api.get<TaskItem>(`/tasks/${this.task().id}`).subscribe({
+      next: tarea => {
+        this.responsables.set(tarea.assignees ?? []);
+        this.principal.set(tarea.assigneeId ?? '');
+        this.avisarDeLosResponsables();
+      },
+    });
+  }
+
+  private avisarDeLosResponsables(): void {
+    this.updated.emit({
+      ...this.task(),
+      assignees: this.responsables(),
+      assigneeId: this.principal(),
+    });
+  }
+
+  cargarDependencias(): void {
+    this.cargandoDependencias.set(true);
+    this.api.get<TaskDependencies>(`/tasks/${this.task().id}/dependencies`).subscribe({
+      next: datos => {
+        this.dependencias.set({
+          bloqueadaPor: datos.bloqueadaPor ?? [],
+          bloqueaA: datos.bloqueaA ?? [],
+        });
+        this.cargandoDependencias.set(false);
+      },
+      error: () => {
+        this.cargandoDependencias.set(false);
+        this.toast.error($localize`Error`, $localize`No se pudieron cargar las dependencias`);
+      },
+    });
+  }
+
+  /**
+   * Carga las candidatas a bloquear: las tareas del mismo proyecto, que es la única
+   * combinación que el servidor acepta. Se piden al abrir el selector y no antes, porque en la
+   * mayoría de las visitas al panel nadie toca las dependencias.
+   */
+  cargarCandidatas(): void {
+    if (this.candidatasABloquear().length) return;
+
+    this.api.get<{ items: TaskItem[] }>('/tasks', { projectId: this.task().projectId, pageSize: 200, includeSubtasks: true })
+      .subscribe({
+        next: pagina => {
+          const yaBloquean = new Set(this.dependencias().bloqueadaPor.map(t => t.id));
+          this.candidatasABloquear.set(
+            (pagina.items ?? []).filter(t => t.id !== this.task().id && !yaBloquean.has(t.id))
+          );
+        },
+        error: () => this.toast.error($localize`Error`, $localize`No se pudieron cargar las tareas del proyecto`),
+      });
+  }
+
+  agregarBloqueo(): void {
+    const elegida = this.bloqueanteElegido;
+    if (!elegida) return;
+
+    this.api.post(`/tasks/${this.task().id}/dependencies`, { dependsOnTaskId: elegida }).subscribe({
+      next: () => {
+        this.bloqueanteElegido = '';
+        this.candidatasABloquear.set([]);
+        this.cargarDependencias();
+        this.avisarDeLosBloqueos(1);
+      },
+      error: respuesta => {
+        // El servidor explica por qué: ciclo, ya existe, otro proyecto. Se muestra su mensaje
+        // en lugar de uno genérico, porque cada caso se corrige de forma distinta.
+        this.toast.error($localize`No se pudo añadir la dependencia`, this.mensajeDelServidor(respuesta));
+      },
+    });
+  }
+
+  quitarBloqueo(bloqueante: TaskDependencyRef): void {
+    this.api.delete(`/tasks/${this.task().id}/dependencies/${bloqueante.id}`).subscribe({
+      next: () => {
+        this.dependencias.update(d => ({ ...d, bloqueadaPor: d.bloqueadaPor.filter(t => t.id !== bloqueante.id) }));
+        this.candidatasABloquear.set([]);
+        this.avisarDeLosBloqueos(-1);
+      },
+      error: () => this.toast.error($localize`Error`, $localize`No se pudo quitar la dependencia`),
+    });
+  }
+
+  private mensajeDelServidor(respuesta: unknown): string {
+    const cuerpo = (respuesta as { error?: unknown })?.error;
+    return typeof cuerpo === 'string' && cuerpo.trim()
+      ? cuerpo
+      : $localize`Inténtalo de nuevo`;
+  }
+
+  /** Mantiene al día el distintivo de bloqueada de la tarjeta sin recargar la lista. */
+  private avisarDeLosBloqueos(delta: number): void {
+    this.updated.emit({
+      ...this.task(),
+      blockedByCount: Math.max(0, (this.task().blockedByCount ?? 0) + delta),
+    });
   }
 
   /** Si esta tarea cuelga de otra. El anidamiento admite un solo nivel. */

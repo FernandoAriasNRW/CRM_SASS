@@ -130,12 +130,41 @@
             </div>
           }
 
-          <!-- Asignado -->
-          <div class="flex items-center gap-3">
-            <span class="text-muted-foreground w-28 shrink-0 flex items-center gap-1.5">
-              <ng-icon name="lucideUser" size="13" /> Asignado
+          <!-- Responsables -->
+          <div class="flex items-start gap-3 col-span-2">
+            <span class="text-muted-foreground w-28 shrink-0 flex items-center gap-1.5 pt-1">
+              <ng-icon name="lucideUser" size="13" /> <span i18n>Responsables</span>
             </span>
-            <span class="text-sm text-muted-foreground">{{ task().assigneeId ? task().assigneeId.slice(0,8) + '...' : 'Sin asignar' }}</span>
+            <div class="flex flex-wrap items-center gap-1.5 flex-1">
+              @for (responsable of responsables(); track responsable) {
+                <span class="flex items-center gap-1.5 rounded-full border border-border pl-1 pr-2 py-0.5 text-xs"
+                      [class.border-primary]="esPrincipal(responsable)">
+                  <ui-avatar [src]="avatarDe(responsable)" [name]="nombreDe(responsable)" class="h-5 w-5" />
+                  {{ nombreDe(responsable) }}
+                  @if (esPrincipal(responsable)) {
+                    <span class="text-[10px] text-primary" i18n>principal</span>
+                  }
+                  <button (click)="quitarResponsable(responsable)"
+                          i18n-aria-label aria-label="Quitar responsable"
+                          class="text-muted-foreground hover:text-destructive transition-colors">
+                    <ng-icon name="lucideX" size="11" />
+                  </button>
+                </span>
+              } @empty {
+                <span class="text-sm text-muted-foreground" i18n>Sin asignar</span>
+              }
+
+              @if (candidatosAResponsable().length) {
+                <select [(ngModel)]="usuarioElegido" (change)="agregarResponsable()"
+                        i18n-aria-label aria-label="Añadir responsable"
+                        class="bg-transparent border border-dashed border-border rounded-full px-2 py-0.5 text-xs outline-none hover:border-primary transition-colors">
+                  <option value="" i18n>+ Responsable</option>
+                  @for (candidato of candidatosAResponsable(); track candidato.id) {
+                    <option [value]="candidato.id">{{ candidato.name }}</option>
+                  }
+                </select>
+              }
+            </div>
           </div>
 
         </div>
@@ -195,6 +224,65 @@
                         class="text-xs text-muted-foreground hover:text-primary disabled:opacity-40 disabled:hover:text-muted-foreground transition-colors px-2 py-1" i18n>
                   Añadir
                 </button>
+              </div>
+            }
+          }
+        </div>
+
+        <div class="border-t border-border"></div>
+
+        <!-- Dependencias -->
+        <div class="space-y-3">
+          <p class="text-xs font-medium text-muted-foreground uppercase tracking-wide" i18n>Dependencias</p>
+
+          @if (cargandoDependencias()) {
+            <app-skeleton class="h-8 w-full" />
+          } @else {
+            <div class="space-y-1">
+              <p class="text-xs text-muted-foreground" i18n>Bloqueada por</p>
+              @for (bloqueante of dependencias().bloqueadaPor; track bloqueante.id) {
+                <div class="flex items-center gap-2 rounded-md border border-border px-2 py-1.5">
+                  <ng-icon name="lucideBan" size="12" class="text-destructive shrink-0" />
+                  <span class="text-sm flex-1 truncate">{{ bloqueante.title }}</span>
+                  <ui-badge [variant]="statusBadge(bloqueante.status)" class="text-[10px]">{{ bloqueante.status }}</ui-badge>
+                  <button (click)="quitarBloqueo(bloqueante)"
+                          i18n-aria-label aria-label="Quitar la dependencia"
+                          class="text-muted-foreground hover:text-destructive transition-colors">
+                    <ng-icon name="lucideX" size="12" />
+                  </button>
+                </div>
+              } @empty {
+                <p class="text-sm text-muted-foreground" i18n>Nada la bloquea.</p>
+              }
+
+              <div class="flex items-center gap-2 pt-1">
+                <select [(ngModel)]="bloqueanteElegido" (focus)="cargarCandidatas()"
+                        i18n-aria-label aria-label="Tarea que bloquea"
+                        class="flex-1 bg-transparent border border-border rounded-md px-2 py-1.5 text-sm outline-none focus:ring-1 focus:ring-ring">
+                  <option value="" i18n>Añadir una tarea que la bloquee…</option>
+                  @for (candidata of candidatasABloquear(); track candidata.id) {
+                    <option [value]="candidata.id">{{ candidata.title }}</option>
+                  }
+                </select>
+                <button (click)="agregarBloqueo()" [disabled]="!bloqueanteElegido"
+                        class="text-xs text-muted-foreground hover:text-primary disabled:opacity-40 transition-colors px-2 py-1" i18n>
+                  Añadir
+                </button>
+              </div>
+            </div>
+
+            @if (dependencias().bloqueaA.length) {
+              <div class="space-y-1">
+                <p class="text-xs text-muted-foreground" i18n>Bloquea a</p>
+                @for (bloqueada of dependencias().bloqueaA; track bloqueada.id) {
+                  <!-- Sólo lectura: la dependencia se quita desde la tarea que la sufre, que es
+                       donde se entiende lo que se está desbloqueando. -->
+                  <div class="flex items-center gap-2 rounded-md px-2 py-1.5 text-muted-foreground">
+                    <ng-icon name="lucideArrowRight" size="12" class="shrink-0" />
+                    <span class="text-sm flex-1 truncate">{{ bloqueada.title }}</span>
+                    <ui-badge [variant]="statusBadge(bloqueada.status)" class="text-[10px]">{{ bloqueada.status }}</ui-badge>
+                  </div>
+                }
               </div>
             }
           }

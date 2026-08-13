@@ -113,6 +113,13 @@
                       <ng-icon name="lucideClock" size="11" />
                       {{ task.estimatedHours }}h
                     </span>
+                    @if (task.blockedByCount) {
+                      <span class="flex items-center gap-1 text-destructive"
+                            [title]="tituloDelBloqueo(task)">
+                        <ng-icon name="lucideBan" size="11" />
+                        {{ task.blockedByCount }}
+                      </span>
+                    }
                     @if (task.subtaskCount) {
                       <span class="flex items-center gap-1"
                             [class.text-success]="task.completedSubtaskCount === task.subtaskCount"
@@ -131,6 +138,14 @@
                             [title]="prioridadDe(task.priority).label">
                         <ng-icon [name]="prioridadDe(task.priority).icon" size="11" />
                         {{ prioridadDe(task.priority).label }}
+                      </span>
+                    }
+                    @if ((task.assignees?.length ?? 0) > 1) {
+                      <!-- Sólo cuando hay más de uno: con uno solo, el número no dice nada que
+                           no se vea ya en el detalle. -->
+                      <span class="flex items-center gap-0.5" [title]="tituloDeResponsables(task)">
+                        <ng-icon name="lucideUsers" size="11" />
+                        {{ task.assignees?.length }}
                       </span>
                     }
                     <ui-badge [variant]="statusBadge(task.status)" class="text-[10px]">{{ task.status }}</ui-badge>
