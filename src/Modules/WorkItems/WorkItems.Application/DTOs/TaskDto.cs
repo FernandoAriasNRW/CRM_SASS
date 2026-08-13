@@ -29,5 +29,10 @@ public sealed record TaskDto(
     /// sin pedir las dependencias tarea por tarea.
     /// </summary>
     int BlockedByCount = 0,
-    int BlocksCount = 0
+    int BlocksCount = 0,
+    /// <summary>
+    /// Todas las personas responsables, la principal primero. <c>AssigneeId</c> es la principal
+    /// y se conserva porque media aplicación lo usa; esta lista es el conjunto completo.
+    /// </summary>
+    IReadOnlyList<Guid>? Assignees = null
 );

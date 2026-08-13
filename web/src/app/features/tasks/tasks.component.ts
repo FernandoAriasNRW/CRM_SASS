@@ -13,7 +13,7 @@ import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import {
   lucideRefreshCw, lucidePlus, lucideClock,
   lucideList, lucideLayoutDashboard, lucideFilter, lucideSave,
-  lucideAlertCircle, lucideArrowUp, lucideMinus, lucideArrowDown, lucideListChecks
+  lucideAlertCircle, lucideArrowUp, lucideMinus, lucideArrowDown, lucideListChecks, lucideUsers
 } from '@ng-icons/lucide';
 import { DataTableComponent, ColumnDef, TableState } from '../../shared/ui/data-table/data-table.component';
 import { FilterField } from '../../shared/ui/data-table/advanced-filters.component';
@@ -63,7 +63,7 @@ const STATUS_BADGE: Record<string, BadgeVariant> = {
   viewProviders: [provideIcons({
     lucideRefreshCw, lucidePlus, lucideClock,
     lucideList, lucideLayoutDashboard, lucideFilter, lucideSave,
-    lucideAlertCircle, lucideArrowUp, lucideMinus, lucideArrowDown, lucideListChecks
+    lucideAlertCircle, lucideArrowUp, lucideMinus, lucideArrowDown, lucideListChecks, lucideUsers
   })],
   templateUrl: './tasks.component.html',
 })
@@ -134,13 +134,11 @@ export class TasksComponent implements OnInit {
       ?? PRIORIDADES.find(p => p.key === PRIORIDAD_POR_DEFECTO)!;
   }
 
-  /**
-   * Si la prioridad merece distintivo en la tarjeta.
-   *
-   * Sólo lo que se sale de lo normal. Marcar las cuatro llenaría el tablero de etiquetas
-   * equivalentes y no señalaría nada; y una prioridad vacía —fila anterior a que existieran—
-   * tampoco es una señal.
-   */
+  /** Texto del distintivo de responsables para el `title` de la tarjeta. */
+  tituloDeResponsables(task: TaskItem): string {
+    return $localize`${task.assignees?.length ?? 0} personas responsables`;
+  }
+
   /** Texto del distintivo de bloqueada para el `title` de la tarjeta. */
   tituloDelBloqueo(task: TaskItem): string {
     return $localize`Bloqueada por ${task.blockedByCount} tarea(s)`;
@@ -151,6 +149,13 @@ export class TasksComponent implements OnInit {
     return $localize`${task.completedSubtaskCount ?? 0} de ${task.subtaskCount} subtareas completadas`;
   }
 
+  /**
+   * Si la prioridad merece distintivo en la tarjeta.
+   *
+   * Sólo lo que se sale de lo normal. Marcar las cuatro llenaría el tablero de etiquetas
+   * equivalentes y no señalaría nada; y una prioridad vacía —fila anterior a que existieran—
+   * tampoco es una señal.
+   */
   esPrioridadDestacable(priority: string): boolean {
     return !!priority && priority !== PRIORIDAD_POR_DEFECTO && PRIORIDADES.some(p => p.key === priority);
   }

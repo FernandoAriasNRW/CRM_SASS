@@ -70,7 +70,13 @@ public sealed class TaskQueries(WorkItemsDbContext context) : ITaskQueries
       query = query.Where(t => t.ParentTaskId == null);
 
     if (projectId.HasValue) query = query.Where(t => t.ProjectId == projectId.Value);
-    if (assigneeId.HasValue) query = query.Where(t => t.AssigneeId == assigneeId.Value);
+    // Se mira el conjunto de responsables y además el campo del principal. Con los datos al día
+    // el segundo es redundante, pero una fila que se hubiera quedado sin traspasar desaparecería
+    // del filtro sin dar ningún error, y eso es justo la clase de silencio que este proyecto ya
+    // ha pagado dos veces.
+    if (assigneeId.HasValue)
+      query = query.Where(t => t.AssigneeId == assigneeId.Value
+                               || t.Assignees.Any(a => a.UserId == assigneeId.Value));
     if (!string.IsNullOrEmpty(status)) query = query.Where(t => t.Status.Value == status || t.Status.Name == status);
     if (!string.IsNullOrEmpty(priority)) query = query.Where(t => t.Priority.Value == priority || t.Priority.Name == priority);
 
@@ -78,7 +84,9 @@ public sealed class TaskQueries(WorkItemsDbContext context) : ITaskQueries
     {
         if (filter.Equals("mine", StringComparison.OrdinalIgnoreCase))
         {
-            query = query.Where(t => t.AssigneeId == userId.Value);
+            // «Mis tareas» son las que respondo, sea como principal o como uno más.
+            query = query.Where(t => t.AssigneeId == userId.Value
+                                     || t.Assignees.Any(a => a.UserId == userId.Value));
         }
         else if (filter.Equals("team", StringComparison.OrdinalIgnoreCase))
         {
@@ -149,7 +157,8 @@ public sealed class TaskQueries(WorkItemsDbContext context) : ITaskQueries
         context.Tasks.Count(s => s.TenantId == tenantId && s.ParentTaskId == t.Id
                                  && (s.Status.Value == completado || s.Status.Name == completado)),
         context.TaskDependencies.Count(d => d.TenantId == tenantId && d.TaskId == t.Id),
-        context.TaskDependencies.Count(d => d.TenantId == tenantId && d.DependsOnTaskId == t.Id)));
+        context.TaskDependencies.Count(d => d.TenantId == tenantId && d.DependsOnTaskId == t.Id),
+        t.Assignees.Select(a => a.UserId).ToList()));
   }
 
   public async Task<TaskDependenciesDto> GetDependenciesAsync(Guid tenantId, Guid taskId, CancellationToken ct = default)

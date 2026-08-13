@@ -28,6 +28,8 @@ export interface TaskItem {
   /** Cuántas tareas bloquean a ésta y a cuántas bloquea ella. También los cuenta el servidor. */
   blockedByCount?: number;
   blocksCount?: number;
+  /** Todas las personas responsables, la principal primero. `assigneeId` es la principal. */
+  assignees?: string[];
 }
 
 /** Una tarea vista desde el panel de dependencias. */

@@ -40,6 +40,16 @@ public sealed class WorkItemsDbContext(DbContextOptions<WorkItemsDbContext> opti
         .HasIndex(t => new { t.TenantId, t.ParentTaskId })
         .HasDatabaseName("IX_Tasks_TenantId_ParentTaskId");
 
+    // Los responsables son una colección propiedad de la tarea: se guardan en su tabla, pero se
+    // alcanzan y se filtran siempre a través de ella, así que heredan su aislamiento por tenant.
+    modelBuilder.Entity<WorkTask>().OwnsMany(t => t.Assignees, a =>
+    {
+      a.ToTable("TaskAssignees");
+      a.WithOwner().HasForeignKey("WorkTaskId");
+      a.Property(x => x.UserId).HasColumnName("UserId");
+      a.HasKey("WorkTaskId", "UserId");
+    });
+
     // La unicidad la garantiza la base y no sólo el handler: dos peticiones simultáneas
     // pasarían las dos la comprobación previa y dejarían la arista duplicada.
     modelBuilder.Entity<TaskDependency>()
