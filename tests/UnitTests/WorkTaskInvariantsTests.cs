@@ -531,4 +531,132 @@ public sealed class WorkTaskInvariantsTests
     }
 
     #endregion
+
+    #region Checklist
+
+    [Fact]
+    public void Una_tarea_nace_sin_checklist()
+    {
+        NuevaTarea().Checklist.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void Los_puntos_se_añaden_al_final_con_posiciones_crecientes()
+    {
+        var tarea = NuevaTarea();
+
+        tarea.AddChecklistItem("Primero");
+        tarea.AddChecklistItem("Segundo");
+        tarea.AddChecklistItem("Tercero");
+
+        tarea.Checklist.OrderBy(i => i.Posicion).Select(i => i.Texto)
+            .Should().ContainInOrder("Primero", "Segundo", "Tercero");
+        tarea.Checklist.Select(i => i.Posicion).Should().OnlyHaveUniqueItems();
+    }
+
+    [Fact]
+    public void Borrar_del_medio_no_hace_que_dos_puntos_empaten_en_el_orden()
+    {
+        // La posición se calcula sobre la mayor existente, no contando puntos: contarlos daría
+        // una posición repetida en cuanto se borrara alguno del medio, y el orden dejaría de
+        // estar definido.
+        var tarea = NuevaTarea();
+        tarea.AddChecklistItem("Primero");
+        var delMedio = tarea.AddChecklistItem("Segundo");
+        tarea.AddChecklistItem("Tercero");
+
+        tarea.RemoveChecklistItem(delMedio.Id);
+        tarea.AddChecklistItem("Cuarto");
+
+        tarea.Checklist.Select(i => i.Posicion).Should().OnlyHaveUniqueItems();
+        tarea.Checklist.OrderBy(i => i.Posicion).Last().Texto.Should().Be("Cuarto");
+    }
+
+    [Fact]
+    public void Un_punto_sin_texto_no_se_acepta()
+    {
+        var tarea = NuevaTarea();
+
+        var vacio = () => tarea.AddChecklistItem("   ");
+
+        vacio.Should().Throw<InvalidOperationException>().WithMessage("*necesita un texto*");
+        tarea.Checklist.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void Un_texto_demasiado_largo_no_se_acepta()
+    {
+        var tarea = NuevaTarea();
+
+        var largo = () => tarea.AddChecklistItem(new string('x', ChecklistItem.LargoMaximo + 1));
+
+        largo.Should().Throw<InvalidOperationException>().WithMessage("*no puede pasar de*");
+    }
+
+    [Fact]
+    public void El_texto_se_recorta_al_guardarlo()
+    {
+        var tarea = NuevaTarea();
+
+        var punto = tarea.AddChecklistItem("  con espacios  ");
+
+        punto.Texto.Should().Be("con espacios");
+    }
+
+    [Fact]
+    public void Marcar_un_punto_cuenta_en_el_progreso_y_emite_evento()
+    {
+        var tarea = NuevaTarea();
+        var uno = tarea.AddChecklistItem("Uno");
+        tarea.AddChecklistItem("Dos");
+        tarea.ClearDomainEvents();
+
+        tarea.UpdateChecklistItem(uno.Id, hecho: true, texto: null);
+
+        tarea.ProgresoDeChecklist().Should().Be((2, 1));
+        tarea.DomainEvents.Should().ContainSingle()
+            .Which.Should().BeOfType<TaskChecklistItemToggledEvent>()
+            .Which.Hecho.Should().BeTrue();
+    }
+
+    [Fact]
+    public void Marcar_lo_que_ya_estaba_marcado_no_emite_evento()
+    {
+        var tarea = NuevaTarea();
+        var uno = tarea.AddChecklistItem("Uno");
+        tarea.UpdateChecklistItem(uno.Id, hecho: true, texto: null);
+        tarea.ClearDomainEvents();
+
+        tarea.UpdateChecklistItem(uno.Id, hecho: true, texto: null);
+
+        tarea.DomainEvents.Should().BeEmpty("sin cambio real no hay nada que contar");
+    }
+
+    [Fact]
+    public void Renombrar_un_punto_no_lo_desmarca()
+    {
+        var tarea = NuevaTarea();
+        var uno = tarea.AddChecklistItem("Con typo");
+        tarea.UpdateChecklistItem(uno.Id, hecho: true, texto: null);
+
+        tarea.UpdateChecklistItem(uno.Id, hecho: null, texto: "Sin typo");
+
+        var punto = tarea.Checklist.Single();
+        punto.Texto.Should().Be("Sin typo");
+        punto.Hecho.Should().BeTrue();
+    }
+
+    [Fact]
+    public void Tocar_un_punto_que_no_existe_se_rechaza()
+    {
+        var tarea = NuevaTarea();
+
+        var marcar = () => tarea.UpdateChecklistItem(Guid.NewGuid(), true, null);
+        var borrar = () => tarea.RemoveChecklistItem(Guid.NewGuid());
+
+        marcar.Should().Throw<InvalidOperationException>().WithMessage("*no existe*");
+        borrar.Should().Throw<InvalidOperationException>().WithMessage("*no existe*");
+    }
+
+    #endregion
 }

@@ -87,6 +87,45 @@ public static class WorkItemsEndpoints
       return result.IsSuccess ? Results.Ok() : Results.BadRequest(result.Error);
     });
 
+    // Checklist. Los puntos se piden aparte del listado: en la tarjeta basta con el progreso, y
+    // traer todos los textos de todas las tareas para pintar «2/5» sería cargar de más.
+    group.MapGet("/{id:guid}/checklist", async (System.Security.Claims.ClaimsPrincipal principal, Guid id, IMediator mediator) =>
+    {
+      var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
+      var result = await mediator.Send(new GetChecklistQuery(tenantId, id));
+      return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
+    });
+
+    group.MapPost("/{id:guid}/checklist", async (System.Security.Claims.ClaimsPrincipal principal, Guid id, AddChecklistItemCommand command, IMediator mediator) =>
+    {
+      var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
+      var actorId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var _uid) ? _uid : Guid.Empty;
+      var actorRole = principal.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Role)?.Value ?? string.Empty;
+
+      var result = await mediator.Send(new AddChecklistItemCommand(tenantId, id, actorId, actorRole, command.Texto));
+      return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
+    });
+
+    group.MapPatch("/{id:guid}/checklist/{itemId:guid}", async (System.Security.Claims.ClaimsPrincipal principal, Guid id, Guid itemId, UpdateChecklistItemCommand command, IMediator mediator) =>
+    {
+      var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
+      var actorId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var _uid) ? _uid : Guid.Empty;
+      var actorRole = principal.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Role)?.Value ?? string.Empty;
+
+      var result = await mediator.Send(new UpdateChecklistItemCommand(tenantId, id, actorId, actorRole, itemId, command.Hecho, command.Texto));
+      return result.IsSuccess ? Results.Ok() : Results.BadRequest(result.Error);
+    });
+
+    group.MapDelete("/{id:guid}/checklist/{itemId:guid}", async (System.Security.Claims.ClaimsPrincipal principal, Guid id, Guid itemId, IMediator mediator) =>
+    {
+      var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
+      var actorId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var _uid) ? _uid : Guid.Empty;
+      var actorRole = principal.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Role)?.Value ?? string.Empty;
+
+      var result = await mediator.Send(new RemoveChecklistItemCommand(tenantId, id, actorId, actorRole, itemId));
+      return result.IsSuccess ? Results.NoContent() : Results.BadRequest(result.Error);
+    });
+
     // Responsables. Cambiar el principal sigue haciéndose con el patch de la tarea; esto añade y
     // quita gente del conjunto, que es otra intención.
     group.MapPost("/{id:guid}/assignees", async (System.Security.Claims.ClaimsPrincipal principal, Guid id, AddTaskAssigneeCommand command, IMediator mediator) =>

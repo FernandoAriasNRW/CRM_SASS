@@ -41,6 +41,14 @@ public sealed class WorkTask : AggregateRoot, ITenantEntity
     /// </summary>
     public IReadOnlyList<TaskAssignee> Assignees => _assignees;
 
+    private readonly List<ChecklistItem> _checklist = [];
+
+    /// <summary>
+    /// Puntos de la checklist. Para pintarlos hay que ordenarlos por
+    /// <see cref="ChecklistItem.Posicion"/>: la colección no vuelve ordenada de la base.
+    /// </summary>
+    public IReadOnlyList<ChecklistItem> Checklist => _checklist;
+
     public Guid CreatedById { get; private set; }
     public decimal EstimatedHours { get; private set; }
     public DateOnly DueDate { get; private set; }
@@ -251,6 +259,53 @@ public sealed class WorkTask : AggregateRoot, ITenantEntity
 
     /// <summary>Si una persona figura entre los responsables.</summary>
     public bool EsResponsable(Guid userId) => _assignees.Any(a => a.UserId == userId);
+
+    /// <summary>
+    /// Añade un punto al final de la checklist.
+    ///
+    /// La posición se calcula sobre la mayor existente y no sobre el número de puntos: si se
+    /// borró alguno del medio, contar cuántos hay daría una posición repetida y dos puntos
+    /// empatarían en el orden.
+    /// </summary>
+    public ChecklistItem AddChecklistItem(string texto)
+    {
+        var siguiente = _checklist.Count == 0 ? 0 : _checklist.Max(i => i.Posicion) + 1;
+        var punto = new ChecklistItem(texto, siguiente);
+
+        _checklist.Add(punto);
+        RaiseDomainEvent(new TaskChecklistItemAddedEvent(Id, TenantId, punto.Id, punto.Texto));
+
+        return punto;
+    }
+
+    /// <summary>Marca o desmarca un punto, y opcionalmente le cambia el texto.</summary>
+    public void UpdateChecklistItem(Guid itemId, bool? hecho, string? texto)
+    {
+        var punto = _checklist.FirstOrDefault(i => i.Id == itemId)
+            ?? throw new InvalidOperationException(ChecklistItem.Reglas.NoExiste);
+
+        if (texto is not null)
+            punto.Renombrar(texto);
+
+        if (hecho.HasValue && hecho.Value != punto.Hecho)
+        {
+            punto.Marcar(hecho.Value);
+            RaiseDomainEvent(new TaskChecklistItemToggledEvent(Id, TenantId, punto.Id, punto.Hecho));
+        }
+    }
+
+    public void RemoveChecklistItem(Guid itemId)
+    {
+        var punto = _checklist.FirstOrDefault(i => i.Id == itemId)
+            ?? throw new InvalidOperationException(ChecklistItem.Reglas.NoExiste);
+
+        _checklist.Remove(punto);
+        RaiseDomainEvent(new TaskChecklistItemRemovedEvent(Id, TenantId, itemId));
+    }
+
+    /// <summary>Cuántos puntos hay y cuántos están hechos. Es lo que se muestra en la tarjeta.</summary>
+    public (int Total, int Hechos) ProgresoDeChecklist()
+        => (_checklist.Count, _checklist.Count(i => i.Hecho));
 
     public static class ReglasDeResponsables
     {

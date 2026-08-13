@@ -17,7 +17,7 @@ import {
 import { DrawerComponent } from '../../shared/ui/drawer.component';
 import {
   PRIORIDADES, PRIORIDAD_POR_DEFECTO,
-  type TaskItem, type TaskDependencies, type TaskDependencyRef,
+  type TaskItem, type TaskDependencies, type TaskDependencyRef, type ChecklistItem,
 } from './task-create-modal.component';
 import { TASK_TAGS, type Tag } from '../../shared/utils/tags';
 import { UsersService, type TenantUser } from '../../core/users.service';
@@ -87,6 +87,9 @@ export class TaskDetailPanelComponent implements OnInit {
   cargandoSubtareas = signal(false);
   creandoSubtarea = signal(false);
   tituloNuevaSubtarea = '';
+  checklist = signal<ChecklistItem[]>([]);
+  cargandoChecklist = signal(false);
+  textoNuevoPunto = '';
   dependencias = signal<TaskDependencies>({ bloqueadaPor: [], bloqueaA: [] });
   cargandoDependencias = signal(false);
   candidatasABloquear = signal<TaskItem[]>([]);
@@ -122,7 +125,75 @@ export class TaskDetailPanelComponent implements OnInit {
     this.loadComments();
     if (!this.esSubtarea()) this.cargarSubtareas();
     this.cargarDependencias();
+    this.cargarChecklist();
     if (!this.usuarios.users().length) this.usuarios.loadTenantUsers().subscribe();
+  }
+
+  readonly puntosHechos = computed(() => this.checklist().filter(p => p.hecho).length);
+
+  cargarChecklist(): void {
+    this.cargandoChecklist.set(true);
+    this.api.get<ChecklistItem[]>(`/tasks/${this.task().id}/checklist`).subscribe({
+      next: puntos => {
+        this.checklist.set(puntos ?? []);
+        this.cargandoChecklist.set(false);
+      },
+      error: () => {
+        this.cargandoChecklist.set(false);
+        this.toast.error($localize`Error`, $localize`No se pudo cargar la checklist`);
+      },
+    });
+  }
+
+  agregarPunto(): void {
+    const texto = this.textoNuevoPunto.trim();
+    if (!texto) return;
+
+    this.api.post<ChecklistItem>(`/tasks/${this.task().id}/checklist`, { texto }).subscribe({
+      next: punto => {
+        this.checklist.update(actuales => [...actuales, punto]);
+        this.textoNuevoPunto = '';
+        this.avisarDeLaChecklist();
+      },
+      error: respuesta => this.toast.error(
+        $localize`No se pudo añadir el punto`, this.mensajeDelServidor(respuesta)),
+    });
+  }
+
+  /**
+   * Marca o desmarca un punto. Se pinta antes de que responda el servidor y se revierte si lo
+   * rechaza, igual que en subtareas, prioridad y tableros.
+   */
+  alternarPunto(punto: ChecklistItem): void {
+    const nuevo = !punto.hecho;
+    this.checklist.update(actuales => actuales.map(p => p.id === punto.id ? { ...p, hecho: nuevo } : p));
+    this.avisarDeLaChecklist();
+
+    this.api.patch(`/tasks/${this.task().id}/checklist/${punto.id}`, { hecho: nuevo }).subscribe({
+      error: () => {
+        this.checklist.update(actuales => actuales.map(p => p.id === punto.id ? { ...p, hecho: !nuevo } : p));
+        this.avisarDeLaChecklist();
+        this.toast.error($localize`Error`, $localize`No se pudo actualizar el punto`);
+      },
+    });
+  }
+
+  quitarPunto(punto: ChecklistItem): void {
+    this.api.delete(`/tasks/${this.task().id}/checklist/${punto.id}`).subscribe({
+      next: () => {
+        this.checklist.update(actuales => actuales.filter(p => p.id !== punto.id));
+        this.avisarDeLaChecklist();
+      },
+      error: () => this.toast.error($localize`Error`, $localize`No se pudo quitar el punto`),
+    });
+  }
+
+  private avisarDeLaChecklist(): void {
+    this.updated.emit({
+      ...this.task(),
+      checklistTotal: this.checklist().length,
+      checklistDone: this.puntosHechos(),
+    });
   }
 
   /** Nombre de una persona, o su identificador recortado si aún no está cargada. */

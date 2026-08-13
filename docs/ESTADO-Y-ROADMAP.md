@@ -365,7 +365,10 @@ Es el trabajo de mayor retorno: sin esto el producto no entra en una comparativa
   tarea. `AssigneeId` se conserva como principal y la migración traspasó los datos existentes.
   Cuidado con el orden: la colección **no vuelve ordenada** de la base, así que quién es el
   principal se sabe comparando con `AssigneeId`, nunca por la posición.
-- **Checklists** dentro de la tarea.
+- ✅ **Checklists** dentro de la tarea *(hecho 2026-08-12)*: colección propiedad del agregado, con la
+  posición explícita porque el orden lo decide quien la escribe y una colección propiedad no vuelve
+  ordenada de la base. La posición se calcula sobre la mayor existente, no contando puntos: al
+  borrar uno del medio, contar daría posiciones repetidas y el orden dejaría de estar definido.
 - **Tareas recurrentes** apoyadas en el worker que ya existe.
 
 Migración de datos: los campos actuales se conservan; `AssigneeId` se migra a una

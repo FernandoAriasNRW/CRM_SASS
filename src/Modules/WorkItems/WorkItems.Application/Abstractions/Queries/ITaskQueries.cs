@@ -29,4 +29,7 @@ public interface ITaskQueries
   /// viajes para pintar un solo panel.
   /// </summary>
   Task<TaskDependenciesDto> GetDependenciesAsync(Guid tenantId, Guid taskId, CancellationToken ct = default);
+
+  /// <summary>Los puntos de la checklist de una tarea, ya ordenados por su posición.</summary>
+  Task<IReadOnlyList<ChecklistItemDto>> GetChecklistAsync(Guid tenantId, Guid taskId, CancellationToken ct = default);
 }

@@ -120,6 +120,14 @@
                         {{ task.blockedByCount }}
                       </span>
                     }
+                    @if (task.checklistTotal) {
+                      <span class="flex items-center gap-0.5"
+                            [class.text-success]="task.checklistDone === task.checklistTotal"
+                            [title]="tituloDeChecklist(task)">
+                        <ng-icon name="lucideSquareCheck" size="11" />
+                        {{ task.checklistDone ?? 0 }}/{{ task.checklistTotal }}
+                      </span>
+                    }
                     @if (task.subtaskCount) {
                       <span class="flex items-center gap-1"
                             [class.text-success]="task.completedSubtaskCount === task.subtaskCount"
