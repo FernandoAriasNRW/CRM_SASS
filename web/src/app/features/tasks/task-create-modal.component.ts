@@ -30,6 +30,17 @@ export interface TaskItem {
   blocksCount?: number;
   /** Todas las personas responsables, la principal primero. `assigneeId` es la principal. */
   assignees?: string[];
+  /** Progreso de la checklist; los puntos se piden aparte. */
+  checklistTotal?: number;
+  checklistDone?: number;
+}
+
+/** Un punto de la checklist. Llega ordenado por posición desde la API. */
+export interface ChecklistItem {
+  id: string;
+  texto: string;
+  hecho: boolean;
+  posicion: number;
 }
 
 /** Una tarea vista desde el panel de dependencias. */

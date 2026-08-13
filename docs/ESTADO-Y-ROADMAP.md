@@ -128,17 +128,17 @@ Comparado con lo que un usuario espera de ClickUp o Monday en 2026:
 
 | Capacidad | Estado | Impacto competitivo |
 |---|---|---|
-| **Prioridad de tarea** | ❌ no existe | 🔴 Ausencia llamativa: está en todos los competidores |
-| **Subtareas / jerarquía** | ❌ no existe | 🔴 Bloquea desglose de trabajo real |
-| **Dependencias entre tareas** | ❌ no existe | 🔴 Sin esto no hay Gantt ni ruta crítica |
-| **Múltiples responsables** | ❌ `AssigneeId` es un solo Guid | 🔴 Monday y ClickUp permiten varios |
+| **Prioridad de tarea** | ✅ Fase 4A | con orden de negocio, no alfabético |
+| **Subtareas / jerarquía** | ✅ Fase 4A | un nivel, con progreso agregado al padre |
+| **Dependencias entre tareas** | ✅ Fase 4A | con detección de ciclos; habilita el Gantt de la 4C |
+| **Múltiples responsables** | ✅ Fase 4A | `AssigneeId` se conserva como principal |
 | **Campos personalizados** | ❌ no existe | 🔴 Bloqueante para enterprise; es *la* feature de Monday |
 | **Time tracking** | ❌ sólo `EstimatedHours` | 🔴 Sin registro real de tiempo |
 | **Automatizaciones** | ❌ no existe | 🔴 Feature #1 en comparativas |
 | **Vista Gantt / timeline** | ❌ no existe | 🟠 Esperada en plan de pago |
 | **Vista tabla / hoja de cálculo** | ❌ no existe | 🟠 Es la vista por defecto de Monday |
 | **Vista carga de trabajo** | ❌ no existe | 🟠 Diferenciador de plan alto |
-| **Checklists** | ❌ no existe | 🟠 |
+| **Checklists** | ✅ Fase 4A | con orden explícito del usuario |
 | **Tareas recurrentes** | ❌ no existe | 🟠 |
 | **Formularios de captura** | ❌ no existe | 🟠 Entrada de trabajo desde fuera |
 | **Metas / OKRs** | ❌ no existe | 🟡 |
@@ -365,7 +365,10 @@ Es el trabajo de mayor retorno: sin esto el producto no entra en una comparativa
   tarea. `AssigneeId` se conserva como principal y la migración traspasó los datos existentes.
   Cuidado con el orden: la colección **no vuelve ordenada** de la base, así que quién es el
   principal se sabe comparando con `AssigneeId`, nunca por la posición.
-- **Checklists** dentro de la tarea.
+- ✅ **Checklists** dentro de la tarea *(hecho 2026-08-12)*: colección propiedad del agregado, con la
+  posición explícita porque el orden lo decide quien la escribe y una colección propiedad no vuelve
+  ordenada de la base. La posición se calcula sobre la mayor existente, no contando puntos: al
+  borrar uno del medio, contar daría posiciones repetidas y el orden dejaría de estar definido.
 - **Tareas recurrentes** apoyadas en el worker que ya existe.
 
 Migración de datos: los campos actuales se conservan; `AssigneeId` se migra a una

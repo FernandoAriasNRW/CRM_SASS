@@ -231,6 +231,49 @@
 
         <div class="border-t border-border"></div>
 
+        <!-- Checklist -->
+        <div class="space-y-2">
+          <div class="flex items-center justify-between">
+            <p class="text-xs font-medium text-muted-foreground uppercase tracking-wide" i18n>Checklist</p>
+            @if (checklist().length) {
+              <span class="text-xs text-muted-foreground">{{ puntosHechos() }}/{{ checklist().length }}</span>
+            }
+          </div>
+
+          @if (cargandoChecklist()) {
+            <app-skeleton class="h-8 w-full" />
+          } @else {
+            <div class="space-y-1">
+              @for (punto of checklist(); track punto.id) {
+                <div class="flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-accent/40 transition-colors">
+                  <input type="checkbox" [checked]="punto.hecho" (change)="alternarPunto(punto)"
+                         [attr.aria-label]="punto.texto"
+                         class="h-3.5 w-3.5 rounded border-border accent-primary cursor-pointer" />
+                  <span class="text-sm flex-1" [class.line-through]="punto.hecho"
+                        [class.text-muted-foreground]="punto.hecho">{{ punto.texto }}</span>
+                  <button (click)="quitarPunto(punto)"
+                          i18n-aria-label aria-label="Quitar el punto"
+                          class="text-muted-foreground hover:text-destructive transition-colors">
+                    <ng-icon name="lucideX" size="11" />
+                  </button>
+                </div>
+              }
+            </div>
+
+            <div class="flex items-center gap-2">
+              <input [(ngModel)]="textoNuevoPunto" (keydown.enter)="agregarPunto()"
+                     i18n-placeholder placeholder="Añadir un punto y pulsar Enter"
+                     class="flex-1 bg-transparent border border-transparent hover:border-border focus:border-border rounded-md px-2 py-1.5 text-sm outline-none placeholder:text-muted-foreground/50 transition-colors focus:ring-1 focus:ring-ring" />
+              <button (click)="agregarPunto()" [disabled]="!textoNuevoPunto.trim()"
+                      class="text-xs text-muted-foreground hover:text-primary disabled:opacity-40 transition-colors px-2 py-1" i18n>
+                Añadir
+              </button>
+            </div>
+          }
+        </div>
+
+        <div class="border-t border-border"></div>
+
         <!-- Dependencias -->
         <div class="space-y-3">
           <p class="text-xs font-medium text-muted-foreground uppercase tracking-wide" i18n>Dependencias</p>

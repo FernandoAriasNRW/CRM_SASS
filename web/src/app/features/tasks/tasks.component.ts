@@ -13,7 +13,7 @@ import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import {
   lucideRefreshCw, lucidePlus, lucideClock,
   lucideList, lucideLayoutDashboard, lucideFilter, lucideSave,
-  lucideAlertCircle, lucideArrowUp, lucideMinus, lucideArrowDown, lucideListChecks, lucideUsers
+  lucideAlertCircle, lucideArrowUp, lucideMinus, lucideArrowDown, lucideListChecks, lucideUsers, lucideSquareCheck
 } from '@ng-icons/lucide';
 import { DataTableComponent, ColumnDef, TableState } from '../../shared/ui/data-table/data-table.component';
 import { FilterField } from '../../shared/ui/data-table/advanced-filters.component';
@@ -63,7 +63,7 @@ const STATUS_BADGE: Record<string, BadgeVariant> = {
   viewProviders: [provideIcons({
     lucideRefreshCw, lucidePlus, lucideClock,
     lucideList, lucideLayoutDashboard, lucideFilter, lucideSave,
-    lucideAlertCircle, lucideArrowUp, lucideMinus, lucideArrowDown, lucideListChecks, lucideUsers
+    lucideAlertCircle, lucideArrowUp, lucideMinus, lucideArrowDown, lucideListChecks, lucideUsers, lucideSquareCheck
   })],
   templateUrl: './tasks.component.html',
 })
@@ -132,6 +132,11 @@ export class TasksComponent implements OnInit {
   prioridadDe(priority: string) {
     return PRIORIDADES.find(p => p.key === priority)
       ?? PRIORIDADES.find(p => p.key === PRIORIDAD_POR_DEFECTO)!;
+  }
+
+  /** Texto del progreso de la checklist para el `title` de la tarjeta. */
+  tituloDeChecklist(task: TaskItem): string {
+    return $localize`${task.checklistDone ?? 0} de ${task.checklistTotal} puntos hechos`;
   }
 
   /** Texto del distintivo de responsables para el `title` de la tarjeta. */
