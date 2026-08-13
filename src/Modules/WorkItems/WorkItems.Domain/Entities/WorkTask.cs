@@ -151,6 +151,53 @@ public sealed class WorkTask : AggregateRoot, ITenantEntity
         RaiseDomainEvent(new TaskPriorityChangedEvent(Id, TenantId, ProjectId, oldPriority.Value, newPriority));
     }
 
+    /// <summary>
+    /// Cambia los datos descriptivos de la tarea: título, descripción, horas estimadas y fecha
+    /// límite. Lo que llegue como <c>null</c> se deja como está.
+    ///
+    /// Van juntos porque son los campos que se editan sueltos desde la pantalla —el detalle de
+    /// tarea y la tabla— y ninguno tiene reglas propias más allá de su propio formato. El estado
+    /// y la prioridad no entran aquí: tienen su método porque emiten evento de dominio, y las
+    /// automatizaciones de la 4D dependen de eso.
+    ///
+    /// **Las horas negativas se rechazan.** No existe media jornada en contra, y aceptarlas
+    /// envenenaría cualquier suma de carga de trabajo sin que nadie lo notase.
+    /// </summary>
+    public void ActualizarDetalles(
+        string? titulo = null,
+        string? descripcion = null,
+        decimal? horasEstimadas = null,
+        DateOnly? fechaLimite = null)
+    {
+        if (titulo is not null)
+        {
+            var nuevo = TaskTitle.Create(titulo);
+            if (!nuevo.IsSuccess)
+                throw new InvalidOperationException(nuevo.Error);
+
+            Title = nuevo.Value!;
+        }
+
+        if (descripcion is not null)
+            Description = descripcion;
+
+        if (horasEstimadas.HasValue)
+        {
+            if (horasEstimadas.Value < 0)
+                throw new InvalidOperationException(ReglasDeDetalle.HorasNegativas);
+
+            EstimatedHours = horasEstimadas.Value;
+        }
+
+        if (fechaLimite.HasValue)
+            DueDate = fechaLimite.Value;
+    }
+
+    public static class ReglasDeDetalle
+    {
+        public const string HorasNegativas = "Las horas estimadas no pueden ser negativas";
+    }
+
     /// <summary>Si esta tarea es subtarea de otra.</summary>
     public bool EsSubtarea => ParentTaskId.HasValue;
 

@@ -93,6 +93,16 @@ public sealed class PatchTaskCommandHandler(
       catch (InvalidOperationException ex) { return Result<bool>.Failure(ex.Message); }
     }
 
+    // El título, la descripción, las horas y la fecha se aplicaban... a ninguna parte: el
+    // handler los ignoraba y devolvía éxito igual, así que la pantalla decía «guardado» y al
+    // recargar volvía el valor viejo. Un cambio que no se guarda tiene que fallar, no callarse.
+    try
+    {
+      task.ActualizarDetalles(
+          request.Title, request.Description, request.EstimatedHours, request.DueDate);
+    }
+    catch (InvalidOperationException ex) { return Result<bool>.Failure(ex.Message); }
+
     await repository.UpdateAsync(task, cancellationToken);
     await unitOfWork.SaveChangesAsync(cancellationToken);
     return Result<bool>.Success(true);

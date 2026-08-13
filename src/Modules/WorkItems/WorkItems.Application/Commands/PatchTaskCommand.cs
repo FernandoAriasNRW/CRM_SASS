@@ -15,7 +15,8 @@ public sealed record PatchTaskCommand(
     string? Status,
     string? Priority,
     Guid? AssigneeId,
-    DateOnly? DueDate
+    DateOnly? DueDate,
+    decimal? EstimatedHours
 ) : ICommand<bool>, IWebhookTriggered, IAuthorizeEntity
 {
     public string WebhookEventName => "workitem.patched";

@@ -771,4 +771,116 @@ public sealed class WorkTaskInvariantsTests
     }
 
     #endregion
+
+    #region Datos descriptivos
+
+    /// <summary>
+    /// Editar un campo suelto no puede borrar los demás.
+    ///
+    /// Es lo que hace la tabla y el detalle de tarea: se manda sólo lo que cambió. Si lo que no
+    /// viene se interpretase como «ponlo a vacío», cambiar la fecha borraría el título.
+    /// </summary>
+    [Fact]
+    public void Actualizar_un_solo_campo_deja_los_demas_como_estaban()
+    {
+        var tarea = NuevaTarea();
+
+        tarea.ActualizarDetalles(horasEstimadas: 13m);
+
+        tarea.EstimatedHours.Should().Be(13m);
+        tarea.Title.Value.Should().Be("Tarea de prueba");
+        tarea.Description.Should().Be("descripción");
+    }
+
+    [Fact]
+    public void Actualizar_cambia_titulo_descripcion_horas_y_fecha()
+    {
+        var tarea = NuevaTarea();
+        var fecha = new DateOnly(2027, 1, 15);
+
+        tarea.ActualizarDetalles("Otro título", "otra descripción", 3.5m, fecha);
+
+        tarea.Title.Value.Should().Be("Otro título");
+        tarea.Description.Should().Be("otra descripción");
+        tarea.EstimatedHours.Should().Be(3.5m);
+        tarea.DueDate.Should().Be(fecha);
+    }
+
+    [Fact]
+    public void Un_titulo_vacio_se_rechaza_en_lugar_de_dejar_la_tarea_sin_nombre()
+    {
+        var tarea = NuevaTarea();
+
+        var accion = () => tarea.ActualizarDetalles(titulo: "   ");
+
+        accion.Should().Throw<InvalidOperationException>();
+        tarea.Title.Value.Should().Be("Tarea de prueba");
+    }
+
+    [Fact]
+    public void Un_titulo_demasiado_largo_se_rechaza()
+    {
+        var tarea = NuevaTarea();
+
+        var accion = () => tarea.ActualizarDetalles(titulo: new string('x', 201));
+
+        accion.Should().Throw<InvalidOperationException>();
+    }
+
+    /// <summary>
+    /// Las horas negativas envenenarían cualquier suma de carga de trabajo —la vista que llega
+    /// en el 4C— sin que nadie lo notase hasta que el total saliera mal.
+    /// </summary>
+    [Fact]
+    public void Las_horas_negativas_se_rechazan()
+    {
+        var tarea = NuevaTarea();
+
+        var accion = () => tarea.ActualizarDetalles(horasEstimadas: -1m);
+
+        accion.Should().Throw<InvalidOperationException>()
+            .WithMessage(WorkTask.ReglasDeDetalle.HorasNegativas);
+        tarea.EstimatedHours.Should().Be(8m);
+    }
+
+    [Fact]
+    public void Cero_horas_es_valido()
+    {
+        var tarea = NuevaTarea();
+
+        tarea.ActualizarDetalles(horasEstimadas: 0m);
+
+        tarea.EstimatedHours.Should().Be(0m);
+    }
+
+    /// <summary>
+    /// Una descripción vacía sí es un valor: es como se borra. Distinguirla de «no la mandes»
+    /// es justo lo que hace que el parámetro sea `null` y no cadena vacía.
+    /// </summary>
+    [Fact]
+    public void La_descripcion_se_puede_vaciar()
+    {
+        var tarea = NuevaTarea();
+
+        tarea.ActualizarDetalles(descripcion: string.Empty);
+
+        tarea.Description.Should().BeEmpty();
+    }
+
+    /// <summary>
+    /// Cambiar datos descriptivos no emite eventos: no hay ninguna automatización de la 4D
+    /// pensada para «alguien corrigió una errata», y emitirlos las haría trabajar de balde.
+    /// </summary>
+    [Fact]
+    public void Actualizar_detalles_no_emite_eventos_de_dominio()
+    {
+        var tarea = NuevaTarea();
+        tarea.ClearDomainEvents();
+
+        tarea.ActualizarDetalles("Otro título", "otra", 1m, new DateOnly(2027, 3, 1));
+
+        tarea.DomainEvents.Should().BeEmpty();
+    }
+
+    #endregion
 }

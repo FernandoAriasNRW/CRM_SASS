@@ -3,8 +3,9 @@ import { FormsModule } from '@angular/forms';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import { lucideLoader2, lucideCircleAlert } from '@ng-icons/lucide';
 import {
-  CustomFieldsService, SEPARADOR_MULTIPLE, mensajeDeError, type CustomFieldValue,
+  CustomFieldsService, SEPARADOR_MULTIPLE, type CustomFieldValue,
 } from '../../core/custom-fields.service';
+import { mensajeDeError } from '../utils/mensaje-de-error';
 import { UsersService } from '../../core/users.service';
 import { SkeletonComponent } from './skeleton.component';
 

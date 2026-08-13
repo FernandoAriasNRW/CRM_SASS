@@ -7,9 +7,9 @@ import {
   lucideLoader2, lucideCircleAlert, lucideX,
 } from '@ng-icons/lucide';
 import {
-  CustomFieldsService, ENTIDADES, TIPOS_DE_CAMPO, mensajeDeError,
-  type CustomFieldDefinition,
+  CustomFieldsService, ENTIDADES, TIPOS_DE_CAMPO, type CustomFieldDefinition,
 } from '../../../core/custom-fields.service';
+import { mensajeDeError } from '../../../shared/utils/mensaje-de-error';
 
 /** Lo que el dominio acepta. Repetirlo aquí evita un viaje al servidor para decir lo obvio. */
 const LARGO_MAXIMO_DEL_NOMBRE = 80;

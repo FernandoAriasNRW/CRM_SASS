@@ -3822,6 +3822,46 @@ Pending</target>
           <context context-type="linenumber">101</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="5641593368923605260" datatype="html">
+        <source>No se pudo guardar</source>
+        <target state="final">Could not save</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/tasks.component.ts</context>
+          <context context-type="linenumber">502</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7646590756920030055" datatype="html">
+        <source>«<x id="PH" equiv-text="valor" xmlns="urn:oasis:names:tc:xliff:document:1.2" />» no es un número de horas.</source>
+        <target state="final">"<x id="PH" equiv-text="valor"/>" is not a number of hours.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/tasks.component.ts</context>
+          <context context-type="linenumber">503</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="388306122432231988" datatype="html">
+        <source>«<x id="PH" equiv-text="item.title" xmlns="urn:oasis:names:tc:xliff:document:1.2" />» se queda como estaba</source>
+        <target state="final">"<x id="PH" equiv-text="item.title"/>" stays as it was</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/tasks.component.ts</context>
+          <context context-type="linenumber">514</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="475463244606901658" datatype="html">
+        <source>No se pudo guardar el cambio.</source>
+        <target state="final">The change could not be saved.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/tasks.component.ts</context>
+          <context context-type="linenumber">515</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5324892388519202446" datatype="html">
+        <source>Editar <x id="PH" equiv-text="col.label" xmlns="urn:oasis:names:tc:xliff:document:1.2" /></source>
+        <target state="final">Edit <x id="PH" equiv-text="col.label"/></target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/data-table/data-table.component.ts</context>
+          <context context-type="linenumber">502</context>
+        </context-group>
+      </trans-unit>
     </body>
   </file>
 </xliff>

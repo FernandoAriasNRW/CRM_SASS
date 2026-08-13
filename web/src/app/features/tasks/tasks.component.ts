@@ -15,13 +15,14 @@ import {
   lucideList, lucideLayoutDashboard, lucideFilter, lucideSave,
   lucideAlertCircle, lucideArrowUp, lucideMinus, lucideArrowDown, lucideListChecks, lucideUsers, lucideSquareCheck
 } from '@ng-icons/lucide';
-import { DataTableComponent, ColumnDef, TableState } from '../../shared/ui/data-table/data-table.component';
+import { DataTableComponent, ColumnDef, TableState, type CellEdit } from '../../shared/ui/data-table/data-table.component';
 import { FilterField } from '../../shared/ui/data-table/advanced-filters.component';
 import { ViewsService, SavedView } from '../../shared/services/views.service';
 import { TableColumnService } from '../../shared/services/table-column.service';
 import { HierarchySignalStore } from '../../core/hierarchy-signal.store';
 import { ClickableDirective } from '../../shared/directives/clickable.directive';
 import { ToastService } from '../../shared/services/toast.service';
+import { mensajeDeError } from '../../shared/utils/mensaje-de-error';
 import { SkeletonListComponent } from '../../shared/ui/skeleton.component';
 import { EmptyInlineComponent } from '../../shared/ui/empty-state.component';
 
@@ -56,6 +57,15 @@ const STATUS_BADGE: Record<string, BadgeVariant> = {
   'To Do': 'secondary', 'In Progress': 'default', 'In Review': 'warning', 'Done': 'success'
 };
 
+/**
+ * Los estados, en el orden del tablero. Se derivan de las columnas en lugar de repetirlos:
+ * una lista aparte acabaría desincronizada el día que se añada un estado.
+ *
+ * Va aquí arriba y no como campo de la clase porque `tableColumns` lo necesita al construirse,
+ * y los campos de instancia se inicializan en orden de declaración.
+ */
+const ESTADOS = COLUMN_DEFS.map(c => c.key);
+
 @Component({
   selector: 'app-tasks',
   standalone: true,
@@ -89,14 +99,28 @@ export class TasksComponent implements OnInit {
   });
   
   // DataTable columns definition
+  /**
+   * Las columnas de la vista de lista.
+   *
+   * Se pueden editar las que el servidor acepta en un `PATCH /tasks/{id}`: título, estado,
+   * prioridad, horas y fecha límite. El responsable queda fuera **a propósito**: tiene su
+   * propio endpoint porque una tarea admite varios y uno de ellos es el principal, y meter eso
+   * en una celda de una sola línea sería prometer algo que la pantalla no puede cumplir.
+   */
   tableColumns: ColumnDef[] = this.columnService.buildColumns<TaskItem>({
-    title: { label: 'Title' },
+    title: { label: 'Title', editable: true },
     description: { label: 'Description', visible: false },
-    status: { label: 'Status', type: 'custom' },
-    priority: { label: $localize`Prioridad`, type: 'custom' },
+    status: {
+      label: 'Status', type: 'custom', editable: true, editor: 'select',
+      options: ESTADOS.map(s => ({ label: s, value: s })),
+    },
+    priority: {
+      label: $localize`Prioridad`, type: 'custom', editable: true, editor: 'select',
+      options: PRIORIDADES.map(p => ({ label: p.label, value: p.key })),
+    },
     assigneeId: { label: 'Asignado', type: 'user' },
-    estimatedHours: { label: 'Hours', type: 'number' },
-    dueDate: { label: 'Due Date', type: 'date' }
+    estimatedHours: { label: 'Hours', type: 'number', editable: true, editor: 'number' },
+    dueDate: { label: 'Due Date', type: 'date', editable: true, editor: 'date' }
   });
 
   // Advanced Filters definition
@@ -459,5 +483,44 @@ export class TasksComponent implements OnInit {
   }
 
 
-  readonly statuses = ['To Do', 'In Progress', 'In Review', 'Done'];
+  /**
+   * Guarda lo editado en una celda de la lista.
+   *
+   * Se pinta antes de tener respuesta y **se revierte si el servidor rechaza**, igual que al
+   * arrastrar una tarjeta en el tablero: dejar en pantalla un valor que no se guardó hace que
+   * alguien se vaya creyendo que el cambio quedó hecho.
+   *
+   * El aviso de error dice qué tarea y a qué valor ha vuelto. Un «no se pudo guardar» a secas
+   * obliga a adivinar cuál de las veinticinco filas es.
+   */
+  onCellEdit({ item, key, valor }: CellEdit<TaskItem>): void {
+    const anterior = (item as unknown as Record<string, unknown>)[key];
+    const nuevo = key === 'estimatedHours' ? Number(valor) : valor;
+
+    if (key === 'estimatedHours' && Number.isNaN(nuevo as number)) {
+      this.toast.error(
+        $localize`No se pudo guardar`,
+        $localize`«${valor}» no es un número de horas.`);
+      return;
+    }
+
+    this.aplicarEnLista(item.id, key, nuevo);
+
+    this.api.patch(`/tasks/${item.id}`, { [key]: nuevo }).subscribe({
+      next: () => this.distributeTasksToColumns(),
+      error: respuesta => {
+        this.aplicarEnLista(item.id, key, anterior);
+        this.toast.error(
+          $localize`«${item.title}» se queda como estaba`,
+          mensajeDeError(respuesta, $localize`No se pudo guardar el cambio.`));
+      },
+    });
+  }
+
+  private aplicarEnLista(id: string, key: string, valor: unknown): void {
+    this.allTasks.update(tasks =>
+      tasks.map(t => t.id === id ? { ...t, [key]: valor } : t));
+  }
+
+  readonly statuses = ESTADOS;
 }

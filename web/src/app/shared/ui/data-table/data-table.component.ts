@@ -1,7 +1,7 @@
 import { Component, Input, Output, EventEmitter, signal, computed, OnInit, TemplateRef } from '@angular/core';
 import { CommonModule, NgTemplateOutlet } from '@angular/common';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import { lucideChevronUp, lucideChevronDown, lucideGripVertical, lucideEye, lucideEyeOff, lucideSettings2, lucideSearch, lucideFilter, lucideSave, lucideDownload } from '@ng-icons/lucide';
+import { lucideChevronUp, lucideChevronDown, lucideGripVertical, lucideEye, lucideEyeOff, lucideSettings2, lucideSearch, lucideFilter, lucideSave, lucideDownload, lucidePencil } from '@ng-icons/lucide';
 import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-drop';
 import { FormsModule } from '@angular/forms';
 import { PaginationComponent } from '../pagination.component';
@@ -15,6 +15,19 @@ export interface ColumnDef {
   type?: 'text' | 'date' | 'number' | 'badge' | 'custom' | 'user';
   visible?: boolean;
   template?: TemplateRef<unknown>;
+  /** Si la celda se puede editar en la propia tabla. Sin esto, la columna es de sólo lectura. */
+  editable?: boolean;
+  /** Con qué control se edita. Por defecto, un campo de texto. */
+  editor?: 'text' | 'number' | 'date' | 'select';
+  /** Las opciones del `select`. Sin ellas la columna no se puede editar aunque lo pida. */
+  options?: { label: string; value: string }[];
+}
+
+/** Un cambio hecho en una celda. Quien reciba esto es el que decide si se guarda. */
+export interface CellEdit<T> {
+  item: T;
+  key: string;
+  valor: string;
 }
 
 export interface TableState {
@@ -33,7 +46,7 @@ export interface TableState {
   selector: 'ui-data-table',
   standalone: true,
   imports: [CommonModule, NgIconComponent, DragDropModule, FormsModule, PaginationComponent, ButtonComponent, NgTemplateOutlet, UserAvatarComponent],
-  providers: [provideIcons({ lucideChevronUp, lucideChevronDown, lucideGripVertical, lucideEye, lucideEyeOff, lucideSettings2, lucideSearch, lucideFilter, lucideSave, lucideDownload })],
+  providers: [provideIcons({ lucideChevronUp, lucideChevronDown, lucideGripVertical, lucideEye, lucideEyeOff, lucideSettings2, lucideSearch, lucideFilter, lucideSave, lucideDownload, lucidePencil })],
   host: { class: 'block h-full' },
   template: `
     <div class="flex flex-col h-full bg-white dark:bg-muted rounded-xl border border-border shadow-sm overflow-hidden">
@@ -151,7 +164,36 @@ export interface TableState {
                   <tr (click)="rowClick.emit(item)" class="hover:bg-muted/80 dark:hover:bg-muted/50 transition-colors group cursor-pointer">
                     @for (col of visibleColumns(); track col) {
                       <td class="px-4 py-2 whitespace-nowrap border-b border-border dark:border-border/50">
-                        @if (col.template) {
+                        @if (editandoEsta(item, col)) {
+                          <!-- El clic se para en el propio control, y no en un envoltorio: si
+                               subiera a la fila abriría el panel de detalle encima de lo que se
+                               está escribiendo. Un div con (click) sería un elemento interactivo
+                               que no se puede enfocar ni alcanzar con el teclado.
+                               Ojo: esta plantilla es una cadena con acentos graves, así que no se
+                               pueden usar aquí ni para citar código. -->
+                          @if (col.editor === 'select') {
+                            <select [ngModel]="valorTexto(item, col)"
+                                    (ngModelChange)="confirmarEdicion(item, col, $event)"
+                                    (click)="$event.stopPropagation()"
+                                    (keydown.escape)="cancelarEdicion()"
+                                    [attr.aria-label]="col.label"
+                                    class="w-full bg-transparent border border-border rounded-md px-2 py-1 text-[13px] outline-none focus:ring-1 focus:ring-ring">
+                              @for (opcion of col.options ?? []; track opcion.value) {
+                                <option [value]="opcion.value">{{ opcion.label }}</option>
+                              }
+                            </select>
+                          } @else {
+                            <input [type]="col.editor === 'date' ? 'date' : 'text'"
+                                   [inputMode]="col.editor === 'number' ? 'decimal' : 'text'"
+                                   [ngModel]="valorTexto(item, col)"
+                                   (blur)="confirmarEdicion(item, col, $any($event.target).value)"
+                                   (click)="$event.stopPropagation()"
+                                   (keydown.enter)="$any($event.target).blur()"
+                                   (keydown.escape)="cancelarEdicion()"
+                                   [attr.aria-label]="col.label"
+                                   class="w-full bg-transparent border border-border rounded-md px-2 py-1 text-[13px] outline-none focus:ring-1 focus:ring-ring" />
+                          }
+                        } @else if (col.template) {
                           <ng-container *ngTemplateOutlet="col.template; context: { $implicit: item, column: col }"></ng-container>
                         } @else {
                           @if (col.type === 'user') {
@@ -161,6 +203,18 @@ export interface TableState {
                               {{ formatValue(item, col) }}
                             </span>
                           }
+                        }
+
+                        @if (sePuedeEditar(col) && !editandoEsta(item, col)) {
+                          <!-- El disparador de la edición va aparte del contenido, y no envolviéndolo,
+                               porque las columnas con plantilla propia ya traen sus propios controles
+                               dentro y anidar botones no es válido. -->
+                          <button type="button"
+                                  (click)="$event.stopPropagation(); empezarEdicion(item, col)"
+                                  [attr.aria-label]="etiquetaDeEdicion(col)"
+                                  class="ml-1 align-middle opacity-0 group-hover:opacity-100 focus:opacity-100 text-muted-foreground hover:text-primary transition-opacity">
+                            <ng-icon name="lucidePencil" class="w-3 h-3"></ng-icon>
+                          </button>
                         }
                       </td>
                     }
@@ -232,6 +286,19 @@ export class DataTableComponent<T extends object = Record<string, unknown>> impl
   @Output() stateChange = new EventEmitter<TableState>();
   @Output() onSaveView = new EventEmitter<TableState>();
   @Output() rowClick = new EventEmitter<T>();
+
+  /**
+   * Un cambio confirmado en una celda.
+   *
+   * La tabla **no guarda nada**: emite el cambio y vuelve a pintar lo que le llegue en `data`.
+   * Quien la usa es quien llama a la API y quien revierte si el servidor rechaza, que es donde
+   * ya vive esa lógica —el tablero lo hace igual al arrastrar una tarjeta—. Si la tabla también
+   * guardara, habría dos sitios decidiendo qué se ve, y acabarían discrepando.
+   */
+  @Output() cellEdit = new EventEmitter<CellEdit<T>>();
+
+  /** La celda que se está editando, o `null`. Sólo puede haber una. */
+  readonly editando = signal<{ fila: T; key: string } | null>(null);
 
   state = signal<TableState>({
     page: 1,
@@ -410,7 +477,63 @@ export class DataTableComponent<T extends object = Record<string, unknown>> impl
   /** Valor de una columna como cadena, para plantillas que esperan texto. */
   valorTexto(item: T, col: ColumnDef): string {
     const val = (item as Record<string, unknown>)[col.key];
-    return val == null ? '' : String(val);
+    if (val == null) return '';
+
+    const texto = String(val);
+
+    // `input type="date"` sólo entiende `aaaa-mm-dd`. Con la marca de tiempo entera se queda
+    // vacío, sin decir por qué, y parece que la tarea no tiene fecha.
+    if (col.editor === 'date') return texto.slice(0, 10);
+
+    return texto;
+  }
+
+  /**
+   * Una columna se puede editar si lo pide y, cuando es un desplegable, si trae opciones.
+   * Un `select` vacío sería un control que no deja elegir nada.
+   */
+  sePuedeEditar(col: ColumnDef): boolean {
+    if (!col.editable) return false;
+    return col.editor !== 'select' || (col.options?.length ?? 0) > 0;
+  }
+
+  editandoEsta(item: T, col: ColumnDef): boolean {
+    const actual = this.editando();
+    return !!actual && actual.fila === item && actual.key === col.key;
+  }
+
+  etiquetaDeEdicion(col: ColumnDef): string {
+    return $localize`Editar ${col.label}`;
+  }
+
+  empezarEdicion(item: T, col: ColumnDef): void {
+    if (!this.sePuedeEditar(col)) return;
+    this.editando.set({ fila: item, key: col.key });
+  }
+
+  cancelarEdicion(): void {
+    this.editando.set(null);
+  }
+
+  /**
+   * Cierra la edición y avisa del cambio, si es que lo hay.
+   *
+   * **Sin edición abierta no se confirma nada.** Al pulsar Escape se quita el editor del DOM, y
+   * el navegador dispara un `blur` sobre el elemento que acaba de desaparecer: sin esta guarda,
+   * ese `blur` guardaba el valor que se acababa de descartar y Escape no cancelaba nada.
+   *
+   * Un valor idéntico tampoco se emite: guardar lo mismo gasta una petición y, si el servidor
+   * responde tarde, hace parpadear una celda que nadie tocó.
+   */
+  confirmarEdicion(item: T, col: ColumnDef, valor: string): void {
+    if (!this.editandoEsta(item, col)) return;
+
+    this.editando.set(null);
+
+    const anterior = this.valorTexto(item, col);
+    if (valor === anterior) return;
+
+    this.cellEdit.emit({ item, key: col.key, valor });
   }
 
   formatValue(item: T, col: ColumnDef): string {

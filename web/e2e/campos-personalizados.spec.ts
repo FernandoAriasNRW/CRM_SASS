@@ -202,7 +202,9 @@ test.describe('la pestaña que define los campos', () => {
 
     await page.getByRole('button', { name: 'Guardar' }).click();
 
-    await expect(page.getByText('Ya hay un campo con ese nombre para esa entidad')).toBeVisible();
+    // `.first()`: el mensaje sale dos veces, en el formulario y en el aviso que levanta el
+    // interceptor de errores. Que aparezca al menos una vez es lo que importa aquí.
+    await expect(page.getByText('Ya hay un campo con ese nombre para esa entidad').first()).toBeVisible();
     await expect(page.getByLabel('Nombre')).toHaveValue('Cliente facturable');
   });
 
@@ -250,7 +252,7 @@ test.describe('el formulario del detalle de tarea', () => {
     await page.getByLabel('Cliente facturable').fill('Globex');
     await page.getByLabel('Cliente facturable').blur();
 
-    await expect(page.getByText('«Paloma mensajera» no está entre las opciones del campo')).toBeVisible();
+    await expect(page.getByText('«Paloma mensajera» no está entre las opciones del campo').first()).toBeVisible();
     // Dejar «Globex» en pantalla sería enseñar algo que el servidor no guardó.
     await expect(page.getByLabel('Cliente facturable')).toHaveValue('Acme');
   });

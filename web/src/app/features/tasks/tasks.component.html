@@ -190,6 +190,7 @@
         [initialState]="tableState()"
         (stateChange)="onTableStateChange($event)"
         (rowClick)="openDetail($event)"
+        (cellEdit)="onCellEdit($event)"
         (onSaveView)="saveCurrentView('Custom View ' + (savedViews().length + 1))">
         
         <!-- Define column templates via structural directive or we can pass a dictionary of templates, 
