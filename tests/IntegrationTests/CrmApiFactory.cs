@@ -33,6 +33,13 @@ public sealed class CrmApiFactory : WebApplicationFactory<Program>, IAsyncLifeti
         builder.UseSetting("Jwt:Key", "clave-solo-para-pruebas-de-integracion-32+caracteres");
         builder.UseSetting("Jwt:Issuer", "CrmApi");
         builder.UseSetting("Jwt:Audience", "CrmClients");
+
+        // El límite de peticiones se sube porque todas las pruebas se autentican como el mismo
+        // administrador y comparten partición: la suite entera cae dentro de la misma ventana de
+        // un minuto. Con el límite de producción empezaron a salir 429 según el orden de
+        // ejecución, un fallo que no dice nada del código y que volvería cada pocas pruebas
+        // nuevas. No se desactiva del todo para que el middleware siga en el camino.
+        builder.UseSetting("RateLimiting:PermitLimit", "100000");
     }
 
     public async Task InitializeAsync() => await _mysql.StartAsync();

@@ -194,6 +194,90 @@ public sealed class TaskPatchFlowTests(CrmApiFactory factory)
     /// donde no está, y la pantalla no podría distinguir «se borró» de «no vale».
     /// </summary>
     [Fact]
+    public async Task La_fecha_de_inicio_se_guarda_al_crear_y_vuelve_al_leer()
+    {
+        var (cliente, tenantId) = await AutenticarAsync();
+
+        var respuesta = await cliente.PostAsJsonAsync("/api/v1/tasks", new
+        {
+            tenantId,
+            createdById = Guid.NewGuid(),
+            projectId = Guid.NewGuid(),
+            title = "Con calendario",
+            description = "creada por las pruebas de integración",
+            assigneeId = Guid.NewGuid(),
+            estimatedHours = 8m,
+            dueDate = "2026-12-01",
+            startDate = "2026-11-25",
+            priority = "Normal"
+        });
+        respuesta.StatusCode.Should().Be(HttpStatusCode.Created);
+
+        var id = (await respuesta.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetGuid();
+        var recuperada = await LeerAsync(cliente, id);
+
+        recuperada.GetProperty("startDate").GetString().Should().StartWith("2026-11-25");
+    }
+
+    /// <summary>
+    /// Una tarea sin inicio lo devuelve nulo y no una fecha inventada: el Gantt la pinta como un
+    /// hito en su vencimiento, que es lo único que de verdad se sabe.
+    /// </summary>
+    [Fact]
+    public async Task Una_tarea_sin_fecha_de_inicio_la_devuelve_nula()
+    {
+        var (cliente, tenantId) = await AutenticarAsync();
+        var id = await CrearAsync(cliente, tenantId, "Sin calendario");
+
+        var recuperada = await LeerAsync(cliente, id);
+
+        recuperada.GetProperty("startDate").ValueKind.Should().Be(JsonValueKind.Null);
+    }
+
+    [Fact]
+    public async Task La_fecha_de_inicio_se_pone_y_se_quita()
+    {
+        var (cliente, tenantId) = await AutenticarAsync();
+        var id = await CrearAsync(cliente, tenantId, "Para planificar");
+
+        await cliente.PatchAsJsonAsync($"/api/v1/tasks/{id}", new { startDate = "2026-11-20" });
+        (await LeerAsync(cliente, id)).GetProperty("startDate").GetString().Should().StartWith("2026-11-20");
+
+        // `null` significa «no toques este campo», así que vaciarla necesita su propio
+        // interruptor. Sin él no habría forma de quitarla desde una pantalla que manda parches.
+        await cliente.PatchAsJsonAsync($"/api/v1/tasks/{id}", new { quitarFechaInicio = true });
+        (await LeerAsync(cliente, id)).GetProperty("startDate").ValueKind.Should().Be(JsonValueKind.Null);
+    }
+
+    [Fact]
+    public async Task Un_inicio_posterior_al_vencimiento_se_rechaza_y_no_llega_a_la_base()
+    {
+        var (cliente, tenantId) = await AutenticarAsync();
+        var id = await CrearAsync(cliente, tenantId, "Con vencimiento en diciembre");
+
+        var patch = await cliente.PatchAsJsonAsync($"/api/v1/tasks/{id}", new { startDate = "2027-01-01" });
+        patch.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+
+        (await LeerAsync(cliente, id)).GetProperty("startDate").ValueKind.Should().Be(JsonValueKind.Null);
+    }
+
+    [Fact]
+    public async Task Mover_las_dos_fechas_a_la_vez_hacia_adelante_vale()
+    {
+        var (cliente, tenantId) = await AutenticarAsync();
+        var id = await CrearAsync(cliente, tenantId, "Para reprogramar entera");
+        await cliente.PatchAsJsonAsync($"/api/v1/tasks/{id}", new { startDate = "2026-11-25" });
+
+        var patch = await cliente.PatchAsJsonAsync($"/api/v1/tasks/{id}",
+            new { startDate = "2027-01-05", dueDate = "2027-01-10" });
+        patch.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var recuperada = await LeerAsync(cliente, id);
+        recuperada.GetProperty("startDate").GetString().Should().StartWith("2027-01-05");
+        recuperada.GetProperty("dueDate").GetString().Should().StartWith("2027-01-10");
+    }
+
+    [Fact]
     public async Task Una_tarea_que_no_existe_da_404_y_un_valor_invalido_da_400()
     {
         var (cliente, tenantId) = await AutenticarAsync();

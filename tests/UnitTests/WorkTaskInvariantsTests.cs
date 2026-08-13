@@ -883,4 +883,150 @@ public sealed class WorkTaskInvariantsTests
     }
 
     #endregion
+
+    #region Fecha de inicio
+
+    private static WorkTask TareaQueVence(DateOnly vencimiento, DateOnly? inicio = null) => WorkTask.Create(
+        tenantId: Guid.NewGuid(),
+        projectId: Guid.NewGuid(),
+        title: "Tarea con calendario",
+        description: "descripción",
+        assigneeId: Guid.NewGuid(),
+        createdById: Guid.NewGuid(),
+        estimatedHours: 8m,
+        dueDate: vencimiento,
+        startDate: inicio);
+
+    /// <summary>
+    /// Una tarea sin fecha de inicio no se la inventa. Deducirla de la creación, o restando las
+    /// horas al vencimiento, dibujaría en el Gantt una barra que nadie ha decidido.
+    /// </summary>
+    [Fact]
+    public void Una_tarea_nace_sin_fecha_de_inicio_si_no_se_le_da_una()
+    {
+        NuevaTarea().StartDate.Should().BeNull();
+    }
+
+    [Fact]
+    public void La_fecha_de_inicio_se_conserva_al_crear()
+    {
+        var tarea = TareaQueVence(new DateOnly(2026, 9, 10), new DateOnly(2026, 9, 1));
+
+        tarea.StartDate.Should().Be(new DateOnly(2026, 9, 1));
+    }
+
+    [Fact]
+    public void El_mismo_dia_de_inicio_y_vencimiento_vale()
+    {
+        var dia = new DateOnly(2026, 9, 1);
+
+        TareaQueVence(dia, dia).StartDate.Should().Be(dia);
+    }
+
+    [Fact]
+    public void No_se_puede_crear_una_tarea_que_empiece_despues_de_vencer()
+    {
+        var accion = () => TareaQueVence(new DateOnly(2026, 9, 1), new DateOnly(2026, 9, 10));
+
+        accion.Should().Throw<InvalidOperationException>()
+            .WithMessage(WorkTask.ReglasDeDetalle.InicioDespuesDelVencimiento);
+    }
+
+    [Fact]
+    public void Poner_un_inicio_posterior_al_vencimiento_se_rechaza()
+    {
+        var tarea = TareaQueVence(new DateOnly(2026, 9, 1));
+
+        var accion = () => tarea.ActualizarDetalles(fechaInicio: new DateOnly(2026, 9, 10));
+
+        accion.Should().Throw<InvalidOperationException>();
+        tarea.StartDate.Should().BeNull();
+    }
+
+    /// <summary>
+    /// Adelantar el vencimiento por detrás del inicio dejaría una barra de longitud negativa. Se
+    /// rechaza el cambio entero en lugar de recolocar fechas por cuenta propia: mover la
+    /// planificación de alguien sin decírselo es peor que no dejarle hacer el cambio.
+    /// </summary>
+    [Fact]
+    public void Adelantar_el_vencimiento_por_detras_del_inicio_se_rechaza()
+    {
+        var tarea = TareaQueVence(new DateOnly(2026, 9, 10), new DateOnly(2026, 9, 5));
+
+        var accion = () => tarea.ActualizarDetalles(fechaLimite: new DateOnly(2026, 9, 1));
+
+        accion.Should().Throw<InvalidOperationException>()
+            .WithMessage(WorkTask.ReglasDeDetalle.VencimientoAntesDelInicio);
+    }
+
+    /// <summary>
+    /// Mandar las dos fechas a la vez se valida contra los valores nuevos, no contra los viejos:
+    /// mover la tarea entera hacia adelante es legítimo y no puede fallar por el orden.
+    /// </summary>
+    [Fact]
+    public void Mover_las_dos_fechas_a_la_vez_hacia_adelante_vale()
+    {
+        var tarea = TareaQueVence(new DateOnly(2026, 9, 10), new DateOnly(2026, 9, 5));
+
+        tarea.ActualizarDetalles(
+            fechaLimite: new DateOnly(2026, 10, 10),
+            fechaInicio: new DateOnly(2026, 10, 5));
+
+        tarea.StartDate.Should().Be(new DateOnly(2026, 10, 5));
+        tarea.DueDate.Should().Be(new DateOnly(2026, 10, 10));
+    }
+
+    [Fact]
+    public void La_fecha_de_inicio_se_puede_quitar()
+    {
+        var tarea = TareaQueVence(new DateOnly(2026, 9, 10), new DateOnly(2026, 9, 5));
+
+        tarea.ActualizarDetalles(quitarFechaInicio: true);
+
+        tarea.StartDate.Should().BeNull();
+    }
+
+    [Fact]
+    public void Editar_otro_campo_no_toca_la_fecha_de_inicio()
+    {
+        var tarea = TareaQueVence(new DateOnly(2026, 9, 10), new DateOnly(2026, 9, 5));
+
+        tarea.ActualizarDetalles(titulo: "Otro título");
+
+        tarea.StartDate.Should().Be(new DateOnly(2026, 9, 5));
+    }
+
+    /// <summary>
+    /// La ocurrencia hereda la **duración**, no la fecha literal: si la plantilla dura tres días,
+    /// cada repetición dura tres días contra su propio vencimiento. Copiar el inicio tal cual
+    /// dejaría ocurrencias que empiezan meses antes de vencer.
+    /// </summary>
+    [Fact]
+    public void Una_ocurrencia_hereda_la_duracion_y_no_la_fecha_de_inicio()
+    {
+        var tarea = WorkTask.Create(
+            Guid.NewGuid(), Guid.NewGuid(), "Repetitiva", "descripción",
+            Guid.NewGuid(), Guid.NewGuid(), 4m,
+            dueDate: new DateOnly(2026, 8, 10), priority: null, parentTaskId: null,
+            startDate: new DateOnly(2026, 8, 7));
+
+        tarea.Repetir(PatronDeRecurrencia.Frecuencias.Mensual, 1, new DateOnly(2026, 9, 10), null);
+
+        var ocurrencia = tarea.GenerarOcurrenciasHasta(new DateOnly(2026, 9, 10)).Single();
+
+        ocurrencia.DueDate.Should().Be(new DateOnly(2026, 9, 10));
+        ocurrencia.StartDate.Should().Be(new DateOnly(2026, 9, 7), "dura los mismos tres días");
+    }
+
+    [Fact]
+    public void Una_ocurrencia_de_una_tarea_sin_inicio_tampoco_lo_tiene()
+    {
+        var tarea = TareaQueSeRepite(PatronDeRecurrencia.Frecuencias.Diaria, 1, new DateOnly(2026, 8, 10));
+
+        var ocurrencia = tarea.GenerarOcurrenciasHasta(new DateOnly(2026, 8, 10)).First();
+
+        ocurrencia.StartDate.Should().BeNull();
+    }
+
+    #endregion
 }

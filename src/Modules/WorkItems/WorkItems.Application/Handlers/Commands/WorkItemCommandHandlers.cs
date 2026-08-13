@@ -35,7 +35,7 @@ public sealed class CreateTaskCommandHandler(
       task = WorkTask.Create(
           request.TenantId, request.ProjectId, request.Title, request.Description,
           request.AssigneeId, request.CreatedById, request.EstimatedHours, request.DueDate,
-          request.Priority, request.ParentTaskId);
+          request.Priority, request.ParentTaskId, request.StartDate);
     }
     catch (InvalidOperationException ex) { return Result<WorkTask>.Failure(ex.Message); }
 
@@ -99,7 +99,8 @@ public sealed class PatchTaskCommandHandler(
     try
     {
       task.ActualizarDetalles(
-          request.Title, request.Description, request.EstimatedHours, request.DueDate);
+          request.Title, request.Description, request.EstimatedHours, request.DueDate,
+          request.StartDate, request.QuitarFechaInicio);
     }
     catch (InvalidOperationException ex) { return Result<bool>.Failure(ex.Message); }
 

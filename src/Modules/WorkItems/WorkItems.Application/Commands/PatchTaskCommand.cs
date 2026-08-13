@@ -16,7 +16,13 @@ public sealed record PatchTaskCommand(
     string? Priority,
     Guid? AssigneeId,
     DateOnly? DueDate,
-    decimal? EstimatedHours
+    decimal? EstimatedHours,
+    DateOnly? StartDate = null,
+    /// <summary>
+    /// Vaciar la fecha de inicio. Hace falta un interruptor aparte porque `null` ya significa
+    /// «no toques este campo», que es lo que necesita una pantalla que manda sólo lo que cambió.
+    /// </summary>
+    bool QuitarFechaInicio = false
 ) : ICommand<bool>, IWebhookTriggered, IAuthorizeEntity
 {
     public string WebhookEventName => "workitem.patched";

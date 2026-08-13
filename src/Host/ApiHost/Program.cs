@@ -257,6 +257,12 @@ builder.Services.AddHealthChecks();
 // Rate limiting. La política global protege toda la API; las políticas nombradas
 // blindan los dos puntos abusables sin autenticación previa: el alta pública de
 // tickets y el login (fuerza bruta de credenciales).
+// El límite global sale de configuración para poder subirlo en las pruebas de integración.
+// Todas se autentican como el mismo administrador, así que comparten partición y la suite
+// entera cabe en una sola ventana: al crecer, empezaron a salir 429 según el orden de
+// ejecución, un fallo que no dice nada del código y que reaparecería cada pocas pruebas.
+var limiteGlobalPorMinuto = builder.Configuration.GetValue("RateLimiting:PermitLimit", 300);
+
 builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
@@ -269,7 +275,7 @@ builder.Services.AddRateLimiter(options =>
                 : context.Connection.RemoteIpAddress?.ToString() ?? "anonymous",
             factory: _ => new FixedWindowRateLimiterOptions
             {
-                PermitLimit = 300,
+                PermitLimit = limiteGlobalPorMinuto,
                 Window = TimeSpan.FromMinutes(1)
             }));
 
