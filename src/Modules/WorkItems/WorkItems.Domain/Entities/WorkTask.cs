@@ -49,6 +49,14 @@ public sealed class WorkTask : AggregateRoot, ITenantEntity
     /// </summary>
     public IReadOnlyList<ChecklistItem> Checklist => _checklist;
 
+    /// <summary>
+    /// Cada cuánto se repite esta tarea, o <c>null</c> si no se repite.
+    ///
+    /// La lleva la tarea que hace de plantilla; las que genera **no la heredan**, o cada
+    /// ocurrencia empezaría a generar las suyas y la serie se multiplicaría sola.
+    /// </summary>
+    public PatronDeRecurrencia? Recurrence { get; private set; }
+
     public Guid CreatedById { get; private set; }
     public decimal EstimatedHours { get; private set; }
     public DateOnly DueDate { get; private set; }
@@ -301,6 +309,65 @@ public sealed class WorkTask : AggregateRoot, ITenantEntity
 
         _checklist.Remove(punto);
         RaiseDomainEvent(new TaskChecklistItemRemovedEvent(Id, TenantId, itemId));
+    }
+
+    /// <summary>Hace que esta tarea se repita, o cambia cada cuánto lo hace.</summary>
+    public void Repetir(string frecuencia, int intervalo, DateOnly proximaOcurrencia, DateOnly? fechaFin)
+    {
+        Recurrence = new PatronDeRecurrencia(frecuencia, intervalo, proximaOcurrencia, fechaFin);
+        RaiseDomainEvent(new TaskRecurrenceSetEvent(Id, TenantId, frecuencia, intervalo, proximaOcurrencia));
+    }
+
+    public void DejarDeRepetir()
+    {
+        if (Recurrence is null)
+            return;
+
+        Recurrence = null;
+        RaiseDomainEvent(new TaskRecurrenceClearedEvent(Id, TenantId));
+    }
+
+    /// <summary>
+    /// Crea las tareas que tocaban hasta <paramref name="hoy"/> incluido.
+    ///
+    /// Devuelve una lista porque una serie puede llevar días sin generarse —la aplicación
+    /// estuvo parada, o el patrón se creó con fecha pasada— y saltarse las atrasadas dejaría
+    /// huecos que nadie va a reclamar pero que falsean cualquier informe.
+    ///
+    /// Cada ocurrencia copia el trabajo que define a la plantilla: proyecto, título,
+    /// descripción, prioridad, horas, responsables y los puntos de la checklist **sin marcar**.
+    /// No copia dependencias ni subtareas: son relaciones con otras tareas concretas, y
+    /// duplicarlas crearía enlaces que nadie pidió.
+    /// </summary>
+    public IReadOnlyList<WorkTask> GenerarOcurrenciasHasta(DateOnly hoy)
+    {
+        if (Recurrence is null)
+            return [];
+
+        var generadas = new List<WorkTask>();
+
+        while (Recurrence.TocaGenerar(hoy))
+        {
+            var ocurrencia = Create(
+                TenantId, ProjectId, Title.Value, Description,
+                AssigneeId, CreatedById, EstimatedHours,
+                Recurrence.ProximaOcurrencia, Priority.Value);
+
+            foreach (var responsable in _assignees.Where(a => a.UserId != AssigneeId))
+                ocurrencia.AddAssignee(responsable.UserId);
+
+            foreach (var punto in _checklist.OrderBy(p => p.Posicion))
+                ocurrencia.AddChecklistItem(punto.Texto);
+
+            generadas.Add(ocurrencia);
+
+            Recurrence.AvanzarA(Servicios.CalendarioDeRecurrencia.Siguiente(Recurrence.ProximaOcurrencia, Recurrence));
+        }
+
+        if (generadas.Count > 0)
+            RaiseDomainEvent(new TaskOccurrencesGeneratedEvent(Id, TenantId, generadas.Count, Recurrence.ProximaOcurrencia));
+
+        return generadas;
     }
 
     /// <summary>Cuántos puntos hay y cuántos están hechos. Es lo que se muestra en la tarjeta.</summary>

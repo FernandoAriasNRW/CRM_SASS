@@ -139,7 +139,7 @@ Comparado con lo que un usuario espera de ClickUp o Monday en 2026:
 | **Vista tabla / hoja de cálculo** | ❌ no existe | 🟠 Es la vista por defecto de Monday |
 | **Vista carga de trabajo** | ❌ no existe | 🟠 Diferenciador de plan alto |
 | **Checklists** | ✅ Fase 4A | con orden explícito del usuario |
-| **Tareas recurrentes** | ❌ no existe | 🟠 |
+| **Tareas recurrentes** | ✅ Fase 4A | diaria, semanal y mensual, con worker que se pone al día |
 | **Formularios de captura** | ❌ no existe | 🟠 Entrada de trabajo desde fuera |
 | **Metas / OKRs** | ❌ no existe | 🟡 |
 | Vista tablero (Kanban) | ✅ | |
@@ -369,7 +369,13 @@ Es el trabajo de mayor retorno: sin esto el producto no entra en una comparativa
   posición explícita porque el orden lo decide quien la escribe y una colección propiedad no vuelve
   ordenada de la base. La posición se calcula sobre la mayor existente, no contando puntos: al
   borrar uno del medio, contar daría posiciones repetidas y el orden dejaría de estar definido.
-- **Tareas recurrentes** apoyadas en el worker que ya existe.
+- ✅ **Tareas recurrentes** *(hecho 2026-08-13)*: el patrón vive en la tarea plantilla y un worker
+  horario crea lo que toca, poniéndose al día con las atrasadas si la aplicación estuvo parada.
+  Las ocurrencias **no heredan el patrón**, o cada una generaría las suyas. El cálculo de la
+  siguiente fecha es una función pura probada mes a mes: una serie del día 31 cae el 28 en
+  febrero y **vuelve al 31 en marzo**, en lugar de degradarse al 28 para siempre.
+
+**Con esto el bloque 4A queda cerrado.**
 
 Migración de datos: los campos actuales se conservan; `AssigneeId` se migra a una
 colección de un elemento.

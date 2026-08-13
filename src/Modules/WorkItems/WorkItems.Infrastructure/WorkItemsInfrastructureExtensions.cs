@@ -30,6 +30,10 @@ public static class WorkItemsInfrastructureExtensions
     services.AddScoped<ITaskRepository, EfTaskRepository>();
     services.AddScoped<ITaskDependencyRepository, EfTaskDependencyRepository>();
     services.AddScoped<ITaskQueries, TaskQueries>();
+
+    services.AddScoped<Recurrencia.GeneradorDeTareasRecurrentes>();
+    services.AddHostedService<Recurrencia.RecurringTasksWorker>();
+
     return services;
   }
 }
