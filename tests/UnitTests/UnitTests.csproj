@@ -22,6 +22,9 @@
 
   <!-- Referencias a los módulos a testear -->
   <ItemGroup>
+    <!-- CustomFields -->
+    <ProjectReference Include="..\..\src\Modules\CustomFields\CustomFields.Domain\CustomFields.Domain.csproj" />
+
     <!-- Identity -->
     <ProjectReference Include="..\..\src\Modules\Identity\Identity.Infrastructure\Identity.Infrastructure.csproj" />
     <ProjectReference Include="..\..\src\Modules\Identity\Identity.Application\Identity.Application.csproj" />

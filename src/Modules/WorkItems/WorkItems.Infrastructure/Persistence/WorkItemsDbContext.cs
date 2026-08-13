@@ -50,6 +50,21 @@ public sealed class WorkItemsDbContext(DbContextOptions<WorkItemsDbContext> opti
       a.HasKey("WorkTaskId", "UserId");
     });
 
+    // El patrón de recurrencia va en las columnas de la propia tarea: es un valor de la tarea,
+    // no una entidad con vida propia, y sacarlo a otra tabla obligaría a un join por cada
+    // listado para no ganar nada.
+    modelBuilder.Entity<WorkTask>().OwnsOne(t => t.Recurrence, r =>
+    {
+      r.Property(x => x.Frecuencia).HasColumnName("Recurrence_Frecuencia").HasMaxLength(20);
+      r.Property(x => x.Intervalo).HasColumnName("Recurrence_Intervalo");
+      r.Property(x => x.ProximaOcurrencia).HasColumnName("Recurrence_ProximaOcurrencia");
+      r.Property(x => x.FechaFin).HasColumnName("Recurrence_FechaFin");
+      r.Property(x => x.DiaDeLaSerie).HasColumnName("Recurrence_DiaDeLaSerie");
+
+      // Por aquí busca el worker las series que tocan, y son pocas entre muchas tareas.
+      r.HasIndex(x => x.ProximaOcurrencia).HasDatabaseName("IX_Tasks_Recurrence_ProximaOcurrencia");
+    });
+
     // La checklist, también propiedad de la tarea. La posición se guarda porque el orden es del
     // usuario y la colección no vuelve ordenada.
     modelBuilder.Entity<WorkTask>().OwnsMany(t => t.Checklist, c =>

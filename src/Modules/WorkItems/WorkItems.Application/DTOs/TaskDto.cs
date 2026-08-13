@@ -40,5 +40,15 @@ public sealed record TaskDto(
     /// completos se piden aparte cuando hacen falta, que es sólo al abrir el detalle.
     /// </summary>
     int ChecklistTotal = 0,
-    int ChecklistDone = 0
+    int ChecklistDone = 0,
+    /// <summary>Cada cuánto se repite, si se repite. Sólo lo lleva la tarea plantilla.</summary>
+    RecurrenceDto? Recurrence = null
+);
+
+/// <summary>El patrón de repetición tal como lo ve la interfaz.</summary>
+public sealed record RecurrenceDto(
+    string Frecuencia,
+    int Intervalo,
+    DateOnly ProximaOcurrencia,
+    DateOnly? FechaFin
 );

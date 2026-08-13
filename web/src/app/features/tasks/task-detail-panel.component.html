@@ -74,6 +74,40 @@
             </select>
           </div>
 
+          <!-- Repetición -->
+          <div class="flex items-center gap-3 col-span-2">
+            <span class="text-muted-foreground w-28 shrink-0 flex items-center gap-1.5">
+              <ng-icon name="lucideRepeat" size="13" /> <span i18n>Repetir</span>
+            </span>
+            <div class="flex items-center gap-2 flex-wrap">
+              <select [(ngModel)]="frecuenciaElegida" (change)="guardarRecurrencia()"
+                      i18n-aria-label aria-label="Cada cuánto se repite"
+                      class="bg-transparent border border-border rounded-md px-2 py-1 text-sm outline-none focus:ring-1 focus:ring-ring">
+                <option value="" i18n>No se repite</option>
+                @for (f of frecuencias; track f.key) {
+                  <option [value]="f.key">{{ f.label }}</option>
+                }
+              </select>
+
+              @if (frecuenciaElegida) {
+                <input type="number" min="1" max="365" [(ngModel)]="intervaloElegido"
+                       (change)="guardarRecurrencia()"
+                       i18n-aria-label aria-label="Cada cuántas veces"
+                       class="w-16 bg-transparent border border-border rounded-md px-2 py-1 text-sm outline-none focus:ring-1 focus:ring-ring" />
+              }
+
+              @if (recurrencia(); as r) {
+                <span class="text-xs text-muted-foreground" i18n>
+                  Próxima: {{ r.proximaOcurrencia }}
+                </span>
+                <button (click)="quitarRecurrencia()"
+                        class="text-xs text-muted-foreground hover:text-destructive transition-colors" i18n>
+                  Dejar de repetir
+                </button>
+              }
+            </div>
+          </div>
+
           <!-- Fecha límite -->
           <div class="flex items-center gap-3">
             <span class="text-muted-foreground w-28 shrink-0 flex items-center gap-1.5">

@@ -139,7 +139,7 @@ Comparado con lo que un usuario espera de ClickUp o Monday en 2026:
 | **Vista tabla / hoja de cálculo** | ❌ no existe | 🟠 Es la vista por defecto de Monday |
 | **Vista carga de trabajo** | ❌ no existe | 🟠 Diferenciador de plan alto |
 | **Checklists** | ✅ Fase 4A | con orden explícito del usuario |
-| **Tareas recurrentes** | ❌ no existe | 🟠 |
+| **Tareas recurrentes** | ✅ Fase 4A | diaria, semanal y mensual, con worker que se pone al día |
 | **Formularios de captura** | ❌ no existe | 🟠 Entrada de trabajo desde fuera |
 | **Metas / OKRs** | ❌ no existe | 🟡 |
 | Vista tablero (Kanban) | ✅ | |
@@ -369,7 +369,13 @@ Es el trabajo de mayor retorno: sin esto el producto no entra en una comparativa
   posición explícita porque el orden lo decide quien la escribe y una colección propiedad no vuelve
   ordenada de la base. La posición se calcula sobre la mayor existente, no contando puntos: al
   borrar uno del medio, contar daría posiciones repetidas y el orden dejaría de estar definido.
-- **Tareas recurrentes** apoyadas en el worker que ya existe.
+- ✅ **Tareas recurrentes** *(hecho 2026-08-13)*: el patrón vive en la tarea plantilla y un worker
+  horario crea lo que toca, poniéndose al día con las atrasadas si la aplicación estuvo parada.
+  Las ocurrencias **no heredan el patrón**, o cada una generaría las suyas. El cálculo de la
+  siguiente fecha es una función pura probada mes a mes: una serie del día 31 cae el 28 en
+  febrero y **vuelve al 31 en marzo**, en lugar de degradarse al 28 para siempre.
+
+**Con esto el bloque 4A queda cerrado.**
 
 Migración de datos: los campos actuales se conservan; `AssigneeId` se migra a una
 colección de un elemento.
@@ -378,8 +384,25 @@ colección de un elemento.
 
 La feature que define a Monday.com y bloqueante para enterprise. Nuevo módulo
 `CustomFields` siguiendo el patrón de los 13 existentes: definición por tenant y por
-tipo de entidad (texto, número, fecha, selección, selección múltiple, usuario, fórmula),
-con valores tipados y aplicables a tareas y proyectos.
+tipo de entidad, con valores tipados y aplicables a tareas y proyectos.
+
+🟡 **Backend hecho (2026-08-13), interfaz pendiente.** Módulo completo con sus cuatro
+proyectos, seis tipos —texto, número, fecha, selección, selección múltiple y usuario—,
+API de definiciones y valores, y 60 pruebas.
+
+Dos decisiones que conviene no deshacer:
+
+- **La fórmula queda fuera a propósito.** Un campo calculado necesita un motor de
+  expresiones —analizador, referencias entre campos, detección de ciclos, recálculo— y eso
+  es un proyecto en sí mismo. Ofrecerlo a medias dejaría un tipo que se puede elegir y no
+  calcula nada. Queda en el backlog como trabajo propio.
+- **El valor se guarda en forma canónica**, no como lo escribió el usuario: números con
+  punto, fechas en ISO y selección múltiple en el orden de la definición. Si cada quien
+  guardara en su formato, ordenar o sumar daría resultados según quién escribió cada fila,
+  y eso no da ningún error al escribir: se descubre meses después.
+
+Falta la interfaz: el formulario dinámico que pinta cada tipo y la columna en la vista de
+tabla, que se apoya en la 4C.
 
 ### Bloque 4C — Vistas (semanas 14-16)
 

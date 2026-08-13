@@ -87,6 +87,31 @@ public static class WorkItemsEndpoints
       return result.IsSuccess ? Results.Ok() : Results.BadRequest(result.Error);
     });
 
+    // Recurrencia. Es un patrón de la tarea, así que se pone y se quita entera; no hay «patch
+    // parcial» porque cambiar sólo el intervalo sin decir desde cuándo no significa nada claro.
+    group.MapPut("/{id:guid}/recurrence", async (System.Security.Claims.ClaimsPrincipal principal, Guid id, SetTaskRecurrenceCommand command, IMediator mediator) =>
+    {
+      var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
+      var actorId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var _uid) ? _uid : Guid.Empty;
+      var actorRole = principal.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Role)?.Value ?? string.Empty;
+
+      var result = await mediator.Send(new SetTaskRecurrenceCommand(
+          tenantId, id, actorId, actorRole, command.Frecuencia, command.Intervalo,
+          command.ProximaOcurrencia, command.FechaFin));
+
+      return result.IsSuccess ? Results.Ok() : Results.BadRequest(result.Error);
+    });
+
+    group.MapDelete("/{id:guid}/recurrence", async (System.Security.Claims.ClaimsPrincipal principal, Guid id, IMediator mediator) =>
+    {
+      var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
+      var actorId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var _uid) ? _uid : Guid.Empty;
+      var actorRole = principal.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Role)?.Value ?? string.Empty;
+
+      var result = await mediator.Send(new ClearTaskRecurrenceCommand(tenantId, id, actorId, actorRole));
+      return result.IsSuccess ? Results.NoContent() : Results.BadRequest(result.Error);
+    });
+
     // Checklist. Los puntos se piden aparte del listado: en la tarjeta basta con el progreso, y
     // traer todos los textos de todas las tareas para pintar «2/5» sería cargar de más.
     group.MapGet("/{id:guid}/checklist", async (System.Security.Claims.ClaimsPrincipal principal, Guid id, IMediator mediator) =>

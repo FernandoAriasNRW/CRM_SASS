@@ -25,3 +25,9 @@ public sealed record TaskChecklistItemAddedEvent(Guid TaskId, Guid TenantId, Gui
 public sealed record TaskChecklistItemToggledEvent(Guid TaskId, Guid TenantId, Guid ItemId, bool Hecho) : DomainEvent;
 
 public sealed record TaskChecklistItemRemovedEvent(Guid TaskId, Guid TenantId, Guid ItemId) : DomainEvent;
+
+public sealed record TaskRecurrenceSetEvent(Guid TaskId, Guid TenantId, string Frecuencia, int Intervalo, DateOnly ProximaOcurrencia) : DomainEvent;
+
+public sealed record TaskRecurrenceClearedEvent(Guid TaskId, Guid TenantId) : DomainEvent;
+
+public sealed record TaskOccurrencesGeneratedEvent(Guid TaskId, Guid TenantId, int Cuantas, DateOnly SiguienteOcurrencia) : DomainEvent;

@@ -182,9 +182,49 @@ namespace WorkItems.Infrastructure.Persistence.Migrations
                                 .HasForeignKey("WorkTaskId");
                         });
 
+                    b.OwnsOne("WorkItems.Domain.ValueObjects.PatronDeRecurrencia", "Recurrence", b1 =>
+                        {
+                            b1.Property<Guid>("WorkTaskId")
+                                .HasColumnType("char(36)");
+
+                            b1.Property<int>("DiaDeLaSerie")
+                                .HasColumnType("int")
+                                .HasColumnName("Recurrence_DiaDeLaSerie");
+
+                            b1.Property<DateOnly?>("FechaFin")
+                                .HasColumnType("date")
+                                .HasColumnName("Recurrence_FechaFin");
+
+                            b1.Property<string>("Frecuencia")
+                                .IsRequired()
+                                .HasMaxLength(20)
+                                .HasColumnType("varchar(20)")
+                                .HasColumnName("Recurrence_Frecuencia");
+
+                            b1.Property<int>("Intervalo")
+                                .HasColumnType("int")
+                                .HasColumnName("Recurrence_Intervalo");
+
+                            b1.Property<DateOnly>("ProximaOcurrencia")
+                                .HasColumnType("date")
+                                .HasColumnName("Recurrence_ProximaOcurrencia");
+
+                            b1.HasKey("WorkTaskId");
+
+                            b1.HasIndex("ProximaOcurrencia")
+                                .HasDatabaseName("IX_Tasks_Recurrence_ProximaOcurrencia");
+
+                            b1.ToTable("Tasks");
+
+                            b1.WithOwner()
+                                .HasForeignKey("WorkTaskId");
+                        });
+
                     b.Navigation("Assignees");
 
                     b.Navigation("Checklist");
+
+                    b.Navigation("Recurrence");
                 });
 #pragma warning restore 612, 618
         }
