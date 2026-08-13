@@ -21,6 +21,11 @@
     <PackageReference Include="FluentAssertions" Version="7.2.0" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="....srcModulesCustomFieldsCustomFields.InfrastructureCustomFields.Infrastructure.csproj" />
+    <ProjectReference Include="....srcModulesCustomFieldsCustomFields.ApplicationCustomFields.Application.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\src\Host\ApiHost\ApiHost.csproj" />
   </ItemGroup>
 </Project>

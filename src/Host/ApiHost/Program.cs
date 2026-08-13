@@ -44,6 +44,7 @@ using WorkItems.Presentation.Endpoints;
 using Tags.Infrastructure;
 using Tags.Presentation;
 using Tags.Presentation.Endpoints;
+using CustomFields.Presentation.Endpoints;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -199,6 +200,7 @@ builder.Services.AddWebhookPresentation(builder.Configuration);
 builder.Services.AddReportingPresentation(builder.Configuration);
 builder.Services.AddTeamsPresentation(builder.Configuration);
 builder.Services.AddTagsPresentation(builder.Configuration);
+builder.Services.AddCustomFieldsPresentation(builder.Configuration);
 builder.Services.AddDocsPresentation(builder.Configuration);
 
 // ═══════════════════════════════════════════════════════════════════════════════ MEDIATR - Commands y Queries ═══════════════════════════════════════════════════════════════════════════════
@@ -215,6 +217,7 @@ builder.Services.AddMediatR(cfg =>
   cfg.RegisterServicesFromAssembly(typeof(Communication.Application.Handlers.Commands.CreateConversationHandler).Assembly); // Communication
   cfg.RegisterServicesFromAssembly(typeof(WebhookEventNotificationHandler).Assembly); // Webhook
   cfg.RegisterServicesFromAssembly(typeof(Teams.Application.Commands.CreateTeamCommand).Assembly); // Teams
+  cfg.RegisterServicesFromAssembly(typeof(CustomFields.Application.Commands.DefineCustomFieldCommand).Assembly); // CustomFields
 
   // Pipeline behavior: valida el request con FluentValidation.
   // Va PRIMERO: no tiene sentido autorizar ni despachar una petición malformada.
@@ -314,6 +317,7 @@ using (var scope = app.Services.CreateScope())
         services.GetRequiredService<Reporting.Infrastructure.Persistence.ReportingDbContext>(),
         services.GetRequiredService<Tags.Infrastructure.Persistence.TagsDbContext>(),
         services.GetRequiredService<Docs.Infrastructure.Persistence.DocsDbContext>(),
+        services.GetRequiredService<CustomFields.Infrastructure.Persistence.CustomFieldsDbContext>(),
         services.GetRequiredService<CrmDbContext>()
     };
 
@@ -430,6 +434,7 @@ app.MapReportingEndpoints();
 app.MapWebhookEndpoints();
 app.MapTeamsEndpoints();
 app.MapTagsEndpoints();
+app.MapCustomFieldsEndpoints();
 app.MapDocsEndpoints();
 
 // Seed de datos de demostración.
