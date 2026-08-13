@@ -384,8 +384,25 @@ colección de un elemento.
 
 La feature que define a Monday.com y bloqueante para enterprise. Nuevo módulo
 `CustomFields` siguiendo el patrón de los 13 existentes: definición por tenant y por
-tipo de entidad (texto, número, fecha, selección, selección múltiple, usuario, fórmula),
-con valores tipados y aplicables a tareas y proyectos.
+tipo de entidad, con valores tipados y aplicables a tareas y proyectos.
+
+🟡 **Backend hecho (2026-08-13), interfaz pendiente.** Módulo completo con sus cuatro
+proyectos, seis tipos —texto, número, fecha, selección, selección múltiple y usuario—,
+API de definiciones y valores, y 60 pruebas.
+
+Dos decisiones que conviene no deshacer:
+
+- **La fórmula queda fuera a propósito.** Un campo calculado necesita un motor de
+  expresiones —analizador, referencias entre campos, detección de ciclos, recálculo— y eso
+  es un proyecto en sí mismo. Ofrecerlo a medias dejaría un tipo que se puede elegir y no
+  calcula nada. Queda en el backlog como trabajo propio.
+- **El valor se guarda en forma canónica**, no como lo escribió el usuario: números con
+  punto, fechas en ISO y selección múltiple en el orden de la definición. Si cada quien
+  guardara en su formato, ordenar o sumar daría resultados según quién escribió cada fila,
+  y eso no da ningún error al escribir: se descubre meses después.
+
+Falta la interfaz: el formulario dinámico que pinta cada tipo y la columna en la vista de
+tabla, que se apoya en la 4C.
 
 ### Bloque 4C — Vistas (semanas 14-16)
 
