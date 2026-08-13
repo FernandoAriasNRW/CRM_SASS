@@ -128,17 +128,17 @@ Comparado con lo que un usuario espera de ClickUp o Monday en 2026:
 
 | Capacidad | Estado | Impacto competitivo |
 |---|---|---|
-| **Prioridad de tarea** | ❌ no existe | 🔴 Ausencia llamativa: está en todos los competidores |
-| **Subtareas / jerarquía** | ❌ no existe | 🔴 Bloquea desglose de trabajo real |
-| **Dependencias entre tareas** | ❌ no existe | 🔴 Sin esto no hay Gantt ni ruta crítica |
-| **Múltiples responsables** | ❌ `AssigneeId` es un solo Guid | 🔴 Monday y ClickUp permiten varios |
+| **Prioridad de tarea** | ✅ Fase 4A | con orden de negocio, no alfabético |
+| **Subtareas / jerarquía** | ✅ Fase 4A | un nivel, con progreso agregado al padre |
+| **Dependencias entre tareas** | ✅ Fase 4A | con detección de ciclos; habilita el Gantt de la 4C |
+| **Múltiples responsables** | ✅ Fase 4A | `AssigneeId` se conserva como principal |
 | **Campos personalizados** | ❌ no existe | 🔴 Bloqueante para enterprise; es *la* feature de Monday |
 | **Time tracking** | ❌ sólo `EstimatedHours` | 🔴 Sin registro real de tiempo |
 | **Automatizaciones** | ❌ no existe | 🔴 Feature #1 en comparativas |
 | **Vista Gantt / timeline** | ❌ no existe | 🟠 Esperada en plan de pago |
 | **Vista tabla / hoja de cálculo** | ❌ no existe | 🟠 Es la vista por defecto de Monday |
 | **Vista carga de trabajo** | ❌ no existe | 🟠 Diferenciador de plan alto |
-| **Checklists** | ❌ no existe | 🟠 |
+| **Checklists** | ✅ Fase 4A | con orden explícito del usuario |
 | **Tareas recurrentes** | ❌ no existe | 🟠 |
 | **Formularios de captura** | ❌ no existe | 🟠 Entrada de trabajo desde fuera |
 | **Metas / OKRs** | ❌ no existe | 🟡 |
