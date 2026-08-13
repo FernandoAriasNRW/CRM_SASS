@@ -25,6 +25,24 @@ export interface TaskItem {
   /** Progreso agregado que calcula el servidor; no se guarda en la tarea. */
   subtaskCount?: number;
   completedSubtaskCount?: number;
+  /** Cuántas tareas bloquean a ésta y a cuántas bloquea ella. También los cuenta el servidor. */
+  blockedByCount?: number;
+  blocksCount?: number;
+  /** Todas las personas responsables, la principal primero. `assigneeId` es la principal. */
+  assignees?: string[];
+}
+
+/** Una tarea vista desde el panel de dependencias. */
+export interface TaskDependencyRef {
+  id: string;
+  title: string;
+  status: string;
+  priority: string;
+}
+
+export interface TaskDependencies {
+  bloqueadaPor: TaskDependencyRef[];
+  bloqueaA: TaskDependencyRef[];
 }
 
 /**

@@ -87,6 +87,56 @@ public static class WorkItemsEndpoints
       return result.IsSuccess ? Results.Ok() : Results.BadRequest(result.Error);
     });
 
+    // Responsables. Cambiar el principal sigue haciéndose con el patch de la tarea; esto añade y
+    // quita gente del conjunto, que es otra intención.
+    group.MapPost("/{id:guid}/assignees", async (System.Security.Claims.ClaimsPrincipal principal, Guid id, AddTaskAssigneeCommand command, IMediator mediator) =>
+    {
+      var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
+      var actorId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var _uid) ? _uid : Guid.Empty;
+      var actorRole = principal.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Role)?.Value ?? string.Empty;
+
+      var result = await mediator.Send(new AddTaskAssigneeCommand(tenantId, id, actorId, actorRole, command.UserId));
+      return result.IsSuccess ? Results.Ok() : Results.BadRequest(result.Error);
+    });
+
+    group.MapDelete("/{id:guid}/assignees/{userId:guid}", async (System.Security.Claims.ClaimsPrincipal principal, Guid id, Guid userId, IMediator mediator) =>
+    {
+      var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
+      var actorId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var _uid) ? _uid : Guid.Empty;
+      var actorRole = principal.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Role)?.Value ?? string.Empty;
+
+      var result = await mediator.Send(new RemoveTaskAssigneeCommand(tenantId, id, actorId, actorRole, userId));
+      return result.IsSuccess ? Results.NoContent() : Results.BadRequest(result.Error);
+    });
+
+    // Dependencias: las dos direcciones en una sola respuesta, porque el panel las pinta juntas.
+    group.MapGet("/{id:guid}/dependencies", async (System.Security.Claims.ClaimsPrincipal principal, Guid id, IMediator mediator) =>
+    {
+      var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
+      var result = await mediator.Send(new GetTaskDependenciesQuery(tenantId, id));
+      return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
+    });
+
+    group.MapPost("/{id:guid}/dependencies", async (System.Security.Claims.ClaimsPrincipal principal, Guid id, AddTaskDependencyCommand command, IMediator mediator) =>
+    {
+      var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
+      var actorId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var _uid) ? _uid : Guid.Empty;
+      var actorRole = principal.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Role)?.Value ?? string.Empty;
+
+      var result = await mediator.Send(new AddTaskDependencyCommand(tenantId, id, actorId, actorRole, command.DependsOnTaskId));
+      return result.IsSuccess ? Results.Ok() : Results.BadRequest(result.Error);
+    });
+
+    group.MapDelete("/{id:guid}/dependencies/{dependsOnTaskId:guid}", async (System.Security.Claims.ClaimsPrincipal principal, Guid id, Guid dependsOnTaskId, IMediator mediator) =>
+    {
+      var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
+      var actorId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var _uid) ? _uid : Guid.Empty;
+      var actorRole = principal.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Role)?.Value ?? string.Empty;
+
+      var result = await mediator.Send(new RemoveTaskDependencyCommand(tenantId, id, actorId, actorRole, dependsOnTaskId));
+      return result.IsSuccess ? Results.NoContent() : Results.BadRequest(result.Error);
+    });
+
     group.MapDelete("/{id:guid}", async (System.Security.Claims.ClaimsPrincipal principal, Guid id, IMediator mediator) =>
     {
       var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;

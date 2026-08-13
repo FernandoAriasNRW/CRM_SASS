@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using WorkItems.Infrastructure.Persistence;
 
@@ -12,9 +13,11 @@ using WorkItems.Infrastructure.Persistence;
 namespace WorkItems.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(WorkItemsDbContext))]
-    partial class WorkItemsDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260813001743_AddTaskDependencies")]
+    partial class AddTaskDependencies
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -132,29 +135,6 @@ namespace WorkItems.Infrastructure.Persistence.Migrations
                         .HasDatabaseName("IX_Tasks_TenantId_ParentTaskId");
 
                     b.ToTable("Tasks");
-                });
-
-            modelBuilder.Entity("WorkItems.Domain.Entities.WorkTask", b =>
-                {
-                    b.OwnsMany("WorkItems.Domain.Entities.TaskAssignee", "Assignees", b1 =>
-                        {
-                            b1.Property<Guid>("WorkTaskId")
-                                .HasColumnType("char(36)");
-
-                            b1.Property<Guid>("UserId")
-                                .ValueGeneratedOnAdd()
-                                .HasColumnType("char(36)")
-                                .HasColumnName("UserId");
-
-                            b1.HasKey("WorkTaskId", "UserId");
-
-                            b1.ToTable("TaskAssignees", (string)null);
-
-                            b1.WithOwner()
-                                .HasForeignKey("WorkTaskId");
-                        });
-
-                    b.Navigation("Assignees");
                 });
 #pragma warning restore 612, 618
         }

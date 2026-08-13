@@ -21,6 +21,14 @@ public sealed class GetTasksQueryHandler(ITaskQueries queries)
   }
 }
 
+public sealed class GetTaskDependenciesQueryHandler(ITaskQueries queries)
+    : IQueryHandler<GetTaskDependenciesQuery, TaskDependenciesDto>
+{
+  public async Task<Result<TaskDependenciesDto>> Handle(GetTaskDependenciesQuery request, CancellationToken cancellationToken)
+      => Result<TaskDependenciesDto>.Success(
+          await queries.GetDependenciesAsync(request.TenantId, request.TaskId, cancellationToken));
+}
+
 public sealed class GetTaskByIdQueryHandler(ITaskQueries queries)
     : IQueryHandler<GetTaskByIdQuery, TaskDto?>
 {

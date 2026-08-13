@@ -11,3 +11,11 @@ public sealed record TaskAssignedEvent(Guid TaskId, Guid TenantId, Guid Assignee
 public sealed record TaskPriorityChangedEvent(Guid TaskId, Guid TenantId, Guid ProjectId, string OldPriority, string NewPriority) : DomainEvent;
 
 public sealed record TaskParentChangedEvent(Guid TaskId, Guid TenantId, Guid ProjectId, Guid? OldParentTaskId, Guid? NewParentTaskId) : DomainEvent;
+
+public sealed record TaskDependencyAddedEvent(Guid DependencyId, Guid TenantId, Guid TaskId, Guid DependsOnTaskId) : DomainEvent;
+
+public sealed record TaskDependencyRemovedEvent(Guid DependencyId, Guid TenantId, Guid TaskId, Guid DependsOnTaskId) : DomainEvent;
+
+public sealed record TaskAssigneeAddedEvent(Guid TaskId, Guid TenantId, Guid UserId) : DomainEvent;
+
+public sealed record TaskAssigneeRemovedEvent(Guid TaskId, Guid TenantId, Guid UserId) : DomainEvent;

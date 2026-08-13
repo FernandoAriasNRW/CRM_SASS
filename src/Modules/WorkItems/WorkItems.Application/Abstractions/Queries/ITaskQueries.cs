@@ -22,4 +22,11 @@ public interface ITaskQueries
   Task<PagedResult<TaskDto>> GetByTenantWithPaginationAsync(Guid tenantId, Guid? projectId, Guid? assigneeId, string? status, string? priority, string? filter, Guid? userId, Guid? parentTaskId, bool incluirSubtareas, PaginationRequest pagination, CancellationToken ct = default);
 
   Task<TaskDto?> GetByIdAsync(Guid tenantId, Guid id, CancellationToken ct = default);
+
+  /// <summary>
+  /// Las dependencias de una tarea, en las dos direcciones: las que la bloquean y las que ella
+  /// bloquea. Se devuelven juntas porque la interfaz las muestra juntas y separarlas serían dos
+  /// viajes para pintar un solo panel.
+  /// </summary>
+  Task<TaskDependenciesDto> GetDependenciesAsync(Guid tenantId, Guid taskId, CancellationToken ct = default);
 }
