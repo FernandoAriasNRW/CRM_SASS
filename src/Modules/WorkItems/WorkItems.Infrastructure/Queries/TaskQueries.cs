@@ -158,7 +158,9 @@ public sealed class TaskQueries(WorkItemsDbContext context) : ITaskQueries
                                  && (s.Status.Value == completado || s.Status.Name == completado)),
         context.TaskDependencies.Count(d => d.TenantId == tenantId && d.TaskId == t.Id),
         context.TaskDependencies.Count(d => d.TenantId == tenantId && d.DependsOnTaskId == t.Id),
-        t.Assignees.Select(a => a.UserId).ToList()));
+        t.Assignees.Select(a => a.UserId).ToList(),
+        t.Checklist.Count,
+        t.Checklist.Count(i => i.Hecho)));
   }
 
   public async Task<TaskDependenciesDto> GetDependenciesAsync(Guid tenantId, Guid taskId, CancellationToken ct = default)
@@ -175,6 +177,14 @@ public sealed class TaskQueries(WorkItemsDbContext context) : ITaskQueries
 
     return new TaskDependenciesDto(bloqueadaPor, bloqueaA);
   }
+
+  public async Task<IReadOnlyList<ChecklistItemDto>> GetChecklistAsync(Guid tenantId, Guid taskId, CancellationToken ct = default)
+      => await context.Tasks.AsNoTracking()
+          .Where(t => t.TenantId == tenantId && t.Id == taskId)
+          .SelectMany(t => t.Checklist)
+          .OrderBy(i => i.Posicion)
+          .Select(i => new ChecklistItemDto(i.Id, i.Texto, i.Hecho, i.Posicion))
+          .ToListAsync(ct);
 
   private async Task<IReadOnlyList<TaskDependencyRefDto>> ReferenciasAsync(
       IQueryable<Guid> ids, Guid tenantId, CancellationToken ct)

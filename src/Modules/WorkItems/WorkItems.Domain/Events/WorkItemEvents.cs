@@ -19,3 +19,9 @@ public sealed record TaskDependencyRemovedEvent(Guid DependencyId, Guid TenantId
 public sealed record TaskAssigneeAddedEvent(Guid TaskId, Guid TenantId, Guid UserId) : DomainEvent;
 
 public sealed record TaskAssigneeRemovedEvent(Guid TaskId, Guid TenantId, Guid UserId) : DomainEvent;
+
+public sealed record TaskChecklistItemAddedEvent(Guid TaskId, Guid TenantId, Guid ItemId, string Texto) : DomainEvent;
+
+public sealed record TaskChecklistItemToggledEvent(Guid TaskId, Guid TenantId, Guid ItemId, bool Hecho) : DomainEvent;
+
+public sealed record TaskChecklistItemRemovedEvent(Guid TaskId, Guid TenantId, Guid ItemId) : DomainEvent;

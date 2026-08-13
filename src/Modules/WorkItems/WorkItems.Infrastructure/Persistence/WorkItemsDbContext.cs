@@ -50,6 +50,18 @@ public sealed class WorkItemsDbContext(DbContextOptions<WorkItemsDbContext> opti
       a.HasKey("WorkTaskId", "UserId");
     });
 
+    // La checklist, también propiedad de la tarea. La posición se guarda porque el orden es del
+    // usuario y la colección no vuelve ordenada.
+    modelBuilder.Entity<WorkTask>().OwnsMany(t => t.Checklist, c =>
+    {
+      c.ToTable("TaskChecklistItems");
+      c.WithOwner().HasForeignKey("WorkTaskId");
+      c.HasKey("WorkTaskId", nameof(ChecklistItem.Id));
+      c.Property(x => x.Texto).HasMaxLength(ChecklistItem.LargoMaximo).IsRequired();
+      c.Property(x => x.Hecho).IsRequired();
+      c.Property(x => x.Posicion).IsRequired();
+    });
+
     // La unicidad la garantiza la base y no sólo el handler: dos peticiones simultáneas
     // pasarían las dos la comprobación previa y dejarían la arista duplicada.
     modelBuilder.Entity<TaskDependency>()

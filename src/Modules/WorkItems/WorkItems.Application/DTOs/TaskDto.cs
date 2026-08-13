@@ -34,5 +34,11 @@ public sealed record TaskDto(
     /// Todas las personas responsables, la principal primero. <c>AssigneeId</c> es la principal
     /// y se conserva porque media aplicación lo usa; esta lista es el conjunto completo.
     /// </summary>
-    IReadOnlyList<Guid>? Assignees = null
+    IReadOnlyList<Guid>? Assignees = null,
+    /// <summary>
+    /// Progreso de la checklist. Se cuenta en la consulta, como el de las subtareas: los puntos
+    /// completos se piden aparte cuando hacen falta, que es sólo al abrir el detalle.
+    /// </summary>
+    int ChecklistTotal = 0,
+    int ChecklistDone = 0
 );
