@@ -13,6 +13,12 @@ public sealed class WorkTask : AggregateRoot, ITenantEntity
     public string Description { get; private set; } = string.Empty;
     public TaskStatus Status { get; private set; } = null!;
     public TaskPriority Priority { get; private set; } = null!;
+
+    /// <summary>
+    /// Tarea de la que ésta es subtarea, o <c>null</c> si es de primer nivel.
+    /// </summary>
+    public Guid? ParentTaskId { get; private set; }
+
     public Guid AssigneeId { get; private set; }
     public Guid CreatedById { get; private set; }
     public decimal EstimatedHours { get; private set; }
@@ -30,10 +36,14 @@ public sealed class WorkTask : AggregateRoot, ITenantEntity
         Guid createdById,
         decimal estimatedHours,
         DateOnly dueDate,
-        string? priority = null)
+        string? priority = null,
+        Guid? parentTaskId = null)
     {
         if (priority is not null && !TaskPriority.Existe(priority))
             throw new InvalidOperationException($"La prioridad '{priority}' no existe");
+
+        if (parentTaskId == Guid.Empty)
+            throw new InvalidOperationException("El identificador de la tarea padre no es válido");
 
         var task = new WorkTask
         {
@@ -44,6 +54,7 @@ public sealed class WorkTask : AggregateRoot, ITenantEntity
             Description = description,
             Status = TaskStatus.ToDo,
             Priority = priority is null ? TaskPriority.PorDefecto : TaskPriority.Desde(priority),
+            ParentTaskId = parentTaskId,
             AssigneeId = assigneeId,
             CreatedById = createdById,
             EstimatedHours = estimatedHours,
@@ -95,6 +106,54 @@ public sealed class WorkTask : AggregateRoot, ITenantEntity
         Priority = TaskPriority.Desde(newPriority);
 
         RaiseDomainEvent(new TaskPriorityChangedEvent(Id, TenantId, ProjectId, oldPriority.Value, newPriority));
+    }
+
+    /// <summary>Si esta tarea es subtarea de otra.</summary>
+    public bool EsSubtarea => ParentTaskId.HasValue;
+
+    /// <summary>
+    /// Cuelga esta tarea de otra, o la desliga si se pasa <c>null</c>.
+    ///
+    /// El anidamiento está limitado a **un nivel**: hay tareas y subtareas, y no subtareas de
+    /// subtareas. Es lo que hace que el progreso del padre sea una cuenta y no un recorrido de
+    /// árbol, y evita de raíz los ciclos, porque un padre no puede tener padre.
+    ///
+    /// Aquí sólo se comprueba lo que el agregado puede ver: que una tarea no sea su propio
+    /// padre. Las otras dos reglas —que el padre no sea ya subtarea, y que la tarea que se
+    /// subordina no tenga subtareas propias— necesitan consultar otras filas, así que las
+    /// aplica el handler antes de llamar. Están enumeradas en <see cref="ReglasDeAnidamiento"/>
+    /// para que no se dupliquen a medias.
+    /// </summary>
+    public void Reparent(Guid? parentTaskId)
+    {
+        if (parentTaskId == Id)
+            throw new InvalidOperationException("Una tarea no puede ser subtarea de sí misma");
+
+        if (parentTaskId == Guid.Empty)
+            throw new InvalidOperationException("El identificador de la tarea padre no es válido");
+
+        if (ParentTaskId == parentTaskId)
+            return;
+
+        var anterior = ParentTaskId;
+        ParentTaskId = parentTaskId;
+
+        RaiseDomainEvent(new TaskParentChangedEvent(Id, TenantId, ProjectId, anterior, parentTaskId));
+    }
+
+    /// <summary>
+    /// Las reglas de anidamiento, en un solo sitio y en el lenguaje del dominio, para que el
+    /// handler que las aplica no las reinvente y los mensajes de error sean los mismos.
+    /// </summary>
+    public static class ReglasDeAnidamiento
+    {
+        /// <summary>Niveles admitidos: la tarea y sus subtareas.</summary>
+        public const int ProfundidadMaxima = 2;
+
+        public const string PadreNoExiste = "La tarea padre no existe";
+        public const string PadreEsSubtarea = "Una subtarea no puede tener subtareas: el anidamiento admite un solo nivel";
+        public const string TieneSubtareas = "Una tarea con subtareas no puede convertirse en subtarea de otra";
+        public const string PadreDeOtroProyecto = "La tarea padre pertenece a otro proyecto";
     }
 
     public void Assign(Guid assigneeId)

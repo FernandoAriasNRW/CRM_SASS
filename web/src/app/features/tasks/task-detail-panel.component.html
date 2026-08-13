@@ -156,6 +156,52 @@
 
         <div class="border-t border-border"></div>
 
+        <!-- Subtareas -->
+        <div class="space-y-2">
+          <div class="flex items-center justify-between">
+            <p class="text-xs font-medium text-muted-foreground uppercase tracking-wide" i18n>Subtareas</p>
+            @if (subtareas().length) {
+              <span class="text-xs text-muted-foreground">{{ subtareasCompletadas() }}/{{ subtareas().length }}</span>
+            }
+          </div>
+
+          @if (esSubtarea()) {
+            <!-- El anidamiento admite un solo nivel, así que aquí no se ofrece añadir: sería
+                 pedir algo que el servidor rechaza. -->
+            <p class="text-sm text-muted-foreground" i18n>Esta tarea es una subtarea, y el anidamiento admite un solo nivel.</p>
+          } @else {
+            @if (cargandoSubtareas()) {
+              <app-skeleton class="h-8 w-full" />
+            } @else {
+              <div class="space-y-1">
+                @for (sub of subtareas(); track sub.id) {
+                  <div class="flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-accent/40 transition-colors">
+                    <input type="checkbox" [checked]="estaCompletada(sub)"
+                           (change)="alternarSubtarea(sub)"
+                           [attr.aria-label]="sub.title"
+                           class="h-3.5 w-3.5 rounded border-border accent-primary cursor-pointer" />
+                    <span class="text-sm flex-1 truncate" [class.line-through]="estaCompletada(sub)"
+                          [class.text-muted-foreground]="estaCompletada(sub)">{{ sub.title }}</span>
+                    <ui-badge [variant]="statusBadge(sub.status)" class="text-[10px]">{{ sub.status }}</ui-badge>
+                  </div>
+                }
+              </div>
+
+              <div class="flex items-center gap-2">
+                <input [(ngModel)]="tituloNuevaSubtarea" (keydown.enter)="crearSubtarea()"
+                       i18n-placeholder placeholder="Añadir subtarea y pulsar Enter"
+                       class="flex-1 bg-transparent border border-transparent hover:border-border focus:border-border rounded-md px-2 py-1.5 text-sm outline-none placeholder:text-muted-foreground/50 transition-colors focus:ring-1 focus:ring-ring" />
+                <button (click)="crearSubtarea()" [disabled]="creandoSubtarea() || !tituloNuevaSubtarea.trim()"
+                        class="text-xs text-muted-foreground hover:text-primary disabled:opacity-40 disabled:hover:text-muted-foreground transition-colors px-2 py-1" i18n>
+                  Añadir
+                </button>
+              </div>
+            }
+          }
+        </div>
+
+        <div class="border-t border-border"></div>
+
         <!-- Adjuntos placeholder -->
         <div class="space-y-2">
           <p class="text-xs font-medium text-muted-foreground uppercase tracking-wide" i18n>Adjuntos</p>
