@@ -207,11 +207,80 @@ elegida, no un fallo.
 
 ---
 
+## 6.bis Dónde se dejó la Fase 4 (traspaso del 2026-08-13)
+
+**El bloque 4A está completo** y el 4B a medias. Nada de esto está todavía en `main`.
+
+| Bloque | Estado |
+|---|---|
+| 4.0 migraciones · 4A prioridad · 4A subtareas | ✅ en `main` |
+| 4A dependencias, responsables, checklists, recurrentes | ✅ hecho, **en PRs sin mergear** |
+| 4B campos personalizados | 🟡 backend hecho; **interfaz a medias** |
+| 4C vistas (tabla, Gantt, carga) · 4D automatizaciones | ⬜ sin empezar |
+
+### La cadena de PRs, en este orden
+
+`#13` → `#14` → `#16` → `#17` → rama `fase-4b-campos-personalizados`
+
+Cada uno sale del anterior. **Mergear de abajo arriba**; si se mergea #13, los siguientes se
+pueden reapuntar a `main` desde la interfaz de GitHub con un clic.
+
+- **#13** — dependencias y responsables. Es sólo el merge que faltó al colapsar la pila: el
+  trabajo ya se revisó en #10 y #11.
+- **#14** — checklists. **#16** — tareas recurrentes (cierra el 4A). **#17** — módulo
+  `CustomFields` (backend).
+
+### Lo que queda del 4B
+
+El backend está entero y probado. Falta la interfaz, empezada en la rama:
+
+- ✅ `web/src/app/core/custom-fields.service.ts` y
+  `web/src/app/shared/ui/custom-fields-form.component.*` — el formulario dinámico que pinta
+  cada tipo y guarda campo a campo. Compila; **sin probar contra la API todavía**.
+- ⬜ Colgarlo del panel de detalle de tarea (`task-detail-panel.component.html`).
+- ⬜ Pestaña de administración de definiciones en `features/admin` (el componente ya tiene
+  pestañas: `activeTab` con users/teams/permissions/webhooks).
+- ⬜ Extraer y traducir las cadenas nuevas, y pasar lint y build.
+
+### Cómo se ha trabajado cada campo, y por qué conviene seguir igual
+
+**dominio → migración → API → interfaz → pruebas → verificación contra la API levantada.**
+
+Ese último paso no es ceremonia: destapó **tres defectos** que ninguna prueba veía —el claim
+del tenant, los `IUnitOfWork` que perdían las escrituras, y el orden no garantizado de los
+responsables—. Levantar la aplicación y mirar lo que devuelve de verdad es lo que separa
+«compila y los tests pasan» de «funciona».
+
+Y la lógica que más caro sale equivocar va como **función pura en el dominio**, para poder
+probarla exhaustivamente sin base de datos: `DetectorDeCiclos`, `CalendarioDeRecurrencia` y
+`ValidadorDeValor` son los tres casos.
+
+### Trampas nuevas descubiertas en esta fase
+
+- **`dotnet ef` con `--no-build` engaña.** El snapshot del modelo es código compilado: sin
+  recompilar antes, `has-pending-model-changes` inventa deriva y `database update` dice
+  «Done» sin aplicar nada. Recompilar siempre antes de comprobar o aplicar.
+- **Una colección propiedad de un agregado no vuelve ordenada** de la base. Si el orden
+  importa —la checklist— hay que guardar la posición; si hay un «principal» —los
+  responsables— se identifica por su campo, nunca por la posición.
+- **MySQL no admite `DEFAULT` en `TEXT`** (error 1101): las columnas con valor por defecto
+  necesitan longitud para ser `varchar`.
+- **El lexer de plantillas de Angular no admite `ñ`** en identificadores.
+- **Un módulo nuevo no funciona hasta registrar su ensamblado en MediatR**; si falta, el
+  handler no se encuentra y sale un 409 desconcertante.
+
+---
+
 ## 7. Por dónde seguir
 
-La tarea 4.0 (migraciones) está cerrada, así que el camino está despejado: **el bloque 4A del
-roadmap en su orden** —prioridad → subtareas → dependencias → múltiples responsables—. La
-prioridad es la más simple y establece el patrón para el resto, migración incluida (§1).
+El 4A está cerrado y el 4B a medias (§6.bis). Lo inmediato, por orden:
+
+1. **Bajar la cadena de PRs** (#13 → #14 → #16 → #17). Crece una rama por tanda, y cuanto más
+   larga, más caro sale el merge.
+2. **Terminar la interfaz del 4B**: colgar el formulario dinámico del detalle de tarea y añadir
+   la pestaña de administración de campos.
+3. Después el **4C** —tabla editable, Gantt apoyado en las dependencias, carga de trabajo— y el
+   **4D**, el motor de automatizaciones sobre los domain events que ya se emiten.
 
 El argumento competitivo sigue siendo el de §3 del roadmap: **el helpdesk integrado**
 —`Ticketing` ya existe— es el diferenciador más barato, porque ni ClickUp ni Monday lo
