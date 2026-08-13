@@ -64,6 +64,20 @@
         <span i18n>Permisos de Roles</span>
       </button>
 
+      <!-- Custom Fields Tab -->
+      <button
+        (click)="setTab('custom-fields')"
+        [class.bg-white]="activeTab() === 'custom-fields'"
+        [class.text-foreground]="activeTab() === 'custom-fields'"
+        [class.font-bold]="activeTab() === 'custom-fields'"
+        [class.bg-white/10]="activeTab() !== 'custom-fields'"
+        [class.text-white/80]="activeTab() !== 'custom-fields'"
+        [class.hover:bg-white/20]="activeTab() !== 'custom-fields'"
+        class="px-4 py-2 rounded-xl text-xs font-medium transition-all flex items-center gap-2 shadow-sm shrink-0">
+        <ng-icon name="lucideListPlus" class="w-4 h-4" [class.text-primary]="activeTab() === 'custom-fields'"></ng-icon>
+        <span i18n>Campos Personalizados</span>
+      </button>
+
       <!-- Webhooks Tab -->
       <button 
         (click)="setTab('webhooks')"
@@ -89,6 +103,8 @@
       <app-admin-teams></app-admin-teams>
     } @else if (activeTab() === 'permissions') {
       <app-admin-permissions></app-admin-permissions>
+    } @else if (activeTab() === 'custom-fields') {
+      <app-admin-custom-fields></app-admin-custom-fields>
     } @else if (activeTab() === 'webhooks') {
       <app-webhooks></app-webhooks>
     }

@@ -3,7 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import { lucideLoader2, lucideCircleAlert } from '@ng-icons/lucide';
 import {
-  CustomFieldsService, SEPARADOR_MULTIPLE, type CustomFieldValue,
+  CustomFieldsService, SEPARADOR_MULTIPLE, mensajeDeError, type CustomFieldValue,
 } from '../../core/custom-fields.service';
 import { UsersService } from '../../core/users.service';
 import { SkeletonComponent } from './skeleton.component';
@@ -98,7 +98,7 @@ export class CustomFieldsFormComponent implements OnInit {
         this.guardando.set(null);
         this.errores.update(actuales => ({
           ...actuales,
-          [campo.definitionId]: this.mensajeDelServidor(respuesta),
+          [campo.definitionId]: mensajeDeError(respuesta, $localize`No se pudo guardar el valor`),
         }));
       },
     });
@@ -114,16 +114,6 @@ export class CustomFieldsFormComponent implements OnInit {
       delete copia[definitionId];
       return copia;
     });
-  }
-
-  private mensajeDelServidor(respuesta: unknown): string {
-    const cuerpo = (respuesta as { error?: unknown })?.error;
-
-    if (typeof cuerpo === 'string' && cuerpo.trim()) return cuerpo;
-
-    // El manejador global devuelve ProblemDetails; su `detail` es el mensaje del dominio.
-    const detalle = (cuerpo as { detail?: string } | undefined)?.detail;
-    return detalle?.trim() ? detalle : $localize`No se pudo guardar el valor`;
   }
 
   nombreDeUsuario(id: string | null): string {

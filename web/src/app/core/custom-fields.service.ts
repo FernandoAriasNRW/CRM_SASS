@@ -20,6 +20,23 @@ export const ENTIDADES = [
 /** Separador de la selección múltiple. Lo fija el backend: un salto de línea. */
 export const SEPARADOR_MULTIPLE = '\n';
 
+/**
+ * Saca el mensaje que explica por qué el servidor rechazó algo.
+ *
+ * Los endpoints de campos personalizados devuelven `BadRequest(result.Error)` —una cadena suelta—
+ * y el manejador global de excepciones devuelve `ProblemDetails`. Hay que contemplar los dos: si
+ * sólo se mira uno, la mitad de los rechazos se convierten en el mensaje genérico y se pierde la
+ * explicación del dominio, que es justo lo que hace falta leer.
+ */
+export function mensajeDeError(respuesta: unknown, porDefecto: string): string {
+  const cuerpo = (respuesta as { error?: unknown })?.error;
+
+  if (typeof cuerpo === 'string' && cuerpo.trim()) return cuerpo;
+
+  const detalle = (cuerpo as { detail?: string } | undefined)?.detail;
+  return detalle?.trim() ? detalle : porDefecto;
+}
+
 export interface CustomFieldDefinition {
   id: string;
   nombre: string;

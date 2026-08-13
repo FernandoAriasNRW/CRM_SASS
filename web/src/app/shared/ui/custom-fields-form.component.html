@@ -1,7 +1,11 @@
 @if (cargando()) {
   <app-skeleton class="h-8 w-full" />
 } @else if (campos().length) {
+  <!-- El encabezado va dentro y bajo la misma condición que la lista: un inquilino sin campos
+       definidos no debe ver un título con nada debajo. -->
   <div class="space-y-3">
+    <p class="text-xs font-medium text-muted-foreground uppercase tracking-wide" i18n>Campos personalizados</p>
+
     @for (campo of campos(); track campo.definitionId) {
       <div class="flex items-start gap-3 text-sm">
         <span class="text-muted-foreground w-28 shrink-0 pt-1 truncate" [title]="campo.nombre">

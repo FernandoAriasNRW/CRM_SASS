@@ -203,6 +203,10 @@
 
         </div>
 
+        <!-- Campos personalizados. No pinta nada —ni encabezado ni separador— si el inquilino no
+             ha definido ninguno, así que va sin envoltorio propio. -->
+        <app-custom-fields-form entidad="Tarea" [entityId]="task().id" />
+
         <div class="border-t border-border"></div>
 
         <!-- Descripción -->
