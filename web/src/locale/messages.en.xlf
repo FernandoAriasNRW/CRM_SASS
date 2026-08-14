@@ -3926,6 +3926,62 @@ Pending</target>
           <context context-type="linenumber">105,106</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="405058489481409876" datatype="html">
+        <source>Nada que repartir todavía</source>
+        <target state="final">Nothing to spread yet</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/carga.component.html</context>
+          <context context-type="linenumber">3,4</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="179519344569649488" datatype="html">
+        <source>La carga se calcula con las tareas pendientes que tienen fecha límite.</source>
+        <target state="final">Workload is calculated from pending tasks that have a due date.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/carga.component.html</context>
+          <context context-type="linenumber">4,5</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3926607342166670745" datatype="html">
+        <source>Persona</source>
+        <target state="final">Person</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/carga.component.html</context>
+          <context context-type="linenumber">11,12</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3448462145758383019" datatype="html">
+        <source>Total</source>
+        <target state="final">Total</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/carga.component.html</context>
+          <context context-type="linenumber">17,18</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6803264364971716854" datatype="html">
+        <source> Las horas estimadas se reparten entre los días laborables de cada tarea. Es una estimación, no un registro de dedicación. Una tarea con varios responsables cuenta entera para cada uno. </source>
+        <target state="final"> Estimated hours are spread across each task's working days. It is an estimate, not a record of time spent. A task with several assignees counts in full for each of them. </target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/carga.component.html</context>
+          <context context-type="linenumber">48,50</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="9066396735664877269" datatype="html">
+        <source> Quedan <x id="INTERPOLATION" equiv-text="{{ carga().sinFecha }}" xmlns="urn:oasis:names:tc:xliff:document:1.2" /> tareas pendientes sin fecha límite, que no se reparten en ninguna semana. La carga real es mayor que la de esta tabla. </source>
+        <target state="final"> There are <x id="INTERPOLATION" equiv-text="{{ carga().sinFecha }}"/> pending tasks with no due date, which are not spread across any week. The real workload is higher than this table shows. </target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/carga.component.html</context>
+          <context context-type="linenumber">54,57</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4075705825773516834" datatype="html">
+        <source>Carga</source>
+        <target state="final">Workload</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/tasks.component.html</context>
+          <context context-type="linenumber">46,47</context>
+        </context-group>
+      </trans-unit>
     </body>
   </file>
 </xliff>

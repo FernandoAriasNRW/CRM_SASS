@@ -1,0 +1,58 @@
+@if (!carga().filas.length) {
+  <div class="flex flex-col items-center justify-center gap-2 py-16 text-muted-foreground">
+    <p class="text-sm font-medium text-foreground" i18n>Nada que repartir todavía</p>
+    <p class="text-xs" i18n>La carga se calcula con las tareas pendientes que tienen fecha límite.</p>
+  </div>
+} @else {
+  <div class="border border-border rounded-xl overflow-x-auto bg-white dark:bg-muted">
+    <table class="w-full text-xs">
+      <thead class="bg-muted/50 text-muted-foreground">
+        <tr>
+          <th class="text-left font-medium px-4 py-2 sticky left-0 bg-muted/50" i18n>Persona</th>
+          @for (semana of carga().semanas; track semana) {
+            <th class="text-right font-medium px-3 py-2 whitespace-nowrap">
+              {{ etiquetaDeSemana(semana) }}
+            </th>
+          }
+          <th class="text-right font-medium px-4 py-2" i18n>Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (fila of carga().filas; track fila.personaId) {
+          <tr class="border-t border-border">
+            <td class="px-4 py-2 font-medium text-foreground whitespace-nowrap sticky left-0 bg-white dark:bg-muted">
+              {{ nombreDe(fila.personaId) }}
+            </td>
+            @for (celda of fila.semanas; track celda.semana) {
+              <td class="px-3 py-2 text-right align-middle">
+                @if (celda.horas > 0) {
+                  <!-- La barra se escala contra la celda más alta de la tabla, no contra una
+                       jornada inventada: compara sin afirmar que algo esté sobrecargado. -->
+                  <div class="flex items-center justify-end gap-2">
+                    <div class="h-1.5 rounded-full bg-primary/60" [style.width.%]="proporcion(celda.horas)"></div>
+                    <span class="text-muted-foreground tabular-nums">{{ celda.horas }}</span>
+                  </div>
+                } @else {
+                  <span class="text-muted-foreground/40">·</span>
+                }
+              </td>
+            }
+            <td class="px-4 py-2 text-right font-semibold text-foreground tabular-nums">{{ fila.total }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <p class="mt-2 text-[11px] text-muted-foreground" i18n>
+    Las horas estimadas se reparten entre los días laborables de cada tarea. Es una estimación,
+    no un registro de dedicación. Una tarea con varios responsables cuenta entera para cada uno.
+  </p>
+
+  @if (carga().sinFecha) {
+    <p class="mt-1 text-[11px] text-destructive" i18n>
+      Quedan {{ carga().sinFecha }} tareas pendientes sin fecha límite, que no se reparten en
+      ninguna semana. La carga real es mayor que la de esta tabla.
+    </p>
+  }
+}

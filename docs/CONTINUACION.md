@@ -216,11 +216,28 @@ mergeada y sus ramas borradas.
 |---|---|
 | 4.0 migraciones · 4A completo (prioridad, subtareas, dependencias, responsables, checklists, recurrentes) | ✅ en `main` |
 | 4B campos personalizados | ✅ backend, interfaz, traducciones y pruebas; verificado contra la API levantada |
-| 4C vistas (tabla editable, Gantt, carga de trabajo) | ⬜ sin empezar |
+| 4C vistas (tabla editable, Gantt con dependencias, carga de trabajo) | ✅ completo |
 | 4D motor de automatizaciones | ⬜ sin empezar |
 | Campos calculados | ⬜ fuera del 4B a propósito; ver `TipoDeCampo` |
 
-El 4B vive en la rama `fase-4b-campos-personalizados`, pendiente de mergear a `main`.
+El 4B y el principio del 4C están en `main` (PR #21). El resto del 4C vive en la rama
+`fase-4c-dependencias-y-carga`.
+
+### Qué quedó hecho en el 4C
+
+- **Tabla editable**: la vista de lista edita en la celda el título, el estado, la prioridad,
+  las horas y la fecha límite. Al hacerlo apareció que `PATCH /tasks/{id}` **aceptaba y no
+  guardaba** salvo responsable, estado y prioridad; ver [[defectos-medidos-fase-4a]].
+- **Fecha de inicio** en la tarea, opcional y con sus dos reglas. Sin ella el Gantt no tendría
+  de dónde sacar el principio de una barra, y deducirla habría sido inventar planificación.
+- **Gantt** con barras, hitos para las tareas sin inicio, línea de hoy y **flechas de
+  dependencia**, de puntos cuando el calendario no las respeta. `GET /tasks/dependencies`
+  devuelve el grafo entero para no pedirlo tarea por tarea.
+- **Carga de trabajo** por persona y semana, repartiendo las horas entre los días laborables.
+  Sin línea de capacidad, porque el producto no sabe la jornada de nadie.
+
+Los cálculos de las dos vistas nuevas viven en `gantt.ts` y `carga.ts` como funciones puras:
+equivocarse en una fecha o en un reparto no da error, sólo produce un número plausible.
 
 ### Qué quedó hecho en el 4B
 
@@ -286,15 +303,22 @@ Las tres cuestan horas porque el fallo aparece lejos de la causa:
 
 ## 7. Por dónde seguir
 
-El 4A y el 4B están cerrados (§6.bis). Lo inmediato, por orden:
+El 4A, el 4B y el 4C están cerrados (§6.bis). Lo inmediato, por orden:
 
-1. **Mergear `fase-4b-campos-personalizados`.** Es la única rama viva.
-2. El **4C** —tabla editable, Gantt apoyado en las dependencias que ya existen, y carga de
-   trabajo— y después el **4D**, el motor de automatizaciones sobre los domain events que los
-   módulos ya emiten.
+1. **Mergear `fase-4c-dependencias-y-carga`.** Es la única rama viva.
+2. El **4D**: el motor de automatizaciones sobre los domain events que los módulos ya emiten.
+   Es lo único que falta de la Fase 4.
 3. Los **campos calculados** quedaron fuera del 4B a propósito: necesitan un motor de
    expresiones —analizador, referencias entre campos, detección de ciclos, recálculo— y eso es
    un proyecto en sí mismo, no un tipo más de la lista.
+
+Dos cosas que este trabajo dejó a la vista y siguen sin arreglar, las dos ajenas al 4C:
+
+- **`GET /tasks/{id}/comments` devuelve 404**, y el panel de detalle saca dos avisos de error
+  cada vez que se abre una tarea.
+- **Un fallo levanta dos avisos**: el del interceptor de errores y el del componente. El del
+  interceptor ya trae la explicación del dominio, así que el segundo repite. Arreglarlo bien
+  pide una forma de que una petición pida no avisar, y eso toca `ApiService` entero.
 
 Y sigue pendiente, desde hace varias sesiones y del lado de quien administra la máquina,
 **cambiar la contraseña de MySQL**: `src/Host/ApiHost/appsettings.Development.json` la lleva

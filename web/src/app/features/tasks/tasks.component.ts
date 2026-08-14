@@ -14,9 +14,10 @@ import {
   lucideRefreshCw, lucidePlus, lucideClock,
   lucideList, lucideLayoutDashboard, lucideFilter, lucideSave,
   lucideAlertCircle, lucideArrowUp, lucideMinus, lucideArrowDown, lucideListChecks, lucideUsers, lucideSquareCheck,
-  lucideChartGantt
+  lucideChartGantt, lucideChartColumn
 } from '@ng-icons/lucide';
 import { GanttComponent } from './gantt.component';
+import { CargaComponent } from './carga.component';
 import type { AristaDeDependencia } from './gantt';
 import { DataTableComponent, ColumnDef, TableState, type CellEdit } from '../../shared/ui/data-table/data-table.component';
 import { FilterField } from '../../shared/ui/data-table/advanced-filters.component';
@@ -72,12 +73,12 @@ const ESTADOS = COLUMN_DEFS.map(c => c.key);
 @Component({
   selector: 'app-tasks',
   standalone: true,
-  imports: [ClickableDirective, FormsModule, BadgeComponent, ButtonComponent, NgIconComponent, DragDropModule, TaskCreateModalComponent, TaskDetailPanelComponent, DataTableComponent, SkeletonListComponent, EmptyInlineComponent, GanttComponent],
+  imports: [ClickableDirective, FormsModule, BadgeComponent, ButtonComponent, NgIconComponent, DragDropModule, TaskCreateModalComponent, TaskDetailPanelComponent, DataTableComponent, SkeletonListComponent, EmptyInlineComponent, GanttComponent, CargaComponent],
   viewProviders: [provideIcons({
     lucideRefreshCw, lucidePlus, lucideClock,
     lucideList, lucideLayoutDashboard, lucideFilter, lucideSave,
     lucideAlertCircle, lucideArrowUp, lucideMinus, lucideArrowDown, lucideListChecks, lucideUsers, lucideSquareCheck,
-    lucideChartGantt
+    lucideChartGantt, lucideChartColumn
   })],
   templateUrl: './tasks.component.html',
 })
@@ -92,7 +93,7 @@ export class TasksComponent implements OnInit {
 
   readonly showModal = signal(false);
   readonly selectedTask = signal<TaskItem | null>(null);
-  readonly viewMode = signal<'board' | 'list' | 'gantt'>('board');
+  readonly viewMode = signal<'board' | 'list' | 'gantt' | 'carga'>('board');
 
   /**
    * El grafo de dependencias, para las flechas del Gantt.

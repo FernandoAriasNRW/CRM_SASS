@@ -38,6 +38,13 @@
                 class="flex items-center gap-2 px-4 py-2.5 border-b-2 font-medium text-sm whitespace-nowrap cursor-pointer transition-colors hover:text-foreground">
           <ng-icon name="lucideChartGantt" size="14" /> Gantt
         </button>
+        <button (click)="viewMode.set('carga')"
+                [class.border-primary]="viewMode() === 'carga'"
+                [class.text-primary]="viewMode() === 'carga'"
+                [class.border-transparent]="viewMode() !== 'carga'"
+                class="flex items-center gap-2 px-4 py-2.5 border-b-2 font-medium text-sm whitespace-nowrap cursor-pointer transition-colors hover:text-foreground">
+          <ng-icon name="lucideChartColumn" size="14" /> <span i18n>Carga</span>
+        </button>
       }
 
       <!-- Saved Views Tabs -->
@@ -212,6 +219,11 @@
   <!-- VISTA GANTT -->
   @if (viewMode() === 'gantt') {
     <app-gantt [tareas]="allTasks()" [dependencias]="dependencias()" (abrir)="openDetail($event)" />
+  }
+
+  <!-- VISTA CARGA DE TRABAJO -->
+  @if (viewMode() === 'carga') {
+    <app-carga [tareas]="allTasks()" />
   }
 
   <ng-template #statusTemplate let-item>
