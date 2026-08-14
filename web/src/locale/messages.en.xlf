@@ -3918,6 +3918,14 @@ Pending</target>
           <context context-type="linenumber">84</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="3212486781240915688" datatype="html">
+        <source> Las flechas de puntos señalan dependencias que el calendario no respeta: la tarea que bloquea termina después de que empiece la bloqueada. </source>
+        <target state="final"> Dotted arrows mark dependencies the schedule does not respect: the blocking task finishes after the blocked one is due to start. </target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/gantt.component.html</context>
+          <context context-type="linenumber">105,106</context>
+        </context-group>
+      </trans-unit>
     </body>
   </file>
 </xliff>

@@ -31,7 +31,7 @@
                 class="flex items-center gap-2 px-4 py-2.5 border-b-2 font-medium text-sm whitespace-nowrap cursor-pointer transition-colors hover:text-foreground">
           <ng-icon name="lucideList" size="14" /> Lista
         </button>
-        <button (click)="viewMode.set('gantt')"
+        <button (click)="verGantt()"
                 [class.border-primary]="viewMode() === 'gantt'"
                 [class.text-primary]="viewMode() === 'gantt'"
                 [class.border-transparent]="viewMode() !== 'gantt'"
@@ -211,7 +211,7 @@
 
   <!-- VISTA GANTT -->
   @if (viewMode() === 'gantt') {
-    <app-gantt [tareas]="allTasks()" (abrir)="openDetail($event)" />
+    <app-gantt [tareas]="allTasks()" [dependencias]="dependencias()" (abrir)="openDetail($event)" />
   }
 
   <ng-template #statusTemplate let-item>

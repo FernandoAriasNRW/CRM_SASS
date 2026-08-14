@@ -183,6 +183,12 @@ public sealed class TaskQueries(WorkItemsDbContext context) : ITaskQueries
     return new TaskDependenciesDto(bloqueadaPor, bloqueaA);
   }
 
+  public async Task<IReadOnlyList<TaskDependencyEdgeDto>> GetDependencyGraphAsync(Guid tenantId, CancellationToken ct = default)
+      => await context.TaskDependencies.AsNoTracking()
+          .Where(d => d.TenantId == tenantId)
+          .Select(d => new TaskDependencyEdgeDto(d.TaskId, d.DependsOnTaskId))
+          .ToListAsync(ct);
+
   public async Task<IReadOnlyList<ChecklistItemDto>> GetChecklistAsync(Guid tenantId, Guid taskId, CancellationToken ct = default)
       => await context.Tasks.AsNoTracking()
           .Where(t => t.TenantId == tenantId && t.Id == taskId)

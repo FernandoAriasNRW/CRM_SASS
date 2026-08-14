@@ -30,6 +30,16 @@ public interface ITaskQueries
   /// </summary>
   Task<TaskDependenciesDto> GetDependenciesAsync(Guid tenantId, Guid taskId, CancellationToken ct = default);
 
+  /// <summary>
+  /// Todas las dependencias del inquilino, como aristas sueltas.
+  ///
+  /// El diagrama de Gantt necesita el grafo entero para dibujar las flechas, y pedirlo tarea por
+  /// tarea serían tantas peticiones como filas: con veinticinco tareas en pantalla, veinticinco
+  /// viajes para pintar una vista. Son pocas filas —una dependencia por par de tareas, no un
+  /// registro por evento—, así que caben en una consulta.
+  /// </summary>
+  Task<IReadOnlyList<TaskDependencyEdgeDto>> GetDependencyGraphAsync(Guid tenantId, CancellationToken ct = default);
+
   /// <summary>Los puntos de la checklist de una tarea, ya ordenados por su posición.</summary>
   Task<IReadOnlyList<ChecklistItemDto>> GetChecklistAsync(Guid tenantId, Guid taskId, CancellationToken ct = default);
 }

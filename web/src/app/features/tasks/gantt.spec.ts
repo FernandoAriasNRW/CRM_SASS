@@ -1,4 +1,4 @@
-import { barrasDe, diaDesde, esFinDeSemana, fechaDelDia, hoyComoDia, marcasDelEje, rangoDe } from './gantt';
+import { barrasDe, diaDesde, esFinDeSemana, fechaDelDia, flechasDe, hoyComoDia, marcasDelEje, rangoDe } from './gantt';
 import type { TaskItem } from './task-create-modal.component';
 
 /**
@@ -175,6 +175,72 @@ describe('gantt', () => {
       expect(esFinDeSemana(diaDesde('2026-08-15')!)).toBeTrue();
       expect(esFinDeSemana(diaDesde('2026-08-16')!)).toBeTrue();
       expect(esFinDeSemana(diaDesde('2026-08-17')!)).toBeFalse();
+    });
+  });
+
+  describe('flechasDe', () => {
+    const hoy = diaDesde('2026-08-10')!;
+
+    /** `a` empieza el 18 y vence el 20; `b` empieza el 22 y vence el 24. */
+    const primera = tarea({ id: 'a', dueDate: '2026-08-20', startDate: '2026-08-18' });
+    const segunda = tarea({ id: 'b', dueDate: '2026-08-24', startDate: '2026-08-22' });
+
+    function barras(tareas = [primera, segunda]) {
+      return barrasDe(tareas, rangoDe(tareas, hoy)!);
+    }
+
+    it('une la barra que bloquea con la bloqueada', () => {
+      const [flecha] = flechasDe([{ taskId: 'b', dependsOnTaskId: 'a' }], barras());
+
+      expect(flecha.desdeFila).toBe(0);
+      expect(flecha.hastaFila).toBe(1);
+      expect(flecha.incumplida).toBeFalse();
+    });
+
+    /**
+     * Es lo que un Gantt tiene que gritar: el plan es imposible tal cual está, porque lo que
+     * bloquea todavía no ha terminado cuando lo bloqueado ya tendría que haber empezado.
+     */
+    it('marca como incumplida la que va hacia atrás en el tiempo', () => {
+      const [flecha] = flechasDe([{ taskId: 'a', dependsOnTaskId: 'b' }], barras());
+
+      expect(flecha.incumplida).toBeTrue();
+    });
+
+    it('encadenar justo el día siguiente no se considera incumplido', () => {
+      const antes = tarea({ id: 'a', dueDate: '2026-08-20', startDate: '2026-08-18' });
+      const despues = tarea({ id: 'b', dueDate: '2026-08-25', startDate: '2026-08-21' });
+
+      const [flecha] = flechasDe(
+        [{ taskId: 'b', dependsOnTaskId: 'a' }], barras([antes, despues]));
+
+      expect(flecha.incumplida).toBeFalse();
+    });
+
+    /** Una flecha que sale del diagrama y no llega a nada confunde más que no dibujarla. */
+    it('descarta las que apuntan a una tarea que no se está pintando', () => {
+      const flechas = flechasDe([
+        { taskId: 'b', dependsOnTaskId: 'fantasma' },
+        { taskId: 'fantasma', dependsOnTaskId: 'a' },
+      ], barras());
+
+      expect(flechas).toEqual([]);
+    });
+
+    it('sin dependencias no hay flechas', () => {
+      expect(flechasDe([], barras())).toEqual([]);
+    });
+
+    it('una tarea puede tener varias flechas', () => {
+      const tercera = tarea({ id: 'c', dueDate: '2026-08-28', startDate: '2026-08-26' });
+
+      const flechas = flechasDe([
+        { taskId: 'c', dependsOnTaskId: 'a' },
+        { taskId: 'c', dependsOnTaskId: 'b' },
+      ], barras([primera, segunda, tercera]));
+
+      expect(flechas.length).toBe(2);
+      expect(flechas.map(f => f.hastaFila)).toEqual([2, 2]);
     });
   });
 

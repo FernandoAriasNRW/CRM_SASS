@@ -37,7 +37,7 @@ const json = (cuerpo: unknown, status = 200) => ({
   status, contentType: 'application/json', body: JSON.stringify(cuerpo),
 });
 
-async function entrar(page: Page, tareas: unknown[]) {
+async function entrar(page: Page, tareas: unknown[], dependencias: unknown[] = []) {
   await page.route(/\/api\/v1\/auth\/login/, r => r.fulfill(json(SESION)));
 
   await page.route(/\/api\/v1\//, r => {
@@ -48,6 +48,9 @@ async function entrar(page: Page, tareas: unknown[]) {
     if (/\/notifications/.test(url)) return r.fulfill(json([]));
     if (/\/views\//.test(url)) return r.fulfill(json([]));
     if (/\/custom-fields/.test(url)) return r.fulfill(json([]));
+    // El grafo entero, que es lo que pide el Gantt. Va antes que el listado porque la ruta
+    // `/tasks/dependencies` también casa con el patrón de tareas.
+    if (/\/tasks\/dependencies/.test(url)) return r.fulfill(json(dependencias));
     if (/\/tasks(\?|$)/.test(url)) return r.fulfill(json({ items: tareas, totalCount: tareas.length }));
     return r.fulfill(json({ items: [], totalCount: 0 }));
   });
@@ -94,6 +97,37 @@ test('una tarea bloqueada se marca', async ({ page }) => {
   await entrar(page, [BLOQUEADA]);
 
   await expect(page.getByTitle('La bloquea otra tarea')).toBeVisible();
+});
+
+test('una dependencia entre dos tareas visibles se dibuja', async ({ page }) => {
+  await entrar(page, [CON_BARRA, BLOQUEADA], [
+    { taskId: BLOQUEADA.id, dependsOnTaskId: CON_BARRA.id },
+  ]);
+
+  await expect(page.locator('app-gantt svg path[marker-end]')).toHaveCount(1);
+});
+
+/**
+ * `CON_BARRA` vence el 20 y `BLOQUEADA` empieza el 19: la que bloquea termina después de que
+ * empiece la bloqueada, así que el plan es imposible tal cual está. Es lo que un Gantt tiene
+ * que gritar, no callar.
+ */
+test('una dependencia que el calendario no respeta se marca y se explica', async ({ page }) => {
+  await entrar(page, [CON_BARRA, BLOQUEADA], [
+    { taskId: BLOQUEADA.id, dependsOnTaskId: CON_BARRA.id },
+  ]);
+
+  await expect(page.locator('app-gantt svg path[stroke-dasharray]')).toHaveCount(1);
+  await expect(page.getByText(/dependencias que el calendario no respeta/i)).toBeVisible();
+});
+
+test('sin dependencias no se dibuja ninguna flecha ni se avisa de nada', async ({ page }) => {
+  await entrar(page, [CON_BARRA, HITO], []);
+
+  // Se cuentan las flechas por su punta y no los `svg` sueltos: los iconos de los rombos
+  // también son `svg`, así que contarlos daría siempre más de cero.
+  await expect(page.locator('app-gantt svg path[marker-end]')).toHaveCount(0);
+  await expect(page.getByText(/dependencias que el calendario no respeta/i)).toHaveCount(0);
 });
 
 test('pulsar una tarea abre su detalle', async ({ page }) => {

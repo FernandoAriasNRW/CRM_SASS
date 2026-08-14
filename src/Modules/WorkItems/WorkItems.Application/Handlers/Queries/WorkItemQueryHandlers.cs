@@ -29,6 +29,14 @@ public sealed class GetTaskDependenciesQueryHandler(ITaskQueries queries)
           await queries.GetDependenciesAsync(request.TenantId, request.TaskId, cancellationToken));
 }
 
+public sealed class GetDependencyGraphQueryHandler(ITaskQueries queries)
+    : IQueryHandler<GetDependencyGraphQuery, IReadOnlyList<TaskDependencyEdgeDto>>
+{
+  public async Task<Result<IReadOnlyList<TaskDependencyEdgeDto>>> Handle(GetDependencyGraphQuery request, CancellationToken cancellationToken)
+      => Result<IReadOnlyList<TaskDependencyEdgeDto>>.Success(
+          await queries.GetDependencyGraphAsync(request.TenantId, cancellationToken));
+}
+
 public sealed class GetChecklistQueryHandler(ITaskQueries queries)
     : IQueryHandler<GetChecklistQuery, IReadOnlyList<ChecklistItemDto>>
 {
