@@ -246,7 +246,15 @@ agrupar por ellos.
 
 ## Lo que sigue pendiente de antes
 
-- Los **campos calculados**, dejados fuera del 4B.
-- **`GET /tasks/{id}/comments` devuelve 404** y llena de avisos el panel de detalle.
-- Un fallo levanta **dos avisos duplicados**: el del interceptor y el del componente.
-- **Cambiar la contraseña de MySQL**, del lado de quien administra la máquina.
+Se aborda **antes de empezar el 5A**: son cabos sueltos que ensucian pantallas que la Fase 5 va
+a tocar, y arreglarlos después sería hacerlo dos veces.
+
+- [x] **Un fallo levantaba dos avisos duplicados**: el del interceptor y el del componente.
+  Resuelto con un `HttpContextToken`: la petición que va a explicar su propio error pide no
+  avisar, y el interceptor lo respeta.
+- [ ] **Comentarios**. `GET /tasks/{id}/comments` devuelve 404 porque **no existían**: no hay
+  ninguna entidad de comentario en todo el backend, aunque el panel de detalle lleve su interfaz
+  escrita. Se implementan para tareas, tickets y proyectos.
+- [ ] **Campos calculados**, dejados fuera del 4B.
+
+La contraseña de MySQL **no está pendiente**: es una base de pruebas y así queda anotado.

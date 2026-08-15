@@ -522,7 +522,9 @@ export class TasksComponent implements OnInit {
 
     this.aplicarEnLista(item.id, key, nuevo);
 
-    this.api.patch(`/tasks/${item.id}`, { [key]: nuevo }).subscribe({
+    // `sinAviso`: el error se cuenta abajo con el nombre de la tarea que se revirtió, que es lo
+    // único que el interceptor no puede saber. Sin esto salían los dos avisos.
+    this.api.patch(`/tasks/${item.id}`, { [key]: nuevo }, { sinAviso: true }).subscribe({
       next: () => this.distributeTasksToColumns(),
       error: respuesta => {
         this.aplicarEnLista(item.id, key, anterior);

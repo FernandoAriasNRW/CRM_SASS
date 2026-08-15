@@ -3,6 +3,13 @@ import { Observable } from 'rxjs';
 import { ApiService } from './api.service';
 
 /**
+ * Estas llamadas explican su propio error —junto al campo, o en el formulario que se queda
+ * abierto—, así que el interceptor no debe levantar además su aviso: sería el mismo texto dos
+ * veces para un solo fallo.
+ */
+const SIN_AVISO = { sinAviso: true };
+
+/**
  * Las reglas de automatización.
  *
  * **El vocabulario —disparadores, campos, operadores, acciones— lo sirve el servidor.** No se
@@ -66,19 +73,19 @@ export class AutomationsService {
   }
 
   crear(regla: ReglaEditable): Observable<ReglaDeAutomatizacion> {
-    return this.api.post<ReglaDeAutomatizacion>('/automations', regla);
+    return this.api.post<ReglaDeAutomatizacion>('/automations', regla, SIN_AVISO);
   }
 
   actualizar(id: string, regla: ReglaEditable): Observable<void> {
-    return this.api.put<void>(`/automations/${id}`, regla);
+    return this.api.put<void>(`/automations/${id}`, regla, SIN_AVISO);
   }
 
   /** Apagar y encender tiene su propia llamada: es lo que se hace con prisa. */
   activar(id: string, activa: boolean): Observable<void> {
-    return this.api.put<void>(`/automations/${id}/active`, { activa });
+    return this.api.put<void>(`/automations/${id}/active`, { activa }, SIN_AVISO);
   }
 
   borrar(id: string): Observable<void> {
-    return this.api.delete<void>(`/automations/${id}`);
+    return this.api.delete<void>(`/automations/${id}`, SIN_AVISO);
   }
 }
