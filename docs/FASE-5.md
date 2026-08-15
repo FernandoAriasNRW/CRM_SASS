@@ -138,14 +138,109 @@ consulta que pinta el reporte en pantalla.
 
 ---
 
-## Lo que hay que decidir antes de empezar
+## Decisiones tomadas (2026-08-15)
 
-1. **Alcance del 5A**: ¿el menú completo con archivado, papelera, visibilidad y favoritos —que
-   es trabajo de backend en todos los módulos— o primero el menú con lo que hoy sí se puede
-   filtrar, y esos cuatro conceptos después?
-2. **Orden**: los cuatro bloques son independientes salvo que el 5C depende del 5D para no
-   acabar con dos motores de consulta.
-3. **Gráficas**: crecer los componentes propios o adoptar una librería.
+1. **El menú va completo, con backend.** Archivado, papelera, visibilidad y favoritos se
+   construyen de verdad; nada de entradas que no filtran.
+2. **El orden es 5A → 5D → 5C → 5B.** El dashboard va después de los reportes porque se
+   alimenta de ellos: el dashboard es lo primero que ve quien entra y resume varios reportes;
+   reportes es donde se generan y se crean.
+3. **Gráficas: Apache ECharts** vía `ngx-echarts`. El estudio y el porqué, abajo.
+
+---
+
+## Estudio: qué librería de gráficas
+
+Se compararon las candidatas reales para Angular en 2026: Chart.js (ya está en el proyecto),
+ApexCharts, ECharts, Highcharts, FusionCharts, Vega-Lite y D3.
+
+**Recomendación: Apache ECharts con `ngx-echarts`.** Tres razones, en orden de peso:
+
+1. **Es la única que resuelve bien la exportación desde el servidor.** ECharts renderiza en
+   Node **a SVG sin una sola dependencia nativa**. Chart.js y ApexCharts obligan a `node-canvas`
+   —pila de C/C++, Cairo o Skia— o a un Chrome headless, y eso hay que instalarlo, mantenerlo y
+   vigilarlo en el contenedor de la API. Como la exportación va a ser asíncrona y del servidor,
+   esta diferencia decide por sí sola.
+2. **Cubre lo que un constructor de reportes tiene que ofrecer**: barras apiladas, series
+   temporales, mapas de calor, treemaps, dispersión, embudos. Chart.js se queda corta en cuanto
+   alguien quiere algo más que barras y líneas, y eso pasaría la primera semana.
+3. **Encaja con la versión de Angular del proyecto.** El proyecto va por Angular 21;
+   `ngx-echarts` publicó su v21 y sigue vivo (v22 en junio de 2026). No es una librería que haya
+   que adoptar cruzando los dedos.
+
+**El coste, que hay que asumir a conciencia:** ECharts pesa. Importada entera se come el
+presupuesto de bundle, que ya está pasado (1,51 MB frente a 1,00 MB, §6). **Hay que importarla
+con los módulos justos** —`echarts/core` y los `charts`/`components` que se usen— y eso obliga a
+que el mapa «tipo de gráfica → módulos que carga» esté en un solo sitio.
+
+**La segunda opción, y por qué no gana: Vega-Lite.** Conceptualmente es la que mejor encaja,
+porque una gráfica *es* una especificación JSON, que es justo lo que hay que guardar cuando el
+usuario construye la suya. Pero su integración con Angular es escasa y su runtime interactivo
+pesa más de lo que aporta aquí. Se le toma prestada la idea, que es la parte valiosa:
+
+> **Lo que se guarda no son opciones de ECharts, sino una definición neutra de la gráfica**
+> —origen, filtros, agrupación, medida, forma—. La definición se traduce a opciones de ECharts
+> para pintarla en el navegador, y **la misma definición** la usa el servidor para exportarla.
+> Guardar opciones de ECharts ataría todos los reportes guardados a la librería: cambiarla algún
+> día invalidaría el trabajo de los usuarios, no sólo el nuestro.
+
+Chart.js se queda mientras tanto: los dos componentes que ya existen siguen funcionando y no hay
+por qué reescribirlos el primer día.
+
+---
+
+## Exportación: asíncrona, del servidor, y avisando
+
+Como pediste:
+
+1. El usuario pide la exportación y **recupera el control inmediatamente**; no se queda mirando
+   una barra.
+2. El trabajo se encola con su estado (`Pendiente`, `Generando`, `Lista`, `Fallida`).
+3. Al terminar, **se le avisa**. El aviso viene activado de serie y **se puede desactivar como
+   cualquier otro**, desde las preferencias de notificaciones que ya existen.
+4. Si sigue en la pantalla, el aviso es en la propia aplicación; si no, por los canales que ya
+   tenga configurados.
+
+**Lo que hay que cuidar, porque es donde estas cosas se pudren:** un trabajo que falla tiene que
+decir **por qué** y quedar visible, no desaparecer. Una exportación que se queda en «generando»
+para siempre es peor que un error, porque nadie sabe si esperar.
+
+---
+
+## Estudio: qué reportes y qué widgets de serie
+
+**El criterio: sólo se ofrece de serie lo que los datos de hoy pueden responder.** Un widget de
+serie que sale vacío para todo el mundo enseña que el producto no sabe de qué habla.
+
+Con lo que hay hoy (tickets, tareas con prioridad, responsables, fechas, horas, dependencias y
+checklists; proyectos; documentos):
+
+| Reporte de serie | Widget que alimenta |
+|---|---|
+| Tickets por estado y antigüedad | Embudo de estados |
+| Tickets abiertos por responsable | Barras horizontales |
+| Tiempo medio hasta la resolución | Serie temporal con la media móvil |
+| Tareas por estado y proyecto | Barras apiladas |
+| Carga por persona y semana | La tabla que ya hace el 4C |
+| Cumplimiento de fechas límite | Porcentaje a tiempo frente a tarde |
+| Tareas bloqueadas | Contador con la lista detrás |
+| Documentos creados por mes | Serie temporal |
+
+**Tu ejemplo —«tickets para el área de diseño, front o back»— no se puede hacer hoy**, y merece
+la pena decirlo claro: **no hay un campo de área en los tickets**. Hay tres caminos y el tercero
+es el bueno:
+
+1. Añadir un campo fijo `Area` a los tickets. Rápido, y equivocado: cada cliente tiene sus áreas.
+2. Reutilizar las etiquetas. Existen, pero una etiqueta no es una dimensión: nada impide poner
+   tres áreas a un mismo ticket, y entonces los totales no suman.
+3. **Usar los campos personalizados del 4B como dimensión de análisis.** El cliente define un
+   campo «Área» de tipo selección con sus valores, y el constructor de reportes lo ofrece como
+   agrupación igual que el estado o la prioridad.
+
+El tercero es, además, **el diferencial**: agrupar por un campo que el propio cliente definió es
+justo lo que ni ClickUp ni Monday hacen bien. Obliga a dos cosas: extender los campos
+personalizados a tickets —hoy son de tareas y proyectos— y que el motor de consulta sepa
+agrupar por ellos.
 
 ---
 
