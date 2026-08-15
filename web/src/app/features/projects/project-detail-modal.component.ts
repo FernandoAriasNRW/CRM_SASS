@@ -8,11 +8,12 @@ import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import { lucideLoader2, lucideTrash2, lucideEdit3, lucideX } from '@ng-icons/lucide';
 
 import { DrawerComponent } from '../../shared/ui/drawer.component';
+import { ComentariosComponent } from '../../shared/ui/comentarios.component';
 
 @Component({
   selector: 'app-project-detail-modal',
   standalone: true,
-  imports: [FormsModule, NgIconComponent, DrawerComponent],
+  imports: [ComentariosComponent, FormsModule, NgIconComponent, DrawerComponent],
   viewProviders: [provideIcons({ lucideLoader2, lucideTrash2, lucideEdit3, lucideX })],
   templateUrl: './project-detail-modal.component.html',
 })

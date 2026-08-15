@@ -34,6 +34,12 @@
           <p class="text-sm text-foreground leading-relaxed">{{ project().description || 'Sin descripción ingresada.' }}</p>
         </div>
 
+        <!-- El mismo hilo que tareas y tickets: comentar es la misma operación en los tres. -->
+        <div class="p-4 rounded-xl border border-border bg-card space-y-2">
+          <h4 class="text-xs font-semibold text-muted-foreground uppercase tracking-wider" i18n>Comentarios</h4>
+          <app-comentarios entidad="Proyecto" [entityId]="project().id" />
+        </div>
+
         <div class="grid grid-cols-2 gap-4">
           <div class="p-3.5 rounded-xl border border-border bg-card">
             <p class="text-xs font-medium text-muted-foreground mb-1" i18n>Fecha de Inicio</p>

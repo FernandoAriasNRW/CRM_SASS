@@ -66,6 +66,7 @@
     <ProjectReference Include="..\..\Modules\Tags\Tags.Presentation\Tags.Presentation.csproj" />
     <ProjectReference Include="..\..\Modules\CustomFields\CustomFields.Presentation\CustomFields.Presentation.csproj" />
     <ProjectReference Include="..\..\Modules\Automations\Automations.Presentation\Automations.Presentation.csproj" />
+    <ProjectReference Include="..\..\Modules\Comments\Comments.Presentation\Comments.Presentation.csproj" />
     <ProjectReference Include="..\..\Modules\Docs\Docs.Presentation\Docs.Presentation.csproj" />
     <ProjectReference Include="..\..\Modules\Docs\Docs.Infrastructure\Docs.Infrastructure.csproj" />
     <ProjectReference Include="..\..\Modules\Docs\Docs.Application\Docs.Application.csproj" />
