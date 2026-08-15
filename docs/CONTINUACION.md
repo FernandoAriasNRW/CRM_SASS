@@ -217,7 +217,7 @@ mergeada y sus ramas borradas.
 | 4.0 migraciones · 4A completo (prioridad, subtareas, dependencias, responsables, checklists, recurrentes) | ✅ en `main` |
 | 4B campos personalizados | ✅ backend, interfaz, traducciones y pruebas; verificado contra la API levantada |
 | 4C vistas (tabla editable, Gantt con dependencias, carga de trabajo) | ✅ completo |
-| 4D motor de automatizaciones | ⬜ sin empezar |
+| 4D motor de automatizaciones | ✅ completo |
 | Campos calculados | ⬜ fuera del 4B a propósito; ver `TipoDeCampo` |
 
 El 4B y el principio del 4C están en `main` (PR #21). El resto del 4C vive en la rama
@@ -238,6 +238,25 @@ El 4B y el principio del 4C están en `main` (PR #21). El resto del 4C vive en l
 
 Los cálculos de las dos vistas nuevas viven en `gantt.ts` y `carga.ts` como funciones puras:
 equivocarse en una fecha o en un reparto no da error, sólo produce un número plausible.
+
+### Qué quedó hecho en el 4D
+
+Módulo `Automations` nuevo: reglas de «cuando pasa X, si se cumple Y, haz Z» sobre los eventos
+de dominio que WorkItems ya emitía, con su pantalla en administración.
+
+- **Las acciones de una regla no disparan otras reglas.** Encadenarlas exige detectar ciclos y
+  un presupuesto de profundidad; prometerlo a medias sería peor, porque la cascada funcionaría
+  casi siempre y un día se comería la base. Lo garantiza una marca en el flujo asíncrono.
+- **El vocabulario —disparadores, campos, operadores, acciones— lo sirve el servidor**, y la
+  pantalla construye el formulario con él. Una copia en el cliente se desincronizaría el día que
+  se añada un disparador.
+- El módulo no conoce a WorkItems ni al revés. Quien traduce el evento a un disparo, y la acción
+  de vuelta a un comando, es el host: `ApiHost/Services/PuenteDeAutomatizaciones.cs`.
+
+**Y destapó dos defectos silenciosos anteriores**, los dos arreglados: el UnitOfWork de
+WorkItems no recibía el repartidor de eventos —es un parámetro opcional de la clase base— así
+que `SaveChangesAndDispatchAsync` guardaba sin repartir, y ningún contrato ofrecía ese método.
+El efecto colateral es que **el aviso al tablero por SignalR no se había ejecutado nunca**.
 
 ### Qué quedó hecho en el 4B
 
@@ -303,12 +322,11 @@ Las tres cuestan horas porque el fallo aparece lejos de la causa:
 
 ## 7. Por dónde seguir
 
-El 4A, el 4B y el 4C están cerrados (§6.bis). Lo inmediato, por orden:
+**La Fase 4 está completa**: 4A, 4B, 4C y 4D (§6.bis). Lo inmediato, por orden:
 
-1. **Mergear `fase-4c-dependencias-y-carga`.** Es la única rama viva.
-2. El **4D**: el motor de automatizaciones sobre los domain events que los módulos ya emiten.
-   Es lo único que falta de la Fase 4.
-3. Los **campos calculados** quedaron fuera del 4B a propósito: necesitan un motor de
+1. **Mergear `fase-4c-dependencias-y-carga`.** Es la única rama viva, y lleva el resto del 4C
+   y todo el 4D.
+2. Los **campos calculados** quedaron fuera del 4B a propósito: necesitan un motor de
    expresiones —analizador, referencias entre campos, detección de ciclos, recálculo— y eso es
    un proyecto en sí mismo, no un tipo más de la lista.
 
