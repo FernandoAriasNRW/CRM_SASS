@@ -48,6 +48,27 @@
           }
         </div>
 
+        <!-- Las flechas van por encima del fondo y por debajo de las barras, y no interceptan el
+             ratón: si lo hicieran, taparían las barras que cruzan y no se podrían pulsar. -->
+        @if (flechas().length) {
+          <svg class="absolute left-0 top-10 pointer-events-none overflow-visible"
+               [attr.width]="anchoTotal()" [attr.height]="altoTotal()" aria-hidden="true">
+            <defs>
+              <marker id="gantt-punta" viewBox="0 0 6 6" refX="5" refY="3"
+                      markerWidth="5" markerHeight="5" orient="auto">
+                <path d="M 0 0 L 6 3 L 0 6 z" fill="currentColor" />
+              </marker>
+            </defs>
+            @for (flecha of flechas(); track $index) {
+              <path [attr.d]="trazadoDe(flecha)" fill="none" stroke="currentColor" stroke-width="1.5"
+                    marker-end="url(#gantt-punta)"
+                    [class.text-destructive]="flecha.incumplida"
+                    [class.text-muted-foreground]="!flecha.incumplida"
+                    [attr.stroke-dasharray]="flecha.incumplida ? '4 2' : null" />
+            }
+          </svg>
+        }
+
         @for (barra of barras(); track barra.tarea.id) {
           <div class="h-9 border-b border-border/50 relative">
             @if (barra.esHito) {
@@ -79,4 +100,10 @@
     Las tareas sin fecha de inicio se marcan con un rombo en su fecha límite. Las que no tienen
     fecha límite no aparecen.
   </p>
+  @if (hayIncumplidas()) {
+    <p class="mt-1 text-[11px] text-destructive" i18n>
+      Las flechas de puntos señalan dependencias que el calendario no respeta: la tarea que
+      bloquea termina después de que empiece la bloqueada.
+    </p>
+  }
 }

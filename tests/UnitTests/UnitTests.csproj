@@ -25,6 +25,12 @@
     <!-- CustomFields -->
     <ProjectReference Include="..\..\src\Modules\CustomFields\CustomFields.Domain\CustomFields.Domain.csproj" />
 
+    <!-- Automations -->
+    <ProjectReference Include="..\..\src\Modules\Automations\Automations.Domain\Automations.Domain.csproj" />
+
+    <!-- Comments -->
+    <ProjectReference Include="..\..\src\Modules\Comments\Comments.Domain\Comments.Domain.csproj" />
+
     <!-- Identity -->
     <ProjectReference Include="..\..\src\Modules\Identity\Identity.Infrastructure\Identity.Infrastructure.csproj" />
     <ProjectReference Include="..\..\src\Modules\Identity\Identity.Application\Identity.Application.csproj" />

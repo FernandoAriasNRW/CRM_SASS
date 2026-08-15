@@ -14,9 +14,11 @@ import {
   lucideRefreshCw, lucidePlus, lucideClock,
   lucideList, lucideLayoutDashboard, lucideFilter, lucideSave,
   lucideAlertCircle, lucideArrowUp, lucideMinus, lucideArrowDown, lucideListChecks, lucideUsers, lucideSquareCheck,
-  lucideChartGantt
+  lucideChartGantt, lucideChartColumn
 } from '@ng-icons/lucide';
 import { GanttComponent } from './gantt.component';
+import { CargaComponent } from './carga.component';
+import type { AristaDeDependencia } from './gantt';
 import { DataTableComponent, ColumnDef, TableState, type CellEdit } from '../../shared/ui/data-table/data-table.component';
 import { FilterField } from '../../shared/ui/data-table/advanced-filters.component';
 import { ViewsService, SavedView } from '../../shared/services/views.service';
@@ -71,12 +73,12 @@ const ESTADOS = COLUMN_DEFS.map(c => c.key);
 @Component({
   selector: 'app-tasks',
   standalone: true,
-  imports: [ClickableDirective, FormsModule, BadgeComponent, ButtonComponent, NgIconComponent, DragDropModule, TaskCreateModalComponent, TaskDetailPanelComponent, DataTableComponent, SkeletonListComponent, EmptyInlineComponent, GanttComponent],
+  imports: [ClickableDirective, FormsModule, BadgeComponent, ButtonComponent, NgIconComponent, DragDropModule, TaskCreateModalComponent, TaskDetailPanelComponent, DataTableComponent, SkeletonListComponent, EmptyInlineComponent, GanttComponent, CargaComponent],
   viewProviders: [provideIcons({
     lucideRefreshCw, lucidePlus, lucideClock,
     lucideList, lucideLayoutDashboard, lucideFilter, lucideSave,
     lucideAlertCircle, lucideArrowUp, lucideMinus, lucideArrowDown, lucideListChecks, lucideUsers, lucideSquareCheck,
-    lucideChartGantt
+    lucideChartGantt, lucideChartColumn
   })],
   templateUrl: './tasks.component.html',
 })
@@ -91,7 +93,16 @@ export class TasksComponent implements OnInit {
 
   readonly showModal = signal(false);
   readonly selectedTask = signal<TaskItem | null>(null);
-  readonly viewMode = signal<'board' | 'list' | 'gantt'>('board');
+  readonly viewMode = signal<'board' | 'list' | 'gantt' | 'carga'>('board');
+
+  /**
+   * El grafo de dependencias, para las flechas del Gantt.
+   *
+   * Se pide una sola vez y sólo al abrir el Gantt: es la única vista que lo necesita, y traerlo
+   * con cada carga de tareas sería un viaje de más en el tablero y en la lista.
+   */
+  readonly dependencias = signal<AristaDeDependencia[]>([]);
+  private dependenciasPedidas = false;
   readonly isLoading = signal(false);
 
   // Table State
@@ -511,7 +522,9 @@ export class TasksComponent implements OnInit {
 
     this.aplicarEnLista(item.id, key, nuevo);
 
-    this.api.patch(`/tasks/${item.id}`, { [key]: nuevo }).subscribe({
+    // `sinAviso`: el error se cuenta abajo con el nombre de la tarea que se revirtió, que es lo
+    // único que el interceptor no puede saber. Sin esto salían los dos avisos.
+    this.api.patch(`/tasks/${item.id}`, { [key]: nuevo }, { sinAviso: true }).subscribe({
       next: () => this.distributeTasksToColumns(),
       error: respuesta => {
         this.aplicarEnLista(item.id, key, anterior);
@@ -519,6 +532,24 @@ export class TasksComponent implements OnInit {
           $localize`«${item.title}» se queda como estaba`,
           mensajeDeError(respuesta, $localize`No se pudo guardar el cambio.`));
       },
+    });
+  }
+
+  /**
+   * Abre el Gantt y, la primera vez, trae el grafo de dependencias.
+   *
+   * Si falla, el diagrama se pinta sin flechas en lugar de no pintarse: las barras siguen
+   * diciendo la verdad, y quedarse sin vista por no poder dibujar un adorno sería peor.
+   */
+  verGantt(): void {
+    this.viewMode.set('gantt');
+
+    if (this.dependenciasPedidas) return;
+    this.dependenciasPedidas = true;
+
+    this.api.get<AristaDeDependencia[]>('/tasks/dependencies').subscribe({
+      next: aristas => this.dependencias.set(aristas ?? []),
+      error: () => this.dependenciasPedidas = false,
     });
   }
 

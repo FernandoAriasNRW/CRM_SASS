@@ -3918,6 +3918,518 @@ Pending</target>
           <context context-type="linenumber">84</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="3212486781240915688" datatype="html">
+        <source> Las flechas de puntos señalan dependencias que el calendario no respeta: la tarea que bloquea termina después de que empiece la bloqueada. </source>
+        <target state="final"> Dotted arrows mark dependencies the schedule does not respect: the blocking task finishes after the blocked one is due to start. </target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/gantt.component.html</context>
+          <context context-type="linenumber">105,106</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="405058489481409876" datatype="html">
+        <source>Nada que repartir todavía</source>
+        <target state="final">Nothing to spread yet</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/carga.component.html</context>
+          <context context-type="linenumber">3,4</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="179519344569649488" datatype="html">
+        <source>La carga se calcula con las tareas pendientes que tienen fecha límite.</source>
+        <target state="final">Workload is calculated from pending tasks that have a due date.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/carga.component.html</context>
+          <context context-type="linenumber">4,5</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3926607342166670745" datatype="html">
+        <source>Persona</source>
+        <target state="final">Person</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/carga.component.html</context>
+          <context context-type="linenumber">11,12</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3448462145758383019" datatype="html">
+        <source>Total</source>
+        <target state="final">Total</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/carga.component.html</context>
+          <context context-type="linenumber">17,18</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6803264364971716854" datatype="html">
+        <source> Las horas estimadas se reparten entre los días laborables de cada tarea. Es una estimación, no un registro de dedicación. Una tarea con varios responsables cuenta entera para cada uno. </source>
+        <target state="final"> Estimated hours are spread across each task's working days. It is an estimate, not a record of time spent. A task with several assignees counts in full for each of them. </target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/carga.component.html</context>
+          <context context-type="linenumber">48,50</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="9066396735664877269" datatype="html">
+        <source> Quedan <x id="INTERPOLATION" equiv-text="{{ carga().sinFecha }}" xmlns="urn:oasis:names:tc:xliff:document:1.2" /> tareas pendientes sin fecha límite, que no se reparten en ninguna semana. La carga real es mayor que la de esta tabla. </source>
+        <target state="final"> There are <x id="INTERPOLATION" equiv-text="{{ carga().sinFecha }}"/> pending tasks with no due date, which are not spread across any week. The real workload is higher than this table shows. </target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/carga.component.html</context>
+          <context context-type="linenumber">54,57</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4075705825773516834" datatype="html">
+        <source>Carga</source>
+        <target state="final">Workload</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/tasks.component.html</context>
+          <context context-type="linenumber">46,47</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3103278054352846255" datatype="html">
+        <source>Automatizaciones</source>
+        <target state="final">Automations</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/admin.component.html</context>
+          <context context-type="linenumber">92,93</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/automations/admin-automations.component.html</context>
+          <context context-type="linenumber">8,9</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3042219212701445442" datatype="html">
+        <source>Cuando pasa algo en una tarea, si se cumplen unas condiciones, se hace algo</source>
+        <target state="final">When something happens to a task, if some conditions hold, something is done</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/automations/admin-automations.component.html</context>
+          <context context-type="linenumber">10,11</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5875053375078987204" datatype="html">
+        <source>Nueva automatización</source>
+        <target state="final">New automation</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/automations/admin-automations.component.html</context>
+          <context context-type="linenumber">23,24</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/automations/admin-automations.component.html</context>
+          <context context-type="linenumber">40</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2310097780560667387" datatype="html">
+        <source>Editar automatización</source>
+        <target state="final">Edit automation</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/automations/admin-automations.component.html</context>
+          <context context-type="linenumber">40,41</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4354236923042658325" datatype="html">
+        <source>Bajar la prioridad al cerrar</source>
+        <target state="final">Lower the priority when closed</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/automations/admin-automations.component.html</context>
+          <context context-type="linenumber">52,53</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6545666942028559135" datatype="html">
+        <source>Cuándo</source>
+        <target state="final">When</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/automations/admin-automations.component.html</context>
+          <context context-type="linenumber">57,58</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/automations/admin-automations.component.html</context>
+          <context context-type="linenumber">177,178</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="750207282045382603" datatype="html">
+        <source>Si se cumple</source>
+        <target state="final">If</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/automations/admin-automations.component.html</context>
+          <context context-type="linenumber">70,71</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="601530771007916182" datatype="html">
+        <source> + Condición </source>
+        <target state="final"> + Condition </target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/automations/admin-automations.component.html</context>
+          <context context-type="linenumber">73</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3091116587054558784" datatype="html">
+        <source>Campo</source>
+        <target state="final">Field</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/automations/admin-automations.component.html</context>
+          <context context-type="linenumber">80</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3609181211862917042" datatype="html">
+        <source>Operador</source>
+        <target state="final">Operator</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/automations/admin-automations.component.html</context>
+          <context context-type="linenumber">86,87</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7592093689512428097" datatype="html">
+        <source>Valor de la condición</source>
+        <target state="final">Condition value</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/automations/admin-automations.component.html</context>
+          <context context-type="linenumber">94,95</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5750460975227561192" datatype="html">
+        <source>sin valor</source>
+        <target state="final">no value</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/automations/admin-automations.component.html</context>
+          <context context-type="linenumber">99,100</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2571742215664338286" datatype="html">
+        <source>Quitar la condición</source>
+        <target state="final">Remove the condition</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/automations/admin-automations.component.html</context>
+          <context context-type="linenumber">102,103</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1819419220863675279" datatype="html">
+        <source> Sin condiciones, la automatización se ejecuta siempre que ocurra lo de arriba. </source>
+        <target state="final"> With no conditions, the automation runs whenever the trigger above happens. </target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/automations/admin-automations.component.html</context>
+          <context context-type="linenumber">109</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2518935827467552036" datatype="html">
+        <source>Entonces</source>
+        <target state="final">Then</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/automations/admin-automations.component.html</context>
+          <context context-type="linenumber">117,118</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5020823087067829802" datatype="html">
+        <source> + Acción </source>
+        <target state="final"> + Action </target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/automations/admin-automations.component.html</context>
+          <context context-type="linenumber">120</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1279538815662451526" datatype="html">
+        <source>Acción</source>
+        <target state="final">Action</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/automations/admin-automations.component.html</context>
+          <context context-type="linenumber">127</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3361948102687459668" datatype="html">
+        <source>Valor de la acción</source>
+        <target state="final">Action value</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/automations/admin-automations.component.html</context>
+          <context context-type="linenumber">133,134</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1220433010861880386" datatype="html">
+        <source>Quitar la acción</source>
+        <target state="final">Remove the action</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/automations/admin-automations.component.html</context>
+          <context context-type="linenumber">136,137</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4728826052931709709" datatype="html">
+        <source> Las acciones se aplican sobre la misma tarea que disparó la automatización, y no disparan otras automatizaciones. </source>
+        <target state="final"> Actions apply to the same task that triggered the automation, and do not trigger other automations. </target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/automations/admin-automations.component.html</context>
+          <context context-type="linenumber">145,146</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5418150855302403712" datatype="html">
+        <source>Qué hace</source>
+        <target state="final">What it does</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/automations/admin-automations.component.html</context>
+          <context context-type="linenumber">178,179</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3993907080011898077" datatype="html">
+        <source>Ejecuciones</source>
+        <target state="final">Runs</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/automations/admin-automations.component.html</context>
+          <context context-type="linenumber">179,180</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2574317389745045302" datatype="html">
+        <source>Activa</source>
+        <target state="final">Active</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/automations/admin-automations.component.html</context>
+          <context context-type="linenumber">180,181</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7534538458854608789" datatype="html">
+        <source>¿Borrar la automatización?</source>
+        <target state="final">Delete the automation?</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/automations/admin-automations.component.html</context>
+          <context context-type="linenumber">209,210</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5950220469251238899" datatype="html">
+        <source>Editar la automatización</source>
+        <target state="final">Edit the automation</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/automations/admin-automations.component.html</context>
+          <context context-type="linenumber">221,222</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1302457464274932964" datatype="html">
+        <source>Borrar la automatización</source>
+        <target state="final">Delete the automation</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/automations/admin-automations.component.html</context>
+          <context context-type="linenumber">225,226</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="9034618490306851299" datatype="html">
+        <source>Todavía no hay automatizaciones.</source>
+        <target state="final">No automations yet.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/automations/admin-automations.component.html</context>
+          <context context-type="linenumber">238,241</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3798283703556221545" datatype="html">
+        <source>No se pudo cargar el vocabulario de automatizaciones</source>
+        <target state="final">The automation vocabulary could not be loaded</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/automations/admin-automations.component.ts</context>
+          <context context-type="linenumber">71</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1006256907618065889" datatype="html">
+        <source>No se pudieron cargar las automatizaciones</source>
+        <target state="final">The automations could not be loaded</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/automations/admin-automations.component.ts</context>
+          <context context-type="linenumber">87</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6090036071054045597" datatype="html">
+        <source>La automatización necesita un nombre</source>
+        <target state="final">The automation needs a name</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/automations/admin-automations.component.ts</context>
+          <context context-type="linenumber">157</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8326018324196237073" datatype="html">
+        <source>El nombre no puede pasar de <x id="PH" equiv-text="LARGO_MAXIMO_DEL_NOMBRE" xmlns="urn:oasis:names:tc:xliff:document:1.2" /> caracteres</source>
+        <target state="final">The name cannot be longer than <x id="PH" equiv-text="LARGO_MAXIMO_DEL_NOMBRE"/> characters</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/automations/admin-automations.component.ts</context>
+          <context context-type="linenumber">159</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3360995117769632602" datatype="html">
+        <source>Hay que elegir cuándo se dispara</source>
+        <target state="final">You have to choose when it triggers</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/automations/admin-automations.component.ts</context>
+          <context context-type="linenumber">162</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4012726759774036765" datatype="html">
+        <source>La automatización necesita al menos una acción</source>
+        <target state="final">The automation needs at least one action</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/automations/admin-automations.component.ts</context>
+          <context context-type="linenumber">165</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3185422376806713779" datatype="html">
+        <source>Cada acción necesita un valor</source>
+        <target state="final">Every action needs a value</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/automations/admin-automations.component.ts</context>
+          <context context-type="linenumber">167</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8556614770875217969" datatype="html">
+        <source>Cada condición necesita un valor con el que comparar</source>
+        <target state="final">Every condition needs a value to compare against</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/automations/admin-automations.component.ts</context>
+          <context context-type="linenumber">171</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3592510368186663129" datatype="html">
+        <source>No se pudo guardar la automatización</source>
+        <target state="final">The automation could not be saved</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/automations/admin-automations.component.ts</context>
+          <context context-type="linenumber">210</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8703350911586713060" datatype="html">
+        <source>No se pudo cambiar el estado de la automatización</source>
+        <target state="final">The automation could not be switched on or off</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/automations/admin-automations.component.ts</context>
+          <context context-type="linenumber">229</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5152884039671205829" datatype="html">
+        <source>No se pudo borrar la automatización</source>
+        <target state="final">The automation could not be deleted</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/automations/admin-automations.component.ts</context>
+          <context context-type="linenumber">250</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2138383669327533175" datatype="html">
+        <source>Cargando comentarios…</source>
+        <target state="final">Loading commentsâ€¦</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/comentarios.component.html</context>
+          <context context-type="linenumber">5,6</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3681249319418283982" datatype="html">
+        <source>Todavía no hay comentarios.</source>
+        <target state="final">No comments yet.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/comentarios.component.html</context>
+          <context context-type="linenumber">7,9</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4508087241791878023" datatype="html">
+        <source>Respondiendo a un comentario</source>
+        <target state="final">Replying to a comment</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/comentarios.component.html</context>
+          <context context-type="linenumber">32,33</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="486025792742582932" datatype="html">
+        <source>Escribe un comentario… (Ctrl+Enter para enviar)</source>
+        <target state="final">Write a commentâ€¦ (Ctrl+Enter to send)</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/comentarios.component.html</context>
+          <context context-type="linenumber">42,43</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5851258101851884859" datatype="html">
+        <source>Nuevo comentario</source>
+        <target state="final">New comment</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/comentarios.component.html</context>
+          <context context-type="linenumber">43,44</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4076669920287250203" datatype="html">
+        <source>Publicar el comentario</source>
+        <target state="final">Post the comment</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/comentarios.component.html</context>
+          <context context-type="linenumber">47,48</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8602416935724150170" datatype="html">
+        <source>(editado)</source>
+        <target state="final">(edited)</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/comentarios.component.html</context>
+          <context context-type="linenumber">69,70</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6664390424027781479" datatype="html">
+        <source>Editar el comentario</source>
+        <target state="final">Edit the comment</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/comentarios.component.html</context>
+          <context context-type="linenumber">75,76</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/comentarios.component.html</context>
+          <context context-type="linenumber">94,95</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2003310705431718470" datatype="html">
+        <source> Responder </source>
+        <target state="final"> Reply </target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/comentarios.component.html</context>
+          <context context-type="linenumber">89</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3929206053338750869" datatype="html">
+        <source>¿Borrarlo?</source>
+        <target state="final">Delete it?</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/comentarios.component.html</context>
+          <context context-type="linenumber">102,103</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7971534499227239033" datatype="html">
+        <source>Borrar el comentario</source>
+        <target state="final">Delete the comment</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/comentarios.component.html</context>
+          <context context-type="linenumber">106,107</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="805776766358169009" datatype="html">
+        <source>Alguien del equipo</source>
+        <target state="final">Someone on the team</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/comentarios.component.ts</context>
+          <context context-type="linenumber">69</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7851991137235053103" datatype="html">
+        <source>No se pudieron cargar los comentarios</source>
+        <target state="final">The comments could not be loaded</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/comentarios.component.ts</context>
+          <context context-type="linenumber">92</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7022624237856598323" datatype="html">
+        <source>No se pudo publicar el comentario</source>
+        <target state="final">The comment could not be posted</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/comentarios.component.ts</context>
+          <context context-type="linenumber">120</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5578848177483459918" datatype="html">
+        <source>No se pudo guardar el comentario</source>
+        <target state="final">The comment could not be saved</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/comentarios.component.ts</context>
+          <context context-type="linenumber">146</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4680015701743909049" datatype="html">
+        <source>No se pudo borrar el comentario</source>
+        <target state="final">The comment could not be deleted</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/comentarios.component.ts</context>
+          <context context-type="linenumber">160</context>
+        </context-group>
+      </trans-unit>
     </body>
   </file>
 </xliff>

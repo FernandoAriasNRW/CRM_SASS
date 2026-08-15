@@ -78,6 +78,20 @@
         <span i18n>Campos Personalizados</span>
       </button>
 
+      <!-- Automations Tab -->
+      <button
+        (click)="setTab('automations')"
+        [class.bg-white]="activeTab() === 'automations'"
+        [class.text-foreground]="activeTab() === 'automations'"
+        [class.font-bold]="activeTab() === 'automations'"
+        [class.bg-white/10]="activeTab() !== 'automations'"
+        [class.text-white/80]="activeTab() !== 'automations'"
+        [class.hover:bg-white/20]="activeTab() !== 'automations'"
+        class="px-4 py-2 rounded-xl text-xs font-medium transition-all flex items-center gap-2 shadow-sm shrink-0">
+        <ng-icon name="lucideZap" class="w-4 h-4" [class.text-primary]="activeTab() === 'automations'"></ng-icon>
+        <span i18n>Automatizaciones</span>
+      </button>
+
       <!-- Webhooks Tab -->
       <button 
         (click)="setTab('webhooks')"
@@ -105,6 +119,8 @@
       <app-admin-permissions></app-admin-permissions>
     } @else if (activeTab() === 'custom-fields') {
       <app-admin-custom-fields></app-admin-custom-fields>
+    } @else if (activeTab() === 'automations') {
+      <app-admin-automations></app-admin-automations>
     } @else if (activeTab() === 'webhooks') {
       <app-webhooks></app-webhooks>
     }

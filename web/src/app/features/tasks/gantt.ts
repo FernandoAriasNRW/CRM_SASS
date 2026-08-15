@@ -148,6 +148,67 @@ export function marcasDelEje(rango: Rango): { dia: Dia; etiqueta: string }[] {
   return marcas;
 }
 
+/** Una dependencia: `taskId` está bloqueada por `dependsOnTaskId`. */
+export interface AristaDeDependencia {
+  taskId: string;
+  dependsOnTaskId: string;
+}
+
+/**
+ * Una flecha ya resuelta a coordenadas de la rejilla, en «días» y «filas».
+ *
+ * Las coordenadas van en unidades del diagrama y no en píxeles: la plantilla multiplica por el
+ * ancho de día y el alto de fila, así que cambiar el zoom no obliga a tocar estos cálculos.
+ */
+export interface Flecha {
+  desdeDia: number;
+  desdeFila: number;
+  hastaDia: number;
+  hastaFila: number;
+  /**
+   * La dependencia se incumple: la tarea que bloquea termina después de que empiece la
+   * bloqueada. Es lo que un Gantt tiene que gritar, porque el plan es imposible tal cual está.
+   */
+  incumplida: boolean;
+}
+
+/**
+ * Convierte las dependencias en flechas entre barras.
+ *
+ * Sólo se dibujan las que unen dos barras visibles: una flecha que sale del diagrama y no llega
+ * a ninguna parte confunde más que la falta de flecha. Y sólo hacia adelante en el tiempo —lo
+ * demás lo marca `incumplida`—, porque el sentido es «esto antes que esto otro».
+ */
+export function flechasDe(
+  aristas: readonly AristaDeDependencia[],
+  barras: readonly Barra[],
+): Flecha[] {
+  const porTarea = new Map<string, { barra: Barra; fila: number }>();
+  barras.forEach((barra, fila) => porTarea.set(barra.tarea.id, { barra, fila }));
+
+  const flechas: Flecha[] = [];
+
+  for (const arista of aristas) {
+    const bloqueada = porTarea.get(arista.taskId);
+    const bloqueante = porTarea.get(arista.dependsOnTaskId);
+
+    if (!bloqueada || !bloqueante) continue;
+
+    const finDelBloqueante = bloqueante.barra.desplazamiento + bloqueante.barra.duracion;
+    const inicioDeLaBloqueada = bloqueada.barra.desplazamiento;
+
+    flechas.push({
+      desdeDia: finDelBloqueante,
+      desdeFila: bloqueante.fila,
+      hastaDia: inicioDeLaBloqueada,
+      hastaFila: bloqueada.fila,
+      incumplida: finDelBloqueante > inicioDeLaBloqueada,
+    });
+  }
+
+  return flechas;
+}
+
 /** Si un día cae en sábado o domingo, para sombrearlo. */
 export function esFinDeSemana(dia: Dia): boolean {
   const diaDeLaSemana = fechaDelDia(dia).getUTCDay();

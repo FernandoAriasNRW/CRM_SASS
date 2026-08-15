@@ -97,7 +97,11 @@ public class WorkItemsTests
         result.Value!.Title.Value.Should().Be("New Task");
 
         await _repositoryMock.Received(1).AddAsync(Arg.Any<WorkTask>(), Arg.Any<CancellationToken>());
-        await _unitOfWorkMock.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
+
+        // El alta guarda **repartiendo los eventos en proceso**, y no sólo al outbox: de ahí
+        // salen los disparos de las automatizaciones y el aviso al tablero. Comprobar el método
+        // concreto no es puntillismo: con el otro, la tarea se guarda igual y nada de eso ocurre.
+        await _unitOfWorkMock.Received(1).SaveChangesAndDispatchAsync(Arg.Any<CancellationToken>());
     }
 
     #endregion

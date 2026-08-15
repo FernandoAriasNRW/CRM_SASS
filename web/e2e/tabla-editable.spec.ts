@@ -168,6 +168,24 @@ test('si el servidor rechaza, la celda vuelve a lo que había y dice por qué', 
 });
 
 /**
+ * Un fallo, un aviso. El interceptor de errores levanta el suyo por cada petición fallida, y
+ * esta pantalla levanta el suyo con el nombre de la tarea que se revirtió: el mismo texto salía
+ * dos veces. Ahora la petición se reserva explicarlo y el interceptor se calla.
+ */
+test('un solo fallo levanta un solo aviso', async ({ page }) => {
+  await entrar(page, {
+    patch: { status: 400, cuerpo: 'Las horas estimadas no pueden ser negativas' },
+  });
+  await irALaLista(page);
+
+  await page.getByRole('button', { name: 'Editar Hours' }).click();
+  await page.getByLabel('Hours', { exact: true }).fill('-5');
+  await page.getByLabel('Hours', { exact: true }).press('Tab');
+
+  await expect(page.getByText('Las horas estimadas no pueden ser negativas')).toHaveCount(1);
+});
+
+/**
  * El aviso tiene que traer la explicación del dominio, no la cadena de Angular «Http failure
  * response for http://localhost:8080/…», que enseña la dirección interna de la API y no dice
  * nada que quien la lee pueda usar.

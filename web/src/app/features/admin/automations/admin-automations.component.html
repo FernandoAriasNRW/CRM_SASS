@@ -1,0 +1,241 @@
+<div class="space-y-6">
+
+  <!-- Cabecera -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+      <h2 class="text-xl font-bold text-foreground dark:text-white tracking-tight flex items-center gap-2">
+        <ng-icon name="lucideZap" class="w-5 h-5 text-primary"></ng-icon>
+        <span i18n>Automatizaciones</span>
+      </h2>
+      <p class="text-xs text-muted-foreground" i18n>Cuando pasa algo en una tarea, si se cumplen unas condiciones, se hace algo</p>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <button (click)="cargar()"
+              class="px-3 py-1.5 border border-border rounded-lg text-xs font-medium text-muted-foreground hover:bg-muted transition-colors flex items-center gap-1.5">
+        <ng-icon name="lucideRefreshCw" class="w-3.5 h-3.5"></ng-icon>
+        <span i18n>Actualizar</span>
+      </button>
+
+      <button (click)="nueva()" [disabled]="esNueva()"
+              class="px-3.5 py-1.5 bg-primary hover:bg-primary text-white rounded-lg text-xs font-semibold shadow-sm transition-colors flex items-center gap-1.5 disabled:opacity-50">
+        <ng-icon name="lucidePlus" class="w-3.5 h-3.5"></ng-icon>
+        <span i18n>Nueva automatización</span>
+      </button>
+    </div>
+  </div>
+
+  @if (error()) {
+    <div class="p-3 bg-destructive-subtle dark:bg-destructive-subtle/40 border border-destructive rounded-xl text-xs text-destructive-subtle-fg flex items-start gap-2" role="alert">
+      <ng-icon name="lucideCircleAlert" class="w-3.5 h-3.5 mt-0.5 shrink-0"></ng-icon>
+      {{ error() }}
+    </div>
+  }
+
+  <!-- Formulario -->
+  @if (editando() !== null) {
+    <div class="border border-border rounded-2xl p-5 bg-white dark:bg-muted shadow-sm space-y-4">
+      <div class="flex items-center justify-between">
+        <h3 class="text-sm font-bold text-foreground">
+          @if (esNueva()) { <span i18n>Nueva automatización</span> } @else { <span i18n>Editar automatización</span> }
+        </h3>
+        <button (click)="cerrarFormulario()" i18n-aria-label aria-label="Cerrar el formulario"
+                class="text-muted-foreground hover:text-foreground transition-colors">
+          <ng-icon name="lucideX" class="w-4 h-4"></ng-icon>
+        </button>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <label class="space-y-1 block">
+          <span class="text-xs font-medium text-muted-foreground" i18n>Nombre</span>
+          <input type="text" [(ngModel)]="nombre" [maxlength]="largoMaximoDelNombre"
+                 i18n-placeholder placeholder="Bajar la prioridad al cerrar"
+                 class="w-full px-3 py-1.5 text-xs bg-white dark:bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-1 focus:ring-primary" />
+        </label>
+
+        <label class="space-y-1 block">
+          <span class="text-xs font-medium text-muted-foreground" i18n>Cuándo</span>
+          <select [(ngModel)]="disparador"
+                  class="w-full px-3 py-1.5 text-xs bg-white dark:bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-1 focus:ring-primary">
+            @for (opcion of vocabulario().disparadores; track opcion) {
+              <option [value]="opcion">{{ opcion }}</option>
+            }
+          </select>
+        </label>
+      </div>
+
+      <!-- Condiciones -->
+      <div class="space-y-2">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-medium text-muted-foreground" i18n>Si se cumple</span>
+          <button (click)="agregarCondicion()"
+                  class="text-xs text-muted-foreground hover:text-primary transition-colors" i18n>
+            + Condición
+          </button>
+        </div>
+
+        @for (condicion of condiciones; track $index) {
+          <div class="flex items-center gap-2">
+            <select [(ngModel)]="condicion.campo" i18n-aria-label aria-label="Campo"
+                    class="px-2 py-1.5 text-xs bg-white dark:bg-background border border-border rounded-lg">
+              @for (campo of vocabulario().campos; track campo) {
+                <option [value]="campo">{{ campo }}</option>
+              }
+            </select>
+
+            <select [(ngModel)]="condicion.operador" i18n-aria-label aria-label="Operador"
+                    class="px-2 py-1.5 text-xs bg-white dark:bg-background border border-border rounded-lg">
+              @for (operador of vocabulario().operadores; track operador) {
+                <option [value]="operador">{{ operador }}</option>
+              }
+            </select>
+
+            @if (necesitaValor(condicion)) {
+              <input type="text" [(ngModel)]="condicion.valor" i18n-aria-label aria-label="Valor de la condición"
+                     class="flex-1 px-2 py-1.5 text-xs bg-white dark:bg-background border border-border rounded-lg" />
+            } @else {
+              <!-- «Está vacío» no compara contra nada, así que no se pide un valor que se iba
+                   a descartar. -->
+              <span class="flex-1 text-xs text-muted-foreground" i18n>sin valor</span>
+            }
+
+            <button (click)="quitarCondicion($index)" i18n-aria-label aria-label="Quitar la condición"
+                    class="text-muted-foreground hover:text-destructive transition-colors">
+              <ng-icon name="lucideX" class="w-3.5 h-3.5"></ng-icon>
+            </button>
+          </div>
+        } @empty {
+          <p class="text-[11px] text-muted-foreground" i18n>
+            Sin condiciones, la automatización se ejecuta siempre que ocurra lo de arriba.
+          </p>
+        }
+      </div>
+
+      <!-- Acciones -->
+      <div class="space-y-2">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-medium text-muted-foreground" i18n>Entonces</span>
+          <button (click)="agregarAccion()"
+                  class="text-xs text-muted-foreground hover:text-primary transition-colors" i18n>
+            + Acción
+          </button>
+        </div>
+
+        @for (accion of acciones; track $index) {
+          <div class="flex items-center gap-2">
+            <select [(ngModel)]="accion.tipo" i18n-aria-label aria-label="Acción"
+                    class="px-2 py-1.5 text-xs bg-white dark:bg-background border border-border rounded-lg">
+              @for (tipo of vocabulario().acciones; track tipo) {
+                <option [value]="tipo">{{ tipo }}</option>
+              }
+            </select>
+
+            <input type="text" [(ngModel)]="accion.valor" i18n-aria-label aria-label="Valor de la acción"
+                   class="flex-1 px-2 py-1.5 text-xs bg-white dark:bg-background border border-border rounded-lg" />
+
+            <button (click)="quitarAccion($index)" i18n-aria-label aria-label="Quitar la acción"
+                    class="text-muted-foreground hover:text-destructive transition-colors">
+              <ng-icon name="lucideX" class="w-3.5 h-3.5"></ng-icon>
+            </button>
+          </div>
+        }
+      </div>
+
+      <p class="text-[11px] text-muted-foreground" i18n>
+        Las acciones se aplican sobre la misma tarea que disparó la automatización, y no disparan
+        otras automatizaciones.
+      </p>
+
+      <div class="flex items-center justify-end gap-2">
+        @if (impedimento; as motivo) {
+          <span class="text-xs text-muted-foreground mr-auto">{{ motivo }}</span>
+        }
+        <button (click)="cerrarFormulario()"
+                class="px-3 py-1.5 border border-border rounded-lg text-xs font-medium text-muted-foreground hover:bg-muted transition-colors" i18n>
+          Cancelar
+        </button>
+        <button (click)="guardar()" [disabled]="!!impedimento || guardando()"
+                class="px-3.5 py-1.5 bg-primary text-white rounded-lg text-xs font-semibold shadow-sm transition-colors flex items-center gap-1.5 disabled:opacity-50">
+          @if (guardando()) {
+            <ng-icon name="lucideLoader2" class="w-3.5 h-3.5 animate-spin"></ng-icon>
+          }
+          <span i18n>Guardar</span>
+        </button>
+      </div>
+    </div>
+  }
+
+  <!-- Las reglas -->
+  @if (cargando()) {
+    <p class="text-xs text-muted-foreground" i18n>Cargando…</p>
+  } @else if (reglas().length) {
+    <div class="border border-border rounded-2xl overflow-hidden">
+      <table class="w-full text-xs">
+        <thead class="bg-muted/50 text-muted-foreground">
+          <tr>
+            <th class="text-left font-medium px-4 py-2" i18n>Nombre</th>
+            <th class="text-left font-medium px-4 py-2" i18n>Cuándo</th>
+            <th class="text-left font-medium px-4 py-2" i18n>Qué hace</th>
+            <th class="text-right font-medium px-4 py-2" i18n>Ejecuciones</th>
+            <th class="text-left font-medium px-4 py-2" i18n>Activa</th>
+            <th class="px-4 py-2"><span class="sr-only" i18n>Acciones</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (regla of reglas(); track regla.id) {
+            <tr class="border-t border-border">
+              <td class="px-4 py-2 font-medium text-foreground">{{ regla.nombre }}</td>
+              <td class="px-4 py-2 text-muted-foreground">{{ regla.disparador }}</td>
+              <td class="px-4 py-2 text-muted-foreground max-w-md truncate" [title]="resumenDe(regla)">
+                {{ resumenDe(regla) }}
+              </td>
+              <!-- Es lo primero que se mira cuando alguien dice que una regla no funciona:
+                   separa «no salta» de «salta y hace otra cosa». -->
+              <td class="px-4 py-2 text-right text-muted-foreground tabular-nums">{{ regla.vecesEjecutada }}</td>
+              <td class="px-4 py-2">
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" [checked]="regla.activa" (change)="alternarActiva(regla)"
+                         [attr.aria-label]="regla.nombre" class="rounded border-border" />
+                  @if (regla.activa) {
+                    <span class="text-[11px] text-muted-foreground" i18n>Sí</span>
+                  } @else {
+                    <span class="text-[11px] text-muted-foreground" i18n>No</span>
+                  }
+                </label>
+              </td>
+              <td class="px-4 py-2">
+                @if (borrando() === regla.id) {
+                  <div class="flex items-center justify-end gap-2">
+                    <span class="text-destructive" i18n>¿Borrar la automatización?</span>
+                    <button (click)="borrar(regla)" [disabled]="guardando()"
+                            class="px-2 py-1 rounded-lg bg-destructive text-white font-semibold disabled:opacity-50" i18n>
+                      Borrar
+                    </button>
+                    <button (click)="borrando.set(null)"
+                            class="px-2 py-1 rounded-lg border border-border text-muted-foreground" i18n>
+                      Cancelar
+                    </button>
+                  </div>
+                } @else {
+                  <div class="flex items-center justify-end gap-2">
+                    <button (click)="editar(regla)" i18n-aria-label aria-label="Editar la automatización"
+                            class="text-muted-foreground hover:text-primary transition-colors">
+                      <ng-icon name="lucideEdit3" class="w-3.5 h-3.5"></ng-icon>
+                    </button>
+                    <button (click)="borrando.set(regla.id)" i18n-aria-label aria-label="Borrar la automatización"
+                            class="text-muted-foreground hover:text-destructive transition-colors">
+                      <ng-icon name="lucideTrash2" class="w-3.5 h-3.5"></ng-icon>
+                    </button>
+                  </div>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  } @else {
+    <p class="text-xs text-muted-foreground" i18n>Todavía no hay automatizaciones.</p>
+  }
+
+</div>
