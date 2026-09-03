@@ -4,16 +4,19 @@ using CustomFields.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
 
-namespace CustomFields.Infrastructure.Migrations
+namespace CustomFields.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(CustomFieldsDbContext))]
-    partial class CustomFieldsDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260903195104_AddFormulaToCustomField")]
+    partial class AddFormulaToCustomField
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

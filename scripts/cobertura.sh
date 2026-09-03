@@ -11,7 +11,7 @@
 # Uso:  scripts/cobertura.sh [umbral]     (por defecto, el de UMBRAL_POR_DEFECTO)
 set -euo pipefail
 
-UMBRAL_POR_DEFECTO=68
+UMBRAL_POR_DEFECTO=70
 
 # Un segundo umbral, sobre ramas, y no por afán de rigor: la cobertura de líneas
 # está inflada por construcción. La capa Presentation pesa el 22 % de las líneas
@@ -29,7 +29,7 @@ UMBRAL_POR_DEFECTO=68
 # cambio pequeño no ponga el build rojo sin motivo, y se suben conforme se gana terreno. Si no
 # se suben nunca, dejan de proteger nada. Medido hoy: 70,8 % de líneas y 58,3 % de ramas
 # (se partió de 68,8 y 55,3).
-UMBRAL_RAMAS_POR_DEFECTO=57
+UMBRAL_RAMAS_POR_DEFECTO=64
 
 # En los runners de CI el intérprete es `python3`; en Git Bash sobre Windows sólo
 # existe `python`. Y no basta con que el nombre exista: Windows trae un alias

@@ -71,6 +71,35 @@
                 }
               </select>
             }
+            @case ('Formula') {
+              <!-- Un campo calculado no se rellena: se lee. No hay editor a propósito, porque
+                   el servidor rechaza cualquier intento de escribirlo y ofrecer una casilla
+                   que siempre falla sería una trampa. -->
+              <div class="flex items-baseline gap-2 px-2 py-1">
+                @if (campo.error) {
+                  <!-- La fórmula está rota: divide entre cero, o usa un campo que ya no
+                       existe. Es distinto de que falten datos y se dice de otra forma, porque
+                       lo que hay que hacer también es distinto: arreglar la fórmula, no
+                       rellenar una casilla. -->
+                  <span class="flex items-start gap-1 text-xs text-destructive" role="alert">
+                    <ng-icon name="lucideCircleAlert" size="12" class="mt-0.5 shrink-0" />
+                    {{ campo.error }}
+                  </span>
+                } @else if (campo.valor) {
+                  <span class="font-medium tabular-nums">{{ campo.valor }}</span>
+                } @else {
+                  <!-- Sin valor porque falta rellenar algo de lo que depende. Se dice, en vez
+                       de enseñar un cero: un total en cero se lee como un dato. -->
+                  <span class="text-xs text-muted-foreground" i18n>Faltan datos para calcularlo</span>
+                }
+
+                @if (campo.formula) {
+                  <code class="text-[11px] text-muted-foreground truncate" [title]="campo.formula">
+                    {{ campo.formula }}
+                  </code>
+                }
+              </div>
+            }
             @default {
               <!-- Un tipo que el backend conoce y esta versión del frontend no. Se muestra el
                    valor en crudo en lugar de esconder el campo: es preferible enseñarlo sin

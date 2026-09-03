@@ -1,8 +1,8 @@
-<?xml version="1.0" encoding="UTF-8" ?>
-<xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
+<?xml version='1.0' encoding='utf-8'?>
+<xliff xmlns="urn:oasis:names:tc:xliff:document:1.2" version="1.2">
   <file source-language="es" target-language="en" datatype="plaintext" original="ng2.template">
     <body>
-<trans-unit id="4785173853922515848" datatype="html">
+      <trans-unit id="4785173853922515848" datatype="html">
         <source>Mi Workspace</source>
         <target state="final">My Workspace</target>
         <context-group purpose="location">
@@ -10,7 +10,7 @@
           <context context-type="linenumber">24,25</context>
         </context-group>
       </trans-unit>
-<trans-unit id="4785173853922515848" datatype="html">
+      <trans-unit id="4785173853922515848" datatype="html">
         <source>Mi Workspace</source>
         <target state="final">My Workspace</target>
         <context-group purpose="location">
@@ -18,7 +18,7 @@
           <context context-type="linenumber">24,25</context>
         </context-group>
       </trans-unit>
-<trans-unit id="4785173853922515848" datatype="html">
+      <trans-unit id="4785173853922515848" datatype="html">
         <source>Mi Workspace</source>
         <target state="final">My Workspace</target>
         <context-group purpose="location">
@@ -26,7 +26,7 @@
           <context context-type="linenumber">24,25</context>
         </context-group>
       </trans-unit>
-<trans-unit id="4785173853922515848" datatype="html">
+      <trans-unit id="4785173853922515848" datatype="html">
         <source>Mi Workspace</source>
         <target state="final">My Workspace</target>
         <context-group purpose="location">
@@ -34,7 +34,7 @@
           <context context-type="linenumber">24,25</context>
         </context-group>
       </trans-unit>
-<trans-unit id="4785173853922515848" datatype="html">
+      <trans-unit id="4785173853922515848" datatype="html">
         <source>Mi Workspace</source>
         <target state="final">My Workspace</target>
         <context-group purpose="location">
@@ -42,7 +42,7 @@
           <context context-type="linenumber">24,25</context>
         </context-group>
       </trans-unit>
-<trans-unit id="4785173853922515848" datatype="html">
+      <trans-unit id="4785173853922515848" datatype="html">
         <source>Mi Workspace</source>
         <target state="final">My Workspace</target>
         <context-group purpose="location">
@@ -2387,8 +2387,10 @@
         </context-group>
       </trans-unit>
       <trans-unit id="5908808893708879362" datatype="html">
-        <source> Próxima: <x id="INTERPOLATION" equiv-text="{{ r.proximaOcurrencia }}"/> </source>
-        <target state="final"> Next: <x id="INTERPOLATION" equiv-text="{{ r.proximaOcurrencia }}"/> </target>
+        <source> Próxima: <x id="INTERPOLATION" equiv-text="{{ r.proximaOcurrencia }}" />
+        </source>
+        <target state="final"> Next: <x id="INTERPOLATION" equiv-text="{{ r.proximaOcurrencia }}" />
+        </target>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tasks/task-detail-panel.component.html</context>
           <context context-type="linenumber">101,102</context>
@@ -2871,32 +2873,38 @@
         </context-group>
       </trans-unit>
       <trans-unit id="8121921990776935406" datatype="html">
-        <source><x id="PH" equiv-text="task.checklistDone ?? 0"/> de <x id="PH_1" equiv-text="task.checklistTotal"/> puntos hechos</source>
-        <target state="final"><x id="PH" equiv-text="task.checklistDone ?? 0"/> of <x id="PH_1" equiv-text="task.checklistTotal"/> items done</target>
+        <source>
+          <x id="PH" equiv-text="task.checklistDone ?? 0" /> de <x id="PH_1" equiv-text="task.checklistTotal" /> puntos hechos</source>
+        <target state="final">
+          <x id="PH" equiv-text="task.checklistDone ?? 0" /> of <x id="PH_1" equiv-text="task.checklistTotal" /> items done</target>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tasks/tasks.component.ts</context>
           <context context-type="linenumber">139</context>
         </context-group>
       </trans-unit>
       <trans-unit id="3963746112432770684" datatype="html">
-        <source><x id="PH" equiv-text="task.assignees?.length ?? 0"/> personas responsables</source>
-        <target state="final"><x id="PH" equiv-text="task.assignees?.length ?? 0"/> people assigned</target>
+        <source>
+          <x id="PH" equiv-text="task.assignees?.length ?? 0" /> personas responsables</source>
+        <target state="final">
+          <x id="PH" equiv-text="task.assignees?.length ?? 0" /> people assigned</target>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tasks/tasks.component.ts</context>
           <context context-type="linenumber">144</context>
         </context-group>
       </trans-unit>
       <trans-unit id="171937729494075993" datatype="html">
-        <source>Bloqueada por <x id="PH" equiv-text="task.blockedByCount"/> tarea(s)</source>
-        <target state="final">Blocked by <x id="PH" equiv-text="task.blockedByCount"/> task(s)</target>
+        <source>Bloqueada por <x id="PH" equiv-text="task.blockedByCount" /> tarea(s)</source>
+        <target state="final">Blocked by <x id="PH" equiv-text="task.blockedByCount" /> task(s)</target>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tasks/tasks.component.ts</context>
           <context context-type="linenumber">149</context>
         </context-group>
       </trans-unit>
       <trans-unit id="2435365218649977532" datatype="html">
-        <source><x id="PH" equiv-text="task.completedSubtaskCount ?? 0"/> de <x id="PH_1" equiv-text="task.subtaskCount"/> subtareas completadas</source>
-        <target state="final"><x id="PH" equiv-text="task.completedSubtaskCount ?? 0"/> of <x id="PH_1" equiv-text="task.subtaskCount"/> subtasks completed</target>
+        <source>
+          <x id="PH" equiv-text="task.completedSubtaskCount ?? 0" /> de <x id="PH_1" equiv-text="task.subtaskCount" /> subtareas completadas</source>
+        <target state="final">
+          <x id="PH" equiv-text="task.completedSubtaskCount ?? 0" /> of <x id="PH_1" equiv-text="task.subtaskCount" /> subtasks completed</target>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tasks/tasks.component.ts</context>
           <context context-type="linenumber">154</context>
@@ -3335,8 +3343,10 @@
         </context-group>
       </trans-unit>
       <trans-unit id="7337528189751824652" datatype="html">
-        <source>Cambiar idioma a <x id="idioma" equiv-text="i.nombre"/></source>
-        <target state="final">Switch language to <x id="idioma" equiv-text="i.nombre"/></target>
+        <source>Cambiar idioma a <x id="idioma" equiv-text="i.nombre" />
+        </source>
+        <target state="final">Switch language to <x id="idioma" equiv-text="i.nombre" />
+        </target>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/ui/command-palette/command-palette.service.ts</context>
           <context context-type="linenumber">124</context>
@@ -3767,8 +3777,8 @@ Pending</target>
         </context-group>
       </trans-unit>
       <trans-unit id="3788663778868855463" datatype="html">
-        <source>El nombre del campo no puede pasar de <x id="PH" equiv-text="LARGO_MAXIMO_DEL_NOMBRE" xmlns="urn:oasis:names:tc:xliff:document:1.2" /> caracteres</source>
-        <target state="final">The field name cannot be longer than <x id="PH" equiv-text="LARGO_MAXIMO_DEL_NOMBRE"/> characters</target>
+        <source>El nombre del campo no puede pasar de <x id="PH" equiv-text="LARGO_MAXIMO_DEL_NOMBRE" /> caracteres</source>
+        <target state="final">The field name cannot be longer than <x id="PH" equiv-text="LARGO_MAXIMO_DEL_NOMBRE" /> characters</target>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/admin/custom-fields/admin-custom-fields.component.ts</context>
           <context context-type="linenumber">159</context>
@@ -3783,8 +3793,8 @@ Pending</target>
         </context-group>
       </trans-unit>
       <trans-unit id="6660759049865551823" datatype="html">
-        <source>Un campo de selección no puede tener más de <x id="PH" equiv-text="MAXIMO_DE_OPCIONES" xmlns="urn:oasis:names:tc:xliff:document:1.2" /> opciones</source>
-        <target state="final">A select field cannot have more than <x id="PH" equiv-text="MAXIMO_DE_OPCIONES"/> options</target>
+        <source>Un campo de selección no puede tener más de <x id="PH" equiv-text="MAXIMO_DE_OPCIONES" /> opciones</source>
+        <target state="final">A select field cannot have more than <x id="PH" equiv-text="MAXIMO_DE_OPCIONES" /> options</target>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/admin/custom-fields/admin-custom-fields.component.ts</context>
           <context context-type="linenumber">166</context>
@@ -3831,16 +3841,16 @@ Pending</target>
         </context-group>
       </trans-unit>
       <trans-unit id="7646590756920030055" datatype="html">
-        <source>«<x id="PH" equiv-text="valor" xmlns="urn:oasis:names:tc:xliff:document:1.2" />» no es un número de horas.</source>
-        <target state="final">"<x id="PH" equiv-text="valor"/>" is not a number of hours.</target>
+        <source>«<x id="PH" equiv-text="valor" />» no es un número de horas.</source>
+        <target state="final">"<x id="PH" equiv-text="valor" />" is not a number of hours.</target>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tasks/tasks.component.ts</context>
           <context context-type="linenumber">503</context>
         </context-group>
       </trans-unit>
       <trans-unit id="388306122432231988" datatype="html">
-        <source>«<x id="PH" equiv-text="item.title" xmlns="urn:oasis:names:tc:xliff:document:1.2" />» se queda como estaba</source>
-        <target state="final">"<x id="PH" equiv-text="item.title"/>" stays as it was</target>
+        <source>«<x id="PH" equiv-text="item.title" />» se queda como estaba</source>
+        <target state="final">"<x id="PH" equiv-text="item.title" />" stays as it was</target>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tasks/tasks.component.ts</context>
           <context context-type="linenumber">514</context>
@@ -3855,8 +3865,10 @@ Pending</target>
         </context-group>
       </trans-unit>
       <trans-unit id="5324892388519202446" datatype="html">
-        <source>Editar <x id="PH" equiv-text="col.label" xmlns="urn:oasis:names:tc:xliff:document:1.2" /></source>
-        <target state="final">Edit <x id="PH" equiv-text="col.label"/></target>
+        <source>Editar <x id="PH" equiv-text="col.label" />
+        </source>
+        <target state="final">Edit <x id="PH" equiv-text="col.label" />
+        </target>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/ui/data-table/data-table.component.ts</context>
           <context context-type="linenumber">502</context>
@@ -3903,16 +3915,24 @@ Pending</target>
         </context-group>
       </trans-unit>
       <trans-unit id="2061641499271155136" datatype="html">
-        <source><x id="PH" equiv-text="barra.tarea.title" xmlns="urn:oasis:names:tc:xliff:document:1.2" />, vence el <x id="PH_1" equiv-text="vence" xmlns="urn:oasis:names:tc:xliff:document:1.2" /></source>
-        <target state="final"><x id="PH" equiv-text="barra.tarea.title"/>, due on <x id="PH_1" equiv-text="vence"/></target>
+        <source>
+          <x id="PH" equiv-text="barra.tarea.title" />, vence el <x id="PH_1" equiv-text="vence" />
+        </source>
+        <target state="final">
+          <x id="PH" equiv-text="barra.tarea.title" />, due on <x id="PH_1" equiv-text="vence" />
+        </target>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tasks/gantt.component.ts</context>
           <context context-type="linenumber">79</context>
         </context-group>
       </trans-unit>
       <trans-unit id="7114553271619331265" datatype="html">
-        <source><x id="PH" equiv-text="barra.tarea.title" xmlns="urn:oasis:names:tc:xliff:document:1.2" />, del <x id="PH_1" equiv-text="empieza" xmlns="urn:oasis:names:tc:xliff:document:1.2" /> al <x id="PH_2" equiv-text="vence" xmlns="urn:oasis:names:tc:xliff:document:1.2" /></source>
-        <target state="final"><x id="PH" equiv-text="barra.tarea.title"/>, from <x id="PH_1" equiv-text="empieza"/> to <x id="PH_2" equiv-text="vence"/></target>
+        <source>
+          <x id="PH" equiv-text="barra.tarea.title" />, del <x id="PH_1" equiv-text="empieza" /> al <x id="PH_2" equiv-text="vence" />
+        </source>
+        <target state="final">
+          <x id="PH" equiv-text="barra.tarea.title" />, from <x id="PH_1" equiv-text="empieza" /> to <x id="PH_2" equiv-text="vence" />
+        </target>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tasks/gantt.component.ts</context>
           <context context-type="linenumber">84</context>
@@ -3967,8 +3987,8 @@ Pending</target>
         </context-group>
       </trans-unit>
       <trans-unit id="9066396735664877269" datatype="html">
-        <source> Quedan <x id="INTERPOLATION" equiv-text="{{ carga().sinFecha }}" xmlns="urn:oasis:names:tc:xliff:document:1.2" /> tareas pendientes sin fecha límite, que no se reparten en ninguna semana. La carga real es mayor que la de esta tabla. </source>
-        <target state="final"> There are <x id="INTERPOLATION" equiv-text="{{ carga().sinFecha }}"/> pending tasks with no due date, which are not spread across any week. The real workload is higher than this table shows. </target>
+        <source> Quedan <x id="INTERPOLATION" equiv-text="{{ carga().sinFecha }}" /> tareas pendientes sin fecha límite, que no se reparten en ninguna semana. La carga real es mayor que la de esta tabla. </source>
+        <target state="final"> There are <x id="INTERPOLATION" equiv-text="{{ carga().sinFecha }}" /> pending tasks with no due date, which are not spread across any week. The real workload is higher than this table shows. </target>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tasks/carga.component.html</context>
           <context context-type="linenumber">54,57</context>
@@ -4235,8 +4255,8 @@ Pending</target>
         </context-group>
       </trans-unit>
       <trans-unit id="8326018324196237073" datatype="html">
-        <source>El nombre no puede pasar de <x id="PH" equiv-text="LARGO_MAXIMO_DEL_NOMBRE" xmlns="urn:oasis:names:tc:xliff:document:1.2" /> caracteres</source>
-        <target state="final">The name cannot be longer than <x id="PH" equiv-text="LARGO_MAXIMO_DEL_NOMBRE"/> characters</target>
+        <source>El nombre no puede pasar de <x id="PH" equiv-text="LARGO_MAXIMO_DEL_NOMBRE" /> caracteres</source>
+        <target state="final">The name cannot be longer than <x id="PH" equiv-text="LARGO_MAXIMO_DEL_NOMBRE" /> characters</target>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/admin/automations/admin-automations.component.ts</context>
           <context context-type="linenumber">159</context>
@@ -4429,6 +4449,42 @@ Pending</target>
           <context context-type="sourcefile">src/app/shared/ui/comentarios.component.ts</context>
           <context context-type="linenumber">160</context>
         </context-group>
+      </trans-unit>
+      <trans-unit id="6851449099375470083" datatype="html">
+        <source>Calculado</source>
+        <target state="translated">Calculated</target>
+      </trans-unit>
+      <trans-unit id="2586802895442748747" datatype="html">
+        <source>(un campo calculado no se rellena)</source>
+        <target state="translated">(a calculated field is not filled in)</target>
+      </trans-unit>
+      <trans-unit id="1797046512591361682" datatype="html">
+        <source>Fórmula</source>
+        <target state="translated">Formula</target>
+      </trans-unit>
+      <trans-unit id="8886438892184710844" datatype="html">
+        <source>[Horas] * [Precio por hora]</source>
+        <target state="translated">[Hours] * [Price per hour]</target>
+      </trans-unit>
+      <trans-unit id="3017505670099393773" datatype="html">
+        <source>Operaciones: + - * / y paréntesis. Funciones: SI, REDONDEAR, MIN, MAX, ABS. Los argumentos se separan con punto y coma, porque la coma es el separador decimal.</source>
+        <target state="translated">Operators: + - * / and parentheses. Functions: SI, REDONDEAR, MIN, MAX, ABS. Arguments are separated by semicolons, because the comma is the decimal separator.</target>
+      </trans-unit>
+      <trans-unit id="7446909147263222998" datatype="html">
+        <source>Campos disponibles:</source>
+        <target state="translated">Available fields:</target>
+      </trans-unit>
+      <trans-unit id="9082252567794559724" datatype="html">
+        <source>Todavía no hay campos numéricos en esta entidad. Una fórmula sólo puede usar campos de tipo Número u otros campos calculados.</source>
+        <target state="translated">There are no numeric fields in this entity yet. A formula can only use Number fields or other calculated fields.</target>
+      </trans-unit>
+      <trans-unit id="6654572487120227264" datatype="html">
+        <source>Un campo calculado necesita una fórmula</source>
+        <target state="translated">A calculated field needs a formula</target>
+      </trans-unit>
+      <trans-unit id="961894320051389133" datatype="html">
+        <source>Faltan datos para calcularlo</source>
+        <target state="translated">Missing data to calculate it</target>
       </trans-unit>
     </body>
   </file>

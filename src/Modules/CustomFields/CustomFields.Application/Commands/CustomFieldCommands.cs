@@ -11,7 +11,9 @@ public sealed record DefineCustomFieldCommand(
     string EntidadDestino,
     bool Obligatorio,
     IReadOnlyList<string>? Opciones,
-    int Posicion
+    int Posicion,
+    /// <summary>Sólo para los campos de tipo Formula; en los demás se ignora.</summary>
+    string? Formula = null
 ) : ICommand<CustomFieldDefinitionDto>;
 
 public sealed record UpdateCustomFieldCommand(
@@ -20,7 +22,8 @@ public sealed record UpdateCustomFieldCommand(
     string Nombre,
     bool Obligatorio,
     IReadOnlyList<string>? Opciones,
-    int Posicion
+    int Posicion,
+    string? Formula = null
 ) : ICommand<bool>;
 
 public sealed record RemoveCustomFieldCommand(

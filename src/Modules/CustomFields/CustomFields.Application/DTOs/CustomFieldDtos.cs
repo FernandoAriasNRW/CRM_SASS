@@ -7,7 +7,9 @@ public sealed record CustomFieldDefinitionDto(
     string EntidadDestino,
     bool Obligatorio,
     IReadOnlyList<string> Opciones,
-    int Posicion
+    int Posicion,
+    /// <summary>La expresión, si es un campo calculado.</summary>
+    string? Formula
 );
 
 /// <summary>
@@ -21,5 +23,12 @@ public sealed record CustomFieldValueDto(
     bool Obligatorio,
     IReadOnlyList<string> Opciones,
     int Posicion,
-    string? Valor
+    string? Valor,
+    /// <summary>La expresión, si es un campo calculado. La pantalla la enseña como ayuda.</summary>
+    string? Formula = null,
+    /// <summary>
+    /// Por qué este campo calculado no tiene valor, si es el caso. Un hueco por falta de datos
+    /// NO llena esto: eso es normal y se distingue de una fórmula rota.
+    /// </summary>
+    string? Error = null
 );

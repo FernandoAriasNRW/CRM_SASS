@@ -90,10 +90,49 @@
                  class="w-full px-3 py-1.5 text-xs bg-white dark:bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-1 focus:ring-primary" />
         </label>
 
-        <label class="flex items-center gap-2 pt-5">
-          <input type="checkbox" [(ngModel)]="obligatorio" class="rounded border-border" />
+        <!-- Un campo calculado no se rellena, así que exigirlo no tendría a quién exigírselo:
+             la casilla se desactiva en vez de esconderse, para que se entienda por qué. -->
+        <label class="flex items-center gap-2 pt-5" [class.opacity-50]="usaFormula">
+          <input type="checkbox" [(ngModel)]="obligatorio" [disabled]="usaFormula" class="rounded border-border" />
           <span class="text-xs font-medium text-muted-foreground" i18n>Obligatorio</span>
+          @if (usaFormula) {
+            <span class="text-[11px] text-muted-foreground" i18n>(un campo calculado no se rellena)</span>
+          }
         </label>
+
+        @if (usaFormula) {
+          <label class="space-y-1 block md:col-span-2">
+            <span class="text-xs font-medium text-muted-foreground" i18n>Fórmula</span>
+            <textarea [(ngModel)]="formula" rows="2"
+                      i18n-placeholder placeholder="[Horas] * [Precio por hora]"
+                      class="w-full px-3 py-1.5 text-xs font-mono bg-white dark:bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-1 focus:ring-primary resize-y"></textarea>
+
+            <span class="text-[11px] text-muted-foreground block" i18n>
+              Operaciones: + - * / y paréntesis. Funciones: SI, REDONDEAR, MIN, MAX, ABS.
+              Los argumentos se separan con punto y coma, porque la coma es el separador decimal.
+            </span>
+
+            @if (camposUsables.length) {
+              <!-- Insertar con un clic en vez de teclear el nombre entre corchetes, que es
+                   donde se cometen las erratas. Sólo salen los campos que una fórmula puede
+                   usar: numéricos y otros calculados. -->
+              <span class="flex flex-wrap items-center gap-1 pt-1">
+                <span class="text-[11px] text-muted-foreground" i18n>Campos disponibles:</span>
+                @for (campo of camposUsables; track campo.id) {
+                  <button type="button" (click)="insertarReferencia(campo.nombre)"
+                          class="text-[11px] px-1.5 py-0.5 rounded border border-border text-muted-foreground hover:border-primary hover:text-primary transition-colors">
+                    {{ campo.nombre }}
+                  </button>
+                }
+              </span>
+            } @else {
+              <span class="text-[11px] text-muted-foreground block" i18n>
+                Todavía no hay campos numéricos en esta entidad. Una fórmula sólo puede usar
+                campos de tipo Número u otros campos calculados.
+              </span>
+            }
+          </label>
+        }
 
         @if (usaOpciones) {
           <label class="space-y-1 block md:col-span-2">

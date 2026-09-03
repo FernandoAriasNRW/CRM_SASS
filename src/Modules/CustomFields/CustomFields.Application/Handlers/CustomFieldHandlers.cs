@@ -6,6 +6,7 @@ using CustomFields.Application.DTOs;
 using CustomFields.Application.Queries;
 using CustomFields.Domain.Entities;
 using CustomFields.Domain.Servicios;
+using CustomFields.Domain.ValueObjects;
 
 namespace CustomFields.Application.Handlers;
 
@@ -25,9 +26,17 @@ public sealed class DefineCustomFieldCommandHandler(
     {
       definicion = CustomFieldDefinition.Create(
           request.TenantId, request.Nombre, request.Tipo, request.EntidadDestino,
-          request.Obligatorio, request.Opciones, request.Posicion);
+          request.Obligatorio, request.Opciones, request.Posicion, request.Formula);
     }
     catch (InvalidOperationException ex) { return Result<CustomFieldDefinitionDto>.Failure(ex.Message); }
+
+    // El dominio ya comprobó que la fórmula se puede leer. Lo que sólo se puede comprobar aquí
+    // es contra qué apunta, porque hace falta ver los demás campos del inquilino.
+    var problema = await ValidarFormula.ContraLosDemasAsync(
+        repositorio, request.TenantId, request.EntidadDestino, request.Nombre, request.Formula, null, ct);
+
+    if (problema is not null)
+      return Result<CustomFieldDefinitionDto>.Failure(problema);
 
     await repositorio.AddDefinitionAsync(definicion, ct);
     await unitOfWork.SaveChangesAsync(ct);
@@ -36,7 +45,7 @@ public sealed class DefineCustomFieldCommandHandler(
   }
 
   internal static CustomFieldDefinitionDto ADto(CustomFieldDefinition d) =>
-      new(d.Id, d.Nombre, d.Tipo, d.EntidadDestino, d.Obligatorio, d.Opciones, d.Posicion);
+      new(d.Id, d.Nombre, d.Tipo, d.EntidadDestino, d.Obligatorio, d.Opciones, d.Posicion, d.Formula);
 }
 
 public sealed class UpdateCustomFieldCommandHandler(
@@ -52,7 +61,13 @@ public sealed class UpdateCustomFieldCommandHandler(
     if (await repositorio.ExisteNombreAsync(request.TenantId, definicion.EntidadDestino, request.Nombre.Trim(), request.Id, ct))
       return Result<bool>.Failure(CustomFieldDefinition.Reglas.NombreRepetido);
 
-    try { definicion.Actualizar(request.Nombre, request.Obligatorio, request.Opciones, request.Posicion); }
+    var problema = await ValidarFormula.ContraLosDemasAsync(
+        repositorio, request.TenantId, definicion.EntidadDestino, request.Nombre, request.Formula, request.Id, ct);
+
+    if (problema is not null)
+      return Result<bool>.Failure(problema);
+
+    try { definicion.Actualizar(request.Nombre, request.Obligatorio, request.Opciones, request.Posicion, request.Formula); }
     catch (InvalidOperationException ex) { return Result<bool>.Failure(ex.Message); }
 
     await unitOfWork.SaveChangesAsync(ct);
@@ -89,6 +104,11 @@ public sealed class SetCustomFieldValueCommandHandler(
     var definicion = await repositorio.GetDefinitionAsync(request.TenantId, request.DefinitionId, ct);
     if (definicion is null)
       return Result<bool>.Failure("El campo no existe");
+
+    // Un campo calculado no se rellena. Aceptar el valor y luego ignorarlo al leer sería peor
+    // que rechazarlo: quien lo escribió vería el suyo desaparecer sin explicación.
+    if (TipoDeCampo.SeCalcula(definicion.Tipo))
+      return Result<bool>.Failure(CustomFieldDefinition.Reglas.NoSeRellenaUnCalculado);
 
     // La validación es del dominio y devuelve el valor ya en forma canónica; el handler sólo
     // guarda lo que ella aprueba.
@@ -138,12 +158,26 @@ public sealed class GetCustomFieldValuesQueryHandler(ICustomFieldRepository repo
 
     var porDefinicion = valores.ToDictionary(v => v.DefinitionId, v => v.Valor);
 
+    // Los campos calculados no tienen valor guardado: se calculan aquí, cada vez. Es lo que
+    // garantiza que nunca estén desfasados —ver el comentario de TipoDeCampo.Formula— y lo que
+    // permite que una fórmula use el resultado de otra.
+    var calculados = CalculadoraDeCampos.Calcular(definiciones, porDefinicion)
+        .ToDictionary(c => c.DefinitionId);
+
     var salida = definiciones
         .OrderBy(d => d.Posicion)
         .ThenBy(d => d.Nombre)
-        .Select(d => new CustomFieldValueDto(
-            d.Id, d.Nombre, d.Tipo, d.Obligatorio, d.Opciones, d.Posicion,
-            porDefinicion.TryGetValue(d.Id, out var valor) ? valor : null))
+        .Select(d =>
+        {
+            if (calculados.TryGetValue(d.Id, out var calculado))
+                return new CustomFieldValueDto(
+                    d.Id, d.Nombre, d.Tipo, d.Obligatorio, d.Opciones, d.Posicion,
+                    calculado.Valor, d.Formula, calculado.Error);
+
+            return new CustomFieldValueDto(
+                d.Id, d.Nombre, d.Tipo, d.Obligatorio, d.Opciones, d.Posicion,
+                porDefinicion.TryGetValue(d.Id, out var valor) ? valor : null, d.Formula);
+        })
         .ToList();
 
     return Result<IReadOnlyList<CustomFieldValueDto>>.Success(salida);

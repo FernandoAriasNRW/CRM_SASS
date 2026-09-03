@@ -107,11 +107,18 @@
           <context context-type="linenumber">19</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="6851449099375470083" datatype="html">
+        <source>Calculado</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/core/custom-fields.service.ts</context>
+          <context context-type="linenumber">20</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="1129880573635334228" datatype="html">
         <source>Tareas</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/core/custom-fields.service.ts</context>
-          <context context-type="linenumber">23</context>
+          <context context-type="linenumber">29</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tasks/tasks.component.html</context>
@@ -122,7 +129,7 @@
         <source>Proyectos</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/core/custom-fields.service.ts</context>
-          <context context-type="linenumber">24</context>
+          <context context-type="linenumber">30</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/projects/projects.component.html</context>
@@ -267,7 +274,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/admin/custom-fields/admin-custom-fields.component.html</context>
-          <context context-type="linenumber">137,138</context>
+          <context context-type="linenumber">176,177</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/teams/team-form.component.html</context>
@@ -406,11 +413,11 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/admin/custom-fields/admin-custom-fields.component.html</context>
-          <context context-type="linenumber">115,116</context>
+          <context context-type="linenumber">154,155</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/admin/custom-fields/admin-custom-fields.component.html</context>
-          <context context-type="linenumber">166</context>
+          <context context-type="linenumber">205</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/admin/permissions/granular-permissions-modal.component.html</context>
@@ -449,7 +456,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/admin/custom-fields/admin-custom-fields.component.html</context>
-          <context context-type="linenumber">122,123</context>
+          <context context-type="linenumber">161,162</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/ui/comentarios.component.html</context>
@@ -464,7 +471,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/admin/custom-fields/admin-custom-fields.component.html</context>
-          <context context-type="linenumber">130,131</context>
+          <context context-type="linenumber">169,170</context>
         </context-group>
       </trans-unit>
       <trans-unit id="5418150855302403712" datatype="html">
@@ -496,7 +503,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/admin/custom-fields/admin-custom-fields.component.html</context>
-          <context context-type="linenumber">141</context>
+          <context context-type="linenumber">180</context>
         </context-group>
       </trans-unit>
       <trans-unit id="382224285571054578" datatype="html">
@@ -507,7 +514,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/admin/custom-fields/admin-custom-fields.component.html</context>
-          <context context-type="linenumber">151</context>
+          <context context-type="linenumber">190</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/ui/comentarios.component.html</context>
@@ -522,7 +529,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/admin/custom-fields/admin-custom-fields.component.html</context>
-          <context context-type="linenumber">151,152</context>
+          <context context-type="linenumber">190,191</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/ui/comentarios.component.html</context>
@@ -544,7 +551,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/admin/custom-fields/admin-custom-fields.component.html</context>
-          <context context-type="linenumber">162</context>
+          <context context-type="linenumber">201</context>
         </context-group>
       </trans-unit>
       <trans-unit id="5950220469251238899" datatype="html">
@@ -696,7 +703,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/admin/custom-fields/admin-custom-fields.component.html</context>
-          <context context-type="linenumber">138,139</context>
+          <context context-type="linenumber">177,178</context>
         </context-group>
       </trans-unit>
       <trans-unit id="4398421562861096268" datatype="html">
@@ -714,25 +721,67 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/admin/custom-fields/admin-custom-fields.component.html</context>
-          <context context-type="linenumber">136,137</context>
+          <context context-type="linenumber">175,176</context>
         </context-group>
       </trans-unit>
       <trans-unit id="1921333671188385461" datatype="html">
         <source>Obligatorio</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/admin/custom-fields/admin-custom-fields.component.html</context>
-          <context context-type="linenumber">95,96</context>
+          <context context-type="linenumber">97,98</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/admin/custom-fields/admin-custom-fields.component.html</context>
-          <context context-type="linenumber">139,140</context>
+          <context context-type="linenumber">178,179</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2586802895442748747" datatype="html">
+        <source>(un campo calculado no se rellena)</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/custom-fields/admin-custom-fields.component.html</context>
+          <context context-type="linenumber">99,100</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1797046512591361682" datatype="html">
+        <source>Fórmula</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/custom-fields/admin-custom-fields.component.html</context>
+          <context context-type="linenumber">105,106</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8886438892184710844" datatype="html">
+        <source>[Horas] * [Precio por hora]</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/custom-fields/admin-custom-fields.component.html</context>
+          <context context-type="linenumber">107,108</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3017505670099393773" datatype="html">
+        <source> Operaciones: + - * / y paréntesis. Funciones: SI, REDONDEAR, MIN, MAX, ABS. Los argumentos se separan con punto y coma, porque la coma es el separador decimal. </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/custom-fields/admin-custom-fields.component.html</context>
+          <context context-type="linenumber">111,112</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7446909147263222998" datatype="html">
+        <source>Campos disponibles:</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/custom-fields/admin-custom-fields.component.html</context>
+          <context context-type="linenumber">120,121</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="9082252567794559724" datatype="html">
+        <source> Todavía no hay campos numéricos en esta entidad. Una fórmula sólo puede usar campos de tipo Número u otros campos calculados. </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/custom-fields/admin-custom-fields.component.html</context>
+          <context context-type="linenumber">130,131</context>
         </context-group>
       </trans-unit>
       <trans-unit id="273982953093131420" datatype="html">
         <source>Opciones, una por línea</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/admin/custom-fields/admin-custom-fields.component.html</context>
-          <context context-type="linenumber">100,101</context>
+          <context context-type="linenumber">139,140</context>
         </context-group>
       </trans-unit>
       <trans-unit id="5189892898552726629" datatype="html">
@@ -741,98 +790,105 @@ No
 Pendiente</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/admin/custom-fields/admin-custom-fields.component.html</context>
-          <context context-type="linenumber">102,103</context>
+          <context context-type="linenumber">141,142</context>
         </context-group>
       </trans-unit>
       <trans-unit id="1301066178405590895" datatype="html">
         <source>Se muestran en este orden. Las repetidas y las líneas vacías se descartan.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/admin/custom-fields/admin-custom-fields.component.html</context>
-          <context context-type="linenumber">104,105</context>
+          <context context-type="linenumber">143,144</context>
         </context-group>
       </trans-unit>
       <trans-unit id="4680306916977333293" datatype="html">
         <source>Opciones</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/admin/custom-fields/admin-custom-fields.component.html</context>
-          <context context-type="linenumber">140,141</context>
+          <context context-type="linenumber">179,180</context>
         </context-group>
       </trans-unit>
       <trans-unit id="6558296895386063048" datatype="html">
         <source>¿Borrar el campo y todos sus valores?</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/admin/custom-fields/admin-custom-fields.component.html</context>
-          <context context-type="linenumber">159,160</context>
+          <context context-type="linenumber">198,199</context>
         </context-group>
       </trans-unit>
       <trans-unit id="8110911654446155507" datatype="html">
         <source>Editar el campo</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/admin/custom-fields/admin-custom-fields.component.html</context>
-          <context context-type="linenumber">171,172</context>
+          <context context-type="linenumber">210,211</context>
         </context-group>
       </trans-unit>
       <trans-unit id="1536832090694406856" datatype="html">
         <source>Borrar el campo</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/admin/custom-fields/admin-custom-fields.component.html</context>
-          <context context-type="linenumber">175,176</context>
+          <context context-type="linenumber">214,215</context>
         </context-group>
       </trans-unit>
       <trans-unit id="2307554988769523501" datatype="html">
         <source>Todavía no hay campos definidos para esta entidad.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/admin/custom-fields/admin-custom-fields.component.html</context>
-          <context context-type="linenumber">188,191</context>
+          <context context-type="linenumber">227,230</context>
         </context-group>
       </trans-unit>
       <trans-unit id="6261493017569141229" datatype="html">
         <source>No se pudieron cargar los campos</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/admin/custom-fields/admin-custom-fields.component.ts</context>
-          <context context-type="linenumber">102</context>
+          <context context-type="linenumber">122</context>
         </context-group>
       </trans-unit>
       <trans-unit id="8156903609303913311" datatype="html">
         <source>El campo necesita un nombre</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/admin/custom-fields/admin-custom-fields.component.ts</context>
-          <context context-type="linenumber">157</context>
+          <context context-type="linenumber">178</context>
         </context-group>
       </trans-unit>
       <trans-unit id="3788663778868855463" datatype="html">
         <source>El nombre del campo no puede pasar de <x id="PH" equiv-text="LARGO_MAXIMO_DEL_NOMBRE"/> caracteres</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/admin/custom-fields/admin-custom-fields.component.ts</context>
-          <context context-type="linenumber">159</context>
+          <context context-type="linenumber">180</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6654572487120227264" datatype="html">
+        <source>Un campo calculado necesita una fórmula</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/custom-fields/admin-custom-fields.component.ts</context>
+          <context context-type="linenumber">184</context>
         </context-group>
       </trans-unit>
       <trans-unit id="5901205096238771849" datatype="html">
         <source>Un campo de selección necesita al menos una opción</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/admin/custom-fields/admin-custom-fields.component.ts</context>
-          <context context-type="linenumber">164</context>
+          <context context-type="linenumber">189</context>
         </context-group>
       </trans-unit>
       <trans-unit id="6660759049865551823" datatype="html">
         <source>Un campo de selección no puede tener más de <x id="PH" equiv-text="MAXIMO_DE_OPCIONES"/> opciones</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/admin/custom-fields/admin-custom-fields.component.ts</context>
-          <context context-type="linenumber">166</context>
+          <context context-type="linenumber">191</context>
         </context-group>
       </trans-unit>
       <trans-unit id="2956903097893657122" datatype="html">
         <source>No se pudo guardar el campo</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/admin/custom-fields/admin-custom-fields.component.ts</context>
-          <context context-type="linenumber">203</context>
+          <context context-type="linenumber">231</context>
         </context-group>
       </trans-unit>
       <trans-unit id="5104739441511916189" datatype="html">
         <source>No se pudo borrar el campo</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/admin/custom-fields/admin-custom-fields.component.ts</context>
-          <context context-type="linenumber">221</context>
+          <context context-type="linenumber">249</context>
         </context-group>
       </trans-unit>
       <trans-unit id="4810516250747154868" datatype="html">
@@ -3824,6 +3880,13 @@ Pendiente</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/ui/custom-fields-form.component.html</context>
           <context context-type="linenumber">42,43</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="961894320051389133" datatype="html">
+        <source>Faltan datos para calcularlo</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/custom-fields-form.component.html</context>
+          <context context-type="linenumber">93,94</context>
         </context-group>
       </trans-unit>
       <trans-unit id="190908139717272186" datatype="html">
