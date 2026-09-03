@@ -1,4 +1,5 @@
 using System.Linq;
+using BuildingBlocks.Application.Abstractions;
 using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -38,9 +39,27 @@ public static class ProjectsEndpoints
       return result.Value is null ? Results.NotFound() : Results.Ok(result.Value);
     });
 
-    group.MapPost("", async (CreateProjectCommand command, IMediator mediator) =>
+    // El tenant y el dueño salen del token, nunca del cuerpo.
+    //
+    // Antes esto era `mediator.Send(command)` con el comando enlazado tal cual del JSON, y el
+    // comando lleva `TenantId` y `OwnerId` dentro. Dos consecuencias, una peor que la otra:
+    //
+    //  - Quien no los mandaba creaba el proyecto con `Guid.Empty`, así que el filtro global de
+    //    inquilino no volvía a verlo nunca. El alta respondía 201 y el proyecto era invisible
+    //    en la lista inmediatamente después. De ahí que el dashboard contara siempre cero.
+    //  - Quien sí los mandaba **elegía en qué organización escribir**. Cualquier usuario
+    //    autenticado podía plantar datos en el inquilino de otro poniendo un Guid en el JSON.
+    //
+    // `IUserContext` es la abstracción que ya existía para esto, y busca el claim sin distinguir
+    // mayúsculas: no se repite aquí el parseo a mano que en su día dejó el tenant vacío.
+    group.MapPost("", async (CreateProjectCommand command, IUserContext usuario, IMediator mediator) =>
     {
-      var result = await mediator.Send(command);
+      var result = await mediator.Send(command with
+      {
+        TenantId = usuario.TenantId,
+        OwnerId = usuario.UserId,
+      });
+
       return result.IsSuccess
               ? Results.Created($"/api/v1/projects/{result.Value!.Id}", result.Value)
               : Results.BadRequest(result.Error);
@@ -70,16 +89,17 @@ public static class ProjectsEndpoints
       return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
     });
 
-    spacesGroup.MapPost("", async (CreateSpaceCommand command, IMediator mediator) =>
+    spacesGroup.MapPost("", async (CreateSpaceCommand command, IUserContext usuario, IMediator mediator) =>
     {
-      var result = await mediator.Send(command);
+      var result = await mediator.Send(command with { TenantId = usuario.TenantId });
       return result.IsSuccess ? Results.Created($"/api/v1/spaces/{result.Value!.Id}", result.Value) : Results.BadRequest(result.Error);
     });
 
-    spacesGroup.MapPatch("/{id:guid}", async (Guid id, UpdateSpaceCommand command, IMediator mediator) =>
+    // El identificador va en la ruta y el inquilino en el token: del cuerpo no se acepta
+    // ninguno de los dos. Si no, se podría renombrar el espacio de otra organización.
+    spacesGroup.MapPatch("/{id:guid}", async (Guid id, UpdateSpaceCommand command, IUserContext usuario, IMediator mediator) =>
     {
-      var actualCommand = command with { SpaceId = id };
-      var result = await mediator.Send(actualCommand);
+      var result = await mediator.Send(command with { SpaceId = id, TenantId = usuario.TenantId });
       return result.IsSuccess ? Results.Ok() : Results.NotFound(result.Error);
     });
 
@@ -92,9 +112,9 @@ public static class ProjectsEndpoints
       return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
     });
 
-    foldersGroup.MapPost("", async (CreateFolderCommand command, IMediator mediator) =>
+    foldersGroup.MapPost("", async (CreateFolderCommand command, IUserContext usuario, IMediator mediator) =>
     {
-      var result = await mediator.Send(command);
+      var result = await mediator.Send(command with { TenantId = usuario.TenantId });
       return result.IsSuccess ? Results.Created($"/api/v1/folders/{result.Value!.Id}", result.Value) : Results.BadRequest(result.Error);
     });
 

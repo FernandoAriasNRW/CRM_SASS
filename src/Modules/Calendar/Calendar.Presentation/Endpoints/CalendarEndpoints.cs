@@ -1,3 +1,4 @@
+using BuildingBlocks.Application.Abstractions;
 using System.Linq;
 using Calendar.Application.Commands;
 using Calendar.Application.Queries;
@@ -38,9 +39,15 @@ public static class CalendarEndpoints
       return result.Value is null ? Results.NotFound() : Results.Ok(result.Value);
     });
 
-    group.MapPost("", async (CreateCalendarEventCommand command, IMediator mediator) =>
+    // Inquilino y organizador, del token. Ver ProjectsEndpoints: misma grieta.
+    group.MapPost("", async (CreateCalendarEventCommand command, IUserContext usuario, IMediator mediator) =>
     {
-      var result = await mediator.Send(command);
+      var result = await mediator.Send(command with
+      {
+        TenantId = usuario.TenantId,
+        OrganizerId = usuario.UserId,
+      });
+
       return result.IsSuccess
               ? Results.Created($"/api/v1/events/{result.Value!.Id}", result.Value)
               : Results.BadRequest(result.Error);

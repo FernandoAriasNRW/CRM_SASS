@@ -1,4 +1,5 @@
 using System.Linq;
+using BuildingBlocks.Application.Abstractions;
 using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -45,20 +46,53 @@ public static class WorkItemsEndpoints
       return result.Value is null ? Results.NotFound() : Results.Ok(result.Value);
     });
 
-    group.MapPost("", async (CreateTaskCommand command, IMediator mediator) =>
+    // El inquilino y el autor salen del token, no del cuerpo. Ver el comentario largo en
+    // ProjectsEndpoints: era la misma grieta, y permitía crear tareas dentro de la
+    // organización de otro sin más que poner un Guid en el JSON.
+    group.MapPost("", async (CreateTaskCommand command, IUserContext usuario, IMediator mediator) =>
     {
-      var result = await mediator.Send(command);
+      var result = await mediator.Send(command with
+      {
+        TenantId = usuario.TenantId,
+        CreatedById = usuario.UserId,
+      });
+
       return result.IsSuccess
               ? Results.Created($"/api/v1/tasks/{result.Value!.Id}", result.Value)
               : Results.BadRequest(result.Error);
     });
 
-    group.MapPatch("/{id:guid}/move", async (System.Security.Claims.ClaimsPrincipal principal, Guid id, string status, Guid actorId, string actorRole, IMediator mediator) =>
+    // Quién mueve la tarea y con qué rol sale del token.
+    //
+    // Llegaban por la cadena de consulta —`?actorId=…&actorRole=…`— y el manejador autoriza con
+    // exactamente esto:
+    //
+    //     if (request.ActorRole != "Admin" && task.AssigneeId != request.ActorId) …
+    //
+    // Es decir, bastaba añadir `&actorRole=Admin` a la URL para saltarse la comprobación entera
+    // y mover cualquier tarea del inquilino. Todos los demás endpoints de este archivo ya leían
+    // el actor de las reclamaciones; éste se había quedado atrás.
+    // El estado nuevo viaja en el cuerpo, y la ruta acepta PATCH y POST.
+    //
+    // No es capricho: el tablero llamaba desde siempre con `POST` y un cuerpo
+    // `{ newStatus }`, mientras que aquí sólo había un `PATCH` que leía `?status=`. Cada
+    // arrastre de una tarjeta se topaba con un 405, la tarjeta volvía a su columna por el
+    // camino de revertir y salía un aviso de error. **Arrastrar en el tablero no ha
+    // funcionado nunca.**
+    //
+    // Se arregla por el lado del servidor además de por el del cliente: el cuerpo es lo que
+    // usa el resto de la API, y admitir los dos verbos evita que una versión antigua de la
+    // interfaz servida desde una caché se quede rota.
+    var mover = async (Guid id, MoverTareaRequest cuerpo, IUserContext usuario, IMediator mediator) =>
     {
-      var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
-      var result = await mediator.Send(new MoveTaskCommand(tenantId, id, actorId, actorRole, status));
+      var result = await mediator.Send(
+          new MoveTaskCommand(usuario.TenantId, id, usuario.UserId, usuario.Role, cuerpo.NewStatus));
+
       return result.IsSuccess ? Results.Ok() : Results.BadRequest(result.Error);
-    });
+    };
+
+    group.MapPatch("/{id:guid}/move", mover);
+    group.MapPost("/{id:guid}/move", mover);
 
     group.MapPatch("/{id:guid}", async (System.Security.Claims.ClaimsPrincipal principal, Guid id, PatchTaskCommand command, IMediator mediator) =>
     {
@@ -247,3 +281,8 @@ public static class WorkItemsEndpoints
     return app;
   }
 }
+
+/// <summary>
+/// El cuerpo de «mover una tarea». El nombre del campo es el que ya mandaba el tablero.
+/// </summary>
+public sealed record MoverTareaRequest(string NewStatus);

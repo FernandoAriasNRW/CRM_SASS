@@ -22,8 +22,11 @@ interface KpiData {
   throughput: number;
   openTickets: number;
   inProgressTickets: number;
-  avgLeadTimeDays: number;
-  avgCycleTimeDays: number;
+  // Pueden venir nulos: el servidor devuelve un hueco cuando no tiene con qué calcularlos
+  // —ninguna tarea cerrada todavía, o, en el caso del ciclo, ningún historial de estados—.
+  // Antes eran constantes escritas a mano en el backend, así que nunca faltaban.
+  avgLeadTimeDays: number | null;
+  avgCycleTimeDays: number | null;
 }
 
 interface TaskStatusBreakdown {
@@ -129,8 +132,12 @@ export class DashboardComponent implements OnInit {
       { label: 'Tareas', value: k?.totalTasks ?? '—', icon: 'lucideCheckSquare', sub: `${k?.doneTasks ?? 0} completadas` },
       { label: 'Tickets abiertos', value: k?.openTickets ?? '—', icon: 'lucideTicket', sub: `${k?.inProgressTickets ?? 0} en progreso` },
       { label: 'Throughput', value: k ? `${k.throughput}%` : '—', icon: 'lucideTrendingUp', sub: 'Tareas completadas' },
-      { label: 'Lead Time', value: k ? `${k.avgLeadTimeDays.toFixed(1)}d` : '—', icon: 'lucideClock', sub: 'Tiempo promedio' },
-      { label: 'Cycle Time', value: k ? `${k.avgCycleTimeDays.toFixed(1)}d` : '—', icon: 'lucideActivity', sub: 'Ciclo promedio' },
+      // El guión ya estaba para «aún no ha llegado la respuesta»; ahora cubre también «el
+      // servidor no tiene con qué calcularlo». Son dos cosas distintas para quien programa y
+      // la misma para quien mira: no hay dato. Lo que no puede pasar es inventarse un 0,0d,
+      // que se leería como «se entrega al instante».
+      { label: 'Lead Time', value: k?.avgLeadTimeDays != null ? `${k.avgLeadTimeDays.toFixed(1)}d` : '—', icon: 'lucideClock', sub: 'Tiempo promedio' },
+      { label: 'Cycle Time', value: k?.avgCycleTimeDays != null ? `${k.avgCycleTimeDays.toFixed(1)}d` : '—', icon: 'lucideActivity', sub: 'Ciclo promedio' },
     ];
   };
 

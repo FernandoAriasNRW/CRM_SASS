@@ -40,6 +40,27 @@ public sealed class WorkItemsDbContext(DbContextOptions<WorkItemsDbContext> opti
         .HasIndex(t => new { t.TenantId, t.ParentTaskId })
         .HasDatabaseName("IX_Tasks_TenantId_ParentTaskId");
 
+    // Las tareas que ya existen no traen fecha de creación. Se rellenan con el momento de
+    // aplicar la migración, que es lo único cierto que se sabe de ellas: no se conoce cuándo
+    // se crearon de verdad, y ponerles una fecha hacia atrás las haría indistinguibles de un
+    // dato real y falsearía las medias de tiempo de ciclo sin que nadie pudiera notarlo.
+    //
+    // La consecuencia hay que tenerla presente: durante las primeras semanas las medias
+    // saldrán cortas, porque todo lo antiguo parece recién creado.
+    modelBuilder.Entity<WorkTask>()
+        .Property(t => t.CreatedAtUtc)
+        .HasDefaultValueSql("CURRENT_TIMESTAMP(6)");
+
+    // La fecha de cierre se queda nula en lo ya completado: no hay forma de saber cuándo se
+    // cerró, y una media sobre fechas inventadas es peor que una media sobre menos datos.
+
+    // El panel de informes filtra por inquilino y ordena por cierre para el tiempo de ciclo y
+    // el diagrama de quemado. Sin este índice son recorridos completos de la tabla en cada
+    // carga del dashboard, que es la pantalla que más se abre.
+    modelBuilder.Entity<WorkTask>()
+        .HasIndex(t => new { t.TenantId, t.CompletedAtUtc })
+        .HasDatabaseName("IX_Tasks_TenantId_CompletedAtUtc");
+
     // Los responsables son una colección propiedad de la tarea: se guardan en su tabla, pero se
     // alcanzan y se filtran siempre a través de ella, así que heredan su aislamiento por tenant.
     modelBuilder.Entity<WorkTask>().OwnsMany(t => t.Assignees, a =>

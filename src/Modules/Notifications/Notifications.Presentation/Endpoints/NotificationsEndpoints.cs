@@ -1,3 +1,4 @@
+using BuildingBlocks.Application.Abstractions;
 using System.Linq;
 using MediatR;
 using Microsoft.AspNetCore.Builder;
@@ -48,9 +49,19 @@ public static class NotificationsEndpoints
       return Results.Ok(new { Count = result });
     });
 
-    group.MapPost("", async (CreateNotificationCommand command, IMediator mediator) =>
+    // Inquilino y remitente, del token. Ver ProjectsEndpoints: misma grieta.
+    //
+    // Aquí el destinatario sí llega en el cuerpo, y debe seguir así: notificar a otra persona
+    // es justo lo que hace este endpoint. Lo que no puede elegir quien llama es *en qué
+    // organización* deja la notificación, ni firmarla con el nombre de otro.
+    group.MapPost("", async (CreateNotificationCommand command, IUserContext usuario, IMediator mediator) =>
     {
-      var result = await mediator.Send(command);
+      var result = await mediator.Send(command with
+      {
+        TenantId = usuario.TenantId,
+        SenderUserId = usuario.UserId,
+      });
+
       return result.IsSuccess
               ? Results.Created($"/api/v1/notifications/{result.Value!.Id}", result.Value)
               : Results.BadRequest(result.Error);

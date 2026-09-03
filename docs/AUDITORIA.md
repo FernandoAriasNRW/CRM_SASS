@@ -7,8 +7,8 @@ salió de ejecutar algo; los que no se pudieron medir se dicen como tales.
 
 | Suite | Resultado |
 |---|---|
-| Unitarias backend (xUnit) | 281 pasan, 0 fallan |
-| Integración (Testcontainers + MySQL) | 97 pasan |
+| Unitarias backend (xUnit) | 288 pasan, 0 fallan |
+| Integración (Testcontainers + MySQL) | 123 pasan |
 | Unitarias frontend (Karma) | 136 pasan |
 | E2E (Playwright) | 76 pasan |
 | Lint frontend | 0 errores, 167 avisos |
@@ -84,6 +84,88 @@ No queda ninguna línea con `ERROR` en el log de la suite.
 del repositorio, incluidos duplicados de los `Dockerfile`. Conviene revisar si tiene
 algo que rescatar y, si no, retirarlo.
 
+### 2.5 Escritura entre inquilinos — resuelto
+
+Varios `POST` enlazaban el comando **directamente del cuerpo de la petición**, y esos comandos
+llevan `TenantId` dentro:
+
+```csharp
+group.MapPost("", async (CreateProjectCommand command, IMediator mediator) =>
+{
+  var result = await mediator.Send(command);   // el cuerpo manda
+```
+
+El `PATCH` y el `DELETE` del mismo archivo sí sacaban el inquilino del token. Sólo el alta se
+fiaba del cliente. Comprobado mandando un inquilino ajeno:
+
+```
+MI TENANT:       8351c5d2-8655-4400-ac95-64a14c29f360
+TENANT AJENO:    a7fc1171-9f81-44d1-a759-e5582c9a22e7
+RESPUESTA (201): {"tenantId":"a7fc1171-9f81-44d1-a759-e5582c9a22e7", ...}
+```
+
+**Cualquier usuario autenticado podía escribir en los datos de otra organización.** Y tenía un
+segundo efecto, el que se veía: quien no mandaba el campo creaba la entidad con `Guid.Empty`,
+así que el filtro global no volvía a encontrarla. El alta respondía 201 y la entidad era
+invisible en el listado inmediatamente después — de ahí que el panel contara siempre cero.
+
+Corregido en Projects (proyectos, espacios y carpetas), WorkItems, Calendar, Notifications,
+Communication y Webhook, usando `IUserContext`, que es la abstracción que ya existía y busca el
+claim sin distinguir mayúsculas. Los módulos nuevos —CustomFields, Comments, Automations,
+Teams, Docs, Reporting— ya lo hacían bien; era deuda de los antiguos.
+
+### 2.6 Escalada de privilegios en «mover una tarea» — resuelto
+
+`PATCH /api/v1/tasks/{id}/move` recibía `actorId` y `actorRole` **por la cadena de consulta**, y
+el manejador autoriza con:
+
+```csharp
+if (request.ActorRole != "Admin" && task.AssigneeId != request.ActorId)
+    return Result<bool>.Failure("No tiene permisos para mover esta tarea");
+```
+
+Añadir `&actorRole=Admin` a la URL saltaba la comprobación entera. Los otros nueve endpoints del
+mismo archivo ya leían el actor de las reclamaciones; éste se había quedado atrás. También pasaba
+en la edición y el borrado de mensajes de Communication, donde bastaba con poner el
+identificador de otra persona para editar sus mensajes.
+
+### 2.7 El hash de la contraseña salía por la API — resuelto
+
+`GET /api/v1/auth/users/me` devolvía:
+
+```json
+{"id":"…","email":"admin@acme.com","role":"Admin",
+ "passwordHash":"$2a$12$SYuz87JtCjqF04J4LcM1l.nYgqTHtIzWcAcyw1BXnpOHZ1fQFZdBi", …}
+```
+
+El `UserDto` llevaba el campo dentro. Nadie lo necesitaba: quien verifica la contraseña al
+iniciar sesión trabaja con la entidad de dominio del repositorio, y el emisor de tokens no lo
+leía nunca. Es bcrypt con coste 12, así que no es catastrófico, pero es un hash de contraseña
+viajando al navegador y quedándose en cachés y registros.
+
+Se quitó el campo del DTO en lugar de filtrarlo en el endpoint: **un dato que no sale de ahí no
+se puede filtrar por descuido más adelante.**
+
+### 2.8 Arrastrar en el tablero no funcionaba — resuelto
+
+El tablero llama con `POST /tasks/{id}/move` y cuerpo `{ newStatus }`. La API sólo tenía un
+`PATCH` que leía `?status=`. Cada arrastre chocaba con un 405, la tarjeta volvía a su columna
+por el camino de revertir y salía un aviso.
+
+Ninguna prueba lo cubría: las de extremo a extremo simulan la respuesta de la API, así que
+comprobaban que la tarjeta se movía en la pantalla contra un servidor que no existía. Es el
+mismo agujero que dejó pasar lo de los comentarios.
+
+### 2.9 El sembrado se tragaba sus errores — resuelto
+
+`SeedAllAsync` atrapa la excepción de cada módulo por separado —correcto, para que el fallo de
+uno no impida sembrar los demás— pero terminaba escribiendo «completed successfully» pasara lo
+que pasara, y `Program.cs` registraba el fallo global como **aviso**.
+
+La siembra de Projects llevaba fallando en silencio: la aplicación arrancaba sin un solo
+proyecto ni tarea. Ahora se acumulan los módulos que fallaron, se lanza al final con la lista, y
+el host lo registra como error.
+
 ## 3. Cobertura: el punto de partida real
 
 ### Lo que se midió primero, y por qué engañaba
@@ -117,11 +199,13 @@ Todo ello en `scripts/cobertura.sh`, que es lo que ejecuta el CI.
 ### La cifra
 
 ```
-Cobertura de líneas ................. 68,8 %   (3.710 / 5.390)
-  descontando Presentation .......... 60,4 %
-Cobertura de ramas .................. 55,3 %   (381 / 688)
-Cobertura de métodos ................ 56,9 %   (579 / 1.017)
+Cobertura de líneas ................. 70,2 %
+  descontando Presentation .......... 62,1 %
+Cobertura de ramas .................. 56,1 %
 Frontend, líneas (Karma) ............ 47,7 %   (562 / 1.179)
+
+Al empezar la auditoría era 68,8 / 60,4 / 55,3. La subida no viene de escribir pruebas para
+subir el número, sino de cubrir los siete módulos que no tenían ninguna.
 ```
 
 64 ensamblados, 509 clases, 349 archivos.
@@ -228,24 +312,56 @@ el mercado, que es un encargo distinto y está en el plan como bloque propio.
 
 ### Reporting tampoco parte de cero
 
-`src/Modules/Reporting` ya existe con 1.348 líneas: entidades `Report` y `Dashboard`,
-modelos de lectura de tareas, proyectos y tickets, consumidores que los alimentan,
-repositorios y dos familias de endpoints —`/api/v1/reports` con listado, alta,
-generación, KPIs, desglose de tareas, progreso de proyectos y burndown, más
-`/api/v1/dashboards`—. El plan de la Fase 5 se escribió como si 5C y 5D empezaran
-en blanco, y no es así.
+`src/Modules/Reporting` ya existía con 1.348 líneas y ocho rutas. Al ejecutarlas por primera vez
+aparecieron cuatro cosas:
 
-Los endpoints están bien construidos: enrutan por MediatR, sacan el `tenantId` de
-las reclamaciones del token y no del cuerpo, y distinguen 200 de 404 y de 400. Sobre
-el papel, correcto.
+**Los KPI eran en parte inventados.** `AvgLeadTimeDays: 2.5` y `AvgCycleTimeDays: 1.4` estaban
+escritos a mano en el código, porque `WorkTask` no guardaba ninguna marca de tiempo y no había
+con qué calcularlos.
 
-Pero **`Reporting.Domain` y `Reporting.Application` están al 0 %**, y ya sabemos por
-qué: ninguna prueba llama a esas rutas. Es decir, **nadie ha comprobado nunca que
-respondan**. Que un endpoint compile y esté registrado no dice nada sobre lo que
-devuelve; el precedente de los comentarios —la interfaz llamaba a un endpoint que
-nunca existió, y las pruebas no lo vieron porque miraban el código de estado— es
-demasiado reciente para dar por bueno lo que no se ha ejecutado.
+**El diagrama de quemado era enteramente ficticio:**
 
-Antes de construir el dashboard encima, hay que levantar la API y llamar a las ocho
-rutas. Es el bloque 2 del plan, y su primer entregable son pruebas de integración
-para Reporting: sin ellas, cualquier cosa que se construya arriba hereda el riesgo.
+```csharp
+int remaining = Math.Max(0, totalTasks - (i / 2));
+```
+
+Bajaba una tarea cada dos días pasara lo que pasara, sin mirar nunca cuándo se completó nada, y
+rellenaba el total a un mínimo de diez tareas para que la línea quedara bien en proyectos
+pequeños. Un gráfico que no depende de los datos es una decoración con aspecto de medida, y es
+peor que no tener gráfico: se toman decisiones mirándolo.
+
+Ambos resueltos. Se añadieron `CreatedAtUtc` y `CompletedAtUtc` a `WorkTask` —migración
+`AddTimestampsToWorkTask`, aplicada y verificada en MySQL—, con la marca de cierre puesta al
+entrar en «Done» y **borrada al salir**: una tarea reabierta no está terminada, y conservar la
+fecha del primer cierre mediría un trabajo que luego se deshizo. El tiempo de entrega y el
+quemado salen ya de esas fechas.
+
+El **tiempo de ciclo sigue sin poder calcularse** y por eso viaja como `null`: mide desde que el
+trabajo empieza de verdad, y eso exige saber cuándo la tarea entró en «En Progreso». Sólo se
+guarda el estado actual, no su historial. Un hueco visible es mejor que un número inventado —
+quien lee el panel puede desconfiar de lo que no está, pero no de lo que parece medido. Tenerlo
+exigiría una tabla de historial de estados; es la decisión pendiente.
+
+**Reporting viola el aislamiento entre módulos.** `Reporting.Infrastructure` referencia
+`Projects.Infrastructure`, `WorkItems.Infrastructure` y `Ticketing.Infrastructure`, y consulta
+sus `DbContext` directamente. Es la deuda arquitectónica más grande del repositorio y sigue ahí:
+tocarla es rehacer el módulo, no un arreglo.
+
+**Los modelos de lectura son código muerto.** `TaskReadModel`, `ProjectReadModel`,
+`TicketReadModel` y sus consumidores existen, pero no hay ningún `AddMassTransit` ni
+`AddConsumer` en el host: nunca se registran ni se pueblan. Por eso `Reporting.Domain` estaba al
+0 %. O se conectan y el repositorio pasa a leer de ellos —que es lo que resolvería también la
+violación de aislamiento—, o se borran; mantenerlos como están sólo confunde a quien los lea.
+
+## 5. Lo que queda anotado y sin resolver
+
+- **Las preferencias de notificación no se guardan.** `GET /api/v1/notifications/preferences`
+  devuelve valores fijos escritos en el código y `PUT` responde con lo mismo que recibe, sin
+  persistir nada. Importa más de lo que parece: la Fase 5 pide que el aviso de exportación
+  terminada se pueda desactivar «como todas las notificaciones», y hoy no hay dónde guardarlo.
+- **Las páginas de documentos no llevan inquilino.** `CreatePageCommand` y `UpdatePageCommand`
+  no tienen `TenantId`, así que el aislamiento de las páginas depende de conocer el
+  identificador del documento. No es explotable a ciegas, pero es la misma familia que 2.5.
+- **La deuda de Reporting**, arriba.
+- **El árbol de trabajo de git abandonado** (2.4).
+- **167 avisos de lint** en el frontend, heredados.

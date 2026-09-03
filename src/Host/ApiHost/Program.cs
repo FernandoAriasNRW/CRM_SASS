@@ -401,8 +401,12 @@ using (var scope = app.Services.CreateScope())
     }
     catch (Exception ex)
     {
+        // Error, no aviso. Un aviso se pierde entre el ruido del arranque, y esto llevaba
+        // tiempo fallando sin que nadie lo notara: la aplicación levantaba sin proyectos ni
+        // tareas y el panel de informes contaba cero. Sigue sin tumbar el arranque —la API es
+        // útil aunque no haya datos de demostración— pero ahora se ve.
         var logger = services.GetRequiredService<Microsoft.Extensions.Logging.ILogger<Program>>();
-        logger.LogWarning(ex, "Error durante la siembra automática de datos demo.");
+        logger.LogError(ex, "La siembra de datos de demostración falló. La aplicación arranca sin ellos.");
     }
 }
 

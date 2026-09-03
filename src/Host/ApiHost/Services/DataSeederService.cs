@@ -40,6 +40,13 @@ public sealed class DataSeederService(IServiceProvider serviceProvider, ILogger<
     public async Task SeedAllAsync(CancellationToken cancellationToken = default)
     {
         logger.LogInformation("Starting global data seeding for all modules...");
+
+        // Qué módulos fallaron. Cada bloque de abajo atrapa su propia excepción para que el
+        // fallo de uno no impida sembrar los demás —eso está bien—, pero antes el método
+        // terminaba diciendo «completed successfully» pasara lo que pasara. La siembra de
+        // Projects llevaba fallando en silencio, así que la aplicación arrancaba sin ningún
+        // proyecto ni tarea y el panel de informes contaba cero sin que nadie supiera por qué.
+        var fallos = new List<string>();
         using var scope = serviceProvider.CreateScope();
 
         // ---------------------------------------------------------------------
@@ -158,6 +165,7 @@ public sealed class DataSeederService(IServiceProvider serviceProvider, ILogger<
         catch (Exception ex)
         {
             logger.LogError(ex, "Error seeding Identity module data");
+            fallos.Add("Identity");
         }
 
         if (tenantId == Guid.Empty) return;
@@ -199,6 +207,7 @@ public sealed class DataSeederService(IServiceProvider serviceProvider, ILogger<
         catch (Exception ex)
         {
             logger.LogError(ex, "Error seeding Teams module data");
+            fallos.Add("Teams");
         }
 
         // ---------------------------------------------------------------------
@@ -263,6 +272,7 @@ public sealed class DataSeederService(IServiceProvider serviceProvider, ILogger<
         catch (Exception ex)
         {
             logger.LogError(ex, "Error seeding Projects module data");
+            fallos.Add("Projects");
         }
 
         // ---------------------------------------------------------------------
@@ -330,6 +340,7 @@ public sealed class DataSeederService(IServiceProvider serviceProvider, ILogger<
         catch (Exception ex)
         {
             logger.LogError(ex, "Error seeding WorkItems module data");
+            fallos.Add("WorkItems");
         }
 
         // ---------------------------------------------------------------------
@@ -370,6 +381,7 @@ public sealed class DataSeederService(IServiceProvider serviceProvider, ILogger<
         catch (Exception ex)
         {
             logger.LogError(ex, "Error seeding Docs module data");
+            fallos.Add("Docs");
         }
 
         // ---------------------------------------------------------------------
@@ -410,6 +422,7 @@ public sealed class DataSeederService(IServiceProvider serviceProvider, ILogger<
         catch (Exception ex)
         {
             logger.LogError(ex, "Error seeding Ticketing module data");
+            fallos.Add("Ticketing");
         }
 
         // ---------------------------------------------------------------------
@@ -441,6 +454,7 @@ public sealed class DataSeederService(IServiceProvider serviceProvider, ILogger<
         catch (Exception ex)
         {
             logger.LogError(ex, "Error seeding Calendar module data");
+            fallos.Add("Calendar");
         }
 
         // ---------------------------------------------------------------------
@@ -494,6 +508,7 @@ public sealed class DataSeederService(IServiceProvider serviceProvider, ILogger<
         catch (Exception ex)
         {
             logger.LogError(ex, "Error seeding Communication module data");
+            fallos.Add("Communication");
         }
 
         // ---------------------------------------------------------------------
@@ -526,6 +541,7 @@ public sealed class DataSeederService(IServiceProvider serviceProvider, ILogger<
         catch (Exception ex)
         {
             logger.LogError(ex, "Error seeding Notifications module data");
+            fallos.Add("Notifications");
         }
 
         // ---------------------------------------------------------------------
@@ -551,6 +567,7 @@ public sealed class DataSeederService(IServiceProvider serviceProvider, ILogger<
         catch (Exception ex)
         {
             logger.LogError(ex, "Error seeding Webhook module data");
+            fallos.Add("Webhook");
         }
 
         // ---------------------------------------------------------------------
@@ -579,6 +596,17 @@ public sealed class DataSeederService(IServiceProvider serviceProvider, ILogger<
         catch (Exception ex)
         {
             logger.LogError(ex, "Error seeding Tags module data");
+            fallos.Add("Tags");
+        }
+
+        if (fallos.Count > 0)
+        {
+            // Se lanza a propósito. Un entorno de demostración a medio sembrar es un entorno
+            // roto, y callarlo sólo traslada el desconcierto a quien abra la pantalla y la vea
+            // vacía. Quien llame decide qué hacer con esto.
+            throw new InvalidOperationException(
+                "La siembra falló en estos módulos: " + string.Join(", ", fallos) +
+                ". Los errores concretos están más arriba en el registro.");
         }
 
         logger.LogInformation("Global data seeding completed successfully across all modules!");
