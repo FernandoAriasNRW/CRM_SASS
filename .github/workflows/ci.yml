@@ -44,31 +44,37 @@ jobs:
       - name: Build
         run: dotnet build CrmSaaS.sln --no-restore --configuration Release
 
-      # Los proyectos de test ya forman parte de la solución, así que --no-build
-      # es correcto: se compilaron en el paso anterior.
-      - name: Tests unitarios
-        run: |
-          dotnet test tests/UnitTests/UnitTests.csproj \
-            --no-build \
-            --configuration Release \
-            --verbosity normal \
-            --collect:"XPlat Code Coverage" \
-            --results-directory ./coverage
+      # Un solo paso para las dos suites y la cobertura, porque el umbral se
+      # comprueba sobre el informe fusionado: las unitarias cubren el dominio y
+      # las de integración son las únicas que cargan Infrastructure y los
+      # endpoints. Por separado, ninguna de las dos cifras significa nada; y
+      # medir sólo las unitarias dejaba diez módulos fuera del informe.
+      #
+      # Sin `continue-on-error`: si fallan las pruebas o la cobertura baja del
+      # umbral, el CI debe ponerse rojo. Antes este paso no podía fallar nunca
+      # —faltaba coverlet.collector, así que no había recolector y `dotnet test`
+      # devolvía 0 igualmente— y llevaba desde el principio sin medir nada.
+      - name: Tests y cobertura
+        run: scripts/cobertura.sh
+        env:
+          COBERTURA_UMBRAL: '60'
 
-      # Sin `continue-on-error`: si fallan, el CI debe ponerse rojo.
-      # Levantan un MySQL real vía Testcontainers, que usa el Docker del runner.
-      - name: Tests de integración
+      # El resumen sale en la pestaña Summary del run, sin descargar artefactos.
+      - name: Resumen de cobertura en el run
+        if: always()
         run: |
-          dotnet test tests/IntegrationTests/IntegrationTests.csproj \
-            --no-build \
-            --configuration Release \
-            --verbosity normal
+          if [ -f coverage/report/SummaryGithub.md ]; then
+            cat coverage/report/SummaryGithub.md >> "$GITHUB_STEP_SUMMARY"
+          fi
 
+      # `always()`: cuando el umbral es lo que falla, el informe es justo lo que
+      # hace falta para ver qué bajó.
       - name: Publicar cobertura
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: backend-coverage
-          path: ./coverage
+          path: ./coverage/report
           retention-days: 7
 
   frontend:
@@ -156,8 +162,40 @@ jobs:
           echo "Bundles de es y en generados."
 
       # ChromeHeadless viene con el runner; no hace falta instalar nada aquí.
+      #
+      # `codeCoverage` está activo en angular.json y karma.conf.js fija umbrales,
+      # así que este paso se pone rojo si la cobertura del frontend retrocede.
+      # Los umbrales son un trinquete puesto justo por debajo de lo medido, no la
+      # meta: un build permanentemente rojo se acaba ignorando.
       - name: Tests unitarios de frontend
         run: npm run test:ci
+
+      - name: Resumen de cobertura del frontend
+        if: always()
+        run: |
+          if [ -f coverage/web/coverage-summary.json ]; then
+            {
+              echo "### Cobertura del frontend"
+              echo ""
+              echo "| Métrica | % | Cubierto / Total |"
+              echo "|---|---:|---:|"
+              node -e '
+                const t = require("./coverage/web/coverage-summary.json").total;
+                const nombres = { lines: "Líneas", statements: "Sentencias", branches: "Ramas", functions: "Funciones" };
+                for (const k of Object.keys(nombres)) {
+                  console.log(`| ${nombres[k]} | ${t[k].pct}% | ${t[k].covered} / ${t[k].total} |`);
+                }
+              '
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Publicar cobertura del frontend
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-coverage
+          path: web/coverage/web
+          retention-days: 7
 
       # Sólo el navegador que usa la suite: instalar los tres multiplicaría por varios
       # minutos un paso que no aporta cobertura adicional.

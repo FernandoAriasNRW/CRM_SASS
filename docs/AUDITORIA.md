@@ -34,10 +34,12 @@ cualquiera que leyera el log entero.
 
 Es el mismo patrón que ya mordió en la Fase 4 con `dotnet ef --no-build`: una
 herramienta que informa del problema por consola pero no lo señala en el código de
-salida. **Un paso de CI que no puede fallar no es un paso de CI.** Por eso el plan
-añade un umbral que sí rompe el build.
+salida. **Un paso de CI que no puede fallar no es un paso de CI.**
 
-Resuelto: `coverlet.collector` en ambos proyectos.
+Resuelto: `coverlet.collector` en ambos proyectos, `coverage.runsettings` para
+decidir qué se mide, `scripts/cobertura.sh` para fusionar las dos suites, y un
+umbral que **sí** rompe el build. Se comprobó en las dos direcciones: con umbral 60
+devuelve 0, con umbral 95 devuelve 1 y escribe un `::error::`.
 
 ### 2.2 Dos referencias de proyecto rotas — resuelto
 
@@ -52,7 +54,30 @@ degradaba a aviso (MSB9008) y compilaba igual, porque `ApiHost` arrastra esos do
 proyectos de forma transitiva. Es decir: la referencia estaba rota **y era
 redundante**. Se eliminaron las dos líneas; el proyecto compila ahora con 0 avisos.
 
-### 2.3 Un árbol de trabajo de git abandonado
+### 2.3 Un `TypeError` que se lanzaba en cada ejecución sin romper nada — resuelto
+
+Al subir a propósito el umbral del frontend para comprobar que el paso podía
+ponerse rojo, el log dejó ver esto:
+
+> `TypeError: this.authStore.getTokenExpiresAt is not a function`
+
+`app.component.spec.ts` sustituía `AuthSignalStore` por un objeto literal con dos
+miembros. El efecto del constructor de `SessionManagerService` llama a
+`getTokenExpiresAt()`, que el doble no tenía, y **Angular se traga los errores que
+se lanzan dentro de un `effect`**: salían por consola y las 136 pruebas seguían en
+verde.
+
+El doble llevaba además tiempo desviado de la clase real: exponía `user` donde
+`AuthSignalStore` expone `userInfo`.
+
+Se arregló usando el store de verdad —sólo depende de `Router`, ya provisto por
+`provideRouter([])`— en lugar de completar el doble a mano. Completarlo sería jugar
+al ratón y el gato: el siguiente miembro que se añada a la clase volvería a
+romperlo en silencio.
+
+No queda ninguna línea con `ERROR` en el log de la suite.
+
+### 2.4 Un árbol de trabajo de git abandonado
 
 `.claude/worktrees/goofy-khorana-d7c41d` sigue registrado, apuntando a la rama
 `claude/goofy-khorana-d7c41d` en el commit `d0650fa`. Contiene una copia completa
@@ -61,81 +86,110 @@ algo que rescatar y, si no, retirarlo.
 
 ## 3. Cobertura: el punto de partida real
 
-Medido, no estimado. Sólo con las pruebas unitarias:
+### Lo que se midió primero, y por qué engañaba
+
+Con el recolector ya funcionando, la primera cifra —sólo pruebas unitarias, todo
+incluido— fue **18,0 %**. Engaña en dos direcciones a la vez:
+
+- **Hacia abajo:** de las 16.278 líneas del informe, **7.366 eran migraciones de
+  Entity Framework**. Código generado por `dotnet ef`, que nadie escribió y que
+  ninguna prueba puede ni debe ejecutar. El 45 % del total, todo a cero.
+- **Hacia arriba:** faltaban diez módulos enteros. `tests/UnitTests` referencia los
+  proyectos uno a uno, así que `Reporting`, `Docs`, `Tags`, `Teams`,
+  `Notifications`, `Communication` y casi todo `Automations` y `Comments` fuera del
+  dominio **no aparecían en el informe**. Una métrica que omite lo no probado
+  siempre miente a favor.
+
+### Cómo se mide ahora
+
+`coverage.runsettings` decide explícitamente qué cuenta: fuera migraciones,
+`*.Designer.cs`, `ModelSnapshot`, `Program.cs` y lo marcado como generado por el
+compilador.
+
+Y se miden **las dos suites juntas**, fusionadas con ReportGenerator. Ninguna basta
+sola: las unitarias cubren el dominio, y las de integración son las únicas que
+cargan `Infrastructure` y los endpoints —y las únicas que, al levantar la API
+entera vía `ApiHost`, hacen visibles los diez módulos que faltaban, sin tener que
+añadir sesenta referencias de proyecto a mano—.
+
+Todo ello en `scripts/cobertura.sh`, que es lo que ejecuta el CI.
+
+### La cifra
 
 ```
-Líneas cubiertas globalmente ........ 18,0 %
+Cobertura de líneas ................. 68,8 %   (3.710 / 5.390)
+Cobertura de ramas .................. 55,3 %   (381 / 688)
+Cobertura de métodos ................ 56,9 %   (579 / 1.017)
+Frontend, líneas (Karma) ............ 47,7 %   (562 / 1.179)
 ```
 
-Ese 18 % es engañoso, y en la dirección pesimista. De las 16.278 líneas que cuenta
-el informe, **7.366 son migraciones de Entity Framework** — código generado que
-nadie escribió y que ninguna prueba unitaria puede ni debe ejecutar. Son el 45 % del
-total y están todas a cero.
+64 ensamblados, 509 clases, 349 archivos.
 
-Descontándolas, la cifra sobre código escrito a mano es:
+**El objetivo del 60 % ya estaba cumplido; nadie lo había calculado nunca.** Conviene
+decirlo sin adornos: no es mérito de este trabajo, es que la medición faltaba. El
+mérito, si hay alguno, es que ahora la cifra existe y no puede bajar en silencio.
 
-```
-Código propio ....................... 32,9 %  (2.928 / 8.912)
-Frontend (Karma, líneas) ............ 47,3 %  (558 / 1.179)
-```
+Queda por debajo del 60 % la **cobertura de ramas** (55,3 %), que es la métrica más
+exigente y la más informativa: mide si se probaron los dos lados de cada `if`, no
+sólo si la línea se ejecutó. Ahí sí hay trabajo.
 
-Reparto por ensamblado, ordenado por lo que más pesa:
+### El reparto, y lo que delata
 
-| Ensamblado | Cubierto | Total | % |
+Bien cubierto, donde se aplicó la disciplina de funciones puras:
+
+| Ensamblado | % |
+|---|---:|
+| Comments.Domain | 100 |
+| WorkItems.Infrastructure | 100 |
+| Automations.Domain | 95,2 |
+| WorkItems.Domain | 96,7 |
+| WorkItems.Application | 93,1 |
+| CustomFields.Domain | 88,9 |
+| Ticketing.Domain | 84,8 |
+
+Y lo que falta, ordenado por lo que más importa:
+
+| Ensamblado | % | Por qué importa |
+|---|---:|---|
+| Reporting.Domain | **0** | ver más abajo |
+| Reporting.Application | **0** | ver más abajo |
+| Tags.Application | **0** | |
+| Teams.Application | **0** | |
+| Communication.Application | **0** | |
+| Notifications.Application | **0** | las notificaciones son el canal del que depende la exportación asíncrona de la Fase 5 |
+| Docs.Application | 9,3 | el editor es el bloque 5B |
+| Identity.Application | 23,6 | autorización: un fallo aquí no lo ve nadie hasta producción |
+| Identity.Domain | 38,4 | |
+| Notifications.Domain | 38,9 | |
+| Docs.Domain | 41,2 | |
+| Communication.Domain | 43,4 | |
+| Calendar.Domain | 46,2 | |
+| BuildingBlocks.Infrastructure | 47,7 | lo comparten todos los módulos |
+
+### El patrón que hay que investigar
+
+Seis módulos repiten la misma forma: **la capa de presentación muy cubierta y la de
+aplicación a cero.**
+
+| Módulo | Presentation | Application | Domain |
 |---|---:|---:|---:|
-| Comments.Domain | 100 | 102 | 98,0 |
-| Automations.Domain | 222 | 236 | 94,1 |
-| WorkItems.Domain | 568 | 636 | 89,3 |
-| Ticketing.Domain | 140 | 166 | 84,3 |
-| Webhook.Domain | 48 | 66 | 72,7 |
-| CustomFields.Domain | 176 | 268 | 65,7 |
-| Ticketing.Application | 140 | 264 | 53,0 |
-| Projects.Domain | 144 | 278 | 51,8 |
-| Webhook.Application | 116 | 228 | 50,9 |
-| Calendar.Domain | 152 | 310 | 49,0 |
-| BuildingBlocks.Domain | 104 | 222 | 46,8 |
-| Projects.Application | 148 | 366 | 40,4 |
-| Calendar.Application | 170 | 472 | 36,0 |
-| Identity.Domain | 130 | 480 | 27,1 |
-| WorkItems.Application | 248 | 986 | 25,2 |
-| Identity.Application | 142 | 940 | 15,1 |
-| BuildingBlocks.Infrastructure | 62 | 1.228 | 5,0 |
-| Identity.Infrastructure | 102 | 2.334 | 4,4 |
-| Projects.Infrastructure | 16 | 1.326 | 1,2 |
-| BuildingBlocks.Application | 0 | 124 | 0,0 |
-| Calendar / Ticketing / Webhook / WorkItems .Infrastructure | 0 | 5.230 | 0,0 |
+| Reporting | 95,2 % | **0 %** | **0 %** |
+| Tags | 100 % | **0 %** | 50 % |
+| Teams | 100 % | **0 %** | 67,8 % |
+| Notifications | 100 % | **0 %** | 38,9 % |
+| Communication | 88,7 % | **0 %** | 43,4 % |
+| Docs | 100 % | 9,3 % | 41,2 % |
 
-Dos lecturas que cambian el plan:
+Los endpoints se ejecutan —las pruebas de integración los llaman y responden— pero
+el dominio y los manejadores **no se ejecutan nunca**. Eso no es falta de pruebas:
+es que la petición no llega a la lógica. O los endpoints resuelven por su cuenta
+contra la base de datos saltándose la capa de aplicación, o devuelven algo fijo.
 
-1. **El dominio ya está bien cubierto.** Donde se aplicó la disciplina de funciones
-   puras —`WorkItems`, `Automations`, `Comments`, `Ticketing`— la cobertura va del
-   84 % al 98 %. Ahí no hay trabajo que hacer.
-2. **Lo que falta es la capa de aplicación**, sobre todo `Identity.Application`
-   (15 %) y `WorkItems.Application` (25 %). Son manejadores de comandos: lógica de
-   autorización, validación y orquestación. Es exactamente el sitio donde un fallo
-   no lo ve nadie hasta producción, y es barato de probar.
-
-**Hay ensamblados que ni siquiera aparecen** en el informe, porque `UnitTests` no
-los referencia: `Comments.Application`, `Comments.Infrastructure`, `Automations.*`
-salvo el dominio, `Reporting.*`, `Docs`, `Tags`, `Teams`, `Notifications` y
-`Communication`. La cobertura real del backend completo es **más baja que 32,9 %**.
-Antes de fijar una meta hay que hacerlos visibles: una métrica que omite lo no
-probado siempre miente a favor.
-
-### Sobre la meta del 60 %
-
-Es alcanzable, pero el número sólo significa algo si se define primero **sobre qué**
-se mide. Propuesta:
-
-- Excluir migraciones de EF y `Program.cs` — código generado o de arranque.
-- Incluir **todos** los módulos, también los que hoy no se referencian.
-- Medir la unión de unitarias **e integración**; las de integración cubren
-  `Infrastructure` y los endpoints, que las unitarias no pueden alcanzar.
-
-Con esa definición, el 60 % es trabajo de verdad pero razonable, y no se llega
-inflando la cifra con pruebas que sólo comprueban códigos de estado. Esa lección
-ya se pagó en la Fase 4: *una prueba que sólo mira el código de estado no ve un
-guardado que no guarda.*
+Es el mismo olor que tenían los comentarios en la Fase 4, donde la interfaz llamaba
+a un endpoint que nunca existió y las pruebas no lo veían porque miraban el código
+de estado. **Una prueba que sólo mira el código de estado no ve un guardado que no
+guarda.** Investigarlo es el bloque 2 del plan, y es imprescindible antes de
+construir el dashboard encima de Reporting.
 
 ## 4. Sobre dos encargos que ya existen
 
