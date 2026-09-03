@@ -9,10 +9,29 @@ public sealed class AutomationsDbContext(DbContextOptions<AutomationsDbContext> 
     : TenantDbContext(options, userContext)
 {
   public DbSet<AutomationRule> Rules => Set<AutomationRule>();
+  public DbSet<EjecucionDeAutomatizacion> Ejecuciones => Set<EjecucionDeAutomatizacion>();
 
   protected override void OnModelCreating(ModelBuilder modelBuilder)
   {
     base.OnModelCreating(modelBuilder);
+
+    modelBuilder.Entity<EjecucionDeAutomatizacion>(e =>
+    {
+      e.ToTable("AutomationExecutions");
+      e.Property(x => x.Resultado).HasMaxLength(30).IsRequired();
+      e.Property(x => x.Detalle).HasMaxLength(EjecucionDeAutomatizacion.LargoMaximoDelDetalle);
+
+      // La consulta de la memoria diaria: «¿esta regla ya se aplicó hoy sobre esta tarea?». La
+      // hace el trabajo de vencimientos una vez por regla y por tarea, así que sin índice sería
+      // un recorrido de la tabla entera multiplicado por el número de tareas del inquilino —y
+      // esta tabla sólo crece.
+      e.HasIndex(x => new { x.TenantId, x.RuleId, x.EntityId, x.Dia })
+       .HasDatabaseName("IX_AutomationExecutions_Memoria");
+
+      // La otra consulta: el historial de una regla, de lo más reciente a lo más antiguo.
+      e.HasIndex(x => new { x.TenantId, x.RuleId, x.CuandoUtc })
+       .HasDatabaseName("IX_AutomationExecutions_Historial");
+    });
 
     modelBuilder.Entity<AutomationRule>(e =>
     {

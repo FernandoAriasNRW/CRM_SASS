@@ -19,6 +19,28 @@ public interface IAutomationRuleRepository
     Task RemoveAsync(AutomationRule regla, CancellationToken ct = default);
 }
 
+/// <summary>
+/// El registro de ejecuciones. Ver <see cref="EjecucionDeAutomatizacion"/> para qué resuelve.
+/// </summary>
+public interface IRepositorioDeEjecuciones
+{
+    Task AnotarAsync(EjecucionDeAutomatizacion ejecucion, CancellationToken ct = default);
+
+    /// <summary>
+    /// Si esa regla ya se ejecutó hoy sobre esa entidad.
+    ///
+    /// Es lo que impide que el disparador por vencimiento avise todos los días sobre la misma
+    /// tarea. Se pregunta por día y no por un rango de horas para que la comparación sea una
+    /// igualdad sobre una columna de fecha, indexable y sin líos de zona horaria.
+    /// </summary>
+    Task<bool> YaSeEjecutoHoyAsync(
+        Guid tenantId, Guid ruleId, Guid entityId, DateOnly dia, CancellationToken ct = default);
+
+    /// <summary>Las últimas ejecuciones de una regla, de la más reciente a la más antigua.</summary>
+    Task<IReadOnlyList<EjecucionDeAutomatizacion>> UltimasDeLaReglaAsync(
+        Guid tenantId, Guid ruleId, int cuantas, CancellationToken ct = default);
+}
+
 public interface IAutomationsUnitOfWork
 {
     Task<int> SaveChangesAsync(CancellationToken ct = default);

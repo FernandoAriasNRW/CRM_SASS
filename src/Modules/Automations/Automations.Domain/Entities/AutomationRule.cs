@@ -25,6 +25,19 @@ public sealed class CondicionDeAutomatizacion
         if (ValueObjects.Operador.NecesitaValor(operador) && string.IsNullOrWhiteSpace(valor))
             throw new InvalidOperationException(AutomationRule.Reglas.CondicionSinValor);
 
+        // «Menor o igual» sobre un campo de texto se rechaza aquí en vez de comparar
+        // alfabéticamente. Comparar «Alta» con «Baja» carácter a carácter da una respuesta —y
+        // por tanto una regla que salta o no salta— que nadie ha pedido y que no da ningún
+        // error. Es preferible no dejar guardarla.
+        if (ValueObjects.Operador.EsNumerico(operador) && !CampoDelEvento.EsNumerico(campo))
+            throw new InvalidOperationException(AutomationRule.Reglas.OperadorNumericoSobreTexto);
+
+        // Y al revés: el valor con el que se compara un campo numérico tiene que ser un número.
+        if (CampoDelEvento.EsNumerico(campo)
+            && ValueObjects.Operador.NecesitaValor(operador)
+            && !int.TryParse(valor, out _))
+            throw new InvalidOperationException(AutomationRule.Reglas.ValorNoNumerico);
+
         Id = Guid.NewGuid();
         Campo = campo;
         Operador = operador;
@@ -195,5 +208,9 @@ public sealed class AutomationRule : AggregateRoot, ITenantEntity
         public static readonly string DemasiadasCondiciones =
             $"Una automatización no puede tener más de {MaximoDeCondiciones} condiciones";
         public const string NombreRepetido = "Ya hay una automatización con ese nombre";
+        public const string OperadorNumericoSobreTexto =
+            "«Menor o igual» y «mayor o igual» sólo valen sobre campos numéricos";
+        public const string ValorNoNumerico =
+            "Ese campo es numérico, así que hay que compararlo con un número entero";
     }
 }

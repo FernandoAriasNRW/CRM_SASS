@@ -46,6 +46,21 @@ public static class AutomationsEndpoints
       campos = CampoDelEvento.Todos(),
       operadores = Operador.Todos(),
       acciones = TipoDeAccion.Todos(),
+
+      // Qué es numérico, servido en vez de deducido en el cliente.
+      //
+      // La interfaz necesita saberlo para no ofrecer «menor o igual» sobre un campo de texto —el
+      // dominio lo rechaza y quien lo intente sólo vería un error—. Repetir la lista allí sería
+      // una copia que se desincroniza el día que se añada un campo numérico, que es justo lo que
+      // acaba de pasar con los tipos de informe: el desplegable ofrecía dos que el servidor no
+      // conocía y la mitad del formulario no funcionaba.
+      camposNumericos = CampoDelEvento.Todos().Where(CampoDelEvento.EsNumerico),
+      operadoresNumericos = Operador.Todos().Where(Operador.EsNumerico),
+      operadoresSinValor = Operador.Todos().Where(o => !Operador.NecesitaValor(o)),
+      disparadoresPorTiempo = TipoDeDisparador.Todos().Where(TipoDeDisparador.EsPorTiempo),
+
+      // El valor especial de «Notificar» para avisar a quien tenga la tarea.
+      destinatarioResponsable = TipoDeAccion.DestinatarioResponsable,
     }));
 
     group.MapGet("", async (ClaimsPrincipal principal, IMediator mediator) =>
@@ -82,6 +97,18 @@ public static class AutomationsEndpoints
     {
       var result = await mediator.Send(new RemoveAutomationRuleCommand(TenantDe(principal), id));
       return result.IsSuccess ? Results.NoContent() : Responder(false, result.Error);
+    });
+
+    // El historial de una regla: qué hizo, cuándo y sobre qué.
+    //
+    // Es lo que se mira cuando alguien dice «mi automatización no funciona», y responde la
+    // pregunta que el contador de la regla no sabía contestar: si no salta, o si salta y las
+    // condiciones no se cumplen.
+    group.MapGet("/{id:guid}/ejecuciones", async (
+        ClaimsPrincipal principal, Guid id, IMediator mediator, int cuantas = 20) =>
+    {
+      var result = await mediator.Send(new GetEjecucionesQuery(TenantDe(principal), id, cuantas));
+      return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
     });
 
     return app;

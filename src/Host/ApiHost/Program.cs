@@ -256,6 +256,15 @@ builder.Services.AddCommentsPresentation(builder.Configuration);
 // El puente entre las tareas y las automatizaciones vive aquí porque es el unico sitio que
 // conoce a los dos modulos. Ver PuenteDeAutomatizaciones.
 builder.Services.AddScoped<Automations.Application.Abstractions.IEjecutorDeAcciones, ApiHost.Services.EjecutorDeAccionesDeTareas>();
+
+// Avisar cruza tres módulos: Automations decide, WorkItems sabe quién tiene la tarea y
+// Notifications entrega. Por eso vive aquí y no dentro de ninguno de los tres.
+builder.Services.AddScoped<ApiHost.Services.AvisoDeAutomatizacion>();
+
+// El disparador por vencimiento no lo levanta un evento —nadie toca la tarea— sino este
+// trabajo, que revisa cada hora qué se acerca a su fecha. Es el que reacciona a que NO ha
+// pasado nada, que es justo lo que no se nota solo.
+builder.Services.AddHostedService<ApiHost.Services.VigilanteDeVencimientos>();
 builder.Services.AddDocsPresentation(builder.Configuration);
 
 // ═══════════════════════════════════════════════════════════════════════════════ MEDIATR - Commands y Queries ═══════════════════════════════════════════════════════════════════════════════

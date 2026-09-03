@@ -49,9 +49,33 @@ public static class EvaluadorDeCondiciones
 
             ValueObjects.Operador.EstaVacio => string.IsNullOrWhiteSpace(valorDelEvento),
 
+            // Comparación numérica de verdad, no alfabética. El dominio ya impide guardar estos
+            // operadores sobre un campo de texto, así que aquí basta con que los dos lados sean
+            // números; si alguno no lo es —un dato corrupto—, la condición no se cumple, que es
+            // el lado seguro: no tocar datos de nadie ante la duda.
+            ValueObjects.Operador.MenorOIgual =>
+                SonNumeros(valorDelEvento, esperado, out var a, out var b) && a <= b,
+
+            ValueObjects.Operador.MayorOIgual =>
+                SonNumeros(valorDelEvento, esperado, out var c, out var d) && c >= d,
+
             // Un operador que esta versión no conoce no se cumple. Ejecutar la acción ante la
             // duda sería tocar datos de alguien por un dato que no se entiende.
             _ => false,
         };
+    }
+
+    /// <summary>
+    /// Cultura invariante en los dos lados: el valor del evento lo escribe el sistema y el
+    /// esperado lo escribió una persona, y si cada uno se leyera con su cultura una regla
+    /// funcionaría o no según el idioma del servidor.
+    /// </summary>
+    private static bool SonNumeros(string? izquierda, string derecha, out int a, out int b)
+    {
+        b = 0;
+        return int.TryParse(izquierda, System.Globalization.NumberStyles.Integer,
+                   System.Globalization.CultureInfo.InvariantCulture, out a)
+            && int.TryParse(derecha, System.Globalization.NumberStyles.Integer,
+                   System.Globalization.CultureInfo.InvariantCulture, out b);
     }
 }
