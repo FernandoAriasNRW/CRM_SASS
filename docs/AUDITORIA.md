@@ -118,6 +118,7 @@ Todo ello en `scripts/cobertura.sh`, que es lo que ejecuta el CI.
 
 ```
 Cobertura de líneas ................. 68,8 %   (3.710 / 5.390)
+  descontando Presentation .......... 60,4 %
 Cobertura de ramas .................. 55,3 %   (381 / 688)
 Cobertura de métodos ................ 56,9 %   (579 / 1.017)
 Frontend, líneas (Karma) ............ 47,7 %   (562 / 1.179)
@@ -126,39 +127,79 @@ Frontend, líneas (Karma) ............ 47,7 %   (562 / 1.179)
 64 ensamblados, 509 clases, 349 archivos.
 
 **El objetivo del 60 % ya estaba cumplido; nadie lo había calculado nunca.** Conviene
-decirlo sin adornos: no es mérito de este trabajo, es que la medición faltaba. El
-mérito, si hay alguno, es que ahora la cifra existe y no puede bajar en silencio.
+decirlo sin adornos: no es mérito de este trabajo, es que la medición faltaba.
 
-Queda por debajo del 60 % la **cobertura de ramas** (55,3 %), que es la métrica más
-exigente y la más informativa: mide si se probaron los dos lados de cada `if`, no
-sólo si la línea se ejecutó. Ahí sí hay trabajo.
+### Por qué el 68,8 % está inflado, y en cuánto
 
-### El reparto, y lo que delata
+La primera lectura de este informe fue que los endpoints de todos los módulos
+estaban bien cubiertos. **Era falsa**, y merece explicarse porque el mismo error se
+puede repetir.
 
-Bien cubierto, donde se aplicó la disciplina de funciones puras:
+Reparto por capa:
+
+| Capa | Cubierto | Total | % | Peso |
+|---|---:|---:|---:|---:|
+| Domain | 2.018 | 3.218 | 62,7 | 29,7 % |
+| Application | 1.446 | 2.990 | 48,4 | 27,6 % |
+| **Presentation** | **2.358** | **2.396** | **98,4** | **22,1 %** |
+| Infrastructure | 1.522 | 2.114 | 72,0 | 19,5 % |
+
+`Presentation` pesa casi una cuarta parte de todo lo medido y sale al 98,4 %. No es
+porque las pruebas llamen a los endpoints. Es porque en una API mínima las líneas
+
+```csharp
+group.MapGet("/kpi", async (...) => { ... });
+```
+
+**se ejecutan al registrar la ruta**, o sea, en cuanto la aplicación arranca. Basta
+con que las pruebas de integración levanten el host una vez para que el registro de
+rutas de los quince módulos cuente como cubierto, aunque nadie llame nunca a
+ninguna.
+
+Descontando esa capa, la cobertura de líneas real es **60,4 %** en lugar de 68,8 %.
+
+Y hay una forma directa de comprobarlo: las rutas que las 97 pruebas de integración
+llegan a tocar son sólo estas seis familias.
+
+```
+/api/v1/auth/…          /api/v1/projects
+/api/v1/tasks/…         /api/v1/comments/…
+/api/v1/automations/…   /api/v1/custom-fields/…
+```
+
+**Ninguna prueba llama a Reporting, Tags, Teams, Notifications, Communication,
+Docs ni Ticketing.** Siete módulos sin una sola prueba de extremo a extremo.
+
+Por eso ahora hay un **segundo umbral sobre la cobertura de ramas**: el registro de
+rutas no tiene ramas, así que esa cifra no admite el engaño. Mide si se probaron los
+dos lados de cada decisión, y está en 55,3 % — por debajo del 60 %. Ahí está el
+trabajo de verdad.
+
+### El reparto por ensamblado
+
+Bien cubierto, donde se aplicó la disciplina de funciones puras en el dominio:
 
 | Ensamblado | % |
 |---|---:|
 | Comments.Domain | 100 |
-| WorkItems.Infrastructure | 100 |
-| Automations.Domain | 95,2 |
 | WorkItems.Domain | 96,7 |
+| Automations.Domain | 95,2 |
 | WorkItems.Application | 93,1 |
 | CustomFields.Domain | 88,9 |
 | Ticketing.Domain | 84,8 |
 
-Y lo que falta, ordenado por lo que más importa:
+Sin cubrir, ordenado por lo que más importa:
 
 | Ensamblado | % | Por qué importa |
 |---|---:|---|
-| Reporting.Domain | **0** | ver más abajo |
-| Reporting.Application | **0** | ver más abajo |
+| Reporting.Domain | **0** | el dashboard de la Fase 5 se apoya aquí |
+| Reporting.Application | **0** | idem |
 | Tags.Application | **0** | |
 | Teams.Application | **0** | |
 | Communication.Application | **0** | |
-| Notifications.Application | **0** | las notificaciones son el canal del que depende la exportación asíncrona de la Fase 5 |
+| Notifications.Application | **0** | es el canal del que depende la exportación asíncrona |
 | Docs.Application | 9,3 | el editor es el bloque 5B |
-| Identity.Application | 23,6 | autorización: un fallo aquí no lo ve nadie hasta producción |
+| Identity.Application | 23,6 | autorización: un fallo aquí no se ve hasta producción |
 | Identity.Domain | 38,4 | |
 | Notifications.Domain | 38,9 | |
 | Docs.Domain | 41,2 | |
@@ -166,30 +207,10 @@ Y lo que falta, ordenado por lo que más importa:
 | Calendar.Domain | 46,2 | |
 | BuildingBlocks.Infrastructure | 47,7 | lo comparten todos los módulos |
 
-### El patrón que hay que investigar
-
-Seis módulos repiten la misma forma: **la capa de presentación muy cubierta y la de
-aplicación a cero.**
-
-| Módulo | Presentation | Application | Domain |
-|---|---:|---:|---:|
-| Reporting | 95,2 % | **0 %** | **0 %** |
-| Tags | 100 % | **0 %** | 50 % |
-| Teams | 100 % | **0 %** | 67,8 % |
-| Notifications | 100 % | **0 %** | 38,9 % |
-| Communication | 88,7 % | **0 %** | 43,4 % |
-| Docs | 100 % | 9,3 % | 41,2 % |
-
-Los endpoints se ejecutan —las pruebas de integración los llaman y responden— pero
-el dominio y los manejadores **no se ejecutan nunca**. Eso no es falta de pruebas:
-es que la petición no llega a la lógica. O los endpoints resuelven por su cuenta
-contra la base de datos saltándose la capa de aplicación, o devuelven algo fijo.
-
-Es el mismo olor que tenían los comentarios en la Fase 4, donde la interfaz llamaba
-a un endpoint que nunca existió y las pruebas no lo veían porque miraban el código
-de estado. **Una prueba que sólo mira el código de estado no ve un guardado que no
-guarda.** Investigarlo es el bloque 2 del plan, y es imprescindible antes de
-construir el dashboard encima de Reporting.
+Los seis módulos con `Application` a cero y `Presentation` al 100 % son
+exactamente los que ninguna prueba llama. No es que la petición se salte la capa de
+aplicación, como sugería la primera lectura de este documento: es que no hay
+petición.
 
 ## 4. Sobre dos encargos que ya existen
 
@@ -209,8 +230,22 @@ el mercado, que es un encargo distinto y está en el plan como bloque propio.
 
 `src/Modules/Reporting` ya existe con 1.348 líneas: entidades `Report` y `Dashboard`,
 modelos de lectura de tareas, proyectos y tickets, consumidores que los alimentan,
-repositorios y dos familias de endpoints. El plan de la Fase 5 se escribió como si
-5C y 5D empezaran en blanco, y no es así. Hay que auditar qué de eso funciona de
-verdad contra la API levantada antes de decidir qué se reescribe — con el precedente
-de los comentarios muy presente, donde la interfaz llamaba a un endpoint que nunca
-existió.
+repositorios y dos familias de endpoints —`/api/v1/reports` con listado, alta,
+generación, KPIs, desglose de tareas, progreso de proyectos y burndown, más
+`/api/v1/dashboards`—. El plan de la Fase 5 se escribió como si 5C y 5D empezaran
+en blanco, y no es así.
+
+Los endpoints están bien construidos: enrutan por MediatR, sacan el `tenantId` de
+las reclamaciones del token y no del cuerpo, y distinguen 200 de 404 y de 400. Sobre
+el papel, correcto.
+
+Pero **`Reporting.Domain` y `Reporting.Application` están al 0 %**, y ya sabemos por
+qué: ninguna prueba llama a esas rutas. Es decir, **nadie ha comprobado nunca que
+respondan**. Que un endpoint compile y esté registrado no dice nada sobre lo que
+devuelve; el precedente de los comentarios —la interfaz llamaba a un endpoint que
+nunca existió, y las pruebas no lo vieron porque miraban el código de estado— es
+demasiado reciente para dar por bueno lo que no se ha ejecutado.
+
+Antes de construir el dashboard encima, hay que levantar la API y llamar a las ocho
+rutas. Es el bloque 2 del plan, y su primer entregable son pruebas de integración
+para Reporting: sin ellas, cualquier cosa que se construya arriba hereda el riesgo.

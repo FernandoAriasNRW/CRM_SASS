@@ -13,6 +13,19 @@ set -euo pipefail
 
 UMBRAL_POR_DEFECTO=60
 
+# Un segundo umbral, sobre ramas, y no por afán de rigor: la cobertura de líneas
+# está inflada por construcción. La capa Presentation pesa el 22 % de las líneas
+# medidas y sale al 98,4 %, pero no porque las pruebas llamen a los endpoints
+# —hay módulos enteros a los que ninguna prueba llama—: las líneas
+# `group.MapGet(...)` se ejecutan al registrar las rutas, es decir, en cuanto la
+# aplicación arranca. Descontando Presentation, la cobertura de líneas real es
+# 60,4 % en vez de 68,8 %.
+#
+# El registro de rutas no tiene ramas, así que la cobertura de ramas no admite
+# ese engaño. Es la cifra que de verdad dice si se probaron los dos lados de cada
+# decisión, y por eso también tiene umbral.
+UMBRAL_RAMAS_POR_DEFECTO=55
+
 # En los runners de CI el intérprete es `python3`; en Git Bash sobre Windows sólo
 # existe `python`. Y no basta con que el nombre exista: Windows trae un alias
 # `python3` de la Microsoft Store que no es un intérprete —imprime un anuncio
@@ -31,6 +44,7 @@ if [ -z "$PYTHON" ]; then
   exit 1
 fi
 UMBRAL="${1:-${COBERTURA_UMBRAL:-$UMBRAL_POR_DEFECTO}}"
+UMBRAL_RAMAS="${2:-${COBERTURA_UMBRAL_RAMAS:-$UMBRAL_RAMAS_POR_DEFECTO}}"
 RAIZ="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$RAIZ"
 
@@ -60,19 +74,51 @@ dotnet reportgenerator \
 
 cat coverage/report/Summary.txt
 
-# El umbral se lee del informe fusionado, no de cada suite por separado: lo que
-# importa es cuánto del sistema queda cubierto entre todas, no cuánto cubre cada
-# una. Un módulo puede estar al 0 % en unitarias y bien cubierto en integración.
-"$PYTHON" - "$UMBRAL" <<'PY'
+# Los umbrales se leen del informe fusionado, no de cada suite por separado: lo
+# que importa es cuánto del sistema queda cubierto entre todas, no cuánto cubre
+# cada una. Un módulo puede estar al 0 % en unitarias y bien cubierto en
+# integración.
+"$PYTHON" - "$UMBRAL" "$UMBRAL_RAMAS" <<'PY'
 import sys, xml.etree.ElementTree as ET
-umbral = float(sys.argv[1])
+
+umbral_linea = float(sys.argv[1])
+umbral_rama  = float(sys.argv[2])
 raiz = ET.parse('coverage/report/Cobertura.xml').getroot()
 linea = float(raiz.get('line-rate')) * 100
 rama  = float(raiz.get('branch-rate')) * 100
-print(f"\nCobertura de líneas: {linea:.1f}%   (umbral: {umbral:.0f}%)")
-print(f"Cobertura de ramas : {rama:.1f}%")
-if linea < umbral:
-    print(f"\n::error::La cobertura de líneas ({linea:.1f}%) está por debajo del umbral ({umbral:.0f}%).")
+
+# Cuánto de la cobertura de líneas viene de la capa Presentation, que se ejecuta
+# al arrancar. Se informa siempre: sin este dato, la cifra global se lee como si
+# midiera pruebas cuando en parte mide un arranque de la aplicación.
+cub = tot = cub_p = tot_p = 0
+for paquete in raiz.iter('package'):
+    es_presentacion = paquete.get('name', '').endswith('.Presentation')
+    for clase in paquete.iter('class'):
+        for l in clase.iter('line'):
+            golpeada = int(l.get('hits')) > 0
+            tot += 1
+            cub += golpeada
+            if es_presentacion:
+                tot_p += 1
+                cub_p += golpeada
+sin_p = (cub - cub_p) / (tot - tot_p) * 100 if tot > tot_p else 0.0
+
+print()
+print(f"Cobertura de líneas ................. {linea:5.1f} %   (umbral: {umbral_linea:.0f} %)")
+print(f"  descontando Presentation .......... {sin_p:5.1f} %   (informativo)")
+print(f"Cobertura de ramas .................. {rama:5.1f} %   (umbral: {umbral_rama:.0f} %)")
+
+fallos = []
+if linea < umbral_linea:
+    fallos.append(f"la cobertura de líneas ({linea:.1f} %) está por debajo del umbral ({umbral_linea:.0f} %)")
+if rama < umbral_rama:
+    fallos.append(f"la cobertura de ramas ({rama:.1f} %) está por debajo del umbral ({umbral_rama:.0f} %)")
+
+if fallos:
+    print()
+    for f in fallos:
+        print("::error::" + f[0].upper() + f[1:] + ".")
     sys.exit(1)
-print("Cobertura por encima del umbral.")
+
+print("Ambos umbrales cumplidos.")
 PY
