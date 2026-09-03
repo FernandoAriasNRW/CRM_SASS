@@ -227,6 +227,21 @@ import { WebPushService, NotificationPreferences } from '../../shared/services/w
                     </div>
                   </div>
                 </label>
+
+                <label class="flex items-center justify-between p-3 rounded-lg border border-border hover:bg-accent/50 transition-colors cursor-pointer">
+                  <div class="flex items-center gap-3">
+                    <input
+                      type="checkbox"
+                      [(ngModel)]="preferences.exportReady"
+                      (ngModelChange)="savePreferences()"
+                      class="w-4 h-4 rounded border-input bg-background text-primary focus:ring-2 focus:ring-primary"
+                    />
+                    <div>
+                      <span class="font-medium">Exportación lista</span>
+                      <p class="text-xs text-muted-foreground">Cuando termina un informe que pediste descargar</p>
+                    </div>
+                  </div>
+                </label>
               </div>
             </div>
 
@@ -312,6 +327,7 @@ export class NotificationPreferencesComponent implements OnInit {
     ticketUpdated: false,
     projectUpdated: true,
     mentionEnabled: true,
+    exportReady: true,
     quietHoursEnabled: false,
     quietHoursStart: '22:00',
     quietHoursEnd: '08:00'
@@ -339,8 +355,13 @@ export class NotificationPreferencesComponent implements OnInit {
 
   savePreferences(): void {
     this.saving.set(true);
-    this.api.put('/notifications/preferences', this.preferences).subscribe({
-      next: () => {
+    this.api.put<NotificationPreferences>('/notifications/preferences', this.preferences).subscribe({
+      next: guardadas => {
+        // Se adopta lo que devuelve el servidor, no lo que se mandó. Hasta ahora el `PUT`
+        // respondía con el mismo cuerpo de la petición sin guardar nada, así que la pantalla
+        // confirmaba cambios que no existían y al recargar volvían atrás. Pintar la respuesta
+        // real es lo que hace que el aviso de «guardado» signifique algo.
+        this.preferences = { ...this.preferences, ...guardadas };
         this.saving.set(false);
         this.toast.success('Preferencias guardadas', 'Tus preferencias de notificación han sido actualizadas.');
       },

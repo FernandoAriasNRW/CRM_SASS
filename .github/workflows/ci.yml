@@ -57,7 +57,7 @@ jobs:
       - name: Tests y cobertura
         run: scripts/cobertura.sh
         env:
-          COBERTURA_UMBRAL: '60'
+          COBERTURA_UMBRAL: '68'
           # El umbral de ramas va aparte porque la cobertura de líneas está
           # inflada por construcción: la capa Presentation pesa el 22 % de las
           # líneas medidas y sale al 98 %, no porque las pruebas llamen a los
@@ -66,7 +66,7 @@ jobs:
           # arranque. El registro no tiene ramas, así que la cobertura de ramas
           # no admite ese engaño: es la que dice si se probaron los dos lados de
           # cada decisión.
-          COBERTURA_UMBRAL_RAMAS: '55'
+          COBERTURA_UMBRAL_RAMAS: '57'
 
       # El resumen sale en la pestaña Summary del run, sin descargar artefactos.
       - name: Resumen de cobertura en el run

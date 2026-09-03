@@ -29,25 +29,41 @@ public static class InfrastructureExtensions
     // MassTransit configuration
     services.AddMassTransit(x =>
     {
-      var assemblyNames = new[] { 
-          "Reporting.Infrastructure",
-          "Communication.Infrastructure", 
-          "Calendar.Infrastructure", 
-          "Ticketing.Infrastructure", 
-          "Notifications.Infrastructure" 
+      // Los ensamblados se buscan por nombre, en texto, porque el módulo no se referencia desde
+      // aquí. Es frágil por naturaleza: un módulo renombrado deja de aportar sus consumidores y
+      // el sistema sigue arrancando como si nada, con los mensajes cayéndose sin destinatario.
+      //
+      // Antes el `catch` estaba vacío —«Ignore if not found»—, así que ni siquiera quedaba
+      // rastro. Ahora un nombre que no carga revienta el arranque: es un error de
+      // configuración, no una circunstancia, y descubrirlo semanas después por mensajes que no
+      // llegan cuesta mucho más que un fallo al levantar.
+      //
+      // Reporting salió de la lista: sus consumidores mantenían unos modelos de lectura que
+      // sólo atendían a eventos de creación —nunca de cambio de estado— y que no leía nadie.
+      var assemblyNames = new[] {
+          "Communication.Infrastructure",
+          "Calendar.Infrastructure",
+          "Ticketing.Infrastructure",
+          "Notifications.Infrastructure"
       };
 
       foreach (var name in assemblyNames)
       {
-          try 
+          System.Reflection.Assembly asm;
+          try
           {
-              var asm = System.Reflection.Assembly.Load(name);
-              x.AddConsumers(asm);
-          } 
-          catch 
-          { 
-              // Ignore if not found
+              asm = System.Reflection.Assembly.Load(name);
           }
+          catch (Exception ex)
+          {
+              throw new InvalidOperationException(
+                  $"No se pudo cargar el ensamblado '{name}' para registrar sus consumidores de " +
+                  "mensajes. O el nombre está mal escrito en esta lista, o el módulo dejó de " +
+                  "formar parte de la solución. Sin él, sus mensajes se publican y no los " +
+                  "recibe nadie.", ex);
+          }
+
+          x.AddConsumers(asm);
       }
 
       x.UsingRabbitMq((context, cfg) =>

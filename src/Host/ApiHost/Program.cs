@@ -200,6 +200,12 @@ builder.Services.AddCommunicationPresentation(builder.Configuration);
 builder.Services.AddCalendarPresentation(builder.Configuration);
 builder.Services.AddWebhookPresentation(builder.Configuration);
 builder.Services.AddReportingPresentation(builder.Configuration);
+
+// El panel de informes cruza Projects, WorkItems y Ticketing, así que su implementación vive
+// aquí y no dentro del módulo: ningún módulo referencia a otro. Reporting declara el contrato;
+// el host, que sí conoce a todos, lo satisface. Mismo criterio que PuenteDeAutomatizaciones.
+builder.Services.AddScoped<Reporting.Application.Abstractions.IDashboardRepository,
+                           ApiHost.Reporting.ConsultasDelPanel>();
 builder.Services.AddTeamsPresentation(builder.Configuration);
 builder.Services.AddTagsPresentation(builder.Configuration);
 builder.Services.AddCustomFieldsPresentation(builder.Configuration);

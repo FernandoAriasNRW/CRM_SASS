@@ -6,9 +6,33 @@ using Ticketing.Domain.ValueObjects;
 using Ticketing.Infrastructure.Persistence;
 using WorkItems.Infrastructure.Persistence;
 
-namespace Reporting.Infrastructure.Repositories;
+namespace ApiHost.Reporting;
 
-public sealed class DashboardRepository(
+/// <summary>
+/// Las consultas del panel de informes, que cruzan tres módulos.
+///
+/// **Vive en el host y no en Reporting.Infrastructure a propósito.** Ningún módulo referencia a
+/// otro; lo que necesita datos de varios se compone aquí, que es donde ya vive
+/// <see cref="ApiHost.Services.PuenteDeAutomatizaciones"/> por la misma razón.
+///
+/// Estaba dentro del módulo, y para conseguirlo `Reporting.Infrastructure` referenciaba los
+/// proyectos de Projects, WorkItems y Ticketing —incluidas sus capas de infraestructura, o sea
+/// sus `DbContext`—. Seis referencias que rompían de lleno la regla de aislamiento: cualquier
+/// cambio en el esquema de otro módulo llegaba hasta aquí sin pasar por ningún contrato.
+///
+/// Reporting sigue declarando el contrato (`IDashboardRepository`); lo que cambia es quién lo
+/// implementa. El módulo dice qué necesita, el host sabe de quién sacarlo.
+///
+/// ---
+///
+/// Hubo una segunda opción, que era leer de los modelos de lectura del propio módulo. Se
+/// descartó, y conviene saber por qué: los consumidores que los alimentaban sólo atendían a
+/// tres eventos de **creación** —ninguno de cambio de estado, actualización o borrado—, así que
+/// una tarea se quedaba en «To Do» para siempre y un proyecto al 0 % de avance. Alimentar el
+/// panel con eso habría dado cifras estables y falsas, que es peor que no tenerlas. Se
+/// eliminaron junto con esta refactorización.
+/// </summary>
+public sealed class ConsultasDelPanel(
     ProjectsDbContext projectsDb,
     WorkItemsDbContext workItemsDb,
     TicketingDbContext ticketingDb) : IDashboardRepository

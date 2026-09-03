@@ -38,6 +38,9 @@
     <!-- Comments -->
     <ProjectReference Include="..\..\src\Modules\Comments\Comments.Domain\Comments.Domain.csproj" />
 
+    <!-- Notifications -->
+    <ProjectReference Include="..\..\src\Modules\Notifications\Notifications.Domain\Notifications.Domain.csproj" />
+
     <!-- Identity -->
     <ProjectReference Include="..\..\src\Modules\Identity\Identity.Infrastructure\Identity.Infrastructure.csproj" />
     <ProjectReference Include="..\..\src\Modules\Identity\Identity.Application\Identity.Application.csproj" />

@@ -7,8 +7,8 @@ salió de ejecutar algo; los que no se pudieron medir se dicen como tales.
 
 | Suite | Resultado |
 |---|---|
-| Unitarias backend (xUnit) | 288 pasan, 0 fallan |
-| Integración (Testcontainers + MySQL) | 123 pasan |
+| Unitarias backend (xUnit) | 312 pasan, 0 fallan |
+| Integración (Testcontainers + MySQL) | 130 pasan |
 | Unitarias frontend (Karma) | 136 pasan |
 | E2E (Playwright) | 76 pasan |
 | Lint frontend | 0 errores, 167 avisos |
@@ -199,9 +199,9 @@ Todo ello en `scripts/cobertura.sh`, que es lo que ejecuta el CI.
 ### La cifra
 
 ```
-Cobertura de líneas ................. 70,2 %
-  descontando Presentation .......... 62,1 %
-Cobertura de ramas .................. 56,1 %
+Cobertura de líneas ................. 70,8 %
+  descontando Presentation .......... 63,0 %
+Cobertura de ramas .................. 58,3 %
 Frontend, líneas (Karma) ............ 47,7 %   (562 / 1.179)
 
 Al empezar la auditoría era 68,8 / 60,4 / 55,3. La subida no viene de escribir pruebas para
@@ -353,15 +353,118 @@ tocarla es rehacer el módulo, no un arreglo.
 0 %. O se conectan y el repositorio pasa a leer de ellos —que es lo que resolvería también la
 violación de aislamiento—, o se borran; mantenerlos como están sólo confunde a quien los lea.
 
-## 5. Lo que queda anotado y sin resolver
+## 5. La deuda de Reporting — resuelta
 
-- **Las preferencias de notificación no se guardan.** `GET /api/v1/notifications/preferences`
-  devuelve valores fijos escritos en el código y `PUT` responde con lo mismo que recibe, sin
-  persistir nada. Importa más de lo que parece: la Fase 5 pide que el aviso de exportación
-  terminada se pueda desactivar «como todas las notificaciones», y hoy no hay dónde guardarlo.
+### El problema
+
+`Reporting.Infrastructure` referenciaba **seis proyectos de otros tres módulos** —Projects,
+WorkItems y Ticketing, con sus capas de infraestructura incluidas— para que `DashboardRepository`
+consultara sus `DbContext` directamente. Es la regla que sostiene el monolito modular, rota de
+lleno: cualquier cambio en el esquema de otro módulo llegaba hasta aquí sin pasar por ningún
+contrato.
+
+Y había una segunda parte. El módulo tenía tres modelos de lectura —`ProjectReadModel`,
+`TaskReadModel`, `TicketReadModel`— alimentados por consumidores de MassTransit. **Corrijo aquí
+lo que dije antes en este mismo documento**: no eran código muerto. Se registran, por
+`Assembly.Load` con el nombre en texto desde `BuildingBlocks.Infrastructure`, y las tablas tenían
+filas: 6 proyectos y 113 tareas.
+
+Lo que sí eran es inservibles. Los tres consumidores atendían **sólo a eventos de creación** —
+ninguno de cambio de estado, actualización ni borrado—, así que una tarea se quedaba en «To Do»
+para siempre y un proyecto al 0 % de avance. Y nadie los leía: el repositorio del panel los
+ignoraba y consultaba las tablas de los otros módulos. Una proyección que no se actualiza no es
+una caché, es una trampa para quien la conecte después creyendo que está al día.
+
+### Lo que se hizo
+
+Las consultas del panel viven ahora en `ApiHost/Reporting/ConsultasDelPanel.cs`. **El host es
+donde este proyecto compone lo que cruza módulos** —el mismo sitio y el mismo motivo que
+`PuenteDeAutomatizaciones`—. Reporting sigue declarando el contrato `IDashboardRepository`; sólo
+cambia quién lo implementa: el módulo dice qué necesita, el host sabe de quién sacarlo.
+
+Los modelos de lectura y sus consumidores se eliminaron, con migración
+`QuitarModelosDeLecturaMuertos` que retira las tres tablas, aplicada y verificada.
+
+Se descartó la alternativa de alimentar el panel desde esas proyecciones: habría exigido
+consumidores para todos los eventos que cambian el estado, un relleno inicial para lo que ya
+existe, y habría metido consistencia eventual justo en las cifras que se acababan de hacer
+honestas. Queda anotado como la evolución natural si algún día el panel necesita no consultar
+tres módulos en caliente.
+
+### Dos infracciones más, encontradas por la prueba que lo vigila
+
+Al escribir el guardián apareció lo que no se veía a simple vista: **`Tags.Application`
+referenciaba `Teams.Domain` y `Projects.Domain`** para que dos manejadores crearan una etiqueta
+al nacer un equipo o un proyecto. Esos manejadores están ahora en
+`ApiHost/Tags/EtiquetasAutomaticas.cs`.
+
+`AislamientoEntreModulosTests` recorre los `.csproj` en disco —no los ensamblados cargados, para
+ver también los módulos que el proyecto de pruebas no referencia, que es donde nadie mira— y
+falla si un módulo referencia a otro o al host. **Hoy: cero infracciones en toda la solución.**
+
+Una regla de arquitectura que sólo vive en la cabeza de quien la escribió se rompe en cuanto
+entra alguien nuevo, o en cuanto pasan unos meses.
+
+### De camino
+
+El registro de consumidores buscaba los ensamblados por nombre en texto y se tragaba el fallo
+con un `catch { // Ignore if not found }`. Un módulo renombrado dejaba de recibir sus mensajes y
+el sistema arrancaba como si nada. Ahora un nombre que no carga revienta el arranque: es un
+error de configuración, no una circunstancia.
+
+## 6. Las preferencias de notificación — resueltas
+
+`GET /api/v1/notifications/preferences` devolvía un objeto con valores fijos escritos en el
+propio endpoint, y `PUT` era literalmente esto:
+
+```csharp
+group.MapPut("/preferences", (object prefs) => Results.Ok(prefs));
+```
+
+Devolvía el cuerpo recibido. **No guardaba nada.** La pantalla funcionaba entera —los
+interruptores se movían, salía el aviso de «Preferencias guardadas»— y al recargar todo volvía a
+su sitio. Prometer y no cumplir es peor que no ofrecerlo.
+
+Ahora hay entidad de dominio, tabla `NotificationPreferences` con índice único por persona y
+organización (migración `AddNotificationPreferences`, aplicada y verificada), y los dos endpoints
+enrutados por MediatR.
+
+Decisiones que merecen constar:
+
+- **Todo llega activado salvo lo que molesta.** Lo que la persona espera —le asignan algo, la
+  mencionan, su exportación terminó— viene encendido, porque no recibirlo se vive como que el
+  sistema falla. Lo que informa de actividad ajena —una tarea que completó otro, un ticket que
+  tocó otro— viene apagado: encendido hace ruido, y el ruido acaba con la persona ignorando
+  *todos* los avisos, incluidos los que importaban.
+- **El aviso de exportación terminada llega encendido y se puede apagar**, que era la condición
+  explícita del encargo para la Fase 5.
+- **Las horas se guardan como `TimeOnly`, no como texto**, y una hora ilegible se rechaza en vez
+  de sustituirse por algo razonable. Guardar en silencio unas horas de silencio distintas de las
+  que la persona escribió es de los fallos que se descubren semanas después, al no recibir un
+  aviso.
+- **El tramo de silencio cruza la medianoche.** De 22:00 a 08:00 es el caso normal, y con la
+  comparación ingenua —«después del inicio *y* antes del fin»— no silencia nunca nada. El fallo
+  sólo se notaría de madrugada. Es una función pura con la hora como argumento, para poder
+  probar la medianoche sin esperar a que sean las doce.
+- **Un tipo de aviso que nadie declaró pasa.** Si alguien añade un aviso y olvida ponerlo en la
+  lista, el fallo es que se recibe de más —molesto y visible— y no que se pierde en silencio,
+  que es el fallo que nadie detecta.
+- **Leer no crea la fila.** Consultar no es modificar, y escribir en una petición de lectura
+  convierte cada apertura de la pantalla en una escritura. Se materializan al guardar.
+
+La prueba que lo cubre no se queda en el código de estado ni en lo que devuelve el `PUT`:
+**vuelve a preguntar en otra petición**. Es la lección del `PATCH` que no guardaba, de la Fase 4.
+
+## 7. Lo que queda anotado y sin resolver
+
 - **Las páginas de documentos no llevan inquilino.** `CreatePageCommand` y `UpdatePageCommand`
   no tienen `TenantId`, así que el aislamiento de las páginas depende de conocer el
   identificador del documento. No es explotable a ciegas, pero es la misma familia que 2.5.
-- **La deuda de Reporting**, arriba.
+- **`Reporting.Domain` sigue al 0 %**: sólo quedan `Report` y `Dashboard`, y nada ejercita el
+  alta de informes.
+- **Los eventos de integración de `BuildingBlocks.Contracts` están declarados y no los usa
+  nadie.** Serían la forma natural de que un módulo reaccione a otro sin pasar por el host;
+  hoy no existe camino de publicación.
 - **El árbol de trabajo de git abandonado** (2.4).
 - **167 avisos de lint** en el frontend, heredados.
+- **Un paquete del frontend supera el presupuesto** de tamaño en 120 kB.

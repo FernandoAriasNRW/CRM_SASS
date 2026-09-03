@@ -14,9 +14,16 @@ public sealed class ReportingDbContext(DbContextOptions<ReportingDbContext> opti
 {
   public DbSet<Report> Reports => Set<Report>();
   public DbSet<Dashboard> Dashboards => Set<Dashboard>();
-  public DbSet<ProjectReadModel> Projects => Set<ProjectReadModel>();
-  public DbSet<TaskReadModel> Tasks => Set<TaskReadModel>();
-  public DbSet<TicketReadModel> Tickets => Set<TicketReadModel>();
+
+  // Aquí había tres modelos de lectura —proyectos, tareas y tickets— alimentados por
+  // consumidores de MassTransit. Se eliminaron: los consumidores sólo atendían a los eventos de
+  // creación, así que una tarea se quedaba en «To Do» para siempre y un proyecto al 0 % de
+  // avance, y nadie los leía. Una proyección que no se actualiza no es una caché, es una
+  // trampa para quien la conecte después creyendo que está al día.
+  //
+  // Si en el futuro hacen falta proyecciones —para que el panel no consulte tres módulos en
+  // caliente— hay que construirlas a conciencia: consumidores para todos los eventos que
+  // cambian el estado, y un relleno inicial para lo que ya existe.
 
   protected override void OnModelCreating(ModelBuilder modelBuilder)
   {
