@@ -455,7 +455,130 @@ Decisiones que merecen constar:
 La prueba que lo cubre no se queda en el código de estado ni en lo que devuelve el `PUT`:
 **vuelve a preguntar en otra petición**. Es la lección del `PATCH` que no guardaba, de la Fase 4.
 
-## 7. Lo que queda anotado y sin resolver
+## 7. Docker y CI/CD
+
+### 7.1 La comprobación de salud llevaba 1.590 fallos seguidos
+
+`docker ps` mostraba `crm_saas_api` como **unhealthy** desde hacía horas. El motivo:
+
+```
+exec: "curl": executable file not found in $PATH
+```
+
+El `healthcheck` del compose invocaba `curl`, y la imagen `mcr.microsoft.com/dotnet/aspnet:9.0`
+no lo trae. Tampoco `wget`. **Nunca había pasado ni una sola vez.**
+
+No es cosmético. Con `depends_on: condition: service_healthy` el arranque se queda colgado
+para siempre, y en Swarm o ECS es un servicio al que no se le enruta tráfico jamás. Cualquier
+plataforma que respete la comprobación consideraba la API caída.
+
+Se resolvió **sin instalar nada**: la propia aplicación acepta `--health-check`, hace la
+petición a `/health/live` y sale con 0 o 1. Instalar `curl` con apt era la alternativa obvia y
+se descartó por tres motivos: añade una descarga de red a cada construcción —que de hecho
+falló al intentarlo, dejando el build roto por algo ajeno al proyecto—, engorda la imagen, y
+suma superficie de CVE para pedir una URL. El proceso que sabe responder es el mismo que se
+quiere comprobar.
+
+Comprobado en las dos direcciones: contenedor en marcha → `healthy`, salida 0; sin servidor
+detrás → salida 1 y `La sonda de salud falló: Connection refused`.
+
+### 7.2 Y la del frontend tampoco habría pasado
+
+Al escribirla apareció el mismo tipo de fallo por otro motivo: nginx escucha en
+`0.0.0.0:8080` —sólo IPv4— y dentro del contenedor `localhost` resuelve primero a `::1`. La
+comprobación moría con «Connection refused» mientras el sitio se servía perfectamente desde
+fuera. Con `127.0.0.1` funciona.
+
+Se detectó porque se ejecutó la imagen y se miró el estado, no porque se leyera el fichero.
+
+### 7.3 La imagen del frontend ignoraba el lockfile
+
+```dockerfile
+RUN npm install --legacy-peer-deps
+```
+
+`npm install` resuelve el árbol de nuevo en lugar de respetar `package-lock.json`, así que la
+imagen podía llevar versiones distintas de las que probó el CI. Y `--legacy-peer-deps` escondía
+los conflictos entre pares en vez de mostrarlos. **Una imagen que no se puede reproducir desde
+el repositorio no sirve para diagnosticar nada cuando falla en producción.** Ahora es `npm ci`.
+
+### 7.4 No había `.dockerignore`
+
+Ninguno de los dos contextos lo tenía, y ambos Dockerfiles hacen `COPY . .`. Se enviaban al
+demonio de Docker el repositorio entero, los `bin/` y `obj/` de sesenta y ocho proyectos,
+`web/node_modules` y el historial de git.
+
+Además de lento, es incorrecto en dos sitios concretos: los `obj/` compilados en Windows llevan
+rutas absolutas dentro de `*.nuget.g.props`, y el `node_modules` del anfitrión trae los
+binarios nativos de Windows de esbuild y rollup, que pisan los de Linux que `npm ci` acaba de
+instalar. Los dos fallan con mensajes que no mencionan la causa.
+
+### 7.5 Las dos imágenes corrían como root
+
+Ahora la API usa el usuario `app` (UID 1654) que la imagen base de .NET define desde la
+versión 8, y el frontend pasa a `nginxinc/nginx-unprivileged` (UID 101). Verificado con `id`
+dentro de los contenedores.
+
+Es lo que permite desplegar en OpenShift y en cualquier clúster con una política que lo exija.
+El precio es que nginx escucha en el 8080 en vez del 80 —un proceso sin privilegios no puede
+abrir un puerto por debajo de 1024—, así que el compose mapea `4200:8080`.
+
+### 7.6 Las redirecciones llevaban el puerto interno
+
+Al pasar al 8080 salió a la luz algo que ya estaba mal: nginx construye redirecciones
+absolutas con el puerto en el que escucha, así que la raíz respondía
+
+```
+Location: http://localhost:8080/es/
+```
+
+Detrás de un proxy, un balanceador o un ingress —o sea, en cualquier despliegue real— eso manda
+al visitante a un puerto que no está publicado. Con `absolute_redirect off` la redirección es
+relativa (`/es/`) y el navegador conserva el esquema, el dominio y el puerto por los que llegó.
+
+Con el puerto 80 el fallo estaba igual de presente pero se camuflaba en local.
+
+### 7.7 El CI no construía ninguna imagen
+
+Nada de lo anterior podía salir a la luz: los Dockerfiles sólo se ejercitaban cuando alguien
+los usaba a mano.
+
+Hay ahora un trabajo `imagenes` que construye y publica en GHCR, en `linux/amd64` y
+`linux/arm64`, con SBOM y atestación de procedencia, caché de capas en Actions, y etiquetado
+por commit, rama y versión semántica. En los pull requests construye pero no publica. Y arranca
+la imagen del frontend para comprobar que se declara sana y sirve la aplicación de verdad,
+porque construir sólo demuestra que compila.
+
+### 7.8 Los despliegues eran teatro
+
+```yaml
+- name: Desplegar backend
+  run: 'echo "Pendiente: integrar con el proveedor cloud"'
+```
+
+Dos trabajos, «Desplegar a staging» y «Desplegar a producción», con ese contenido. **Salían en
+verde.** El panel de Actions decía que producción se había actualizado y no era cierto.
+
+Un despliegue que siempre tiene éxito porque no hace nada es peor que no tenerlo: quita las
+ganas de mirar. Se quitaron los dos.
+
+Lo que queda en su lugar es lo que hace falta para desplegar en cualquier sitio: imágenes
+versionadas y publicadas, un `docker-compose.prod.yml` que las consume sin compilar nada en el
+servidor, y `docs/DESPLIEGUE.md` con lo que hay que saber para Kubernetes, OpenShift, Cloud
+Run, App Runner y Container Apps. El último paso —qué plataforma, con qué credenciales— es una
+decisión que no está tomada, y el sitio donde añadirla está marcado en el workflow.
+
+### Lo que hay que tener presente al desplegar
+
+- **Las migraciones se aplican al arrancar** y, si fallan, la aplicación no sirve nada. Con
+  varias réplicas todas lo intentan a la vez; MySQL las serializa, pero la primera migración
+  larga convertirá eso en una carrera. Cuando llegue, hay que sacarla a un paso previo.
+- **`/health/live` y `/health/ready` no son intercambiables.** Usar «listo» como sonda de
+  vida reinicia la aplicación cada vez que la base de datos tose, lo cual no arregla la base y
+  sí tira las conexiones que aún funcionaban.
+- **Desplegar por digestión, no por etiqueta.** `latest` y los nombres de rama se mueven.
+
+## 8. Lo que queda anotado y sin resolver
 
 - **Las páginas de documentos no llevan inquilino.** `CreatePageCommand` y `UpdatePageCommand`
   no tienen `TenantId`, así que el aislamiento de las páginas depende de conocer el

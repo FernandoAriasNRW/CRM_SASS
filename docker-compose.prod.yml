@@ -1,0 +1,114 @@
+# Despliegue con las imágenes publicadas, sin compilar nada en el servidor.
+#
+# El `docker-compose.yml` de al lado construye desde el código y sirve para desarrollar. Este
+# consume lo que el CI ya construyó, probó y publicó en GHCR, que es lo que se debe desplegar:
+# compilar en el servidor de producción significa desplegar algo que nadie ha probado.
+#
+#     export IMAGE_TAG=sha-<commit>          # ver docs/DESPLIEGUE.md
+#     docker compose -f docker-compose.prod.yml up -d
+#
+# Diferencias con el de desarrollo, todas deliberadas:
+#   - No publica los puertos de MySQL ni de RabbitMQ. En desarrollo se abren para poder
+#     mirar dentro; en producción son superficie de ataque a cambio de nada.
+#   - No monta código ni construye.
+#   - Todo servicio se reinicia salvo que se pare a mano.
+#   - Límites de memoria: sin ellos, una fuga en un contenedor se lleva por delante la
+#     máquina entera y con ella los demás servicios.
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: crm_saas_db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?falta MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-CrmDb}
+      MYSQL_USER: ${MYSQL_USER:?falta MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?falta MYSQL_PASSWORD}
+    volumes:
+      - db_data:/var/lib/mysql
+    networks: [crm_network]
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p$$MYSQL_ROOT_PASSWORD"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: crm_saas_rabbitmq
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-guest}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:?falta RABBITMQ_PASSWORD}
+    networks: [crm_network]
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+
+  api:
+    # Por digestión o por `sha-<commit>`, nunca por `latest`: una etiqueta móvil hace que
+    # dos servidores que arrancaron con un día de diferencia ejecuten binarios distintos, y
+    # que nadie pueda decir qué hay desplegado.
+    image: ghcr.io/${GITHUB_REPOSITORY:-fernandoariasnrw/crm-saas-suite}/api:${IMAGE_TAG:?falta IMAGE_TAG}
+    container_name: crm_saas_api
+    restart: unless-stopped
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_HTTP_PORTS=8080
+      - ConnectionStrings__DefaultConnection=Server=db;Port=3306;Database=${MYSQL_DATABASE:-CrmDb};Uid=${MYSQL_USER};Pwd=${MYSQL_PASSWORD};
+      - ConnectionStrings__MySql=Server=db;Port=3306;Database=${MYSQL_DATABASE:-CrmDb};Uid=${MYSQL_USER};Pwd=${MYSQL_PASSWORD};
+      - Jwt__Key=${JWT_KEY:?falta JWT_KEY}
+      - Jwt__Issuer=${JWT_ISSUER:-crm-saas-api}
+      - Jwt__Audience=${JWT_AUDIENCE:-crm-saas-web}
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__Username=${RABBITMQ_USER:-guest}
+      - RabbitMQ__Password=${RABBITMQ_PASSWORD}
+    ports:
+      - "${API_PORT:-8080}:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks: [crm_network]
+    # La comprobación viene en la imagen; no se repite aquí para no tener dos definiciones
+    # que puedan discrepar.
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+
+  web:
+    image: ghcr.io/${GITHUB_REPOSITORY:-fernandoariasnrw/crm-saas-suite}/web:${IMAGE_TAG:?falta IMAGE_TAG}
+    container_name: crm_saas_web
+    restart: unless-stopped
+    ports:
+      - "${WEB_PORT:-80}:8080"
+    depends_on:
+      api:
+        condition: service_healthy
+    networks: [crm_network]
+    deploy:
+      resources:
+        limits:
+          memory: 128m
+
+volumes:
+  db_data:
+
+networks:
+  crm_network:
+    driver: bridge

@@ -6,6 +6,10 @@ name: CI
 on:
   push:
     branches: [main, develop]
+    # Las etiquetas de versión disparan el pipeline para que las imágenes salgan etiquetadas
+    # como v1.2.3, 1.2 y 1. Sin esto, los patrones semver del trabajo `imagenes` no se
+    # activan nunca y toda versión quedaría identificada sólo por su commit.
+    tags: ['v*']
   pull_request:
     branches: [main, develop]
 
@@ -272,52 +276,163 @@ jobs:
           fi
           echo "Sin credenciales versionadas."
 
-  deploy-staging:
-    name: Desplegar a staging
+  # ════════════════════════════════════════════════════════════════════ IMÁGENES ═══
+  #
+  # Construye y publica las imágenes en el registro de contenedores de GitHub (GHCR).
+  #
+  # Esto es lo que convierte «desplegable en cualquier plataforma» en algo real: una imagen
+  # publicada y versionada la arranca igual Kubernetes, ECS, Cloud Run, Swarm, Fly o un
+  # `docker run` en un servidor. Antes no se construía ninguna imagen en el CI, así que los
+  # Dockerfiles sólo se ejercitaban cuando alguien los usaba a mano — y llevaban dentro un
+  # `healthcheck` que invocaba un `curl` inexistente y un `npm install` que ignoraba el
+  # lockfile. Nada de eso podía salir a la luz sin construirlas aquí.
+  imagenes:
+    name: Imágenes — construir y publicar
     runs-on: ubuntu-latest
     needs: [backend, frontend, seguridad]
-    if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
-    environment:
-      name: staging
-      url: https://staging.crm-saas.example.com
+
+    # En un pull request se construyen pero NO se publican: interesa saber si el Dockerfile
+    # sigue funcionando, no llenar el registro de imágenes de ramas que quizá no se mezclen.
+    permissions:
+      contents: read
+      packages: write
+      # Para la atestación de procedencia: deja constancia firmada de qué commit y qué
+      # workflow produjeron cada imagen. Sin ella, una imagen en el registro es un binario
+      # sin origen comprobable.
+      id-token: write
+      attestations: write
+
+    strategy:
+      # Si una imagen falla, la otra termina igual: saber que sólo una está rota es
+      # información, y con fail-fast se pierde.
+      fail-fast: false
+      matrix:
+        include:
+          - nombre: api
+            contexto: .
+            dockerfile: src/Host/ApiHost/Dockerfile
+          - nombre: web
+            contexto: ./web
+            dockerfile: web/Dockerfile
+
     steps:
       - uses: actions/checkout@v4
 
-      - name: Descargar artefacto del frontend
-        uses: actions/download-artifact@v4
+      # QEMU para poder construir arm64 desde un runner x86. Cuesta minutos, y se paga sólo
+      # en las construcciones que se publican: los servidores arm —Graviton, Ampere— son
+      # bastante más baratos, y una imagen que sólo existe para amd64 cierra esa puerta.
+      - name: Preparar QEMU
+        if: github.event_name != 'pull_request'
+        uses: docker/setup-qemu-action@v3
+
+      - name: Preparar Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Autenticarse en GHCR
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
         with:
-          name: frontend-dist
-          path: web/dist/web/browser
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Desplegar backend
-        run: 'echo "Pendiente: integrar con el proveedor cloud"'
-        env:
-          DEPLOY_TOKEN: ${{ secrets.STAGING_DEPLOY_TOKEN }}
-
-      - name: Desplegar frontend
-        run: 'echo "Pendiente: integrar con CDN/S3"'
-
-  deploy-production:
-    name: Desplegar a producción
-    runs-on: ubuntu-latest
-    needs: [backend, frontend, seguridad]
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    environment:
-      name: production
-      url: https://crm-saas.example.com
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Descargar artefacto del frontend
-        uses: actions/download-artifact@v4
+      # Las etiquetas salen de aquí en vez de escribirse a mano:
+      #   - `sha-<commit>` en todas. Es la única que identifica sin ambigüedad qué se
+      #     desplegó, y la que debe usar producción.
+      #   - `main` / `develop` para la última de cada rama.
+      #   - `latest` sólo en la rama por defecto.
+      #   - `v1.2.3`, `1.2` y `1` cuando el disparo es una etiqueta de versión.
+      - name: Calcular etiquetas y metadatos
+        id: meta
+        uses: docker/metadata-action@v5
         with:
-          name: frontend-dist
-          path: web/dist/web/browser
+          images: ghcr.io/${{ github.repository }}/${{ matrix.nombre }}
+          tags: |
+            type=sha,format=long
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern=v{{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=raw,value=latest,enable={{is_default_branch}}
+          labels: |
+            org.opencontainers.image.title=CRM SaaS Suite — ${{ matrix.nombre }}
+            org.opencontainers.image.description=Gestión de trabajo con helpdesk integrado
 
-      - name: Desplegar backend
-        run: 'echo "Pendiente: integrar con el proveedor cloud"'
-        env:
-          DEPLOY_TOKEN: ${{ secrets.PRODUCTION_DEPLOY_TOKEN }}
+      - name: Construir y publicar
+        uses: docker/build-push-action@v6
+        id: build
+        with:
+          context: ${{ matrix.contexto }}
+          file: ${{ matrix.dockerfile }}
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          # Multiarquitectura sólo al publicar: en un PR duplicaría el tiempo para
+          # comprobar lo mismo.
+          platforms: ${{ github.event_name != 'pull_request' && 'linux/amd64,linux/arm64' || 'linux/amd64' }}
+          # Caché en la propia caché de Actions. `mode=max` guarda también las capas
+          # intermedias, que es lo que ahorra de verdad en una compilación por etapas.
+          cache-from: type=gha,scope=${{ matrix.nombre }}
+          cache-to: type=gha,scope=${{ matrix.nombre }},mode=max
+          provenance: true
+          sbom: true
 
-      - name: Desplegar frontend
-        run: 'echo "Pendiente: integrar con CDN/S3"'
+      - name: Atestiguar la procedencia
+        if: github.event_name != 'pull_request'
+        uses: actions/attest-build-provenance@v1
+        with:
+          subject-name: ghcr.io/${{ github.repository }}/${{ matrix.nombre }}
+          subject-digest: ${{ steps.build.outputs.digest }}
+          push-to-registry: true
+
+      # Que la imagen arranque y se declare sana. Construir sólo demuestra que compila.
+      #
+      # Se comprueba la del frontend, que se sostiene sola. La de la API necesita una base de
+      # datos y su arranque real lo cubren las pruebas de integración, que levantan MySQL.
+      - name: Comprobar que la imagen del frontend arranca y queda sana
+        if: matrix.nombre == 'web' && github.event_name != 'pull_request'
+        run: |
+          set -euo pipefail
+          etiqueta=$(echo "${{ steps.meta.outputs.tags }}" | head -n1)
+          docker run -d --name comprobacion -p 8080:8080 "$etiqueta"
+
+          # Hasta 60 s. El `start-period` del Dockerfile es de 10 s.
+          for _ in $(seq 1 20); do
+            estado=$(docker inspect comprobacion --format '{{.State.Health.Status}}')
+            [ "$estado" = "healthy" ] && break
+            [ "$estado" = "unhealthy" ] && { echo "::error::La imagen arrancó pero se declara enferma."; docker logs comprobacion; exit 1; }
+            sleep 3
+          done
+
+          [ "$estado" = "healthy" ] || { echo "::error::La imagen no llegó a estar sana en 60 s."; docker logs comprobacion; exit 1; }
+
+          # Y que sirva algo de verdad, no sólo que el proceso esté vivo.
+          codigo=$(docker exec comprobacion wget -q -O /dev/null -S http://127.0.0.1:8080/es/ 2>&1 | awk '/HTTP\//{print $2; exit}')
+          [ "$codigo" = "200" ] || { echo "::error::La página en español devolvió $codigo."; exit 1; }
+
+          echo "La imagen arranca, se declara sana y sirve la aplicación."
+          docker rm -f comprobacion
+
+  # ════════════════════════════════════════════════════════════════════ DESPLIEGUE ═══
+  #
+  # NO hay pasos de despliegue automático, y es deliberado.
+  #
+  # Aquí había dos trabajos, «Desplegar a staging» y «Desplegar a producción», cuyo contenido
+  # real era:
+  #
+  #     - name: Desplegar backend
+  #       run: 'echo "Pendiente: integrar con el proveedor cloud"'
+  #
+  # Salían en verde. Un despliegue que siempre tiene éxito porque no hace nada es peor que no
+  # tenerlo: el panel de Actions decía que producción se había actualizado, y no era cierto.
+  # Se han quitado.
+  #
+  # Lo que sí hay ahora es lo que hace falta para desplegar en cualquier sitio: imágenes
+  # multiarquitectura publicadas y versionadas en GHCR, con procedencia atestiguada. El
+  # último paso —qué plataforma y con qué credenciales— depende de una decisión que aún no
+  # está tomada, y las instrucciones para hacerlo a mano están en docs/DESPLIEGUE.md.
+  #
+  # Cuando haya destino, este es el sitio; el trabajo necesita `environment:` para que
+  # GitHub pida la aprobación y guarde los secretos, y debe desplegar por digestión
+  # (`@sha256:…`) y no por etiqueta, porque una etiqueta se puede mover.

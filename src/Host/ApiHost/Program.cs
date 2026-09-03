@@ -48,6 +48,47 @@ using CustomFields.Presentation.Endpoints;
 using Automations.Presentation.Endpoints;
 using Comments.Presentation.Endpoints;
 
+// La sonda de salud del contenedor: `dotnet ApiHost.dll --health-check`.
+//
+// Existe para que la imagen no necesite `curl` ni `wget`. La imagen de ASP.NET no trae
+// ninguno de los dos, y el `healthcheck` del compose invocaba `curl` igualmente: llevaba
+// 1.590 fallos consecutivos y el contenedor figuraba como «unhealthy» de forma permanente.
+// Con `depends_on: condition: service_healthy` eso deja el arranque colgado, y en un
+// orquestador es un servicio al que nunca se le enruta tráfico.
+//
+// La alternativa era instalar `curl` con apt en la imagen. Se descartó: añade una descarga
+// de red a cada construcción —que ya falló una vez, dejando el build entero roto por algo
+// que no es del proyecto—, engorda la imagen y suma superficie de CVE para pedir una URL.
+// El proceso que ya sabe responder es el mismo que se está comprobando.
+//
+// Sale antes de construir el host a propósito: no levanta servidor, no toca la base y no
+// aplica migraciones. Sólo pregunta y devuelve 0 o 1.
+if (args.Contains("--health-check"))
+{
+    var puerto = Environment.GetEnvironmentVariable("ASPNETCORE_HTTP_PORTS")?.Split(';')[0] ?? "8080";
+
+    // `/health/live` y no `/health/ready`: «vivo» pregunta si el proceso responde, «listo»
+    // pregunta además por la base de datos. Reiniciar el contenedor porque la base está caída
+    // no arregla la base y sí tira las conexiones que aún funcionaban.
+    using var sonda = new HttpClient { Timeout = TimeSpan.FromSeconds(5) };
+
+    try
+    {
+        // `127.0.0.1` y no `localhost`: dentro de un contenedor `localhost` puede resolver
+        // primero a `::1`, y si el servidor sólo escucha en IPv4 la sonda falla mientras el
+        // servicio funciona. Le pasa a la imagen del frontend con nginx.
+        var respuesta = await sonda.GetAsync($"http://127.0.0.1:{puerto}/health/live");
+        return respuesta.IsSuccessStatusCode ? 0 : 1;
+    }
+    catch (Exception ex)
+    {
+        // A stderr: lo recoge `docker inspect` en el registro de la comprobación, y es lo
+        // único que verá quien intente entender por qué el contenedor no está sano.
+        await Console.Error.WriteLineAsync($"La sonda de salud falló: {ex.Message}");
+        return 1;
+    }
+}
+
 var builder = WebApplication.CreateBuilder(args);
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -490,6 +531,10 @@ app.MapHub<WorkItems.Presentation.Hubs.BoardHub>("/hubs/board");
 app.MapHub<Ticketing.Presentation.Hubs.TicketsHub>("/hubs/tickets");
 
 await app.RunAsync();
+
+// El código de salida del proceso. Lo exige el compilador desde que la sonda de salud de
+// arriba devuelve 0 o 1: en cuanto una rama devuelve un valor, todas tienen que hacerlo.
+return 0;
 
 public class DummyNotificationsHub : Microsoft.AspNetCore.SignalR.Hub { }
 
