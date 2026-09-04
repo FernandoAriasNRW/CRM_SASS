@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Reporting.Application.Commands;
+using Reporting.Application.Exportaciones;
 using Reporting.Application.Queries;
 using Reporting.Infrastructure;
 
@@ -50,15 +51,50 @@ public static class ReportingEndpoints
               : Results.BadRequest(result.Error);
     });
 
-    group.MapPost("/{id:guid}/generate", async (System.Security.Claims.ClaimsPrincipal principal, Guid id, string format, IMediator mediator) =>
+    // Pedir una exportación. Devuelve 202 y el trabajo con su estado.
+    //
+    // **202 y no 200 a propósito**: aquí no hay fichero todavía, sólo una promesa de que lo
+    // habrá. Con 200 la pantalla podría creer que ya puede descargar, que es lo que hacía el
+    // endpoint anterior: llamaba a `MarkAsGenerated` con una URL inventada
+    // —`/reports/{id}/{nombre}.pdf`— que no apuntaba a ningún fichero y que ningún endpoint
+    // servía. La pantalla decía «generado» y no había nada que descargar.
+    group.MapPost("/{id:guid}/exportar", async (
+        System.Security.Claims.ClaimsPrincipal principal, Guid id, string format, IMediator mediator) =>
     {
       var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
-      var dto = await mediator.Send(new GetReportByIdQuery(tenantId, id));
-      if (dto.Value == null) return Results.NotFound();
+      var userId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var _uid) ? _uid : Guid.Empty;
 
-      var command = new GenerateReportCommand(tenantId, id, dto.Value.Type, format);
-      var result = await mediator.Send(command);
-      return result.IsSuccess ? Results.Ok() : Results.BadRequest(result.Error);
+      var result = await mediator.Send(new SolicitarExportacionCommand(tenantId, id, userId, format));
+
+      return result.IsSuccess
+          ? Results.Accepted($"/api/v1/exportaciones/{result.Value!.Id}", result.Value)
+          : Results.BadRequest(result.Error);
+    });
+
+    // La ruta antigua, que se mantiene para no romper la pantalla mientras se actualiza.
+    //
+    // Hace **lo mismo** que la nueva —encolar una exportación de verdad— en vez de lo que hacía
+    // antes. Se conserva el nombre, no el comportamiento: fingir que se generó algo era el fallo.
+    group.MapPost("/{id:guid}/generate", async (
+        System.Security.Claims.ClaimsPrincipal principal, Guid id, string format, IMediator mediator) =>
+    {
+      var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
+      var userId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var _uid) ? _uid : Guid.Empty;
+
+      var result = await mediator.Send(new SolicitarExportacionCommand(tenantId, id, userId, format));
+
+      return result.IsSuccess
+          ? Results.Accepted($"/api/v1/exportaciones/{result.Value!.Id}", result.Value)
+          : Results.BadRequest(result.Error);
+    });
+
+    // Las exportaciones de un informe, con su estado y —si falló— su motivo.
+    group.MapGet("/{id:guid}/exportaciones", async (
+        System.Security.Claims.ClaimsPrincipal principal, Guid id, IMediator mediator) =>
+    {
+      var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
+      var result = await mediator.Send(new GetExportacionesQuery(tenantId, id));
+      return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
     });
 
     group.MapGet("/kpi", async (System.Security.Claims.ClaimsPrincipal principal, IMediator mediator) =>
@@ -87,6 +123,36 @@ public static class ReportingEndpoints
       var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
       var result = await mediator.Send(new GetProjectBurndownQuery(tenantId, projectId));
       return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
+    });
+
+    var exportaciones = app.MapGroup("/api/v1/exportaciones").WithTags("Exportaciones").RequireAuthorization();
+
+    // El estado de una exportación. Es lo que la pantalla consulta mientras espera.
+    exportaciones.MapGet("/{exportacionId:guid}", async (
+        System.Security.Claims.ClaimsPrincipal principal, Guid exportacionId, IMediator mediator) =>
+    {
+      var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
+      var result = await mediator.Send(new GetExportacionQuery(tenantId, exportacionId));
+      return result.IsSuccess ? Results.Ok(result.Value) : Results.NotFound(result.Error);
+    });
+
+    // La descarga.
+    //
+    // Es el endpoint que faltaba: antes se guardaba una URL inventada y no había nada detrás.
+    // El nombre del fichero va en la respuesta para que el navegador lo use al guardarlo; sin
+    // eso, el fichero se descarga con el identificador de la exportación por nombre.
+    exportaciones.MapGet("/{exportacionId:guid}/descargar", async (
+        System.Security.Claims.ClaimsPrincipal principal, Guid exportacionId, IMediator mediator) =>
+    {
+      var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
+
+      var result = await mediator.Send(new DescargarExportacionQuery(tenantId, exportacionId));
+
+      // 409 y no 404: la exportación existe, lo que pasa es que todavía no está lista o falló.
+      // Un 404 haría pensar que se perdió, y la pantalla dejaría de preguntar.
+      return result.IsSuccess
+          ? Results.File(result.Value!.Bytes, result.Value.TipoDeContenido, result.Value.Nombre)
+          : Results.Conflict(result.Error);
     });
 
     app.MapDashboardEndpoints();

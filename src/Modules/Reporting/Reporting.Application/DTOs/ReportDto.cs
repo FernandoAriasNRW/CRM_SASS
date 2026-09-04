@@ -4,22 +4,22 @@ using Reporting.Domain.ValueObjects;
 namespace Reporting.Application.DTOs;
 
 /// <summary>
-/// El informe tal como sale de la API.
+/// El informe tal como sale de la API: qué se quiere ver, no una copia concreta de ello.
 ///
-/// **Ojo con el estado de generación.** `FromEntity` copiaba siete campos y se dejaba cuatro
-/// —`GeneratedFileUrl`, `GeneratedAt`, `ErrorMessage` e `IsGenerated`—, que se quedaban en el
-/// valor de su inicializador. Consecuencias, y las tres se veían en la pantalla:
+/// **Ya no lleva estado de generación**, y conviene saber por qué, porque estos cuatro campos
+/// —`GeneratedFileUrl`, `GeneratedAt`, `ErrorMessage` e `IsGenerated`— dieron dos fallos
+/// seguidos:
 ///
-///  - `IsGenerated` salía **siempre false**, aunque la base dijera que sí. Un informe generado
-///    no podía aparecer como generado nunca.
-///  - `GeneratedFileUrl` salía **siempre null**, así que no había forma de descargarlo.
-///  - `GeneratedAt` tenía por defecto `DateTime.Now`, de modo que la API **inventaba una fecha
-///    de generación** —la de la propia petición— para informes que no se habían generado. Era
-///    lo peor de los tres: los otros dos se notan porque falta algo; éste devolvía un dato
-///    plausible y falso, distinto en cada llamada.
+///  - Primero, `FromEntity` **no los copiaba**: se quedaban en el valor de su inicializador. Un
+///    informe generado salía siempre como no generado, sin URL, y con `GeneratedAt` a
+///    `DateTime.Now` por defecto, o sea con una fecha de generación **inventada y distinta en
+///    cada llamada**. Se arregló copiándolos.
+///  - Y entonces se vio el fallo de debajo: lo que copiaban tampoco era cierto. La URL la
+///    fabricaba `MarkAsGenerated` a mano y no apuntaba a ningún fichero.
 ///
-/// Ahora se copian los once. Los inicializadores se quitan para que el compilador avise si
-/// mañana se añade un campo y alguien se olvida de mapearlo, en vez de rellenarlo en silencio.
+/// Ahora el estado vive en `Exportacion`, una por petición y por formato, y se consulta en
+/// `/api/v1/reports/{id}/exportaciones`. Un informe puede tener muchas exportaciones —o ninguna—
+/// y ese «muchas» es justo lo que cuatro campos sueltos no sabían representar.
 /// </summary>
 public class ReportDto(Guid Id, Guid tenantId, Guid createdById, string name, string type, string format, string? parameters = null)
 {
@@ -30,10 +30,6 @@ public class ReportDto(Guid Id, Guid tenantId, Guid createdById, string name, st
   public string Type { get; set; } = type;
   public string Format { get; set; } = format;
   public string? Parameters { get; set; } = parameters;
-  public string? GeneratedFileUrl { get; set; }
-  public DateTime? GeneratedAt { get; set; }
-  public string? ErrorMessage { get; set; }
-  public bool IsGenerated { get; set; }
 
   public static ReportDto FromEntity(Report report)
   {
@@ -45,13 +41,7 @@ public class ReportDto(Guid Id, Guid tenantId, Guid createdById, string name, st
         report.Type.Name,
         report.Format.Name,
         report.Parameters
-    )
-    {
-      GeneratedFileUrl = report.GeneratedFileUrl,
-      GeneratedAt = report.GeneratedAt,
-      ErrorMessage = report.ErrorMessage,
-      IsGenerated = report.IsGenerated,
-    };
+    );
   }
 
   public Report ToEntity()

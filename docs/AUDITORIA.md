@@ -623,7 +623,67 @@ idempotente. No bloquea nada y no se ha tocado en esta fase.
 
 ---
 
-## 10. Lo que queda anotado y sin resolver
+## 10. Fase 5D — la exportación de informes
+
+### 10.1 El informe que constaba generado sin haberse generado
+
+`POST /reports/{id}/generate` respondía 200, marcaba el informe como generado y guardaba
+`GeneratedFileUrl = "/reports/{id}/{nombre}.pdf"`. **Esa ruta no la servía ningún endpoint y ese
+fichero no existía.** En la base de desarrollo había tres informes con URLs así.
+
+Es el mismo patrón que el borrado que no borraba y que la cobertura que no se medía, con un
+agravante: aquí ya se había arreglado *una* capa del problema —el DTO no copiaba esos campos, así
+que ni siquiera llegaban a la pantalla— y al arreglarla quedó a la vista que lo que llegaba
+tampoco era cierto.
+
+Los cuatro campos (`IsGenerated`, `GeneratedFileUrl`, `GeneratedAt`, `ErrorMessage`) se han
+quitado del informe, con su migración. Además de mentir, eran **un solo juego de campos para
+muchas exportaciones**: el mismo informe se exporta en PDF y en Excel, por dos personas a la vez,
+y la segunda pisaba a la primera.
+
+### 10.2 El trabajador de segundo plano exportaba ficheros vacíos
+
+Encontrado **verificando contra la aplicación levantada**, no por las pruebas.
+
+El generador de exportaciones corre sin petición HTTP, así que no hay usuario, así que
+`TenantDbContext.CurrentTenantId` vale `Guid.Empty` y el filtro global no casa con ninguna fila.
+Resultado:
+
+| | API en pantalla | Fichero exportado |
+|---|---|---|
+| Proyectos | 5 | **0** |
+| Tareas | 15 | **0** |
+| Tickets abiertos | 215 | **0** |
+
+El fichero salía bien formado, con su nombre, su tamaño y su aviso de «ya está listo». **Nada
+fallaba.**
+
+**Y mis propias pruebas de integración no lo cazaron**, porque comprobaban que el CSV contuviera
+la palabra «Proyectos» —el encabezado— y no lo que ponía al lado. Comprobar que un informe tiene
+la forma correcta no es comprobar que dice la verdad. Se añadieron dos pruebas que comparan el
+fichero **contra los números que devuelve la API**.
+
+El arreglo es `TenantDbContext.ComoInquilino(tenantId)`: declara el inquilino para las consultas
+de un trabajo de segundo plano sin apagar los demás filtros. La alternativa,
+`IgnoreQueryFilters()`, habría hecho salir en los informes lo archivado y lo borrado, que es peor
+porque no se nota.
+
+### 10.3 El sembrador estaba roto sobre una base nueva, por la misma causa
+
+Anotado en §9.3 como «no es idempotente». La causa real es la de 10.2: el sembrador tampoco tiene
+petición, así que insertaba tres espacios, los releía a través del filtro, obtenía cero filas y
+lanzaba en `existingSpaces[0]`. Con el paso de Projects caído, **las tareas tampoco se creaban**,
+porque dependen de que haya proyectos.
+
+Se veía en cualquier ejecución filtrada de las pruebas de integración, que levantan un MySQL
+limpio: fallaban las que necesitan tareas. En la ejecución completa pasaban, que es la clase de
+intermitencia que se acaba culpando al azar.
+
+Arreglado declarando el inquilino en los diez contextos que el sembrador usa.
+
+---
+
+## 11. Lo que queda anotado y sin resolver
 
 - **Las páginas de documentos no llevan inquilino.** `CreatePageCommand` y `UpdatePageCommand`
   no tienen `TenantId`, así que el aislamiento de las páginas depende de conocer el
@@ -645,6 +705,14 @@ idempotente. No bloquea nada y no se ha tocado en esta fase.
   devuelven poco, que es honesto pero no útil.
 - **Archivar y borrar tampoco tienen botón.** Misma situación: la API responde, el menú enseña
   el archivo y la papelera, y de momento sólo se llenan desde la API.
+- **`POST /api/v1/reports` devuelve la entidad de dominio, no el DTO.** Se cuelan `typeValue`,
+  `formatValue`, `tenantId` y hasta `domainEvents` en la respuesta. No es explotable, pero expone
+  la forma interna del agregado y ata la API a ella.
+- **El informe de actividad por persona enseña identificadores, no nombres.** Los nombres viven
+  en Identity y este informe ya cruza dos módulos; ponerles nombre exige un puerto nuevo, como el
+  de favoritos.
+- **Del constructor de informes y la programación no hay nada.** Un informe de tipo `Custom` se
+  rechaza al exportar **diciendo por qué**, en vez de generar un fichero vacío.
 - **Documentos tiene la columna de archivado y no la usa.** Se le puso al modelar el concepto
   para no dejar el agregado a medias, pero Docs mantiene su propio panel lateral y no se ha
   enganchado al compartido.

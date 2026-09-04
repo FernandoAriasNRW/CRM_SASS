@@ -145,11 +145,25 @@ antes.
 
 ## 5D — Reportes
 
-- **Lista de todos los reportes**, los de serie y los creados.
-- **Constructor**: origen de datos, filtros, agrupación, medida, forma de pintarlo.
-- **Exportación** a Excel, PDF y CSV.
-- **Programación**: que un reporte se genere y se envíe solo. El módulo `Communication` ya manda
-  correo y la Fase 4 dejó un motor de reglas del que se puede aprender.
+- [x] **Lista de todos los reportes**, los de serie y los creados. Ya existía.
+- [ ] **Constructor**: origen de datos, filtros, agrupación, medida, forma de pintarlo.
+- [x] **Exportación** a Excel, PDF y CSV — **hecha** (2026-09-04), asíncrona, del servidor, con
+      estado y aviso. Ver abajo.
+- [ ] **Programación**: que un reporte se genere y se envíe solo.
+
+> **Estado de la exportación.** Construida entera: se pide y se recupera el control al instante,
+> un trabajador de segundo plano genera el fichero, y al terminar avisa respetando las
+> preferencias de notificación. Los tres formatos producen ficheros reales —comprobado
+> descargándolos y mirando su firma: BOM en el CSV, `PK` en el `.xlsx`, `%PDF-` en el PDF—.
+>
+> **Lo que había antes no exportaba nada.** `MarkAsGenerated` guardaba una URL construida a mano
+> (`/reports/{id}/{nombre}.pdf`) que no apuntaba a ningún fichero y que ningún endpoint servía.
+> El informe constaba como generado y no había nada que descargar. Los cuatro campos que
+> guardaban ese estado se han quitado del informe: el estado vive ahora en `Exportacion`, una por
+> petición y por formato, porque un informe se exporta muchas veces.
+>
+> **Falta el constructor y la programación**, y con ellos el ejemplo de «tickets por área» que
+> requiere campos personalizados en tickets como dimensión de análisis.
 
 **Sobre la exportación, una advertencia:** hacerla en el cliente es rápido de escribir y se
 rompe con volumen —el navegador no puede con cien mil filas— y además no sirve para la
@@ -224,6 +238,12 @@ Como pediste:
 **Lo que hay que cuidar, porque es donde estas cosas se pudren:** un trabajo que falla tiene que
 decir **por qué** y quedar visible, no desaparecer. Una exportación que se queda en «generando»
 para siempre es peor que un error, porque nadie sabe si esperar.
+
+> **Cómo quedó (2026-09-04).** Los cuatro puntos están construidos. Sobre el aviso de arriba: una
+> exportación que lleve más de diez minutos «generando» se vuelve a coger, y agotados tres
+> intentos se marca fallida **con el motivo guardado en la fila**, no sólo en el registro del
+> servidor —quien pregunta «¿por qué no salió mi informe?» no tiene acceso a los registros—. Hay
+> prueba de integración que provoca un fallo real y comprueba que el motivo explica qué pasa.
 
 ---
 

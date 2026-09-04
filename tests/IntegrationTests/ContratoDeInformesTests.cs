@@ -153,17 +153,22 @@ public sealed class ContratoDeInformesTests(CrmApiFactory factory)
     }
 
     /// <summary>
-    /// El estado de generación tiene que llegar hasta quien lo pide.
+    /// El informe ya no finge tener un estado de generación, y esta prueba lo vigila.
     ///
-    /// No llegaba. `ReportDto.FromEntity` copiaba siete campos y se dejaba cuatro, así que un
-    /// informe generado salía por la API como no generado y sin URL: la pantalla no podía
-    /// enseñarlo como listo ni ofrecer la descarga por mucho que la base dijera lo contrario.
+    /// Su versión anterior comprobaba lo contrario: que tras llamar a `/generate` el informe se
+    /// leyera como generado y con URL. Y pasaba —el mapeo del DTO se había arreglado para que
+    /// esos campos viajaran— pero **lo que viajaba era mentira**: la URL la fabricaba
+    /// `MarkAsGenerated` a mano y no apuntaba a ningún fichero.
+    ///
+    /// Los cuatro campos se han quitado del informe. El estado vive ahora en las exportaciones,
+    /// una por petición y por formato, porque un informe se exporta muchas veces y cuatro campos
+    /// sueltos sólo saben contar la última.
     ///
     /// Se comprueba **volviendo a preguntar** en otra petición, no mirando lo que devolvió el
     /// POST. Es la misma lección del PATCH que respondía 200 sin guardar.
     /// </summary>
     [Fact]
-    public async Task Un_informe_generado_se_lee_como_generado()
+    public async Task El_informe_no_lleva_estado_de_generacion_inventado()
     {
         var cliente = await AutenticarAsync();
 
@@ -176,25 +181,31 @@ public sealed class ContratoDeInformesTests(CrmApiFactory factory)
         alta.StatusCode.Should().Be(HttpStatusCode.Created);
         var id = (await alta.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetGuid();
 
-        var reciennacido = await cliente.GetFromJsonAsync<JsonElement>($"/api/v1/reports/{id}");
-        reciennacido.GetProperty("isGenerated").GetBoolean().Should().BeFalse();
-        reciennacido.GetProperty("generatedAt").ValueKind.Should().Be(JsonValueKind.Null,
-            "un informe recién pedido no se ha generado, así que no puede traer fecha de generación; "
-            + "el DTO tenía DateTime.Now por defecto e inventaba una distinta en cada llamada");
+        var informe = await cliente.GetFromJsonAsync<JsonElement>($"/api/v1/reports/{id}");
 
-        var generacion = await cliente.PostAsync($"/api/v1/reports/{id}/generate?format=Csv", null);
-        generacion.StatusCode.Should().Be(HttpStatusCode.OK);
+        foreach (var campo in new[] { "isGenerated", "generatedFileUrl", "generatedAt", "errorMessage" })
+        {
+            informe.TryGetProperty(campo, out _).Should().BeFalse(
+                $"«{campo}» describía una sola generación por informe y además guardaba una URL "
+                + "que no llevaba a ningún fichero. Ahora eso lo cuentan las exportaciones");
+        }
 
-        var despues = await cliente.GetFromJsonAsync<JsonElement>($"/api/v1/reports/{id}");
-
-        despues.GetProperty("isGenerated").GetBoolean().Should().BeTrue();
-        despues.GetProperty("generatedFileUrl").GetString().Should().NotBeNullOrWhiteSpace();
-        despues.GetProperty("generatedAt").ValueKind.Should().NotBe(JsonValueKind.Null);
+        // Y lo que sí tiene que llegar, llega: el mapeo del DTO sigue sin dejarse campos por el
+        // camino, que es la preocupación original de esta prueba.
+        informe.GetProperty("name").GetString().Should().Be("Informe que se genera");
+        informe.GetProperty("type").GetString().Should().Be("TaskBreakdown");
+        informe.GetProperty("format").GetString().Should().Be("Csv");
     }
 
-    /// <summary>El listado usa el mismo mapeo, y se consulta por otro camino: también se mira.</summary>
+    /// <summary>
+    /// El listado usa el mismo mapeo y se consulta por otro camino, así que también se mira.
+    ///
+    /// Antes comprobaba que el listado trajera el estado de generación; ahora comprueba que la
+    /// exportación se vea desde el informe. Es la misma preocupación —que el estado llegue hasta
+    /// la pantalla— sobre el sitio donde el estado es cierto.
+    /// </summary>
     [Fact]
-    public async Task El_listado_tambien_trae_el_estado_de_generacion()
+    public async Task Desde_el_informe_se_ven_sus_exportaciones()
     {
         var cliente = await AutenticarAsync();
 
@@ -206,15 +217,16 @@ public sealed class ContratoDeInformesTests(CrmApiFactory factory)
         });
         var id = (await alta.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetGuid();
 
-        await cliente.PostAsync($"/api/v1/reports/{id}/generate?format=Excel", null);
+        var sinNada = await cliente.GetFromJsonAsync<JsonElement>($"/api/v1/reports/{id}/exportaciones");
+        sinNada.EnumerateArray().Should().BeEmpty("recién creado no se ha exportado nunca");
 
-        var listado = await cliente.GetFromJsonAsync<JsonElement>("/api/v1/reports?pageSize=100");
+        await cliente.PostAsync($"/api/v1/reports/{id}/exportar?format=Excel", null);
 
-        var mio = listado.GetProperty("items").EnumerateArray()
-            .Single(r => r.GetProperty("id").GetGuid() == id);
+        var conUna = await cliente.GetFromJsonAsync<JsonElement>($"/api/v1/reports/{id}/exportaciones");
 
-        mio.GetProperty("isGenerated").GetBoolean().Should().BeTrue();
-        mio.GetProperty("generatedFileUrl").GetString().Should().NotBeNullOrWhiteSpace();
+        var suya = conUna.EnumerateArray().Should().ContainSingle().Subject;
+        suya.GetProperty("formato").GetString().Should().Be("Excel");
+        suya.GetProperty("estado").GetString().Should().BeOneOf("Pendiente", "Generando", "Lista");
     }
 
     [Fact]

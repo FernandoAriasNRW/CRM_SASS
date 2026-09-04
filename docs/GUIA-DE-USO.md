@@ -318,6 +318,31 @@ viene a continuación.
 
 ---
 
+### Llevarte un informe a un fichero
+
+En la lista de informes, cada uno tiene tres botones: **Pdf**, **Excel** y **Csv**. Se ofrecen los
+tres siempre, independientemente del formato con el que se creó el informe, porque lo normal es
+querer el PDF para mandarlo y el Excel para trabajarlo.
+
+**El fichero lo prepara el servidor, no tu navegador.** Al pulsar recuperas el control
+inmediatamente y se te avisa cuando esté: no hay que quedarse mirando la pantalla. Ese aviso se
+puede desactivar como cualquier otro, en las preferencias de notificaciones.
+
+Si tarda más de lo normal, se te dice **y el informe sigue generándose**; no se ha perdido. Y si
+algo falla, se te dice **qué** ha fallado, no sólo que falló.
+
+Sobre los ficheros:
+
+- El **CSV** se separa por punto y coma, no por comas, para que los decimales españoles —«1,5»—
+  no partan las columnas. Y lleva la marca que hace que Excel abra bien los acentos.
+- El **Excel** viene con la cabecera fija y el autofiltro puesto, listo para ordenar y filtrar.
+- El **PDF** se gira a horizontal solo cuando el informe tiene muchas columnas.
+
+Un informe muy grande se recorta, **y el propio fichero lo dice** en su línea de cabecera. Nunca
+se recorta en silencio.
+
+---
+
 ## 9. Avisos y preferencias
 
 En el icono de la campana están los avisos. En sus preferencias se decide qué llega y por qué
@@ -349,18 +374,17 @@ Sólo para administradores:
 
 Esto es tan parte de la guía como lo anterior.
 
-### Los informes no se descargan
+### Los informes no se construyen a medida
 
-Se puede pedir un informe y queda registrado, y el botón **«Generar» marca el informe como
-generado**. Pero **no se produce ningún fichero**: no hay nada que descargar, y el enlace no
-lleva a ninguna parte.
+Se pueden **exportar** —eso ya funciona, mira más arriba— pero todavía no se pueden **construir**:
+elegir el origen de los datos, los filtros, la agrupación y la forma de pintarlo. Hoy hay siete
+tipos de informe de serie y se elige uno.
 
-La exportación de verdad —generarla en el servidor, en segundo plano, y avisar al terminar— está
-planificada y todavía no construida. La preferencia para desactivar ese aviso ya existe, pero el
-aviso aún no llega porque no hay exportación que lo dispare.
+Si eliges el tipo **«Personalizado»**, al exportarlo te dirá que necesita el constructor de
+informes y que elijas otro tipo. Es a propósito: preferimos decirlo a entregar un fichero vacío.
 
-**Mientras tanto:** las cifras del panel están al día y son fiables; lo que no hay es cómo
-llevárselas a un fichero.
+Tampoco se pueden **programar** todavía: que un informe se genere solo cada lunes y llegue por
+correo.
 
 ### El tiempo de ciclo no se calcula
 

@@ -175,7 +175,14 @@ public sealed class DataSeederService(IServiceProvider serviceProvider, ILogger<
         // ---------------------------------------------------------------------
         try
         {
+            // El sembrador no tiene petición, así que el filtro global compara el inquilino
+            // contra Guid.Empty y **todas sus consultas devuelven cero filas**. Eso rompía la
+            // siembra en una base nueva: se insertaban los tres espacios, la relectura salía
+            // vacía y `existingSpaces[0]` lanzaba; con Projects caído, las tareas —que dependen
+            // de que haya proyectos— tampoco se creaban. Declarar el inquilino lo arregla sin
+            // apagar el resto de filtros, que es lo que haría IgnoreQueryFilters.
             var teamsDb = scope.ServiceProvider.GetRequiredService<TeamsDbContext>();
+            using var _teamsDbInquilino = teamsDb.ComoInquilino(tenantId);
             try { await teamsDb.Database.ExecuteSqlAsync($"UPDATE `Teams` SET `TenantId` = {tenantId} WHERE `TenantId` != {tenantId}", cancellationToken); } catch { }
 
             var existingTeams = await teamsDb.Teams.Where(t => t.TenantId == tenantId).ToListAsync(cancellationToken);
@@ -217,6 +224,7 @@ public sealed class DataSeederService(IServiceProvider serviceProvider, ILogger<
         try
         {
             var projectsDb = scope.ServiceProvider.GetRequiredService<ProjectsDbContext>();
+            using var _projectsDbInquilino = projectsDb.ComoInquilino(tenantId);
             try
             {
                 await projectsDb.Database.ExecuteSqlAsync($"UPDATE `Spaces` SET `TenantId` = {tenantId} WHERE `TenantId` != {tenantId}", cancellationToken);
@@ -281,6 +289,7 @@ public sealed class DataSeederService(IServiceProvider serviceProvider, ILogger<
         try
         {
             var workItemsDb = scope.ServiceProvider.GetRequiredService<WorkItemsDbContext>();
+            using var _workItemsDbInquilino = workItemsDb.ComoInquilino(tenantId);
             try { await workItemsDb.Database.ExecuteSqlAsync($"UPDATE `Tasks` SET `TenantId` = {tenantId} WHERE `TenantId` != {tenantId}", cancellationToken); } catch { }
 
             var existingTasks = await workItemsDb.Tasks.Where(t => t.TenantId == tenantId).ToListAsync(cancellationToken);
@@ -349,6 +358,7 @@ public sealed class DataSeederService(IServiceProvider serviceProvider, ILogger<
         try
         {
             var docsDb = scope.ServiceProvider.GetRequiredService<DocsDbContext>();
+            using var _docsDbInquilino = docsDb.ComoInquilino(tenantId);
             try
             {
                 await docsDb.Database.ExecuteSqlAsync($"UPDATE `Documents` SET `TenantId` = {tenantId} WHERE `TenantId` != {tenantId}", cancellationToken);
@@ -390,6 +400,7 @@ public sealed class DataSeederService(IServiceProvider serviceProvider, ILogger<
         try
         {
             var ticketsDb = scope.ServiceProvider.GetRequiredService<TicketingDbContext>();
+            using var _ticketsDbInquilino = ticketsDb.ComoInquilino(tenantId);
             try { await ticketsDb.Database.ExecuteSqlAsync($"UPDATE `Tickets` SET `TenantId` = {tenantId} WHERE `TenantId` != {tenantId}", cancellationToken); } catch { }
 
             var existingTickets = await ticketsDb.Tickets.Where(t => t.TenantId == tenantId).ToListAsync(cancellationToken);
@@ -431,6 +442,7 @@ public sealed class DataSeederService(IServiceProvider serviceProvider, ILogger<
         try
         {
             var calendarDb = scope.ServiceProvider.GetRequiredService<CalendarDbContext>();
+            using var _calendarDbInquilino = calendarDb.ComoInquilino(tenantId);
             try { await calendarDb.Database.ExecuteSqlAsync($"UPDATE `calendar_events` SET `tenant_id` = {tenantId} WHERE `tenant_id` != {tenantId}", cancellationToken); } catch { }
 
             var existingEvents = await calendarDb.CalendarEvents.Where(e => e.TenantId == tenantId).ToListAsync(cancellationToken);
@@ -463,6 +475,7 @@ public sealed class DataSeederService(IServiceProvider serviceProvider, ILogger<
         try
         {
             var commDb = scope.ServiceProvider.GetRequiredService<CommunicationsDbContext>();
+            using var _commDbInquilino = commDb.ComoInquilino(tenantId);
             try
             {
                 await commDb.Database.ExecuteSqlAsync($"UPDATE `Conversations` SET `TenantId` = {tenantId} WHERE `TenantId` != {tenantId}", cancellationToken);
@@ -517,6 +530,7 @@ public sealed class DataSeederService(IServiceProvider serviceProvider, ILogger<
         try
         {
             var notifDb = scope.ServiceProvider.GetRequiredService<NotificationsDbContext>();
+            using var _notifDbInquilino = notifDb.ComoInquilino(tenantId);
             try { await notifDb.Database.ExecuteSqlAsync($"UPDATE `Notifications` SET `TenantId` = {tenantId} WHERE `TenantId` != {tenantId}", cancellationToken); } catch { }
 
             var existingNotifs = await notifDb.Notifications.Where(n => n.TenantId == tenantId && n.RecipientUserId == adminUser.Id).ToListAsync(cancellationToken);
@@ -550,6 +564,7 @@ public sealed class DataSeederService(IServiceProvider serviceProvider, ILogger<
         try
         {
             var webhookDb = scope.ServiceProvider.GetRequiredService<WebhookDbContext>();
+            using var _webhookDbInquilino = webhookDb.ComoInquilino(tenantId);
             try { await webhookDb.Database.ExecuteSqlAsync($"UPDATE `webhook_subscriptions` SET `TenantId` = {tenantId} WHERE `TenantId` != {tenantId}", cancellationToken); } catch { }
 
             var existingWebhooks = await webhookDb.Subscriptions.Where(w => w.TenantId == tenantId).ToListAsync(cancellationToken);
@@ -576,6 +591,7 @@ public sealed class DataSeederService(IServiceProvider serviceProvider, ILogger<
         try
         {
             var tagsDb = scope.ServiceProvider.GetRequiredService<TagsDbContext>();
+            using var _tagsDbInquilino = tagsDb.ComoInquilino(tenantId);
             try { await tagsDb.Database.ExecuteSqlAsync($"UPDATE `Tags` SET `TenantId` = {tenantId} WHERE `TenantId` != {tenantId}", cancellationToken); } catch { }
 
             var existingTags = await tagsDb.Tags.Where(t => t.TenantId == tenantId).ToListAsync(cancellationToken);

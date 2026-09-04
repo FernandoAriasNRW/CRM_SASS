@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Reporting.Infrastructure.Persistence;
 
@@ -11,9 +12,11 @@ using Reporting.Infrastructure.Persistence;
 namespace Reporting.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(ReportingDbContext))]
-    partial class ReportingDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260904185339_Exportaciones")]
+    partial class Exportaciones
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -151,10 +154,22 @@ namespace Reporting.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("CreatedById")
                         .HasColumnType("char(36)");
 
+                    b.Property<string>("ErrorMessage")
+                        .HasColumnType("longtext");
+
                     b.Property<int>("FormatValue")
                         .HasColumnType("int");
 
+                    b.Property<DateTime?>("GeneratedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("GeneratedFileUrl")
+                        .HasColumnType("longtext");
+
                     b.Property<bool>("IsDeleted")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("IsGenerated")
                         .HasColumnType("tinyint(1)");
 
                     b.Property<string>("Name")

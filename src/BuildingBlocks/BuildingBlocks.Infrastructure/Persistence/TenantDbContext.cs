@@ -24,7 +24,34 @@ public abstract class TenantDbContext(DbContextOptions options, IUserContext? us
     /// defecto. Un proceso que legítimamente deba cruzar tenants ha de declararlo
     /// explícitamente con <c>IgnoreQueryFilters()</c>.
     /// </summary>
-    public Guid CurrentTenantId => userContext?.TenantId ?? Guid.Empty;
+    public Guid CurrentTenantId => _inquilinoForzado ?? userContext?.TenantId ?? Guid.Empty;
+
+    private Guid? _inquilinoForzado;
+
+    /// <summary>
+    /// Ejecuta las consultas de este contexto como si fueran de un inquilino concreto, y lo
+    /// deshace al salir del <c>using</c>.
+    ///
+    /// <b>Existe para los trabajos de segundo plano</b>, que no tienen petición y por tanto no
+    /// tienen usuario: sin esto, <see cref="CurrentTenantId"/> vale <c>Guid.Empty</c>, el filtro
+    /// global no casa con ninguna fila y **todas las consultas devuelven cero sin dar ningún
+    /// error**. Pasó exactamente eso: el generador de exportaciones producía ficheros correctos,
+    /// con su aviso y todo, y **vacíos** —la API decía 15 tareas y el informe exportado decía 0—.
+    ///
+    /// La alternativa era <c>IgnoreQueryFilters()</c> con el <c>TenantId</c> repetido a mano en
+    /// cada consulta. Se descartó porque apaga **todos** los filtros: lo archivado y lo borrado
+    /// volverían a salir, y un informe con tareas de la papelera dentro es peor que uno vacío,
+    /// porque nadie lo nota.
+    ///
+    /// Sólo debe usarlo un proceso que sepa de qué inquilino es el trabajo que está haciendo.
+    /// </summary>
+    public IDisposable ComoInquilino(Guid tenantId)
+    {
+        var previo = _inquilinoForzado;
+        _inquilinoForzado = tenantId;
+
+        return new AmbitoDeAlcance(() => _inquilinoForzado = previo);
+    }
 
     /// <summary>
     /// Si las consultas de este contexto deben dejar pasar lo que está en la papelera.

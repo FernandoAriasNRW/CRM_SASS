@@ -42,30 +42,3 @@ public sealed class CreateReportHandler(
         return Result<Report>.Success(reportResult.Value!);
     }
 }
-
-public sealed class GenerateReportHandler(
-    IReportRepository repository,
-    IReportingUnitOfWork unitOfWork) : ICommandHandler<GenerateReportCommand, bool>
-{
-    public async Task<Result<bool>> Handle(GenerateReportCommand request, CancellationToken ct)
-    {
-        var report = await repository.GetByIdAsync(request.TenantId, request.ReportId, ct);
-        if (report is null)
-            return Result<bool>.Failure("Report not found");
-
-        try
-        {
-            report.MarkAsGenerated($"/reports/{report.Id}/{report.Name}.{request.Format.ToLower()}");
-            await repository.UpdateAsync(report, ct);
-            await unitOfWork.SaveChangesAsync(ct);
-            return Result<bool>.Success(true);
-        }
-        catch (Exception ex)
-        {
-            report.MarkAsFailed(ex.Message);
-            await repository.UpdateAsync(report, ct);
-            await unitOfWork.SaveChangesAsync(ct);
-            return Result<bool>.Failure(ex.Message);
-        }
-    }
-}

@@ -89,6 +89,11 @@ if (args.Contains("--health-check"))
     }
 }
 
+// La licencia comunitaria de QuestPDF hay que declararla antes de generar el primer PDF, o
+// lanza al hacerlo. Se declara aquí, al arrancar, y no dentro del escritor: es una decisión de
+// la aplicación —bajo qué licencia se usa la librería— y no del código que dibuja una tabla.
+QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -247,6 +252,17 @@ builder.Services.AddReportingPresentation(builder.Configuration);
 // el host, que sí conoce a todos, lo satisface. Mismo criterio que PuenteDeAutomatizaciones.
 builder.Services.AddScoped<Reporting.Application.Abstractions.IDashboardRepository,
                            ApiHost.Reporting.ConsultasDelPanel>();
+
+// Y la fuente de datos de las exportaciones, por lo mismo: un informe de tareas mira WorkItems y
+// uno de tickets mira Ticketing. Reutiliza ConsultasDelPanel para los agregados, de modo que el
+// PDF y la pantalla dan los mismos números.
+builder.Services.AddScoped<ApiHost.Reporting.ConsultasDelPanel>();
+builder.Services.AddScoped<ApiHost.Reporting.DatosDelInforme>();
+
+// El trabajador que genera los ficheros. Va en segundo plano porque quien exporta recupera el
+// control enseguida, y porque los informes programados ocurren sin nadie delante: un solo camino
+// para las dos cosas.
+builder.Services.AddHostedService<ApiHost.Reporting.GeneradorDeExportaciones>();
 builder.Services.AddTeamsPresentation(builder.Configuration);
 builder.Services.AddTagsPresentation(builder.Configuration);
 builder.Services.AddCustomFieldsPresentation(builder.Configuration);

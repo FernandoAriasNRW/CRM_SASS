@@ -4566,6 +4566,62 @@ Pending</target>
           <context context-type="linenumber">1</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="1453124955640330010" datatype="html">
+        <source>Preparando el informe. Te avisamos cuando esté.</source>
+        <target state="final">Preparing the report. We&apos;ll let you know when it&apos;s ready.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/reports/exportaciones.service.ts</context>
+          <context context-type="linenumber">1</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2949724591621687468" datatype="html">
+        <source>El informe está tardando. Seguirá generándose; búscalo en la lista de exportaciones.</source>
+        <target state="final">The report is taking a while. It will keep generating; look for it in the exports list.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/reports/exportaciones.service.ts</context>
+          <context context-type="linenumber">1</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4031195481505711637" datatype="html">
+        <source>La exportación falló.</source>
+        <target state="final">The export failed.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/reports/exportaciones.service.ts</context>
+          <context context-type="linenumber">1</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1040816601604727882" datatype="html">
+        <source>No se pudo exportar el informe.</source>
+        <target state="final">The report could not be exported.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/reports/exportaciones.service.ts</context>
+          <context context-type="linenumber">1</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2889892981467670610" datatype="html">
+        <source>La descarga llegó vacía.</source>
+        <target state="final">The download came through empty.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/reports/exportaciones.service.ts</context>
+          <context context-type="linenumber">1</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6578227001858936794" datatype="html">
+        <source>Informe descargado.</source>
+        <target state="final">Report downloaded.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/reports/exportaciones.service.ts</context>
+          <context context-type="linenumber">1</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="378781101181427302" datatype="html">
+        <source>Generando…</source>
+        <target state="final">Generating…</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/reports/exportaciones.service.ts</context>
+          <context context-type="linenumber">1</context>
+        </context-group>
+      </trans-unit>
     </body>
   </file>
 </xliff>
