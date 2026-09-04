@@ -285,12 +285,12 @@ public class WorkItemsTests
 
         // El handler usa GetByTenantWithPaginationAsync, no GetByTenantAsync.
         _queriesMock.GetByTenantWithPaginationAsync(
-                _tenantId, null, null, null, null, null, null, null, false,
+                _tenantId, null, null, null, null, null, null, false,
                 Arg.Any<PaginationRequest>(), Arg.Any<CancellationToken>())
             .Returns(pagedResult);
 
         var getHandler = new GetTasksQueryHandler(_queriesMock);
-        var query = new GetTasksQuery(_tenantId, null, null, null, null, null, null, new PaginationRequest { Page = 1, PageSize = 10 });
+        var query = new GetTasksQuery(_tenantId, null, null, null, null, null, new PaginationRequest { Page = 1, PageSize = 10 });
 
         // Act
         var result = await getHandler.Handle(query, CancellationToken.None);

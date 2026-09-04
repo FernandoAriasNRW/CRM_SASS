@@ -8,7 +8,7 @@ namespace Projects.Domain.Entities;
 /// <summary>
 /// Entidad de dominio Project.
 /// </summary>
-public sealed class Project : AggregateRoot, ITenantEntity, ISoftDeletable
+public sealed class Project : AggregateRoot, ITenantEntity, ISoftDeletable, IArchivable
 {
   public Guid TenantId { get; private set; }
   public Guid SpaceId { get; private set; }
@@ -143,4 +143,29 @@ public sealed class Project : AggregateRoot, ITenantEntity, ISoftDeletable
       TagIds.Remove(tagId);
     }
   }
+
+    #region Archivo
+
+    /// <summary>Cuándo se archivó, o <c>null</c> si está a la vista. Ver <see cref="IArchivable"/>.</summary>
+    public DateTime? ArchivadoEnUtc { get; private set; }
+
+    /// <summary>
+    /// Aparta el proyecto de las listas sin borrarlo.
+    ///
+    /// Es idempotente: archivar dos veces no cambia la fecha original, para que dos pestañas
+    /// mandando la misma orden no hagan parecer reciente algo archivado hace meses.
+    ///
+    /// Archivar no es borrar: la papelera de este agregado sigue siendo <c>IsDeleted</c>, y las
+    /// dos cosas conviven. Un proyecto archivado que se borra sigue archivado al restaurarlo.
+    /// </summary>
+    public void Archivar()
+    {
+        if (ArchivadoEnUtc is not null) return;
+        ArchivadoEnUtc = DateTime.UtcNow;
+    }
+
+    /// <summary>Devuelve el proyecto a las listas.</summary>
+    public void Desarchivar() => ArchivadoEnUtc = null;
+
+    #endregion
 }

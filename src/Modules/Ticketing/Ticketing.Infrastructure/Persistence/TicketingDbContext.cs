@@ -15,7 +15,14 @@ public sealed class TicketingDbContext(DbContextOptions<TicketingDbContext> opti
         base.OnModelCreating(modelBuilder);
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(TicketingDbContext).Assembly);
 
-      // Aislamiento por tenant y soft delete, compuestos en un solo filtro.
-      ApplyTenantFilters(modelBuilder);
+        // Ahora **todas** las consultas llevan `ArchivadoEnUtc IS NULL` y `IsDeleted = 0`,
+        // porque el filtro global los añade. Sin este índice, esa condición se evalúa fila a
+        // fila sobre el resultado del filtro de inquilino en cada listado.
+        modelBuilder.Entity<Ticket>()
+            .HasIndex(t => new { t.TenantId, t.ArchivadoEnUtc, t.IsDeleted })
+            .HasDatabaseName("IX_Tickets_TenantId_Archivado_Borrado");
+
+        // Aislamiento por tenant, papelera y archivado, compuestos en un solo filtro.
+        ApplyTenantFilters(modelBuilder);
     }
 }

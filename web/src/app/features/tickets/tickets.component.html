@@ -1,3 +1,9 @@
+<!-- El panel de navegación compartido. Es el de Docs extraído: ancho, anclable, y con las
+     entradas que **hoy sí** filtran. Ver vocabulario-del-menu.ts para por qué no hay más. -->
+<div class="relative">
+  <app-panel-de-navegacion modulo="tickets" [(anclado)]="panelAnclado" />
+
+  <div class="transition-[padding] duration-300" [class.pl-64]="panelAnclado()">
 <div class="space-y-4">
 
   <!-- Header & Views Tab Bar (ClickUp Style) -->
@@ -155,6 +161,8 @@
     }
   </ng-template>
 
+</div>
+  </div>
 </div>
 
 @if (showModal()) {

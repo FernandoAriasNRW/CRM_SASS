@@ -28,6 +28,9 @@ namespace Docs.Infrastructure.Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("char(36)");
 
+                    b.Property<DateTime?>("ArchivadoEnUtc")
+                        .HasColumnType("datetime(6)");
+
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("datetime(6)");
 

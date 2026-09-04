@@ -40,6 +40,12 @@ public static class IdentityInfrastructureExtensions
         // Identity. Ver IFavoritosDelUsuario.
         services.AddScoped<BuildingBlocks.Application.Abstractions.IFavoritosDelUsuario,
                            Identity.Infrastructure.Persistence.FavoritosDelUsuario>();
+
+        // Y el de visibilidad, para «compartido conmigo» y «privado». Misma razón.
+        services.AddScoped<Identity.Application.Comparticion.IRepositorioDeComparticion,
+                           Identity.Infrastructure.Persistence.RepositorioDeComparticion>();
+        services.AddScoped<BuildingBlocks.Application.Abstractions.IVisibilidadDeEntidades,
+                           Identity.Infrastructure.Persistence.VisibilidadDeEntidades>();
         services.AddScoped<BuildingBlocks.Domain.IUnitOfWork, IdentityUnitOfWork>();
         services.AddScoped<IUserQueries, UserQueries>();
         services.AddScoped<IJwtService, JwtService>();

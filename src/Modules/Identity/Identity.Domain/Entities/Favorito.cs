@@ -3,17 +3,24 @@ using BuildingBlocks.Domain.Primitives;
 
 namespace Identity.Domain.Entities;
 
-/// <summary>Sobre qué se puede poner una estrella.</summary>
+/// <summary>
+/// Sobre qué se puede poner una estrella.
+///
+/// Los nombres son los de <see cref="TiposDeEntidad"/> y no una lista propia: son las mismas
+/// cosas de las que hablan los demás módulos, y dos listas acabarían discrepando en una letra.
+/// Se conserva el nombre <c>TipoDeFavorito</c> porque es lo que dice el dominio de Identity, y
+/// porque no todo tipo de entidad tiene por qué ser marcable el día que aparezca uno nuevo.
+/// </summary>
 public static class TipoDeFavorito
 {
-    public const string Tarea = "Tarea";
-    public const string Proyecto = "Proyecto";
-    public const string Ticket = "Ticket";
-    public const string Documento = "Documento";
+    public const string Tarea = TiposDeEntidad.Tarea;
+    public const string Proyecto = TiposDeEntidad.Proyecto;
+    public const string Ticket = TiposDeEntidad.Ticket;
+    public const string Documento = TiposDeEntidad.Documento;
 
-    public static IReadOnlyList<string> Todos() => [Tarea, Proyecto, Ticket, Documento];
+    public static IReadOnlyList<string> Todos() => TiposDeEntidad.Todos();
 
-    public static bool Existe(string tipo) => Todos().Contains(tipo);
+    public static bool Existe(string tipo) => TiposDeEntidad.Existe(tipo);
 }
 
 /// <summary>

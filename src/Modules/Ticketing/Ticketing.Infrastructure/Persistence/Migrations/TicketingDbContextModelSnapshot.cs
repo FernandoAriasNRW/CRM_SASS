@@ -28,8 +28,14 @@ namespace Ticketing.Infrastructure.Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("char(36)");
 
+                    b.Property<DateTime?>("ArchivadoEnUtc")
+                        .HasColumnType("datetime(6)");
+
                     b.Property<Guid?>("AssignedAgentId")
                         .HasColumnType("char(36)");
+
+                    b.Property<DateTime?>("BorradoEnUtc")
+                        .HasColumnType("datetime(6)");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime(6)");
@@ -40,6 +46,9 @@ namespace Ticketing.Infrastructure.Persistence.Migrations
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasColumnType("longtext");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("tinyint(1)");
 
                     b.Property<int>("PriorityValue")
                         .HasColumnType("int");
@@ -62,6 +71,9 @@ namespace Ticketing.Infrastructure.Persistence.Migrations
                         .HasColumnType("longtext");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("TenantId", "ArchivadoEnUtc", "IsDeleted")
+                        .HasDatabaseName("IX_Tickets_TenantId_Archivado_Borrado");
 
                     b.ToTable("Tickets");
                 });

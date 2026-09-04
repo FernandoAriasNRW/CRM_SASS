@@ -14,6 +14,14 @@ namespace Projects.Presentation.Endpoints;
 
 public static class ProjectsEndpoints
 {
+  /// <summary>Las rutas de archivo y papelera, con la acción que ejecuta cada una.</summary>
+  private static readonly (string Ruta, BuildingBlocks.Application.AccionDeArchivo Accion)[] AccionesDeArchivo =
+  [
+    ("archivar", BuildingBlocks.Application.AccionDeArchivo.Archivar),
+    ("desarchivar", BuildingBlocks.Application.AccionDeArchivo.Desarchivar),
+    ("restaurar", BuildingBlocks.Application.AccionDeArchivo.RestaurarDePapelera)
+  ];
+
   public static IServiceCollection AddProjectsPresentation(this IServiceCollection services, IConfiguration configuration)
   {
     services.AddProjectsInfrastructure(configuration);
@@ -24,11 +32,14 @@ public static class ProjectsEndpoints
   {
     var group = app.MapGroup("/api/v1/projects").WithTags("Projects").RequireAuthorization();
 
-    group.MapGet("", async (System.Security.Claims.ClaimsPrincipal principal, [Microsoft.AspNetCore.Mvc.FromQuery] string? status, [Microsoft.AspNetCore.Mvc.FromQuery] Guid? ownerId, [Microsoft.AspNetCore.Mvc.FromQuery] Guid? spaceId, [Microsoft.AspNetCore.Mvc.FromQuery] Guid? folderId, [Microsoft.AspNetCore.Mvc.FromQuery] string? filter, IMediator mediator, [Microsoft.AspNetCore.Mvc.FromQuery] int page = 1, [Microsoft.AspNetCore.Mvc.FromQuery] int pageSize = 25) =>
+    group.MapGet("", async (System.Security.Claims.ClaimsPrincipal principal, [Microsoft.AspNetCore.Mvc.FromQuery] string? status, [Microsoft.AspNetCore.Mvc.FromQuery] Guid? ownerId, [Microsoft.AspNetCore.Mvc.FromQuery] Guid? spaceId, [Microsoft.AspNetCore.Mvc.FromQuery] Guid? folderId, [Microsoft.AspNetCore.Mvc.FromQuery] string? filter, BuildingBlocks.Application.Abstractions.IAlcanceDeVista alcances, IMediator mediator, [Microsoft.AspNetCore.Mvc.FromQuery] int page = 1, [Microsoft.AspNetCore.Mvc.FromQuery] int pageSize = 25) =>
     {
       var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
       var userId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var _uid) ? _uid : Guid.Empty;
-      var result = await mediator.Send(new GetProjectsQuery(tenantId, status, ownerId, spaceId, folderId, filter, userId, new() { Page = page, PageSize = pageSize }));
+      // El resolutor decide en un solo sitio qué hace falta consultar para el filtro pedido.
+      var alcance = await alcances.ResolverAsync(filter, userId, BuildingBlocks.Domain.TiposDeEntidad.Proyecto);
+
+      var result = await mediator.Send(new GetProjectsQuery(tenantId, status, ownerId, spaceId, folderId, alcance, new() { Page = page, PageSize = pageSize }));
       return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
     });
 
@@ -76,9 +87,30 @@ public static class ProjectsEndpoints
     group.MapDelete("/{id:guid}", async (System.Security.Claims.ClaimsPrincipal principal, Guid id, IMediator mediator) =>
     {
       var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
-      var result = await mediator.Send(new DeleteProjectCommand(tenantId, id, tenantId));
+      var actorId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var _uid) ? _uid : Guid.Empty;
+
+      // Quien borra es la persona, no el inquilino. Aquí iba el TenantId en el hueco de
+      // «DeletedBy», así que el registro de quién borró un proyecto decía el nombre de la
+      // empresa en todas las filas.
+      var result = await mediator.Send(new DeleteProjectCommand(tenantId, id, actorId));
       return result.IsSuccess ? Results.NoContent() : Results.NotFound(result.Error);
     });
+
+    // Archivar, desarchivar y restaurar de la papelera. En una tabla y no en tres bloques
+    // copiados: son idénticos salvo el verbo.
+    foreach (var (ruta, accion) in AccionesDeArchivo)
+    {
+      group.MapPost("/{id:guid}/" + ruta, async (System.Security.Claims.ClaimsPrincipal principal, Guid id, IMediator mediator) =>
+      {
+        var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
+        var actorId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var _uid) ? _uid : Guid.Empty;
+
+        var result = await mediator.Send(
+            new Projects.Application.CambiarArchivoDeProyectoCommand(tenantId, id, actorId, accion));
+
+        return result.IsSuccess ? Results.NoContent() : Results.NotFound(result.Error);
+      });
+    }
 
     var spacesGroup = app.MapGroup("/api/v1/spaces").WithTags("Spaces").RequireAuthorization();
 

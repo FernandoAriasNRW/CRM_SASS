@@ -16,6 +16,7 @@ import { ButtonComponent } from '../../shared/ui/button.component';
 import { HierarchySignalStore } from '../../core/hierarchy-signal.store';
 import { ViewsService, SavedView } from '../../shared/services/views.service';
 import { TableColumnService } from '../../shared/services/table-column.service';
+import { PanelDeNavegacionComponent } from '../../shared/ui/panel-de-navegacion/panel-de-navegacion.component';
 
 const STATUS_VARIANT: Record<string, string> = {
   'Planned':     'bg-muted text-foreground',
@@ -27,11 +28,17 @@ const STATUS_VARIANT: Record<string, string> = {
 @Component({
   selector: 'app-projects',
   standalone: true,
-  imports: [CommonModule, NgIconComponent, ProjectCreateModalComponent, ProjectDetailModalComponent, AsyncPipe, DataTableComponent, AdvancedFiltersComponent, ButtonComponent],
+  imports: [PanelDeNavegacionComponent, CommonModule, NgIconComponent, ProjectCreateModalComponent, ProjectDetailModalComponent, AsyncPipe, DataTableComponent, AdvancedFiltersComponent, ButtonComponent],
   viewProviders: [provideIcons({ lucideRefreshCw, lucidePlus, lucideEye, lucideFilter, lucideSave })],
   templateUrl: './projects.component.html',
 })
 export class ProjectsComponent implements OnInit {
+  /**
+   * Si el panel de navegación está anclado. La vista lo necesita para dejarle sitio: el panel
+   * se dibuja por encima, así que sin este relleno taparía la primera columna de la lista.
+   */
+  panelAnclado = signal(true);
+
   private readonly api = inject(ApiService);
   private readonly store = inject(Store);
   private readonly viewsService = inject(ViewsService);

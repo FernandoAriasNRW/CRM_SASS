@@ -4486,6 +4486,86 @@ Pending</target>
         <source>Faltan datos para calcularlo</source>
         <target state="translated">Missing data to calculate it</target>
       </trans-unit>
+      <trans-unit id="8752683350539801997" datatype="html">
+        <source>Ver todo</source>
+        <target state="final">View all</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/panel-de-navegacion/vocabulario-del-menu.ts</context>
+          <context context-type="linenumber">1</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1807916332018437555" datatype="html">
+        <source>Asignado a mí</source>
+        <target state="final">Assigned to me</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/panel-de-navegacion/vocabulario-del-menu.ts</context>
+          <context context-type="linenumber">1</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6686527627555450047" datatype="html">
+        <source>Creado por mí</source>
+        <target state="final">Created by me</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/panel-de-navegacion/vocabulario-del-menu.ts</context>
+          <context context-type="linenumber">1</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8307013293442796509" datatype="html">
+        <source>Favoritos</source>
+        <target state="final">Favorites</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/panel-de-navegacion/vocabulario-del-menu.ts</context>
+          <context context-type="linenumber">1</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5297831694845247371" datatype="html">
+        <source>Compartido conmigo</source>
+        <target state="final">Shared with me</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/panel-de-navegacion/vocabulario-del-menu.ts</context>
+          <context context-type="linenumber">1</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4760056198413288553" datatype="html">
+        <source>Privado</source>
+        <target state="final">Private</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/panel-de-navegacion/vocabulario-del-menu.ts</context>
+          <context context-type="linenumber">1</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2352471522276607242" datatype="html">
+        <source>Archivado</source>
+        <target state="final">Archived</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/panel-de-navegacion/vocabulario-del-menu.ts</context>
+          <context context-type="linenumber">1</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2482040009896677134" datatype="html">
+        <source>Papelera</source>
+        <target state="final">Trash</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/panel-de-navegacion/vocabulario-del-menu.ts</context>
+          <context context-type="linenumber">1</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="204224406769681528" datatype="html">
+        <source>Fijar el panel de navegación</source>
+        <target state="final">Pin the navigation panel</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/panel-de-navegacion/vocabulario-del-menu.ts</context>
+          <context context-type="linenumber">1</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8125674636147739761" datatype="html">
+        <source>Vistas</source>
+        <target state="final">Views</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/panel-de-navegacion/vocabulario-del-menu.ts</context>
+          <context context-type="linenumber">1</context>
+        </context-group>
+      </trans-unit>
     </body>
   </file>
 </xliff>

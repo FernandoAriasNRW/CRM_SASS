@@ -127,11 +127,11 @@ public class ProjectsTests
             2, 1, 10
         );
 
-        _queriesMock.GetByTenantAsync(_tenantId, null, null, null, null, null, null, 1, 10, Arg.Any<CancellationToken>())
+        _queriesMock.GetByTenantAsync(_tenantId, null, null, null, null, null, 1, 10, Arg.Any<CancellationToken>())
             .Returns(pagedResult);
 
         var getHandler = new GetProjectsQueryHandler(_queriesMock);
-        var query = new GetProjectsQuery(_tenantId, null, null, null, null, null, null, new PaginationRequest { Page = 1, PageSize = 10 });
+        var query = new GetProjectsQuery(_tenantId, null, null, null, null, null, new PaginationRequest { Page = 1, PageSize = 10 });
 
         // Act
         var result = await getHandler.Handle(query, CancellationToken.None);

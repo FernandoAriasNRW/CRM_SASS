@@ -11,8 +11,7 @@ public interface IProjectQueries
         Guid? ownerId,
         Guid? spaceId,
         Guid? folderId,
-        string? filter,
-        Guid? userId,
+        BuildingBlocks.Application.AlcanceDeVista? alcance,
         int page,
         int pageSize,
         CancellationToken ct = default);

@@ -1,3 +1,9 @@
+<!-- El panel de navegación compartido. Es el de Docs extraído: ancho, anclable, y con las
+     entradas que **hoy sí** filtran. Ver vocabulario-del-menu.ts para por qué no hay más. -->
+<div class="relative">
+  <app-panel-de-navegacion modulo="projects" [(anclado)]="panelAnclado" />
+
+  <div class="transition-[padding] duration-300" [class.pl-64]="panelAnclado()">
 <div class="space-y-6">
   <div class="flex items-center justify-between">
     <div>
@@ -50,6 +56,8 @@
       (rowClick)="openDetailModal($event)"
       (onSaveView)="saveCurrentView('Custom View ' + (savedViews().length + 1))">
     </ui-data-table>
+  </div>
+</div>
   </div>
 </div>
 

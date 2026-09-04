@@ -578,7 +578,52 @@ decisión que no está tomada, y el sitio donde añadirla está marcado en el wo
   sí tira las conexiones que aún funcionaban.
 - **Desplegar por digestión, no por etiqueta.** `latest` y los nombres de rama se mueven.
 
-## 8. Lo que queda anotado y sin resolver
+## 9. Fase 5A — el menú de navegación
+
+### 9.1 Tres borrados que no borraban
+
+Al construir la papelera aparecieron tres endpoints que decían haber hecho algo y no lo hacían.
+Es la misma familia que la cobertura que no se medía, el sembrador que decía «completado» y el
+`PUT /notifications/preferences` que devolvía lo que le mandabas.
+
+| Endpoint | Qué hacía | Qué devolvía |
+|---|---|---|
+| `DELETE /api/v1/tickets/{id}` | Leía el ticket, comprobaba que existía y **nada más** | 204 |
+| `DELETE /api/v1/tasks/{id}` | Cargaba la tarea y la volvía a guardar **sin tocarla** | 204 |
+| `DELETE /api/v1/projects/{id}` | Borraba bien, pero guardaba el **TenantId** en `DeletedBy` | 204 |
+
+Los dos primeros dejaban el elemento en la lista al recargar. El tercero borra de verdad, pero
+el registro de quién borró un proyecto decía el identificador de la empresa en todas las filas,
+que es tanto como no guardarlo.
+
+Los tres están arreglados y los tres tienen prueba de integración que comprueba **que
+desaparece de la lista**, no que responda 204: responder 204 ya lo hacían.
+
+### 9.2 Un desajuste de vocabulario en los permisos, anotado y sin tocar
+
+La tabla `EntityPermissions` guarda hoy 185 filas, todas por rol y de módulo entero, con
+`EntityType` en plural: `"Tasks"`, `"Projects"`, `"Docs"`. Los comandos, en cambio, piden
+autorización en singular: `EntityType => "Task"`.
+
+**Nunca casan.** Un permiso por rol sobre «Tasks» no llega a consultarse cuando un comando
+pregunta por «Task», así que la autorización granular por rol no está haciendo nada; lo que
+decide hoy es el atajo de administrador y el permiso por defecto de los miembros.
+
+No se ha cambiado aquí a propósito: unificar el vocabulario altera quién puede hacer qué en toda
+la aplicación, y eso merece su propio trabajo con sus propias pruebas, no un arreglo de paso
+dentro de otra cosa. La compartición nueva escribe en **singular**, que es el vocabulario que sí
+se consulta, para que compartir algo conceda acceso de verdad donde se comprueba.
+
+### 9.3 El sembrador falla al arrancar sobre una base ya sembrada
+
+Levantando la API contra la base de desarrollo con datos, la siembra falla en dos módulos:
+`Tags` por clave duplicada (`IX_Tags_TenantId_Name`) y `Projects` por un índice fuera de rango.
+La aplicación arranca igual y avisa —eso funciona— pero conviene saber que el sembrador no es
+idempotente. No bloquea nada y no se ha tocado en esta fase.
+
+---
+
+## 10. Lo que queda anotado y sin resolver
 
 - **Las páginas de documentos no llevan inquilino.** `CreatePageCommand` y `UpdatePageCommand`
   no tienen `TenantId`, así que el aislamiento de las páginas depende de conocer el
@@ -591,3 +636,15 @@ decisión que no está tomada, y el sitio donde añadirla está marcado en el wo
 - **El árbol de trabajo de git abandonado** (2.4).
 - **167 avisos de lint** en el frontend, heredados.
 - **Un paquete del frontend supera el presupuesto** de tamaño en 120 kB.
+- **El vocabulario de `EntityType` no casa entre los permisos sembrados y los comandos** (9.2).
+  Es lo más serio de esta lista: la autorización granular por rol no llega a aplicarse.
+- **El sembrador no es idempotente** (9.3).
+- **Compartir no tiene interfaz todavía.** Los endpoints existen y están probados, y los filtros
+  «compartido conmigo» y «privado» funcionan contra ellos, pero no hay ningún botón en la
+  aplicación que comparta. Hasta que lo haya, esas dos entradas del menú responden bien y
+  devuelven poco, que es honesto pero no útil.
+- **Archivar y borrar tampoco tienen botón.** Misma situación: la API responde, el menú enseña
+  el archivo y la papelera, y de momento sólo se llenan desde la API.
+- **Documentos tiene la columna de archivado y no la usa.** Se le puso al modelar el concepto
+  para no dejar el agregado a medias, pero Docs mantiene su propio panel lateral y no se ha
+  enganchado al compartido.

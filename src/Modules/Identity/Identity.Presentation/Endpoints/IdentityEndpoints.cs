@@ -134,6 +134,41 @@ public static class IdentityEndpoints
           : Results.BadRequest(result.Error);
     }).RequireAuthorization();
 
+    // Compartición. Va bajo el elemento y no bajo el usuario, al revés que los favoritos: un
+    // favorito es una decisión sobre mí, y compartir es una decisión sobre la cosa.
+    var comparticionGroup = app.MapGroup("/api/v1/comparticion").WithTags("Comparticion");
+
+    comparticionGroup.MapGet("/{tipo}/{entityId:guid}", async (
+        string tipo, Guid entityId, IUserContext usuario, IMediator mediator) =>
+    {
+      var result = await mediator.Send(
+          new Identity.Application.Comparticion.GetCompartidoConQuery(usuario.TenantId, tipo, entityId));
+
+      return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
+    }).RequireAuthorization();
+
+    comparticionGroup.MapPut("/{tipo}/{entityId:guid}/{conUsuarioId:guid}", async (
+        string tipo, Guid entityId, Guid conUsuarioId, CompartirRequest cuerpo,
+        IUserContext usuario, IMediator mediator) =>
+    {
+      // PUT y no POST: compartir con la misma persona dos veces deja el mismo estado, cambiando
+      // el nivel si hace falta. Con POST, la segunda llamada tendría que decidir si es un
+      // conflicto, y no lo es.
+      var result = await mediator.Send(new Identity.Application.Comparticion.CompartirCommand(
+          usuario.TenantId, tipo, entityId, conUsuarioId, cuerpo.Nivel));
+
+      return result.IsSuccess ? Results.NoContent() : Results.BadRequest(result.Error);
+    }).RequireAuthorization();
+
+    comparticionGroup.MapDelete("/{tipo}/{entityId:guid}/{conUsuarioId:guid}", async (
+        string tipo, Guid entityId, Guid conUsuarioId, IUserContext usuario, IMediator mediator) =>
+    {
+      var result = await mediator.Send(new Identity.Application.Comparticion.DejarDeCompartirCommand(
+          usuario.TenantId, tipo, entityId, conUsuarioId));
+
+      return result.IsSuccess ? Results.NoContent() : Results.BadRequest(result.Error);
+    }).RequireAuthorization();
+
     usersGroup.MapGet("/me/preferences", async (IMediator mediator, ClaimsPrincipal principal) =>
     {
       var userId = Guid.TryParse(principal.FindFirstValue(JwtRegisteredClaimNames.Sub) ?? principal.FindFirstValue(ClaimTypes.NameIdentifier), out var uid) ? uid : Guid.Empty;
@@ -277,3 +312,6 @@ public static class IdentityEndpoints
 public record CreateUserRequest(string Name, string Email, string Password, string Role);
 public record UpdateUserRequest(string Name, string Email, string Role);
 public record SaveGranularPermissionsRequest(string TargetType, Guid? UserId, Guid? TeamId, string? RoleName, List<GranularPermissionInputItem> Permissions);
+
+/// <summary>Con qué nivel se comparte: «View», «Edit» o «Full».</summary>
+public sealed record CompartirRequest(string Nivel);

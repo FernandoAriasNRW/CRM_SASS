@@ -11,10 +11,12 @@ public sealed record GetTicketsQuery(
     string? Priority,
     string? Status,
     PaginationRequest Pagination,
-    /// <summary>Uno de <c>FiltrosDeVista</c>, o nulo. Lo manda el panel de navegación.</summary>
-    string? Filter = null,
-    /// <summary>Quien pregunta. Sin esto, «mis tickets» no significa nada.</summary>
-    Guid? UserId = null,
-    /// <summary>Los que esa persona marcó, cuando el filtro es «favoritos».</summary>
-    IReadOnlyList<Guid>? IdsFavoritos = null
+    /// <summary>
+    /// La entrada del panel de navegación que se ha pulsado, ya resuelta: qué filtro es, quién
+    /// pregunta y las listas que sólo se pueden saber fuera del módulo.
+    ///
+    /// Iba como tres parámetros sueltos —filtro, usuario, favoritos— y cada concepto nuevo del
+    /// menú añadía otro. Ver <c>AlcanceDeVista</c>.
+    /// </summary>
+    BuildingBlocks.Application.AlcanceDeVista? Alcance = null
 ) : IQuery<PagedResult<TicketDto>>;

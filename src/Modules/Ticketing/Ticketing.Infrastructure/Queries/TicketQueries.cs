@@ -22,9 +22,19 @@ public sealed class TicketQueries(TicketingDbContext context) : ITicketQueries
     public async Task<PagedResult<TicketDto>> GetByTenantWithPaginationAsync(
         Guid tenantId, Guid? customerId, Guid? agentId, string? priority, string? status,
         PaginationRequest pagination,
-        string? filter = null, Guid? userId = null, IReadOnlyList<Guid>? idsFavoritos = null,
+        AlcanceDeVista? alcance = null,
         CancellationToken ct = default)
     {
+        var vista = alcance ?? AlcanceDeVista.Ninguno;
+
+        // La papelera y el archivo están fuera de lo que el filtro global deja ver, así que no
+        // basta con un `Where`: hay que abrir el alcance antes de construir la consulta. El
+        // ámbito se cierra al terminar el método, de modo que ninguna consulta posterior de esta
+        // petición hereda la apertura.
+        using var _ = context.VerTambien(
+            borrados: vista.Es(FiltrosDeVista.Papelera),
+            archivados: vista.Es(FiltrosDeVista.Archivados));
+
         var query = context.Tickets.AsNoTracking().Where(t => t.TenantId == tenantId);
 
         // Los filtros del panel de navegación.
@@ -32,33 +42,46 @@ public sealed class TicketQueries(TicketingDbContext context) : ITicketQueries
         // Esto no existía, y el menú ya ofrecía «Mis Tickets» apuntando a `?filter=mine`: el
         // parámetro llegaba, nadie lo leía y la pantalla devolvía los 175 tickets de siempre.
         // Quien lo usaba creía estar viendo los suyos.
-        if (!string.IsNullOrWhiteSpace(filter))
-        {
-            if (FiltrosDeVista.Es(filter, FiltrosDeVista.Mios) && userId.HasValue)
-            {
-                // «Míos» en un ticket es el agente que lo lleva, no quien lo abrió: el que abre
-                // suele ser un cliente y no tiene esta pantalla.
-                query = query.Where(t => t.AssignedAgentId == userId.Value);
-            }
-            else if (FiltrosDeVista.Es(filter, FiltrosDeVista.CreadosPorMi) && userId.HasValue)
-            {
-                query = query.Where(t => t.CustomerId == userId.Value);
-            }
-            else if (FiltrosDeVista.Es(filter, FiltrosDeVista.Favoritos))
-            {
-                // Sin marcados, la lista es vacía y no «todos». Devolver todo cuando no hay
-                // favoritos sería el mismo engaño que se está arreglando, sólo que al revés.
-                var marcados = (idsFavoritos ?? []).ToArray();
+        var yo = vista.UsuarioId;
 
-                // `EF.Constant` incrusta los identificadores en el SQL en vez de pasarlos como
-                // un parámetro de colección. Hace falta: el proveedor de MySQL no traduce una
-                // colección parametrizada y la consulta fallaba con «Primitive collections
-                // support has not been enabled» —un 409 en la cara de quien pulsara «Favoritos»—.
-                //
-                // Es seguro porque la lista está acotada: Favorito.MaximoPorPersonaYTipo son 200
-                // identificadores como mucho. Sin ese tope, incrustar sería un problema distinto.
-                query = query.Where(t => EF.Constant(marcados).Contains(t.Id));
-            }
+        if (vista.Es(FiltrosDeVista.Mios) && yo.HasValue)
+        {
+            // «Míos» en un ticket es el agente que lo lleva, no quien lo abrió: el que abre
+            // suele ser un cliente y no tiene esta pantalla.
+            query = query.Where(t => t.AssignedAgentId == yo.Value);
+        }
+        else if (vista.Es(FiltrosDeVista.CreadosPorMi) && yo.HasValue)
+        {
+            query = query.Where(t => t.CustomerId == yo.Value);
+        }
+        else if (vista.Es(FiltrosDeVista.Favoritos))
+        {
+            // Sin marcados, la lista es vacía y no «todos». Devolver todo cuando no hay
+            // favoritos sería el mismo engaño que se está arreglando, sólo que al revés.
+            var marcados = vista.Favoritos.ToArray();
+            query = query.Where(t => EF.Constant(marcados).Contains(t.Id));
+        }
+        else if (vista.Es(FiltrosDeVista.CompartidosConmigo))
+        {
+            var conmigo = vista.CompartidosConmigo.ToArray();
+            query = query.Where(t => EF.Constant(conmigo).Contains(t.Id));
+        }
+        else if (vista.Es(FiltrosDeVista.Privados) && yo.HasValue)
+        {
+            // Privado es «lo llevo yo y no se lo he dado a nadie». Se resta lo compartido en
+            // lugar de guardar un campo `EsPrivado`, que sería una segunda fuente de verdad y se
+            // desincronizaría en cuanto alguien compartiera por otra vía.
+            var compartidos = vista.CompartidosConAlguien.ToArray();
+            query = query.Where(t => t.AssignedAgentId == yo.Value && !EF.Constant(compartidos).Contains(t.Id));
+        }
+        else if (vista.Es(FiltrosDeVista.Archivados))
+        {
+            // El alcance abierto arriba deja pasar lo archivado; aquí se pide **sólo** eso.
+            query = query.Where(t => t.ArchivadoEnUtc != null);
+        }
+        else if (vista.Es(FiltrosDeVista.Papelera))
+        {
+            query = query.Where(t => t.IsDeleted);
         }
 
         if (customerId.HasValue) query = query.Where(t => t.CustomerId == customerId.Value);

@@ -13,7 +13,16 @@ copiar pantallas.
 
 ---
 
-## 5A — Un solo menú de navegación
+## 5A — Un solo menú de navegación  ✅ **hecho** (2026-09-04)
+
+> **Estado.** Los cuatro pasos del orden sugerido están construidos y verificados contra la API
+> levantada. Lo que queda es interfaz, no cimientos: no hay botones para archivar, borrar ni
+> compartir desde la pantalla —sólo desde la API—, y Docs conserva su panel propio. Está anotado
+> en `AUDITORIA.md` §10.
+>
+> Lo que sí se cumple, que era la condición de esta fase: **las ocho entradas del menú filtran de
+> verdad**. Comprobado en los tres módulos, con `/tickets?filter=mine` pasando de devolver 190 de
+> 190 a devolver 5.
 
 **El problema:** hoy hay dos menús que hacen lo mismo y no se parecen. El desplegable que sale
 al pasar el ratón por un icono del sidebar (`app.component.html`, `NavigationSignalStore`) y el
@@ -64,14 +73,25 @@ nuevos que atraviesan todos los módulos:
 **Sin eso, el menú tendría entradas que no filtran nada.** Es lo que hay que evitar: un menú que
 promete y devuelve la misma lista es peor que un menú corto.
 
-### Orden sugerido
+### Orden sugerido — y cómo quedó
 
-1. Componente `app-panel-de-navegacion` compartido, alimentado por un vocabulario por módulo,
-   con las entradas que **hoy sí** se pueden filtrar (ver todo, asignado a mí, creado por mí, y
-   las particulares que salen de datos existentes).
-2. Archivado y papelera, transversales, con su columna y su filtro por defecto.
-3. Visibilidad y compartición.
-4. Favoritos.
+1. ✅ Componente `app-panel-de-navegacion` compartido, en Tareas, Tickets y Proyectos. El
+   vocabulario vive en `vocabulario-del-menu.ts` y **sólo admite filtros que el servidor sabe
+   aplicar**. El filtro activo vive en la URL, así que una vista filtrada se comparte por enlace
+   y el botón de atrás funciona.
+2. ✅ Archivado y papelera. La decisión que importa: **van en el filtro global**
+   (`TenantQueryFilter`), no en un `Where` por consulta. El plan avisaba de que ésta era «la
+   parte que se rompe en silencio», y componerlo en el filtro global significa que **ninguna
+   consulta puede olvidarse**: para ver lo escondido hay que pedirlo con `VerTambien`, que no es
+   `IgnoreQueryFilters()` —eso apagaría también el aislamiento por inquilino—.
+3. ✅ Visibilidad y compartición, sobre la tabla `EntityPermissions` que ya existía. No se creó
+   una tabla nueva: dos tablas diciendo quién ve qué acabarían discrepando. «Privado» se calcula
+   restando lo compartido en lugar de guardar un campo, que sería una segunda fuente de verdad.
+4. ✅ Favoritos (hecho antes, en el commit `9f63a0d`).
+
+**Las entradas propias de cada módulo del cuadro de arriba —«Vencen esta semana», «Sin asignar»,
+«Vencidos de SLA», «En riesgo»— no están.** El servidor no las sabe filtrar todavía, y ponerlas
+sería justo lo que esta fase viene a quitar.
 
 ---
 

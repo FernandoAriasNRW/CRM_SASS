@@ -33,7 +33,37 @@ public static class FiltrosDeVista
     /// <summary>De mi equipo. Ya existía en tareas y proyectos.</summary>
     public const string DeMiEquipo = "team";
 
-    public static IReadOnlyList<string> Todos() => [Mios, CreadosPorMi, Favoritos, DeMiEquipo];
+    /// <summary>
+    /// Lo que otra persona me compartió explícitamente. No incluye lo que veo por ser de mi
+    /// equipo o por mi rol: eso ya se ve en «ver todo», y mezclarlo dejaría esta entrada
+    /// devolviendo prácticamente la lista entera.
+    /// </summary>
+    public const string CompartidosConmigo = "shared";
+
+    /// <summary>Mío y de nadie más: lo que llevo yo y no he compartido con nadie.</summary>
+    public const string Privados = "private";
+
+    /// <summary>
+    /// Apartado de la vista, sin borrar. Es el único filtro que **añade** filas en vez de
+    /// quitarlas: sin él lo archivado no sale por ninguna parte.
+    /// </summary>
+    public const string Archivados = "archived";
+
+    /// <summary>Borrado y recuperable. Igual que <see cref="Archivados"/>, abre el filtro global.</summary>
+    public const string Papelera = "trash";
+
+    public static IReadOnlyList<string> Todos() =>
+        [Mios, CreadosPorMi, Favoritos, DeMiEquipo, CompartidosConmigo, Privados, Archivados, Papelera];
+
+    /// <summary>
+    /// Si el filtro pide ver cosas que el filtro global esconde —la papelera o el archivo—.
+    ///
+    /// Se pregunta antes de lanzar la consulta, porque abrir ese alcance es una decisión
+    /// consciente y no algo que un `Where` pueda hacer por su cuenta: lo que el filtro global
+    /// esconde no está en el conjunto que la consulta puede filtrar.
+    /// </summary>
+    public static bool AbreElAlcance(string? filtro) =>
+        Es(filtro, Archivados) || Es(filtro, Papelera);
 
     public static bool Existe(string? filtro) =>
         !string.IsNullOrWhiteSpace(filtro) && Todos().Contains(filtro, StringComparer.OrdinalIgnoreCase);

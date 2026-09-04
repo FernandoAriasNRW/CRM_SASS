@@ -23,6 +23,7 @@ import { TableColumnService } from '../../shared/services/table-column.service';
 import { ClickableDirective } from '../../shared/directives/clickable.directive';
 import { ToastService } from '../../shared/services/toast.service';
 import { EmptyInlineComponent } from '../../shared/ui/empty-state.component';
+import { PanelDeNavegacionComponent } from '../../shared/ui/panel-de-navegacion/panel-de-navegacion.component';
 
 interface Column {
   key: string;
@@ -51,7 +52,7 @@ const STATUS_BADGE: Record<string, BadgeVariant> = {
 @Component({
   selector: 'app-tickets',
   standalone: true,
-  imports: [ClickableDirective, 
+  imports: [PanelDeNavegacionComponent, ClickableDirective, 
     CommonModule, FormsModule, BadgeComponent, ButtonComponent,
     NgIconComponent, DragDropModule, TicketCreateModalComponent, TicketDetailPanelComponent,
     DataTableComponent, HasPermissionDirective, EmptyInlineComponent
@@ -63,6 +64,12 @@ const STATUS_BADGE: Record<string, BadgeVariant> = {
   templateUrl: './tickets.component.html',
 })
 export class TicketsComponent implements OnInit {
+  /**
+   * Si el panel de navegación está anclado. La vista lo necesita para dejarle sitio: el panel
+   * se dibuja por encima, así que sin este relleno taparía la primera columna de la lista.
+   */
+  panelAnclado = signal(true);
+
   private readonly toast = inject(ToastService);
   private readonly api = inject(ApiService);
   private readonly realtime = inject(RealtimeService);

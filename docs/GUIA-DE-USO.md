@@ -41,6 +41,34 @@ en el navegador, así que lo encontrarás igual desde otro ordenador.
 En cualquier pantalla, el **buscador de comandos** (`Ctrl` + `K`) va directo a lo que escribas
 sin pasar por el menú.
 
+### El panel de vistas
+
+En **Tareas**, **Proyectos** y **Tickets** hay un panel lateral con las vistas de esa sección.
+Viene fijado; el alfiler de su cabecera lo suelta, y entonces se esconde y vuelve a salir al
+acercar el ratón al borde izquierdo.
+
+| Vista | Qué enseña |
+|---|---|
+| Ver todo | La lista completa |
+| Asignado a mí | Lo que respondes tú. En un ticket, los que llevas como agente |
+| Creado por mí | Lo que abriste tú, aunque ahora responda otro |
+| Favoritos | Lo que marcaste con la estrella |
+| Compartido conmigo | Lo que alguien te dio a ti en concreto |
+| Privado | Lo tuyo que no has compartido con nadie |
+| Archivado | Lo que apartaste de la vista sin borrarlo |
+| Papelera | Lo borrado, que se puede recuperar |
+
+**La vista queda en la dirección**, así que puedes copiar el enlace de una lista filtrada y
+mandárselo a alguien, y el botón de atrás del navegador funciona como esperas.
+
+**Lo que hay en este panel filtra de verdad.** Si una vista te devuelve una lista vacía, es que
+no hay nada; no es que se haya quedado a medias.
+
+**Archivado y papelera no son lo mismo.** Archivar es «esto ya no me estorba»: sale de las
+listas y se queda ahí. La papelera es «esto lo he borrado», y lleva implícito que algún día se
+vacía. Algo que estaba archivado y se borra, al restaurarlo **sigue archivado**, que es donde su
+dueño lo había dejado.
+
 ### La aplicación está en dos idiomas
 
 Español e inglés. El idioma se elige en el navegador y la dirección lo refleja: `/es/…` o
@@ -338,6 +366,19 @@ llevárselas a un fichero.
 
 Sale como un guion. Necesita saber cuándo una tarea entró realmente en «En progreso», y hoy sólo
 se guarda su estado actual, no el historial de cambios.
+
+### Archivar, borrar y compartir todavía no tienen botón
+
+Las vistas de **Archivado**, **Papelera**, **Compartido conmigo** y **Privado** funcionan y
+enseñan lo que les toca, pero **en la pantalla no hay aún un botón para archivar algo, mandarlo
+a la papelera o compartirlo con alguien**. Todo eso existe en la API y está probado; lo que
+falta es el control en la interfaz.
+
+En la práctica: hoy verás esas cuatro vistas casi siempre vacías, no porque estén rotas, sino
+porque todavía no hay forma cómoda de llenarlas.
+
+La única excepción es **borrar**, que sí tiene botón donde ya lo tenía —y que hasta ahora decía
+haber borrado sin borrar nada—. Ahora manda a la papelera de verdad.
 
 ### El historial de automatizaciones no tiene pantalla
 

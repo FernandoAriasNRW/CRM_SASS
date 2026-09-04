@@ -18,6 +18,9 @@ public static class InfrastructureExtensions
     // 1. Servicios Transversales (Singleton/Scoped que no dependen del DBContext)
     services.AddScoped<IEmailService, SmtpEmailService>();
     services.AddScoped<IDomainEventDispatcher, DomainEventDispatcher>();
+
+    // Quien resuelve las entradas del menú de navegación en todos los módulos.
+    services.AddScoped<IAlcanceDeVista, BuildingBlocks.Infrastructure.Vistas.ResolutorDeAlcance>();
     services.AddScoped<IOutboxService, OutboxService>();
     services.AddScoped(typeof(IUnitOfWork<>), typeof(UnitOfWork<>));
     services.AddHostedService<OutboxDispatcherWorker>();

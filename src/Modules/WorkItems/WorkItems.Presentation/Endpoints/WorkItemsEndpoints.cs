@@ -14,6 +14,14 @@ namespace WorkItems.Presentation.Endpoints;
 
 public static class WorkItemsEndpoints
 {
+  /// <summary>Las rutas de archivo y papelera, con la acción que ejecuta cada una.</summary>
+  private static readonly (string Ruta, BuildingBlocks.Application.AccionDeArchivo Accion)[] AccionesDeArchivo =
+  [
+    ("archivar", BuildingBlocks.Application.AccionDeArchivo.Archivar),
+    ("desarchivar", BuildingBlocks.Application.AccionDeArchivo.Desarchivar),
+    ("restaurar", BuildingBlocks.Application.AccionDeArchivo.RestaurarDePapelera)
+  ];
+
   /// <summary>
   /// El mensaje con el que los handlers dicen que la tarea no existe. Es lo único que separa un
   /// 404 de un 400, así que se nombra en lugar de repetir la cadena.
@@ -30,11 +38,16 @@ public static class WorkItemsEndpoints
   {
     var group = app.MapGroup("/api/v1/tasks").WithTags("Tasks").RequireAuthorization();
 
-    group.MapGet("", async (System.Security.Claims.ClaimsPrincipal principal, [Microsoft.AspNetCore.Mvc.FromQuery] Guid? projectId, [Microsoft.AspNetCore.Mvc.FromQuery] Guid? assigneeId, [Microsoft.AspNetCore.Mvc.FromQuery] string? status, [Microsoft.AspNetCore.Mvc.FromQuery] string? priority, [Microsoft.AspNetCore.Mvc.FromQuery] string? filter, IMediator mediator, [Microsoft.AspNetCore.Mvc.FromQuery] Guid? parentTaskId = null, [Microsoft.AspNetCore.Mvc.FromQuery] bool includeSubtasks = false, [Microsoft.AspNetCore.Mvc.FromQuery] int page = 1, [Microsoft.AspNetCore.Mvc.FromQuery] int pageSize = 25, [Microsoft.AspNetCore.Mvc.FromQuery] string? sortColumn = null, [Microsoft.AspNetCore.Mvc.FromQuery] string? sortDirection = null, [Microsoft.AspNetCore.Mvc.FromQuery] DateTime? startDate = null, [Microsoft.AspNetCore.Mvc.FromQuery] DateTime? endDate = null) =>
+    group.MapGet("", async (System.Security.Claims.ClaimsPrincipal principal, [Microsoft.AspNetCore.Mvc.FromQuery] Guid? projectId, [Microsoft.AspNetCore.Mvc.FromQuery] Guid? assigneeId, [Microsoft.AspNetCore.Mvc.FromQuery] string? status, [Microsoft.AspNetCore.Mvc.FromQuery] string? priority, [Microsoft.AspNetCore.Mvc.FromQuery] string? filter, BuildingBlocks.Application.Abstractions.IAlcanceDeVista alcances, IMediator mediator, [Microsoft.AspNetCore.Mvc.FromQuery] Guid? parentTaskId = null, [Microsoft.AspNetCore.Mvc.FromQuery] bool includeSubtasks = false, [Microsoft.AspNetCore.Mvc.FromQuery] int page = 1, [Microsoft.AspNetCore.Mvc.FromQuery] int pageSize = 25, [Microsoft.AspNetCore.Mvc.FromQuery] string? sortColumn = null, [Microsoft.AspNetCore.Mvc.FromQuery] string? sortDirection = null, [Microsoft.AspNetCore.Mvc.FromQuery] DateTime? startDate = null, [Microsoft.AspNetCore.Mvc.FromQuery] DateTime? endDate = null) =>
     {
       var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
       var userId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var _uid) ? _uid : Guid.Empty;
-      var query = new GetTasksQuery(tenantId, projectId, assigneeId, status, priority, filter, userId, new() { Page = page, PageSize = pageSize, SortColumn = sortColumn, SortDirection = sortDirection, StartDate = startDate, EndDate = endDate }, parentTaskId, includeSubtasks);
+      // El resolutor decide qué hace falta consultar para el filtro pedido —favoritos,
+      // compartidos, nada— en un solo sitio, para que ningún endpoint reciba un filtro y no
+      // haga nada con él, que es como «Mis Tickets» acabó devolviendo los 175 de siempre.
+      var alcance = await alcances.ResolverAsync(filter, userId, BuildingBlocks.Domain.TiposDeEntidad.Tarea);
+
+      var query = new GetTasksQuery(tenantId, projectId, assigneeId, status, priority, alcance, new() { Page = page, PageSize = pageSize, SortColumn = sortColumn, SortDirection = sortDirection, StartDate = startDate, EndDate = endDate }, parentTaskId, includeSubtasks);
       var result = await mediator.Send(query);
       return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
     });
@@ -128,7 +141,7 @@ public static class WorkItemsEndpoints
     {
       var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
       var userId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var _uid) ? _uid : Guid.Empty;
-      var query = new GetTasksQuery(tenantId, null, null, null, null, null, userId, new() { Page = page, PageSize = pageSize, SortColumn = sortColumn, SortDirection = sortDirection }, id, false);
+      var query = new GetTasksQuery(tenantId, null, null, null, null, null, new() { Page = page, PageSize = pageSize, SortColumn = sortColumn, SortDirection = sortDirection }, id, false);
       var result = await mediator.Send(query);
       return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
     });
@@ -267,6 +280,20 @@ public static class WorkItemsEndpoints
       var result = await mediator.Send(new RemoveTaskDependencyCommand(tenantId, id, actorId, actorRole, dependsOnTaskId));
       return result.IsSuccess ? Results.NoContent() : Results.BadRequest(result.Error);
     });
+
+    // Archivar, desarchivar y restaurar de la papelera. En una tabla y no en tres bloques
+    // copiados: son idénticos salvo el verbo, y copiarlos es como acaban desincronizándose.
+    // Borrar sigue siendo DELETE, que ahora sí manda a la papelera.
+    foreach (var (ruta, accion) in AccionesDeArchivo)
+    {
+      group.MapPost("/{id:guid}/" + ruta, async (System.Security.Claims.ClaimsPrincipal principal, Guid id, IMediator mediator) =>
+      {
+        var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
+
+        var result = await mediator.Send(new WorkItems.Application.CambiarArchivoDeTareaCommand(tenantId, id, accion));
+        return result.IsSuccess ? Results.NoContent() : Results.NotFound(result.Error);
+      });
+    }
 
     group.MapDelete("/{id:guid}", async (System.Security.Claims.ClaimsPrincipal principal, Guid id, IMediator mediator) =>
     {
