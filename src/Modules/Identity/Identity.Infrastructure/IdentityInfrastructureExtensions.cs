@@ -33,6 +33,13 @@ public static class IdentityInfrastructureExtensions
         services.AddScoped<IUserRepository, EfUserRepository>();
         services.AddScoped<ISavedViewRepository, EfSavedViewRepository>();
         services.AddScoped<IEntityPermissionRepository, EfEntityPermissionRepository>();
+        services.AddScoped<Identity.Application.Favoritos.IRepositorioDeFavoritos,
+                           Identity.Infrastructure.Persistence.RepositorioDeFavoritos>();
+
+        // El puerto que consumen los demás módulos para filtrar por favoritos sin conocer a
+        // Identity. Ver IFavoritosDelUsuario.
+        services.AddScoped<BuildingBlocks.Application.Abstractions.IFavoritosDelUsuario,
+                           Identity.Infrastructure.Persistence.FavoritosDelUsuario>();
         services.AddScoped<BuildingBlocks.Domain.IUnitOfWork, IdentityUnitOfWork>();
         services.AddScoped<IUserQueries, UserQueries>();
         services.AddScoped<IJwtService, JwtService>();

@@ -35,6 +35,15 @@ public sealed class ProjectQueries(ProjectsDbContext context) : IProjectQueries
             {
                 query = query.Where(p => EF.Functions.JsonContains(p.TagIds, userId.Value.ToString()));
             }
+            else if (BuildingBlocks.Application.FiltrosDeVista.Es(
+                         filter, BuildingBlocks.Application.FiltrosDeVista.CreadosPorMi))
+            {
+                // Un proyecto no guarda quién lo creó, sólo quién lo posee. Se usa el dueño, que
+                // es lo más cercano y lo que la gente espera. Si algún día hace falta distinguir
+                // «lo abrí yo» de «lo llevo yo», hará falta una columna nueva: fingir la
+                // diferencia con el dueño daría dos entradas de menú con la misma lista.
+                query = query.Where(p => p.OwnerId == userId.Value);
+            }
         }
 
         var totalCount = await query.CountAsync(ct);

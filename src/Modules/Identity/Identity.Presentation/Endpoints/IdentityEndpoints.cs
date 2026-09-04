@@ -1,3 +1,5 @@
+using BuildingBlocks.Application.Abstractions;
+using Identity.Application.Favoritos;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Identity.Application.Commands;
@@ -109,6 +111,28 @@ public static class IdentityEndpoints
     }).RequireAuthorization();
 
     var usersGroup = app.MapGroup("/api/v1/users").WithTags("Users");
+
+    // Favoritos. Van bajo el usuario y no bajo cada módulo porque una estrella no es un atributo
+    // de la tarea: es algo que una persona decidió sobre ella. Ver Favorito para el porqué.
+    usersGroup.MapGet("/me/favoritos/{tipo}", async (
+        string tipo, IUserContext usuario, IMediator mediator) =>
+    {
+      var result = await mediator.Send(new GetFavoritosQuery(usuario.TenantId, usuario.UserId, tipo));
+      return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
+    }).RequireAuthorization();
+
+    // Un solo endpoint que alterna, no uno para marcar y otro para desmarcar: la estrella es un
+    // interruptor, y con dos endpoints dos pestañas abiertas acaban peleándose.
+    usersGroup.MapPost("/me/favoritos/{tipo}/{entityId:guid}", async (
+        string tipo, Guid entityId, IUserContext usuario, IMediator mediator) =>
+    {
+      var result = await mediator.Send(
+          new AlternarFavoritoCommand(usuario.TenantId, usuario.UserId, tipo, entityId));
+
+      return result.IsSuccess
+          ? Results.Ok(new { marcado = result.Value })
+          : Results.BadRequest(result.Error);
+    }).RequireAuthorization();
 
     usersGroup.MapGet("/me/preferences", async (IMediator mediator, ClaimsPrincipal principal) =>
     {

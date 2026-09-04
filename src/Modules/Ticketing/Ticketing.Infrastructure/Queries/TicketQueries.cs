@@ -1,3 +1,4 @@
+using BuildingBlocks.Application;
 using BuildingBlocks.Domain;
 using Microsoft.EntityFrameworkCore;
 using Ticketing.Infrastructure.Persistence;
@@ -12,14 +13,53 @@ public sealed class TicketQueries(TicketingDbContext context) : ITicketQueries
         Guid tenantId, Guid? customerId, Guid? agentId, string? priority, string? status,
         int page, int pageSize, CancellationToken ct = default)
     {
-        return await GetByTenantWithPaginationAsync(tenantId, customerId, agentId, priority, status, new PaginationRequest { Page = page, PageSize = pageSize }, ct);
+        return await GetByTenantWithPaginationAsync(
+            tenantId, customerId, agentId, priority, status,
+            new PaginationRequest { Page = page, PageSize = pageSize },
+            ct: ct);
     }
 
     public async Task<PagedResult<TicketDto>> GetByTenantWithPaginationAsync(
         Guid tenantId, Guid? customerId, Guid? agentId, string? priority, string? status,
-        PaginationRequest pagination, CancellationToken ct = default)
+        PaginationRequest pagination,
+        string? filter = null, Guid? userId = null, IReadOnlyList<Guid>? idsFavoritos = null,
+        CancellationToken ct = default)
     {
         var query = context.Tickets.AsNoTracking().Where(t => t.TenantId == tenantId);
+
+        // Los filtros del panel de navegación.
+        //
+        // Esto no existía, y el menú ya ofrecía «Mis Tickets» apuntando a `?filter=mine`: el
+        // parámetro llegaba, nadie lo leía y la pantalla devolvía los 175 tickets de siempre.
+        // Quien lo usaba creía estar viendo los suyos.
+        if (!string.IsNullOrWhiteSpace(filter))
+        {
+            if (FiltrosDeVista.Es(filter, FiltrosDeVista.Mios) && userId.HasValue)
+            {
+                // «Míos» en un ticket es el agente que lo lleva, no quien lo abrió: el que abre
+                // suele ser un cliente y no tiene esta pantalla.
+                query = query.Where(t => t.AssignedAgentId == userId.Value);
+            }
+            else if (FiltrosDeVista.Es(filter, FiltrosDeVista.CreadosPorMi) && userId.HasValue)
+            {
+                query = query.Where(t => t.CustomerId == userId.Value);
+            }
+            else if (FiltrosDeVista.Es(filter, FiltrosDeVista.Favoritos))
+            {
+                // Sin marcados, la lista es vacía y no «todos». Devolver todo cuando no hay
+                // favoritos sería el mismo engaño que se está arreglando, sólo que al revés.
+                var marcados = (idsFavoritos ?? []).ToArray();
+
+                // `EF.Constant` incrusta los identificadores en el SQL en vez de pasarlos como
+                // un parámetro de colección. Hace falta: el proveedor de MySQL no traduce una
+                // colección parametrizada y la consulta fallaba con «Primitive collections
+                // support has not been enabled» —un 409 en la cara de quien pulsara «Favoritos»—.
+                //
+                // Es seguro porque la lista está acotada: Favorito.MaximoPorPersonaYTipo son 200
+                // identificadores como mucho. Sin ese tope, incrustar sería un problema distinto.
+                query = query.Where(t => EF.Constant(marcados).Contains(t.Id));
+            }
+        }
 
         if (customerId.HasValue) query = query.Where(t => t.CustomerId == customerId.Value);
         if (agentId.HasValue) query = query.Where(t => t.AssignedAgentId == agentId.Value);

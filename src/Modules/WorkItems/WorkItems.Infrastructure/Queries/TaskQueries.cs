@@ -92,6 +92,13 @@ public sealed class TaskQueries(WorkItemsDbContext context) : ITaskQueries
         {
             query = query.Where(t => EF.Functions.JsonContains(t.TagIds, userId.Value.ToString()));
         }
+        else if (BuildingBlocks.Application.FiltrosDeVista.Es(
+                     filter, BuildingBlocks.Application.FiltrosDeVista.CreadosPorMi))
+        {
+            // «Creado por mí» es distinto de «mío»: una tarea que abrí y pasó a otra persona
+            // sigue siendo mía en el sentido de que la escribí yo, y es como se busca.
+            query = query.Where(t => t.CreatedById == userId.Value);
+        }
     }
 
     if (pagination.StartDate.HasValue)

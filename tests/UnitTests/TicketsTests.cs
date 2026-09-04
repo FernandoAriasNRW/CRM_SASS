@@ -147,9 +147,14 @@ public class TicketsTests
         );
 
         // El handler usa GetByTenantWithPaginationAsync, no GetByTenantAsync.
+        // Todos los argumentos como especificaciones: NSubstitute no admite mezclar valores
+        // concretos y matchers cuando hay varios del mismo tipo, y ahora los hay.
         _queriesMock.GetByTenantWithPaginationAsync(
-                _tenantId, null, null, null, null,
-                Arg.Any<PaginationRequest>(), Arg.Any<CancellationToken>())
+                Arg.Is(_tenantId), Arg.Any<Guid?>(), Arg.Any<Guid?>(),
+                Arg.Any<string?>(), Arg.Any<string?>(),
+                Arg.Any<PaginationRequest>(),
+                Arg.Any<string?>(), Arg.Any<Guid?>(), Arg.Any<IReadOnlyList<Guid>?>(),
+                Arg.Any<CancellationToken>())
             .Returns(pagedResult);
 
         var getHandler = new GetTicketsHandler(_queriesMock);

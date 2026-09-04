@@ -1,3 +1,4 @@
+using BuildingBlocks.Application;
 using BuildingBlocks.Domain;
 using Ticketing.Application.DTOs;
 
@@ -15,7 +16,11 @@ public interface ITicketQueries
         int pageSize,
         CancellationToken ct = default);
 
-    Task<PagedResult<TicketDto>> GetByTenantWithPaginationAsync(Guid tenantId, Guid? customerId, Guid? agentId, string? priority, string? status, PaginationRequest pagination, CancellationToken ct = default);
+    Task<PagedResult<TicketDto>> GetByTenantWithPaginationAsync(
+        Guid tenantId, Guid? customerId, Guid? agentId, string? priority, string? status,
+        PaginationRequest pagination,
+        string? filter = null, Guid? userId = null, IReadOnlyList<Guid>? idsFavoritos = null,
+        CancellationToken ct = default);
 
     Task<TicketDto?> GetByIdAsync(Guid tenantId, Guid id, CancellationToken ct = default);
 }
