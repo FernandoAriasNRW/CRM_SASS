@@ -7,7 +7,13 @@ Posicionamiento de producto: competir con ClickUp y Monday.com.
 Backend en .NET 9 (monolito modular con Clean Architecture por bounded context),
 frontend en Angular 21.
 
+> **Cómo se usa el producto:** [`docs/GUIA-DE-USO.md`](docs/GUIA-DE-USO.md) — escrita para quien
+> trabaja con la herramienta, no para quien la programa. Incluye un apartado de lo que todavía no
+> hace, que es tan parte de la guía como el resto.
+>
 > Estado actual del proyecto y plan de trabajo: [`docs/ESTADO-Y-ROADMAP.md`](docs/ESTADO-Y-ROADMAP.md)
+> · Auditoría y defectos encontrados: [`docs/AUDITORIA.md`](docs/AUDITORIA.md)
+> · Despliegue: [`docs/DESPLIEGUE.md`](docs/DESPLIEGUE.md)
 
 ---
 
