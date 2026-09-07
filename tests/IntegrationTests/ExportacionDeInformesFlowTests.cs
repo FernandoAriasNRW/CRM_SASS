@@ -250,9 +250,13 @@ public sealed class ExportacionDeInformesFlowTests(CrmApiFactory factory)
     /// <summary>
     /// Un fallo deja el motivo y queda visible, en vez de desaparecer.
     ///
-    /// Era la advertencia expresa del plan. Se provoca con un informe de tipo «Custom», que
-    /// necesita el constructor de informes y todavía no existe: el trabajador falla y tiene que
-    /// contarlo con palabras.
+    /// Era la advertencia expresa del plan. Se provoca con un informe a medida **sin definición**:
+    /// no hay nada que calcular, el trabajador falla, y tiene que contarlo con palabras que digan
+    /// qué hacer.
+    ///
+    /// Antes esta prueba se apoyaba en que los informes a medida no se podían exportar en
+    /// absoluto. Ahora sí se pueden —el constructor existe— así que lo que se provoca es el caso
+    /// que sigue sin poder resolverse: uno a medio configurar.
     /// </summary>
     [Fact]
     public async Task Un_fallo_dice_por_que_y_no_desaparece()
@@ -270,8 +274,8 @@ public sealed class ExportacionDeInformesFlowTests(CrmApiFactory factory)
         final.GetProperty("error").GetString().Should().NotBeNullOrWhiteSpace(
             "un fallo mudo obliga a mirar los registros del servidor, y quien pregunta no tiene acceso");
 
-        final.GetProperty("error").GetString().Should().Contain("constructor de informes",
-            "el motivo tiene que explicar qué pasa, no sólo que pasó algo");
+        final.GetProperty("error").GetString().Should().Contain("constructor",
+            "el motivo tiene que explicar qué hacer, no sólo que pasó algo");
     }
 
     /// <summary>Descargar algo que falló explica el motivo, en vez de dar un 404 desconcertante.</summary>

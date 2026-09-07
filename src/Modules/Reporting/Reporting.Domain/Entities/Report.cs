@@ -14,6 +14,25 @@ public sealed class Report : AggregateRoot, ITenantEntity, ISoftDeletable
     public int TypeValue { get; private set; }
     public int FormatValue { get; private set; }
     public string? Parameters { get; private set; }
+
+    /// <summary>
+    /// La definición del informe a medida, serializada, o <c>null</c> si es de los de serie.
+    ///
+    /// Va en su propia columna y no dentro de <see cref="Parameters"/>, que es un campo de texto
+    /// libre heredado sin forma conocida: mezclar una estructura que se valida con otra que no,
+    /// en la misma columna, obliga a adivinar cuál es cuál al leerla.
+    ///
+    /// Se guarda como JSON y no en columnas porque su forma es un árbol —filtros con campo,
+    /// operador y valor— y normalizarlo serían tres tablas para algo que siempre se lee entero y
+    /// nunca se consulta por partes.
+    /// </summary>
+    /// <remarks>
+    /// Se llama <c>DefinicionJson</c> y no <c>Definicion</c> porque lo segundo tapaba al espacio
+    /// de nombres <c>Reporting.Domain.Definicion</c> dentro de esta clase. El nombre además dice
+    /// la verdad: lo que hay en la columna es el JSON, no el objeto.
+    /// </remarks>
+    public string? DefinicionJson { get; private set; }
+
     public DateTime CreatedAt { get; private set; }
     public bool IsDeleted { get; private set; }
 
@@ -64,6 +83,31 @@ public sealed class Report : AggregateRoot, ITenantEntity, ISoftDeletable
         report.RaiseDomainEvent(new ReportCreatedEvent(report.Id, tenantId, createdById));
         return Result<Report>.Success(report);
     }
+
+    /// <summary>
+    /// Convierte el informe en uno a medida, o le cambia la definición.
+    ///
+    /// La definición se valida aquí, en el dominio, y no sólo en el borde: un informe con una
+    /// definición que el motor no sabe traducir se guarda bien y **falla al exportarlo**, cuando
+    /// quien lo construyó ya no está mirando.
+    /// </summary>
+    public Result DefinirAMedida(Definicion.DefinicionDeInforme definicion)
+    {
+        var validacion = definicion.Validar();
+        if (validacion.IsFailure) return validacion;
+
+        DefinicionJson = definicion.ASerializar();
+
+        // El tipo pasa a «Custom» por coherencia: un informe con definición es a medida, y dejarlo
+        // como «TaskSummary» haría que el motor eligiera el camino de los de serie e ignorara
+        // silenciosamente todo lo que la persona configuró.
+        TypeValue = ValueObjects.ReportType.Custom.Value;
+
+        return Result.Success();
+    }
+
+    /// <summary>La definición ya leída, o <c>null</c> si no es a medida.</summary>
+    public Definicion.DefinicionDeInforme? LeerDefinicion() => Definicion.DefinicionDeInforme.Leer(DefinicionJson);
 
     public void AddTag(Guid tagId)
     {

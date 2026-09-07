@@ -259,10 +259,22 @@ builder.Services.AddScoped<Reporting.Application.Abstractions.IDashboardReposito
 builder.Services.AddScoped<ApiHost.Reporting.ConsultasDelPanel>();
 builder.Services.AddScoped<ApiHost.Reporting.DatosDelInforme>();
 
+// El motor de los informes a medida: traduce la definición neutra que construyó el usuario a
+// filas. Mismo sitio y mismo motivo que lo de arriba.
+builder.Services.AddScoped<ApiHost.Reporting.MotorDeInformes>();
+builder.Services.AddScoped<Reporting.Application.Definiciones.IResolutorDeInformes>(
+    sp => sp.GetRequiredService<ApiHost.Reporting.MotorDeInformes>());
+
 // El trabajador que genera los ficheros. Va en segundo plano porque quien exporta recupera el
 // control enseguida, y porque los informes programados ocurren sin nadie delante: un solo camino
 // para las dos cosas.
 builder.Services.AddHostedService<ApiHost.Reporting.GeneradorDeExportaciones>();
+
+// Y el que dispara los informes programados. No genera nada: deja la exportación pedida y el
+// generador de arriba la recoge, para que un informe programado y uno pedido a mano recorran el
+// mismo camino.
+builder.Services.AddScoped<ApiHost.Reporting.CorreosDeDestinatarios>();
+builder.Services.AddHostedService<ApiHost.Reporting.PlanificadorDeInformes>();
 builder.Services.AddTeamsPresentation(builder.Configuration);
 builder.Services.AddTagsPresentation(builder.Configuration);
 builder.Services.AddCustomFieldsPresentation(builder.Configuration);

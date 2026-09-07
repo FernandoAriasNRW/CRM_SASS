@@ -146,10 +146,9 @@ antes.
 ## 5D — Reportes
 
 - [x] **Lista de todos los reportes**, los de serie y los creados. Ya existía.
-- [ ] **Constructor**: origen de datos, filtros, agrupación, medida, forma de pintarlo.
-- [x] **Exportación** a Excel, PDF y CSV — **hecha** (2026-09-04), asíncrona, del servidor, con
-      estado y aviso. Ver abajo.
-- [ ] **Programación**: que un reporte se genere y se envíe solo.
+- [x] **Constructor**: origen de datos, filtros, agrupación, medida, forma de pintarlo.
+- [x] **Exportación** a Excel, PDF y CSV — asíncrona, del servidor, con estado y aviso.
+- [x] **Programación**: que un reporte se genere y se envíe solo.
 
 > **Estado de la exportación.** Construida entera: se pide y se recupera el control al instante,
 > un trabajador de segundo plano genera el fichero, y al terminar avisa respetando las
@@ -162,8 +161,21 @@ antes.
 > guardaban ese estado se han quitado del informe: el estado vive ahora en `Exportacion`, una por
 > petición y por formato, porque un informe se exporta muchas veces.
 >
-> **Falta el constructor y la programación**, y con ellos el ejemplo de «tickets por área» que
-> requiere campos personalizados en tickets como dimensión de análisis.
+> **El constructor** guarda una definición neutra —origen, filtros, agrupación, medida, forma— y
+> nunca SQL ni opciones de ECharts. Cada pieza se valida contra un catálogo que el servidor
+> **sirve a la pantalla**: ninguna lista de opciones está escrita en el frontend, que es lo que
+> impide repetir el fallo de ofrecer algo que el motor no sabe hacer. Hay vista previa antes de
+> guardar y una prueba que recorre el catálogo entero comprobando que todo lo que ofrece se puede
+> calcular.
+>
+> **La programación** deja la exportación pedida y el generador que ya existía la recoge: un
+> informe programado y uno pedido a mano recorren el mismo camino, para que no haya dos motores
+> que se separen. Diaria, semanal o mensual; nada de «cada hora», que sería un generador de correo
+> no deseado.
+>
+> **Lo que sigue sin poderse hacer** es el ejemplo de «tickets por área»: requiere campos
+> personalizados en tickets como dimensión de análisis, y hoy los campos personalizados son de
+> tareas y proyectos. Está anotado en la auditoría.
 
 **Sobre la exportación, una advertencia:** hacerla en el cliente es rápido de escribir y se
 rompe con volumen —el navegador no puede con cien mil filas— y además no sirve para la

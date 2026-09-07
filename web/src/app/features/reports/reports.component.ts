@@ -11,6 +11,7 @@ import { AdvancedFiltersComponent, FilterField } from '../../shared/ui/data-tabl
 import { ViewsService, SavedView } from '../../shared/services/views.service';
 import { TableColumnService } from '../../shared/services/table-column.service';
 import { ExportacionesService } from './exportaciones.service';
+import { ConstructorDeInformesComponent } from './constructor-de-informes.component';
 
 interface ReportDto {
   id: string;
@@ -23,7 +24,7 @@ interface ReportDto {
 @Component({
   selector: 'app-reports',
   standalone: true,
-  imports: [BadgeComponent, ButtonComponent, NgIconComponent, ReportCreateModalComponent, DataTableComponent, AdvancedFiltersComponent],
+  imports: [ConstructorDeInformesComponent, BadgeComponent, ButtonComponent, NgIconComponent, ReportCreateModalComponent, DataTableComponent, AdvancedFiltersComponent],
   viewProviders: [provideIcons({ lucideRefreshCw, lucidePlus, lucideDownload, lucideFileText, lucideFilter, lucideSave })],
   templateUrl: './reports.component.html',
 })
@@ -40,6 +41,9 @@ export class ReportsComponent implements OnInit {
    * servidor no conocía y pedirlos daba 400. `ContratoDeInformesTests` vigila esa unión.
    */
   readonly formatos = ['Pdf', 'Excel', 'Csv'] as const;
+
+  /** El informe que se está construyendo, o nulo si el constructor está cerrado. */
+  readonly enConstruccion = signal<ReportDto | null>(null);
 
   readonly reports = signal<ReportDto[]>([]);
   readonly loading = signal(false);
@@ -176,6 +180,9 @@ export class ReportsComponent implements OnInit {
     // encarga de esperar y avisar. Es la primera condición del plan de exportación.
     void this.exportaciones.exportar(id, formato);
   }
+
+  abrirConstructor(informe: ReportDto): void { this.enConstruccion.set(informe); }
+  cerrarConstructor(): void { this.enConstruccion.set(null); }
 
   /** Si este informe tiene una exportación en marcha, para desactivar el botón. */
   estaExportando(id: string): boolean {

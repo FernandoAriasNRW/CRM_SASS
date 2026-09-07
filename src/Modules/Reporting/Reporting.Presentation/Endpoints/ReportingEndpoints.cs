@@ -6,7 +6,9 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Reporting.Application.Commands;
+using Reporting.Application.Definiciones;
 using Reporting.Application.Exportaciones;
+using Reporting.Application.Programaciones;
 using Reporting.Application.Queries;
 using Reporting.Infrastructure;
 
@@ -88,6 +90,51 @@ public static class ReportingEndpoints
           : Results.BadRequest(result.Error);
     });
 
+    // ── El constructor de informes ──────────────────────────────────────────────────────────
+    //
+    // El catálogo va primero y sin autenticar por inquilino porque no depende de ninguno: es la
+    // lista de lo que el motor sabe hacer. La pantalla se alimenta de aquí y no escribe ninguna
+    // de estas opciones por su cuenta, que es lo que evita volver a ofrecer algo que el servidor
+    // no conoce.
+    group.MapGet("/catalogo", async (IMediator mediator) =>
+    {
+      var result = await mediator.Send(new GetCatalogoQuery());
+      return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
+    });
+
+    // La vista previa: enseña el resultado **antes** de guardar. Sin ella, construir un informe
+    // es escribir a ciegas y descubrir el resultado al exportarlo.
+    group.MapPost("/vista-previa", async (
+        System.Security.Claims.ClaimsPrincipal principal, VistaPreviaRequest cuerpo, IMediator mediator) =>
+    {
+      var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
+
+      var result = await mediator.Send(new VistaPreviaQuery(
+          tenantId, cuerpo.Titulo ?? "Vista previa", cuerpo.Definicion));
+
+      return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
+    });
+
+    group.MapGet("/{id:guid}/definicion", async (
+        System.Security.Claims.ClaimsPrincipal principal, Guid id, IMediator mediator) =>
+    {
+      var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
+      var result = await mediator.Send(new GetDefinicionQuery(tenantId, id));
+      return result.IsSuccess ? Results.Ok(result.Value) : Results.NotFound(result.Error);
+    });
+
+    // PUT y no POST: guardar la definición dos veces deja el mismo informe. Con POST, la segunda
+    // llamada tendría que decidir si es un conflicto, y no lo es.
+    group.MapPut("/{id:guid}/definicion", async (
+        System.Security.Claims.ClaimsPrincipal principal, Guid id,
+        Reporting.Domain.Definicion.DefinicionDeInforme definicion, IMediator mediator) =>
+    {
+      var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
+
+      var result = await mediator.Send(new GuardarDefinicionCommand(tenantId, id, definicion));
+      return result.IsSuccess ? Results.NoContent() : Results.BadRequest(result.Error);
+    });
+
     // Las exportaciones de un informe, con su estado y —si falló— su motivo.
     group.MapGet("/{id:guid}/exportaciones", async (
         System.Security.Claims.ClaimsPrincipal principal, Guid id, IMediator mediator) =>
@@ -125,6 +172,51 @@ public static class ReportingEndpoints
       return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
     });
 
+    // ── Informes programados ────────────────────────────────────────────────────────────────
+
+    group.MapGet("/{id:guid}/programaciones", async (
+        System.Security.Claims.ClaimsPrincipal principal, Guid id, IMediator mediator) =>
+    {
+      var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
+      var result = await mediator.Send(new GetProgramacionesQuery(tenantId, id));
+      return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
+    });
+
+    group.MapPost("/{id:guid}/programaciones", async (
+        System.Security.Claims.ClaimsPrincipal principal, Guid id, ProgramarRequest cuerpo, IMediator mediator) =>
+    {
+      var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
+      var userId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var _uid) ? _uid : Guid.Empty;
+
+      // El destinatario es quien programa. Programar un informe para otra persona es una decisión
+      // distinta —y con implicaciones de permisos— que todavía no se ofrece.
+      var result = await mediator.Send(new ProgramarInformeCommand(
+          tenantId, id, userId, cuerpo.Frecuencia, cuerpo.Formato, cuerpo.Hora, cuerpo.Dia));
+
+      return result.IsSuccess
+          ? Results.Created($"/api/v1/reports/{id}/programaciones/{result.Value!.Id}", result.Value)
+          : Results.BadRequest(result.Error);
+    });
+
+    var programaciones = app.MapGroup("/api/v1/programaciones").WithTags("Programaciones").RequireAuthorization();
+
+    programaciones.MapPatch("/{programacionId:guid}", async (
+        System.Security.Claims.ClaimsPrincipal principal, Guid programacionId,
+        CambiarProgramacionRequest cuerpo, IMediator mediator) =>
+    {
+      var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
+      var result = await mediator.Send(new CambiarProgramacionCommand(tenantId, programacionId, cuerpo.Activa));
+      return result.IsSuccess ? Results.NoContent() : Results.NotFound(result.Error);
+    });
+
+    programaciones.MapDelete("/{programacionId:guid}", async (
+        System.Security.Claims.ClaimsPrincipal principal, Guid programacionId, IMediator mediator) =>
+    {
+      var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
+      var result = await mediator.Send(new QuitarProgramacionCommand(tenantId, programacionId));
+      return result.IsSuccess ? Results.NoContent() : Results.BadRequest(result.Error);
+    });
+
     var exportaciones = app.MapGroup("/api/v1/exportaciones").WithTags("Exportaciones").RequireAuthorization();
 
     // El estado de una exportación. Es lo que la pantalla consulta mientras espera.
@@ -160,3 +252,23 @@ public static class ReportingEndpoints
     return app;
   }
 }
+
+/// <summary>
+/// El cuerpo de la vista previa: la definición y, opcionalmente, el título con el que enseñarla.
+///
+/// El título es opcional porque en el constructor el informe puede no tener nombre todavía: se
+/// está probando qué enseñar antes de decidir cómo llamarlo.
+/// </summary>
+public sealed record VistaPreviaRequest(
+    Reporting.Domain.Definicion.DefinicionDeInforme Definicion, string? Titulo);
+
+/// <summary>
+/// Lo que hace falta para programar un informe.
+///
+/// <c>Dia</c> es el día de la semana (1 lunes … 7 domingo) o el del mes, según la frecuencia, y
+/// sobra en las diarias. Un solo campo porque nunca se usan a la vez: dos harían posible guardar
+/// «cada lunes día 15», que no significa nada.
+/// </summary>
+public sealed record ProgramarRequest(string Frecuencia, string Formato, string Hora, int? Dia);
+
+public sealed record CambiarProgramacionRequest(bool Activa);

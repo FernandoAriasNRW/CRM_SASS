@@ -35,6 +35,9 @@ public static class ReportingInfrastructureExtensions
         services.AddSingleton<Reporting.Application.Exportaciones.IEscritorDeInforme,
                               Reporting.Infrastructure.Exportaciones.EscritorPdf>();
         services.AddSingleton<Reporting.Infrastructure.Exportaciones.EscritoresDeInforme>();
+
+        services.AddScoped<Reporting.Application.Programaciones.IRepositorioDeProgramaciones,
+                           Reporting.Infrastructure.Persistence.RepositorioDeProgramaciones>();
         services.AddScoped<ICustomDashboardRepository, CustomDashboardRepository>();
 
         // `IDashboardRepository` NO se registra aquí. Sus consultas cruzan tres módulos, así que

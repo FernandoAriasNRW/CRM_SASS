@@ -683,7 +683,51 @@ Arreglado declarando el inquilino en los diez contextos que el sembrador usa.
 
 ---
 
-## 11. Lo que queda anotado y sin resolver
+## 11. Fase 5D — el constructor y la programación
+
+### 11.1 Un `with` de record que dejaba los filtros sin validar
+
+`DefinicionDeInforme` tenía la lista de filtros expuesta así:
+
+```csharp
+public IReadOnlyList<FiltroDeInforme> FiltrosAplicados { get; } = Filtros ?? [];
+```
+
+Parece correcto y no lo es: **el `with` de los records copia el campo de respaldo del original en
+lugar de volver a ejecutar el inicializador**. Una definición modificada con
+`with { Filtros = ... }` conservaba la lista vieja —vacía—, así que sus filtros **no se validaban
+ni se aplicaban**: el informe salía con todas las filas y sin dar ningún error.
+
+Lo cazó una prueba, no la lectura del código. La forma correcta es una propiedad calculada
+(`=> Filtros ?? []`), que no tiene campo que copiar.
+
+### 11.2 Lo que se decidió no admitir, y por qué
+
+Tres decisiones que reducen lo que el producto ofrece, a propósito:
+
+- **El día 31 en una programación mensual se rechaza.** Un informe programado el 31 no se
+  generaría en febrero ni en los meses de treinta días: cuatro meses al año fallando en silencio.
+  Se admite hasta el 28 y el mensaje explica el motivo.
+- **No hay frecuencia «cada hora».** Un informe que llega cada hora se deja de leer el segundo día
+  y se convierte en ruido que además esconde los que sí importan.
+- **La definición no guarda SQL ni opciones de ECharts.** Lo primero convertiría el constructor en
+  una vía de ejecución de consultas arbitrarias; lo segundo ataría los informes que construyan los
+  usuarios a la librería de gráficas, y cambiarla algún día invalidaría su trabajo.
+
+### 11.3 La hora de los informes programados es la del servidor
+
+La programación guarda **hora local**, no UTC, porque quien pide un informe «cada lunes a las 8»
+lo quiere a las 8 de su mañana y guardar UTC obliga a una conversión que se rompe dos veces al año
+con el cambio de hora.
+
+Pero **no hay zona horaria por inquilino**, así que el planificador usa la del servidor. Mientras
+todos los clientes estén en el mismo huso no se nota; en cuanto haya uno fuera, sus informes
+llegarán con las horas de diferencia que corresponda. Hace falta una zona horaria por inquilino
+—o por persona— y convertir en el planificador.
+
+---
+
+## 12. Lo que queda anotado y sin resolver
 
 - **Las páginas de documentos no llevan inquilino.** `CreatePageCommand` y `UpdatePageCommand`
   no tienen `TenantId`, así que el aislamiento de las páginas depende de conocer el
@@ -711,8 +755,16 @@ Arreglado declarando el inquilino en los diez contextos que el sembrador usa.
 - **El informe de actividad por persona enseña identificadores, no nombres.** Los nombres viven
   en Identity y este informe ya cruza dos módulos; ponerles nombre exige un puerto nuevo, como el
   de favoritos.
-- **Del constructor de informes y la programación no hay nada.** Un informe de tipo `Custom` se
-  rechaza al exportar **diciendo por qué**, en vez de generar un fichero vacío.
+- **No hay zona horaria por inquilino** y los informes programados usan la del servidor (11.3).
+- **«Tickets por área» sigue sin poderse hacer.** Es el ejemplo que se pidió, y necesita campos
+  personalizados en tickets como dimensión de análisis: hoy los campos personalizados son de
+  tareas y proyectos. El catálogo del constructor está preparado para recibirlos —basta añadir
+  campos a un origen— pero la extensión a tickets es trabajo del módulo de campos.
+- **El constructor no pinta gráficas todavía.** Guarda la forma —barras, líneas, tarta— porque el
+  dashboard la va a necesitar, pero la vista previa y la exportación enseñan una tabla. Las
+  gráficas son del bloque 5C, con ECharts.
+- **Agrupar por persona enseña identificadores.** Igual que el informe de actividad: los nombres
+  viven en Identity y hace falta un puerto, como el de favoritos.
 - **Documentos tiene la columna de archivado y no la usa.** Se le puso al modelar el concepto
   para no dejar el agregado a medias, pero Docs mantiene su propio panel lateral y no se ha
   enganchado al compartido.

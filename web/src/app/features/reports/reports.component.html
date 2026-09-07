@@ -74,6 +74,13 @@
       </button>
     }
 
+    <!-- El constructor se abre por informe: es donde se decide qué enseña. -->
+    <button uiButton variant="ghost" size="sm" (click)="abrirConstructor(item)"
+            i18n-title title="Configurar qué enseña este informe">
+      <ng-icon name="lucideFilter" size="14" class="mr-1" />
+      <span i18n>Construir</span>
+    </button>
+
     @if (estaExportando(item.id)) {
       <span class="text-xs text-muted-foreground ml-1" i18n>Generando…</span>
     }
@@ -82,4 +89,12 @@
 
 @if (showCreateModal()) {
   <app-report-create-modal (closed)="closeCreateModal()" (created)="onReportCreated()" />
+}
+
+@if (enConstruccion(); as informe) {
+  <app-constructor-de-informes
+    [reportId]="informe.id"
+    [titulo]="informe.name"
+    (cerrado)="cerrarConstructor()"
+    (guardado)="load()" />
 }

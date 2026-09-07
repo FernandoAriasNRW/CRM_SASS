@@ -318,6 +318,56 @@ viene a continuación.
 
 ---
 
+### Construir un informe a tu medida
+
+El botón **«Construir»** de cada informe abre el constructor. Se eligen cuatro cosas:
+
+| | |
+|---|---|
+| **Datos de** | Tareas, tickets o proyectos |
+| **Agrupado por** | El campo que forma las filas: estado, prioridad, responsable, una fecha… |
+| **Midiendo** | Cuántos hay, o una suma o media de un campo numérico |
+| **Pintado como** | Tabla, barras, líneas o tarta |
+
+Si agrupas por una fecha, se te pregunta además si quieres verlo **por día, semana, mes o año**.
+
+**Los filtros** se añaden uno a uno. Sólo se te ofrecen las combinaciones que tienen sentido: no
+puedes pedir «prioridad mayor que», porque una prioridad no se ordena así, ni «está vacío» sobre
+un campo que siempre tiene valor. Y cuando el campo es una lista cerrada —un estado, una
+prioridad— eliges de un desplegable en vez de escribirlo: escribir «Open» a mano es como se acaba
+filtrando por algo que no existe y viendo un informe vacío que parece un informe sin datos.
+
+**«Ver resultado» te lo enseña antes de guardar.** Si la combinación no se puede calcular, se te
+dice **cuál** de las piezas falla, ahí mismo, junto a los desplegables.
+
+Debajo de la tabla verás una línea con el origen, los filtros aplicados y cuántas filas la
+componen. **Esa línea viaja con el fichero exportado**, para que quien lo reciba en un correo sepa
+qué está mirando sin tener que preguntar.
+
+Un detalle: cuando no hay nada que promediar —los días medios hasta resolver de unos tickets que
+nadie ha resuelto— verás una raya, no un cero. Un cero ahí diría que se resuelven al instante.
+
+---
+
+### Que un informe llegue solo
+
+Un informe se puede **programar** para que se genere solo: **cada día**, **cada semana** en el día
+que elijas, o **cada mes**. Se indica la hora, y es tu hora local.
+
+Cuando toca, el informe se genera y te llega un correo con el aviso; el fichero está en la
+pantalla de informes, como cualquier otro. **El correo lleva un enlace, no el fichero adjunto**:
+un informe de varios megas rebota en la mitad de los servidores de correo, y el enlace además
+comprueba que quien lo abre tenga permiso.
+
+Dos cosas que **no** se pueden hacer, a propósito:
+
+- **No hay frecuencia «cada hora».** Un informe que llega cada hora se deja de leer el segundo día
+  y acaba escondiendo los que sí importan.
+- **No se puede programar el día 31.** No existiría en febrero ni en los meses de treinta días, y
+  fallaría cuatro meses al año sin que nadie supiera por qué. El día 28 es el último que se admite.
+
+---
+
 ### Llevarte un informe a un fichero
 
 En la lista de informes, cada uno tiene tres botones: **Pdf**, **Excel** y **Csv**. Se ofrecen los
@@ -374,17 +424,10 @@ Sólo para administradores:
 
 Esto es tan parte de la guía como lo anterior.
 
-### Los informes no se construyen a medida
+### Los informes a medida todavía no se pintan como gráficas
 
-Se pueden **exportar** —eso ya funciona, mira más arriba— pero todavía no se pueden **construir**:
-elegir el origen de los datos, los filtros, la agrupación y la forma de pintarlo. Hoy hay siete
-tipos de informe de serie y se elige uno.
-
-Si eliges el tipo **«Personalizado»**, al exportarlo te dirá que necesita el constructor de
-informes y que elijas otro tipo. Es a propósito: preferimos decirlo a entregar un fichero vacío.
-
-Tampoco se pueden **programar** todavía: que un informe se genere solo cada lunes y llegue por
-correo.
+El constructor deja elegir cómo quieres verlo —barras, líneas, tarta— y lo guarda, pero de momento
+**la vista previa y la exportación enseñan una tabla**. Las gráficas llegan con el panel.
 
 ### El tiempo de ciclo no se calcula
 

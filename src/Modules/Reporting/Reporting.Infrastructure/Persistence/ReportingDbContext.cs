@@ -21,6 +21,9 @@ public sealed class ReportingDbContext(DbContextOptions<ReportingDbContext> opti
   /// <summary>Los bytes, en su propia tabla para que listar exportaciones no los arrastre.</summary>
   public DbSet<ContenidoDeExportacion> ContenidosDeExportacion => Set<ContenidoDeExportacion>();
 
+  /// <summary>Los informes que se generan solos cada tanto.</summary>
+  public DbSet<ProgramacionDeInforme> Programaciones => Set<ProgramacionDeInforme>();
+
   // Aquí había tres modelos de lectura —proyectos, tareas y tickets— alimentados por
   // consumidores de MassTransit. Se eliminaron: los consumidores sólo atendían a los eventos de
   // creación, así que una tarea se quedaba en «To Do» para siempre y un proyecto al 0 % de
@@ -60,6 +63,15 @@ public sealed class ReportingDbContext(DbContextOptions<ReportingDbContext> opti
     modelBuilder.Entity<ContenidoDeExportacion>()
         .Property(c => c.Bytes)
         .HasColumnType("LONGBLOB");
+
+    // El trabajador pregunta por las activas cada pocos minutos y sobre todos los inquilinos.
+    modelBuilder.Entity<ProgramacionDeInforme>()
+        .HasIndex(p => p.Activa)
+        .HasDatabaseName("IX_Programaciones_Activa");
+
+    modelBuilder.Entity<ProgramacionDeInforme>()
+        .HasIndex(p => new { p.TenantId, p.ReportId })
+        .HasDatabaseName("IX_Programaciones_TenantId_ReportId");
 
     // Aislamiento por tenant y soft delete, compuestos en un solo filtro.
     ApplyTenantFilters(modelBuilder);

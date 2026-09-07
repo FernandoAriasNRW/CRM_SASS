@@ -28,6 +28,7 @@ namespace ApiHost.Reporting;
 /// </summary>
 public sealed class DatosDelInforme(
     ConsultasDelPanel panel,
+    MotorDeInformes motor,
     ProjectsDbContext proyectosDb,
     WorkItemsDbContext tareasDb,
     TicketingDbContext ticketsDb)
@@ -74,16 +75,33 @@ public sealed class DatosDelInforme(
             nameof(ReportType.TicketAnalytics) => await TicketsAsync(informe, tenantId, ct),
             nameof(ReportType.UserActivity) => await ActividadPorPersonaAsync(informe, tenantId, ct),
 
-            // «Custom» es el hueco reservado al constructor de informes, que todavía no existe.
-            // Se dice tal cual en vez de generar un fichero vacío: un PDF con encabezados y nada
-            // dentro parece un fallo del sistema, y esto no lo es.
-            nameof(ReportType.Custom) => throw new InvalidOperationException(
-                "Los informes personalizados necesitan el constructor de informes, que todavía no existe. "
-                + "Elige uno de los tipos disponibles."),
+            // Los informes a medida los resuelve el motor a partir de su definición guardada.
+            nameof(ReportType.Custom) => await AMedidaAsync(informe, ct),
 
             _ => throw new InvalidOperationException(
                 $"El tipo de informe «{informe.Type.Name}» no sabe generar datos todavía")
         };
+    }
+
+    /// <summary>
+    /// Un informe a medida: el motor lo resuelve desde su definición.
+    ///
+    /// Si no tiene definición se dice, en vez de generar un fichero con encabezados y nada
+    /// dentro: un informe vacío parece un fallo del sistema, y esto es un informe a medio
+    /// configurar.
+    /// </summary>
+    private async Task<TablaDeInforme> AMedidaAsync(Report informe, CancellationToken ct)
+    {
+        var definicion = informe.LeerDefinicion();
+
+        if (definicion is null)
+        {
+            throw new InvalidOperationException(
+                "Este informe está marcado como personalizado pero no tiene definición. "
+                + "Ábrelo en el constructor y elige el origen, la agrupación y la medida.");
+        }
+
+        return await motor.ResolverAsync(informe.Name, informe.TenantId, definicion, ct);
     }
 
     private async Task<TablaDeInforme> KpisAsync(Report informe, Guid tenantId, CancellationToken ct)
