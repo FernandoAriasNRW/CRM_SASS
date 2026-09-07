@@ -127,7 +127,12 @@ public class ProjectsTests
             2, 1, 10
         );
 
-        _queriesMock.GetByTenantAsync(_tenantId, null, null, null, null, null, 1, 10, Arg.Any<CancellationToken>())
+        // La paginación viaja como objeto y no como dos enteros sueltos, desde que `search` se
+        // añadió al mismo sitio: pasarla desmontada obligaba a tocar la firma en cada módulo cada
+        // vez que aparece un parámetro nuevo de lista.
+        _queriesMock.GetByTenantAsync(
+                _tenantId, null, null, null, null, null,
+                Arg.Any<PaginationRequest>(), Arg.Any<CancellationToken>())
             .Returns(pagedResult);
 
         var getHandler = new GetProjectsQueryHandler(_queriesMock);

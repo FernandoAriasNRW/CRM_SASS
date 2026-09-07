@@ -221,10 +221,14 @@ public static class IdentityEndpoints
       return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
     }).RequireAuthorization();
 
-    usersGroup.MapGet("", async (IMediator mediator, ClaimsPrincipal principal) =>
+    usersGroup.MapGet("", async (string? search, int? pageSize, IMediator mediator, ClaimsPrincipal principal) =>
     {
       var tenantId = Guid.TryParse(principal.FindFirstValue("tenantId"), out var tid) ? tid : Guid.Empty;
-      var result = await mediator.Send(new GetTenantUsersQuery(tenantId));
+
+      // `search` con el mismo nombre que en tareas, tickets y proyectos. Cuatro endpoints con
+      // cuatro nombres para lo mismo es cómo el frontend acaba llamando `q` en un sitio y `search`
+      // en otro, y alguien probando a ver cuál funciona.
+      var result = await mediator.Send(new GetTenantUsersQuery(tenantId, search, pageSize));
       return Results.Ok(result.Value);
     }).RequireAuthorization();
 

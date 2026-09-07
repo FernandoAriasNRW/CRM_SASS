@@ -11,7 +11,7 @@ public sealed class ProjectQueries(ProjectsDbContext context) : IProjectQueries
 {
     public async Task<PagedResult<ProjectDto>> GetByTenantAsync(
         Guid tenantId, string? status, Guid? ownerId, Guid? spaceId, Guid? folderId, AlcanceDeVista? alcance,
-        int page, int pageSize, CancellationToken ct = default)
+        PaginationRequest pagination, CancellationToken ct = default)
     {
         var vista = alcance ?? AlcanceDeVista.Ninguno;
 
@@ -76,15 +76,20 @@ public sealed class ProjectQueries(ProjectsDbContext context) : IProjectQueries
             query = query.Where(p => p.IsDeleted);
         }
 
+        // Búsqueda por texto, sobre **todos** los proyectos del inquilino. Ver la nota equivalente
+        // en TicketQueries.
+        if (pagination.TextoBuscado is { } texto)
+            query = query.Where(p => p.Name.Value.Contains(texto) || p.Description.Contains(texto));
+
         var totalCount = await query.CountAsync(ct);
         var items = await query
             .OrderByDescending(p => p.StartDate)
-            .Skip((page - 1) * pageSize).Take(pageSize)
+            .Skip(pagination.Skip).Take(pagination.Take)
             .Select(p => new ProjectDto(p.Id, p.TenantId, p.SpaceId, p.FolderId, p.Name.Value, p.Description,
                 p.StartDate, p.EstimatedEndDate, p.Status.Value, p.OwnerId))
             .ToListAsync(ct);
 
-        return PagedResult<ProjectDto>.Create(items, totalCount, page, pageSize);
+        return PagedResult<ProjectDto>.Create(items, totalCount, pagination.Page, pagination.PageSize);
     }
 
     public async Task<ProjectDto?> GetByIdAsync(Guid tenantId, Guid id, CancellationToken ct = default)

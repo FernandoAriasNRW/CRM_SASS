@@ -97,6 +97,19 @@ public sealed class TicketQueries(TicketingDbContext context) : ITicketQueries
             if (sVal > 0) query = query.Where(t => t.StatusValue == sVal);
         }
 
+        // Búsqueda por texto, sobre **todos** los tickets del inquilino.
+        //
+        // Va en el servidor y no filtrando en el cliente lo que quepa en una página: con miles de
+        // filas, lo que se busca puede no estar entre las primeras y el buscador saldría vacío
+        // para algo que sí existe — un fallo que sólo aparece cuando el cliente crece, y que para
+        // entonces nadie relaciona con esto.
+        //
+        // Se busca en el asunto y en la descripción: quien busca «impresora» a veces recuerda una
+        // palabra del cuerpo y no del título, y limitarlo al título hace parecer que el dato no
+        // está.
+        if (pagination.TextoBuscado is { } texto)
+            query = query.Where(t => t.Title.Contains(texto) || t.Description.Contains(texto));
+
         if (pagination.StartDate.HasValue) query = query.Where(t => t.CreatedAt >= pagination.StartDate.Value);
         if (pagination.EndDate.HasValue) query = query.Where(t => t.CreatedAt <= pagination.EndDate.Value);
 

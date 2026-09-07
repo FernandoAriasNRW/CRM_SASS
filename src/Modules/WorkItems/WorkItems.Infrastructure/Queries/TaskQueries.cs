@@ -137,6 +137,11 @@ public sealed class TaskQueries(WorkItemsDbContext context) : ITaskQueries
         query = query.Where(t => t.IsDeleted);
     }
 
+    // Búsqueda por texto, sobre **todas** las tareas del inquilino. Ver la nota equivalente en
+    // TicketQueries: en el servidor y no filtrando en el cliente lo que quepa en una página.
+    if (pagination.TextoBuscado is { } texto)
+        query = query.Where(t => t.Title.Value.Contains(texto) || t.Description.Contains(texto));
+
     if (pagination.StartDate.HasValue)
     {
         var sd = DateOnly.FromDateTime(pagination.StartDate.Value);

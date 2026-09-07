@@ -319,6 +319,11 @@ Ojo a un detalle: el `@` o el `#` tienen que ir **después de un espacio** o al 
 línea. Escrito pegado a otra palabra no se dispara, para que «viernes.#» no se convierta en una
 mención sin querer.
 
+**Busca en todo, no en lo que tengas abierto.** Escribe dos o tres letras y el desplegable
+consulta el servidor: encuentra la tarea aunque sea la número mil doscientos y nunca la hayas
+visto. Da igual las tildes y las mayúsculas —«diseno» encuentra «Diseño»— y de personas puedes
+escribir el nombre o el correo, que es lo único que distingue a dos Ana García.
+
 **Y aquí está lo que hace distinto a este producto:** cuando mencionas una tarea en un documento,
 **la tarea se entera**. Al abrirla verás un apartado **«Mencionado en»** con los documentos que
 hablan de ella, con el texto tal como lo escribiste. Lo mismo con los tickets.

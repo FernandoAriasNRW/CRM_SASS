@@ -38,7 +38,7 @@ public static class WorkItemsEndpoints
   {
     var group = app.MapGroup("/api/v1/tasks").WithTags("Tasks").RequireAuthorization();
 
-    group.MapGet("", async (System.Security.Claims.ClaimsPrincipal principal, [Microsoft.AspNetCore.Mvc.FromQuery] Guid? projectId, [Microsoft.AspNetCore.Mvc.FromQuery] Guid? assigneeId, [Microsoft.AspNetCore.Mvc.FromQuery] string? status, [Microsoft.AspNetCore.Mvc.FromQuery] string? priority, [Microsoft.AspNetCore.Mvc.FromQuery] string? filter, BuildingBlocks.Application.Abstractions.IAlcanceDeVista alcances, IMediator mediator, [Microsoft.AspNetCore.Mvc.FromQuery] Guid? parentTaskId = null, [Microsoft.AspNetCore.Mvc.FromQuery] bool includeSubtasks = false, [Microsoft.AspNetCore.Mvc.FromQuery] int page = 1, [Microsoft.AspNetCore.Mvc.FromQuery] int pageSize = 25, [Microsoft.AspNetCore.Mvc.FromQuery] string? sortColumn = null, [Microsoft.AspNetCore.Mvc.FromQuery] string? sortDirection = null, [Microsoft.AspNetCore.Mvc.FromQuery] DateTime? startDate = null, [Microsoft.AspNetCore.Mvc.FromQuery] DateTime? endDate = null) =>
+    group.MapGet("", async (System.Security.Claims.ClaimsPrincipal principal, [Microsoft.AspNetCore.Mvc.FromQuery] Guid? projectId, [Microsoft.AspNetCore.Mvc.FromQuery] Guid? assigneeId, [Microsoft.AspNetCore.Mvc.FromQuery] string? status, [Microsoft.AspNetCore.Mvc.FromQuery] string? priority, [Microsoft.AspNetCore.Mvc.FromQuery] string? filter, BuildingBlocks.Application.Abstractions.IAlcanceDeVista alcances, IMediator mediator, [Microsoft.AspNetCore.Mvc.FromQuery] Guid? parentTaskId = null, [Microsoft.AspNetCore.Mvc.FromQuery] bool includeSubtasks = false, [Microsoft.AspNetCore.Mvc.FromQuery] int page = 1, [Microsoft.AspNetCore.Mvc.FromQuery] int pageSize = 25, [Microsoft.AspNetCore.Mvc.FromQuery] string? sortColumn = null, [Microsoft.AspNetCore.Mvc.FromQuery] string? sortDirection = null, [Microsoft.AspNetCore.Mvc.FromQuery] DateTime? startDate = null, [Microsoft.AspNetCore.Mvc.FromQuery] DateTime? endDate = null, [Microsoft.AspNetCore.Mvc.FromQuery] string? search = null) =>
     {
       var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
       var userId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var _uid) ? _uid : Guid.Empty;
@@ -47,7 +47,7 @@ public static class WorkItemsEndpoints
       // haga nada con él, que es como «Mis Tickets» acabó devolviendo los 175 de siempre.
       var alcance = await alcances.ResolverAsync(filter, userId, BuildingBlocks.Domain.TiposDeEntidad.Tarea);
 
-      var query = new GetTasksQuery(tenantId, projectId, assigneeId, status, priority, alcance, new() { Page = page, PageSize = pageSize, SortColumn = sortColumn, SortDirection = sortDirection, StartDate = startDate, EndDate = endDate }, parentTaskId, includeSubtasks);
+      var query = new GetTasksQuery(tenantId, projectId, assigneeId, status, priority, alcance, new() { Page = page, PageSize = pageSize, SortColumn = sortColumn, SortDirection = sortDirection, StartDate = startDate, EndDate = endDate, Buscar = search }, parentTaskId, includeSubtasks);
       var result = await mediator.Send(query);
       return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
     });

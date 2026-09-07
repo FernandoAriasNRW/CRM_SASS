@@ -13,7 +13,7 @@ public sealed class GetProjectsQueryHandler(IProjectQueries queries)
   {
     var result = await queries.GetByTenantAsync(
         request.TenantId, request.Status, request.OwnerId, request.SpaceId, request.FolderId, request.Alcance,
-        request.Pagination.Page, request.Pagination.PageSize, cancellationToken);
+        request.Pagination, cancellationToken);
 
     return Result<PagedResult<ProjectDto>>.Success(result);
   }

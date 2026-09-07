@@ -799,15 +799,15 @@ mención por la API y comprueba que la tarea la ve desde el otro lado**.
   del sembrador, y una exigía ser la única que la mencionaba. Es el patrón que ya mordió con las
   reglas de automatización sin condiciones.
 
-### 13.3 El buscador de menciones filtra en el cliente
+### 13.3 El buscador de menciones filtraba en el cliente — resuelto
 
-Al escribir `#` se piden las primeras cincuenta tareas, cincuenta tickets y cincuenta proyectos y
-se filtran en el navegador. **Con miles de filas, lo que se busca puede no estar entre esas
-cincuenta** y el desplegable saldría vacío para algo que sí existe.
+Al escribir `#` se pedían las primeras cincuenta tareas, cincuenta tickets y cincuenta proyectos y
+se filtraban en el navegador. **Con miles de filas, lo que se busca puede no estar entre esas
+cincuenta** y el desplegable saldría vacío para algo que sí existe: funcionaba en instalaciones
+pequeñas y se degradaba en silencio en las grandes.
 
-El arreglo es un parámetro de búsqueda por texto en esas tres APIs, que hoy no existe. Mientras
-tanto funciona bien en instalaciones pequeñas y se degrada en silencio en las grandes, que es
-exactamente la clase de cosa que hay que dejar escrita.
+Ahora hay un parámetro `search` en tareas, tickets, proyectos y personas, y filtra la base de
+datos. Se detalla en la sección 15.
 
 ---
 
@@ -856,8 +856,6 @@ exactamente la clase de cosa que hay que dejar escrita.
 - **`doughnut-chart` se ha quedado sin uso** al pasar la tarta a ser un widget. `line-chart` sigue
   vivo para el burndown.
 - **De la Fase 5B faltan los bloques arrastrables y los comentarios en línea** (ver `FASE-5.md`).
-- **El buscador de menciones filtra en el cliente** (13.3): hace falta búsqueda por texto en las
-  APIs de tareas, tickets y proyectos.
 - **Las menciones a personas no avisan a la persona mencionada.** Se guardan y se pueden consultar,
   pero mencionar a alguien no le manda una notificación. El tipo de aviso `Mention` ya existe en
   las preferencias, así que es enganchar el evento.
@@ -869,3 +867,62 @@ exactamente la clase de cosa que hay que dejar escrita.
 - **Documentos tiene la columna de archivado y no la usa.** Se le puso al modelar el concepto
   para no dejar el agregado a medias, pero Docs mantiene su propio panel lateral y no se ha
   enganchado al compartido.
+
+---
+
+## 15. Búsqueda por texto en las APIs
+
+### 15.1 Un solo nombre para lo mismo
+
+`search` en las cuatro listas, y `Buscar`/`TextoBuscado` en el `PaginationRequest` que comparten
+tareas, tickets y proyectos. Poner el parámetro en cada módulo por separado habría dado tres
+nombres para la misma operación, que es como el frontend acaba llamando `q` en un sitio y `search`
+en otro, y alguien probando cuál funciona.
+
+`TextoBuscado` recorta y devuelve nulo si sólo hay espacios: un cuadro de búsqueda que se vacía
+mandaría `search=%20`, y sin eso sería un `LIKE '%   %'` —una lista vacía sin motivo aparente.
+
+### 15.2 Las tildes las pone la base de datos
+
+No se normalizan acentos ni mayúsculas en ninguna parte. La colación es `utf8mb4_0900_ai_ci`,
+insensible a las dos cosas: comprobado contra los datos reales, `MODULO`, `modulo` y `módulo`
+devuelven los mismos 46 tickets. El buscador de menciones tenía su propia función para quitar
+tildes y se ha borrado; duplicaba lo que la base ya hace, y dos sitios haciendo lo mismo acaban
+discrepando.
+
+Queda una prueba de integración que lo fija. Si algún día cambia la colación, el síntoma sería
+«las tildes dejaron de encontrarse» sin nadie sabiendo por qué.
+
+### 15.3 El fallo que enseñó a escribir la prueba
+
+El servicio de menciones pedía las personas a `/auth/users`, que no existe —la lista del inquilino
+cuelga de `/users`— y **el `catch` genérico convertía el 404 en una lista vacía**. Las menciones
+con `@` no encontraban a nadie nunca, sin un solo error en ninguna parte. Viajó en el commit de la
+5B y se descubrió al leer las rutas, no probando.
+
+Dos cambios: el error se registra en la consola en vez de desaparecer, y hay una prueba que fija
+**las URL literales** que el servicio pide. Comprobar «se llamó a la API» contra un doble que
+responde a cualquier ruta habría dejado pasar el fallo tal cual.
+
+También se vio que devolver siempre `{}` al fallar rompía el desplegable unas líneas más abajo
+—`{}.slice` no existe—, así que ahora el valor vacío lo pone quien llama.
+
+### 15.4 Buscar de verdad se comprueba fuera de la primera página
+
+La prueba central elige el último registro de la lista, comprueba que **no** está en la página
+pedida y entonces lo busca. Sin esa comprobación previa, la prueba pasaría también con el filtro
+en el cliente y no diría nada.
+
+El tamaño de página sale de los datos —uno menos de los que haya— en vez de estar escrito. La
+primera versión pedía cinco y suponía que el sembrador crea más: contra la base de desarrollo
+pasaba, y contra el contenedor —cinco proyectos justos— fallaba sin que nada estuviera roto.
+
+### 15.5 `/users` devolvía 683 filas para enseñar cinco
+
+Se vio midiendo, no leyendo: la lista de personas no pagina y en la base de desarrollo son 683
+filas —con duplicados, del sembrador que no es idempotente—. El desplegable de menciones se las
+descargaba todas para quedarse con cinco.
+
+Ahora acepta `pageSize`, **opcional**. No se pone un máximo por defecto a propósito: la pantalla
+de administración pide esta misma lista, y recortarla en silencio escondería personas sin que
+nadie se enterara. Hay prueba de las dos mitades.

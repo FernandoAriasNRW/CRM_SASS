@@ -12,8 +12,10 @@ public interface IProjectQueries
         Guid? spaceId,
         Guid? folderId,
         BuildingBlocks.Application.AlcanceDeVista? alcance,
-        int page,
-        int pageSize,
+        // El objeto de paginación entero y no `page, pageSize` sueltos: es el que lleva el texto
+        // buscado, y así los tres módulos con listado reciben lo mismo. Con dos enteros habría que
+        // añadir un parámetro más por cada opción de listado que aparezca.
+        PaginationRequest pagination,
         CancellationToken ct = default);
 
     Task<ProjectDto?> GetByIdAsync(Guid tenantId, Guid id, CancellationToken ct = default);

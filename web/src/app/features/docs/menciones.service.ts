@@ -44,12 +44,15 @@ export class MencionesService {
   }
 
   private async personas(texto: string): Promise<CandidatoDeMencion[]> {
-    const usuarios = await this.pedir<{ id: string; name: string; email: string }[]>('/auth/users');
+    // `/users`, no `/auth/users`. La lista de personas del inquilino cuelga de `/users`;
+    // `/auth/users` sólo tiene `/me`. Estuvo mal escrito y **el `catch` de más abajo se lo
+    // tragaba**: las menciones con `@` no encontraban a nadie nunca, sin dar ningún error. Hay
+    // una prueba que fija estas rutas justo por eso.
+    const usuarios = await this.pedir(
+      `/users?pageSize=${MencionesService.PORTIPO}&search=${encodeURIComponent(texto)}`,
+      [] as { id: string; name: string; email: string }[]);
 
-    return usuarios
-      .filter(u => this.coincide(u.name, texto) || this.coincide(u.email, texto))
-      .slice(0, MencionesService.PORTIPO)
-      .map(u => ({ id: u.id, etiqueta: u.name, tipo: 'Persona' as const, detalle: u.email }));
+    return usuarios.map(u => ({ id: u.id, etiqueta: u.name, tipo: 'Persona' as const, detalle: u.email }));
   }
 
   private async cosas(texto: string): Promise<CandidatoDeMencion[]> {
@@ -69,15 +72,23 @@ export class MencionesService {
   }
 
   /**
-   * Pide una lista y se queda con lo que coincide.
+   * Pide una lista ya filtrada por el servidor.
    *
-   * **El filtrado es en el cliente y eso tiene un límite escrito:** se piden las primeras
-   * cincuenta y se filtran aquí. Con miles de tareas, lo que se busca puede no estar entre esas
-   * cincuenta y el desplegable saldría vacío para algo que sí existe. El arreglo de verdad es un
-   * parámetro de búsqueda por texto en la API, que hoy no existe; queda anotado en la auditoría.
+   * **La búsqueda es del servidor y recorre todo el inquilino.** Antes se pedían las primeras
+   * cincuenta filas y se filtraban aquí, y eso se degrada en silencio: con miles de tareas, lo que
+   * se busca puede no estar entre esas cincuenta y el desplegable sale vacío para algo que sí
+   * existe. El fallo sólo aparece cuando el cliente crece, que es cuando nadie lo relaciona con
+   * esto.
+   *
+   * Tampoco hace falta normalizar acentos ni mayúsculas: la base de datos usa una colación
+   * insensible a las dos cosas, así que «diseno» encuentra «Diseño» sin que el cliente toque nada.
+   * Comprobado contra los datos reales antes de quitar el código que lo hacía a mano.
    */
   private async pedirLista(ruta: string, texto: string) {
-    const respuesta = await this.pedir<{ items?: unknown[] }>(`${ruta}?pageSize=50`);
+    const respuesta = await this.pedir(
+      `${ruta}?pageSize=${MencionesService.PORTIPO}&search=${encodeURIComponent(texto)}`,
+      {} as { items?: unknown[] });
+
     const items = (respuesta.items ?? []) as Record<string, unknown>[];
 
     return items
@@ -86,28 +97,29 @@ export class MencionesService {
         titulo: String(i['title'] ?? i['name'] ?? ''),
         detalle: String(i['status'] ?? i['priority'] ?? '')
       }))
-      .filter(i => i.id && this.coincide(i.titulo, texto))
-      .slice(0, MencionesService.PORTIPO);
+      .filter(i => i.id);
   }
 
   /**
-   * Compara sin acentos y sin mayúsculas.
+   * Pide sin avisar de los errores: un desplegable que no encuentra nada no es algo que anunciar
+   * con un aviso flotante encima del editor.
    *
-   * Buscar «diseno» tiene que encontrar «Diseño»: quien escribe deprisa no pone la tilde, y un
-   * buscador que no la encuentra parece que no tiene el dato.
+   * **Pero tragarse el error escondió un fallo real:** la ruta de personas estaba mal escrita
+   * —`/auth/users` en vez de `/users`— y el 404 desaparecía aquí, así que las menciones con `@` no
+   * encontraban a nadie y no había ni un síntoma. Se sigue devolviendo vacío, porque reventar el
+   * desplegable sería peor, pero **queda en la consola**: un fallo silencioso al menos deja rastro
+   * para quien vaya a mirar.
+   *
+   * El valor vacío lo pone quien llama, y no es un detalle: devolver siempre `{}` hacía que un
+   * fallo de red rompiera el desplegable igual —`{}.slice` no existe—, sólo que unas líneas más
+   * abajo y con otro error encima.
    */
-  private coincide(valor: string, texto: string): boolean {
-    return this.normalizar(valor).includes(this.normalizar(texto));
-  }
-
-  private normalizar(texto: string): string {
-    return texto.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
-  }
-
-  /** Sin aviso automático: un desplegable que no encuentra nada no es un error que anunciar. */
-  private pedir<T>(ruta: string): Promise<T> {
+  private pedir<T>(ruta: string, vacio: T): Promise<T> {
     return firstValueFrom(this.api.get<T>(ruta, undefined, { sinAviso: true }))
-      .catch(() => ({} as T));
+      .catch((error) => {
+        console.warn(`No se pudo buscar en ${ruta}`, error);
+        return vacio;
+      });
   }
 
   /**
