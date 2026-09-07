@@ -4798,6 +4798,54 @@ Pending</target>
           <context context-type="linenumber">1</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="3024677306715062969" datatype="html">
+        <source>Sin datos para este informe.</source>
+        <target state="final">No data for this report.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/dashboard/dashboard.component.html</context>
+          <context context-type="linenumber">1</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3075410358527505008" datatype="html">
+        <source> Tu panel está vacío. Añade informes desde la pantalla de Reportes. </source>
+        <target state="final"> Your dashboard is empty. Add reports from the Reports screen. </target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/dashboard/dashboard.component.html</context>
+          <context context-type="linenumber">1</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5130509794228032729" datatype="html">
+        <source>Burndown del Proyecto</source>
+        <target state="final">Project burndown</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/dashboard/dashboard.component.html</context>
+          <context context-type="linenumber">1</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7616113205741469471" datatype="html">
+        <source>Preparando tu panel…</source>
+        <target state="final">Preparing your dashboard…</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/dashboard/dashboard.component.html</context>
+          <context context-type="linenumber">1</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7661673596607955806" datatype="html">
+        <source>Quitar del panel</source>
+        <target state="final">Remove from dashboard</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/dashboard/dashboard.component.html</context>
+          <context context-type="linenumber">1</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8884726332823413356" datatype="html">
+        <source>Mis gráficas</source>
+        <target state="final">My charts</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/dashboard/dashboard.component.html</context>
+          <context context-type="linenumber">1</context>
+        </context-group>
+      </trans-unit>
     </body>
   </file>
 </xliff>

@@ -301,8 +301,22 @@ public sealed class MotorDeInformes(
                         ? Media(g.Select(x => x.Valor))
                         : g.Sum(x => x.Valor ?? 0)
             })
-            .OrderByDescending(g => g.Valor ?? double.MinValue)
             .ToList();
+
+        // **Las fechas se ordenan por fecha; lo demás, por cantidad.**
+        //
+        // Ordenar siempre por cantidad parece razonable —lo grande primero— y destroza cualquier
+        // serie temporal: «tickets por mes» salía 2026-08, 2026-09, 2026-07, y una gráfica de
+        // líneas con el eje de tiempo desordenado no significa nada. Se vio al mirar la salida
+        // real, no en el código.
+        //
+        // El orden alfabético vale como orden cronológico porque las claves se escriben con el
+        // año delante —«2026-08», «2026-S32»—, que es justo para lo que se eligió ese formato.
+        var agrupaPorFecha = origen.Campo(d.Agrupacion)?.Tipo == TipoDeCampo.Fecha;
+
+        grupos = agrupaPorFecha
+            ? grupos.OrderBy(g => g.Grupo, StringComparer.Ordinal).ToList()
+            : grupos.OrderByDescending(g => g.Valor ?? double.MinValue).ToList();
 
         var recortado = false;
 

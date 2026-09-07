@@ -727,7 +727,53 @@ llegarán con las horas de diferencia que corresponda. Hace falta una zona horar
 
 ---
 
-## 12. Lo que queda anotado y sin resolver
+## 12. Fase 5C — el panel
+
+### 12.1 El gestor de paneles que no gestionaba nada
+
+Se podían crear paneles, ponerles nombre y marcarlos como públicos, y **pulsar uno no hacía
+nada**: `selectDashboard` guardaba la selección en una señal que ninguna plantilla leía, y la
+columna `WidgetsJson` no la escribía ni la leía ningún código. La tabla tenía **cero filas**: la
+funcionalidad nunca llegó a usarse.
+
+Es el mismo patrón que el borrado que no borraba y el informe que constaba generado. La diferencia
+es que aquí no había nada que arreglar: se le ha dado significado a la columna y a la pantalla.
+
+### 12.2 Una serie temporal ordenada por cantidad
+
+El motor de informes ordenaba **siempre** de mayor a menor. Parece razonable —lo grande primero—
+y destroza cualquier serie temporal: «tickets abiertos por mes» salía `2026-08, 2026-09, 2026-07`,
+y una gráfica de líneas con el eje de tiempo desordenado no dice nada.
+
+**No lo cazó ninguna prueba**: se vio mirando la salida real del panel. Ahora las fechas se ordenan
+por fecha y hay una prueba que lo vigila.
+
+### 12.3 Un `Guid` en el sitio equivocado, que compilaba
+
+El endpoint de guardar la disposición pasaba el identificador del panel donde va el de la persona:
+
+```csharp
+new GuardarDisposicionCommand(tenantId, id, userId, cuerpo.Widgets)
+//                                      ↑ panel   ↑ persona   — el comando espera (tenant, user, panel)
+```
+
+Tres `Guid` seguidos compilan en cualquier orden. La comprobación de dueño habría rechazado al
+propio dueño de su panel. Los tres comandos con varios `Guid` pasan ahora sus argumentos **con
+nombre**.
+
+### 12.4 El coste de ECharts, medido y acotado
+
+El paquete del panel pasa de 62 kB a **789 kB en bruto / 224 kB por la red**, y sólo se descarga al
+abrir el panel. Se importa con los módulos justos —tres tipos de gráfica, cuatro componentes, el
+renderizador de canvas— y el mapa vive en un solo fichero.
+
+Se le ha dado **presupuesto propio** (aviso a 850 kB, error a 1 MB) en lugar de subir el de todas
+las pantallas, para que el resto siga vigilado con el límite estricto. El aviso de `anyScript` a
+700 kB sigue saltando para este paquete y para el de Docs, que ya estaba por encima desde antes.
+
+---
+
+## 13. Lo que queda anotado y sin resolver
 
 - **Las páginas de documentos no llevan inquilino.** `CreatePageCommand` y `UpdatePageCommand`
   no tienen `TenantId`, así que el aislamiento de las páginas depende de conocer el
@@ -760,9 +806,17 @@ llegarán con las horas de diferencia que corresponda. Hace falta una zona horar
   personalizados en tickets como dimensión de análisis: hoy los campos personalizados son de
   tareas y proyectos. El catálogo del constructor está preparado para recibirlos —basta añadir
   campos a un origen— pero la extensión a tickets es trabajo del módulo de campos.
-- **El constructor no pinta gráficas todavía.** Guarda la forma —barras, líneas, tarta— porque el
-  dashboard la va a necesitar, pero la vista previa y la exportación enseñan una tabla. Las
-  gráficas son del bloque 5C, con ECharts.
+- **El constructor sigue enseñando tablas en su vista previa**, aunque el panel ya pinta gráficas
+  con la misma definición. Reutilizar ahí el componente de gráfica es un cambio pequeño y
+  pendiente.
+- **«Barras apiladas» se pinta como barras normales.** Apilar necesita una segunda dimensión
+  —agrupar por dos campos— que el catálogo no ofrece todavía. Se pinta en vez de rechazarse
+  porque el resultado sigue siendo cierto, sólo que menos rico.
+- **Los recuadros no se arrastran.** La disposición se guarda y se respeta, y hay endpoint para
+  cambiarla, pero en la pantalla sólo se pueden quitar recuadros: falta el arrastrar y
+  redimensionar.
+- **`doughnut-chart` se ha quedado sin uso** al pasar la tarta a ser un widget. `line-chart` sigue
+  vivo para el burndown.
 - **Agrupar por persona enseña identificadores.** Igual que el informe de actividad: los nombres
   viven en Identity y hace falta un puerto, como el de favoritos.
 - **Documentos tiene la columna de archivado y no la usa.** Se le puso al modelar el concepto

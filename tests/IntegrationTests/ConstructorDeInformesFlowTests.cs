@@ -315,6 +315,47 @@ public sealed class ConstructorDeInformesFlowTests(CrmApiFactory factory)
         }
     }
 
+    /// <summary>
+    /// Una serie temporal sale en orden cronológico, no de mayor a menor.
+    ///
+    /// El motor ordenaba **siempre** por cantidad, que parece razonable —lo grande primero— y
+    /// destroza cualquier serie temporal: «tickets por mes» salía 2026-08, 2026-09, 2026-07, y una
+    /// gráfica de líneas con el eje de tiempo desordenado no significa nada.
+    ///
+    /// No lo cazó ninguna prueba: se vio mirando la salida real del panel. Ésta existe para que no
+    /// haga falta volver a mirarla.
+    /// </summary>
+    [Fact]
+    public async Task Agrupar_por_fecha_sale_en_orden_cronologico()
+    {
+        var cliente = await AutenticarAsync();
+
+        // Por vencimiento y por día: el sembrador crea todos los tickets el mismo mes, así que
+        // agrupándolos por mes sale un solo grupo y la prueba no comprobaría nada. Los
+        // vencimientos de las tareas sí se reparten en varios días.
+        var respuesta = await cliente.PostAsJsonAsync("/api/v1/reports/vista-previa", new
+        {
+            definicion = Definicion("Tareas", "vencimiento", "conteo", "lineas", granularidad: "dia"),
+            titulo = "Tareas por día de vencimiento"
+        });
+
+        respuesta.StatusCode.Should().Be(HttpStatusCode.OK, await respuesta.Content.ReadAsStringAsync());
+
+        var previa = await respuesta.Content.ReadFromJsonAsync<JsonElement>();
+
+        var dias = previa.GetProperty("filas").EnumerateArray()
+            .Select(f => f.EnumerateArray().First().GetString()!)
+            .ToList();
+
+        dias.Should().HaveCountGreaterThan(1, "hacen falta varias fechas para que el orden importe");
+
+        // Las claves llevan el año delante —«2026-08»— justo para que el orden alfabético sea el
+        // cronológico. Si eso cambiara, esta comprobación dejaría de valer y hay que cambiarla
+        // a la vez.
+        dias.Should().BeInAscendingOrder(StringComparer.Ordinal,
+            "una serie temporal desordenada no se puede leer en una gráfica de líneas");
+    }
+
     [Fact]
     public async Task Una_definicion_invalida_dice_que_falla_y_que_vale()
     {

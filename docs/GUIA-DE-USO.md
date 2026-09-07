@@ -393,6 +393,30 @@ se recorta en silencio.
 
 ---
 
+### Tu panel de inicio
+
+El **Dashboard** tiene dos partes. Arriba, unas cifras del espacio de trabajo que no se tocan.
+Debajo, **«Mis gráficas»**: tu panel, y es **tuyo**. Lo que coloques ahí no cambia lo que ven los
+demás, y lo que ellos coloquen no cambia el tuyo.
+
+La primera vez que entras se monta solo con seis gráficas: tickets por estado y por prioridad,
+tareas por estado, por responsable y por proyecto, y tickets abiertos por mes.
+
+**Cada recuadro es un informe de verdad**, no una gráfica fija. Eso significa que puedes abrirlo en
+el constructor de informes y cambiar lo que enseña —el origen, los filtros, la agrupación— y el
+recuadro cambia con él. Y cualquier informe que construyas se puede poner en el panel.
+
+La **✕** de cada recuadro lo quita del panel. **No borra el informe**: sigue en tu lista de
+reportes y lo puedes volver a poner.
+
+Debajo de cada gráfica hay una línea pequeña que dice de qué está hecha —origen, filtros y cuántas
+filas la componen—. Está ahí para que no haya que adivinar qué se está mirando.
+
+Si un recuadro no puede pintarse, **lo dice en su sitio y los demás siguen funcionando**. Un solo
+informe mal configurado no deja la pantalla en blanco.
+
+---
+
 ## 9. Avisos y preferencias
 
 En el icono de la campana están los avisos. En sus preferencias se decide qué llega y por qué
@@ -424,10 +448,19 @@ Sólo para administradores:
 
 Esto es tan parte de la guía como lo anterior.
 
-### Los informes a medida todavía no se pintan como gráficas
+### Los recuadros del panel no se arrastran todavía
 
-El constructor deja elegir cómo quieres verlo —barras, líneas, tarta— y lo guarda, pero de momento
-**la vista previa y la exportación enseñan una tabla**. Las gráficas llegan con el panel.
+Las gráficas se colocan solas y se pueden quitar, pero **no se pueden mover ni redimensionar con
+el ratón**. La colocación se guarda —el servidor la respeta— pero falta el gesto en la pantalla.
+
+### La vista previa del constructor enseña una tabla
+
+El constructor deja elegir cómo quieres ver el informe —barras, líneas, tarta— y el panel lo pinta
+así. Pero **su propia vista previa sigue enseñando una tabla**. El dato es el mismo; lo que falta
+es reutilizar ahí la gráfica.
+
+Y **«barras apiladas» se pinta como barras normales**: apilar necesita agrupar por dos campos a la
+vez, y de momento se agrupa por uno.
 
 ### El tiempo de ciclo no se calcula
 

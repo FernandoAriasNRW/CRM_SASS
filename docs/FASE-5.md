@@ -115,7 +115,22 @@ TipTap tiene extensiones para 1, 2 y 3. Las 4, 5 y 6 son trabajo propio.
 
 ---
 
-## 5C — Dashboard
+## 5C — Dashboard  ✅ **hecho** (2026-09-07)
+
+> **Estado.** La rejilla se guarda por persona, cada recuadro es un informe, los datos de todos
+> llegan en una sola petición y las gráficas son ECharts con los módulos justos. Los seis
+> recuadros de partida enseñan datos reales el primer día; hay una prueba que lo comprueba y que
+> falla si alguno viene vacío o roto.
+>
+> **Lo que se ha quitado:** la tarta fija de «distribución de tareas», que ahora es uno de los
+> recuadros. **Lo que se ha conservado fijo:** el avance por proyecto y el burndown, porque el
+> catálogo de informes todavía no los sabe expresar —el primero necesita un porcentaje de
+> completado, el segundo dos series a la vez— y quitarlos habría sido perder algo que funciona.
+>
+> **Lo que había antes y no hacía nada:** un gestor de paneles donde se podían crear, nombrar y
+> marcar como públicos, y **al pulsarlos no pasaba nada** —la selección iba a una señal que no
+> pintaba nada y la columna de widgets no la leía nadie—. Nunca llegó a haber una fila en esa
+> tabla.
 
 **Lo que pidió el usuario:** un resumen personalizable de los reportes, donde se ven estadísticas
 que faciliten el análisis —tickets por área, por ejemplo—, con unas por defecto y libertad para
@@ -136,10 +151,30 @@ añadir y quitar.
 **Widgets de partida:** tickets por área, tickets por estado, tareas por responsable, carga de
 la semana, cumplimiento de fechas, tiempo medio de resolución de tickets.
 
+> **Los que salieron, y por qué no son todos ésos.** El criterio manda: «sólo se ofrece de serie
+> lo que los datos de hoy pueden responder». Están tickets por estado, tickets por prioridad,
+> tareas por estado, tareas por responsable, tareas por proyecto y tickets abiertos por mes.
+>
+> Fuera: **tickets por área**, que necesita campos personalizados en tickets; **cumplimiento de
+> fechas** y **tiempo medio de resolución**, que el motor sabe calcular pero que sin tickets
+> resueltos salen con una raya en todos los meses — estrenar el producto con una gráfica vacía es
+> justo lo que el plan prohibía.
+
 **Herramienta de gráficas:** hay dos componentes propios (`doughnut-chart`, `line-chart`). Para
 lo que viene —barras apiladas, series temporales, tablas dinámicas— conviene decidir si se
 crecen o se adopta una librería. Recomiendo decidirlo con la lista de widgets delante y no
 antes.
+
+> **Cómo quedó.** ECharts con `ngx-echarts@21` —la que corresponde a este Angular—, importada con
+> los módulos justos: tres tipos de gráfica, cuatro componentes y el renderizador de canvas. El
+> mapa de módulos vive en un solo fichero (`echarts-modulos.ts`), que era la condición del estudio.
+>
+> **El coste, medido:** el paquete del panel pasa de 62 kB a 789 kB en bruto, **224 kB por la
+> red**, y sólo se descarga al abrir el panel. Se le ha dado presupuesto propio (aviso a 850 kB,
+> error a 1 MB) en vez de subir el de todas las pantallas.
+>
+> `line-chart` se conserva para el burndown, que no es expresable como informe todavía;
+> `doughnut-chart` se ha quedado sin uso y queda anotado.
 
 ---
 
