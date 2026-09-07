@@ -382,8 +382,14 @@
 
       </div>
 
-      <!-- Panel derecho — actividad y comentarios -->
+      <!--
+        «Mencionado en»: la vuelta de las menciones. Va en el panel derecho, junto a la actividad,
+        porque es información *sobre* esta tarea que viene de fuera, igual que los comentarios.
+      -->
       <div class="w-80 shrink-0 border-l border-border flex flex-col">
+        <div class="p-4 border-b border-border">
+          <app-mencionado-en tipo="Tarea" [entidadId]="task().id" />
+        </div>
 
         <!-- Tabs -->
         <div class="flex border-b border-border shrink-0">

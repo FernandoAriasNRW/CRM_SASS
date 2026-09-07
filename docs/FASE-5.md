@@ -95,7 +95,27 @@ sería justo lo que esta fase viene a quitar.
 
 ---
 
-## 5B — Editor tipo Notion
+## 5B — Editor tipo Notion  ◐ **parcial** (2026-09-07)
+
+> **Estado por punto**, sobre la lista de abajo:
+>
+> | | | |
+> |---|---|---|
+> | 1 | Menú `/` | ✅ Ya existía y funciona |
+> | 2 | Bloques arrastrables | ❌ **No hecho** |
+> | 3 | Menú flotante de selección | ✅ Ya existía |
+> | 4 | Barra lateral de esquema | ✅ Hecha |
+> | 5 | Comentarios en línea | ❌ **No hecho** |
+> | 6 | Menciones `@` y `#` | ✅ Hechas, **con la vuelta** |
+>
+> Se atacó primero el 6 porque es donde el plan sitúa el diferencial, y con él el 4, que es barato
+> y de valor inmediato. Quedan el 2 y el 5.
+>
+> **Lo que hace especial al 6 es la vuelta.** Escribir `#tarea` y que quede un enlace lo hace
+> cualquiera; que la tarea sepa qué documentos hablan de ella no se puede resolver leyendo el
+> documento —habría que abrir todos los del inquilino y buscar dentro—, así que las menciones se
+> guardan en su propia tabla, **derivadas del contenido al guardar**. Aceptar una lista del cliente
+> habría permitido que el documento dijera una cosa y el índice otra.
 
 **Lo que hay:** TipTap, y es la causa de casi todos los `any` de la deuda medida (§6).
 
@@ -112,6 +132,13 @@ sería justo lo que esta fase viene a quitar.
    documento es algo que ClickUp hace a medias.
 
 TipTap tiene extensiones para 1, 2 y 3. Las 4, 5 y 6 son trabajo propio.
+
+> **Sobre el 2 y el 5, que quedan pendientes.** El arrastre de bloques necesita
+> `@tiptap/extension-drag-handle`, que es una dependencia más y un gesto que hay que probar en el
+> navegador con cuidado. Los comentarios en línea necesitan **anclar un comentario a un bloque**,
+> y el módulo `Comments` que ya existe comenta entidades enteras —tarea, ticket, proyecto—: haría
+> falta ampliarlo con el identificador del bloque y decidir qué pasa cuando ese bloque se borra.
+> Ninguno de los dos es difícil; los dos son más de lo que cabía aquí.
 
 ---
 

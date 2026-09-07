@@ -112,8 +112,17 @@
 
     </div>
 
-    <!-- Panel derecho — comentarios -->
+    <!-- Panel derecho — comentarios y menciones -->
     <div class="w-80 shrink-0 border-l border-border flex flex-col pl-4">
+      <!--
+        «Mencionado en»: qué documentos hablan de este ticket. Es la vuelta del diferencial, y para
+        un ticket es donde más se nota: la especificación o el acta donde se decidió algo suele ser
+        lo que falta para entenderlo.
+      -->
+      <div class="pb-4 border-b border-border">
+        <app-mencionado-en tipo="Ticket" [entidadId]="ticket().id" />
+      </div>
+
       <div class="flex border-b border-border shrink-0">
         <button
           (click)="activeTab.set('comments')"

@@ -149,6 +149,25 @@ public static class DocsEndpointsExtensions
             return result.IsSuccess ? Results.Ok() : Results.BadRequest(result.Error);
         });
 
+        // ── Menciones ───────────────────────────────────────────────────────────────────────
+        //
+        // «¿Qué documentos hablan de esta tarea?». Va bajo /docs y no bajo la tarea porque la
+        // respuesta es una lista de documentos y la da Docs; la pantalla de la tarea la consume
+        // sin que WorkItems tenga que conocer a Docs.
+        group.MapGet("/menciones/{tipo}/{entidadId:guid}", async (
+            string tipo, Guid entidadId,
+            BuildingBlocks.Application.Abstractions.IMencionesEnDocumentos menciones) =>
+        {
+            if (!Docs.Domain.Menciones.TiposMencionables.Existe(tipo))
+            {
+                return Results.BadRequest(
+                    $"«{tipo}» no se puede mencionar. Los que sí: "
+                    + string.Join(", ", Docs.Domain.Menciones.TiposMencionables.Todos()));
+            }
+
+            return Results.Ok(await menciones.QuienMencionaAsync(tipo, entidadId));
+        });
+
         group.MapGet("/{id:guid}/pages", async (Guid id, HttpContext context, IMediator mediator) =>
         {
             var query = new GetPagesQuery(id);

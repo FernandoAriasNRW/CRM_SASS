@@ -221,8 +221,24 @@
           class="w-full text-4xl font-bold bg-transparent outline-none text-foreground placeholder-zinc-300 dark:placeholder-zinc-700 tracking-tight" 
           i18n-placeholder placeholder="Document Title">
       </div>
-      <div class="max-w-3xl mx-auto px-8 pb-12 editor-container">
-        <tiptap-editor [editor]="editor"></tiptap-editor>
+      <!--
+        El editor con su índice al lado. El esquema va a la derecha y no en la barra lateral
+        izquierda porque ésa ya la ocupa la navegación entre documentos: dos árboles a la izquierda
+        obligarían a distinguir cuál es cuál cada vez.
+
+        Se esconde en pantallas estrechas: un índice que roba la mitad del ancho al texto estorba
+        más de lo que ayuda.
+      -->
+      <div class="flex gap-8 px-8 pb-12">
+        <div class="flex-1 min-w-0 max-w-3xl mx-auto editor-container">
+          <tiptap-editor [editor]="editor"></tiptap-editor>
+        </div>
+
+        <aside class="hidden xl:block w-56 shrink-0 pt-2">
+          <div class="sticky top-4">
+            <app-esquema-del-documento [editor]="editor" [version]="versionDelEsquema()" />
+          </div>
+        </aside>
       </div>
     </div>
 

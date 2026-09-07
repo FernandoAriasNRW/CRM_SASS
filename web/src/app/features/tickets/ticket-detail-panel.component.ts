@@ -28,11 +28,12 @@ const STATUS_BADGE: Record<string, BadgeVariant> = {
 import { DrawerComponent } from '../../shared/ui/drawer.component';
 import { ClickableDirective } from '../../shared/directives/clickable.directive';
 import { ComentariosComponent } from '../../shared/ui/comentarios.component';
+import { MencionadoEnComponent } from '../../shared/ui/mencionado-en.component';
 
 @Component({
   selector: 'app-ticket-detail-panel',
   standalone: true,
-  imports: [ComentariosComponent, ClickableDirective, FormsModule, DatePipe, BadgeComponent, AvatarComponent, NgIconComponent, DrawerComponent],
+  imports: [MencionadoEnComponent, ComentariosComponent, ClickableDirective, FormsModule, DatePipe, BadgeComponent, AvatarComponent, NgIconComponent, DrawerComponent],
   viewProviders: [provideIcons({
     lucideX, lucideCheck, lucideUser, lucideTag,
     lucideFlag, lucideMessageSquare, lucidePaperclip,

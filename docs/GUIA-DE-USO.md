@@ -300,6 +300,37 @@ alguien ya decidió.
 
 ---
 
+### Escribir un documento
+
+El editor funciona como esperas de uno moderno: escribes `/` y se abre la lista de bloques
+—encabezados, listas, tablas, citas, código, imágenes, checklists—, y al seleccionar texto aparece
+la barra de negrita, cursiva y enlace.
+
+**A la derecha tienes el índice de la página**, con sus encabezados. Pulsando uno vas ahí y el
+cursor se queda listo para escribir. En pantallas estrechas se oculta, para no robarle ancho al
+texto.
+
+### Mencionar cosas: `@` y `#`
+
+Escribe **`@`** para mencionar a una persona, o **`#`** para mencionar una tarea, un ticket o un
+proyecto. Aparece un desplegable donde eliges; se navega con las flechas y se acepta con Enter.
+
+Ojo a un detalle: el `@` o el `#` tienen que ir **después de un espacio** o al principio de la
+línea. Escrito pegado a otra palabra no se dispara, para que «viernes.#» no se convierta en una
+mención sin querer.
+
+**Y aquí está lo que hace distinto a este producto:** cuando mencionas una tarea en un documento,
+**la tarea se entera**. Al abrirla verás un apartado **«Mencionado en»** con los documentos que
+hablan de ella, con el texto tal como lo escribiste. Lo mismo con los tickets.
+
+Eso significa que el acta donde se decidió algo, o la especificación que explica el porqué, dejan
+de estar perdidas: aparecen justo donde alguien las va a necesitar.
+
+Si borras la mención del texto, desaparece también de la tarea. El índice se rehace cada vez que
+se guarda la página, así que no puede quedarse diciendo algo que el documento ya no dice.
+
+---
+
 ## 8. Panel e informes
 
 El **panel** muestra las cifras de la organización: proyectos, tareas, cuántas están terminadas,
@@ -447,6 +478,19 @@ Sólo para administradores:
 ## Lo que todavía no hace
 
 Esto es tan parte de la guía como lo anterior.
+
+### En el editor faltan dos cosas
+
+**Los bloques no se arrastran**: no hay una manija a la izquierda de cada párrafo para reordenarlos
+con el ratón. Se reordenan cortando y pegando, como en cualquier editor.
+
+**No hay comentarios dentro del texto**: se puede comentar una tarea o un ticket entero, pero no
+señalar un párrafo concreto de un documento y comentar sobre él.
+
+### Mencionar a alguien no le avisa
+
+Si escribes `@` y mencionas a una persona, la mención queda guardada y se puede consultar, pero
+**no le llega ninguna notificación**. Por ahora hay que decírselo por otro medio.
 
 ### Los recuadros del panel no se arrastran todavía
 

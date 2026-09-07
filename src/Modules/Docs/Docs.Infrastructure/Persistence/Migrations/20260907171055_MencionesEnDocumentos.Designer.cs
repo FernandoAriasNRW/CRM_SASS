@@ -4,6 +4,7 @@ using Docs.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Docs.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(DocsDbContext))]
-    partial class DocsDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260907171055_MencionesEnDocumentos")]
+    partial class MencionesEnDocumentos
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

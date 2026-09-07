@@ -25,6 +25,7 @@ import { UsersService, type TenantUser } from '../../core/users.service';
 import { ClickableDirective } from '../../shared/directives/clickable.directive';
 import { CustomFieldsFormComponent } from '../../shared/ui/custom-fields-form.component';
 import { ComentariosComponent } from '../../shared/ui/comentarios.component';
+import { MencionadoEnComponent } from '../../shared/ui/mencionado-en.component';
 
 const STATUSES = ['To Do', 'In Progress', 'In Review', 'Done'];
 
@@ -39,7 +40,7 @@ const STATUS_BADGE: Record<string, BadgeVariant> = {
 @Component({
   selector: 'app-task-detail-panel',
   standalone: true,
-  imports: [ClickableDirective, FormsModule, DatePipe, BadgeComponent, AvatarComponent, NgIconComponent, SkeletonComponent, DrawerComponent, CustomFieldsFormComponent, ComentariosComponent],
+  imports: [MencionadoEnComponent, ClickableDirective, FormsModule, DatePipe, BadgeComponent, AvatarComponent, NgIconComponent, SkeletonComponent, DrawerComponent, CustomFieldsFormComponent, ComentariosComponent],
   viewProviders: [provideIcons({
     lucideX, lucideCheck, lucideCalendar, lucideClock, lucideUser,
     lucideTag, lucideFlag, lucideMessageSquare, lucidePaperclip,

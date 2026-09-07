@@ -65,6 +65,7 @@
     <ProjectReference Include="..\..\src\Modules\Reporting\Reporting.Infrastructure\Reporting.Infrastructure.csproj" />
     <ProjectReference Include="..\..\src\Modules\Reporting\Reporting.Application\Reporting.Application.csproj" />
     <ProjectReference Include="..\..\src\Modules\Reporting\Reporting.Domain\Reporting.Domain.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Docs\Docs.Domain\Docs.Domain.csproj" />
     <ProjectReference Include="..\..\src\Modules\Ticketing\Ticketing.Infrastructure\Ticketing.Infrastructure.csproj" />
     <ProjectReference Include="..\..\src\Modules\Ticketing\Ticketing.Application\Ticketing.Application.csproj" />
     <ProjectReference Include="..\..\src\Modules\Ticketing\Ticketing.Domain\Ticketing.Domain.csproj" />

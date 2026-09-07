@@ -773,7 +773,45 @@ las pantallas, para que el resto siga vigilado con el límite estricto. El aviso
 
 ---
 
-## 13. Lo que queda anotado y sin resolver
+## 13. Fase 5B — menciones y esquema
+
+### 13.1 El contrato invisible entre el editor y el servidor
+
+Las menciones se escriben en el editor como `data-mencion-tipo` y `data-mencion-id`, y el servidor
+las extrae leyendo esos dos atributos del HTML guardado. **Si los nombres divergieran, las
+menciones dejarían de indexarse sin que nada fallara**: los documentos seguirían guardándose, los
+enlaces seguirían viéndose, y ninguna tarea volvería a saber quién habla de ella.
+
+Es la misma familia que la cadena `"Ticket"` escrita a mano entre Ticketing e Identity. Se cuida
+igual: las constantes están con nombre en un solo fichero del lado del editor, hay pruebas
+unitarias que fijan el formato del lado del servidor, y una de integración que **escribe una
+mención por la API y comprueba que la tarea la ve desde el otro lado**.
+
+### 13.2 Dos fallos de EF y uno de pruebas
+
+- **Ordenar por una propiedad del objeto proyectado.** `OrderByDescending` después del `Select`
+  hacía que EF no supiera traducir la consulta: fallaba al ejecutarse, con un 409 y un mensaje de
+  cien líneas. Se ordena antes de proyectar.
+- **La forma real de la API no era la que suponía la prueba.** `POST /api/v1/docs` devuelve el
+  identificador **como una cadena suelta**, no envuelto en un objeto. Una prueba escrita contra la
+  forma que uno espera comprueba una API imaginaria.
+- **Pasaba sola y fallaba acompañada.** Varias pruebas de menciones trabajan sobre la misma tarea
+  del sembrador, y una exigía ser la única que la mencionaba. Es el patrón que ya mordió con las
+  reglas de automatización sin condiciones.
+
+### 13.3 El buscador de menciones filtra en el cliente
+
+Al escribir `#` se piden las primeras cincuenta tareas, cincuenta tickets y cincuenta proyectos y
+se filtran en el navegador. **Con miles de filas, lo que se busca puede no estar entre esas
+cincuenta** y el desplegable saldría vacío para algo que sí existe.
+
+El arreglo es un parámetro de búsqueda por texto en esas tres APIs, que hoy no existe. Mientras
+tanto funciona bien en instalaciones pequeñas y se degrada en silencio en las grandes, que es
+exactamente la clase de cosa que hay que dejar escrita.
+
+---
+
+## 14. Lo que queda anotado y sin resolver
 
 - **Las páginas de documentos no llevan inquilino.** `CreatePageCommand` y `UpdatePageCommand`
   no tienen `TenantId`, así que el aislamiento de las páginas depende de conocer el
@@ -817,6 +855,15 @@ las pantallas, para que el resto siga vigilado con el límite estricto. El aviso
   redimensionar.
 - **`doughnut-chart` se ha quedado sin uso** al pasar la tarta a ser un widget. `line-chart` sigue
   vivo para el burndown.
+- **De la Fase 5B faltan los bloques arrastrables y los comentarios en línea** (ver `FASE-5.md`).
+- **El buscador de menciones filtra en el cliente** (13.3): hace falta búsqueda por texto en las
+  APIs de tareas, tickets y proyectos.
+- **Las menciones a personas no avisan a la persona mencionada.** Se guardan y se pueden consultar,
+  pero mencionar a alguien no le manda una notificación. El tipo de aviso `Mention` ya existe en
+  las preferencias, así que es enganchar el evento.
+- **Un documento borrado deja sus menciones.** Se quitan al reescribir la página, no al borrar el
+  documento, así que una tarea podría enseñar un enlace a un documento que ya no está. El enlace
+  no rompe nada —lleva a una pantalla que dirá que no existe— pero conviene limpiarlo.
 - **Agrupar por persona enseña identificadores.** Igual que el informe de actividad: los nombres
   viven en Identity y hace falta un puerto, como el de favoritos.
 - **Documentos tiene la columna de archivado y no la usa.** Se le puso al modelar el concepto

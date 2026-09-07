@@ -17,6 +17,9 @@ import StarterKit from '@tiptap/starter-kit';
 import Image from '@tiptap/extension-image';
 import Youtube from '@tiptap/extension-youtube';
 import SlashCommand from './extensions/slash-command';
+import { Mencion } from './extensions/mencion';
+import { MencionesService } from './menciones.service';
+import { EsquemaDelDocumentoComponent } from './esquema-del-documento.component';
 import { FileAttachment } from './extensions/file-attachment';
 import { TiptapEditorDirective } from 'ngx-tiptap';
 import { Table } from '@tiptap/extension-table';
@@ -49,7 +52,7 @@ export interface PresetTemplate {
 @Component({
   selector: 'app-docs',
   standalone: true,
-  imports: [
+  imports: [EsquemaDelDocumentoComponent, 
     GuardarPlantillaModalComponent, ImportarDocumentoModalComponent, SelectorPlantillaModalComponent,ClickableDirective, CommonModule, FormsModule, NgIconComponent, TiptapEditorDirective, EmojiPickerComponent],
   providers: [
     provideIcons({
@@ -71,6 +74,15 @@ export interface PresetTemplate {
 export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
   private docsService = inject(DocsService);
 
+  /**
+   * Quien busca a qué se puede mencionar.
+   *
+   * Se declara **antes** que el editor a propósito: los campos se inicializan en orden y el editor
+   * lo usa al construirse. Declarado después, `this.menciones` sería `undefined` dentro de la
+   * extensión y el desplegable de menciones no encontraría nunca nada —sin dar ningún error—.
+   */
+  private menciones = inject(MencionesService);
+
   documents = signal<DocumentDto[]>([]);
   pagesByDoc = signal<Record<string, PageDto[]>>({});
   
@@ -80,6 +92,14 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
   expandedPages = signal<Set<string>>(new Set<string>());
   
   private contentUpdate$ = new Subject<{ pageId: string, title: string, content: string }>();
+
+  /**
+   * Cambia cuando el contenido se guarda, para que el índice se vuelva a leer.
+   *
+   * Se ata al guardado y no a cada pulsación: recalcular el esquema en cada tecla redibuja la
+   * barra lateral mientras se escribe un título, que parpadea justo cuando hace falta concentrarse.
+   */
+  readonly versionDelEsquema = signal(0);
 
   // UI state
   searchQuery = signal('');
@@ -207,6 +227,11 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
       Youtube,
       FileAttachment,
       SlashCommand,
+
+      // Menciones `@persona` y `#tarea`. El buscador se inyecta aquí y no dentro de la extensión
+      // porque la extensión no puede —ni debe— saber llamar a la API: sabe escribir el nodo con
+      // el formato que el servidor lee, y nada más.
+      Mencion.configure({ buscador: (disparador, consulta) => this.menciones.buscar(disparador, consulta) }),
       Table.configure({ resizable: true }),
       TableRow,
       TableHeader,
@@ -237,6 +262,8 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
           title: page.title,
           content: editor.getHTML()
         });
+
+        this.versionDelEsquema.update(v => v + 1);
       }
     }
   });
