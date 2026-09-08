@@ -65,8 +65,34 @@ public sealed class DataSeederService(IServiceProvider serviceProvider, ILogger<
             // Asignar directamente el resultado de FirstOrDefaultAsync dejaba la variable
             // marcada como posiblemente nula durante el resto del método, que es de donde
             // salían las 22 advertencias de desreferencia.
-            var existingAdmin = await identityDb.User.FirstOrDefaultAsync(u => u.Email.Value == "admin@acme.com", cancellationToken)
-                ?? await identityDb.User.FirstOrDefaultAsync(cancellationToken);
+            //
+            // **Sin el filtro de inquilino, y esto es la causa de un fallo medido.** Identity es
+            // el único contexto que no puede abrir `ComoInquilino` aquí: el inquilino sale del
+            // administrador, así que todavía no se sabe cuál es. Con el filtro puesto,
+            // `CurrentTenantId` valía `Guid.Empty`, la búsqueda no encontraba al administrador
+            // **que sí estaba en la tabla**, y el sembrador lo creaba otra vez. En cada arranque.
+            // La base de desarrollo acabó con 695 usuarios y 11 correos distintos —115 filas
+            // «admin@acme.com»—, y como el login coge una fila cualquiera de las 115, quien
+            // iniciaba sesión no era el administrador que posee los proyectos: «Mis proyectos»
+            // enseñaba 0 teniendo cinco.
+            //
+            // Se apagan los filtros pero se descartan los borrados a mano: `IgnoreQueryFilters`
+            // los apaga todos, y resucitar a un administrador que alguien mandó a la papelera
+            // sería un fallo peor y más difícil de ver.
+            //
+            // Y se ordena por fecha: **el más antiguo**. No es un capricho — los proyectos, las
+            // tareas y los tickets se sembraron en la primera pasada y apuntan a ese. Quedarse
+            // con el último dejaría todo lo demás apuntando a un usuario que ya no existe.
+            var existingAdmin = await identityDb.User
+                    .IgnoreQueryFilters()
+                    .Where(u => !u.IsDeleted && u.Email.Value == "admin@acme.com")
+                    .OrderBy(u => u.CreatedAtUtc)
+                    .FirstOrDefaultAsync(cancellationToken)
+                ?? await identityDb.User
+                    .IgnoreQueryFilters()
+                    .Where(u => !u.IsDeleted)
+                    .OrderBy(u => u.CreatedAtUtc)
+                    .FirstOrDefaultAsync(cancellationToken);
 
             if (existingAdmin is null)
             {
@@ -76,7 +102,7 @@ public sealed class DataSeederService(IServiceProvider serviceProvider, ILogger<
                 existingAdmin = User.Create(Guid.NewGuid(), "Admin Administrator", email, pass, adminRole).Value
                     ?? throw new InvalidOperationException("No se pudo crear el usuario administrador del seed.");
                 identityDb.User.Add(existingAdmin);
-                await identityDb.SaveChangesAsync(cancellationToken);
+                await GuardarUsuariosAsync(identityDb, cancellationToken);
             }
 
             // Todo el resto del seed cuelga de este usuario: es el propietario de los
@@ -84,6 +110,11 @@ public sealed class DataSeederService(IServiceProvider serviceProvider, ILogger<
             adminUser = existingAdmin;
 
             tenantId = adminUser.TenantId;
+
+            // Ya se sabe de quién es esto, así que a partir de aquí Identity se comporta como los
+            // otros nueve contextos. Sin esta línea, todas las consultas de abajo se filtran
+            // contra `Guid.Empty`, vuelven vacías, y el sembrador cree que no hay nada sembrado.
+            using var _identityDbInquilino = identityDb.ComoInquilino(tenantId);
 
             // Align any orphaned Users or EntityPermissions to tenantId
             try
@@ -128,7 +159,7 @@ public sealed class DataSeederService(IServiceProvider serviceProvider, ILogger<
                         }
                     }
                 }
-                await identityDb.SaveChangesAsync(cancellationToken);
+                await GuardarUsuariosAsync(identityDb, cancellationToken);
                 existingUsers = await identityDb.User.Where(u => u.TenantId == tenantId).ToListAsync(cancellationToken);
             }
 
@@ -627,4 +658,54 @@ public sealed class DataSeederService(IServiceProvider serviceProvider, ILogger<
 
         logger.LogInformation("Global data seeding completed successfully across all modules!");
     }
+
+    /// <summary>
+    /// Guarda usuarios sabiendo que el correo es único en la base, y trata el choque como lo que
+    /// es: alguien ya lo sembró.
+    ///
+    /// <b>La comprobación en memoria no basta.</b> Se mira si el correo ya está antes de añadirlo,
+    /// pero entre esa lectura y el guardado puede haber otra instancia sembrando —dos réplicas
+    /// arrancando a la vez, que es lo normal en cuanto esto se despliegue más de una vez—. La
+    /// única barrera de verdad es el índice único de la base; esto sólo decide qué hacer cuando
+    /// salta.
+    ///
+    /// Se descartan las entidades que chocaron y se sigue: el objetivo de la siembra es dejar la
+    /// base con esos usuarios dentro, y si ya están, está cumplido. Lo que **no** se hace es
+    /// tragarse cualquier error: un fallo que no sea de duplicidad se relanza, porque una siembra
+    /// que calla un error de esquema deja la aplicación a medias sin decirlo.
+    /// </summary>
+    private async Task<int> GuardarUsuariosAsync(
+        IdentityDbContext identityDb, CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await identityDb.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException ex) when (EsCorreoRepetido(ex))
+        {
+            // Se sueltan los usuarios pendientes: reintentar con ellos dentro volvería a chocar.
+            foreach (var entrada in identityDb.ChangeTracker.Entries<User>()
+                         .Where(e => e.State == EntityState.Added)
+                         .ToList())
+            {
+                entrada.State = EntityState.Detached;
+            }
+
+            logger.LogInformation(
+                "El correo de algún usuario de demostración ya existía; se deja el que estaba. "
+                + "Es lo esperado al sembrar sobre una base ya sembrada.");
+
+            return 0;
+        }
+    }
+
+    /// <summary>
+    /// Si el error de la base es «esta clave ya existe» y no otra cosa.
+    ///
+    /// Se mira el código nativo de MySQL (1062, <c>ER_DUP_ENTRY</c>) en lugar de buscar texto en
+    /// el mensaje: el mensaje cambia con el idioma del servidor y con la versión, y un filtro por
+    /// texto acabaría dejando pasar errores que no son este.
+    /// </summary>
+    private static bool EsCorreoRepetido(DbUpdateException ex)
+        => ex.InnerException is MySqlConnector.MySqlException { ErrorCode: MySqlConnector.MySqlErrorCode.DuplicateKeyEntry };
 }

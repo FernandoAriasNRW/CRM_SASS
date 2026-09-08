@@ -467,7 +467,19 @@ using (var scope = app.Services.CreateScope())
 
     var identityCtx = services.GetRequiredService<Identity.Infrastructure.Persistence.IdentityDbContext>();
 
-    if (!identityCtx.User.Any())
+    // Red de seguridad: si no hay ni un usuario, no se podría entrar a arreglar nada.
+    //
+    // **`IgnoreQueryFilters` no es opcional aquí, y su ausencia costó 695 usuarios.** Esto corre
+    // en el arranque, sin petición y por tanto sin usuario, así que el filtro de inquilino compara
+    // contra `Guid.Empty` y `User.Any()` devolvía **false teniendo once usuarios dentro**. Cada
+    // arranque creaba otro «admin@acme.com». Como el inicio de sesión busca por correo y se queda
+    // con una fila cualquiera, quien entraba no era el administrador que posee los proyectos:
+    // «Mis proyectos» enseñaba 0 teniendo cinco.
+    //
+    // Se descartan los borrados a mano en vez de dejar el filtro de papelera puesto: si el único
+    // administrador está en la papelera, esto tiene que crear uno nuevo —si no, nadie puede
+    // entrar a sacarlo—.
+    if (!identityCtx.User.IgnoreQueryFilters().Any(u => !u.IsDeleted))
     {
         var adminRole = Identity.Domain.ValueObjects.UserRole.Admin;
         var email = Identity.Domain.ValueObjects.Email.Create("admin@acme.com").Value!;
