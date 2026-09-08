@@ -12,6 +12,7 @@ public sealed record CreateCalendarEventCommand(
     string Type,
     Guid? ProjectId = null,
     Guid? TaskId = null,
+    Guid? TicketId = null,
     string? Description = null,
     string? Location = null,
     bool IsAllDay = false,

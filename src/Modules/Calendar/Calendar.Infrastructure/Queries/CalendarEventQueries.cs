@@ -62,7 +62,12 @@ public sealed class CalendarEventQueries(CalendarDbContext context) : ICalendarE
 
     var dtos = items.Select(MapToDto).ToList();
 
-    return PagedResult<CalendarEventDto>.Create(dtos, pagination.Page, pagination.PageSize, totalCount);
+    // Con nombre. La firma es `Create(items, totalCount, page, pageSize)` y aquí se pasaba
+    // `(dtos, page, pageSize, totalCount)`: tres enteros seguidos compilan en cualquier orden, así
+    // que el calendario respondía «230 páginas de 1 elemento» sin que nada fallara. Es el mismo
+    // error que el de la disposición del panel, donde tres `Guid` seguidos se cruzaron igual.
+    return PagedResult<CalendarEventDto>.Create(
+        items: dtos, totalCount: totalCount, page: pagination.Page, pageSize: pagination.PageSize);
   }
 
   public async Task<PagedResult<CalendarEventDto>> GetDeletedByTenantAsync(
@@ -85,7 +90,12 @@ public sealed class CalendarEventQueries(CalendarDbContext context) : ICalendarE
 
     var dtos = items.Select(MapToDto).ToList();
 
-    return PagedResult<CalendarEventDto>.Create(dtos, pagination.Page, pagination.PageSize, totalCount);
+    // Con nombre. La firma es `Create(items, totalCount, page, pageSize)` y aquí se pasaba
+    // `(dtos, page, pageSize, totalCount)`: tres enteros seguidos compilan en cualquier orden, así
+    // que el calendario respondía «230 páginas de 1 elemento» sin que nada fallara. Es el mismo
+    // error que el de la disposición del panel, donde tres `Guid` seguidos se cruzaron igual.
+    return PagedResult<CalendarEventDto>.Create(
+        items: dtos, totalCount: totalCount, page: pagination.Page, pageSize: pagination.PageSize);
   }
 
   private static CalendarEventDto MapToDto(CalendarEvent entity)
@@ -96,6 +106,7 @@ public sealed class CalendarEventQueries(CalendarDbContext context) : ICalendarE
         entity.OrganizerId,
         entity.ProjectId,
         entity.TaskId,
+        entity.TicketId,
         entity.Title,
         entity.Description,
         CalendarEventType.FromValue<CalendarEventType>(entity.TypeValue)?.Name ?? "Unknown",
@@ -109,6 +120,8 @@ public sealed class CalendarEventQueries(CalendarDbContext context) : ICalendarE
         entity.CreatedAt,
         entity.IsDeleted,
         entity.DeletedAt,
-        entity.DeletedBy);
+        entity.DeletedBy,
+        entity.CanceladoEnUtc,
+        entity.MotivoDeCancelacion);
   }
 }

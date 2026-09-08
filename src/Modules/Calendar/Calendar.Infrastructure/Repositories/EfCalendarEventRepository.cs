@@ -32,13 +32,19 @@ public sealed class EfCalendarEventRepository(CalendarDbContext context) : ICale
         CancellationToken ct = default,
         bool includeDeleted = false)
     {
-        var query = _context.CalendarEvents.AsQueryable();
-
-        // Aplicar filtro global de soft delete
-        if (!includeDeleted)
-        {
-            query = query.Where(e => !e.IsDeleted);
-        }
+        // `IgnoreQueryFilters` cuando se piden los borrados, no un `Where` a mano.
+        //
+        // **Esto era un parámetro que no hacía nada.** Antes, con `includeDeleted: true` sólo se
+        // dejaba de añadir `Where(e => !e.IsDeleted)`, pero el filtro global del `DbContext` sigue
+        // ahí y excluye los borrados igualmente: la consulta nunca veía el evento. Restaurar algo
+        // de la papelera respondía «Evento no encontrado» **teniéndolo delante**, así que lo que
+        // iba a la papelera no salía nunca.
+        //
+        // Al apagar los filtros se cae también el de inquilino, y por eso el `TenantId` se
+        // compara explícitamente abajo: sin esa condición, esto leería eventos de otro cliente.
+        var query = includeDeleted
+            ? _context.CalendarEvents.IgnoreQueryFilters()
+            : _context.CalendarEvents.AsQueryable();
 
         return await query
             .FirstOrDefaultAsync(e => e.TenantId == tenantId && e.Id == id, ct);

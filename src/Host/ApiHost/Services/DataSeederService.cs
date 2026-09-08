@@ -493,10 +493,45 @@ public sealed class DataSeederService(IServiceProvider serviceProvider, ILogger<
             if (existingEvents.Count == 0)
             {
                 var now = DateTime.UtcNow;
-                var res1 = CalendarEvent.Create(tenantId, adminUser.Id, "Sprint Planning - CRM SaaS v2.0", now.AddDays(1).Date.AddHours(9), now.AddDays(1).Date.AddHours(10).AddMinutes(30), CalendarEventType.Meeting, null, null, "Planificación de tareas del sprint con todo el equipo de desarrollo", "Sala Virtual Meet", false);
-                var res2 = CalendarEvent.Create(tenantId, adminUser.Id, "Demo de Producto con Cliente VIP - Acme Corp", now.AddDays(2).Date.AddHours(14), now.AddDays(2).Date.AddHours(15), CalendarEventType.Appointment, null, null, "Presentación de la nueva interfaz ClickUp y permisos granulares", "Google Meet Link", false);
-                var res3 = CalendarEvent.Create(tenantId, adminUser.Id, "Revisión de Arquitectura & Webhooks", now.AddDays(3).Date.AddHours(11), now.AddDays(3).Date.AddHours(12), CalendarEventType.Meeting, null, null, "Auditoría de seguridad y firmado HMAC-SHA256 de webhooks", "Sala de Reuniones A", false);
-                var res4 = CalendarEvent.Create(tenantId, adminUser.Id, "Despliegue a Producción v2.1", now.AddDays(5).Date.AddHours(8), now.AddDays(5).Date.AddHours(18), CalendarEventType.Task, null, null, "Despliegue de contenedores Docker y actualización de base de datos MySQL", "Servidor Cloud", true);
+                // Con argumentos con nombre. Estaban puestos por posición, y al añadir `ticketId`
+                // a `Create` **la descripción pasó a ocupar el hueco del identificador**: sólo se
+                // vio porque los tipos no casaban. Con tres `Guid?` seguidos habría compilado
+                // igual y los eventos se habrían sembrado enlazados a cualquier cosa.
+                var res1 = CalendarEvent.Create(
+                    tenantId: tenantId, organizerId: adminUser.Id,
+                    title: "Sprint Planning - CRM SaaS v2.0",
+                    startTime: now.AddDays(1).Date.AddHours(9),
+                    endTime: now.AddDays(1).Date.AddHours(10).AddMinutes(30),
+                    type: CalendarEventType.Meeting,
+                    description: "Planificación de tareas del sprint con todo el equipo de desarrollo",
+                    location: "Sala Virtual Meet", isAllDay: false);
+
+                var res2 = CalendarEvent.Create(
+                    tenantId: tenantId, organizerId: adminUser.Id,
+                    title: "Demo de Producto con Cliente VIP - Acme Corp",
+                    startTime: now.AddDays(2).Date.AddHours(14),
+                    endTime: now.AddDays(2).Date.AddHours(15),
+                    type: CalendarEventType.Appointment,
+                    description: "Presentación de la nueva interfaz ClickUp y permisos granulares",
+                    location: "Google Meet Link", isAllDay: false);
+
+                var res3 = CalendarEvent.Create(
+                    tenantId: tenantId, organizerId: adminUser.Id,
+                    title: "Revisión de Arquitectura & Webhooks",
+                    startTime: now.AddDays(3).Date.AddHours(11),
+                    endTime: now.AddDays(3).Date.AddHours(12),
+                    type: CalendarEventType.Meeting,
+                    description: "Auditoría de seguridad y firmado HMAC-SHA256 de webhooks",
+                    location: "Sala de Reuniones A", isAllDay: false);
+
+                var res4 = CalendarEvent.Create(
+                    tenantId: tenantId, organizerId: adminUser.Id,
+                    title: "Despliegue a Producción v2.1",
+                    startTime: now.AddDays(5).Date.AddHours(8),
+                    endTime: now.AddDays(5).Date.AddHours(18),
+                    type: CalendarEventType.Task,
+                    description: "Despliegue de contenedores Docker y actualización de base de datos MySQL",
+                    location: "Servidor Cloud", isAllDay: true);
 
                 if (res1.IsSuccess && res1.Value != null) calendarDb.CalendarEvents.Add(res1.Value);
                 if (res2.IsSuccess && res2.Value != null) calendarDb.CalendarEvents.Add(res2.Value);

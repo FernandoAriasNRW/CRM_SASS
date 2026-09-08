@@ -21,7 +21,12 @@ public sealed record CalendarRescheduledEvent(
     DateTime NewEndTime) : DomainEvent;
 
 /// <summary>
-/// Evento de dominio publicado cuando se cancela (soft delete) un evento.
+/// Evento de dominio publicado cuando un evento va a la papelera.
+///
+/// Conserva el nombre <c>CalendarCancelled</c> porque hay suscriptores fuera —los webhooks lo
+/// publican con ese nombre— y renombrarlo rompería a quien ya escuche. Lo que significa está en
+/// <c>CalendarEvent.EnviarAPapelera</c>: no es la cancelación de la reunión, es quitarla de en
+/// medio. La cancelación de verdad es <see cref="EventoCanceladoEvent"/>.
 /// </summary>
 public sealed record CalendarCancelledEvent(
     Guid Id,
@@ -37,3 +42,16 @@ public sealed record CalendarUpdatedEvent(
     string? Description,
     string? Location
   ) : DomainEvent;
+
+/// <summary>
+/// El evento se ha anulado pero sigue en el calendario, tachado.
+///
+/// Es distinto de <see cref="CalendarCancelledEvent"/>, que es irse a la papelera. Se separan
+/// porque quien escuche esto querrá avisar a los asistentes —«la reunión del jueves se anula»—, y
+/// eso no tiene sentido para un evento que alguien creó por error y borró.
+/// </summary>
+public sealed record EventoCanceladoEvent(
+    Guid Id,
+    Guid TenantId,
+    Guid PorQuien,
+    string? Motivo) : DomainEvent;

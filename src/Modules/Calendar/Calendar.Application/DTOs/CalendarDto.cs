@@ -12,6 +12,7 @@ public sealed record CalendarEventDto(
     Guid OrganizerId,
     Guid? ProjectId,
     Guid? TaskId,
+    Guid? TicketId,
     string Title,
     string? Description,
     string Type,
@@ -25,7 +26,9 @@ public sealed record CalendarEventDto(
     DateTime CreatedAt,
     bool IsDeleted,
     DateTime? DeletedAt,
-    Guid? DeletedBy);
+    Guid? DeletedBy,
+    DateTime? CanceladoEnUtc,
+    string? MotivoDeCancelacion);
 
 /// <summary>
 /// Extensiones para mapeo de DTOs.
@@ -43,6 +46,7 @@ public static class CalendarEventDtoExtensions
             entity.OrganizerId,
             entity.ProjectId,
             entity.TaskId,
+            entity.TicketId,
             entity.Title,
             entity.Description,
             entity.Type.Name,
@@ -56,7 +60,9 @@ public static class CalendarEventDtoExtensions
             entity.CreatedAt,
             entity.IsDeleted,
             entity.DeletedAt,
-            entity.DeletedBy);
+            entity.DeletedBy,
+            entity.CanceladoEnUtc,
+            entity.MotivoDeCancelacion);
     }
 
     /// <summary>

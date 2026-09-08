@@ -47,6 +47,7 @@ using Tags.Presentation.Endpoints;
 using CustomFields.Presentation.Endpoints;
 using Automations.Presentation.Endpoints;
 using Comments.Presentation.Endpoints;
+using ApiHost.Calendar;
 
 // La sonda de salud del contenedor: `dotnet ApiHost.dll --health-check`.
 //
@@ -258,6 +259,10 @@ builder.Services.AddScoped<Reporting.Application.Abstractions.IDashboardReposito
 // PDF y la pantalla dan los mismos números.
 builder.Services.AddScoped<ApiHost.Reporting.ConsultasDelPanel>();
 builder.Services.AddScoped<ApiHost.Reporting.DatosDelInforme>();
+
+// La agenda de un día, que junta los eventos con lo que vence ese día en tareas, tickets y
+// proyectos. Vive en el host por lo mismo que las dos de arriba: cruza módulos.
+builder.Services.AddScoped<ApiHost.Calendar.AgendaDelDia>();
 
 // El motor de los informes a medida: traduce la definición neutra que construyó el usuario a
 // filas. Mismo sitio y mismo motivo que lo de arriba.
@@ -549,6 +554,7 @@ app.MapTicketingEndpoints();
 app.MapNotificationsEndpoints();
 app.MapCommunicationEndpoints();
 app.MapCalendarEndpoints();
+app.MapAgendaEndpoints();
 app.MapReportingEndpoints();
 app.MapWebhookEndpoints();
 app.MapTeamsEndpoints();
