@@ -826,7 +826,6 @@ datos. Se detalla en la sección 15.
 - **Un paquete del frontend supera el presupuesto** de tamaño en 120 kB.
 - **El vocabulario de `EntityType` no casa entre los permisos sembrados y los comandos** (9.2).
   Es lo más serio de esta lista: la autorización granular por rol no llega a aplicarse.
-- **El sembrador no es idempotente** (9.3).
 - **Compartir no tiene interfaz todavía.** Los endpoints existen y están probados, y los filtros
   «compartido conmigo» y «privado» funcionan contra ellos, pero no hay ningún botón en la
   aplicación que comparta. Hasta que lo haya, esas dos entradas del menú responden bien y
@@ -926,3 +925,104 @@ descargaba todas para quedarse con cinco.
 Ahora acepta `pageSize`, **opcional**. No se pone un máximo por defecto a propósito: la pantalla
 de administración pide esta misma lista, y recortarla en silencio escondería personas sin que
 nadie se enterara. Hay prueba de las dos mitades.
+
+---
+
+## 16. El sembrador, las vistas y el calendario
+
+### 16.1 695 usuarios, y «Mis proyectos» en cero
+
+Dos sitios buscaban al administrador con el filtro de inquilino puesto: el arranque de `Program`
+—`if (!identityCtx.User.Any())`— y el propio sembrador. En el arranque no hay petición, así que
+`CurrentTenantId` vale `Guid.Empty` y **la comprobación decía «no hay usuarios» teniendo once**.
+Cada arranque creaba otro `admin@acme.com` y los diez de demostración: 695 filas con 11 correos
+distintos, +12 por arranque.
+
+Y no se quedó en desorden. El inicio de sesión busca por correo y se queda con una fila cualquiera,
+así que quien entraba no era el administrador que posee los proyectos: **«Mis proyectos» enseñaba 0
+teniendo cinco**, y el desplegable de menciones ofrecía la misma persona cincuenta y siete veces.
+
+Identity es el único contexto que no puede abrir `ComoInquilino` al principio —el inquilino sale
+del propio administrador—, así que esas dos búsquedas ignoran los filtros y descartan los borrados
+a mano. En cuanto se sabe el inquilino, Identity se comporta como los otros nueve.
+
+### 16.2 El índice es lo que impide que vuelva
+
+Arreglar el código no basta: dos instancias arrancando a la vez volverían a crear el duplicado
+entre la lectura y la escritura. El correo pasa a ser único **en la base**, globalmente y no por
+inquilino, porque el inicio de sesión busca sólo por correo —no hay dónde escribir el inquilino en
+la pantalla de entrada—.
+
+Dos detalles técnicos que costaron un intento cada uno:
+
+- `Email` era `longtext`, y MySQL no lo indexa sin decirle cuántos caracteres mirar. Pasa a
+  `varchar(320)`, el máximo de la norma.
+- El índice **no puede declararse en el modelo**: `Email` es un tipo complejo y `HasIndex("Email")`
+  intenta crear una propiedad sombra con ese nombre. Vive en la migración, en SQL.
+
+La limpieza se queda con el más antiguo de cada correo —los proyectos y las tareas apuntan a ese— y
+traslada al superviviente sus vistas, favoritos y permisos antes de borrar. 719 usuarios y 181
+vistas quedaron en 11 y 4.
+
+### 16.3 Los mismos duplicados en el calendario
+
+184 eventos con cuatro títulos: cuarenta y seis copias de cada reunión. Misma causa.
+
+La primera versión de la migración que los limpia comparaba también el organizador —dos eventos
+homónimos de personas distintas sí son dos eventos— y **no borró ni una fila**: cada copia tenía un
+organizador distinto, porque cada arranque creaba también un administrador nuevo. Los dos fallos
+eran el mismo, y sólo se vio al medir el resultado en vez de dar por bueno el «Done» de la
+migración.
+
+Aquí no se pone índice único: dos reuniones distintas pueden llamarse igual y empezar a la vez en
+salas distintas. Se limpia lo que un fallo generó; no se impone una regla que el calendario no
+tiene.
+
+### 16.4 Las pestañas de vista que desaparecían
+
+En tickets y en tareas, las vistas de fábrica vivían dentro de un
+`@if (savedViews().length === 0)`. Con una vista guardada —y el sembrador crea una— **se iban**. En
+tickets eso dejaba sin ninguna forma de ver la lista; en tareas se llevaba además el Gantt y la
+carga. Y como nadie llamaba nunca al endpoint de borrar vistas, que existía desde el principio, no
+había vuelta atrás.
+
+Las dos pantallas tenían el enredo copiado. Se extrae a `app-barra-de-vistas`, y con él se caen
+tres cosas más: el `prompt()` que el navegador bloquea dentro de un marco —crear una vista no hacía
+nada y no avisaba—, la aplicación de vistas que sólo entendía «board» y «list» —una vista de Gantt
+se abría como tablero— y el desajuste `Tasks`/`WorkItems`, que tenía la vista sembrada guardada y
+sin verla nadie.
+
+### 16.5 El calendario hablaba otro idioma
+
+La pantalla pedía `?from=&to=` donde la API lee `startDate` y `endDate`, trataba
+`{ items, totalCount }` como si fuera un array, y al crear mandaba `startsAtUtc` donde el comando
+espera `startTime`. Los tres fallos caían en el mismo `error: () => {}`: **el calendario salía
+vacío siempre** y crear un evento no hacía nada, sin un solo mensaje.
+
+En el servidor, tres más de la misma familia:
+
+- **«Cancelar» era borrar.** `Cancel()` hacía un borrado lógico, así que anular una reunión la
+  quitaba del calendario. Ahora son dos cosas: anulado se ve tachado y con motivo, la papelera
+  quita de en medio y tiene vuelta.
+- **`includeDeleted` no hacía nada.** Sólo se saltaba un `Where` a mano mientras el filtro global
+  seguía escondiendo la fila, así que restaurar respondía «Evento no encontrado» teniéndola
+  delante: lo que iba a la papelera no salía nunca.
+- **El paginado mentía.** `Create(items, totalCount, page, pageSize)` recibía
+  `(dtos, page, pageSize, totalCount)`.
+
+### 16.6 Las fechas sin «Z», que corrían todos los eventos
+
+Se descubrió midiendo: se creó una reunión a las 11:00 y la pantalla la enseñaba a las 16:00.
+
+Las fechas se guardan en UTC, pero MySQL las devuelve con `Kind = Unspecified` y el serializador
+escribía `"2026-09-17T16:00:00"`, **sin marca de zona**. El navegador lee una fecha sin zona como
+local, así que cada evento se corría el desfase horario entero.
+
+Se arregla en el servidor y no en el cliente a propósito: el que sabe que estas fechas son UTC es
+quien las guarda, y taparlo en el navegador dejaría el mismo tropiezo puesto para los webhooks, las
+exportaciones y cualquier otro consumidor. Al hacerlo apareció que el mapeo a DTO estaba escrito
+dos veces y ya había empezado a separarse; ahora hay uno.
+
+Queda dicho lo que esto no arregla: **no hay zona horaria por inquilino**. Cada quien ve la hora de
+su ordenador, y los eventos de demostración están sembrados a las 08:00 UTC, que en UTC−5 son las
+tres de la madrugada.

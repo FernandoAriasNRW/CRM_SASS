@@ -295,8 +295,38 @@ alguien ya decidió.
 - **Documentos** — Editor de texto enriquecido, con páginas dentro de cada documento y
   plantillas.
 - **Chat** — Canales de conversación, en tiempo real.
-- **Calendario** — Eventos con fecha, vinculables a proyectos y tareas.
+- **Calendario** — Eventos con fecha, enlazables a proyectos, tareas y tickets.
 - **Equipos** — Grupos de personas, para asignar y filtrar por equipo.
+
+---
+
+### El calendario
+
+Se abre en el mes. **Pulsa un día y el día se despliega**: sus horas, los eventos colocados en la
+suya, y arriba lo que vence ese día aunque no ocurra a una hora concreta —tareas que hay que
+entregar, proyectos que terminan—. Pulsando una franja horaria creas ahí mismo, con esa hora ya
+puesta.
+
+**El botón derecho abre un menú**, y ofrece cosas distintas según dónde pulses:
+
+- Sobre un día: crear un evento, ver los eventos, ver la agenda, las tareas que se entregan ese
+  día, los tickets del día, los proyectos que terminan, los ajustes de aviso, y enviar a la
+  papelera todos los eventos del día.
+- Sobre un evento: modificarlo, enlazarlo, cancelarlo o mandarlo a la papelera.
+
+**Cancelar y mandar a la papelera no son lo mismo, y la diferencia importa.** Un evento cancelado
+**se queda en el calendario, tachado**, con el motivo: quien mire el jueves tiene que ver que la
+reunión se anuló, porque si desaparece la gente se presenta igual. La papelera es para lo que no
+debería estar ahí —un evento creado por error— y tiene vuelta: el botón «Papelera» de arriba lista
+lo borrado y lo recupera.
+
+Un evento puede **enlazarse con una tarea, un ticket y un proyecto a la vez**. En el formulario
+escribes dos letras y busca en todo el inquilino, no en lo que haya cargado. Quitar el enlace es
+pulsar «Quitar»; no hace falta borrar el evento y rehacerlo.
+
+Un aviso sobre las horas: los eventos se guardan en UTC y se enseñan en la hora de tu ordenador.
+Todavía no hay zona horaria por inquilino, así que un equipo repartido por varios husos verá cada
+uno la suya.
 
 ---
 

@@ -84,6 +84,15 @@ public sealed class BusquedaPorTextoFlowTests(CrmApiFactory factory)
     private static readonly char[] Separadores = [' ', '-', ':', ',', '.'];
 
     /// <summary>
+    /// Cuántos se piden como «primera página».
+    ///
+    /// Un número fijo y pequeño, no calculado de cuántos haya: lo que la prueba comprueba es que
+    /// la búsqueda alcanza algo que no está en la página que se pidió, y para eso da igual el
+    /// tamaño mientras haya registros de sobra.
+    /// </summary>
+    private const int TAMANO_DE_PAGINA = 3;
+
+    /// <summary>
     /// Una palabra del título que sirva para buscar: la más larga, para que no sea «de» ni «la».
     /// </summary>
     private static string PalabraBuscable(string titulo) =>
@@ -94,15 +103,15 @@ public sealed class BusquedaPorTextoFlowTests(CrmApiFactory factory)
     /// <summary>
     /// El fallo original, con su nombre: encontrar algo que no cabe en la primera página.
     ///
-    /// Se elige el último elemento de la lista completa y se comprueba primero que <b>no</b> está
-    /// en la primera página; sin esa comprobación, la prueba pasaría también con la búsqueda vieja
-    /// del cliente y no diría nada.
+    /// Se pide una página, se elige un registro que <b>no</b> está en ella y se busca. Sin esa
+    /// comprobación previa, la prueba pasaría también con la búsqueda vieja del cliente y no diría
+    /// nada.
     ///
-    /// El tamaño de página sale de los datos —uno menos de los que haya— en vez de ser un número
-    /// escrito aquí. La primera versión pedía cinco y daba por hecho que el sembrador crea más:
-    /// contra la base de desarrollo pasaba y contra la del contenedor, que tiene cinco proyectos
-    /// justos, fallaba sin que nada estuviera roto. Una prueba no debe suponer cuántas filas
-    /// siembra otro.
+    /// Ha fallado de dos maneras distintas antes de quedar así, y las dos por suponer cosas sobre
+    /// los datos: primero dando por hecho que el sembrador crea más de cinco —contra el contenedor,
+    /// que tiene cinco proyectos justos, fallaba sin que nada estuviera roto—, y después calculando
+    /// el tamaño de página de un conteo anterior, que otras pruebas de la misma colección movían
+    /// entre las dos llamadas.
     /// </summary>
     [Theory]
     [MemberData(nameof(Listas))]
@@ -111,17 +120,27 @@ public sealed class BusquedaPorTextoFlowTests(CrmApiFactory factory)
         var cliente = await AutenticarAsync();
 
         var todos = await ItemsAsync(cliente, $"{ruta}?pageSize=200");
-        todos.Length.Should().BeGreaterThan(1,
-            "con un solo registro no hay nada fuera de la página y esto no comprueba nada");
+        todos.Length.Should().BeGreaterThan(TAMANO_DE_PAGINA,
+            "hacen falta más registros que los que cabe en una página para que haya algo fuera");
 
-        var escondido = todos[^1];
-        var id = escondido.GetProperty("id").GetGuid();
-        var titulo = escondido.GetProperty(campo).GetString()!;
+        // Se pide la página primero y **se elige después** uno que no esté en ella.
+        //
+        // Al revés era frágil: la primera versión calculaba el tamaño de página a partir de un
+        // conteo anterior, y otras pruebas de la misma colección crean tareas mientras tanto. Con
+        // una fila más entre las dos llamadas, el elemento elegido entraba en la página y la
+        // prueba fallaba sin que nada estuviera roto. Comprobar la pertenencia real no depende de
+        // cuántos haya.
+        var primeraPagina = await ItemsAsync(cliente, $"{ruta}?pageSize={TAMANO_DE_PAGINA}");
+        var enLaPagina = primeraPagina.Select(i => i.GetProperty("id").GetGuid()).ToHashSet();
 
-        var primeraPagina = await ItemsAsync(cliente, $"{ruta}?pageSize={todos.Length - 1}");
-        primeraPagina.Select(i => i.GetProperty("id").GetGuid()).Should().NotContain(id,
+        var escondido = todos.LastOrDefault(t => !enLaPagina.Contains(t.GetProperty("id").GetGuid()));
+
+        escondido.ValueKind.Should().NotBe(JsonValueKind.Undefined,
             "el elemento elegido tiene que estar fuera de la primera página; si no, buscar en el "
             + "cliente sobre lo ya descargado también lo habría encontrado");
+
+        var id = escondido.GetProperty("id").GetGuid();
+        var titulo = escondido.GetProperty(campo).GetString()!;
 
         var encontrados = await ItemsAsync(cliente, $"{ruta}?pageSize=200&search={Uri.EscapeDataString(titulo)}");
 

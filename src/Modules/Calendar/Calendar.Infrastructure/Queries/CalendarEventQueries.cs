@@ -98,30 +98,14 @@ public sealed class CalendarEventQueries(CalendarDbContext context) : ICalendarE
         items: dtos, totalCount: totalCount, page: pagination.Page, pageSize: pagination.PageSize);
   }
 
-  private static CalendarEventDto MapToDto(CalendarEvent entity)
-  {
-    return new CalendarEventDto(
-        entity.Id,
-        entity.TenantId,
-        entity.OrganizerId,
-        entity.ProjectId,
-        entity.TaskId,
-        entity.TicketId,
-        entity.Title,
-        entity.Description,
-        CalendarEventType.FromValue<CalendarEventType>(entity.TypeValue)?.Name ?? "Unknown",
-        entity.StartTime,
-        entity.EndTime,
-        entity.Location,
-        entity.IsAllDay,
-        RecurrencePattern.FromValue<RecurrencePattern>(entity.RecurrenceValue)?.Name ?? "None",
-        entity.RecurrenceInterval,
-        entity.RecurrenceEndDate,
-        entity.CreatedAt,
-        entity.IsDeleted,
-        entity.DeletedAt,
-        entity.DeletedBy,
-        entity.CanceladoEnUtc,
-        entity.MotivoDeCancelacion);
-  }
+  /// <summary>
+  /// Pasa la entidad a DTO reutilizando el mapeo de la capa de aplicación.
+  ///
+  /// <b>Estaba escrito dos veces</b>, aquí y en <c>CalendarEventDtoExtensions.ToDto</c>, y las dos
+  /// copias ya habían empezado a separarse: una traducía el tipo con <c>FromValue(...)?.Name ??
+  /// "Unknown"</c> y la otra con la propiedad de la entidad. Cuando se marcaron las fechas como
+  /// UTC —lo que evita que el navegador corra los eventos el desfase horario— sólo se arregló una
+  /// de las dos, así que la lista seguía mal mientras el detalle salía bien.
+  /// </summary>
+  private static CalendarEventDto MapToDto(CalendarEvent entity) => entity.ToDto();
 }
