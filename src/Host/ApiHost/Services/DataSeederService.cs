@@ -182,11 +182,23 @@ public sealed class DataSeederService(IServiceProvider serviceProvider, ILogger<
                 await identityDb.SaveChangesAsync(cancellationToken);
             }
 
+            // Las vistas que se sembraron con el nombre interno del módulo se renombran al que
+            // usa la pantalla. Sin esto seguirían guardadas y sin verse, que es peor que no
+            // tenerlas: ocupan sitio y no aparecen.
+            await identityDb.Database.ExecuteSqlAsync(
+                $"UPDATE `SavedViews` SET `ModuleName` = 'Tasks' WHERE `ModuleName` = 'WorkItems'",
+                cancellationToken);
+
             var existingViews = await identityDb.SavedViews.Where(v => v.TenantId == tenantId && v.UserId == adminUser.Id).ToListAsync(cancellationToken);
             if (existingViews.Count == 0)
             {
                 identityDb.SavedViews.AddRange(
-                    SavedView.Create(adminUser.Id, tenantId, "WorkItems", "Mis Tareas Pendientes", "{\"page\":1,\"pageSize\":25,\"searchTerm\":\"\",\"filters\":{\"status\":\"To Do\"}}", true),
+                    // «Tasks», no «WorkItems». El módulo se llama WorkItems por dentro, pero la
+                    // pantalla pide sus vistas por «Tasks» —como la ruta `/tasks`—, así que una
+                    // vista sembrada con el nombre interno **no la ve nadie**: la pantalla pedía
+                    // `/views/Tasks` y el servidor devolvía una lista vacía teniéndola guardada.
+                    // Es el mismo desajuste de vocabulario que el de `EntityType`.
+                    SavedView.Create(adminUser.Id, tenantId, "Tasks", "Mis Tareas Pendientes", "{\"page\":1,\"pageSize\":25,\"searchTerm\":\"\",\"filters\":{\"status\":\"To Do\"}}", true),
                     SavedView.Create(adminUser.Id, tenantId, "Projects", "Proyectos Activos Q3", "{\"page\":1,\"pageSize\":25,\"searchTerm\":\"\",\"filters\":{}}", false),
                     SavedView.Create(adminUser.Id, tenantId, "Tickets", "Tickets Prioritarios", "{\"page\":1,\"pageSize\":25,\"searchTerm\":\"\",\"filters\":{\"priority\":\"High\"}}", false)
                 );

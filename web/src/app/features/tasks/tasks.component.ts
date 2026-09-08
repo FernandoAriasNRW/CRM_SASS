@@ -22,6 +22,7 @@ import type { AristaDeDependencia } from './gantt';
 import { DataTableComponent, ColumnDef, TableState, type CellEdit } from '../../shared/ui/data-table/data-table.component';
 import { FilterField } from '../../shared/ui/data-table/advanced-filters.component';
 import { ViewsService, SavedView } from '../../shared/services/views.service';
+import { BarraDeVistasComponent, type VistaIntegrada } from '../../shared/ui/barra-de-vistas/barra-de-vistas.component';
 import { TableColumnService } from '../../shared/services/table-column.service';
 import { HierarchySignalStore } from '../../core/hierarchy-signal.store';
 import { ClickableDirective } from '../../shared/directives/clickable.directive';
@@ -74,7 +75,7 @@ const ESTADOS = COLUMN_DEFS.map(c => c.key);
 @Component({
   selector: 'app-tasks',
   standalone: true,
-  imports: [PanelDeNavegacionComponent, ClickableDirective, FormsModule, BadgeComponent, ButtonComponent, NgIconComponent, DragDropModule, TaskCreateModalComponent, TaskDetailPanelComponent, DataTableComponent, SkeletonListComponent, EmptyInlineComponent, GanttComponent, CargaComponent],
+  imports: [PanelDeNavegacionComponent, ClickableDirective, FormsModule, BadgeComponent, ButtonComponent, NgIconComponent, DragDropModule, TaskCreateModalComponent, TaskDetailPanelComponent, DataTableComponent, SkeletonListComponent, EmptyInlineComponent, GanttComponent, CargaComponent, BarraDeVistasComponent],
   viewProviders: [provideIcons({
     lucideRefreshCw, lucidePlus, lucideClock,
     lucideList, lucideLayoutDashboard, lucideFilter, lucideSave,
@@ -101,6 +102,18 @@ export class TasksComponent implements OnInit {
   readonly showModal = signal(false);
   readonly selectedTask = signal<TaskItem | null>(null);
   readonly viewMode = signal<'board' | 'list' | 'gantt' | 'carga'>('board');
+
+  /**
+   * Las cuatro formas de ver que este módulo sabe pintar. Es la lista que dibuja las pestañas y
+   * también la que valida qué modo puede ponerse: si estuviera escrita dos veces, guardar una
+   * vista de Gantt acabaría abriendo un tablero.
+   */
+  readonly VISTAS_INTEGRADAS: VistaIntegrada[] = [
+    { clave: 'board', etiqueta: 'Tablero', icono: 'lucideLayoutDashboard' },
+    { clave: 'list',  etiqueta: 'Lista',   icono: 'lucideList' },
+    { clave: 'gantt', etiqueta: 'Gantt',   icono: 'lucideChartGantt' },
+    { clave: 'carga', etiqueta: 'Carga',   icono: 'lucideChartColumn' }
+  ];
 
   /**
    * El grafo de dependencias, para las flechas del Gantt.
@@ -282,38 +295,45 @@ export class TasksComponent implements OnInit {
     });
   }
 
-  getIconForView(view: SavedView): string {
-    try {
-      const state = JSON.parse(view.stateJson);
-      return state.viewType === 'board' ? 'lucideLayoutDashboard' : 'lucideList';
-    } catch {
-      return 'lucideList';
-    }
+  /** Cambia a una vista de fábrica y deja de estar en una guardada. */
+  verComo(modo: string): void {
+    this.aplicarModo(modo);
+    this.activeViewId.set(null);
   }
 
-  createNewView(type: 'list' | 'board'): void {
-    const name = prompt('Nombre de la nueva vista:');
-    if (!name) return;
-    
-    this.viewMode.set(type);
-    
-    const newState = {
-      ...this.tableState(),
-      viewType: type
-    };
-    
-    const payload = {
+  crearVista({ nombre, tipo }: { nombre: string; tipo: string }): void {
+    this.aplicarModo(tipo);
+
+    const estado = { ...this.tableState(), viewType: tipo };
+
+    this.viewsService.saveView({
       moduleName: 'Tasks',
-      viewName: name,
-      stateJson: JSON.stringify(newState),
+      viewName: nombre,
+      stateJson: JSON.stringify(estado),
       isDefault: false
-    };
-    
-    this.viewsService.saveView(payload).subscribe({
+    }).subscribe({
       next: (view) => {
         this.savedViews.update(views => [...views, view]);
         this.activeViewId.set(view.id);
-        this.tableState.set(newState);
+        this.tableState.set(estado as TableState);
+      }
+    });
+  }
+
+  /**
+   * Borra una vista guardada. La API tenía el endpoint desde el principio y no lo llamaba nadie:
+   * se podían crear vistas y no quitarlas.
+   */
+  borrarVista(vista: SavedView): void {
+    this.viewsService.deleteView(vista.id).subscribe({
+      next: () => {
+        this.savedViews.update(views => views.filter(v => v.id !== vista.id));
+
+        if (this.activeViewId() === vista.id) {
+          this.activeViewId.set(null);
+          this.aplicarModo('board');
+          this.loadTasks();
+        }
       }
     });
   }
@@ -323,13 +343,33 @@ export class TasksComponent implements OnInit {
     try {
       const state = JSON.parse(view.stateJson) as TableState;
       this.tableState.set(state);
-      if (state.viewType === 'board' || state.viewType === 'list') {
-        this.viewMode.set(state.viewType);
-      }
+      if (state.viewType) this.aplicarModo(state.viewType);
       this.loadTasks();
     } catch (e) {
       console.error('Failed to parse saved view state', e);
     }
+  }
+
+  /**
+   * Pone un modo comprobando que sea uno de los que este módulo pinta.
+   *
+   * Antes se comparaba a mano contra 'board' y 'list', así que **una vista guardada de Gantt o de
+   * carga se abría como tablero**: la pestaña quedaba marcada y debajo salía otra cosa. Se valida
+   * contra la misma lista que dibuja las pestañas, que es la única forma de que no se
+   * desincronicen.
+   */
+  private aplicarModo(modo: string): void {
+    if (!this.VISTAS_INTEGRADAS.some(v => v.clave === modo)) return;
+
+    // El Gantt no es sólo un modo: la primera vez tiene que pedir el grafo de dependencias, o
+    // sale sin flechas. Se pasa por `verGantt` en lugar de poner la señal a mano, que es lo que
+    // hacía que una vista guardada de Gantt se abriera pelada.
+    if (modo === 'gantt') {
+      this.verGantt();
+      return;
+    }
+
+    this.viewMode.set(modo as 'board' | 'list' | 'carga');
   }
 
   onTableStateChange(state: TableState): void {

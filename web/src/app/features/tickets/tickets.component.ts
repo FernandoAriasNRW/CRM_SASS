@@ -24,6 +24,7 @@ import { ClickableDirective } from '../../shared/directives/clickable.directive'
 import { ToastService } from '../../shared/services/toast.service';
 import { EmptyInlineComponent } from '../../shared/ui/empty-state.component';
 import { PanelDeNavegacionComponent } from '../../shared/ui/panel-de-navegacion/panel-de-navegacion.component';
+import { BarraDeVistasComponent, type VistaIntegrada } from '../../shared/ui/barra-de-vistas/barra-de-vistas.component';
 
 interface Column {
   key: string;
@@ -55,7 +56,7 @@ const STATUS_BADGE: Record<string, BadgeVariant> = {
   imports: [PanelDeNavegacionComponent, ClickableDirective, 
     CommonModule, FormsModule, BadgeComponent, ButtonComponent,
     NgIconComponent, DragDropModule, TicketCreateModalComponent, TicketDetailPanelComponent,
-    DataTableComponent, HasPermissionDirective, EmptyInlineComponent
+    DataTableComponent, HasPermissionDirective, EmptyInlineComponent, BarraDeVistasComponent
   ],
   viewProviders: [provideIcons({
     lucideRefreshCw, lucidePlus, lucideList,
@@ -81,6 +82,18 @@ export class TicketsComponent implements OnInit {
   readonly showModal = signal(false);
   readonly selectedTicket = signal<Ticket | null>(null);
   readonly viewMode = signal<'board' | 'list'>('board');
+
+  /**
+   * Las formas de ver que este módulo sabe pintar.
+   *
+   * Se declaran aquí y no dentro de la barra porque cada módulo tiene las suyas: tareas añade
+   * Gantt y carga de trabajo, y una barra que las supiese todas ofrecería en tickets pestañas que
+   * no llevan a ninguna parte.
+   */
+  readonly VISTAS_INTEGRADAS: VistaIntegrada[] = [
+    { clave: 'board', etiqueta: 'Tablero', icono: 'lucideLayoutDashboard' },
+    { clave: 'list',  etiqueta: 'Lista',   icono: 'lucideList' }
+  ];
   readonly isLoading = signal(false);
 
   // Table State
@@ -191,38 +204,53 @@ export class TicketsComponent implements OnInit {
     });
   }
 
-  getIconForView(view: SavedView): string {
-    try {
-      const state = JSON.parse(view.stateJson);
-      return state.viewType === 'board' ? 'lucideLayoutDashboard' : 'lucideList';
-    } catch {
-      return 'lucideList';
-    }
+  /**
+   * Cambia a una vista de fábrica, y deja de estar en una guardada.
+   *
+   * Limpiar `activeViewId` importa: si no, la pestaña guardada seguiría marcada mientras se está
+   * viendo otra cosa, que es enseñar dos verdades a la vez.
+   */
+  verComo(modo: string): void {
+    this.viewMode.set(modo as 'board' | 'list');
+    this.activeViewId.set(null);
   }
 
-  createNewView(type: 'list' | 'board'): void {
-    const name = prompt('Nombre de la nueva vista:');
-    if (!name) return;
-    
-    this.viewMode.set(type);
-    
-    const newState = {
-      ...this.tableState(),
-      viewType: type
-    };
-    
-    const payload = {
+  crearVista({ nombre, tipo }: { nombre: string; tipo: string }): void {
+    this.viewMode.set(tipo as 'board' | 'list');
+
+    const estado = { ...this.tableState(), viewType: tipo };
+
+    this.viewsService.saveView({
       moduleName: 'Tickets',
-      viewName: name,
-      stateJson: JSON.stringify(newState),
+      viewName: nombre,
+      stateJson: JSON.stringify(estado),
       isDefault: false
-    };
-    
-    this.viewsService.saveView(payload).subscribe({
+    }).subscribe({
       next: (view) => {
         this.savedViews.update(views => [...views, view]);
         this.activeViewId.set(view.id);
-        this.tableState.set(newState);
+        this.tableState.set(estado as TableState);
+      }
+    });
+  }
+
+  /**
+   * Borra una vista guardada.
+   *
+   * La API tenía el endpoint desde el principio y **no lo llamaba nadie**: se podían crear vistas
+   * y no quitarlas. Si además la que estaba puesta era la borrada, se vuelve al tablero; dejar
+   * marcada una pestaña que ya no existe deja la pantalla enseñando algo sin nombre.
+   */
+  borrarVista(vista: SavedView): void {
+    this.viewsService.deleteView(vista.id).subscribe({
+      next: () => {
+        this.savedViews.update(views => views.filter(v => v.id !== vista.id));
+
+        if (this.activeViewId() === vista.id) {
+          this.activeViewId.set(null);
+          this.viewMode.set('board');
+          this.loadTickets();
+        }
       }
     });
   }

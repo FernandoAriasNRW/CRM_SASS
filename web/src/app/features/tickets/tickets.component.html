@@ -20,55 +20,18 @@
       </div>
     </div>
 
-    <div class="flex items-center px-2 overflow-x-auto">
-      <!-- Default Views (if none saved) -->
-      @if (savedViews().length === 0) {
-        <button (click)="viewMode.set('board')"
-          [class.border-primary]="viewMode() === 'board'"
-          [class.text-primary]="viewMode() === 'board'"
-          [class.border-transparent]="viewMode() !== 'board'"
-          class="flex items-center gap-2 px-4 py-2.5 border-b-2 font-medium text-sm whitespace-nowrap cursor-pointer transition-colors hover:text-foreground">
-          <ng-icon name="lucideLayoutDashboard" size="14" /> Board
-        </button>
-        <button (click)="viewMode.set('list')"
-          [class.border-primary]="viewMode() === 'list'"
-          [class.text-primary]="viewMode() === 'list'"
-          [class.border-transparent]="viewMode() !== 'list'"
-          class="flex items-center gap-2 px-4 py-2.5 border-b-2 font-medium text-sm whitespace-nowrap cursor-pointer transition-colors hover:text-foreground">
-          <ng-icon name="lucideList" size="14" /> Lista
-        </button>
-      }
-
-      <!-- Saved Views Tabs -->
-      @for (view of savedViews(); track view.id) {
-        <button (click)="applySavedView(view)"
-          [class.border-primary]="activeViewId() === view.id"
-          [class.text-primary]="activeViewId() === view.id"
-          [class.border-transparent]="activeViewId() !== view.id"
-          class="flex items-center gap-2 px-4 py-2.5 border-b-2 font-medium text-sm whitespace-nowrap cursor-pointer transition-colors hover:text-foreground">
-          <ng-icon [name]="getIconForView(view)" size="14" />
-          {{ view.viewName }}
-        </button>
-      }
-
-      <!-- Add View -->
-      <div class="relative group" tabindex="0">
-        <button class="flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-          <ng-icon name="lucidePlus" size="14" /> Vista
-        </button>
-        <div class="absolute top-full left-0 mt-1 w-48 rounded-lg border border-border bg-card shadow-lg z-10 hidden group-focus-within:block focus-within:block">
-          <div class="p-2 space-y-1">
-            <p class="px-2 py-1 text-xs font-semibold text-muted-foreground uppercase tracking-wider" i18n>Crear nueva vista</p>
-            <button (click)="createNewView('list')" class="flex items-center gap-2 w-full px-2 py-1.5 text-sm hover:bg-accent rounded-md transition-colors text-left">
-              <ng-icon name="lucideList" size="14" /> Lista
-            </button>
-            <button (click)="createNewView('board')" class="flex items-center gap-2 w-full px-2 py-1.5 text-sm hover:bg-accent rounded-md transition-colors text-left">
-              <ng-icon name="lucideLayoutDashboard" size="14" /> Tablero
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
+    <!-- Las pestañas: las de fábrica siempre, y detrás las guardadas. Antes las de fábrica
+         vivían dentro de un @if (savedViews().length === 0) y desaparecían en cuanto había una
+         vista guardada, así que no había forma de ver los tickets como lista. -->
+    <app-barra-de-vistas
+      [integradas]="VISTAS_INTEGRADAS"
+      [modo]="viewMode()"
+      [guardadas]="savedViews()"
+      [vistaActivaId]="activeViewId()"
+      (cambiarModo)="verComo($event)"
+      (aplicar)="applySavedView($event)"
+      (crear)="crearVista($event)"
+      (borrar)="borrarVista($event)" />
   </div>
 
   <!-- VISTA BOARD -->
