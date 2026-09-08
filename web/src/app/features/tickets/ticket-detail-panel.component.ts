@@ -13,13 +13,6 @@ import {
 import type { Ticket } from './ticket-create-modal.component';
 import { TICKET_TAGS, type Tag } from '../../shared/utils/tags';
 
-interface Comment {
-  id: string;
-  authorId: string;
-  authorName: string;
-  content: string;
-  createdAtUtc: string;
-}
 
 const STATUSES = ['New', 'In Progress', 'Resolved', 'Closed'];
 const PRIORITIES = [
@@ -34,11 +27,12 @@ const STATUS_BADGE: Record<string, BadgeVariant> = {
 
 import { DrawerComponent } from '../../shared/ui/drawer.component';
 import { ClickableDirective } from '../../shared/directives/clickable.directive';
+import { ComentariosComponent } from '../../shared/ui/comentarios.component';
 
 @Component({
   selector: 'app-ticket-detail-panel',
   standalone: true,
-  imports: [ClickableDirective, FormsModule, DatePipe, BadgeComponent, AvatarComponent, NgIconComponent, DrawerComponent],
+  imports: [ComentariosComponent, ClickableDirective, FormsModule, DatePipe, BadgeComponent, AvatarComponent, NgIconComponent, DrawerComponent],
   viewProviders: [provideIcons({
     lucideX, lucideCheck, lucideUser, lucideTag,
     lucideFlag, lucideMessageSquare, lucidePaperclip,
@@ -61,8 +55,6 @@ export class TicketDetailPanelComponent implements OnInit {
   priority = 'normal';
   selectedTags = signal<string[]>([]);
   showTagPicker = signal(false);
-  newComment = signal('');
-  comments = signal<Comment[]>([]);
   activeTab = signal<'comments' | 'activity'>('comments');
 
   readonly statuses = STATUSES;
@@ -80,15 +72,8 @@ export class TicketDetailPanelComponent implements OnInit {
     if ((t as any).tags) {
       this.selectedTags.set(String((t as any).tags).split(',').map((s: string) => s.trim()).filter(Boolean));
     }
-    this.loadComments();
   }
 
-  loadComments(): void {
-    this.api.get<Comment[]>(`/tickets/${this.ticket().id}/comments`).subscribe({
-      next: data => this.comments.set(data),
-      error: () => {},
-    });
-  }
 
   saveField(field: string, value: unknown): void {
     this.isSaving.set(true);
@@ -127,21 +112,7 @@ export class TicketDetailPanelComponent implements OnInit {
     return TICKET_TAGS.find(t => t.key === key);
   }
 
-  sendComment(): void {
-    const content = this.newComment().trim();
-    if (!content) return;
-    this.api.post<Comment>(`/tickets/${this.ticket().id}/comments`, { content }).subscribe({
-      next: comment => {
-        this.comments.update(c => [...c, comment]);
-        this.newComment.set('');
-      },
-      error: () => {},
-    });
-  }
 
-  onKeydown(e: KeyboardEvent): void {
-    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) this.sendComment();
-  }
 
   close(): void { this.closed.emit(); }
 }

@@ -2,6 +2,13 @@ import { Injectable, inject, signal } from '@angular/core';
 import { Observable, tap } from 'rxjs';
 import { ApiService } from './api.service';
 
+/**
+ * Estas llamadas explican su propio error —junto al campo, o en el formulario que se queda
+ * abierto—, así que el interceptor no debe levantar además su aviso: sería el mismo texto dos
+ * veces para un solo fallo.
+ */
+const SIN_AVISO = { sinAviso: true };
+
 /** Los tipos que define el backend. Cambiar esta lista sin cambiar allí no sirve de nada. */
 export const TIPOS_DE_CAMPO = [
   { key: 'Texto', label: $localize`Texto` },
@@ -67,21 +74,21 @@ export class CustomFieldsService {
    * normalizaciones distintas —una en el navegador y otra en el servidor— acaban discrepando.
    */
   guardarValor(definitionId: string, entityId: string, valor: string | null): Observable<void> {
-    return this.api.put<void>(`/custom-fields/values/${definitionId}/${entityId}`, { valor });
+    return this.api.put<void>(`/custom-fields/values/${definitionId}/${entityId}`, { valor }, SIN_AVISO);
   }
 
   definir(campo: Omit<CustomFieldDefinition, 'id'>): Observable<CustomFieldDefinition> {
-    return this.api.post<CustomFieldDefinition>('/custom-fields', campo).pipe(
+    return this.api.post<CustomFieldDefinition>('/custom-fields', campo, SIN_AVISO).pipe(
       tap(() => this.invalidar(campo.entidadDestino))
     );
   }
 
   actualizar(id: string, entidad: string, cambios: Pick<CustomFieldDefinition, 'nombre' | 'obligatorio' | 'opciones' | 'posicion'>): Observable<void> {
-    return this.api.put<void>(`/custom-fields/${id}`, cambios).pipe(tap(() => this.invalidar(entidad)));
+    return this.api.put<void>(`/custom-fields/${id}`, cambios, SIN_AVISO).pipe(tap(() => this.invalidar(entidad)));
   }
 
   borrar(id: string, entidad: string): Observable<void> {
-    return this.api.delete<void>(`/custom-fields/${id}`).pipe(tap(() => this.invalidar(entidad)));
+    return this.api.delete<void>(`/custom-fields/${id}`, SIN_AVISO).pipe(tap(() => this.invalidar(entidad)));
   }
 
   private invalidar(entidad: string): void {

@@ -9,6 +9,16 @@ public sealed record TaskDependencyRefDto(Guid Id, string Title, string Status, 
 /// «Bloqueada por» es lo que impide avanzar; «bloquea a» es la consecuencia de no avanzar. Es
 /// la misma relación mirada de los dos lados, y en la base sólo se guarda una vez.
 /// </summary>
+/// <summary>
+/// Una arista del grafo: <paramref name="TaskId"/> está bloqueada por
+/// <paramref name="DependsOnTaskId"/>.
+///
+/// Es lo mínimo para dibujar una flecha. No lleva título ni estado a propósito: quien pinta el
+/// diagrama ya tiene las tareas cargadas, y repetirlos aquí multiplicaría el tamaño de la
+/// respuesta por cada dependencia sin añadir nada.
+/// </summary>
+public sealed record TaskDependencyEdgeDto(Guid TaskId, Guid DependsOnTaskId);
+
 public sealed record TaskDependenciesDto(
     IReadOnlyList<TaskDependencyRefDto> BloqueadaPor,
     IReadOnlyList<TaskDependencyRefDto> BloqueaA

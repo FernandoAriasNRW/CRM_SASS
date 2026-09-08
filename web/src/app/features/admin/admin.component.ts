@@ -4,17 +4,18 @@ import { Router, RouterModule, ActivatedRoute } from '@angular/router';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import {
   lucideUsers, lucideUserCheck, lucideShieldCheck, lucideWebhook,
-  lucideSettings, lucideBuilding2, lucideListPlus
+  lucideSettings, lucideBuilding2, lucideListPlus, lucideZap
 } from '@ng-icons/lucide';
 import { AdminUsersComponent } from './users/admin-users.component';
 import { AdminTeamsComponent } from './teams/admin-teams.component';
 import { AdminPermissionsComponent } from './permissions/admin-permissions.component';
 import { AdminCustomFieldsComponent } from './custom-fields/admin-custom-fields.component';
+import { AdminAutomationsComponent } from './automations/admin-automations.component';
 import { WebhooksComponent } from '../webhooks/webhooks.component';
 
-type PestanaDeAdmin = 'users' | 'teams' | 'permissions' | 'custom-fields' | 'webhooks';
+type PestanaDeAdmin = 'users' | 'teams' | 'permissions' | 'custom-fields' | 'automations' | 'webhooks';
 
-const PESTANAS: PestanaDeAdmin[] = ['users', 'teams', 'permissions', 'custom-fields', 'webhooks'];
+const PESTANAS: PestanaDeAdmin[] = ['users', 'teams', 'permissions', 'custom-fields', 'automations', 'webhooks'];
 
 @Component({
   selector: 'app-admin',
@@ -26,12 +27,13 @@ const PESTANAS: PestanaDeAdmin[] = ['users', 'teams', 'permissions', 'custom-fie
     AdminTeamsComponent,
     AdminPermissionsComponent,
     AdminCustomFieldsComponent,
+    AdminAutomationsComponent,
     WebhooksComponent
 ],
   viewProviders: [
     provideIcons({
       lucideUsers, lucideUserCheck, lucideShieldCheck, lucideWebhook,
-      lucideSettings, lucideBuilding2, lucideListPlus
+      lucideSettings, lucideBuilding2, lucideListPlus, lucideZap
     })
   ],
   templateUrl: './admin.component.html',

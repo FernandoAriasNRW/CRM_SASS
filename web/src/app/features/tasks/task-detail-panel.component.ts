@@ -24,14 +24,7 @@ import { TASK_TAGS, type Tag } from '../../shared/utils/tags';
 import { UsersService, type TenantUser } from '../../core/users.service';
 import { ClickableDirective } from '../../shared/directives/clickable.directive';
 import { CustomFieldsFormComponent } from '../../shared/ui/custom-fields-form.component';
-
-interface Comment {
-  id: string;
-  authorId: string;
-  authorName: string;
-  content: string;
-  createdAtUtc: string;
-}
+import { ComentariosComponent } from '../../shared/ui/comentarios.component';
 
 const STATUSES = ['To Do', 'In Progress', 'In Review', 'Done'];
 
@@ -46,7 +39,7 @@ const STATUS_BADGE: Record<string, BadgeVariant> = {
 @Component({
   selector: 'app-task-detail-panel',
   standalone: true,
-  imports: [ClickableDirective, FormsModule, DatePipe, BadgeComponent, AvatarComponent, NgIconComponent, SkeletonComponent, DrawerComponent, CustomFieldsFormComponent],
+  imports: [ClickableDirective, FormsModule, DatePipe, BadgeComponent, AvatarComponent, NgIconComponent, SkeletonComponent, DrawerComponent, CustomFieldsFormComponent, ComentariosComponent],
   viewProviders: [provideIcons({
     lucideX, lucideCheck, lucideCalendar, lucideClock, lucideUser,
     lucideTag, lucideFlag, lucideMessageSquare, lucidePaperclip,
@@ -82,8 +75,6 @@ export class TaskDetailPanelComponent implements OnInit {
   estimatedHours = 0;
   selectedTags = signal<string[]>([]);
   showTagPicker = signal(false);
-  newComment = signal('');
-  comments = signal<Comment[]>([]);
   saving = signal(false);
   subtareas = signal<TaskItem[]>([]);
   cargandoSubtareas = signal(false);
@@ -100,8 +91,6 @@ export class TaskDetailPanelComponent implements OnInit {
   cargandoDependencias = signal(false);
   candidatasABloquear = signal<TaskItem[]>([]);
   bloqueanteElegido = '';
-  loadingComments = signal(false);
-  sendingComment = signal(false);
   activeTab = signal<'comments' | 'activity'>('comments');
 
   readonly priorities = PRIORIDADES;
@@ -128,7 +117,6 @@ export class TaskDetailPanelComponent implements OnInit {
     }
     this.responsables.set(t.assignees ?? (t.assigneeId ? [t.assigneeId] : []));
     this.principal.set(t.assigneeId ?? '');
-    this.loadComments();
     if (!this.esSubtarea()) this.cargarSubtareas();
     this.cargarDependencias();
     this.cargarChecklist();
@@ -497,19 +485,6 @@ export class TaskDetailPanelComponent implements OnInit {
     });
   }
 
-  loadComments(): void {
-    this.loadingComments.set(true);
-    this.api.get<Comment[]>(`/tasks/${this.task().id}/comments`).subscribe({
-      next: data => {
-        this.comments.set(data);
-        this.loadingComments.set(false);
-      },
-      error: () => {
-        this.loadingComments.set(false);
-        this.toast.error('Error', 'No se pudieron cargar los comentarios');
-      },
-    });
-  }
 
   saveField(field: string, value: unknown): void {
     this.saving.set(true);
@@ -586,27 +561,7 @@ export class TaskDetailPanelComponent implements OnInit {
     });
   }
 
-  sendComment(): void {
-    const content = this.newComment().trim();
-    if (!content) return;
-    this.sendingComment.set(true);
-    this.api.post<Comment>(`/tasks/${this.task().id}/comments`, { content }).subscribe({
-      next: comment => {
-        this.comments.update(c => [...c, comment]);
-        this.newComment.set('');
-        this.sendingComment.set(false);
-        this.toast.success('Comentario agregado', 'Tu comentario fue publicado');
-      },
-      error: () => {
-        this.sendingComment.set(false);
-        this.toast.error('Error', 'No se pudo enviar el comentario');
-      },
-    });
-  }
 
-  onKeydown(e: KeyboardEvent): void {
-    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) this.sendComment();
-  }
 
   close(): void { this.closed.emit(); }
 }

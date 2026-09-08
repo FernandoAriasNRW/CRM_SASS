@@ -196,6 +196,16 @@ public static class WorkItemsEndpoints
       return result.IsSuccess ? Results.NoContent() : Results.BadRequest(result.Error);
     });
 
+    // El grafo entero, para el Gantt. Va antes que la ruta con identificador para que no la
+    // capture: «dependencies» no es un Guid, pero dejar dos rutas que compiten por el mismo
+    // tramo es la clase de cosa que se rompe sola al tocar cualquiera de las dos.
+    group.MapGet("/dependencies", async (System.Security.Claims.ClaimsPrincipal principal, IMediator mediator) =>
+    {
+      var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
+      var result = await mediator.Send(new GetDependencyGraphQuery(tenantId));
+      return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
+    });
+
     // Dependencias: las dos direcciones en una sola respuesta, porque el panel las pinta juntas.
     group.MapGet("/{id:guid}/dependencies", async (System.Security.Claims.ClaimsPrincipal principal, Guid id, IMediator mediator) =>
     {

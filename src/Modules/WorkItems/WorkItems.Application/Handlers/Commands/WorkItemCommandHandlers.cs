@@ -40,7 +40,11 @@ public sealed class CreateTaskCommandHandler(
     catch (InvalidOperationException ex) { return Result<WorkTask>.Failure(ex.Message); }
 
     await repository.AddAsync(task, cancellationToken);
-    await unitOfWork.SaveChangesAsync(cancellationToken);
+
+    // Se reparten los eventos en proceso, y no sólo al outbox: de aquí salen los disparos de
+    // las automatizaciones y el aviso por SignalR al tablero, y los dos tienen que ocurrir
+    // dentro de esta misma petición para que quien acabe de tocar la tarea vea el resultado.
+    await unitOfWork.SaveChangesAndDispatchAsync(cancellationToken);
 
     return Result<WorkTask>.Success(task);
   }
@@ -105,7 +109,11 @@ public sealed class PatchTaskCommandHandler(
     catch (InvalidOperationException ex) { return Result<bool>.Failure(ex.Message); }
 
     await repository.UpdateAsync(task, cancellationToken);
-    await unitOfWork.SaveChangesAsync(cancellationToken);
+
+    // Se reparten los eventos en proceso, y no sólo al outbox: de aquí salen los disparos de
+    // las automatizaciones y el aviso por SignalR al tablero, y los dos tienen que ocurrir
+    // dentro de esta misma petición para que quien acabe de tocar la tarea vea el resultado.
+    await unitOfWork.SaveChangesAndDispatchAsync(cancellationToken);
     return Result<bool>.Success(true);
   }
 }
