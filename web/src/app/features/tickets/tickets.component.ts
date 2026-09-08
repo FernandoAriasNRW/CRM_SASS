@@ -10,6 +10,7 @@ import { BadgeComponent, type BadgeVariant } from '../../shared/ui/badge.compone
 import { ButtonComponent } from '../../shared/ui/button.component';
 import { TicketCreateModalComponent, type Ticket } from './ticket-create-modal.component';
 import { TicketDetailPanelComponent } from './ticket-detail-panel.component';
+import { ESTADOS_DE_TICKET, insigniaDelEstado, nombreDeLaPrioridad, nombreDelEstado } from './vocabulario-de-tickets';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import {
   lucideRefreshCw, lucidePlus, lucideList,
@@ -23,7 +24,6 @@ import { TableColumnService } from '../../shared/services/table-column.service';
 import { ClickableDirective } from '../../shared/directives/clickable.directive';
 import { ToastService } from '../../shared/services/toast.service';
 import { EmptyInlineComponent } from '../../shared/ui/empty-state.component';
-import { PanelDeNavegacionComponent } from '../../shared/ui/panel-de-navegacion/panel-de-navegacion.component';
 import { BarraDeVistasComponent, type VistaIntegrada } from '../../shared/ui/barra-de-vistas/barra-de-vistas.component';
 
 interface Column {
@@ -39,21 +39,25 @@ interface Column {
 /** Tarjetas por columna antes de pedir más. Ver el mismo razonamiento en tasks. */
 const POR_TANDA = 25;
 
-const COLUMN_DEFS: Omit<Column, 'tickets' | 'pendientes'>[] = [
-  { key: 'Open',         label: 'Abierto',      badge: 'secondary' },
-  { key: 'InProgress',   label: 'En progreso',  badge: 'default'   },
-  { key: 'Resolved',     label: 'Resuelto',     badge: 'success'   },
-  { key: 'Closed',       label: 'Cerrado',      badge: 'outline'   },
-];
+/**
+ * Las columnas del tablero, sacadas del vocabulario compartido.
+ *
+ * Estaban escritas aquí a mano y **faltaba `PendingInfo`**: un ticket esperando información no
+ * caía en ninguna columna, así que desaparecía del tablero sin estar borrado ni archivado. Ahora
+ * salen de la misma lista que usan el cajón de detalle y el alta.
+ */
+const COLUMN_DEFS: Omit<Column, 'tickets' | 'pendientes'>[] = ESTADOS_DE_TICKET.map(e => ({
+  key: e.clave,
+  label: e.etiqueta,
+  badge: e.badge
+}));
 
-const STATUS_BADGE: Record<string, BadgeVariant> = {
-  'Open': 'secondary', 'InProgress': 'default', 'Resolved': 'success', 'Closed': 'outline'
-};
+
 
 @Component({
   selector: 'app-tickets',
   standalone: true,
-  imports: [PanelDeNavegacionComponent, ClickableDirective, 
+  imports: [ClickableDirective, 
     CommonModule, FormsModule, BadgeComponent, ButtonComponent,
     NgIconComponent, DragDropModule, TicketCreateModalComponent, TicketDetailPanelComponent,
     DataTableComponent, HasPermissionDirective, EmptyInlineComponent, BarraDeVistasComponent
@@ -65,11 +69,6 @@ const STATUS_BADGE: Record<string, BadgeVariant> = {
   templateUrl: './tickets.component.html',
 })
 export class TicketsComponent implements OnInit {
-  /**
-   * Si el panel de navegación está anclado. La vista lo necesita para dejarle sitio: el panel
-   * se dibuja por encima, así que sin este relleno taparía la primera columna de la lista.
-   */
-  panelAnclado = signal(true);
 
   private readonly toast = inject(ToastService);
   private readonly api = inject(ApiService);
@@ -138,7 +137,10 @@ export class TicketsComponent implements OnInit {
 
   readonly statuses = ['Open', 'InProgress', 'Resolved', 'Closed'];
 
-  statusBadge(status: string): BadgeVariant { return STATUS_BADGE[status] ?? 'outline'; }
+  statusBadge(status: string): BadgeVariant { return insigniaDelEstado(status); }
+
+  readonly nombreDelEstado = nombreDelEstado;
+  readonly nombreDeLaPrioridad = nombreDeLaPrioridad;
 
   @ViewChild('statusTemplate', { static: true }) statusTemplate!: TemplateRef<any>;
   @ViewChild('priorityTemplate', { static: true }) priorityTemplate!: TemplateRef<any>;

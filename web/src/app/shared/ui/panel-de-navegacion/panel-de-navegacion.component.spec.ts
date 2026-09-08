@@ -26,6 +26,10 @@ describe('PanelDeNavegacionComponent', () => {
     fixture = TestBed.createComponent(PanelDeNavegacionComponent);
     componente = fixture.componentInstance;
     fixture.componentRef.setInput('modulo', 'tickets');
+    // El módulo de la pantalla se le dice desde fuera. Antes el componente lo sacaba de
+    // `router.url`, que no reacciona a los cambios de ruta y además obligaba a que el doble del
+    // router fingiera una URL para algo que no es asunto suyo.
+    fixture.componentRef.setInput('moduloActual', 'tickets');
     fixture.detectChanges();
   });
 
@@ -57,6 +61,36 @@ describe('PanelDeNavegacionComponent', () => {
 
     const [, opciones] = router.navigate.calls.mostRecent().args as [unknown[], { queryParams: Record<string, unknown> }];
     expect(opciones.queryParams['filter']).toBe('favorites');
+  });
+
+  /**
+   * Navega a la ruta del módulo del panel, no a la actual.
+   *
+   * Importa desde que el panel se asoma desde la barra lateral: estando en Tareas y asomando el de
+   * Tickets, «Favoritos» tiene que llevar a los tickets favoritos. Navegando relativo llevaba a
+   * las tareas favoritas, que es la pantalla equivocada con el filtro correcto.
+   */
+  it('navega al módulo del panel aunque se esté en otro', () => {
+    fixture.componentRef.setInput('moduloActual', 'tasks');
+    fixture.detectChanges();
+
+    componente.ir(componente.vocabulario().entradas.find(e => e.filtro === FILTROS.favoritos)!);
+
+    const [ruta] = router.navigate.calls.mostRecent().args as [unknown[]];
+    expect(ruta).toEqual(['/tickets']);
+  });
+
+  /**
+   * Y por lo mismo, asomado sobre otro módulo no marca nada: el filtro de la URL es del módulo en
+   * el que se está, y marcarlo aquí haría creer que los tickets ya están filtrados así.
+   */
+  it('asomado sobre otro módulo no marca ninguna entrada', () => {
+    fixture.componentRef.setInput('moduloActual', 'tasks');
+    parametros.next({ filter: 'archived' });
+    fixture.detectChanges();
+
+    const archivado = componente.vocabulario().entradas.find(e => e.filtro === 'archived')!;
+    expect(componente.esLaActiva(archivado)).toBeFalse();
   });
 
   /**
@@ -96,6 +130,7 @@ describe('PanelDeNavegacionComponent', () => {
    */
   it('un módulo desconocido no rompe, sólo no ofrece nada', () => {
     fixture.componentRef.setInput('modulo', 'facturas');
+    fixture.componentRef.setInput('moduloActual', 'facturas');
     fixture.detectChanges();
 
     expect(componente.vocabulario().entradas.length).toBe(0);

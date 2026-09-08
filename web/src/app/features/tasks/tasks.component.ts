@@ -30,7 +30,6 @@ import { ToastService } from '../../shared/services/toast.service';
 import { mensajeDeError } from '../../shared/utils/mensaje-de-error';
 import { SkeletonListComponent } from '../../shared/ui/skeleton.component';
 import { EmptyInlineComponent } from '../../shared/ui/empty-state.component';
-import { PanelDeNavegacionComponent } from '../../shared/ui/panel-de-navegacion/panel-de-navegacion.component';
 
 export interface Column {
   key: string;
@@ -75,7 +74,7 @@ const ESTADOS = COLUMN_DEFS.map(c => c.key);
 @Component({
   selector: 'app-tasks',
   standalone: true,
-  imports: [PanelDeNavegacionComponent, ClickableDirective, FormsModule, BadgeComponent, ButtonComponent, NgIconComponent, DragDropModule, TaskCreateModalComponent, TaskDetailPanelComponent, DataTableComponent, SkeletonListComponent, EmptyInlineComponent, GanttComponent, CargaComponent, BarraDeVistasComponent],
+  imports: [ClickableDirective, FormsModule, BadgeComponent, ButtonComponent, NgIconComponent, DragDropModule, TaskCreateModalComponent, TaskDetailPanelComponent, DataTableComponent, SkeletonListComponent, EmptyInlineComponent, GanttComponent, CargaComponent, BarraDeVistasComponent],
   viewProviders: [provideIcons({
     lucideRefreshCw, lucidePlus, lucideClock,
     lucideList, lucideLayoutDashboard, lucideFilter, lucideSave,
@@ -85,11 +84,6 @@ const ESTADOS = COLUMN_DEFS.map(c => c.key);
   templateUrl: './tasks.component.html',
 })
 export class TasksComponent implements OnInit {
-  /**
-   * Si el panel de navegación está anclado. La vista lo necesita para dejarle sitio: el panel
-   * se dibuja por encima, así que sin este relleno taparía la primera columna de la lista.
-   */
-  panelAnclado = signal(true);
 
   private readonly toast = inject(ToastService);
   private readonly api = inject(ApiService);
@@ -240,7 +234,7 @@ export class TasksComponent implements OnInit {
         return { ...s, filters: newFilters, page: 1 };
       });
       setTimeout(() => this.loadTasks(), 0);
-    }, { allowSignalWrites: true });
+    });
   }
 
   ngOnInit(): void {

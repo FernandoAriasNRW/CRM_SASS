@@ -58,7 +58,17 @@ import { lucideX, lucideMaximize2, lucideMinimize2 } from '@ng-icons/lucide';
           </div>
 
           <!-- Drawer Content Body -->
-          <div class="flex-1 overflow-y-auto p-6 space-y-6">
+          <!--
+            El scroll del cuerpo se puede desactivar. Los cajones de dos columnas —el detalle de
+            un ticket, el de una tarea— tienen su propio desplazamiento dentro de cada columna, y
+            con éste puesto salían **dos barras anidadas**: una para el cajón y otra para la
+            columna, pegadas, sin que ninguna llevara a ninguna parte útil.
+          -->
+          <div class="flex-1 p-6"
+               [class.overflow-y-auto]="scrollBody"
+               [class.overflow-hidden]="!scrollBody"
+               [class.space-y-6]="scrollBody"
+               [class.min-h-0]="!scrollBody">
             <ng-content></ng-content>
           </div>
 
@@ -84,6 +94,14 @@ export class DrawerComponent {
   @Input() subtitle = '';
   @Input() size: 'sm' | 'md' | 'lg' | 'xl' | '2xl' = 'lg';
   @Input() showFooter = true;
+
+  /**
+   * Si el cuerpo del cajón se desplaza por su cuenta.
+   *
+   * Se pone en `false` cuando el contenido ya gestiona su propio desplazamiento —por ejemplo un
+   * cajón de dos columnas—: con las dos cosas activas aparecen dos barras, una dentro de la otra.
+   */
+  @Input() scrollBody = true;
   @Output() closed = new EventEmitter<void>();
   @Output() isOpenChange = new EventEmitter<boolean>();
 

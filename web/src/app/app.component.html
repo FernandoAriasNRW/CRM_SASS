@@ -51,7 +51,8 @@
       <!-- Navegación principal -->
       <nav class="flex-1 py-3 flex flex-col items-center gap-2 overflow-visible">
         @for (item of navStore.pinnedItems(); track item.route; let i = $index) {
-          <div class="relative group/menu w-full flex justify-center">
+          <div class="relative group/menu w-full flex justify-center"
+               (mouseenter)="alEntrarEnModulo(item.route)">
             <!-- Nav Item (Icon only + small label below) -->
             <a
               [routerLink]="item.route"
@@ -63,8 +64,13 @@
               <span class="text-[10px] mt-0.5 scale-90">{{ item.label }}</span>
             </a>
 
-            <!-- Submenu Popover (Solo si item.hasSubmenu) -->
-            @if (item.hasSubmenu) {
+            <!--
+              El desplegable de la barra, sólo para los módulos **sin** panel de navegación.
+              Los que lo tienen —tareas, tickets, proyectos— enseñan el panel de verdad, que sale
+              a la derecha de la barra; tener los dos era enseñar dos listas distintas de lo mismo
+              a un centímetro una de otra, y la de aquí era además la que mentía.
+            -->
+            @if (item.hasSubmenu && !tienePanel(item.route)) {
               <div class="absolute left-[54px] ml-1 hidden group-hover/menu:block"
                    [class.top-0]="i < 3" [class.bottom-0]="i >= 3">
                 <!-- Triangulito (opcional) -->
@@ -178,7 +184,24 @@
       </div>
     </aside>
 
-    <div class="flex-1 flex flex-col overflow-hidden">
+    <!--
+      El panel de navegación del módulo, a nivel de armazón.
+      Vivía dentro de cada pantalla, y allí **se encogía con el contenido**: en el Gantt o en la
+      carga de trabajo se quedaba en un palmo de alto. Aquí ocupa la pantalla entera siempre.
+      Anclado empuja el contenido; sin anclar se asoma por encima y se recoge al salir.
+    -->
+    @if (moduloDelPanel(); as modulo) {
+      <div
+        class="fixed left-16 top-0 h-full z-40 transition-transform duration-200"
+        [class.-translate-x-full]="!panelVisible()"
+        (mouseenter)="raton.set(true)"
+        (mouseleave)="raton.set(false)">
+        <app-panel-de-navegacion [modulo]="modulo" [moduloActual]="moduloDeLaRuta()" [(anclado)]="panelAnclado" />
+      </div>
+    }
+
+    <div class="flex-1 flex flex-col overflow-hidden transition-[padding] duration-200"
+         [class.pl-64]="panelAnclado() && moduloDelPanel()">
       <header class="h-14 border-b border-border bg-card flex items-center justify-between px-6 shrink-0">
         <div class="flex items-center gap-2 text-sm text-muted-foreground">
           <ng-icon name="lucideLayoutDashboard" size="16" class="text-primary"></ng-icon>

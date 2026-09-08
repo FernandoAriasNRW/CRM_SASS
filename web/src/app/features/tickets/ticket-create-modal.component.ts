@@ -5,6 +5,7 @@ import { ButtonComponent } from '../../shared/ui/button.component';
 import { InputComponent } from '../../shared/ui/input.component';
 import { LabelComponent } from '../../shared/ui/label.component';
 import { DrawerComponent } from '../../shared/ui/drawer.component';
+import { PRIORIDADES_DE_TICKET } from './vocabulario-de-tickets';
 
 export interface Ticket {
   id: string;
@@ -17,7 +18,14 @@ export interface Ticket {
   createdAt: string;
 }
 
-const PRIORITIES = ['Low', 'Medium', 'High', 'Urgent'];
+/**
+ * Las prioridades salen del vocabulario compartido.
+ *
+ * Aquí estaba escrito `['Low', 'Medium', 'High', 'Urgent']`, y **«Urgent» no existe** en el
+ * servidor —se llama «Critical»—. El comando lo recibía, no casaba con ningún valor y el ticket
+ * se creaba con la prioridad por defecto sin avisar de nada.
+ */
+const PRIORITIES = PRIORIDADES_DE_TICKET;
 
 @Component({
   selector: 'app-ticket-create-modal',
@@ -33,7 +41,7 @@ export class TicketCreateModalComponent {
 
   title = '';
   description = '';
-  priority = PRIORITIES[1];
+  priority = 'Medium';
 
   loading = signal(false);
   error = signal('');

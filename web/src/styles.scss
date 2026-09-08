@@ -143,3 +143,53 @@
     @apply bg-background text-foreground font-sans;
   }
 }
+
+/*
+ * Las barras de desplazamiento, en el estilo de la aplicación.
+ *
+ * **No tenían ninguno.** Salía la barra gruesa del sistema, gris y con sus flechas, que en un
+ * cajón lateral de fondo claro se ve como un tablón: es lo que hacía que los cajones parecieran
+ * de otra aplicación.
+ *
+ * Se estilan globalmente y no sólo en el cajón porque el problema es de todas las zonas que se
+ * desplazan —el panel de navegación, las tablas, la lista de comentarios— y arreglarlo en un
+ * sitio dejaría el resto descuadrado.
+ *
+ * Se dejan **siempre visibles y no sólo al pasar el ratón**: una barra que aparece al acercarse
+ * esconde que hay más contenido debajo, y entonces la gente no baja.
+ */
+@layer base {
+  /* Firefox. Va aparte porque no entiende las pseudoclases de WebKit. */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--border)) transparent;
+  }
+
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  /* Transparente, no gris: así la barra no dibuja un canal sobre el fondo de la tarjeta. */
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background-color: hsl(var(--border));
+    border-radius: 9999px;
+
+    /* El borde transparente deja aire a los lados sin necesidad de otro elemento. */
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: hsl(var(--muted-foreground) / 0.5);
+  }
+
+  /* La esquina donde se cruzan las dos barras, que si no se queda de color sistema. */
+  ::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+}

@@ -1,5 +1,8 @@
 import { Component, input, output, computed } from '@angular/core';
-import { NgIconComponent } from '@ng-icons/core';
+import { NgIconComponent, provideIcons } from '@ng-icons/core';
+import {
+  lucideChevronLeft, lucideChevronRight, lucideChevronsLeft, lucideChevronsRight
+} from '@ng-icons/lucide';
 
 export interface PaginationState {
   page: number;
@@ -14,6 +17,13 @@ export interface PaginationState {
   selector: 'app-pagination',
   standalone: true,
   imports: [NgIconComponent],
+  // Los cuatro iconos que usa la plantilla. **Faltaban del todo**, y `ng-icon` no falla cuando no
+  // encuentra uno: pinta un hueco. Los botones de «primera», «anterior», «siguiente» y «última»
+  // salían como cuadros en blanco, que es peor que no tener icono —un cuadro vacío parece un
+  // error de carga y nadie se atreve a pulsarlo—.
+  viewProviders: [provideIcons({
+    lucideChevronLeft, lucideChevronRight, lucideChevronsLeft, lucideChevronsRight
+  })],
   template: `
     @if (state().totalPages > 1) {
       <div class="flex items-center justify-between px-2 py-3 border-t border-border">

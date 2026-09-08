@@ -46,33 +46,46 @@ export const DEFAULT_NAV_ITEMS: NavItem[] = [
 ];
 
 const DEFAULT_SUBMENUS: Record<string, SubmenuItem[]> = {
+  // Las dos entradas de «Spaces» que había aquí no tenían ruta: pulsarlas no hacía nada, ni
+  // siquiera navegar mal. Se quitan hasta que exista la pantalla.
   home: [
     { id: 'h_mine_proj', label: 'Mis Proyectos', route: '/projects', queryParams: { filter: 'mine' } },
     { id: 'h_mine_task', label: 'Mis Tareas', route: '/tasks', queryParams: { filter: 'mine' } },
-    { id: 'h_mine_tick', label: 'Mis Tickets', route: '/tickets', queryParams: { filter: 'mine' } },
-    { id: 'h_div_1', label: 'Spaces', isDivider: true },
-    { id: 'h_spaces_all', label: 'Listar todos' },
-    { id: 'h_spaces_add', label: 'Añadir o Crear Space', isAction: true }
+    { id: 'h_mine_tick', label: 'Mis Tickets', route: '/tickets', queryParams: { filter: 'mine' } }
   ],
+  // «Crear Dashboard» iba a `/dashboard/new`, que no es una ruta: dejaba en Home. El panel se
+  // crea solo al entrar por primera vez, así que tampoco hace falta.
   dashboard: [
     { id: 'd_all', label: 'Listar todos', route: '/dashboard', queryParams: { type: 'all' } },
     { id: 'd_mine', label: 'Mis Dashboards', route: '/dashboard', queryParams: { type: 'private' } },
-    { id: 'd_team', label: 'Dashboards del team', route: '/dashboard', queryParams: { type: 'public' } },
-    { id: 'd_div_1', label: '', isDivider: true },
-    { id: 'd_add', label: 'Crear Dashboard', route: '/dashboard/new', isAction: true }
+    { id: 'd_team', label: 'Dashboards del team', route: '/dashboard', queryParams: { type: 'public' } }
   ]
 };
 
+/**
+ * El desplegable por defecto de un módulo de la barra lateral.
+ *
+ * <b>Aquí sólo entra lo que existe.</b> Antes generaba además dos entradas que no llevaban a
+ * ninguna parte:
+ *
+ * - «X del Team», con <code>?filter=team</code>. El servidor no conoce ese filtro —los que
+ *   entiende están en <code>FiltrosDeVista</code>— así que devolvía **la lista entera**: quien lo
+ *   pulsaba creía estar viendo lo de su equipo.
+ * - «Crear / Agregar», hacia <code>/{módulo}/new</code>. Esa ruta no existe en
+ *   <code>app.routes.ts</code>, y la ruta comodín te dejaba en Home sin decir nada.
+ *
+ * Es la misma regla del panel de navegación —ver <code>vocabulario-del-menu.ts</code>—: un menú
+ * que promete y no cumple es peor que un menú corto.
+ *
+ * Los módulos con panel propio —tareas, tickets, proyectos— no usan esto: enseñan el panel.
+ */
 function getDefaultSubmenu(item: NavItem): SubmenuItem[] {
   if (DEFAULT_SUBMENUS[item.id]) {
     return DEFAULT_SUBMENUS[item.id];
   }
   return [
     { id: `${item.id}_all`, label: 'Listar todos', route: item.route },
-    { id: `${item.id}_mine`, label: `Mis ${item.label.toLowerCase()}`, route: item.route, queryParams: { filter: 'mine' } },
-    { id: `${item.id}_team`, label: `${item.label} del Team`, route: item.route, queryParams: { filter: 'team' } },
-    { id: `${item.id}_div`, label: '', isDivider: true },
-    { id: `${item.id}_add`, label: 'Crear / Agregar', route: `${item.route}/new`, isAction: true }
+    { id: `${item.id}_mine`, label: `Mis ${item.label.toLowerCase()}`, route: item.route, queryParams: { filter: 'mine' } }
   ];
 }
 

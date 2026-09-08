@@ -1026,3 +1026,84 @@ dos veces y ya había empezado a separarse; ahora hay uno.
 Queda dicho lo que esto no arregla: **no hay zona horaria por inquilino**. Cada quien ve la hora de
 su ordenador, y los eventos de demostración están sembrados a las 08:00 UTC, que en UTC−5 son las
 tres de la madrugada.
+
+---
+
+## 17. La capa visible: dos submenús, iconos que no había y vocabularios cruzados
+
+Seis cosas señaladas mirando la aplicación, no leyendo el código. Cinco resultaron ser defectos y
+la sexta no era nuestra.
+
+### 17.1 Iconos declarados y no provistos
+
+`ng-icon` **no falla cuando no encuentra un icono**: deja el hueco y escribe un aviso. Por eso
+convivían dos síntomas que parecían de cosas distintas: el paginado enseñaba cuatro cuadros en
+blanco donde van «primera / anterior / siguiente / última» —no declaraba ninguno de los cuatro— y
+la consola repetía «No icon named lucidePlus» siete veces por carga, del «+» del armazón.
+
+Un cuadro vacío es peor que no tener icono: parece un error de carga y nadie lo pulsa. Queda una
+prueba que comprueba que hay `<svg>` dentro de cada botón, no que el botón existe —el botón
+existía—.
+
+### 17.2 El error de consola que no era nuestro
+
+`Cannot read properties of undefined (reading 'startTime')`, con la pila entera en `<anonymous>` y
+un `reportAllChanges` que no aparece ni en el código ni en las dependencias. Reproducido en un
+navegador limpio, sin extensiones: **no sale**. Es de una extensión del navegador, no de la
+aplicación.
+
+Lo que sí era nuestro y se ha quitado: la bandera `allowSignalWrites`, que Angular ya ignora y sólo
+dejaba un aviso de obsolescencia en cada carga.
+
+### 17.3 Dos submenús, y el que mandaba era el falso
+
+La barra lateral sacaba su propio desplegable al pasar el ratón, y la pantalla enseñaba además el
+panel de navegación. Dos listas distintas de lo mismo, a un centímetro una de otra.
+
+El de la barra era el malo:
+
+- «X del Team» mandaba `?filter=team`, **que el servidor no conoce**: devolvía la lista entera.
+  Es exactamente el fallo que la Fase 5A vino a eliminar, vivo en otro sitio.
+- «Crear / Agregar» iba a `/{módulo}/new`, **que no es ninguna ruta**: la ruta comodín dejaba en
+  Home sin decir nada. Igual «Crear Dashboard» y «Añadir o Crear Space», esta última sin ni
+  siquiera destino.
+
+Ahora el panel es el único submenú: se asoma al pasar el ratón por la barra, se ancla, y enseña el
+módulo que se está señalando —asomarlo sobre Tickets estando en Tareas lleva a los tickets—. Los
+módulos sin panel conservan su desplegable, ya sin las entradas que no llevaban a ninguna parte.
+
+### 17.4 El panel se encogía con el contenido
+
+Vivía dentro de cada pantalla, así que su alto era el del contenido: en el Gantt o en la carga de
+trabajo —vistas cortas— se quedaba en un palmo, flotando. Al subirlo al armazón ocupa la pantalla
+entera siempre, y las vistas pasan a `flex-1 min-h-0` en vez de altos fijos de `650px`.
+
+Es el mismo cambio que arregla el punto anterior: un panel por aplicación, no uno por pantalla.
+
+### 17.5 Barras de desplazamiento sin estilo
+
+No había ninguna regla de `scrollbar` en todo el proyecto, así que salía la del sistema: gruesa,
+gris, con su canal. En un cajón lateral de fondo claro se ve como un tablón.
+
+Y en los cajones de detalle salían **dos, anidadas**: el cuerpo del cajón se desplazaba y además lo
+hacía cada columna. El cajón admite ahora apagar su propio desplazamiento cuando el contenido ya
+gestiona el suyo.
+
+### 17.6 Tres vocabularios para un ticket
+
+El tablero decía `Open / InProgress / Resolved / Closed`, el cajón de detalle
+`New / In Progress / Resolved / Closed`, el alta `Low / Medium / High / Urgent`. El servidor dice
+otra cosa: existe `PendingInfo`, no existe `New`, y la prioridad más alta se llama `Critical`.
+
+Se veía y no se entendía:
+
+- Al abrir un ticket, **los desplegables de estado y prioridad salían en blanco** —«Open» no estaba
+  entre las opciones y «Low» tampoco, porque las claves iban en minúscula— mientras la etiqueta de
+  arriba decía «Open» y «Low».
+- Un ticket en `PendingInfo` **no caía en ninguna columna del tablero**: ni borrado ni archivado,
+  simplemente invisible.
+- Crear con prioridad «Urgent» guardaba la prioridad por defecto sin avisar.
+
+Un solo sitio, `vocabulario-de-tickets.ts`, con las claves del servidor y su nombre en castellano.
+Las insignias enseñan el nombre y no la clave: antes ponía «Open» junto a un desplegable que decía
+«Abierto».

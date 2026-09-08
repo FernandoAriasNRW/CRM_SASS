@@ -1,10 +1,13 @@
-<!-- El panel de navegación compartido. Es el de Docs extraído: ancho, anclable, y con las
-     entradas que **hoy sí** filtran. Ver vocabulario-del-menu.ts para por qué no hay más. -->
-<div class="relative">
-  <app-panel-de-navegacion modulo="projects" [(anclado)]="panelAnclado" />
+<!--
+  El panel de navegación ya no se pinta aquí: vive en el armazón, pegado a la barra lateral.
+  Estando dentro de la pantalla se encogía con el contenido —en el Gantt o en la carga de trabajo
+  quedaba en un palmo de alto— y además convivía con el desplegable de la barra, que enseñaba otra
+  lista distinta de lo mismo.
 
-  <div class="transition-[padding] duration-300" [class.pl-64]="panelAnclado()">
-<div class="space-y-6">
+  `h-full` y `min-h-0`: la vista ocupa el alto disponible en vez de el de sus datos, para que una
+  tabla corta no deje media pantalla en blanco.
+-->
+<div class="space-y-6 h-full min-h-0 flex flex-col">
   <div class="flex items-center justify-between">
     <div>
       <h2 class="text-2xl font-semibold tracking-tight" i18n>Proyectos</h2>
@@ -45,7 +48,7 @@
     </div>
   }
 
-  <div class="h-[650px]">
+  <div class="flex-1 min-h-0">
     <ui-data-table
       [columns]="tableColumns"
       [data]="projects()"
@@ -56,8 +59,6 @@
       (rowClick)="openDetailModal($event)"
       (onSaveView)="saveCurrentView('Custom View ' + (savedViews().length + 1))">
     </ui-data-table>
-  </div>
-</div>
   </div>
 </div>
 
