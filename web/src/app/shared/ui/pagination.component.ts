@@ -27,8 +27,12 @@ export interface PaginationState {
   template: `
     @if (state().totalPages > 1) {
       <div class="flex items-center justify-between px-2 py-3 border-t border-border">
-        <!-- Results info -->
-        <div class="text-sm text-muted-foreground">
+        <!--
+          La frase entera va marcada, no cada palabra suelta: «Mostrando … de … resultados» no se
+          ordena igual en todos los idiomas, y traducir «de» por su cuenta produce frases que no
+          se sostienen.
+        -->
+        <div class="text-sm text-muted-foreground" i18n>
           Mostrando
           <span class="font-medium">{{ startItem() }}</span>
           -

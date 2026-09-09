@@ -62,7 +62,7 @@ export interface TableState {
               type="text"
               [ngModel]="state().searchTerm"
               (ngModelChange)="onSearch($event)"
-              placeholder="Search..."
+              i18n-placeholder placeholder="Buscar…"
               class="w-full pl-9 pr-4 py-2 bg-muted border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary transition-shadow"
               />
             </div>
@@ -72,20 +72,20 @@ export interface TableState {
           <div class="flex items-center gap-2">
             <button uiButton variant="ghost" (click)="onSaveView.emit(state())">
               <ng-icon name="lucideSave" class="w-4 h-4 mr-2"></ng-icon>
-              Save View
+              <span i18n>Guardar vista</span>
             </button>
     
             <div class="relative" #settingsDropdown>
               <button uiButton variant="outline" (click)="toggleColumnSettings()">
                 <ng-icon name="lucideSettings2" class="w-4 h-4 mr-2"></ng-icon>
-                Columns
+                <span i18n>Columnas</span>
               </button>
     
               <!-- Column Settings Dropdown -->
               @if (showColumnSettings()) {
                 <div class="absolute right-0 mt-2 w-72 bg-white dark:bg-muted rounded-xl border border-border shadow-lg z-50 overflow-hidden flex flex-col max-h-[450px]">
                   <div class="p-3 border-b border-border bg-muted dark:bg-muted/50 shrink-0">
-                    <h4 class="font-medium text-sm text-foreground dark:text-white">Visible Columns</h4>
+                    <h4 class="font-medium text-sm text-foreground dark:text-white" i18n>Columnas visibles</h4>
                   </div>
                   <div class="p-2 overflow-y-auto shrink min-h-[100px]" cdkDropList (cdkDropListDropped)="onColumnDrop($event)">
                     @for (col of mutableColumns(); track col) {

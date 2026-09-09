@@ -9,6 +9,7 @@ import { BadgeComponent, type BadgeVariant } from '../../shared/ui/badge.compone
 import { ButtonComponent } from '../../shared/ui/button.component';
 import { PRIORIDADES, PRIORIDAD_POR_DEFECTO, TaskCreateModalComponent, type TaskItem } from './task-create-modal.component';
 import { TaskDetailPanelComponent } from './task-detail-panel.component';
+import { ESTADOS_DE_TAREA, insigniaDelEstadoDeTarea, nombreDelEstadoDeTarea } from './vocabulario-de-tareas';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import {
   lucideRefreshCw, lucidePlus, lucideClock,
@@ -51,16 +52,18 @@ export interface Column {
  */
 const POR_TANDA = 25;
 
-const COLUMN_DEFS: Omit<Column, 'tasks' | 'pendientes'>[] = [
-  { key: 'To Do',       label: 'Por hacer',  badge: 'secondary' },
-  { key: 'In Progress', label: 'En progreso', badge: 'default'   },
-  { key: 'In Review',   label: 'En revisión', badge: 'warning'   },
-  { key: 'Done',        label: 'Completado',  badge: 'success'   },
-];
-
-const STATUS_BADGE: Record<string, BadgeVariant> = {
-  'To Do': 'secondary', 'In Progress': 'default', 'In Review': 'warning', 'Done': 'success'
-};
+/**
+ * Las columnas del tablero, sacadas del vocabulario compartido.
+ *
+ * Estaban escritas aquí con sus nombres en español a mano, y el cajón de detalle enseñaba las
+ * claves del servidor —«To Do», «In Progress»—: la misma tarea decía dos cosas según dónde se
+ * mirara, y ninguna de las dos se traducía al cambiar de idioma.
+ */
+const COLUMN_DEFS: Omit<Column, 'tasks' | 'pendientes'>[] = ESTADOS_DE_TAREA.map(e => ({
+  key: e.clave,
+  label: e.etiqueta,
+  badge: e.badge
+}));
 
 /**
  * Los estados, en el orden del tablero. Se derivan de las columnas en lugar de repetirlos:
@@ -103,10 +106,10 @@ export class TasksComponent implements OnInit {
    * vista de Gantt acabaría abriendo un tablero.
    */
   readonly VISTAS_INTEGRADAS: VistaIntegrada[] = [
-    { clave: 'board', etiqueta: 'Tablero', icono: 'lucideLayoutDashboard' },
-    { clave: 'list',  etiqueta: 'Lista',   icono: 'lucideList' },
-    { clave: 'gantt', etiqueta: 'Gantt',   icono: 'lucideChartGantt' },
-    { clave: 'carga', etiqueta: 'Carga',   icono: 'lucideChartColumn' }
+    { clave: 'board', etiqueta: $localize`Tablero`, icono: 'lucideLayoutDashboard' },
+    { clave: 'list',  etiqueta: $localize`Lista`,   icono: 'lucideList' },
+    { clave: 'gantt', etiqueta: $localize`Gantt`,   icono: 'lucideChartGantt' },
+    { clave: 'carga', etiqueta: $localize`Carga`,   icono: 'lucideChartColumn' }
   ];
 
   /**
@@ -136,28 +139,28 @@ export class TasksComponent implements OnInit {
    * en una celda de una sola línea sería prometer algo que la pantalla no puede cumplir.
    */
   tableColumns: ColumnDef[] = this.columnService.buildColumns<TaskItem>({
-    title: { label: 'Title', editable: true },
-    description: { label: 'Description', visible: false },
+    title: { label: $localize`Título`, editable: true },
+    description: { label: $localize`Descripción`, visible: false },
     status: {
-      label: 'Status', type: 'custom', editable: true, editor: 'select',
-      options: ESTADOS.map(s => ({ label: s, value: s })),
+      label: $localize`Estado`, type: 'custom', editable: true, editor: 'select',
+      options: ESTADOS_DE_TAREA.map(e => ({ label: e.etiqueta, value: e.clave })),
     },
     priority: {
       label: $localize`Prioridad`, type: 'custom', editable: true, editor: 'select',
       options: PRIORIDADES.map(p => ({ label: p.label, value: p.key })),
     },
-    assigneeId: { label: 'Asignado', type: 'user' },
-    estimatedHours: { label: 'Hours', type: 'number', editable: true, editor: 'number' },
-    dueDate: { label: 'Due Date', type: 'date', editable: true, editor: 'date' }
+    assigneeId: { label: $localize`Asignado`, type: 'user' },
+    estimatedHours: { label: $localize`Horas`, type: 'number', editable: true, editor: 'number' },
+    dueDate: { label: $localize`Fecha límite`, type: 'date', editable: true, editor: 'date' }
   });
 
   // Advanced Filters definition
   filterFields = computed<FilterField[]>(() => [
-    { key: 'projectId', label: 'Project', type: 'select', options: this.projectOptions() },
-    { key: 'status', label: 'Status', type: 'select', options: this.statuses.map(s => ({ label: s, value: s })) },
+    { key: 'projectId', label: $localize`Proyecto`, type: 'select', options: this.projectOptions() },
+    { key: 'status', label: $localize`Estado`, type: 'select', options: ESTADOS_DE_TAREA.map(e => ({ label: e.etiqueta, value: e.clave })) },
     { key: 'priority', label: $localize`Prioridad`, type: 'select', options: PRIORIDADES.map(p => ({ label: p.label, value: p.key })) },
-    { key: 'startDate', label: 'Start Date', type: 'date' },
-    { key: 'endDate', label: 'End Date', type: 'date' }
+    { key: 'startDate', label: $localize`Desde`, type: 'date' },
+    { key: 'endDate', label: $localize`Hasta`, type: 'date' }
   ]);
 
   // Saved Views
@@ -178,7 +181,9 @@ export class TasksComponent implements OnInit {
       .map(t => ({ label: t.projectId, value: t.projectId }));
   });
 
-  statusBadge(status: string): BadgeVariant { return STATUS_BADGE[status] ?? 'outline'; }
+  statusBadge(status: string): BadgeVariant { return insigniaDelEstadoDeTarea(status); }
+
+  readonly nombreDelEstado = nombreDelEstadoDeTarea;
 
   /** La prioridad tal como se pinta. Ante un valor desconocido, cae en la normal. */
   prioridadDe(priority: string) {

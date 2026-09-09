@@ -127,7 +127,7 @@
                         {{ task.assignees?.length }}
                       </span>
                     }
-                    <ui-badge [variant]="statusBadge(task.status)" class="text-[10px]">{{ task.status }}</ui-badge>
+                    <ui-badge [variant]="statusBadge(task.status)" class="text-[10px]">{{ nombreDelEstado(task.status) }}</ui-badge>
                   </div>
                 </div>
               </div>
@@ -184,7 +184,7 @@
   }
 
   <ng-template #statusTemplate let-item>
-    <ui-badge [variant]="statusBadge(item.status)">{{ item.status }}</ui-badge>
+    <ui-badge [variant]="statusBadge(item.status)">{{ nombreDelEstado(item.status) }}</ui-badge>
   </ng-template>
 
   <ng-template #priorityTemplate let-item>

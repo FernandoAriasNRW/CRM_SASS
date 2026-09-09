@@ -123,17 +123,32 @@ describe('PanelDeNavegacionComponent', () => {
   });
 
   /**
-   * Un módulo sin vocabulario no revienta la pantalla: enseña un panel vacío.
+   * Un módulo nuevo del menú recibe panel sin que nadie lo dé de alta aquí.
    *
-   * Preferible a inventarse entradas por defecto, que sería volver a ofrecer filtros que ese
-   * módulo no sabe aplicar.
+   * Es lo que hace que añadir un módulo a la barra lateral no lo deje sin submenú mientras el
+   * resto sí lo tiene. Se le ofrece **sólo «Ver todo»**: es lo único que se puede afirmar sin
+   * conocerlo. Inventarle «Mis facturas» o «Facturas del equipo» sería repetir el fallo que se
+   * quitó —ofrecer filtros que el servidor no aplica—.
    */
-  it('un módulo desconocido no rompe, sólo no ofrece nada', () => {
+  it('un módulo nuevo recibe panel, con la única entrada que es cierta', () => {
     fixture.componentRef.setInput('modulo', 'facturas');
     fixture.componentRef.setInput('moduloActual', 'facturas');
+    fixture.componentRef.setInput('nombreDelModulo', 'Facturas');
     fixture.detectChanges();
 
-    expect(componente.vocabulario().entradas.length).toBe(0);
+    expect(componente.vocabulario().titulo).toBe('Facturas');
+    expect(componente.vocabulario().entradas.map(e => e.filtro)).toEqual([null]);
+  });
+
+  /**
+   * Y el que sí tiene vocabulario propio lo usa. Es la otra mitad: si el respaldo se aplicara
+   * siempre, todos los módulos tendrían una sola entrada y nadie lo notaría hasta usarlos.
+   */
+  it('un módulo conocido usa su propio vocabulario', () => {
+    fixture.componentRef.setInput('modulo', 'docs');
+    fixture.detectChanges();
+
+    expect(componente.vocabulario().entradas.length).toBeGreaterThan(1);
   });
 });
 

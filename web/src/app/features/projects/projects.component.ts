@@ -57,10 +57,10 @@ export class ProjectsComponent implements OnInit {
   });
 
   tableColumns: ColumnDef[] = this.columnService.buildColumns<Project>({
-    name: { label: 'Nombre' },
-    description: { label: 'Descripción', sortable: false, visible: false },
-    status: { label: 'Estado', type: 'custom' },
-    ownerId: { label: 'Propietario', type: 'user' },
+    name: { label: $localize`Nombre` },
+    description: { label: $localize`Descripción`, sortable: false, visible: false },
+    status: { label: $localize`Estado`, type: 'custom' },
+    ownerId: { label: $localize`Propietario`, type: 'user' },
     spaceId: { label: 'Space ID', sortable: false, visible: false },
     folderId: { label: 'Folder ID', sortable: false, visible: false },
     startDate: { label: 'Inicio', type: 'date' },

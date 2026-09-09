@@ -1,6 +1,8 @@
-import { Component, inject, signal, computed, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
+import { Component, effect, inject, signal, computed, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewInit, Injector } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import { 
   lucideFileText, lucidePlus, lucideFolder, lucideMoreVertical,
@@ -12,6 +14,10 @@ import {
   lucideArrowUpDown, lucideTag, lucideX, lucideFileUp, lucideBriefcase, lucideCheck
 } from '@ng-icons/lucide';
 import { DocsService, DocumentDto, PageDto } from './docs.service';
+import { SeccionesDelPanelService } from '../../shared/ui/panel-de-navegacion/secciones-del-panel.service';
+
+/** Las pestañas que el panel de Documentos sabe abrir. Cualquier otra cosa en `?tab=` cae en «all». */
+const TABS_DE_DOCS = ['all', 'my', 'shared', 'private', 'meeting-notes', 'archived'] as const;
 import { Editor } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
 import Image from '@tiptap/extension-image';
@@ -104,7 +110,29 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
   // UI state
   searchQuery = signal('');
   isSearchActive = signal(false);
-  activeSidebarTab = signal<'all' | 'my' | 'shared' | 'private' | 'meeting-notes' | 'archived'>('all');
+  /**
+   * La pestaña del panel de Documentos, <b>leída de la URL</b>.
+   *
+   * Era estado interno del componente, y por eso Docs necesitaba su propia barra lateral: nadie
+   * de fuera podía cambiarla. Al pasarla a `?tab=` la maneja el panel de navegación compartido
+   * como el resto de los módulos, y de paso una pestaña se puede compartir por enlace y el botón
+   * de atrás funciona.
+   */
+  private readonly router = inject(Router);
+  private readonly ruta = inject(ActivatedRoute);
+  private readonly seccionesDelPanel = inject(SeccionesDelPanelService);
+
+  /** `effect` fuera del constructor necesita inyector explícito. */
+  private readonly inyector = inject(Injector);
+
+  readonly activeSidebarTab = computed<'all' | 'my' | 'shared' | 'private' | 'meeting-notes' | 'archived'>(() => {
+    const tab = this.parametrosDeLaUrl()['tab'];
+    return TABS_DE_DOCS.includes(tab as never) ? tab as never : 'all';
+  });
+
+  private readonly parametrosDeLaUrl = toSignal(
+    inject(ActivatedRoute).queryParams,
+    { initialValue: {} as Record<string, string> });
   isPrivateCollapsed = signal(false);
   isPinned = signal(true);
   isHovered = signal(false);
@@ -271,6 +299,35 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
   ngOnInit() {
     this.loadDocuments();
 
+    // Los favoritos y las páginas recientes se le entregan al panel compartido. Son datos de
+    // Documentos, así que los pone Documentos; el panel sólo sabe pintar secciones.
+    //
+    // Va en un `effect` porque las dos listas cambian —al marcar una estrella, al abrir un
+    // documento— y una entrega única dejaría el panel enseñando lo de hace un rato.
+    effect(() => {
+      this.seccionesDelPanel.registrar('docs', [
+        {
+          titulo: $localize`Favoritos`,
+          siNoHayNada: $localize`Marca un documento con la estrella para verlo aquí.`,
+          elementos: this.starredDocuments().map(doc => ({
+            id: doc.id,
+            etiqueta: doc.title,
+            icono: 'lucideStar',
+            alPulsar: () => this.selectDocument(doc)
+          }))
+        },
+        {
+          titulo: $localize`Páginas recientes`,
+          elementos: this.documents().slice(0, 5).map(doc => ({
+            id: 'reciente-' + doc.id,
+            etiqueta: doc.title,
+            icono: 'lucideBookOpen',
+            alPulsar: () => this.selectDocument(doc)
+          }))
+        }
+      ]);
+    }, { injector: this.inyector });
+
     this.contentUpdate$.pipe(
       debounceTime(1000)
     ).subscribe(update => {
@@ -293,6 +350,10 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
 
   ngOnDestroy() {
     this.editor.destroy();
+
+    // Si no se limpian, al salir de Documentos el panel de Tareas seguiría enseñando documentos
+    // favoritos: las secciones viven en un servicio global.
+    this.seccionesDelPanel.limpiar('docs');
   }
 
   onGlobalClick(event: Event) {
@@ -526,10 +587,22 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
     }
   }
 
+  /**
+   * Cambia de pestaña navegando, no tocando una señal.
+   *
+   * Lo sigue usando el botón «volver a todos los documentos» de la cabecera del editor. La
+   * navegación es la que mueve la pestaña; cerrar el documento abierto es lo único que queda
+   * aquí, porque de eso la URL no dice nada.
+   */
   setSidebarTab(tab: 'all' | 'my' | 'shared' | 'private' | 'meeting-notes' | 'archived') {
-    this.activeSidebarTab.set(tab);
     this.activeDocument.set(null);
     this.activePage.set(null);
+
+    void this.router.navigate([], {
+      relativeTo: this.ruta,
+      queryParams: { tab: tab === 'all' ? null : tab },
+      queryParamsHandling: 'merge'
+    });
   }
 
   togglePrivate() {

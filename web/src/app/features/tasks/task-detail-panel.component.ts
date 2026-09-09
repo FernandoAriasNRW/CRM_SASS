@@ -26,16 +26,11 @@ import { ClickableDirective } from '../../shared/directives/clickable.directive'
 import { CustomFieldsFormComponent } from '../../shared/ui/custom-fields-form.component';
 import { ComentariosComponent } from '../../shared/ui/comentarios.component';
 import { MencionadoEnComponent } from '../../shared/ui/mencionado-en.component';
-
-const STATUSES = ['To Do', 'In Progress', 'In Review', 'Done'];
+import { ESTADOS_DE_TAREA, insigniaDelEstadoDeTarea, nombreDelEstadoDeTarea } from './vocabulario-de-tareas';
 
 /** Los dos estados entre los que alterna el check de una subtarea. Los define el backend. */
 const ESTADO_COMPLETADO = 'Done';
 const ESTADO_INICIAL = 'To Do';
-
-const STATUS_BADGE: Record<string, BadgeVariant> = {
-  'To Do': 'secondary', 'In Progress': 'default', 'In Review': 'warning', 'Done': 'success'
-};
 
 @Component({
   selector: 'app-task-detail-panel',
@@ -95,14 +90,16 @@ export class TaskDetailPanelComponent implements OnInit {
   activeTab = signal<'comments' | 'activity'>('comments');
 
   readonly priorities = PRIORIDADES;
-  readonly statuses = STATUSES;
+  readonly statuses = ESTADOS_DE_TAREA;
   readonly availableTags = TASK_TAGS;
 
   readonly currentPriority = computed(() =>
     PRIORIDADES.find(p => p.key === this.priority) ?? PRIORIDADES[2]
   );
 
-  statusBadge(s: string): BadgeVariant { return STATUS_BADGE[s] ?? 'outline'; }
+  statusBadge(s: string): BadgeVariant { return insigniaDelEstadoDeTarea(s); }
+
+  readonly nombreDelEstado = nombreDelEstadoDeTarea;
 
   ngOnInit(): void {
     const t = this.task();

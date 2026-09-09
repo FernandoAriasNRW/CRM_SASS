@@ -90,8 +90,8 @@ export class TicketsComponent implements OnInit {
    * no llevan a ninguna parte.
    */
   readonly VISTAS_INTEGRADAS: VistaIntegrada[] = [
-    { clave: 'board', etiqueta: 'Tablero', icono: 'lucideLayoutDashboard' },
-    { clave: 'list',  etiqueta: 'Lista',   icono: 'lucideList' }
+    { clave: 'board', etiqueta: $localize`Tablero`, icono: 'lucideLayoutDashboard' },
+    { clave: 'list',  etiqueta: $localize`Lista`,   icono: 'lucideList' }
   ];
   readonly isLoading = signal(false);
 
@@ -104,20 +104,20 @@ export class TicketsComponent implements OnInit {
 
   // DataTable columns definition
   tableColumns: ColumnDef[] = this.columnService.buildColumns<Ticket>({
-    title: { label: 'Title' },
-    description: { label: 'Description', visible: false },
-    status: { label: 'Status', type: 'custom' },
-    priority: { label: 'Priority', type: 'custom' },
-    assignedAgentId: { label: 'Agente', type: 'user' },
-    createdAt: { label: 'Created At', type: 'date' }
+    title: { label: $localize`Título` },
+    description: { label: $localize`Descripción`, visible: false },
+    status: { label: $localize`Estado`, type: 'custom' },
+    priority: { label: $localize`Prioridad`, type: 'custom' },
+    assignedAgentId: { label: $localize`Agente`, type: 'user' },
+    createdAt: { label: $localize`Creado`, type: 'date' }
   });
 
   // Advanced Filters definition
   filterFields = computed<FilterField[]>(() => [
     { key: 'priority', label: 'Priority', type: 'select', options: this.priorities().map(p => ({ label: p, value: p })) },
     { key: 'status', label: 'Status', type: 'select', options: this.statuses.map(s => ({ label: s, value: s })) },
-    { key: 'startDate', label: 'Start Date', type: 'date' },
-    { key: 'endDate', label: 'End Date', type: 'date' }
+    { key: 'startDate', label: $localize`Desde`, type: 'date' },
+    { key: 'endDate', label: $localize`Hasta`, type: 'date' }
   ]);
 
   // Saved Views

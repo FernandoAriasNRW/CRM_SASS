@@ -1107,3 +1107,73 @@ Se veía y no se entendía:
 Un solo sitio, `vocabulario-de-tickets.ts`, con las claves del servidor y su nombre en castellano.
 Las insignias enseñan el nombre y no la clave: antes ponía «Open» junto a un desplegable que decía
 «Abierto».
+
+---
+
+## 18. Un solo panel para todos los módulos, y el idioma a medias
+
+### 18.1 El panel llegaba a tres módulos de diez
+
+La entrega anterior movió el panel de navegación al armazón, pero sólo para tareas, tickets y
+proyectos. El resto —Inicio, Panel, Documentos, Equipos, Chat, Calendario, Informes— se quedaba con
+el desplegable viejo, así que **la barra lateral se comportaba de dos maneras según dónde pusieras
+el ratón**.
+
+Ahora el vocabulario cubre todos, y un módulo que se añada al menú **recibe panel sin tocar nada**:
+`vocabularioDe` le da su nombre y la entrada «Ver todo», que es lo único que se puede afirmar sin
+conocerlo. Inventarle «Mis X» o «X del equipo» sería repetir el fallo que se acaba de quitar.
+
+Para que eso fuera posible, una entrada del panel puede llevar a otra ruta o fijar parámetros que
+no son `?filter=`: el de Inicio lleva a las tareas y los tickets de uno, y el de Documentos cambia
+de pestaña con `?tab=`.
+
+### 18.2 Documentos era la excepción que sostenía el problema
+
+Su panel tenía además de las pestañas una lista de favoritos y otra de páginas recientes, y por eso
+era el único módulo con barra lateral propia: nadie de fuera podía pintar esos datos. El resultado
+era el doble submenú, el panel compartido y el suyo justo al lado.
+
+Dos cambios lo resuelven: las pestañas pasan de estado interno a `?tab=` —así las mueve el panel
+compartido, y de paso una pestaña se comparte por enlace y responde al botón de atrás—, y un
+servicio pequeño (`SeccionesDelPanelService`) deja que un módulo entregue secciones propias al
+panel. El módulo empuja lo suyo; el panel sólo sabe pintar secciones.
+
+Se ha caído «Popular Wikis», un recuadro fijo que prometía que ahí aparecerían los wikis más vistos.
+No aparecían: no hay nada que los cuente.
+
+### 18.3 Desanclar no escondía nada
+
+El anclaje era **una sola bandera para toda la aplicación**, y hacía tres cosas mal: desanclar no
+recogía el panel —seguía visible—, anclar en Tareas anclaba también en Documentos, y al cambiar de
+módulo no se consultaba nada.
+
+Ahora hay un anclaje por módulo. Sin anclar, el panel se asoma al pasar el ratón por su icono y se
+recoge al salir de la barra. Anclado, se queda y empuja el contenido. **Al cambiar de módulo manda
+el anclaje del módulo de la pantalla**, no el del que se estaba asomando: si mandara el señalado,
+asomar uno anclado dejaría el panel abierto para siempre.
+
+### 18.4 El idioma: no faltaban traducciones, faltaban marcas
+
+La aplicación se ve mitad en español y mitad en inglés **elijas el idioma que elijas**, y no es que
+falten traducciones: hay 565 y las plantillas están marcadas casi al completo. Lo que había era:
+
+- **172 etiquetas escritas en TypeScript sin `$localize`**: las columnas de las tablas —«Title»,
+  «Status», «Due Date»—, los nombres de los módulos de la barra —«Home», «Dashboard», «Docs»,
+  «Teams» en inglés junto a «Proyectos» y «Tareas» en español— y las pestañas de vista. Esas no se
+  traducen nunca: salen igual en las dos versiones.
+- **18 cadenas marcadas cuyo texto de origen estaba en inglés.** Como el idioma de origen es `es`,
+  esas salen en inglés **en la versión española**: «All Docs», «My Docs», «Shared with me».
+- **Claves del servidor enseñadas en crudo**: «To Do», «In Progress». Son datos, no texto, y por eso
+  no se traducen; hay que enseñar su nombre. El tablero de tareas ya lo hacía y el cajón de detalle
+  no, así que la misma tarea decía dos cosas según dónde se mirara.
+
+Los tres se han corregido, y las claves ahora viven junto a su nombre en
+`vocabulario-de-tareas.ts` y `vocabulario-de-tickets.ts`, que es lo que impide que alguien traduzca
+una clave por descuido y rompa el guardado.
+
+### 18.5 El cajón de tareas tenía el doble de márgenes
+
+El cuerpo del cajón ponía `p-6` y la columna izquierda añadía `px-8 py-6` encima: el contenido
+empezaba a cincuenta y seis píxeles del borde. Además se desplazaban las dos, así que salían dos
+barras anidadas. Mismo tratamiento que el de tickets: un solo desplazamiento, separadores finos en
+vez de líneas gruesas, y los campos sin recuadro permanente.

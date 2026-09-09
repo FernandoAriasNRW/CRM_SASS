@@ -14,7 +14,6 @@ import { UserAvatarComponent } from './shared/ui/user-avatar.component';
 import { SidebarCustomizerComponent } from './shared/ui/sidebar-customizer.component';
 import { SubmenuCustomizerComponent } from './shared/ui/submenu-customizer.component';
 import { PanelDeNavegacionComponent } from './shared/ui/panel-de-navegacion/panel-de-navegacion.component';
-import { VOCABULARIO } from './shared/ui/panel-de-navegacion/vocabulario-del-menu';
 import {
   lucideLayoutDashboard, lucideFolderKanban, lucideCheckSquare,
   lucideTicket, lucideLogOut, lucideMenu, lucideX,
@@ -28,14 +27,6 @@ import { UpperCasePipe } from '@angular/common';
 import { ClickableDirective } from './shared/directives/clickable.directive';
 import { CommandPaletteComponent } from './shared/ui/command-palette/command-palette.component';
 import { CommandPaletteService } from './shared/ui/command-palette/command-palette.service';
-
-/**
- * Los módulos que tienen panel de navegación propio.
- *
- * Sale de `VOCABULARIO`, que es donde están las entradas: si estuviera escrita a mano aquí, añadir
- * un módulo al vocabulario no le daría panel y nadie sabría por qué.
- */
-const MODULOS_CON_PANEL = Object.keys(VOCABULARIO);
 
 @Component({
   selector: 'app-root',
@@ -138,13 +129,27 @@ export class AppComponent implements OnInit {
   /** Si el ratón está encima del panel. Sin esto, al ir hacia él se cerraría por el camino. */
   protected readonly raton = signal(false);
 
-  /** El panel se queda abierto y empuja el contenido. */
-  protected readonly panelAnclado = signal(true);
+  /**
+   * Qué paneles están anclados, <b>uno por módulo</b>.
+   *
+   * Antes era una sola bandera para todos, y eso hacía dos cosas mal: anclar en Tareas anclaba
+   * también en Documentos —donde a lo mejor estorba— y desanclar en uno lo desanclaba en todos.
+   * Cada módulo se usa de una manera; el de Documentos se quiere fijo y el de Tickets al vuelo.
+   *
+   * Arranca anclado para el módulo en el que se entra: un panel que empieza escondido en una
+   * pantalla nueva es un panel que nadie descubre.
+   */
+  private readonly anclados = signal<Record<string, boolean>>({});
 
-  /** El módulo de la ruta actual, si tiene panel. */
+  /** El módulo de la ruta actual. Todos los del menú tienen panel. */
   protected readonly moduloDeLaRuta = computed(() => {
-    const segmento = (this.currentRouteUrl() ?? '').split('?')[0].split('/')[1] ?? '';
-    return MODULOS_CON_PANEL.includes(segmento) ? segmento : null;
+    const url = (this.currentRouteUrl() ?? '').split('?')[0];
+    const segmento = url.split('/')[1] ?? '';
+
+    // La raíz es Inicio, que en el menú se llama `home` y no tiene segmento.
+    if (!segmento) return 'home';
+
+    return this.navStore.allItems().some(i => i.id === segmento) ? segmento : null;
   });
 
   /**
@@ -156,24 +161,60 @@ export class AppComponent implements OnInit {
   protected readonly moduloDelPanel = computed(
     () => this.moduloSenalado() ?? this.moduloDeLaRuta());
 
+  /** La entrada del menú del panel que se está enseñando, para su nombre y su ruta. */
+  protected readonly itemDelPanel = computed(() => {
+    const modulo = this.moduloDelPanel();
+    return modulo ? this.navStore.allItems().find(i => i.id === modulo) ?? null : null;
+  });
+
+  /** Si el panel del módulo que se está enseñando está anclado. */
+  protected readonly panelAnclado = computed(() => {
+    const modulo = this.moduloDelPanel();
+    return modulo ? this.anclados()[modulo] ?? true : false;
+  });
+
   /**
    * Si el panel se ve ahora mismo.
    *
-   * Anclado, siempre. Sin anclar, sólo mientras el ratón esté en la barra o en el propio panel:
-   * si sólo se mirara la barra, el panel se cerraría en cuanto se moviera el ratón hacia él.
+   * <b>El anclaje que manda es el del módulo de la pantalla, no el del que se está asomando.</b>
+   * Es lo que hace que al cambiar de módulo el panel se quede o se recoja según cómo esté ese: si
+   * mandara el señalado, asomar uno anclado dejaría el panel abierto para siempre.
+   *
+   * Sin anclar, se ve mientras el ratón esté en la barra o en el propio panel. Lo segundo hace
+   * falta o el panel se cerraría al mover el ratón hacia él.
    */
-  protected readonly panelVisible = computed(
-    () => this.panelAnclado() || this.moduloSenalado() !== null || this.raton());
+  protected readonly panelVisible = computed(() => {
+    const deLaRuta = this.moduloDeLaRuta();
+    const ancladoAqui = deLaRuta ? this.anclados()[deLaRuta] ?? true : false;
 
-  protected tienePanel(ruta: string): boolean {
-    return MODULOS_CON_PANEL.includes(ruta.replace(/^\//, ''));
+    return ancladoAqui || this.moduloSenalado() !== null || this.raton();
+  });
+
+  /**
+   * El panel empuja el contenido sólo cuando está anclado <b>en la pantalla actual</b>.
+   *
+   * Asomándose por encima no empuja: si lo hiciera, la página entera se movería cada vez que el
+   * ratón roza la barra lateral.
+   */
+  protected readonly panelEmpuja = computed(() => {
+    const deLaRuta = this.moduloDeLaRuta();
+    return !!deLaRuta && (this.anclados()[deLaRuta] ?? true);
+  });
+
+  protected alEntrarEnModulo(id: string): void {
+    this.moduloSenalado.set(id);
   }
 
-  protected alEntrarEnModulo(ruta: string): void {
-    const modulo = ruta.replace(/^\//, '');
-    // Los módulos sin panel no lo abren, pero **sí lo cierran**: pasar el ratón por «Docs» tiene
-    // que recoger el de Tareas, o se quedaría abierto enseñando otra cosa.
-    this.moduloSenalado.set(MODULOS_CON_PANEL.includes(modulo) ? modulo : null);
+  /** Al salir de la barra lateral, el panel vuelve a ser el de la pantalla en la que se está. */
+  protected alSalirDeLaBarra(): void {
+    this.moduloSenalado.set(null);
+  }
+
+  protected alternarAnclado(anclado: boolean): void {
+    const modulo = this.moduloDelPanel();
+    if (!modulo) return;
+
+    this.anclados.update(actuales => ({ ...actuales, [modulo]: anclado }));
   }
 
   // Drawer state for sidebar customizer

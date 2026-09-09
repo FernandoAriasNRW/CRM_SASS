@@ -22,9 +22,9 @@ export interface FilterField {
       <div class="flex items-center gap-2 mb-4">
         <button uiButton variant="outline" (click)="toggleOpen()">
           <ng-icon name="lucideFilter" class="w-4 h-4 mr-2"></ng-icon>
-          Filters
+          <span i18n>Filtros</span>
         </button>
-        <button uiButton variant="ghost" size="sm" (click)="clearFilters()">Clear All</button>
+        <button uiButton variant="ghost" size="sm" (click)="clearFilters()" i18n>Limpiar</button>
       </div>
     
       @if (isOpen()) {

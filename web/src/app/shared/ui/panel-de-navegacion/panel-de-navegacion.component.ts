@@ -4,11 +4,13 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
-  lucideArchive, lucideList, lucideLock, lucidePenLine, lucidePin, lucidePinOff,
-  lucideShare2, lucideStar, lucideTrash2, lucideUser
+  lucideArchive, lucideCalendarDays, lucideFileText, lucideFolderKanban, lucideList, lucideLock,
+  lucidePenLine, lucidePin, lucidePinOff, lucideShare2, lucideSquareCheck, lucideStar,
+  lucideTicket, lucideTrash2, lucideUser, lucideUsers
 } from '@ng-icons/lucide';
 
-import { EntradaDeMenu, VOCABULARIO, VocabularioDeModulo } from './vocabulario-del-menu';
+import { EntradaDeMenu, VocabularioDeModulo, vocabularioDe } from './vocabulario-del-menu';
+import { SeccionesDelPanelService } from './secciones-del-panel.service';
 
 /**
  * El panel lateral de navegación: <b>el único submenú de la aplicación</b>.
@@ -35,8 +37,9 @@ import { EntradaDeMenu, VOCABULARIO, VocabularioDeModulo } from './vocabulario-d
   standalone: true,
   imports: [CommonModule, NgIcon],
   viewProviders: [provideIcons({
-    lucideArchive, lucideList, lucideLock, lucidePenLine, lucidePin, lucidePinOff,
-    lucideShare2, lucideStar, lucideTrash2, lucideUser
+    lucideArchive, lucideCalendarDays, lucideFileText, lucideFolderKanban, lucideList, lucideLock,
+    lucidePenLine, lucidePin, lucidePinOff, lucideShare2, lucideSquareCheck, lucideStar,
+    lucideTicket, lucideTrash2, lucideUser, lucideUsers
   })],
   template: `
     <div
@@ -80,15 +83,67 @@ import { EntradaDeMenu, VOCABULARIO, VocabularioDeModulo } from './vocabulario-d
           </button>
         }
       </nav>
+
+      <!--
+        Lo que aporta el propio módulo: los favoritos y las páginas recientes de Documentos, por
+        ejemplo. Va debajo de la navegación y separado, porque son datos y no destinos fijos.
+      -->
+      @if (secciones().length > 0) {
+        <div class="px-2 pb-3 space-y-4 overflow-y-auto border-t border-border/80 pt-3">
+          @for (seccion of secciones(); track seccion.titulo) {
+            <div>
+              <span class="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5 px-1">
+                {{ seccion.titulo }}
+              </span>
+
+              @if (seccion.elementos.length > 0) {
+                <div class="space-y-0.5">
+                  @for (elemento of seccion.elementos; track elemento.id) {
+                    <button
+                      type="button"
+                      (click)="elemento.alPulsar()"
+                      class="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-muted-foreground
+                             hover:bg-secondary/70 rounded-md transition-colors text-left
+                             focus:outline-none focus:ring-2 focus:ring-ring">
+                      @if (elemento.icono) {
+                        <ng-icon [name]="elemento.icono" class="w-3.5 h-3.5 flex-shrink-0" />
+                      }
+                      <span class="truncate">{{ elemento.etiqueta }}</span>
+                    </button>
+                  }
+                </div>
+              } @else if (seccion.siNoHayNada) {
+                <p class="px-1 text-[11px] text-muted-foreground">{{ seccion.siNoHayNada }}</p>
+              }
+            </div>
+          }
+        </div>
+      }
     </div>
   `
 })
 export class PanelDeNavegacionComponent {
   private readonly router = inject(Router);
   private readonly ruta = inject(ActivatedRoute);
+  private readonly seccionesDeLosModulos = inject(SeccionesDelPanelService);
 
-  /** El módulo cuyo vocabulario se pinta: `tasks`, `tickets` o `projects`. */
+  /** El módulo cuyo vocabulario se pinta. Cualquiera de los del menú lateral. */
   readonly modulo = input.required<string>();
+
+  /**
+   * El nombre del módulo según el menú lateral.
+   *
+   * Sólo se usa para los módulos que aún no tienen vocabulario escrito: así uno nuevo enseña su
+   * nombre de verdad en la cabecera del panel en vez de la clave de la ruta.
+   */
+  readonly nombreDelModulo = input<string | undefined>(undefined);
+
+  /**
+   * La ruta del módulo, cuando no coincide con su identificador.
+   *
+   * Inicio es `home` y su ruta es `/`. Suponer `/${modulo}` llevaría a `/home`, que no existe.
+   */
+  readonly rutaDelModulo = input<string | undefined>(undefined);
 
   /**
    * Anclado: se queda abierto y el contenido se corre a la derecha. Sin anclar, se asoma al pasar
@@ -114,7 +169,10 @@ export class PanelDeNavegacionComponent {
   readonly filtroActivo = computed(() => this.parametros()['filter'] ?? null);
 
   readonly vocabulario = computed<VocabularioDeModulo>(
-    () => VOCABULARIO[this.modulo()] ?? { titulo: this.modulo(), inicial: '·', entradas: [] });
+    () => vocabularioDe(this.modulo(), this.nombreDelModulo()));
+
+  /** Las secciones que el módulo haya registrado. Vacío para casi todos. */
+  readonly secciones = computed(() => this.seccionesDeLosModulos.todas()[this.modulo()] ?? []);
 
   /**
    * Si una entrada está puesta.
@@ -124,7 +182,23 @@ export class PanelDeNavegacionComponent {
    * los tickets ya están filtrados así.
    */
   esLaActiva(entrada: EntradaDeMenu): boolean {
-    return this.esElModuloActual() && (entrada.filtro ?? null) === this.filtroActivo();
+    if (!this.esElModuloActual()) return false;
+
+    // Una entrada con ruta propia —«Mis tareas» desde Inicio— nunca es «la activa» del panel de
+    // Inicio: lleva a otra pantalla, así que si estuviera marcada diría que estás en ella.
+    if (entrada.ruta) return false;
+
+    // Los parámetros que la entrada fija tienen que coincidir todos. Es lo que distingue las
+    // pestañas de Documentos entre sí, que no usan `?filter=`.
+    for (const [clave, valor] of Object.entries(entrada.params ?? {})) {
+      if (this.parametros()[clave] !== valor) return false;
+    }
+
+    // Y los que no fija no pueden estar puestos, o «Todos los documentos» saldría marcado
+    // estando en «Privados».
+    if (!entrada.params && this.parametros()['tab']) return false;
+
+    return (entrada.filtro ?? null) === this.filtroActivo();
   }
 
   private esElModuloActual(): boolean {
@@ -142,8 +216,10 @@ export class PanelDeNavegacionComponent {
    * siga siendo la de siempre y no una variante que parezca filtrada.
    */
   ir(entrada: EntradaDeMenu): void {
-    this.router.navigate(['/' + this.modulo()], {
-      queryParams: { filter: entrada.filtro }
+    const destino = entrada.ruta ?? this.rutaDelModulo() ?? '/' + this.modulo();
+
+    this.router.navigate([destino], {
+      queryParams: { filter: entrada.filtro, tab: null, type: null, ...entrada.params }
     });
   }
 
