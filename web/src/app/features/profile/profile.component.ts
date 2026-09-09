@@ -89,17 +89,17 @@ export class ProfileComponent implements OnInit {
     this.passwordSuccess.set('');
 
     if (!this.currentPassword || !this.newPassword || !this.confirmPassword) {
-      this.passwordError.set('Todos los campos son requeridos');
+      this.passwordError.set($localize`Todos los campos son requeridos`);
       return;
     }
 
     if (this.newPassword !== this.confirmPassword) {
-      this.passwordError.set('Las contraseñas no coinciden');
+      this.passwordError.set($localize`Las contraseñas no coinciden`);
       return;
     }
 
     if (this.newPassword.length < 6) {
-      this.passwordError.set('La nueva contraseña debe tener al menos 6 caracteres');
+      this.passwordError.set($localize`La nueva contraseña debe tener al menos 6 caracteres`);
       return;
     }
 

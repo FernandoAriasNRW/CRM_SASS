@@ -413,8 +413,7 @@ export class TicketsComponent implements OnInit {
           tickets.map(t => t.id === ticket.id ? { ...t, status: estadoAnterior } : t)
         );
 
-        this.toast.error(
-          'No se pudo mover el ticket',
+        this.toast.error($localize`No se pudo mover el ticket`,
           `«${ticket.title}» sigue en ${estadoAnterior}.`);
       },
     });

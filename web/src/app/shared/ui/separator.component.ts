@@ -12,7 +12,7 @@ export class SeparatorComponent {
   @HostBinding('class') get classes() {
     return cn(
       'shrink-0 bg-border block',
-      this.orientation() === 'horizontal' ? 'h-[1px] w-full' : 'h-full w-[1px]'
+      this.orientation() === 'horizontal' ? $localize`h-[1px] w-full` : $localize`h-full w-[1px]`
     );
   }
 }

@@ -135,16 +135,16 @@ export class DashboardComponent implements OnInit {
   readonly kpiCards = () => {
     const k = this.kpi();
     return [
-      { label: 'Proyectos', value: k?.totalProjects ?? '—', icon: 'lucideFolderKanban', sub: 'Total activos' },
-      { label: 'Tareas', value: k?.totalTasks ?? '—', icon: 'lucideCheckSquare', sub: `${k?.doneTasks ?? 0} completadas` },
-      { label: 'Tickets abiertos', value: k?.openTickets ?? '—', icon: 'lucideTicket', sub: `${k?.inProgressTickets ?? 0} en progreso` },
-      { label: 'Throughput', value: k ? `${k.throughput}%` : '—', icon: 'lucideTrendingUp', sub: 'Tareas completadas' },
+      { label: $localize`Proyectos`, value: k?.totalProjects ?? '—', icon: 'lucideFolderKanban', sub: $localize`Total activos` },
+      { label: $localize`Tareas`, value: k?.totalTasks ?? '—', icon: 'lucideCheckSquare', sub: $localize`${k?.doneTasks ?? 0}:COMPLETADAS: completadas` },
+      { label: $localize`Tickets abiertos`, value: k?.openTickets ?? '—', icon: 'lucideTicket', sub: $localize`${k?.inProgressTickets ?? 0}:ENPROGRESO: en progreso` },
+      { label: $localize`Rendimiento`, value: k ? `${k.throughput}%` : '—', icon: 'lucideTrendingUp', sub: $localize`Tareas completadas` },
       // El guión ya estaba para «aún no ha llegado la respuesta»; ahora cubre también «el
       // servidor no tiene con qué calcularlo». Son dos cosas distintas para quien programa y
       // la misma para quien mira: no hay dato. Lo que no puede pasar es inventarse un 0,0d,
       // que se leería como «se entrega al instante».
-      { label: 'Lead Time', value: k?.avgLeadTimeDays != null ? `${k.avgLeadTimeDays.toFixed(1)}d` : '—', icon: 'lucideClock', sub: 'Tiempo promedio' },
-      { label: 'Cycle Time', value: k?.avgCycleTimeDays != null ? `${k.avgCycleTimeDays.toFixed(1)}d` : '—', icon: 'lucideActivity', sub: 'Ciclo promedio' },
+      { label: $localize`Tiempo de entrega`, value: k?.avgLeadTimeDays != null ? `${k.avgLeadTimeDays.toFixed(1)}d` : '—', icon: 'lucideClock', sub: $localize`Promedio` },
+      { label: $localize`Tiempo de ciclo`, value: k?.avgCycleTimeDays != null ? `${k.avgCycleTimeDays.toFixed(1)}d` : '—', icon: 'lucideActivity', sub: $localize`Promedio` },
     ];
   };
 

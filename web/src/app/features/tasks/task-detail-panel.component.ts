@@ -551,7 +551,7 @@ export class TaskDetailPanelComponent implements OnInit {
     this.api.post(`/tasks/${this.task().id}/move`, { newStatus }).subscribe({
       next: () => {
         this.updated.emit({ ...this.task(), status: newStatus });
-        this.toast.success('Estado actualizado', `La tarea ahora está en ${newStatus}`);
+        this.toast.success($localize`Estado actualizado`, `La tarea ahora está en ${newStatus}`);
       },
       error: () => {
         this.toast.error('Error', 'No se pudo cambiar el estado');

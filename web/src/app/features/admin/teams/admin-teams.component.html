@@ -164,7 +164,7 @@
       Cancelar
     </button>
     <button (click)="saveTeam()" class="px-4 py-2 text-xs font-semibold text-white bg-primary hover:bg-primary rounded-lg shadow-sm">
-      {{ editingTeam() ? 'Guardar Cambios' : 'Crear Equipo' }}
+      @if (editingTeam()) { <span i18n>Guardar Cambios</span> } @else { <span i18n>Crear Equipo</span> }
     </button>
   </div>
 </app-drawer>

@@ -30,7 +30,7 @@ export interface Toast {
  * this.toast.error('Error', 'No se pudo guardar el proyecto');
  *
  * // Mostrar éxito
- * this.toast.success('Éxito', 'Proyecto guardado correctamente');
+ * this.toast.success($localize`Éxito`, 'Proyecto guardado correctamente');
  * ```
  */
 @Injectable({ providedIn: 'root' })

@@ -200,7 +200,7 @@
               </div>
             </div>
             <p class="text-sm text-muted-foreground mb-4">
-              Creado el {{ dashboard.createdById === authStore.userInfo()?.id ? 'Por ti' : 'Por otro usuario' }}
+              Creado el @if (dashboard.createdById === authStore.userInfo()?.id) { <span i18n>Por ti</span> } @else { <span i18n>Por otro usuario</span> }
             </p>
             <div class="flex items-center justify-between mt-4">
               <button uiButton variant="outline" size="sm" class="w-full">

@@ -58,7 +58,7 @@ export class LoginComponent {
             });
         },
         error: () => {
-          this.error.set('Credenciales inválidas');
+          this.error.set($localize`Credenciales inválidas`);
           this.loading.set(false);
         },
       });

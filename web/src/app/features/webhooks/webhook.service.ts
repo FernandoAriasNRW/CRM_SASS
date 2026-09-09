@@ -41,8 +41,7 @@ export class WebhookService {
     return this.api.post<WebhookSubscription>('/webhooks', request).pipe(
       tap({
         next: (subscription) => {
-          this.toast.success(
-            'Webhook creado',
+          this.toast.success($localize`Webhook creado`,
             `"${subscription.name}" ha sido creado exitosamente. Guarda el secret de forma segura.`
           );
         },
@@ -66,7 +65,7 @@ export class WebhookService {
       .pipe(
         tap({
           next: () => {
-            this.toast.success('Webhook actualizado', 'Los cambios han sido guardados');
+            this.toast.success($localize`Webhook actualizado`, 'Los cambios han sido guardados');
           },
           error: () => {
             this.toast.error('Error', 'No se pudo actualizar el webhook');
@@ -83,7 +82,7 @@ export class WebhookService {
     return this.api.delete<void>(`/webhooks/${subscriptionId}?tenantId=${tenantId}`).pipe(
       tap({
         next: () => {
-          this.toast.success('Webhook eliminado', 'La suscripción ha sido eliminada');
+          this.toast.success($localize`Webhook eliminado`, 'La suscripción ha sido eliminada');
         },
         error: () => {
           this.toast.error('Error', 'No se pudo eliminar el webhook');
@@ -105,8 +104,7 @@ export class WebhookService {
       .pipe(
         tap({
           next: () => {
-            this.toast.warning(
-              'Secret regenerado',
+            this.toast.warning($localize`Secret regenerado`,
               'El secret anterior ha dejado de funcionar. Usa el nuevo secret.'
             );
           },

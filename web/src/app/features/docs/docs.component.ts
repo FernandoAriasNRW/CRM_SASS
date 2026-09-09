@@ -392,7 +392,7 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
     if (event) event.stopPropagation();
     this.isNewDocDropdownOpen.set(false);
 
-    const title = type === 2 ? 'Untitled Wiki' : 'Untitled Document';
+    const title = type === 2 ? $localize`Untitled Wiki` : $localize`Untitled Document`;
     this.docsService.createDocument({
       title,
       description: '',

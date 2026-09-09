@@ -14,12 +14,12 @@ import {
 
 /** Los tipos que entiende el servidor, con su nombre en castellano. */
 const TIPOS: { clave: string; etiqueta: string }[] = [
-  { clave: 'Meeting', etiqueta: 'Reunión' },
-  { clave: 'Appointment', etiqueta: 'Cita' },
-  { clave: 'Task', etiqueta: 'Tarea' },
-  { clave: 'Reminder', etiqueta: 'Recordatorio' },
-  { clave: 'OutOfOffice', etiqueta: 'Fuera de oficina' },
-  { clave: 'Holiday', etiqueta: 'Día festivo' }
+  { clave: 'Meeting', etiqueta: $localize`Reunión` },
+  { clave: 'Appointment', etiqueta: $localize`Cita` },
+  { clave: 'Task', etiqueta: $localize`Tarea` },
+  { clave: 'Reminder', etiqueta: $localize`Recordatorio` },
+  { clave: 'OutOfOffice', etiqueta: $localize`Fuera de oficina` },
+  { clave: 'Holiday', etiqueta: $localize`Día festivo` }
 ];
 
 /**
@@ -42,7 +42,7 @@ const TIPOS: { clave: string; etiqueta: string }[] = [
   template: `
     <app-drawer
       [isOpen]="abierto()"
-      [title]="evento() ? 'Modificar evento' : 'Nuevo evento'"
+      [title]="titulodelCajon()"
       [subtitle]="subtitulo()"
       size="md"
       (closed)="cerrar.emit()">
@@ -239,6 +239,16 @@ export class EventoDrawerComponent {
     this.candidatos.set([]);
   }
 
+  /**
+   * El título del cajón.
+   *
+   * Va en un método y no en un ternario dentro de la plantilla porque `$localize` usa comillas
+   * invertidas, y la plantilla del componente también: escrito ahí, la cierra a media frase.
+   */
+  titulodelCajon(): string {
+    return this.evento() ? $localize`Modificar evento` : $localize`Nuevo evento`;
+  }
+
   subtitulo(): string {
     const evento = this.evento();
     return evento?.canceladoEnUtc ? 'Este evento está anulado' : '';
@@ -308,7 +318,7 @@ export class EventoDrawerComponent {
         ? await this.guardarModificacion(evento.id, datos)
         : await this.calendario.crear(datos);
 
-      this.avisos.success(evento ? 'Evento modificado' : 'Evento creado', guardado.title);
+      this.avisos.success(evento ? $localize`Evento modificado` : $localize`Evento creado`, guardado.title);
       this.guardado.emit(guardado);
     } finally {
       // En `finally` para que un fallo no deje el botón girando para siempre. El aviso del error

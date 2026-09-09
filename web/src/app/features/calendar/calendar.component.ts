@@ -72,7 +72,15 @@ export class CalendarComponent implements OnInit {
   /** Sobre qué se abrió el menú: un día de la rejilla o un evento concreto. */
   private readonly objetoDelMenu = signal<{ dia: Date; evento: EventoDelCalendario | null } | null>(null);
 
-  readonly DIAS_SEMANA = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+  /**
+   * Las abreviaturas de los días. Se escriben en vez de pedírselas al navegador porque
+   * `toLocaleDateString` las devuelve en el idioma del sistema operativo, no en el de la
+   * aplicación: con Windows en inglés saldrían «Mon, Tue» dentro de la versión española.
+   */
+  readonly DIAS_SEMANA = [
+    $localize`Lun`, $localize`Mar`, $localize`Mié`,
+    $localize`Jue`, $localize`Vie`, $localize`Sáb`, $localize`Dom`
+  ];
 
   readonly mesLegible = computed(() =>
     this.mesActual().toLocaleDateString('es', { month: 'long', year: 'numeric' }));
@@ -116,25 +124,25 @@ export class CalendarComponent implements OnInit {
 
     if (evento) {
       return [
-        { clave: 'modificar', etiqueta: 'Modificar', icono: 'lucidePencil' },
-        { clave: 'enlazar', etiqueta: 'Enlazar con tarea, ticket o proyecto', icono: 'lucideLink' },
+        { clave: 'modificar', etiqueta: $localize`Modificar`, icono: 'lucidePencil' },
+        { clave: 'enlazar', etiqueta: $localize`Enlazar con tarea, ticket o proyecto`, icono: 'lucideLink' },
         evento.canceladoEnUtc
-          ? { clave: 'reactivar', etiqueta: 'Deshacer la anulación', icono: 'lucideRotateCcw', separadorAntes: true }
-          : { clave: 'anular', etiqueta: 'Cancelar el evento', icono: 'lucideBan', separadorAntes: true },
-        { clave: 'papelera', etiqueta: 'Enviar a la papelera', icono: 'lucideTrash2', destructiva: true }
+          ? { clave: 'reactivar', etiqueta: $localize`Deshacer la anulación`, icono: 'lucideRotateCcw', separadorAntes: true }
+          : { clave: 'anular', etiqueta: $localize`Cancelar el evento`, icono: 'lucideBan', separadorAntes: true },
+        { clave: 'papelera', etiqueta: $localize`Enviar a la papelera`, icono: 'lucideTrash2', destructiva: true }
       ];
     }
 
     // Las del día. Es la lista que se pidió, en el orden en que se pidió.
     return [
-      { clave: 'crear', etiqueta: 'Crear nuevo evento', icono: 'lucideCalendarPlus' },
-      { clave: 'ver-eventos', etiqueta: 'Ver eventos', icono: 'lucideEye' },
-      { clave: 'agenda', etiqueta: 'Ver agenda del día', icono: 'lucideCalendarRange' },
-      { clave: 'tareas', etiqueta: 'Tareas para entregar hoy', icono: 'lucideSquareCheck', separadorAntes: true },
-      { clave: 'tickets', etiqueta: 'Tickets del día', icono: 'lucideTicket' },
-      { clave: 'proyectos', etiqueta: 'Proyectos a finalizar hoy', icono: 'lucideFolderCheck' },
-      { clave: 'ajustes', etiqueta: 'Ajustes', icono: 'lucideSettings', separadorAntes: true },
-      { clave: 'papelera-dia', etiqueta: 'Enviar a la papelera los eventos', icono: 'lucideTrash2', destructiva: true }
+      { clave: 'crear', etiqueta: $localize`Crear nuevo evento`, icono: 'lucideCalendarPlus' },
+      { clave: 'ver-eventos', etiqueta: $localize`Ver eventos`, icono: 'lucideEye' },
+      { clave: 'agenda', etiqueta: $localize`Ver agenda del día`, icono: 'lucideCalendarRange' },
+      { clave: 'tareas', etiqueta: $localize`Tareas para entregar hoy`, icono: 'lucideSquareCheck', separadorAntes: true },
+      { clave: 'tickets', etiqueta: $localize`Tickets del día`, icono: 'lucideTicket' },
+      { clave: 'proyectos', etiqueta: $localize`Proyectos a finalizar hoy`, icono: 'lucideFolderCheck' },
+      { clave: 'ajustes', etiqueta: $localize`Ajustes`, icono: 'lucideSettings', separadorAntes: true },
+      { clave: 'papelera-dia', etiqueta: $localize`Enviar a la papelera los eventos`, icono: 'lucideTrash2', destructiva: true }
     ];
   });
 
@@ -361,13 +369,13 @@ export class CalendarComponent implements OnInit {
     const motivo = prompt(`¿Por qué se anula «${evento.title}»?`) ?? null;
 
     await this.calendario.anular(evento.id, motivo);
-    this.avisos.success('Evento anulado', 'Sigue en el calendario, tachado.');
+    this.avisos.success($localize`Evento anulado`, 'Sigue en el calendario, tachado.');
     await this.refrescar();
   }
 
   private async reactivar(evento: EventoDelCalendario): Promise<void> {
     await this.calendario.reactivar(evento.id);
-    this.avisos.success('Evento reactivado', evento.title);
+    this.avisos.success($localize`Evento reactivado`, evento.title);
     await this.refrescar();
   }
 
@@ -375,7 +383,7 @@ export class CalendarComponent implements OnInit {
     if (!confirm(`¿Enviar «${evento.title}» a la papelera?`)) return;
 
     await this.calendario.aLaPapelera(evento.id);
-    this.avisos.success('En la papelera', 'Se puede recuperar desde la papelera.');
+    this.avisos.success($localize`En la papelera`, 'Se puede recuperar desde la papelera.');
     await this.refrescar();
   }
 
@@ -389,7 +397,7 @@ export class CalendarComponent implements OnInit {
     const delDia = this.eventos().filter(e => mismoDia(new Date(e.startTime), dia));
 
     if (delDia.length === 0) {
-      this.avisos.info('Nada que enviar', 'Este día no tiene eventos.');
+      this.avisos.info($localize`Nada que enviar`, 'Este día no tiene eventos.');
       return;
     }
 
@@ -401,7 +409,7 @@ export class CalendarComponent implements OnInit {
       await this.calendario.aLaPapelera(evento.id);
     }
 
-    this.avisos.success('En la papelera', `${delDia.length} evento${delDia.length > 1 ? 's' : ''}.`);
+    this.avisos.success($localize`En la papelera`, `${delDia.length} evento${delDia.length > 1 ? 's' : ''}.`);
     await this.refrescar();
   }
 
@@ -418,7 +426,7 @@ export class CalendarComponent implements OnInit {
 
   async restaurar(evento: EventoDelCalendario): Promise<void> {
     await this.calendario.restaurar(evento.id);
-    this.avisos.success('Evento recuperado', evento.title);
+    this.avisos.success($localize`Evento recuperado`, evento.title);
 
     this.enPapelera.set(await this.calendario.papelera());
     await this.cargar();

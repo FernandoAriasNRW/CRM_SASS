@@ -537,8 +537,7 @@ export class TasksComponent implements OnInit {
           tasks.map(t => t.id === task.id ? { ...t, status: estadoAnterior } : t)
         );
 
-        this.toast.error(
-          'No se pudo mover la tarea',
+        this.toast.error($localize`No se pudo mover la tarea`,
           `«${task.title}» sigue en ${estadoAnterior}.`);
       },
     });

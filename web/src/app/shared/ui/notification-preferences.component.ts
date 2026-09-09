@@ -363,7 +363,7 @@ export class NotificationPreferencesComponent implements OnInit {
         // real es lo que hace que el aviso de «guardado» signifique algo.
         this.preferences = { ...this.preferences, ...guardadas };
         this.saving.set(false);
-        this.toast.success('Preferencias guardadas', 'Tus preferencias de notificación han sido actualizadas.');
+        this.toast.success($localize`Preferencias guardadas`, 'Tus preferencias de notificación han sido actualizadas.');
       },
       error: () => {
         this.saving.set(false);
@@ -379,7 +379,7 @@ export class NotificationPreferencesComponent implements OnInit {
       this.preferences.pushEnabled = true;
       this.savePreferences();
     } else {
-      this.toast.warning('Permiso denegado', 'No se pudieron activar las notificaciones push.');
+      this.toast.warning($localize`Permiso denegado`, 'No se pudieron activar las notificaciones push.');
     }
   }
 

@@ -50,7 +50,7 @@ export class TicketCreateModalComponent {
 
   submit(): void {
     if (!this.title.trim() || !this.description.trim()) {
-      this.error.set('Título y descripción son requeridos');
+      this.error.set($localize`Título y descripción son requeridos`);
       return;
     }
     this.loading.set(true);
@@ -59,7 +59,7 @@ export class TicketCreateModalComponent {
       title: this.title, description: this.description, priority: this.priority
     }).subscribe({
       next: ticket => { this.created.emit(ticket); this.closed.emit(); },
-      error: () => { this.error.set('Error al crear el ticket'); this.loading.set(false); },
+      error: () => { this.error.set($localize`Error al crear el ticket`); this.loading.set(false); },
     });
   }
 

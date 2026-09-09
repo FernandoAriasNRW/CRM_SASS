@@ -16,6 +16,7 @@ import { ButtonComponent } from '../../shared/ui/button.component';
 import { HierarchySignalStore } from '../../core/hierarchy-signal.store';
 import { ViewsService, SavedView } from '../../shared/services/views.service';
 import { TableColumnService } from '../../shared/services/table-column.service';
+import { ESTADOS_DE_PROYECTO, nombreDelEstadoDeProyecto } from './vocabulario-de-proyectos';
 
 const STATUS_VARIANT: Record<string, string> = {
   'Planned':     'bg-muted text-foreground',
@@ -63,17 +64,21 @@ export class ProjectsComponent implements OnInit {
     ownerId: { label: $localize`Propietario`, type: 'user' },
     spaceId: { label: 'Space ID', sortable: false, visible: false },
     folderId: { label: 'Folder ID', sortable: false, visible: false },
-    startDate: { label: 'Inicio', type: 'date' },
-    estimatedEndDate: { label: 'Fin Estimado', type: 'date' }
+    startDate: { label: $localize`Inicio`, type: 'date' },
+    estimatedEndDate: { label: $localize`Fin estimado`, type: 'date' }
   }, [
     { key: 'actions', label: 'Acciones', sortable: false, type: 'custom' }
   ]);
 
   filterFields = computed<FilterField[]>(() => [
-    { key: 'status', label: 'Status', type: 'select', options: ['Planned', 'In Progress', 'Done', 'On Hold'].map(s => ({ label: s, value: s })) },
-    { key: 'startDate', label: 'Start Date', type: 'date' },
-    { key: 'endDate', label: 'End Date', type: 'date' }
+    // Las claves son las del servidor —no se traducen— y el nombre sí. Antes se enseñaba la
+    // clave cruda: «Planned», «On Hold».
+    { key: 'status', label: $localize`Estado`, type: 'select', options: ESTADOS_DE_PROYECTO.map(e => ({ label: e.etiqueta, value: e.clave })) },
+    { key: 'startDate', label: $localize`Desde`, type: 'date' },
+    { key: 'endDate', label: $localize`Hasta`, type: 'date' }
   ]);
+
+  readonly nombreDelEstado = nombreDelEstadoDeProyecto;
 
   savedViews = signal<SavedView[]>([]);
   activeViewId = signal<string | null>(null);

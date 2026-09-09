@@ -161,7 +161,7 @@
           <ng-icon name="lucideLoader2" size="14" class="animate-spin" />
           <span i18n>Guardando...</span>
         } @else {
-          <span>{{ isEditing() ? 'Guardar Cambios' : 'Crear Webhook' }}</span>
+          <span>@if (isEditing()) { <span i18n>Guardar Cambios</span> } @else { <span i18n>Crear Webhook</span> }</span>
         }
       </button>
     </div>

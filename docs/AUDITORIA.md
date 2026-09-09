@@ -1177,3 +1177,49 @@ El cuerpo del cajón ponía `p-6` y la columna izquierda añadía `px-8 py-6` en
 empezaba a cincuenta y seis píxeles del borde. Además se desplazaban las dos, así que salían dos
 barras anidadas. Mismo tratamiento que el de tickets: un solo desplazamiento, separadores finos en
 vez de líneas gruesas, y los campos sin recuadro permanente.
+
+### 18.6 El idioma, hasta el final: faltaban 84 traducciones y 121 marcas
+
+La entrega anterior marcó lo que se veía en las pantallas señaladas, y eso **no bastaba**. Al
+comparar lo que la aplicación marca contra lo que el fichero inglés traduce salió el número que
+explica la mezcla:
+
+| | |
+|---|---|
+| cadenas que la aplicación marca | 604 |
+| con traducción al inglés | 520 |
+| **sin traducción al inglés** | **84** |
+
+Una cadena marcada sin traducción **no da error**: Angular usa el texto de origen. Como el idioma de
+origen es `es`, esas 84 salían **en español dentro de la versión inglesa**. Marcar sin traducir
+mueve el problema, no lo resuelve.
+
+Y quedaban dos patrones que ningún barrido anterior tocaba:
+
+- **Ternarios en plantilla**: `{{ loading() ? 'Ingresando...' : 'Ingresar' }}`. No se pueden marcar
+  con `i18n` tal cual —el atributo marca elementos, no expresiones—, así que se convierten en
+  `@if`/`@else` con un `<span i18n>` en cada rama. Eran 26.
+- **Mensajes en TypeScript**: los avisos y los errores que se enseñan (`error.set('Credenciales
+  inválidas')`). Eran 69.
+
+Un aviso sobre el barrido automático: envolvió también los `console.error`, que son para quien
+programa y no se traducen; se deshizo. Y en un componente con plantilla en línea metió un
+`$localize` —que usa comillas invertidas— **dentro** de la plantilla, que también las usa: la cortó
+a media frase y dejó el fichero sin compilar. Por eso el título de ese cajón se calcula ahora en un
+método.
+
+También apareció, por el camino, que la aplicación **no compilaba para producción**: un `i18n`
+anidado dentro de otro (`NG5002`). `ng serve` no lo ve porque desactiva la traducción, así que el
+fallo sólo salía al construir de verdad.
+
+**Cómo se comprueba.** No con un `grep` de palabras españolas en el paquete inglés: ahí conviven
+las claves del servidor —«In Progress», «To Do» son datos, no texto— con las traducciones, y el
+resultado son falsos positivos. Se comprueba de dos maneras: que no quede ninguna unidad sin
+traducir, y que para dieciséis parejas conocidas cada paquete tenga **su** versión y no la otra.
+
+### 18.7 Cómo elegir idioma en el contenedor
+
+No hay nada que ajustar: la imagen compila los dos y `nginx` elige por el `Accept-Language` del
+navegador, con el español por defecto. Con el navegador en inglés se entra a `/en/`. Para ver la
+otra versión basta con ir a `http://localhost:4200/es/` —la redirección de la raíz es 302, no 301,
+precisamente para que no quede fijada—.

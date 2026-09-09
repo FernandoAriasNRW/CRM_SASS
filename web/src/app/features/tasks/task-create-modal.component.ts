@@ -123,7 +123,7 @@ export class TaskCreateModalComponent {
 
   submit(): void {
     if (!this.title.trim() || !this.projectId || !this.dueDate) {
-      this.error.set('Título, proyecto y fecha son requeridos');
+      this.error.set($localize`Título, proyecto y fecha son requeridos`);
       return;
     }
     this.loading.set(true);
@@ -142,7 +142,7 @@ export class TaskCreateModalComponent {
         this.closed.emit();
       },
       error: () => {
-        this.error.set('Error al crear la tarea');
+        this.error.set($localize`Error al crear la tarea`);
         this.loading.set(false);
       },
     });
