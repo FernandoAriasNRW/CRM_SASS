@@ -7787,6 +7787,46 @@ Pending</target>
           <context context-type="linenumber">50</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="4962394098902432955" datatype="html">
+        <source>Subiendo…</source>
+        <target state="final">Uploading…</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">44,45</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2446589817058114129" datatype="html">
+        <source>No se pudo subir el fichero</source>
+        <target state="final">The file could not be uploaded</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.ts</context>
+          <context context-type="linenumber">225</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5208525926701256982" datatype="html">
+        <source>«<x id="PH" equiv-text="fichero.name"/>» no llegó al servidor.</source>
+        <target state="final">«<x id="PH" equiv-text="fichero.name"/>» did not reach the server.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.ts</context>
+          <context context-type="linenumber">226</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7372878754954792576" datatype="html">
+        <source>Subir un fichero</source>
+        <target state="final">Upload a file</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/extensions/comandos-del-editor.ts</context>
+          <context context-type="linenumber">259</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5304700585930250476" datatype="html">
+        <source>Desde tu ordenador</source>
+        <target state="final">From your computer</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/extensions/comandos-del-editor.ts</context>
+          <context context-type="linenumber">260</context>
+        </context-group>
+      </trans-unit>
     </body>
   </file>
 </xliff>

@@ -25,9 +25,26 @@ public static class InfrastructureExtensions
     services.AddScoped(typeof(IUnitOfWork<>), typeof(UnitOfWork<>));
     services.AddHostedService<OutboxDispatcherWorker>();
 
-    // Storage
+    // ── Dónde se guardan los ficheros ──────────────────────────────────────────────────────
+    //
+    // Se elige aquí, y no dentro del servicio, porque es una decisión de despliegue: con
+    // credenciales de Cloudinary se sube a Cloudinary; sin ellas, al disco del servidor.
+    //
+    // Antes sólo existía Cloudinary y **no está configurado en ninguna parte** —ni en desarrollo,
+    // ni en producción, ni en el compose—, así que subir un fichero devolvía «Cloud name must be
+    // specified in Account!» con un 400. Un servicio registrado que no puede funcionar es peor
+    // que no tenerlo: parece que el sistema sabe subir ficheros.
     services.Configure<CloudinaryOptions>(configuration.GetSection("Cloudinary"));
-    services.AddScoped<IStorageService, CloudinaryStorageService>();
+    services.Configure<OpcionesDeDisco>(configuration.GetSection("AlmacenEnDisco"));
+
+    var cloudinaryConfigurado = !string.IsNullOrWhiteSpace(configuration["Cloudinary:CloudName"])
+        && !string.IsNullOrWhiteSpace(configuration["Cloudinary:ApiKey"])
+        && !string.IsNullOrWhiteSpace(configuration["Cloudinary:ApiSecret"]);
+
+    if (cloudinaryConfigurado)
+      services.AddScoped<IStorageService, CloudinaryStorageService>();
+    else
+      services.AddScoped<IStorageService, AlmacenamientoEnDisco>();
 
     // MassTransit configuration
     services.AddMassTransit(x =>

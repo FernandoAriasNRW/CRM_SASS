@@ -53,6 +53,21 @@ services:
       - Jwt__Issuer=${JWT_ISSUER:-crm-saas-api}
       - Jwt__Audience=${JWT_AUDIENCE:-crm-saas-web}
       - RabbitMQ__Host=rabbitmq
+
+      # Dónde acaban los ficheros que se adjuntan a un documento.
+      #
+      # Con credenciales de Cloudinary se suben a Cloudinary; sin ellas, al disco del servidor. La
+      # elección se hace al arrancar, así que las tres variables pueden faltar y el sistema sigue
+      # funcionando: lo que no puede pasar es que parezca que sabe subir ficheros y no sepa.
+      - Cloudinary__CloudName=${CLOUDINARY_CLOUD_NAME:-}
+      - Cloudinary__ApiKey=${CLOUDINARY_API_KEY:-}
+      - Cloudinary__ApiSecret=${CLOUDINARY_API_SECRET:-}
+
+      # El disco es la reserva. Va a un volumen para que los ficheros sobrevivan a recrear el
+      # contenedor, y a una ruta escribible: la imagen corre con usuario sin privilegios.
+      - AlmacenEnDisco__Carpeta=/var/almacen
+    volumes:
+      - almacen_data:/var/almacen
     ports:
       - "8080:8080"
     depends_on:
@@ -94,6 +109,7 @@ services:
 
 volumes:
   db_data:
+  almacen_data:
 
 networks:
   crm_network:

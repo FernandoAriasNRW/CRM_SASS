@@ -32,6 +32,12 @@ FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS final
 WORKDIR /app
 COPY --from=build /app/publish .
 
+# La carpeta de los ficheros adjuntos, creada **antes** de bajar de privilegios y con su dueño
+# puesto. Docker copia el dueño de la carpeta de la imagen al crear un volumen nuevo encima; sin
+# esto el volumen nace de root, el proceso no puede escribir, y subir un fichero devolvía un 403
+# sin más explicación.
+RUN mkdir -p /var/almacen && chown $APP_UID /var/almacen
+
 # Sin privilegios. `APP_UID` (1654) viene definido en la imagen base desde .NET 8; se usa esa
 # en vez de crear un usuario propio para no divergir de lo que espera la plataforma.
 # Plataformas como OpenShift rechazan de plano una imagen que declare root.

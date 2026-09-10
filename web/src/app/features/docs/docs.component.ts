@@ -46,8 +46,9 @@ import CharacterCount from '@tiptap/extension-character-count';
 import { createLowlight, common } from 'lowlight';
 import { Aviso } from './extensions/aviso';
 import { BloqueDeCodigo } from './extensions/bloque-de-codigo';
+import FileHandler from '@tiptap/extension-file-handler';
 import { EmojiPickerComponent } from './extensions/emoji-picker.component';
-import { Subject, debounceTime } from 'rxjs';
+import { Subject, debounceTime, firstValueFrom } from 'rxjs';
 import { ClickableDirective } from '../../shared/directives/clickable.directive';
 import { GuardarPlantillaModalComponent } from './modals/guardar-plantilla-modal.component';
 import { ImportarDocumentoModalComponent } from './modals/importar-documento-modal.component';
@@ -127,6 +128,9 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
   /** Cuántas palabras lleva la página abierta. */
   readonly palabras = signal(0);
 
+  /** Si hay una subida en marcha, para poder avisarlo en la cabecera. */
+  readonly subiendo = signal(false);
+
   /** Qué está pidiendo el modal de dirección, o `null` si no hay ninguno abierto. */
   readonly urlPedida = signal<ClaseDeUrl | null>(null);
 
@@ -165,6 +169,66 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
     if (!url) return;
 
     this.editor.chain().focus().setTextSelection({ from, to }).setLink({ href: url }).run();
+  }
+
+  /**
+   * Abre el selector de ficheros del sistema y sube lo que se elija.
+   *
+   * El `input` se crea y se tira: uno permanente en la plantilla conserva el fichero anterior, así
+   * que elegir dos veces el mismo fichero seguido no dispara el `change` la segunda vez.
+   */
+  private elegirYSubir(): Promise<{ url: string; nombre: string; esImagen: boolean } | null> {
+    return new Promise(resolver => {
+      const campo = document.createElement('input');
+      campo.type = 'file';
+
+      campo.addEventListener('change', async () => {
+        const fichero = campo.files?.[0];
+        if (!fichero) { resolver(null); return; }
+
+        resolver(await this.subir(fichero));
+      });
+
+      // Si se cierra el diálogo sin elegir nada no llega ningún evento en algunos navegadores, así
+      // que se resuelve al volver el foco a la ventana. Sin esto la promesa queda colgada y el
+      // comando del menú nunca termina.
+      window.addEventListener('focus', () => setTimeout(() => resolver(null), 500), { once: true });
+
+      campo.click();
+    });
+  }
+
+  /** Sube el fichero e inserta lo que corresponda donde diga la posición. */
+  private async subirEInsertar(fichero: File, posicion?: number) {
+    const subido = await this.subir(fichero);
+    if (!subido) return;
+
+    const contenido = subido.esImagen
+      ? { type: 'image', attrs: { src: subido.url, alt: subido.nombre } }
+      : { type: 'fileAttachment', attrs: { href: subido.url, title: subido.nombre } };
+
+    const cadena = this.editor.chain().focus();
+    if (posicion !== undefined) cadena.insertContentAt(posicion, contenido);
+    else cadena.insertContent(contenido);
+    cadena.run();
+  }
+
+  /** La subida en sí, con su aviso si falla. */
+  private async subir(fichero: File): Promise<{ url: string; nombre: string; esImagen: boolean } | null> {
+    this.subiendo.set(true);
+
+    try {
+      const { url } = await firstValueFrom(this.docsService.subirFichero(fichero));
+      return { url, nombre: fichero.name, esImagen: fichero.type.startsWith('image/') };
+    } catch (err) {
+      this.toast.error(
+        $localize`No se pudo subir el fichero`,
+        $localize`«${fichero.name}» no llegó al servidor.`);
+      console.error('No se pudo subir el fichero', err);
+      return null;
+    } finally {
+      this.subiendo.set(false);
+    }
   }
 
   /** Contesta al comando que esperaba y cierra el modal. */
@@ -330,7 +394,25 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
 
       // El menú `/` no sabe pedir una dirección: se le inyecta cómo, igual que a las menciones se
       // les inyecta el buscador. Antes lo hacía con `window.prompt`, que bloquea la pestaña.
-      SlashCommand.configure({ pedirUrl: (clase) => this.pedirUrl(clase) }),
+      SlashCommand.configure({
+        pedirUrl: (clase) => this.pedirUrl(clase),
+        subirFichero: () => this.elegirYSubir()
+      }),
+
+      /**
+       * Arrastrar un fichero al editor, o pegarlo desde el portapapeles.
+       *
+       * Es la forma en que se mete una captura en un documento, y no existía: la única vía era
+       * pedir una dirección de una imagen que ya estuviera publicada en algún sitio.
+       */
+      FileHandler.configure({
+        onDrop: (editorActual, ficheros, posicion) => {
+          for (const fichero of ficheros) void this.subirEInsertar(fichero, posicion);
+        },
+        onPaste: (editorActual, ficheros) => {
+          for (const fichero of ficheros) void this.subirEInsertar(fichero);
+        }
+      }),
 
       // Menciones `@persona` y `#tarea`. El buscador se inyecta aquí y no dentro de la extensión
       // porque la extensión no puede —ni debe— saber llamar a la API: sabe escribir el nodo con

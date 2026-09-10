@@ -1,6 +1,6 @@
 import { Extension } from '@tiptap/core';
 import Suggestion from '@tiptap/suggestion';
-import type { ComandoDelEditor, PedirUrl } from './comandos-del-editor';
+import type { ComandoDelEditor, PedirUrl, SubirFichero } from './comandos-del-editor';
 import { getSuggestionItems, renderItems } from './suggestion';
 
 interface OpcionesDelMenu {
@@ -12,6 +12,9 @@ interface OpcionesDelMenu {
    * puede dar estilo, y que además se sale del editor.
    */
   pedirUrl: PedirUrl;
+
+  /** Cómo se pide un fichero del ordenador y se sube. */
+  subirFichero: SubirFichero;
 }
 
 export default Extension.create<OpcionesDelMenu>({
@@ -21,12 +24,14 @@ export default Extension.create<OpcionesDelMenu>({
     return {
       // De reserva: sin nada inyectado, los comandos que necesitan dirección no insertan nada en
       // vez de reventar. Que el editor funcione a medias es preferible a que no arranque.
-      pedirUrl: async () => null
+      pedirUrl: async () => null,
+      subirFichero: async () => null
     };
   },
 
   addProseMirrorPlugins() {
     const pedirUrl = this.options.pedirUrl;
+    const subirFichero = this.options.subirFichero;
 
     return [
       Suggestion({
@@ -36,7 +41,7 @@ export default Extension.create<OpcionesDelMenu>({
         render: renderItems(pedirUrl),
         command: ({ editor, range, props }) => {
           const comando = props as unknown as ComandoDelEditor;
-          void comando.ejecutar({ editor, range, pedirUrl });
+          void comando.ejecutar({ editor, range, pedirUrl, subirFichero });
         }
       })
     ];

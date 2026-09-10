@@ -38,6 +38,13 @@
 
       <!-- Right Actions -->
       <div class="flex items-center gap-3">
+        @if (subiendo()) {
+          <span class="text-xs text-muted-foreground flex items-center gap-1.5">
+            <ng-icon name="lucideUpload" class="w-3.5 h-3.5"></ng-icon>
+            <span i18n>Subiendo…</span>
+          </span>
+        }
+
         <span class="text-xs text-muted-foreground tabular-nums" i18n>{palabras(), plural, =0 {Sin palabras} =1 {1 palabra} other {{{ palabras() }} palabras}}</span>
 
         <!--

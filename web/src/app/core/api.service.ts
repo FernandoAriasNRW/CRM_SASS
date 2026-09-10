@@ -78,6 +78,23 @@ export class ApiService {
     });
   }
 
+  /**
+   * La dirección completa de un fichero guardado por el servidor.
+   *
+   * Lo que devuelve la subida es una ruta relativa —`/almacen/…`—, y el navegador la resolvería
+   * contra el origen de la **aplicación**, no contra el de la API, que son distintos. La imagen
+   * quedaría rota dentro del documento.
+   *
+   * Una dirección absoluta se devuelve tal cual: cuando el almacenamiento es Cloudinary, lo que
+   * llega ya es una URL completa a otro dominio.
+   */
+  urlDeFichero(ruta: string): string {
+    if (/^https?:\/\//i.test(ruta)) return ruta;
+
+    const origen = new URL(this.baseUrl).origin;
+    return `${origen}${ruta.startsWith('/') ? '' : '/'}${ruta}`;
+  }
+
   post<T>(path: string, payload: unknown, opciones?: OpcionesDeLlamada): Observable<T> {
     return this.http.post<T>(`${this.baseUrl}${path}`, payload, {
       withCredentials: true, // Important: sends cookies automatically

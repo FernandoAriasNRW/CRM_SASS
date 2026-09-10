@@ -16,7 +16,7 @@ import {
   lucideBan, lucideChevronRight, lucideCircleCheck, lucideCode, lucideHeading1, lucideHeading2,
   lucideHeading3, lucideImage, lucideLightbulb, lucideList, lucideListChecks, lucideListOrdered,
   lucideMinus, lucidePaperclip, lucideQuote, lucideTable, lucideTriangleAlert, lucideType,
-  lucideYoutube
+  lucideUpload, lucideYoutube
 } from '@ng-icons/lucide';
 import type {} from './aviso';
 
@@ -28,6 +28,14 @@ import type {} from './aviso';
  * la misma pregunta y comparte el mismo modal para no acabar con dos validaciones distintas.
  */
 export type PedirUrl = (clase: 'imagen' | 'video' | 'adjunto' | 'enlace') => Promise<string | null>;
+
+/**
+ * Cómo se pide un fichero del ordenador y se sube.
+ *
+ * Devuelve la dirección con la que quedó guardado, o `null` si se canceló o falló. Igual que
+ * `PedirUrl`, lo inyecta el componente: la extensión no sabe llamar a la API.
+ */
+export type SubirFichero = () => Promise<{ url: string; nombre: string; esImagen: boolean } | null>;
 
 export interface ComandoDelEditor {
   clave: string;
@@ -48,7 +56,12 @@ export interface ComandoDelEditor {
    * Aplica el comando. El resultado se ignora: `run()` devuelve si la cadena se pudo aplicar, y
    * eso no es el resultado del comando.
    */
-  ejecutar: (contexto: { editor: Editor; range: Range; pedirUrl: PedirUrl }) => unknown;
+  ejecutar: (contexto: {
+    editor: Editor;
+    range: Range;
+    pedirUrl: PedirUrl;
+    subirFichero: SubirFichero;
+  }) => unknown;
 }
 
 const GRUPO_BASICO = $localize`Básico`;
@@ -239,6 +252,26 @@ export const COMANDOS_DEL_EDITOR: readonly ComandoDelEditor[] = [
     ejecutar: async ({ editor, range, pedirUrl }) => {
       const url = await pedirUrl('video');
       if (url) editor.chain().focus().deleteRange(range).setYoutubeVideo({ src: url }).run();
+    }
+  },
+  {
+    clave: 'subir',
+    titulo: $localize`Subir un fichero`,
+    descripcion: $localize`Desde tu ordenador`,
+    icono: lucideUpload,
+    grupo: GRUPO_INSERTAR,
+    alias: ['subir', 'upload', 'fichero', 'archivo', 'imagen', 'adjuntar'],
+    ejecutar: async ({ editor, range, subirFichero }) => {
+      const subido = await subirFichero();
+      if (!subido) return;
+
+      // Una imagen se enseña; cualquier otra cosa va como tarjeta de adjunto. Meter un PDF en un
+      // `<img>` deja un hueco roto en medio del documento.
+      const contenido = subido.esImagen
+        ? { type: 'image', attrs: { src: subido.url, alt: subido.nombre } }
+        : { type: 'fileAttachment', attrs: { href: subido.url, title: subido.nombre } };
+
+      editor.chain().focus().deleteRange(range).insertContent(contenido).run();
     }
   },
   {

@@ -139,6 +139,22 @@ export class DocsService {
     return this.api.post<string>(`${this.endpoint}/from-template`, req).pipe(map(idLimpio));
   }
 
+  /**
+   * Sube un fichero y devuelve su dirección.
+   *
+   * `POST /docs/upload` existía desde el principio con su handler y su servicio de almacenamiento,
+   * y **no lo llamaba nadie**: este método no existía.
+   */
+  subirFichero(fichero: File): Observable<{ url: string }> {
+    const cuerpo = new FormData();
+    cuerpo.append('file', fichero, fichero.name);
+
+    return this.api.post<{ url: string }>(`${this.endpoint}/upload`, cuerpo).pipe(
+      // La dirección se completa aquí, donde entra el dato, y no en cada sitio que la use: lo que
+      // se guarda dentro del documento tiene que poder abrirse desde cualquier parte.
+      map(respuesta => ({ url: this.api.urlDeFichero(respuesta.url) })));
+  }
+
   getUsosDePlantilla(): Observable<UsoDePlantillaDto[]> {
     return this.api.get<UsoDePlantillaDto[]>(`${this.endpoint}/plantillas/usos`);
   }
