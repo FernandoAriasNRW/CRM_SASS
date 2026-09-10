@@ -221,6 +221,25 @@ public static class IdentityEndpoints
       return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
     }).RequireAuthorization();
 
+    /// <summary>
+    /// Cambiar la propia contraseña.
+    ///
+    /// <b>El comando, su handler y su validador existían desde el principio y ningún endpoint los
+    /// exponía.</b> La pantalla de perfil llamaba a `/profile/password`, que no es ninguna ruta:
+    /// cambiar la contraseña devolvía 404 y el aviso decía «El recurso solicitado no existe».
+    ///
+    /// El identificador sale del token y no del cuerpo: si viniera de fuera, cualquiera podría
+    /// mandar el de otra persona y cambiarle la contraseña conociendo sólo la suya.
+    /// </summary>
+    usersGroup.MapPut("/me/password", async (CambiarContrasenaRequest req, IMediator mediator, ClaimsPrincipal principal) =>
+    {
+      var userId = Guid.TryParse(principal.FindFirstValue(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub) ?? principal.FindFirstValue(System.Security.Claims.ClaimTypes.NameIdentifier), out var uid) ? uid : Guid.Empty;
+      if (userId == Guid.Empty) return Results.Unauthorized();
+
+      var result = await mediator.Send(new ChangePasswordCommand(userId, req.CurrentPassword, req.NewPassword));
+      return result.IsSuccess ? Results.NoContent() : Results.BadRequest(result.Error);
+    }).RequireAuthorization();
+
     usersGroup.MapGet("", async (string? search, int? pageSize, IMediator mediator, ClaimsPrincipal principal) =>
     {
       var tenantId = Guid.TryParse(principal.FindFirstValue("tenantId"), out var tid) ? tid : Guid.Empty;
@@ -314,6 +333,9 @@ public static class IdentityEndpoints
 }
 
 public record CreateUserRequest(string Name, string Email, string Password, string Role);
+
+/// <summary>Lo que hace falta para cambiar la propia contraseña. El usuario sale del token.</summary>
+public record CambiarContrasenaRequest(string CurrentPassword, string NewPassword);
 public record UpdateUserRequest(string Name, string Email, string Role);
 public record SaveGranularPermissionsRequest(string TargetType, Guid? UserId, Guid? TeamId, string? RoleName, List<GranularPermissionInputItem> Permissions);
 

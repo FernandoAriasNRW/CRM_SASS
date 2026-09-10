@@ -1223,3 +1223,73 @@ No hay nada que ajustar: la imagen compila los dos y `nginx` elige por el `Accep
 navegador, con el español por defecto. Con el navegador en inglés se entra a `/en/`. Para ver la
 otra versión basta con ir a `http://localhost:4200/es/` —la redirección de la raíz es 302, no 301,
 precisamente para que no quede fijada—.
+
+---
+
+## 19. El idioma que no se podía elegir, y un perfil que daba error al abrirse
+
+### 19.1 `/es` llevaba al inglés
+
+`location /es/` exige la barra final, así que escribir `/es` caía en el `location /` de más abajo y
+se convertía en `/en/es`: la aplicación **inglesa** intentando abrir una ruta llamada «es», que su
+enrutador no conoce, y de ahí a la pantalla de inicio. El idioma acababa siendo justo el contrario
+del que se pedía.
+
+Se añaden `location = /es` y `= /en` que redirigen con barra.
+
+### 19.2 El idioma lo decidía el navegador y sólo el navegador
+
+`nginx` elegía por `Accept-Language` y no había ninguna otra forma de influir: quien tuviera Chrome
+en inglés se quedaba en inglés para siempre, sin nada que tocar dentro de la aplicación.
+
+Ahora la elección de la persona manda sobre la del navegador. Se guarda en una cookie —y no en
+`localStorage`— porque **quien decide a qué carpeta enviar la visita es el servidor**, y el servidor
+no ve `localStorage`. El selector vive en el perfil y conserva la pantalla al cambiar:
+`/en/profile` lleva a `/es/profile`, no al inicio.
+
+### 19.3 Las vistas recientes congelaban el idioma
+
+En la versión inglesa seguían apareciendo «Proyectos» y «Tareas». No era una traducción que
+faltara: **`RecentView` guardaba el nombre ya escrito y eso se persiste en el servidor**. Entrabas
+una vez a Proyectos en español y esa palabra quedaba grabada en tus preferencias, en el idioma del
+día en que se guardó.
+
+Ahora se guarda el identificador del módulo y el nombre se resuelve al pintarlo. Es la misma regla
+de siempre: en la base van claves, no texto de pantalla.
+
+### 19.4 El perfil pedía dos rutas que no existen
+
+Al abrirlo salía «El recurso solicitado no existe» encima de un formulario en blanco: pedía
+`GET /users/me`, y el usuario actual está en `/auth/users/me`. Cambiar la contraseña llamaba a
+`/profile/password`, que tampoco existe.
+
+Y ahí apareció lo importante. **El comando de cambiar contraseña, su handler y su validador
+existían desde el principio y ningún endpoint los exponía**; al conectarlo, la primera prueba contra
+la API levantada devolvió esto:
+
+    PUT /users/me/password con la contraseña actual equivocada -> 204
+
+El handler recibía `CurrentPassword` y **no la miraba**. Cambiaba la contraseña igual. Nunca estuvo
+expuesto —por eso nadie lo sufrió— pero eso es suerte y no diseño: en cuanto la pantalla lo llama,
+cualquiera que encuentre una sesión abierta se queda con la cuenta sin conocer la contraseña. Se
+verifica con la misma función que el inicio de sesión, porque dos formas de comprobar la misma
+contraseña acaban discrepando.
+
+La prueba que queda no es «cambia la contraseña» —la versión rota pasaba esa con nota— sino **«no
+la cambia si la anterior no es la buena»**, comprobando además que la de siempre sigue sirviendo.
+
+### 19.5 El tema existía y no se podía encender
+
+Toda la aplicación tiene variantes `dark:` —cientos— y la única forma de verlas era un atajo de la
+paleta de comandos que hacía `classList.toggle('dark')` sin guardar nada: al recargar se perdía.
+Medio diseño existía y no se podía usar.
+
+Ahora hay tres opciones y «el del sistema» es la de fábrica: quien tiene el ordenador en oscuro
+espera que las aplicaciones lo respeten sin decírselo a cada una. Se guarda en `localStorage` y no
+en el servidor a propósito — es una preferencia del aparato: el mismo usuario puede querer oscuro
+en el portátil de noche y claro en el monitor de la oficina.
+
+### 19.6 Dos iconos iguales en la barra
+
+«Admin» y «Customizar menú» usaban los dos el engranaje, uno encima del otro y con destinos
+distintos. Admin pasa a un escudo.

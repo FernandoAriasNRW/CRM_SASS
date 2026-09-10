@@ -118,7 +118,12 @@
               routerLinkActive="text-primary bg-primary/10"
               class="flex flex-col items-center justify-center w-12 h-12 rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground transition-colors cursor-pointer"
             >
-              <ng-icon name="lucideSettings" size="22"></ng-icon>
+              <!--
+                Escudo y no engranaje: el engranaje ya es el de «customizar menú», que está
+                pegado justo debajo. Dos iconos iguales, uno encima del otro, con destinos
+                distintos: no había forma de saber cuál llevaba a dónde sin pulsarlos.
+              -->
+              <ng-icon name="lucideShieldCheck" size="22"></ng-icon>
               <span class="text-[10px] mt-0.5 scale-90" i18n>Admin</span>
             </a>
           </div>

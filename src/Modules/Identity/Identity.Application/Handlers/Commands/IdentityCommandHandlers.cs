@@ -305,6 +305,18 @@ public sealed class ChangePasswordCommandHandler(
     if (user.IsDeleted)
       return Result<bool>.Failure("No se puede cambiar la contraseña de un usuario eliminado");
 
+    // **Se comprueba la contraseña actual, y esto faltaba.**
+    //
+    // El comando la recibía desde el principio y el handler la ignoraba: cambiaba la contraseña
+    // pasara lo que pasara. No llegó a estar expuesto —ningún endpoint lo llamaba— pero eso es
+    // suerte, no diseño: en cuanto se conecta la pantalla, cualquiera que encontrara una sesión
+    // abierta podría cambiar la contraseña sin conocer la anterior y quedarse con la cuenta.
+    //
+    // Se verifica igual que en el inicio de sesión, con la misma función: dos formas distintas de
+    // comprobar la misma contraseña acabarían discrepando.
+    if (user.PasswordHash is null || !PasswordHash.Verify(request.CurrentPassword, user.PasswordHash.Value))
+      return Result<bool>.Failure("La contraseña actual no es correcta");
+
     PasswordHash newHash;
     try { newHash = PasswordHash.Create(request.NewPassword); }
     catch (ArgumentException ex) { return Result<bool>.Failure(ex.Message); }

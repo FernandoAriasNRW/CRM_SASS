@@ -19,7 +19,7 @@ import {
   lucideTicket, lucideLogOut, lucideMenu, lucideX,
   lucideMessageSquare, lucideCalendar, lucideBarChart2, lucideUser, lucideSettings,
   lucideWebhook, lucideChevronDown, lucideChevronRight, lucideFileText,
-  lucideUsers, lucideHome, lucideMoreHorizontal, lucideChartBar, lucidePlus
+  lucideUsers, lucideHome, lucideMoreHorizontal, lucideChartBar, lucidePlus, lucideShieldCheck
 } from '@ng-icons/lucide';
 import { HierarchySignalStore } from './core/hierarchy-signal.store';
 import { NavigationSignalStore } from './core/navigation-signal.store';
@@ -49,6 +49,7 @@ import { CommandPaletteService } from './shared/ui/command-palette/command-palet
     lucideTicket, lucideLogOut, lucideMenu, lucideX,
     lucideMessageSquare, lucideCalendar, lucideBarChart2, lucideUser, lucideSettings, lucideWebhook,
     lucideChevronDown, lucideChevronRight, lucideFileText, lucideUsers, lucideHome, lucideMoreHorizontal, lucideChartBar,
+    lucideShieldCheck,
     // `lucidePlus` lo usa el «+» de añadir al submenú. Faltaba, y `ng-icon` no falla cuando no
     // encuentra un icono: sólo escribe un aviso en la consola y deja el hueco. Era el ruido que
     // salía siete veces en cada carga.

@@ -6525,6 +6525,239 @@ Pending</target>
           <context context-type="linenumber">34,35</context>
         </context-group>
       </trans-unit>
+    
+      <trans-unit id="3906034958359540712" datatype="html">
+        <source>Claro</source>
+        <target>Light</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/core/tema.service.ts</context>
+          <context context-type="linenumber">8</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4560550641194494267" datatype="html">
+        <source>Oscuro</source>
+        <target>Dark</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/core/tema.service.ts</context>
+          <context context-type="linenumber">9</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1835230877853006184" datatype="html">
+        <source>El del sistema</source>
+        <target>Match the system</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/core/tema.service.ts</context>
+          <context context-type="linenumber">10</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="771879419236270848" datatype="html">
+        <source>Mi perfil</source>
+        <target>My profile</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/profile/profile.component.html</context>
+          <context context-type="linenumber">6,7</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4001703361246884590" datatype="html">
+        <source>Tus datos y tus preferencias.</source>
+        <target>Your details and your preferences.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/profile/profile.component.html</context>
+          <context context-type="linenumber">7,8</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="99190041010817482" datatype="html">
+        <source>Información personal</source>
+        <target>Personal information</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/profile/profile.component.html</context>
+          <context context-type="linenumber">41,43</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6636683595176968390" datatype="html">
+        <source> Es con lo que inicias sesión, así que no se cambia desde aquí. </source>
+        <target>It is what you sign in with, so it is not changed from here.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/profile/profile.component.html</context>
+          <context context-type="linenumber">62</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6781504143506783940" datatype="html">
+        <source>Sobre ti</source>
+        <target>About you</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/profile/profile.component.html</context>
+          <context context-type="linenumber">74,75</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7786297859370373412" datatype="html">
+        <source>Un par de líneas sobre a qué te dedicas…</source>
+        <target>A couple of lines about what you do…</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/profile/profile.component.html</context>
+          <context context-type="linenumber">76,77</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2473708249335920209" datatype="html">
+        <source>Tema</source>
+        <target>Theme</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/profile/profile.component.html</context>
+          <context context-type="linenumber">104,105</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2805760957814082248" datatype="html">
+        <source> «El del sistema» sigue lo que tengas configurado en el ordenador. </source>
+        <target>“Match the system” follows whatever your computer is set to.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/profile/profile.component.html</context>
+          <context context-type="linenumber">106</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1500181871307171807" datatype="html">
+        <source>Idioma</source>
+        <target>Language</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/profile/profile.component.html</context>
+          <context context-type="linenumber">126,127</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6262729743879597698" datatype="html">
+        <source> La aplicación se recarga al cambiarlo, y se queda elegido para la próxima vez. </source>
+        <target>The app reloads when you change it, and remembers your choice.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/profile/profile.component.html</context>
+          <context context-type="linenumber">128</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="290313232585469193" datatype="html">
+        <source>Cambiar la contraseña</source>
+        <target>Change your password</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/profile/profile.component.html</context>
+          <context context-type="linenumber">153,154</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="776923865543362672" datatype="html">
+        <source> Hace falta la actual: es lo que impide que alguien la cambie desde una sesión que dejaste abierta. </source>
+        <target>The current one is required: it is what stops someone changing it from a session you left open.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/profile/profile.component.html</context>
+          <context context-type="linenumber">155,156</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4540451997494300520" datatype="html">
+        <source>Contraseña actual</source>
+        <target>Current password</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/profile/profile.component.html</context>
+          <context context-type="linenumber">162,163</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8375244175220500411" datatype="html">
+        <source>Nueva contraseña</source>
+        <target>New password</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/profile/profile.component.html</context>
+          <context context-type="linenumber">169,170</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2046899843400134158" datatype="html">
+        <source>Repite la nueva</source>
+        <target>Repeat the new one</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/profile/profile.component.html</context>
+          <context context-type="linenumber">176,177</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7349065148301340370" datatype="html">
+        <source>Cambiar contraseña</source>
+        <target>Change password</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/profile/profile.component.html</context>
+          <context context-type="linenumber">196,197</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6313734668493507850" datatype="html">
+        <source>Cuenta</source>
+        <target>Account</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/profile/profile.component.ts</context>
+          <context context-type="linenumber">58</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="615851232113116780" datatype="html">
+        <source>Apariencia e idioma</source>
+        <target>Appearance and language</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/profile/profile.component.ts</context>
+          <context context-type="linenumber">59</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1822994600677553424" datatype="html">
+        <source>Seguridad</source>
+        <target>Security</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/profile/profile.component.ts</context>
+          <context context-type="linenumber">60</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6377259224948564303" datatype="html">
+        <source>Avisos</source>
+        <target>Notifications</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/profile/profile.component.ts</context>
+          <context context-type="linenumber">61</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6305259579532338904" datatype="html">
+        <source>Perfil actualizado</source>
+        <target>Profile updated</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/profile/profile.component.ts</context>
+          <context context-type="linenumber">111</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5261093163124669853" datatype="html">
+        <source>Rellena los tres campos.</source>
+        <target>Fill in the three fields.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/profile/profile.component.ts</context>
+          <context context-type="linenumber">140</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1544723926025083665" datatype="html">
+        <source>Las contraseñas no coinciden.</source>
+        <target>The passwords do not match.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/profile/profile.component.ts</context>
+          <context context-type="linenumber">145</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="202308503087398456" datatype="html">
+        <source>La nueva contraseña necesita al menos 6 caracteres.</source>
+        <target>The new password needs at least 6 characters.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/profile/profile.component.ts</context>
+          <context context-type="linenumber">150</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4948878802944895632" datatype="html">
+        <source>Contraseña cambiada</source>
+        <target>Password changed</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/profile/profile.component.ts</context>
+          <context context-type="linenumber">162</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="124495435934889901" datatype="html">
+        <source>No se pudo cambiar la contraseña.</source>
+        <target>The password could not be changed.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/profile/profile.component.ts</context>
+          <context context-type="linenumber">175</context>
+        </context-group>
+      </trans-unit>
     </body>
   </file>
 </xliff>
