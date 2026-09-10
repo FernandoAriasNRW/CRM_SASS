@@ -246,3 +246,51 @@ cubre el 90 % del dolor real por una fracción del coste.
 
 La Fase A. El editor no parece simple: parece que funciona y a veces no guarda. Eso es más grave
 que no tener bloques desplegables.
+
+---
+
+## 7. Qué se hizo, y en qué me equivoqué al auditar
+
+Fases A, B, C y D implementadas. La E queda pendiente.
+
+### Una corrección al apartado 1.6
+
+Escribí que `POST /docs/upload` «funciona» y sólo le faltaba quien lo llamara. **Era falso.** El
+único almacenamiento registrado subía a Cloudinary, y Cloudinary no estaba configurado en ninguna
+parte —ni en desarrollo, ni en producción, ni en el compose—: la respuesta era un 400 con
+«Cloud name must be specified in Account!». Nunca había llegado a subir nada.
+
+Lo di por bueno porque leí el código y compilaba. Es exactamente el error que esta auditoría le
+reprocha al resto del módulo: dar por funcionando lo que nadie ha ejecutado. Se vio al llamarlo.
+
+Al conectarlo aparecieron dos fallos más que nadie podía haber encontrado antes, porque nadie había
+podido llegar a ejecutar ese camino:
+
+- **Todo se subía como imagen.** Cloudinary rechaza un PDF o un CSV por el endpoint de imágenes.
+- **Un fallo del almacenamiento devolvía un 500 con la traza dentro**, porque la excepción subía
+  hasta el manejador global.
+
+Y uno que introduje yo al arreglarlo: crear la carpeta del almacén con una ruta relativa a `/app`
+**tiraba el arranque entero de la API**, porque la imagen corre con un usuario sin privilegios. Que
+no se puedan subir ficheros es un problema; que no arranque el servidor es otro mucho mayor. La
+carpeta se crea ahora en la imagen con su dueño puesto, y si aun así falla se registra el error y
+el servidor arranca igual.
+
+### Lo que quedó de cada fase
+
+- **A.** Estado real del guardado con reintento; árbol de páginas con crear, anidar, mover y
+  borrar; endpoint para renombrar documentos; los dos botones de exportar funcionando.
+- **B.** Menú `/` con teclado, filtro por subcadena y alias, en español, agrupado y con iconos;
+  fuera los dos `window.prompt`; barra flotante con enlace, código, cita y limpiar formato.
+- **C.** Asa para arrastrar bloques, desplegables, avisos en cuatro tonos, código con lenguaje
+  elegible y coloreado, tipografía automática, resaltado y contador de palabras.
+- **D.** Subida de ficheros por arrastre, pegado y selector, con almacenamiento en disco como
+  reserva cuando no hay credenciales.
+
+### Lo que sigue pendiente
+
+- **Fase E**, los comentarios en línea. La edición simultánea sigue sin recomendarse por ahora:
+  exige Y.js, un servidor de sincronización y cambiar cómo persiste el módulo entero.
+- **El contenido de las plantillas predefinidas sigue en inglés** dentro del handler. Son
+  documentos enteros, y es un arreglo aparte.
+- **El bloque de columnas**, que ya dejé para el final por ser el más caro y el que menos se usa.
