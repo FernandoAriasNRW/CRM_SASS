@@ -676,7 +676,7 @@
         <source> Cancelar </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/admin/automations/admin-automations.component.html</context>
-          <context context-type="linenumber">155</context>
+          <context context-type="linenumber">155,156</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/admin/automations/admin-automations.component.html</context>
@@ -684,7 +684,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/admin/custom-fields/admin-custom-fields.component.html</context>
-          <context context-type="linenumber">154</context>
+          <context context-type="linenumber">154,155</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/admin/custom-fields/admin-custom-fields.component.html</context>
@@ -692,7 +692,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/admin/permissions/granular-permissions-modal.component.html</context>
-          <context context-type="linenumber">116</context>
+          <context context-type="linenumber">116,117</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/admin/teams/admin-teams.component.html</context>
@@ -700,7 +700,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/calendar/evento-drawer.component.ts</context>
-          <context context-type="linenumber">162</context>
+          <context context-type="linenumber">162,163</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/projects/project-detail-modal.component.html</context>
@@ -871,7 +871,7 @@
         <source>Todavía no hay automatizaciones.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/admin/automations/admin-automations.component.html</context>
-          <context context-type="linenumber">238,240</context>
+          <context context-type="linenumber">238,241</context>
         </context-group>
       </trans-unit>
       <trans-unit id="3798283703556221545" datatype="html">
@@ -1135,7 +1135,7 @@ Pendiente</source>
         <source>Todavía no hay campos definidos para esta entidad.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/admin/custom-fields/admin-custom-fields.component.html</context>
-          <context context-type="linenumber">227,229</context>
+          <context context-type="linenumber">227,230</context>
         </context-group>
       </trans-unit>
       <trans-unit id="6261493017569141229" datatype="html">
@@ -1342,7 +1342,7 @@ Pendiente</source>
         <source>Editar</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/admin/permissions/granular-permissions-modal.component.html</context>
-          <context context-type="linenumber">83,84</context>
+          <context context-type="linenumber">83,85</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/projects/project-detail-modal.component.html</context>
@@ -1357,7 +1357,7 @@ Pendiente</source>
         <source>Ver</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/admin/permissions/granular-permissions-modal.component.html</context>
-          <context context-type="linenumber">92,93</context>
+          <context context-type="linenumber">92,94</context>
         </context-group>
       </trans-unit>
       <trans-unit id="8640238881320541056" datatype="html">
@@ -1709,7 +1709,7 @@ Pendiente</source>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/ui/barra-de-vistas/barra-de-vistas.component.ts</context>
-          <context context-type="linenumber">134,135</context>
+          <context context-type="linenumber">133,134</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/ui/comentarios.component.html</context>
@@ -2166,7 +2166,7 @@ Pendiente</source>
         <source>Buscar…</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/calendar/evento-drawer.component.ts</context>
-          <context context-type="linenumber">136,137</context>
+          <context context-type="linenumber">137</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
@@ -2174,7 +2174,7 @@ Pendiente</source>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/ui/data-table/data-table.component.ts</context>
-          <context context-type="linenumber">65,66</context>
+          <context context-type="linenumber">66</context>
         </context-group>
       </trans-unit>
       <trans-unit id="6524126258216133372" datatype="html">
@@ -2251,7 +2251,7 @@ Pendiente</source>
         <source> Tu panel está vacío. Añade informes desde la pantalla de Reportes. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/dashboard/dashboard.component.html</context>
-          <context context-type="linenumber">83</context>
+          <context context-type="linenumber">83,84</context>
         </context-group>
       </trans-unit>
       <trans-unit id="7661673596607955806" datatype="html">
@@ -2456,14 +2456,14 @@ Pendiente</source>
         <source> Export HTML </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
-          <context context-type="linenumber">53</context>
+          <context context-type="linenumber">53,54</context>
         </context-group>
       </trans-unit>
       <trans-unit id="1183490736564333693" datatype="html">
         <source> Export PDF </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
-          <context context-type="linenumber">56</context>
+          <context context-type="linenumber">56,57</context>
         </context-group>
       </trans-unit>
       <trans-unit id="808224684930071116" datatype="html">
@@ -4976,7 +4976,7 @@ Pendiente</source>
         <source>Equipo encargado de...</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/teams/team-form.component.html</context>
-          <context context-type="linenumber">11</context>
+          <context context-type="linenumber">11,12</context>
         </context-group>
       </trans-unit>
       <trans-unit id="3348885058742055564" datatype="html">
@@ -5004,7 +5004,7 @@ Pendiente</source>
         <source> No se encontraron equipos. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/teams/teams-list.component.html</context>
-          <context context-type="linenumber">50</context>
+          <context context-type="linenumber">50,51</context>
         </context-group>
       </trans-unit>
       <trans-unit id="4531372279467575442" datatype="html">
@@ -5018,14 +5018,14 @@ Pendiente</source>
         <source> Hemos recibido tu solicitud. Recibirás un email de confirmación pronto. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tickets/public-ticket-form.component.html</context>
-          <context context-type="linenumber">12</context>
+          <context context-type="linenumber">12,13</context>
         </context-group>
       </trans-unit>
       <trans-unit id="6313194474051044764" datatype="html">
         <source> Enviar otro ticket </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tickets/public-ticket-form.component.html</context>
-          <context context-type="linenumber">17</context>
+          <context context-type="linenumber">17,18</context>
         </context-group>
       </trans-unit>
       <trans-unit id="8591064715277983358" datatype="html">
@@ -5425,21 +5425,21 @@ Pendiente</source>
         <source>Cómo se verá</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/ui/barra-de-vistas/barra-de-vistas.component.ts</context>
-          <context context-type="linenumber">115,116</context>
+          <context context-type="linenumber">114,115</context>
         </context-group>
       </trans-unit>
       <trans-unit id="1224564890882671342" datatype="html">
         <source>Guardar la vista</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/ui/barra-de-vistas/barra-de-vistas.component.ts</context>
-          <context context-type="linenumber">127,128</context>
+          <context context-type="linenumber">126,127</context>
         </context-group>
       </trans-unit>
       <trans-unit id="1831668866980053360" datatype="html">
         <source>Vista</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/ui/barra-de-vistas/barra-de-vistas.component.ts</context>
-          <context context-type="linenumber">142,143</context>
+          <context context-type="linenumber">141,142</context>
         </context-group>
       </trans-unit>
       <trans-unit id="3024677306715062969" datatype="html">
@@ -5688,7 +5688,7 @@ Pendiente</source>
         <source>Vistas</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/ui/panel-de-navegacion/panel-de-navegacion.component.ts</context>
-          <context context-type="linenumber">67,68</context>
+          <context context-type="linenumber">68</context>
         </context-group>
       </trans-unit>
       <trans-unit id="6686527627555450047" datatype="html">
