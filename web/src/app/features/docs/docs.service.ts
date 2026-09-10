@@ -1,5 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { ApiService } from '../../core/api.service';
+import { HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
@@ -40,6 +41,16 @@ export interface CreatePageRequest {
 export interface UpdatePageRequest {
   title: string;
   content: string;
+}
+
+export interface RenameDocumentRequest {
+  title: string;
+  description?: string | null;
+}
+
+export interface MovePageRequest {
+  parentPageId?: string | null;
+  order: number;
 }
 
 export interface SaveAsTemplateRequest {
@@ -91,6 +102,25 @@ export class DocsService {
 
   updatePage(pageId: string, req: UpdatePageRequest): Observable<void> {
     return this.api.put<void>(`${this.endpoint}/pages/${pageId}`, req);
+  }
+
+  renameDocument(documentId: string, req: RenameDocumentRequest): Observable<void> {
+    return this.api.put<void>(`${this.endpoint}/${documentId}`, req);
+  }
+
+  movePage(pageId: string, req: MovePageRequest): Observable<void> {
+    return this.api.put<void>(`${this.endpoint}/pages/${pageId}/mover`, req);
+  }
+
+  /**
+   * Descarga el HTML del documento, con la sesión puesta.
+   *
+   * Antes se abría la URL en una pestaña nueva, y una pestaña nueva no lleva la cabecera de
+   * sesión: el endpoint la exige, así que el botón devolvía 401 siempre. `descargarFichero` ya
+   * hacía esto bien para los informes; aquí sólo se reutiliza.
+   */
+  exportarHtml(documentId: string): Observable<HttpResponse<Blob>> {
+    return this.api.descargarFichero(`${this.endpoint}/${documentId}/export`);
   }
 
   deleteDocument(documentId: string): Observable<void> {

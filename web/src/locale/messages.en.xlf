@@ -7011,6 +7011,238 @@ Pending</target>
           <context context-type="linenumber">290,291</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="6664462798141512329" datatype="html">
+        <source> Páginas </source>
+        <target state="final"> Pages </target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/arbol-de-paginas.component.ts</context>
+          <context context-type="linenumber">52,53</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1418701343983838387" datatype="html">
+        <source>Nueva página</source>
+        <target state="final">New page</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/arbol-de-paginas.component.ts</context>
+          <context context-type="linenumber">55,56</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/arbol-de-paginas.component.ts</context>
+          <context context-type="linenumber">56,57</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6260097265061548538" datatype="html">
+        <source>Subir</source>
+        <target state="final">Move up</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/arbol-de-paginas.component.ts</context>
+          <context context-type="linenumber">97</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/arbol-de-paginas.component.ts</context>
+          <context context-type="linenumber">98</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1807334415175256941" datatype="html">
+        <source>Bajar</source>
+        <target state="final">Move down</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/arbol-de-paginas.component.ts</context>
+          <context context-type="linenumber">105</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/arbol-de-paginas.component.ts</context>
+          <context context-type="linenumber">106</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3957501632032474151" datatype="html">
+        <source>Convertir en subpágina de la anterior</source>
+        <target state="final">Make it a subpage of the one above</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/arbol-de-paginas.component.ts</context>
+          <context context-type="linenumber">112,113</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/arbol-de-paginas.component.ts</context>
+          <context context-type="linenumber">113,114</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8650549404598021374" datatype="html">
+        <source>Sacar un nivel</source>
+        <target state="final">Move out one level</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/arbol-de-paginas.component.ts</context>
+          <context context-type="linenumber">120,121</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/arbol-de-paginas.component.ts</context>
+          <context context-type="linenumber">121,122</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8492287280654416654" datatype="html">
+        <source>Nueva subpágina</source>
+        <target state="final">New subpage</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/arbol-de-paginas.component.ts</context>
+          <context context-type="linenumber">128,129</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/arbol-de-paginas.component.ts</context>
+          <context context-type="linenumber">129,130</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="765029681281106238" datatype="html">
+        <source>Sin título</source>
+        <target state="final">Untitled</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/arbol-de-paginas.component.ts</context>
+          <context context-type="linenumber">160</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.ts</context>
+          <context context-type="linenumber">553</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.ts</context>
+          <context context-type="linenumber">564</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.ts</context>
+          <context context-type="linenumber">580</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2127132689165385765" datatype="html">
+        <source>Un documento no puede quedarse sin páginas</source>
+        <target state="final">A document cannot be left without pages</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/arbol-de-paginas.component.ts</context>
+          <context context-type="linenumber">162</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8988027286072479731" datatype="html">
+        <source>Título de la página</source>
+        <target state="final">Page title</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">34,35</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">36,37</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6544434813255650585" datatype="html">
+        <source>Cambios sin guardar</source>
+        <target state="final">Unsaved changes</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">56,57</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8119726758357544762" datatype="html">
+        <source>Guardado a las <x id="INTERPOLATION" equiv-text="{{ guardadoA() | date:&apos;HH:mm&apos; }}"/></source>
+        <target state="final">Saved at <x id="INTERPOLATION" equiv-text="{{ guardadoA() | date:&apos;HH:mm&apos; }}"/></target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">62,63</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4118238247249197879" datatype="html">
+        <source>No se guardó. Reintentar</source>
+        <target state="final">Not saved. Retry</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">70,71</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7066821535554359061" datatype="html">
+        <source> Exportar HTML </source>
+        <target state="final"> Export HTML </target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">85,86</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8124095536805773781" datatype="html">
+        <source> Exportar PDF </source>
+        <target state="final"> Export PDF </target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">90,91</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5716669141364218435" datatype="html">
+        <source>Encabezado…</source>
+        <target state="final">Heading…</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.ts</context>
+          <context context-type="linenumber">286</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4485468787556077788" datatype="html">
+        <source>Escribe / para los comandos, o empieza a escribir…</source>
+        <target state="final">Type / for commands, or just start writing…</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.ts</context>
+          <context context-type="linenumber">288</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1818943602692326957" datatype="html">
+        <source>No se pudo renombrar el documento</source>
+        <target state="final">The document could not be renamed</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.ts</context>
+          <context context-type="linenumber">368</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2810368711520298109" datatype="html">
+        <source>No se pudo crear la página</source>
+        <target state="final">The page could not be created</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.ts</context>
+          <context context-type="linenumber">571</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3987557394785611089" datatype="html">
+        <source>No se pudo mover la página</source>
+        <target state="final">The page could not be moved</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.ts</context>
+          <context context-type="linenumber">601</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="600148905644155332" datatype="html">
+        <source>No se pudo borrar la página</source>
+        <target state="final">The page could not be deleted</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.ts</context>
+          <context context-type="linenumber">624</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3057282740296298902" datatype="html">
+        <source>No se pudo generar el PDF</source>
+        <target state="final">The PDF could not be generated</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.ts</context>
+          <context context-type="linenumber">712</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7162568738219761890" datatype="html">
+        <source>No se pudo exportar el documento</source>
+        <target state="final">The document could not be exported</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.ts</context>
+          <context context-type="linenumber">755</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4918317744378679008" datatype="html">
+        <source>Los cambios siguen en pantalla. Vuelve a intentarlo desde la cabecera.</source>
+        <target state="final">Your changes are still on screen. Try again from the header.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.ts</context>
+          <context context-type="linenumber">832</context>
+        </context-group>
+      </trans-unit>
     </body>
   </file>
 </xliff>
