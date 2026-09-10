@@ -1,4 +1,13 @@
-<div class="space-y-6">
+<!--
+  El panel de navegación ya no se pinta aquí: vive en el armazón, pegado a la barra lateral.
+  Estando dentro de la pantalla se encogía con el contenido —en el Gantt o en la carga de trabajo
+  quedaba en un palmo de alto— y además convivía con el desplegable de la barra, que enseñaba otra
+  lista distinta de lo mismo.
+
+  `h-full` y `min-h-0`: la vista ocupa el alto disponible en vez de el de sus datos, para que una
+  tabla corta no deje media pantalla en blanco.
+-->
+<div class="space-y-6 h-full min-h-0 flex flex-col">
   <div class="flex items-center justify-between">
     <div>
       <h2 class="text-2xl font-semibold tracking-tight" i18n>Proyectos</h2>
@@ -26,7 +35,7 @@
 
   @if (savedViews().length > 0) {
     <div class="flex items-center gap-2 mb-4">
-      <span class="text-sm font-medium text-muted-foreground" i18n>Saved Views:</span>
+      <span class="text-sm font-medium text-muted-foreground" i18n>Vistas guardadas:</span>
       @for (view of savedViews(); track view) {
         <button
           (click)="applySavedView(view)"
@@ -39,7 +48,7 @@
     </div>
   }
 
-  <div class="h-[650px]">
+  <div class="flex-1 min-h-0">
     <ui-data-table
       [columns]="tableColumns"
       [data]="projects()"
@@ -55,7 +64,7 @@
 
 <ng-template #statusTemplate let-item>
   <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium" [class]="statusStyle(item.status)">
-    {{ item.status }}
+    {{ nombreDelEstado(item.status) }}
   </span>
 </ng-template>
 

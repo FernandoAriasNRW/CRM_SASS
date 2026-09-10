@@ -47,6 +47,42 @@ public sealed record RemoveAutomationRuleCommand(Guid TenantId, Guid Id) : IComm
 
 public sealed record GetAutomationRulesQuery(Guid TenantId) : IQuery<IReadOnlyList<AutomationRuleDto>>;
 
+/// <summary>Una ejecución tal como se enseña en el historial de la regla.</summary>
+public sealed record EjecucionDto(
+    Guid EntityId,
+    string Resultado,
+    string? Detalle,
+    DateTime CuandoUtc);
+
+/// <summary>
+/// Las últimas ejecuciones de una regla.
+///
+/// Es la respuesta a «mi automatización no funciona». El contador de la regla sólo distingue
+/// «no salta» de «salta»; esto añade el caso que más despista, que es «salta y las condiciones
+/// no se cumplen» —y entonces quien la configuró ve el contador a cero y culpa al disparador,
+/// cuando lo que falla es una condición suya—.
+/// </summary>
+public sealed record GetEjecucionesQuery(Guid TenantId, Guid RuleId, int Cuantas = 20)
+    : IQuery<IReadOnlyList<EjecucionDto>>;
+
+public sealed class GetEjecucionesHandler(IRepositorioDeEjecuciones repositorio)
+    : IQueryHandler<GetEjecucionesQuery, IReadOnlyList<EjecucionDto>>
+{
+    /// <summary>Un tope duro: sin él, quien pida cien mil se lleva la tabla entera.</summary>
+    private const int MaximoPorPeticion = 100;
+
+    public async Task<Result<IReadOnlyList<EjecucionDto>>> Handle(GetEjecucionesQuery peticion, CancellationToken ct)
+    {
+        var cuantas = Math.Clamp(peticion.Cuantas, 1, MaximoPorPeticion);
+
+        var ejecuciones = await repositorio.UltimasDeLaReglaAsync(
+            peticion.TenantId, peticion.RuleId, cuantas, ct);
+
+        return Result<IReadOnlyList<EjecucionDto>>.Success(
+            ejecuciones.Select(e => new EjecucionDto(e.EntityId, e.Resultado, e.Detalle, e.CuandoUtc)).ToList());
+    }
+}
+
 // ---------------------------------------------------------------- Traducción
 
 public static class Mapeo

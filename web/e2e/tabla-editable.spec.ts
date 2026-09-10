@@ -97,8 +97,8 @@ test('sólo las columnas editables ofrecen editarse', async ({ page }) => {
   await entrar(page);
   await irALaLista(page);
 
-  await expect(page.getByRole('button', { name: 'Editar Hours' })).toHaveCount(1);
-  await expect(page.getByRole('button', { name: 'Editar Title' })).toHaveCount(1);
+  await expect(page.getByRole('button', { name: 'Editar Horas' })).toHaveCount(1);
+  await expect(page.getByRole('button', { name: 'Editar Título' })).toHaveCount(1);
   // El responsable tiene su propio endpoint porque una tarea admite varios: no cabe en una celda.
   await expect(page.getByRole('button', { name: 'Editar Asignado' })).toHaveCount(0);
 });
@@ -107,9 +107,9 @@ test('editar una celda manda sólo el campo que cambió', async ({ page }) => {
   const enviados = await entrar(page);
   await irALaLista(page);
 
-  await page.getByRole('button', { name: 'Editar Hours' }).click();
-  await page.getByLabel('Hours', { exact: true }).fill('13.5');
-  await page.getByLabel('Hours', { exact: true }).press('Tab');
+  await page.getByRole('button', { name: 'Editar Horas' }).click();
+  await page.getByLabel('Horas', { exact: true }).fill('13.5');
+  await page.getByLabel('Horas', { exact: true }).press('Tab');
 
   await expect.poll(() => enviados.length).toBe(1);
   expect(enviados[0].cuerpo).toEqual({ estimatedHours: 13.5 });
@@ -120,9 +120,9 @@ test('el estado se edita con un desplegable de los estados que existen', async (
   const enviados = await entrar(page);
   await irALaLista(page);
 
-  await page.getByRole('button', { name: 'Editar Status' }).click();
-  await expect(page.getByLabel('Status', { exact: true })).toBeVisible();
-  await page.getByLabel('Status', { exact: true }).selectOption('In Progress');
+  await page.getByRole('button', { name: 'Editar Estado' }).click();
+  await expect(page.getByLabel('Estado', { exact: true })).toBeVisible();
+  await page.getByLabel('Estado', { exact: true }).selectOption('In Progress');
 
   await expect.poll(() => enviados.length).toBe(1);
   expect(enviados[0].cuerpo).toEqual({ status: 'In Progress' });
@@ -132,11 +132,11 @@ test('escapar no guarda nada', async ({ page }) => {
   const enviados = await entrar(page);
   await irALaLista(page);
 
-  await page.getByRole('button', { name: 'Editar Hours' }).click();
-  await page.getByLabel('Hours', { exact: true }).fill('99');
-  await page.getByLabel('Hours', { exact: true }).press('Escape');
+  await page.getByRole('button', { name: 'Editar Horas' }).click();
+  await page.getByLabel('Horas', { exact: true }).fill('99');
+  await page.getByLabel('Horas', { exact: true }).press('Escape');
 
-  await expect(page.getByLabel('Hours', { exact: true })).toBeHidden();
+  await expect(page.getByLabel('Horas', { exact: true })).toBeHidden();
   expect(enviados).toEqual([]);
   await expect(celdaDeHoras(page)).toContainText('8');
 });
@@ -145,10 +145,10 @@ test('dejar el mismo valor no gasta una petición', async ({ page }) => {
   const enviados = await entrar(page);
   await irALaLista(page);
 
-  await page.getByRole('button', { name: 'Editar Hours' }).click();
-  await page.getByLabel('Hours', { exact: true }).press('Tab');
+  await page.getByRole('button', { name: 'Editar Horas' }).click();
+  await page.getByLabel('Horas', { exact: true }).press('Tab');
 
-  await expect(page.getByLabel('Hours', { exact: true })).toBeHidden();
+  await expect(page.getByLabel('Horas', { exact: true })).toBeHidden();
   expect(enviados).toEqual([]);
 });
 
@@ -158,9 +158,9 @@ test('si el servidor rechaza, la celda vuelve a lo que había y dice por qué', 
   });
   await irALaLista(page);
 
-  await page.getByRole('button', { name: 'Editar Hours' }).click();
-  await page.getByLabel('Hours', { exact: true }).fill('-5');
-  await page.getByLabel('Hours', { exact: true }).press('Tab');
+  await page.getByRole('button', { name: 'Editar Horas' }).click();
+  await page.getByLabel('Horas', { exact: true }).fill('-5');
+  await page.getByLabel('Horas', { exact: true }).press('Tab');
 
   await expect(page.getByText('Las horas estimadas no pueden ser negativas').first()).toBeVisible();
   // Dejar el −5 en pantalla haría creer que la estimación quedó cambiada.
@@ -178,9 +178,9 @@ test('un solo fallo levanta un solo aviso', async ({ page }) => {
   });
   await irALaLista(page);
 
-  await page.getByRole('button', { name: 'Editar Hours' }).click();
-  await page.getByLabel('Hours', { exact: true }).fill('-5');
-  await page.getByLabel('Hours', { exact: true }).press('Tab');
+  await page.getByRole('button', { name: 'Editar Horas' }).click();
+  await page.getByLabel('Horas', { exact: true }).fill('-5');
+  await page.getByLabel('Horas', { exact: true }).press('Tab');
 
   await expect(page.getByText('Las horas estimadas no pueden ser negativas')).toHaveCount(1);
 });
@@ -196,9 +196,9 @@ test('el aviso no enseña la dirección interna de la API', async ({ page }) => 
   });
   await irALaLista(page);
 
-  await page.getByRole('button', { name: 'Editar Hours' }).click();
-  await page.getByLabel('Hours', { exact: true }).fill('-5');
-  await page.getByLabel('Hours', { exact: true }).press('Tab');
+  await page.getByRole('button', { name: 'Editar Horas' }).click();
+  await page.getByLabel('Horas', { exact: true }).fill('-5');
+  await page.getByLabel('Horas', { exact: true }).press('Tab');
 
   await expect(page.getByText('Las horas estimadas no pueden ser negativas').first()).toBeVisible();
   await expect(page.getByText(/Http failure response/)).toHaveCount(0);

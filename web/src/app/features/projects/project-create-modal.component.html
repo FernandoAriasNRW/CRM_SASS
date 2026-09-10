@@ -38,7 +38,7 @@
   <div drawer-footer class="flex justify-end gap-2 w-full">
     <button uiButton variant="outline" (click)="close()" i18n>Cancelar</button>
     <button uiButton (click)="submit()" [disabled]="loading()">
-      {{ loading() ? 'Creando...' : 'Crear Proyecto' }}
+      @if (loading()) { <span i18n>Creando...</span> } @else { <span i18n>Crear Proyecto</span> }
     </button>
   </div>
 </app-drawer>

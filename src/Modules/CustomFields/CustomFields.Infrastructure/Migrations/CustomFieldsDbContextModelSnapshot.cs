@@ -33,6 +33,9 @@ namespace CustomFields.Infrastructure.Migrations
                         .HasMaxLength(30)
                         .HasColumnType("varchar(30)");
 
+                    b.Property<string>("Formula")
+                        .HasColumnType("longtext");
+
                     b.Property<string>("Nombre")
                         .IsRequired()
                         .HasMaxLength(80)

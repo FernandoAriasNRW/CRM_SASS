@@ -47,6 +47,53 @@ using Tags.Presentation.Endpoints;
 using CustomFields.Presentation.Endpoints;
 using Automations.Presentation.Endpoints;
 using Comments.Presentation.Endpoints;
+using ApiHost.Calendar;
+
+// La sonda de salud del contenedor: `dotnet ApiHost.dll --health-check`.
+//
+// Existe para que la imagen no necesite `curl` ni `wget`. La imagen de ASP.NET no trae
+// ninguno de los dos, y el `healthcheck` del compose invocaba `curl` igualmente: llevaba
+// 1.590 fallos consecutivos y el contenedor figuraba como «unhealthy» de forma permanente.
+// Con `depends_on: condition: service_healthy` eso deja el arranque colgado, y en un
+// orquestador es un servicio al que nunca se le enruta tráfico.
+//
+// La alternativa era instalar `curl` con apt en la imagen. Se descartó: añade una descarga
+// de red a cada construcción —que ya falló una vez, dejando el build entero roto por algo
+// que no es del proyecto—, engorda la imagen y suma superficie de CVE para pedir una URL.
+// El proceso que ya sabe responder es el mismo que se está comprobando.
+//
+// Sale antes de construir el host a propósito: no levanta servidor, no toca la base y no
+// aplica migraciones. Sólo pregunta y devuelve 0 o 1.
+if (args.Contains("--health-check"))
+{
+    var puerto = Environment.GetEnvironmentVariable("ASPNETCORE_HTTP_PORTS")?.Split(';')[0] ?? "8080";
+
+    // `/health/live` y no `/health/ready`: «vivo» pregunta si el proceso responde, «listo»
+    // pregunta además por la base de datos. Reiniciar el contenedor porque la base está caída
+    // no arregla la base y sí tira las conexiones que aún funcionaban.
+    using var sonda = new HttpClient { Timeout = TimeSpan.FromSeconds(5) };
+
+    try
+    {
+        // `127.0.0.1` y no `localhost`: dentro de un contenedor `localhost` puede resolver
+        // primero a `::1`, y si el servidor sólo escucha en IPv4 la sonda falla mientras el
+        // servicio funciona. Le pasa a la imagen del frontend con nginx.
+        var respuesta = await sonda.GetAsync($"http://127.0.0.1:{puerto}/health/live");
+        return respuesta.IsSuccessStatusCode ? 0 : 1;
+    }
+    catch (Exception ex)
+    {
+        // A stderr: lo recoge `docker inspect` en el registro de la comprobación, y es lo
+        // único que verá quien intente entender por qué el contenedor no está sano.
+        await Console.Error.WriteLineAsync($"La sonda de salud falló: {ex.Message}");
+        return 1;
+    }
+}
+
+// La licencia comunitaria de QuestPDF hay que declararla antes de generar el primer PDF, o
+// lanza al hacerlo. Se declara aquí, al arrancar, y no dentro del escritor: es una decisión de
+// la aplicación —bajo qué licencia se usa la librería— y no del código que dibuja una tabla.
+QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -200,6 +247,39 @@ builder.Services.AddCommunicationPresentation(builder.Configuration);
 builder.Services.AddCalendarPresentation(builder.Configuration);
 builder.Services.AddWebhookPresentation(builder.Configuration);
 builder.Services.AddReportingPresentation(builder.Configuration);
+
+// El panel de informes cruza Projects, WorkItems y Ticketing, así que su implementación vive
+// aquí y no dentro del módulo: ningún módulo referencia a otro. Reporting declara el contrato;
+// el host, que sí conoce a todos, lo satisface. Mismo criterio que PuenteDeAutomatizaciones.
+builder.Services.AddScoped<Reporting.Application.Abstractions.IDashboardRepository,
+                           ApiHost.Reporting.ConsultasDelPanel>();
+
+// Y la fuente de datos de las exportaciones, por lo mismo: un informe de tareas mira WorkItems y
+// uno de tickets mira Ticketing. Reutiliza ConsultasDelPanel para los agregados, de modo que el
+// PDF y la pantalla dan los mismos números.
+builder.Services.AddScoped<ApiHost.Reporting.ConsultasDelPanel>();
+builder.Services.AddScoped<ApiHost.Reporting.DatosDelInforme>();
+
+// La agenda de un día, que junta los eventos con lo que vence ese día en tareas, tickets y
+// proyectos. Vive en el host por lo mismo que las dos de arriba: cruza módulos.
+builder.Services.AddScoped<ApiHost.Calendar.AgendaDelDia>();
+
+// El motor de los informes a medida: traduce la definición neutra que construyó el usuario a
+// filas. Mismo sitio y mismo motivo que lo de arriba.
+builder.Services.AddScoped<ApiHost.Reporting.MotorDeInformes>();
+builder.Services.AddScoped<Reporting.Application.Definiciones.IResolutorDeInformes>(
+    sp => sp.GetRequiredService<ApiHost.Reporting.MotorDeInformes>());
+
+// El trabajador que genera los ficheros. Va en segundo plano porque quien exporta recupera el
+// control enseguida, y porque los informes programados ocurren sin nadie delante: un solo camino
+// para las dos cosas.
+builder.Services.AddHostedService<ApiHost.Reporting.GeneradorDeExportaciones>();
+
+// Y el que dispara los informes programados. No genera nada: deja la exportación pedida y el
+// generador de arriba la recoge, para que un informe programado y uno pedido a mano recorran el
+// mismo camino.
+builder.Services.AddScoped<ApiHost.Reporting.CorreosDeDestinatarios>();
+builder.Services.AddHostedService<ApiHost.Reporting.PlanificadorDeInformes>();
 builder.Services.AddTeamsPresentation(builder.Configuration);
 builder.Services.AddTagsPresentation(builder.Configuration);
 builder.Services.AddCustomFieldsPresentation(builder.Configuration);
@@ -209,6 +289,15 @@ builder.Services.AddCommentsPresentation(builder.Configuration);
 // El puente entre las tareas y las automatizaciones vive aquí porque es el unico sitio que
 // conoce a los dos modulos. Ver PuenteDeAutomatizaciones.
 builder.Services.AddScoped<Automations.Application.Abstractions.IEjecutorDeAcciones, ApiHost.Services.EjecutorDeAccionesDeTareas>();
+
+// Avisar cruza tres módulos: Automations decide, WorkItems sabe quién tiene la tarea y
+// Notifications entrega. Por eso vive aquí y no dentro de ninguno de los tres.
+builder.Services.AddScoped<ApiHost.Services.AvisoDeAutomatizacion>();
+
+// El disparador por vencimiento no lo levanta un evento —nadie toca la tarea— sino este
+// trabajo, que revisa cada hora qué se acerca a su fecha. Es el que reacciona a que NO ha
+// pasado nada, que es justo lo que no se nota solo.
+builder.Services.AddHostedService<ApiHost.Services.VigilanteDeVencimientos>();
 builder.Services.AddDocsPresentation(builder.Configuration);
 
 // ═══════════════════════════════════════════════════════════════════════════════ MEDIATR - Commands y Queries ═══════════════════════════════════════════════════════════════════════════════
@@ -383,7 +472,19 @@ using (var scope = app.Services.CreateScope())
 
     var identityCtx = services.GetRequiredService<Identity.Infrastructure.Persistence.IdentityDbContext>();
 
-    if (!identityCtx.User.Any())
+    // Red de seguridad: si no hay ni un usuario, no se podría entrar a arreglar nada.
+    //
+    // **`IgnoreQueryFilters` no es opcional aquí, y su ausencia costó 695 usuarios.** Esto corre
+    // en el arranque, sin petición y por tanto sin usuario, así que el filtro de inquilino compara
+    // contra `Guid.Empty` y `User.Any()` devolvía **false teniendo once usuarios dentro**. Cada
+    // arranque creaba otro «admin@acme.com». Como el inicio de sesión busca por correo y se queda
+    // con una fila cualquiera, quien entraba no era el administrador que posee los proyectos:
+    // «Mis proyectos» enseñaba 0 teniendo cinco.
+    //
+    // Se descartan los borrados a mano en vez de dejar el filtro de papelera puesto: si el único
+    // administrador está en la papelera, esto tiene que crear uno nuevo —si no, nadie puede
+    // entrar a sacarlo—.
+    if (!identityCtx.User.IgnoreQueryFilters().Any(u => !u.IsDeleted))
     {
         var adminRole = Identity.Domain.ValueObjects.UserRole.Admin;
         var email = Identity.Domain.ValueObjects.Email.Create("admin@acme.com").Value!;
@@ -401,8 +502,12 @@ using (var scope = app.Services.CreateScope())
     }
     catch (Exception ex)
     {
+        // Error, no aviso. Un aviso se pierde entre el ruido del arranque, y esto llevaba
+        // tiempo fallando sin que nadie lo notara: la aplicación levantaba sin proyectos ni
+        // tareas y el panel de informes contaba cero. Sigue sin tumbar el arranque —la API es
+        // útil aunque no haya datos de demostración— pero ahora se ve.
         var logger = services.GetRequiredService<Microsoft.Extensions.Logging.ILogger<Program>>();
-        logger.LogWarning(ex, "Error durante la siembra automática de datos demo.");
+        logger.LogError(ex, "La siembra de datos de demostración falló. La aplicación arranca sin ellos.");
     }
 }
 
@@ -449,6 +554,7 @@ app.MapTicketingEndpoints();
 app.MapNotificationsEndpoints();
 app.MapCommunicationEndpoints();
 app.MapCalendarEndpoints();
+app.MapAgendaEndpoints();
 app.MapReportingEndpoints();
 app.MapWebhookEndpoints();
 app.MapTeamsEndpoints();
@@ -480,6 +586,10 @@ app.MapHub<WorkItems.Presentation.Hubs.BoardHub>("/hubs/board");
 app.MapHub<Ticketing.Presentation.Hubs.TicketsHub>("/hubs/tickets");
 
 await app.RunAsync();
+
+// El código de salida del proceso. Lo exige el compilador desde que la sonda de salud de
+// arriba devuelve 0 o 1: en cuanto una rama devuelve un valor, todas tienen que hacerlo.
+return 0;
 
 public class DummyNotificationsHub : Microsoft.AspNetCore.SignalR.Hub { }
 

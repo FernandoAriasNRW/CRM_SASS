@@ -1029,4 +1029,74 @@ public sealed class WorkTaskInvariantsTests
     }
 
     #endregion
+
+    #region Marcas de tiempo
+
+    // De estas dos columnas salen el tiempo de entrega y el diagrama de quemado. Antes no
+    // existían, y el panel devolvía 2,5 y 1,4 días escritos a mano porque no había con qué
+    // calcularlos.
+
+    private static WorkTask TareaNueva() => WorkTask.Create(
+        Guid.NewGuid(), Guid.NewGuid(), "Una tarea", "descripción",
+        Guid.NewGuid(), Guid.NewGuid(), 3m, new DateOnly(2026, 12, 31));
+
+    [Fact]
+    public void Una_tarea_nace_con_fecha_de_creacion_y_sin_fecha_de_cierre()
+    {
+        var antes = DateTime.UtcNow;
+
+        var tarea = TareaNueva();
+
+        tarea.CreatedAtUtc.Should().BeOnOrAfter(antes).And.BeOnOrBefore(DateTime.UtcNow);
+        tarea.CompletedAtUtc.Should().BeNull("acaba de crearse, no está terminada");
+    }
+
+    [Fact]
+    public void Terminar_una_tarea_deja_constancia_de_cuando()
+    {
+        var tarea = TareaNueva();
+        var antes = DateTime.UtcNow;
+
+        tarea.Move("Done");
+
+        tarea.CompletedAtUtc.Should().NotBeNull();
+        tarea.CompletedAtUtc!.Value.Should().BeOnOrAfter(antes).And.BeOnOrBefore(DateTime.UtcNow);
+    }
+
+    /// <summary>
+    /// Reabrir borra la marca. Es lo que hace que el tiempo de ciclo signifique algo: una tarea
+    /// que se dio por hecha y se deshizo no está terminada, y conservar la fecha del primer
+    /// cierre mediría un trabajo que luego hubo que rehacer.
+    /// </summary>
+    [Fact]
+    public void Reabrir_una_tarea_borra_la_fecha_de_cierre()
+    {
+        var tarea = TareaNueva();
+        tarea.Move("Done");
+        tarea.CompletedAtUtc.Should().NotBeNull();
+
+        tarea.Move("In Progress");
+
+        tarea.CompletedAtUtc.Should().BeNull("una tarea reabierta no está completada");
+    }
+
+    /// <summary>
+    /// «En Espera» no es terminar. Contarla como cerrada falsearía el avance y el tiempo de
+    /// entrega a la vez, y en la dirección que hace quedar bien, que es la peligrosa.
+    /// </summary>
+    [Theory]
+    [InlineData("To Do")]
+    [InlineData("In Progress")]
+    [InlineData("In Review")]
+    [InlineData("On Hold")]
+    public void Ningun_otro_estado_marca_la_tarea_como_terminada(string estado)
+    {
+        var tarea = TareaNueva();
+
+        tarea.Move(estado);
+
+        tarea.CompletedAtUtc.Should().BeNull();
+    }
+
+    #endregion
 }

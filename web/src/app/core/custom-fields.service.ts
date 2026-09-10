@@ -17,7 +17,13 @@ export const TIPOS_DE_CAMPO = [
   { key: 'Seleccion', label: $localize`Selección` },
   { key: 'SeleccionMultiple', label: $localize`Selección múltiple` },
   { key: 'Usuario', label: $localize`Usuario` },
+  { key: 'Formula', label: $localize`Calculado` },
 ] as const;
+
+/** Los que se calculan solos: ni se rellenan ni se pueden marcar obligatorios. */
+export function seCalcula(tipo: string): boolean {
+  return tipo === 'Formula';
+}
 
 export const ENTIDADES = [
   { key: 'Tarea', label: $localize`Tareas` },
@@ -35,6 +41,8 @@ export interface CustomFieldDefinition {
   obligatorio: boolean;
   opciones: string[];
   posicion: number;
+  /** La expresión, si es un campo calculado. */
+  formula: string | null;
 }
 
 /** Un campo con su valor para una entidad concreta. */
@@ -46,6 +54,16 @@ export interface CustomFieldValue {
   opciones: string[];
   posicion: number;
   valor: string | null;
+  /** La expresión, si es calculado. Se enseña como ayuda junto al resultado. */
+  formula?: string | null;
+  /**
+   * Por qué un campo calculado no tiene valor.
+   *
+   * Ojo con la distinción: un hueco por falta de datos deja `valor` y `error` en nulo, y es
+   * normal —falta rellenar algo—. Esto sólo se llena cuando la fórmula en sí no se puede
+   * calcular: divide entre cero, o usa un campo que ya no existe.
+   */
+  error?: string | null;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -83,7 +101,7 @@ export class CustomFieldsService {
     );
   }
 
-  actualizar(id: string, entidad: string, cambios: Pick<CustomFieldDefinition, 'nombre' | 'obligatorio' | 'opciones' | 'posicion'>): Observable<void> {
+  actualizar(id: string, entidad: string, cambios: Pick<CustomFieldDefinition, 'nombre' | 'obligatorio' | 'opciones' | 'posicion' | 'formula'>): Observable<void> {
     return this.api.put<void>(`/custom-fields/${id}`, cambios, SIN_AVISO).pipe(tap(() => this.invalidar(entidad)));
   }
 

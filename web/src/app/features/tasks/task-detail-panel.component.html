@@ -1,4 +1,5 @@
-<app-drawer [isOpen]="true" (closed)="close()" [title]="title" subtitle="Detalle de tarea y comentarios" size="xl">
+<app-drawer [isOpen]="true" (closed)="close()" [title]="title"
+            i18n-subtitle subtitle="Detalle de tarea y comentarios" size="xl" [scrollBody]="false">
   <div drawer-header class="flex items-center gap-2">
     <!-- Status pill -->
     <div class="relative group">
@@ -7,15 +8,15 @@
                        status === 'In Progress' ? 'bg-primary-subtle text-primary-subtle-fg border-primary' :
                        status === 'In Review' ? 'bg-warning-subtle text-warning-subtle-fg border-warning' :
                        'bg-muted text-muted-foreground border-border'">
-        {{ status }}
+        {{ nombreDelEstado(status) }}
         <ng-icon name="lucideChevronDown" size="11" />
       </button>
       <!-- Status dropdown -->
       <div class="absolute top-full left-0 mt-1 w-36 rounded-lg border border-border bg-card shadow-lg z-10 hidden group-focus-within:block">
-        @for (s of statuses; track s) {
-          <button (click)="changeStatus(s)"
+        @for (s of statuses; track s.clave) {
+          <button (click)="changeStatus(s.clave)"
                   class="flex items-center gap-2 w-full px-3 py-2 text-xs hover:bg-accent transition-colors first:rounded-t-lg last:rounded-b-lg">
-            <ui-badge [variant]="statusBadge(s)" class="text-[10px]">{{ s }}</ui-badge>
+            <ui-badge [variant]="s.badge" class="text-[10px]">{{ s.etiqueta }}</ui-badge>
           </button>
         }
       </div>
@@ -28,40 +29,46 @@
     }
   </div>
 
-  <!-- Body: dos columnas -->
-  <div class="flex flex-col md:flex-row h-full min-h-[100%]">
+  <!--
+    Mismo reparto que el cajón de un ticket: dos columnas con su propio desplazamiento y el del
+    cajón apagado. Antes el cuerpo tenía `p-6` y esta columna añadía `px-8 py-6` encima, así que
+    el contenido empezaba a cincuenta y seis píxeles del borde y sobraba media pantalla en blanco.
+  -->
+  <div class="flex flex-col md:flex-row h-full min-h-0 gap-6">
 
       <!-- Panel izquierdo — detalle -->
-      <div class="flex-1 overflow-y-auto px-8 py-6 space-y-6">
+      <div class="flex-1 min-h-0 overflow-y-auto pr-1 space-y-5">
 
         <!-- Título -->
         <textarea
           [(ngModel)]="title"
           (blur)="saveField('title', title)"
           rows="2"
-          class="w-full text-2xl font-bold bg-transparent border-none outline-none resize-none placeholder:text-muted-foreground/40 leading-tight"
+          class="w-full text-2xl font-bold bg-transparent border-none outline-none resize-none
+                 placeholder:text-muted-foreground/40 leading-tight rounded-lg px-2 py-1 -ml-2
+                 hover:bg-muted/40 focus:bg-muted/40 transition-colors"
           i18n-placeholder placeholder="Nombre de la tarea"
         ></textarea>
 
         <!-- Propiedades en grid -->
-        <div class="grid grid-cols-2 gap-x-8 gap-y-3 text-sm">
+        <div class="grid grid-cols-2 gap-x-8 gap-y-1 text-sm">
 
           <!-- Estado -->
-          <div class="flex items-center gap-3">
-            <span class="text-muted-foreground w-28 shrink-0 flex items-center gap-1.5">
-              <ng-icon name="lucideCheck" size="13" /> Estado
+          <div class="flex items-center gap-3 py-1">
+            <span class="text-muted-foreground w-28 shrink-0 flex items-center gap-1.5 text-xs font-medium">
+              <ng-icon name="lucideCheck" size="13" /> <span i18n>Estado</span>
             </span>
             <select [(ngModel)]="status" (change)="changeStatus(status)"
                     class="bg-transparent border-none outline-none text-sm cursor-pointer hover:text-primary transition-colors">
-              @for (s of statuses; track s) {
-                <option [value]="s">{{ s }}</option>
+              @for (s of statuses; track s.clave) {
+                <option [value]="s.clave">{{ s.etiqueta }}</option>
               }
             </select>
           </div>
 
           <!-- Prioridad -->
-          <div class="flex items-center gap-3">
-            <span class="text-muted-foreground w-28 shrink-0 flex items-center gap-1.5">
+          <div class="flex items-center gap-3 py-1">
+            <span class="text-muted-foreground w-28 shrink-0 flex items-center gap-1.5 text-xs font-medium">
               <ng-icon name="lucideFlag" size="13" /> <span i18n>Prioridad</span>
             </span>
             <ng-icon [name]="currentPriority().icon" size="13" [class]="currentPriority().color" />
@@ -75,8 +82,8 @@
           </div>
 
           <!-- Repetición -->
-          <div class="flex items-center gap-3 col-span-2">
-            <span class="text-muted-foreground w-28 shrink-0 flex items-center gap-1.5">
+          <div class="flex items-center gap-3 col-span-2 py-1">
+            <span class="text-muted-foreground w-28 shrink-0 flex items-center gap-1.5 text-xs font-medium">
               <ng-icon name="lucideRepeat" size="13" /> <span i18n>Repetir</span>
             </span>
             <div class="flex items-center gap-2 flex-wrap">
@@ -109,9 +116,9 @@
           </div>
 
           <!-- Fecha límite -->
-          <div class="flex items-center gap-3">
-            <span class="text-muted-foreground w-28 shrink-0 flex items-center gap-1.5">
-              <ng-icon name="lucideCalendar" size="13" /> Fecha límite
+          <div class="flex items-center gap-3 py-1">
+            <span class="text-muted-foreground w-28 shrink-0 flex items-center gap-1.5 text-xs font-medium">
+              <ng-icon name="lucideCalendar" size="13" /> <span i18n>Fecha límite</span>
             </span>
             <input type="date" [(ngModel)]="dueDate"
                    (change)="saveField('dueDate', dueDate)"
@@ -119,9 +126,9 @@
           </div>
 
           <!-- Horas estimadas -->
-          <div class="flex items-center gap-3">
-            <span class="text-muted-foreground w-28 shrink-0 flex items-center gap-1.5">
-              <ng-icon name="lucideClock" size="13" /> Horas est.
+          <div class="flex items-center gap-3 py-1">
+            <span class="text-muted-foreground w-28 shrink-0 flex items-center gap-1.5 text-xs font-medium">
+              <ng-icon name="lucideClock" size="13" /> <span i18n>Horas est.</span>
             </span>
             <input type="number" [(ngModel)]="estimatedHours" min="0" step="0.5"
                    (blur)="saveField('estimatedHours', estimatedHours)"
@@ -129,9 +136,9 @@
           </div>
 
           <!-- Etiquetas -->
-          <div class="flex items-start gap-3 col-span-2">
-            <span class="text-muted-foreground w-28 shrink-0 flex items-center gap-1.5 pt-1">
-              <ng-icon name="lucideTag" size="13" /> Etiquetas
+          <div class="flex items-start gap-3 col-span-2 pt-3 mt-2 border-t border-border/60">
+            <span class="text-muted-foreground w-28 shrink-0 flex items-center gap-1.5 pt-1 text-xs font-medium">
+              <ng-icon name="lucideTag" size="13" /> <span i18n>Etiquetas</span>
             </span>
             <div class="flex flex-wrap gap-1.5 flex-1">
               @for (key of selectedTags(); track key) {
@@ -165,8 +172,8 @@
           }
 
           <!-- Responsables -->
-          <div class="flex items-start gap-3 col-span-2">
-            <span class="text-muted-foreground w-28 shrink-0 flex items-center gap-1.5 pt-1">
+          <div class="flex items-start gap-3 col-span-2 py-1">
+            <span class="text-muted-foreground w-28 shrink-0 flex items-center gap-1.5 pt-1 text-xs font-medium">
               <ng-icon name="lucideUser" size="13" /> <span i18n>Responsables</span>
             </span>
             <div class="flex flex-wrap items-center gap-1.5 flex-1">
@@ -207,24 +214,22 @@
              ha definido ninguno, así que va sin envoltorio propio. -->
         <app-custom-fields-form entidad="Tarea" [entityId]="task().id" />
 
-        <div class="border-t border-border"></div>
-
         <!-- Descripción -->
-        <div class="space-y-2">
-          <p class="text-xs font-medium text-muted-foreground uppercase tracking-wide" i18n>Descripción</p>
+        <div class="space-y-1.5">
+          <p class="text-xs font-semibold text-muted-foreground uppercase tracking-wide" i18n>Descripción</p>
           <textarea
             [(ngModel)]="description"
             (blur)="saveField('description', description)"
             rows="6"
             i18n-placeholder placeholder="Agrega una descripción detallada, instrucciones, links o lo que necesites..."
-            class="w-full bg-transparent border border-transparent hover:border-border focus:border-border rounded-lg px-3 py-2 text-sm outline-none resize-none placeholder:text-muted-foreground/40 transition-colors focus:ring-1 focus:ring-ring"
+            class="w-full bg-transparent rounded-lg px-3 py-2 -ml-3 text-sm leading-relaxed outline-none
+                   resize-none placeholder:text-muted-foreground/40 transition-colors
+                   hover:bg-muted/40 focus:bg-muted/40 focus:ring-1 focus:ring-ring"
           ></textarea>
         </div>
 
-        <div class="border-t border-border"></div>
-
         <!-- Subtareas -->
-        <div class="space-y-2">
+        <div class="space-y-1.5">
           <div class="flex items-center justify-between">
             <p class="text-xs font-medium text-muted-foreground uppercase tracking-wide" i18n>Subtareas</p>
             @if (subtareas().length) {
@@ -267,7 +272,7 @@
           }
         </div>
 
-        <div class="border-t border-border"></div>
+        <div class="border-t border-border/60"></div>
 
         <!-- Checklist -->
         <div class="space-y-2">
@@ -310,7 +315,7 @@
           }
         </div>
 
-        <div class="border-t border-border"></div>
+        <div class="border-t border-border/60"></div>
 
         <!-- Dependencias -->
         <div class="space-y-3">
@@ -369,7 +374,7 @@
           }
         </div>
 
-        <div class="border-t border-border"></div>
+        <div class="border-t border-border/60"></div>
 
         <!-- Adjuntos placeholder -->
         <div class="space-y-2">
@@ -382,8 +387,14 @@
 
       </div>
 
-      <!-- Panel derecho — actividad y comentarios -->
-      <div class="w-80 shrink-0 border-l border-border flex flex-col">
+      <!--
+        «Mencionado en»: la vuelta de las menciones. Va en el panel derecho, junto a la actividad,
+        porque es información *sobre* esta tarea que viene de fuera, igual que los comentarios.
+      -->
+      <div class="w-80 shrink-0 min-h-0 border-l border-border/60 flex flex-col pl-6">
+        <div class="p-4 border-b border-border">
+          <app-mencionado-en tipo="Tarea" [entidadId]="task().id" />
+        </div>
 
         <!-- Tabs -->
         <div class="flex border-b border-border shrink-0">

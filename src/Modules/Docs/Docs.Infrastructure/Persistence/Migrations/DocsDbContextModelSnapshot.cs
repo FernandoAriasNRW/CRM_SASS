@@ -28,6 +28,9 @@ namespace Docs.Infrastructure.Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("char(36)");
 
+                    b.Property<DateTime?>("ArchivadoEnUtc")
+                        .HasColumnType("datetime(6)");
+
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("datetime(6)");
 
@@ -141,6 +144,46 @@ namespace Docs.Infrastructure.Persistence.Migrations
                     b.HasIndex("ParentPageId");
 
                     b.ToTable("Pages");
+                });
+
+            modelBuilder.Entity("Docs.Domain.Menciones.MencionEnDocumento", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTime>("DetectadaUtc")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<Guid>("DocumentId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid>("EntidadMencionadaId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid>("PageId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<string>("TextoVisible")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("TipoMencionado")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId", "PageId")
+                        .HasDatabaseName("IX_Menciones_TenantId_PageId");
+
+                    b.HasIndex("TenantId", "TipoMencionado", "EntidadMencionadaId")
+                        .HasDatabaseName("IX_Menciones_TenantId_Tipo_Entidad");
+
+                    b.ToTable("MencionesEnDocumentos");
                 });
 
             modelBuilder.Entity("Docs.Domain.Entities.DocumentPermission", b =>

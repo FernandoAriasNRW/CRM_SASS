@@ -5,7 +5,7 @@ using TaskStatus = WorkItems.Domain.ValueObjects.TaskStatus;
 
 namespace WorkItems.Domain.Entities;
 
-public sealed class WorkTask : AggregateRoot, ITenantEntity
+public sealed class WorkTask : AggregateRoot, ITenantEntity, ISoftDeletable, IArchivable
 {
     public Guid TenantId { get; private set; }
     public Guid ProjectId { get; private set; }
@@ -72,6 +72,33 @@ public sealed class WorkTask : AggregateRoot, ITenantEntity
     public DateOnly? StartDate { get; private set; }
     public List<Guid> TagIds { get; private set; } = new();
 
+    /// <summary>
+    /// Cuándo se creó la tarea.
+    ///
+    /// No existía, y su ausencia no era un detalle: sin ella no se puede calcular cuánto tarda
+    /// el trabajo en atravesar el tablero. El panel de informes devolvía un tiempo medio de
+    /// ciclo de 1,4 días escrito a mano en el código, porque no había con qué calcularlo.
+    ///
+    /// Las tareas anteriores a esta columna se quedan con la fecha en que se aplicó la
+    /// migración. Es una aproximación y hay que saberlo al leer las medias de las primeras
+    /// semanas; inventar una fecha de creación hacia atrás habría sido peor, porque no se
+    /// distinguiría de un dato real.
+    /// </summary>
+    public DateTime CreatedAtUtc { get; private set; }
+
+    /// <summary>
+    /// Cuándo pasó a estado final, o <c>null</c> si aún no lo ha hecho.
+    ///
+    /// Se pone al mover la tarea a «Done» y **se borra si sale de ahí**: una tarea reabierta no
+    /// está completada, y dejar la marca antigua daría un tiempo de ciclo que mide el primer
+    /// intento y no el trabajo real.
+    ///
+    /// De aquí salen el tiempo de ciclo y el diagrama de quemado. Las tareas ya completadas
+    /// antes de la migración quedan con <c>null</c>: no se sabe cuándo se cerraron, y una media
+    /// calculada sobre fechas inventadas es peor que una media sobre menos datos.
+    /// </summary>
+    public DateTime? CompletedAtUtc { get; private set; }
+
     private WorkTask() { }
 
     public static WorkTask Create(
@@ -110,7 +137,8 @@ public sealed class WorkTask : AggregateRoot, ITenantEntity
             CreatedById = createdById,
             EstimatedHours = estimatedHours,
             DueDate = dueDate,
-            StartDate = startDate
+            StartDate = startDate,
+            CreatedAtUtc = DateTime.UtcNow
         };
 
         // Una tarea que nace asignada aparece ya en el conjunto de responsables, no sólo en el
@@ -138,6 +166,11 @@ public sealed class WorkTask : AggregateRoot, ITenantEntity
 
         var oldStatus = Status;
         Status = new TaskStatus(newStatus, newStatus);
+
+        // La marca de cierre se pone al entrar en el estado final y se quita al salir de él.
+        // Quitarla importa tanto como ponerla: una tarea reabierta que conservara la fecha del
+        // primer cierre daría un tiempo de ciclo que mide un trabajo que luego se deshizo.
+        CompletedAtUtc = TaskStatus.EsFinal(newStatus) ? DateTime.UtcNow : null;
 
         RaiseDomainEvent(new TaskStatusChangedEvent(Id, TenantId, ProjectId, oldStatus.Value.ToString(), newStatus));
     }
@@ -498,4 +531,53 @@ public sealed class WorkTask : AggregateRoot, ITenantEntity
             TagIds.Remove(tagId);
         }
     }
+
+    #region Archivo y papelera
+
+    /// <summary>Cuándo se archivó, o <c>null</c> si está a la vista. Ver <see cref="IArchivable"/>.</summary>
+    public DateTime? ArchivadoEnUtc { get; private set; }
+
+    /// <summary>Si está en la papelera. El filtro global lo esconde salvo que se pida verlo.</summary>
+    public bool IsDeleted { get; private set; }
+
+    /// <summary>Cuándo se envió a la papelera, para poder vaciarla por antigüedad algún día.</summary>
+    public DateTime? BorradoEnUtc { get; private set; }
+
+    /// <summary>
+    /// Aparta la tarea de las listas sin borrarla.
+    ///
+    /// Es idempotente: archivar dos veces no cambia la fecha original. Importa porque dos
+    /// pestañas abiertas pueden mandar la misma orden, y reescribir la fecha haría parecer
+    /// reciente algo archivado hace meses.
+    /// </summary>
+    public void Archivar()
+    {
+        if (ArchivadoEnUtc is not null) return;
+        ArchivadoEnUtc = DateTime.UtcNow;
+    }
+
+    /// <summary>Devuelve la tarea a las listas.</summary>
+    public void Desarchivar() => ArchivadoEnUtc = null;
+
+    /// <summary>
+    /// Manda la tarea a la papelera: deja de verse pero se puede recuperar.
+    ///
+    /// Archivar y borrar no se pisan. Una tarea archivado que se borra sigue archivado al
+    /// restaurarlo, que es lo que espera quien lo archivó.
+    /// </summary>
+    public void EnviarAPapelera()
+    {
+        if (IsDeleted) return;
+        IsDeleted = true;
+        BorradoEnUtc = DateTime.UtcNow;
+    }
+
+    /// <summary>Saca la tarea de la papelera y la deja como estaba.</summary>
+    public void RestaurarDePapelera()
+    {
+        IsDeleted = false;
+        BorradoEnUtc = null;
+    }
+
+    #endregion
 }

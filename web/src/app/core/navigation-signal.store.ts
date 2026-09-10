@@ -32,47 +32,68 @@ export interface SidebarPreferences {
  * Secciones de la aplicación. Se exporta para que la paleta de comandos ofrezca las
  * mismas y no una copia que se desincronice al añadir o quitar una sección.
  */
+/**
+ * Los nombres van con `$localize` porque **se leen en pantalla**.
+ *
+ * Estaban a medias: «Home», «Dashboard», «Docs» y «Teams» en inglés y «Proyectos», «Tareas»,
+ * «Calendario» y «Reportes» en español, así que la barra lateral salía en dos idiomas a la vez
+ * eligieras el que eligieras. El identificador (`id`) no se traduce nunca: es la clave con la que
+ * se guardan las preferencias del menú.
+ */
 export const DEFAULT_NAV_ITEMS: NavItem[] = [
-  { id: 'home', label: 'Home', icon: 'lucideHome', route: '/', hasSubmenu: true, isHome: true, hasCustomizer: true },
-  { id: 'dashboard', label: 'Dashboard', icon: 'lucideLayoutDashboard', route: '/dashboard', hasSubmenu: true, hasCustomizer: true },
-  { id: 'docs', label: 'Docs', icon: 'lucideFileText', route: '/docs', hasSubmenu: true, hasCustomizer: true },
-  { id: 'projects', label: 'Proyectos', icon: 'lucideFolderKanban', route: '/projects', hasSubmenu: true, hasCustomizer: true },
-  { id: 'tasks', label: 'Tareas', icon: 'lucideCheckSquare', route: '/tasks', hasSubmenu: true, hasCustomizer: true },
-  { id: 'tickets', label: 'Tickets', icon: 'lucideTicket', route: '/tickets', hasSubmenu: true, hasCustomizer: true },
-  { id: 'teams', label: 'Teams', icon: 'lucideUsers', route: '/teams', hasSubmenu: true, hasCustomizer: true },
-  { id: 'chat', label: 'Chat', icon: 'lucideMessageSquare', route: '/chat' },
-  { id: 'calendar', label: 'Calendario', icon: 'lucideCalendar', route: '/calendar' },
-  { id: 'reports', label: 'Reportes', icon: 'lucideChartBar', route: '/reports' }
+  { id: 'home', label: $localize`Inicio`, icon: 'lucideHome', route: '/', hasSubmenu: true, isHome: true, hasCustomizer: true },
+  { id: 'dashboard', label: $localize`Panel`, icon: 'lucideLayoutDashboard', route: '/dashboard', hasSubmenu: true, hasCustomizer: true },
+  { id: 'docs', label: $localize`Documentos`, icon: 'lucideFileText', route: '/docs', hasSubmenu: true, hasCustomizer: true },
+  { id: 'projects', label: $localize`Proyectos`, icon: 'lucideFolderKanban', route: '/projects', hasSubmenu: true, hasCustomizer: true },
+  { id: 'tasks', label: $localize`Tareas`, icon: 'lucideCheckSquare', route: '/tasks', hasSubmenu: true, hasCustomizer: true },
+  { id: 'tickets', label: $localize`Tickets`, icon: 'lucideTicket', route: '/tickets', hasSubmenu: true, hasCustomizer: true },
+  { id: 'teams', label: $localize`Equipos`, icon: 'lucideUsers', route: '/teams', hasSubmenu: true, hasCustomizer: true },
+  { id: 'chat', label: $localize`Chat`, icon: 'lucideMessageSquare', route: '/chat' },
+  { id: 'calendar', label: $localize`Calendario`, icon: 'lucideCalendar', route: '/calendar' },
+  { id: 'reports', label: $localize`Informes`, icon: 'lucideChartBar', route: '/reports' }
 ];
 
 const DEFAULT_SUBMENUS: Record<string, SubmenuItem[]> = {
+  // Las dos entradas de «Spaces» que había aquí no tenían ruta: pulsarlas no hacía nada, ni
+  // siquiera navegar mal. Se quitan hasta que exista la pantalla.
   home: [
-    { id: 'h_mine_proj', label: 'Mis Proyectos', route: '/projects', queryParams: { filter: 'mine' } },
-    { id: 'h_mine_task', label: 'Mis Tareas', route: '/tasks', queryParams: { filter: 'mine' } },
-    { id: 'h_mine_tick', label: 'Mis Tickets', route: '/tickets', queryParams: { filter: 'mine' } },
-    { id: 'h_div_1', label: 'Spaces', isDivider: true },
-    { id: 'h_spaces_all', label: 'Listar todos' },
-    { id: 'h_spaces_add', label: 'Añadir o Crear Space', isAction: true }
+    { id: 'h_mine_proj', label: $localize`Mis proyectos`, route: '/projects', queryParams: { filter: 'mine' } },
+    { id: 'h_mine_task', label: $localize`Mis tareas`, route: '/tasks', queryParams: { filter: 'mine' } },
+    { id: 'h_mine_tick', label: $localize`Mis tickets`, route: '/tickets', queryParams: { filter: 'mine' } }
   ],
+  // «Crear Dashboard» iba a `/dashboard/new`, que no es una ruta: dejaba en Home. El panel se
+  // crea solo al entrar por primera vez, así que tampoco hace falta.
   dashboard: [
-    { id: 'd_all', label: 'Listar todos', route: '/dashboard', queryParams: { type: 'all' } },
-    { id: 'd_mine', label: 'Mis Dashboards', route: '/dashboard', queryParams: { type: 'private' } },
-    { id: 'd_team', label: 'Dashboards del team', route: '/dashboard', queryParams: { type: 'public' } },
-    { id: 'd_div_1', label: '', isDivider: true },
-    { id: 'd_add', label: 'Crear Dashboard', route: '/dashboard/new', isAction: true }
+    { id: 'd_all', label: $localize`Todos`, route: '/dashboard', queryParams: { type: 'all' } },
+    { id: 'd_mine', label: $localize`Mis paneles`, route: '/dashboard', queryParams: { type: 'private' } },
+    { id: 'd_team', label: $localize`Del equipo`, route: '/dashboard', queryParams: { type: 'public' } }
   ]
 };
 
+/**
+ * El desplegable por defecto de un módulo de la barra lateral.
+ *
+ * <b>Aquí sólo entra lo que existe.</b> Antes generaba además dos entradas que no llevaban a
+ * ninguna parte:
+ *
+ * - «X del Team», con <code>?filter=team</code>. El servidor no conoce ese filtro —los que
+ *   entiende están en <code>FiltrosDeVista</code>— así que devolvía **la lista entera**: quien lo
+ *   pulsaba creía estar viendo lo de su equipo.
+ * - «Crear / Agregar», hacia <code>/{módulo}/new</code>. Esa ruta no existe en
+ *   <code>app.routes.ts</code>, y la ruta comodín te dejaba en Home sin decir nada.
+ *
+ * Es la misma regla del panel de navegación —ver <code>vocabulario-del-menu.ts</code>—: un menú
+ * que promete y no cumple es peor que un menú corto.
+ *
+ * Los módulos con panel propio —tareas, tickets, proyectos— no usan esto: enseñan el panel.
+ */
 function getDefaultSubmenu(item: NavItem): SubmenuItem[] {
   if (DEFAULT_SUBMENUS[item.id]) {
     return DEFAULT_SUBMENUS[item.id];
   }
   return [
-    { id: `${item.id}_all`, label: 'Listar todos', route: item.route },
-    { id: `${item.id}_mine`, label: `Mis ${item.label.toLowerCase()}`, route: item.route, queryParams: { filter: 'mine' } },
-    { id: `${item.id}_team`, label: `${item.label} del Team`, route: item.route, queryParams: { filter: 'team' } },
-    { id: `${item.id}_div`, label: '', isDivider: true },
-    { id: `${item.id}_add`, label: 'Crear / Agregar', route: `${item.route}/new`, isAction: true }
+    { id: `${item.id}_all`, label: $localize`Ver todo`, route: item.route },
+    { id: `${item.id}_mine`, label: $localize`Asignado a mí`, route: item.route, queryParams: { filter: 'mine' } }
   ];
 }
 

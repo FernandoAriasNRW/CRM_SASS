@@ -11,6 +11,7 @@ using Ticketing.Application.Abstractions.Queries;
 using Ticketing.Application.DTOs;
 using Ticketing.Domain.Entities;
 using Ticketing.Domain.ValueObjects;
+using BuildingBlocks.Application;
 using BuildingBlocks.Application.Abstractions;
 using BuildingBlocks.Domain;
 
@@ -147,9 +148,14 @@ public class TicketsTests
         );
 
         // El handler usa GetByTenantWithPaginationAsync, no GetByTenantAsync.
+        //
+        // Esta llamada llegó a tener diez argumentos, tres de ellos opcionales y del mismo tipo,
+        // y NSubstitute la rechazaba con un error de argumentos ambiguos que no decía nada del
+        // problema real. Al agrupar filtro, usuario y listas en AlcanceDeVista, vuelve a caber.
         _queriesMock.GetByTenantWithPaginationAsync(
                 _tenantId, null, null, null, null,
-                Arg.Any<PaginationRequest>(), Arg.Any<CancellationToken>())
+                Arg.Any<PaginationRequest>(), Arg.Any<AlcanceDeVista?>(),
+                Arg.Any<CancellationToken>())
             .Returns(pagedResult);
 
         var getHandler = new GetTicketsHandler(_queriesMock);

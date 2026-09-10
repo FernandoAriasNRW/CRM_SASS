@@ -80,9 +80,7 @@
                 [class.shadow-sm]="resource.level === 'Edit'"
                 [class.text-muted-foreground]="resource.level !== 'Edit'"
                 [class.dark:text-muted-foreground]="resource.level !== 'Edit'"
-                class="px-2.5 py-1 text-xs font-semibold rounded-md transition-all hover:text-primary dark:hover:text-primary-subtle-fg" i18n>
-                Edit
-              </button>
+                class="px-2.5 py-1 text-xs font-semibold rounded-md transition-all hover:text-primary dark:hover:text-primary-subtle-fg" i18n>Editar</button>
 
               <button 
                 (click)="setPermissionLevel(resource.key, 'View')"
@@ -91,9 +89,7 @@
                 [class.shadow-sm]="resource.level === 'View'"
                 [class.text-muted-foreground]="resource.level !== 'View'"
                 [class.dark:text-muted-foreground]="resource.level !== 'View'"
-                class="px-2.5 py-1 text-xs font-semibold rounded-md transition-all hover:text-success dark:hover:text-success-subtle-fg" i18n>
-                View
-              </button>
+                class="px-2.5 py-1 text-xs font-semibold rounded-md transition-all hover:text-success dark:hover:text-success-subtle-fg" i18n>Ver</button>
 
               <button 
                 (click)="setPermissionLevel(resource.key, 'None')"
@@ -102,9 +98,7 @@
                 [class.shadow-sm]="resource.level === 'None'"
                 [class.text-muted-foreground]="resource.level !== 'None'"
                 [class.dark:text-muted-foreground]="resource.level !== 'None'"
-                class="px-2.5 py-1 text-xs font-semibold rounded-md transition-all hover:text-destructive dark:hover:text-destructive-subtle-fg" i18n>
-                None
-              </button>
+                class="px-2.5 py-1 text-xs font-semibold rounded-md transition-all hover:text-destructive dark:hover:text-destructive-subtle-fg" i18n>Ninguno</button>
             </div>
           </div>
         }

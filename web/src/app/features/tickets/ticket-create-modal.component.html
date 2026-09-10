@@ -9,8 +9,8 @@
       <label uiLabel for="t-priority" i18n>Prioridad</label>
       <select id="t-priority" [(ngModel)]="priority"
               class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
-        @for (p of priorities; track p) {
-          <option [value]="p">{{ p }}</option>
+        @for (p of priorities; track p.clave) {
+          <option [value]="p.clave">{{ p.etiqueta }}</option>
         }
       </select>
     </div>
@@ -31,7 +31,7 @@
   <div drawer-footer class="flex justify-end gap-2 w-full">
     <button uiButton variant="outline" (click)="close()" i18n>Cancelar</button>
     <button uiButton (click)="submit()" [disabled]="loading()">
-      {{ loading() ? 'Creando...' : 'Crear ticket' }}
+      @if (loading()) { <span i18n>Creando...</span> } @else { <span i18n>Crear ticket</span> }
     </button>
   </div>
 </app-drawer>

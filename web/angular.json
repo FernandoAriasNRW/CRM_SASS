@@ -77,6 +77,12 @@
                   "maximumError": "4kb"
                 },
                 {
+                  "type": "bundle",
+                  "name": "dashboard-component",
+                  "maximumWarning": "850kb",
+                  "maximumError": "1mb"
+                },
+                {
                   "type": "anyScript",
                   "maximumWarning": "700kb",
                   "maximumError": "1.5mb"
@@ -142,7 +148,9 @@
             "styles": [
               "src/styles.scss"
             ],
-            "scripts": []
+            "scripts": [],
+            "karmaConfig": "karma.conf.js",
+            "codeCoverage": true
           }
         },
         "lint": {

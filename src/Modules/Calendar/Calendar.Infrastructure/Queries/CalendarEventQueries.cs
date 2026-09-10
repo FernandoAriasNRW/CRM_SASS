@@ -62,7 +62,12 @@ public sealed class CalendarEventQueries(CalendarDbContext context) : ICalendarE
 
     var dtos = items.Select(MapToDto).ToList();
 
-    return PagedResult<CalendarEventDto>.Create(dtos, pagination.Page, pagination.PageSize, totalCount);
+    // Con nombre. La firma es `Create(items, totalCount, page, pageSize)` y aquí se pasaba
+    // `(dtos, page, pageSize, totalCount)`: tres enteros seguidos compilan en cualquier orden, así
+    // que el calendario respondía «230 páginas de 1 elemento» sin que nada fallara. Es el mismo
+    // error que el de la disposición del panel, donde tres `Guid` seguidos se cruzaron igual.
+    return PagedResult<CalendarEventDto>.Create(
+        items: dtos, totalCount: totalCount, page: pagination.Page, pageSize: pagination.PageSize);
   }
 
   public async Task<PagedResult<CalendarEventDto>> GetDeletedByTenantAsync(
@@ -85,30 +90,22 @@ public sealed class CalendarEventQueries(CalendarDbContext context) : ICalendarE
 
     var dtos = items.Select(MapToDto).ToList();
 
-    return PagedResult<CalendarEventDto>.Create(dtos, pagination.Page, pagination.PageSize, totalCount);
+    // Con nombre. La firma es `Create(items, totalCount, page, pageSize)` y aquí se pasaba
+    // `(dtos, page, pageSize, totalCount)`: tres enteros seguidos compilan en cualquier orden, así
+    // que el calendario respondía «230 páginas de 1 elemento» sin que nada fallara. Es el mismo
+    // error que el de la disposición del panel, donde tres `Guid` seguidos se cruzaron igual.
+    return PagedResult<CalendarEventDto>.Create(
+        items: dtos, totalCount: totalCount, page: pagination.Page, pageSize: pagination.PageSize);
   }
 
-  private static CalendarEventDto MapToDto(CalendarEvent entity)
-  {
-    return new CalendarEventDto(
-        entity.Id,
-        entity.TenantId,
-        entity.OrganizerId,
-        entity.ProjectId,
-        entity.TaskId,
-        entity.Title,
-        entity.Description,
-        CalendarEventType.FromValue<CalendarEventType>(entity.TypeValue)?.Name ?? "Unknown",
-        entity.StartTime,
-        entity.EndTime,
-        entity.Location,
-        entity.IsAllDay,
-        RecurrencePattern.FromValue<RecurrencePattern>(entity.RecurrenceValue)?.Name ?? "None",
-        entity.RecurrenceInterval,
-        entity.RecurrenceEndDate,
-        entity.CreatedAt,
-        entity.IsDeleted,
-        entity.DeletedAt,
-        entity.DeletedBy);
-  }
+  /// <summary>
+  /// Pasa la entidad a DTO reutilizando el mapeo de la capa de aplicación.
+  ///
+  /// <b>Estaba escrito dos veces</b>, aquí y en <c>CalendarEventDtoExtensions.ToDto</c>, y las dos
+  /// copias ya habían empezado a separarse: una traducía el tipo con <c>FromValue(...)?.Name ??
+  /// "Unknown"</c> y la otra con la propiedad de la entidad. Cuando se marcaron las fechas como
+  /// UTC —lo que evita que el navegador corra los eventos el desfase horario— sólo se arregló una
+  /// de las dos, así que la lista seguía mal mientras el detalle salía bien.
+  /// </summary>
+  private static CalendarEventDto MapToDto(CalendarEvent entity) => entity.ToDto();
 }

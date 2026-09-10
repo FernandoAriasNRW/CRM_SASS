@@ -10,6 +10,16 @@ public sealed class EfTaskRepository(WorkItemsDbContext context) : ITaskReposito
   public async Task<WorkTask?> GetByIdAsync(Guid tenantId, Guid id, CancellationToken ct = default)
       => await context.Tasks.FirstOrDefaultAsync(t => t.TenantId == tenantId && t.Id == id, ct);
 
+  public async Task<WorkTask?> GetIncluyendoOcultosAsync(Guid tenantId, Guid id, CancellationToken ct = default)
+  {
+    // El ámbito se cierra al salir del `using`: si se quedara abierto, las consultas siguientes
+    // de esta misma petición empezarían a devolver tareas borradas sin que nadie lo pidiera.
+    // Ojo: no vale `IgnoreQueryFilters()`, que apagaría también el aislamiento por inquilino.
+    using var _ = context.VerTambien(borrados: true, archivados: true);
+
+    return await context.Tasks.FirstOrDefaultAsync(t => t.TenantId == tenantId && t.Id == id, ct);
+  }
+
   public async Task AddAsync(WorkTask task, CancellationToken ct = default)
       => await context.Tasks.AddAsync(task, ct);
 

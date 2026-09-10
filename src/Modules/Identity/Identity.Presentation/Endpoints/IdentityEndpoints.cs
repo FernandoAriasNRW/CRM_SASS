@@ -1,3 +1,5 @@
+using BuildingBlocks.Application.Abstractions;
+using Identity.Application.Favoritos;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Identity.Application.Commands;
@@ -110,6 +112,63 @@ public static class IdentityEndpoints
 
     var usersGroup = app.MapGroup("/api/v1/users").WithTags("Users");
 
+    // Favoritos. Van bajo el usuario y no bajo cada módulo porque una estrella no es un atributo
+    // de la tarea: es algo que una persona decidió sobre ella. Ver Favorito para el porqué.
+    usersGroup.MapGet("/me/favoritos/{tipo}", async (
+        string tipo, IUserContext usuario, IMediator mediator) =>
+    {
+      var result = await mediator.Send(new GetFavoritosQuery(usuario.TenantId, usuario.UserId, tipo));
+      return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
+    }).RequireAuthorization();
+
+    // Un solo endpoint que alterna, no uno para marcar y otro para desmarcar: la estrella es un
+    // interruptor, y con dos endpoints dos pestañas abiertas acaban peleándose.
+    usersGroup.MapPost("/me/favoritos/{tipo}/{entityId:guid}", async (
+        string tipo, Guid entityId, IUserContext usuario, IMediator mediator) =>
+    {
+      var result = await mediator.Send(
+          new AlternarFavoritoCommand(usuario.TenantId, usuario.UserId, tipo, entityId));
+
+      return result.IsSuccess
+          ? Results.Ok(new { marcado = result.Value })
+          : Results.BadRequest(result.Error);
+    }).RequireAuthorization();
+
+    // Compartición. Va bajo el elemento y no bajo el usuario, al revés que los favoritos: un
+    // favorito es una decisión sobre mí, y compartir es una decisión sobre la cosa.
+    var comparticionGroup = app.MapGroup("/api/v1/comparticion").WithTags("Comparticion");
+
+    comparticionGroup.MapGet("/{tipo}/{entityId:guid}", async (
+        string tipo, Guid entityId, IUserContext usuario, IMediator mediator) =>
+    {
+      var result = await mediator.Send(
+          new Identity.Application.Comparticion.GetCompartidoConQuery(usuario.TenantId, tipo, entityId));
+
+      return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
+    }).RequireAuthorization();
+
+    comparticionGroup.MapPut("/{tipo}/{entityId:guid}/{conUsuarioId:guid}", async (
+        string tipo, Guid entityId, Guid conUsuarioId, CompartirRequest cuerpo,
+        IUserContext usuario, IMediator mediator) =>
+    {
+      // PUT y no POST: compartir con la misma persona dos veces deja el mismo estado, cambiando
+      // el nivel si hace falta. Con POST, la segunda llamada tendría que decidir si es un
+      // conflicto, y no lo es.
+      var result = await mediator.Send(new Identity.Application.Comparticion.CompartirCommand(
+          usuario.TenantId, tipo, entityId, conUsuarioId, cuerpo.Nivel));
+
+      return result.IsSuccess ? Results.NoContent() : Results.BadRequest(result.Error);
+    }).RequireAuthorization();
+
+    comparticionGroup.MapDelete("/{tipo}/{entityId:guid}/{conUsuarioId:guid}", async (
+        string tipo, Guid entityId, Guid conUsuarioId, IUserContext usuario, IMediator mediator) =>
+    {
+      var result = await mediator.Send(new Identity.Application.Comparticion.DejarDeCompartirCommand(
+          usuario.TenantId, tipo, entityId, conUsuarioId));
+
+      return result.IsSuccess ? Results.NoContent() : Results.BadRequest(result.Error);
+    }).RequireAuthorization();
+
     usersGroup.MapGet("/me/preferences", async (IMediator mediator, ClaimsPrincipal principal) =>
     {
       var userId = Guid.TryParse(principal.FindFirstValue(JwtRegisteredClaimNames.Sub) ?? principal.FindFirstValue(ClaimTypes.NameIdentifier), out var uid) ? uid : Guid.Empty;
@@ -162,10 +221,33 @@ public static class IdentityEndpoints
       return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
     }).RequireAuthorization();
 
-    usersGroup.MapGet("", async (IMediator mediator, ClaimsPrincipal principal) =>
+    /// <summary>
+    /// Cambiar la propia contraseña.
+    ///
+    /// <b>El comando, su handler y su validador existían desde el principio y ningún endpoint los
+    /// exponía.</b> La pantalla de perfil llamaba a `/profile/password`, que no es ninguna ruta:
+    /// cambiar la contraseña devolvía 404 y el aviso decía «El recurso solicitado no existe».
+    ///
+    /// El identificador sale del token y no del cuerpo: si viniera de fuera, cualquiera podría
+    /// mandar el de otra persona y cambiarle la contraseña conociendo sólo la suya.
+    /// </summary>
+    usersGroup.MapPut("/me/password", async (CambiarContrasenaRequest req, IMediator mediator, ClaimsPrincipal principal) =>
+    {
+      var userId = Guid.TryParse(principal.FindFirstValue(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub) ?? principal.FindFirstValue(System.Security.Claims.ClaimTypes.NameIdentifier), out var uid) ? uid : Guid.Empty;
+      if (userId == Guid.Empty) return Results.Unauthorized();
+
+      var result = await mediator.Send(new ChangePasswordCommand(userId, req.CurrentPassword, req.NewPassword));
+      return result.IsSuccess ? Results.NoContent() : Results.BadRequest(result.Error);
+    }).RequireAuthorization();
+
+    usersGroup.MapGet("", async (string? search, int? pageSize, IMediator mediator, ClaimsPrincipal principal) =>
     {
       var tenantId = Guid.TryParse(principal.FindFirstValue("tenantId"), out var tid) ? tid : Guid.Empty;
-      var result = await mediator.Send(new GetTenantUsersQuery(tenantId));
+
+      // `search` con el mismo nombre que en tareas, tickets y proyectos. Cuatro endpoints con
+      // cuatro nombres para lo mismo es cómo el frontend acaba llamando `q` en un sitio y `search`
+      // en otro, y alguien probando a ver cuál funciona.
+      var result = await mediator.Send(new GetTenantUsersQuery(tenantId, search, pageSize));
       return Results.Ok(result.Value);
     }).RequireAuthorization();
 
@@ -251,5 +333,11 @@ public static class IdentityEndpoints
 }
 
 public record CreateUserRequest(string Name, string Email, string Password, string Role);
+
+/// <summary>Lo que hace falta para cambiar la propia contraseña. El usuario sale del token.</summary>
+public record CambiarContrasenaRequest(string CurrentPassword, string NewPassword);
 public record UpdateUserRequest(string Name, string Email, string Role);
 public record SaveGranularPermissionsRequest(string TargetType, Guid? UserId, Guid? TeamId, string? RoleName, List<GranularPermissionInputItem> Permissions);
+
+/// <summary>Con qué nivel se comparte: «View», «Edit» o «Full».</summary>
+public sealed record CompartirRequest(string Nivel);

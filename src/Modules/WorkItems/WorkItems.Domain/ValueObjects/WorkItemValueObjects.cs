@@ -52,6 +52,24 @@ public sealed class TaskStatus : Enumeration<string>
     /// </summary>
     public static bool Existe(string status) =>
         All().Any(s => s.Value == status);
+
+    /// <summary>
+    /// Si el estado da la tarea por terminada.
+    ///
+    /// Sólo «Done» lo es. «On Hold» no: una tarea en espera sigue viva, y contarla como cerrada
+    /// falsearía tanto el avance como el tiempo de ciclo.
+    ///
+    /// Acepta el valor y también el nombre en español porque conviven las dos formas en los
+    /// datos: <see cref="WorkTask.Move"/> construye el estado con <c>new TaskStatus(v, v)</c>,
+    /// así que una tarea movida a «Done» acaba con nombre «Done», mientras que las creadas
+    /// desde las constantes de esta clase llevan «Completado». Comparar sólo por una de las dos
+    /// dejaría fuera la mitad de las tareas terminadas, que es justo el error que obligó a
+    /// escribir tres comparaciones encadenadas en el repositorio del panel.
+    /// </summary>
+    public static bool EsFinal(string? status) =>
+        status is not null &&
+        (string.Equals(status, Done.Value, StringComparison.OrdinalIgnoreCase) ||
+         string.Equals(status, Done.Name, StringComparison.OrdinalIgnoreCase));
 }
 
 /// <summary>

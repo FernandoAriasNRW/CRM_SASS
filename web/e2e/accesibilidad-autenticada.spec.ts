@@ -73,7 +73,7 @@ const VISTAS = [
   { nombre: 'proyectos',  termino: 'proyectos',  url: /\/projects/ },
   { nombre: 'panel',      termino: 'dashboard',  url: /\/dashboard/ },
   { nombre: 'calendario', termino: 'calendario', url: /\/calendar/ },
-  { nombre: 'informes',   termino: 'reportes',   url: /\/reports/ },
+  { nombre: 'informes',   termino: 'informes',   url: /\/reports/ },
 ];
 
 for (const vista of VISTAS) {

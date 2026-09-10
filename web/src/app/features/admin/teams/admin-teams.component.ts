@@ -86,7 +86,7 @@ export class AdminTeamsComponent implements OnInit {
         this.loading.set(false);
       },
       error: () => {
-        this.error.set('Error al cargar equipos');
+        this.error.set($localize`Error al cargar equipos`);
         this.loading.set(false);
       }
     });

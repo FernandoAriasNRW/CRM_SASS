@@ -4,56 +4,66 @@
   [title]="title" 
   subtitle="Detalle del ticket de soporte y seguimiento"
   size="xl"
+  [scrollBody]="false"
 >
   <!-- Badge Slot -->
+  <!--
+    El nombre legible, no la clave. Arriba ponía «Open» y «Low» —lo que viaja al servidor— junto a
+    unos desplegables que decían «Abierto» y «Baja»: la misma cosa escrita de dos maneras en la
+    misma línea.
+  -->
   <div drawer-badge class="flex items-center gap-1.5">
-    <ui-badge [variant]="statusBadge(status)">{{ status }}</ui-badge>
-    <ui-badge variant="outline">{{ priority }}</ui-badge>
+    <ui-badge [variant]="statusBadge(status)">{{ nombreDelEstado(status) }}</ui-badge>
+    <ui-badge variant="outline">{{ nombreDeLaPrioridad(priority) }}</ui-badge>
   </div>
 
-  <!-- Body: dos columnas -->
-  <div class="flex flex-col md:flex-row h-full min-h-[100%]">
+  <!--
+    Dos columnas, cada una con su propio desplazamiento y el del cajón apagado: antes había una
+    barra dentro de otra. Las propiedades van en filas sueltas y no dentro de una tarjeta con
+    borde: el recuadro sobre fondo claro pesaba más que lo que contenía.
+  -->
+  <div class="flex flex-col md:flex-row h-full min-h-0 gap-6">
     <!-- Panel izquierdo — detalle -->
-    <div class="flex-1 overflow-y-auto pr-6 space-y-6">
+    <div class="flex-1 min-h-0 overflow-y-auto pr-1 space-y-5">
 
       <!-- Título Editable -->
       <textarea
         [(ngModel)]="title"
         (blur)="saveField('title', title)"
         rows="2"
-        class="w-full text-xl font-bold bg-transparent border-none outline-none resize-none placeholder:text-muted-foreground/40 leading-tight focus:ring-1 focus:ring-ring rounded-lg p-2"
+        class="w-full text-2xl font-bold bg-transparent border-none outline-none resize-none placeholder:text-muted-foreground/40 leading-tight rounded-lg px-2 py-1 -ml-2 hover:bg-muted/40 focus:bg-muted/40 transition-colors"
         i18n-placeholder placeholder="Título del ticket"
       ></textarea>
 
-      <!-- Propiedades en grid -->
-      <div class="grid grid-cols-2 gap-x-6 gap-y-3 text-sm p-4 rounded-xl border border-border bg-muted/20">
+      <!-- Propiedades: filas, sin caja -->
+      <div class="grid grid-cols-2 gap-x-8 gap-y-1 text-sm">
 
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-3 py-1">
           <span class="text-muted-foreground w-24 shrink-0 flex items-center gap-1.5 text-xs font-medium">
             <ng-icon name="lucideCheck" size="13" /> Estado
           </span>
           <select [(ngModel)]="status" (change)="changeStatus(status)"
                   class="bg-background border border-input rounded-md px-2 py-1 text-xs cursor-pointer focus:ring-1 focus:ring-ring outline-none">
-            @for (s of statuses; track s) {
-              <option [value]="s">{{ s }}</option>
+            @for (s of statuses; track s.clave) {
+              <option [value]="s.clave">{{ s.etiqueta }}</option>
             }
           </select>
         </div>
 
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-3 py-1">
           <span class="text-muted-foreground w-24 shrink-0 flex items-center gap-1.5 text-xs font-medium">
             <ng-icon name="lucideFlag" size="13" /> Prioridad
           </span>
           <select [(ngModel)]="priority" (change)="saveField('priority', priority)"
                   class="bg-background border border-input rounded-md px-2 py-1 text-xs cursor-pointer focus:ring-1 focus:ring-ring outline-none">
-            @for (p of priorities; track p.key) {
-              <option [value]="p.key">{{ p.label }}</option>
+            @for (p of priorities; track p.clave) {
+              <option [value]="p.clave">{{ p.etiqueta }}</option>
             }
           </select>
         </div>
 
         <!-- Etiquetas -->
-        <div class="flex items-start gap-3 col-span-2 pt-2 border-t border-border/50">
+        <div class="flex items-start gap-3 col-span-2 pt-3 mt-2 border-t border-border/60">
           <span class="text-muted-foreground w-24 shrink-0 flex items-center gap-1.5 text-xs font-medium pt-1">
             <ng-icon name="lucideTag" size="13" /> Etiquetas
           </span>
@@ -89,22 +99,28 @@
         }
       </div>
 
-      <!-- Descripción -->
-      <div class="space-y-2">
-        <p class="text-xs font-semibold text-muted-foreground uppercase tracking-wide" i18n>Descripción del Problema</p>
+      <!--
+        La descripción sin recuadro fijo: se marca al pasar el ratón y al escribir. Un campo con
+        borde permanente pesa igual que uno con contenido, y en un cajón con cuatro apartados eso
+        es lo que lo hacía parecer un formulario en vez de un documento.
+      -->
+      <div class="space-y-1.5">
+        <p class="text-xs font-semibold text-muted-foreground uppercase tracking-wide" i18n>Descripción</p>
         <textarea
           [(ngModel)]="description"
           (blur)="saveField('description', description)"
           rows="6"
-          i18n-placeholder placeholder="Descripción del problema..."
-          class="w-full bg-background border border-input focus:border-ring rounded-lg px-3 py-2 text-sm outline-none resize-none placeholder:text-muted-foreground/40 transition-colors focus:ring-1 focus:ring-ring"
+          i18n-placeholder placeholder="Describe el problema…"
+          class="w-full bg-transparent rounded-lg px-3 py-2 -ml-3 text-sm leading-relaxed outline-none resize-none
+                 placeholder:text-muted-foreground/40 transition-colors
+                 hover:bg-muted/40 focus:bg-muted/40 focus:ring-1 focus:ring-ring"
         ></textarea>
       </div>
 
       <!-- Adjuntos -->
-      <div class="space-y-2">
+      <div class="space-y-1.5">
         <p class="text-xs font-semibold text-muted-foreground uppercase tracking-wide" i18n>Adjuntos</p>
-        <button class="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground border border-dashed border-border rounded-lg px-4 py-3 w-full transition-colors hover:bg-accent/30">
+        <button class="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground rounded-lg px-3 py-2 -ml-3 w-full transition-colors hover:bg-muted/40">
           <ng-icon name="lucidePaperclip" size="14" />
           <span i18n>Adjuntar archivo, captura o documento</span>
         </button>
@@ -112,8 +128,17 @@
 
     </div>
 
-    <!-- Panel derecho — comentarios -->
-    <div class="w-80 shrink-0 border-l border-border flex flex-col pl-4">
+    <!-- Panel derecho — comentarios y menciones -->
+    <div class="w-80 shrink-0 min-h-0 border-l border-border/60 flex flex-col pl-6">
+      <!--
+        «Mencionado en»: qué documentos hablan de este ticket. Es la vuelta del diferencial, y para
+        un ticket es donde más se nota: la especificación o el acta donde se decidió algo suele ser
+        lo que falta para entenderlo.
+      -->
+      <div class="pb-4 border-b border-border">
+        <app-mencionado-en tipo="Ticket" [entidadId]="ticket().id" />
+      </div>
+
       <div class="flex border-b border-border shrink-0">
         <button
           (click)="activeTab.set('comments')"

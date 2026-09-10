@@ -62,6 +62,47 @@ namespace Automations.Infrastructure.Migrations
                     b.ToTable("AutomationRules", (string)null);
                 });
 
+            modelBuilder.Entity("Automations.Domain.Entities.EjecucionDeAutomatizacion", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTime>("CuandoUtc")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Detalle")
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)");
+
+                    b.Property<DateOnly>("Dia")
+                        .HasColumnType("date");
+
+                    b.Property<Guid>("EntityId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<string>("Resultado")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("varchar(30)");
+
+                    b.Property<Guid>("RuleId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("char(36)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId", "RuleId", "CuandoUtc")
+                        .HasDatabaseName("IX_AutomationExecutions_Historial");
+
+                    b.HasIndex("TenantId", "RuleId", "EntityId", "Dia")
+                        .HasDatabaseName("IX_AutomationExecutions_Memoria");
+
+                    b.ToTable("AutomationExecutions", (string)null);
+                });
+
             modelBuilder.Entity("Automations.Domain.Entities.AutomationRule", b =>
                 {
                     b.OwnsMany("Automations.Domain.Entities.AccionDeAutomatizacion", "Acciones", b1 =>

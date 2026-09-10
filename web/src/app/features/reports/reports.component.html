@@ -55,12 +55,46 @@
 </ng-template>
 
 <ng-template #actionsTemplate let-item>
-  <button uiButton variant="outline" size="sm" (click)="generateReport(item.id, item.format)">
-    <ng-icon name="lucideDownload" size="14" />
-    Generar
-  </button>
+  <!--
+    Un botón por formato, y no uno que use el formato guardado del informe.
+
+    El formato del informe es con el que se creó; a la hora de llevárselo, la misma persona quiere
+    el PDF para mandarlo y el Excel para trabajarlo. Ofrecer los tres evita tener que editar el
+    informe para cambiar de formato.
+  -->
+  <div class="flex items-center gap-1 justify-end">
+    @for (formato of formatos; track formato) {
+      <button
+        uiButton variant="outline" size="sm"
+        [disabled]="estaExportando(item.id)"
+        (click)="exportar(item.id, formato)"
+        [attr.title]="'Exportar a ' + formato">
+        <ng-icon name="lucideDownload" size="14" class="mr-1" />
+        {{ formato }}
+      </button>
+    }
+
+    <!-- El constructor se abre por informe: es donde se decide qué enseña. -->
+    <button uiButton variant="ghost" size="sm" (click)="abrirConstructor(item)"
+            i18n-title title="Configurar qué enseña este informe">
+      <ng-icon name="lucideFilter" size="14" class="mr-1" />
+      <span i18n>Construir</span>
+    </button>
+
+    @if (estaExportando(item.id)) {
+      <span class="text-xs text-muted-foreground ml-1" i18n>Generando…</span>
+    }
+  </div>
 </ng-template>
 
 @if (showCreateModal()) {
   <app-report-create-modal (closed)="closeCreateModal()" (created)="onReportCreated()" />
+}
+
+@if (enConstruccion(); as informe) {
+  <app-constructor-de-informes
+    [reportId]="informe.id"
+    [titulo]="informe.name"
+    (cerrado)="cerrarConstructor()"
+    (guardado)="load()" />
 }

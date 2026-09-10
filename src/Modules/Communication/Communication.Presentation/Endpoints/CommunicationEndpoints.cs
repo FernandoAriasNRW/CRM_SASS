@@ -1,3 +1,4 @@
+using BuildingBlocks.Application.Abstractions;
 using System.Linq;
 using Communication.Application.Commands;
 using Communication.Application.Queries;
@@ -46,36 +47,40 @@ public static class CommunicationEndpoints
       return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
     });
 
-    group.MapPost("", async (CreateConversationCommand command, IMediator mediator) =>
+    // Inquilino del token. Ver ProjectsEndpoints: misma grieta.
+    group.MapPost("", async (CreateConversationCommand command, IUserContext usuario, IMediator mediator) =>
     {
-      var result = await mediator.Send(command);
+      var result = await mediator.Send(command with { TenantId = usuario.TenantId });
       return result.IsSuccess
               ? Results.Created($"/api/v1/channels/{result.Value!.Id}", result.Value)
               : Results.BadRequest(result.Error);
     });
 
-    group.MapPost("/{id:guid}/messages", async (System.Security.Claims.ClaimsPrincipal principal, Guid id, Guid senderId, string content, IMediator mediator) =>
+    // Quien firma el mensaje es quien lo manda, no quien lo diga la petición: `senderId` venía
+    // en la cadena de consulta, así que cualquiera podía escribir en un canal con el nombre de
+    // otra persona. Es la misma regla que en los comentarios, donde el autor sale del token.
+    group.MapPost("/{id:guid}/messages", async (Guid id, string content, IUserContext usuario, IMediator mediator) =>
     {
-      var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
-      var command = new SendMessageCommand(tenantId, id, senderId, content);
+      var command = new SendMessageCommand(usuario.TenantId, id, usuario.UserId, content);
       var result = await mediator.Send(command);
       return result.IsSuccess
               ? Results.Created($"/api/v1/channels/{id}/messages/{result.Value!.Id}", result.Value)
               : Results.BadRequest(result.Error);
     });
 
-    group.MapPatch("/messages/{id:guid}", async (System.Security.Claims.ClaimsPrincipal principal, Guid id, Guid senderId, string newContent, IMediator mediator) =>
+    // Quién edita sale del token. Venía por la URL, así que quien quisiera editar el mensaje de
+    // otra persona sólo tenía que poner el identificador de esa persona en `senderId`.
+    group.MapPatch("/messages/{id:guid}", async (Guid id, string newContent, IUserContext usuario, IMediator mediator) =>
     {
-      var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
-      var command = new EditMessageCommand(tenantId, id, senderId, newContent);
+      var command = new EditMessageCommand(usuario.TenantId, id, usuario.UserId, newContent);
       var result = await mediator.Send(command);
       return result.IsSuccess ? Results.Ok() : Results.BadRequest(result.Error);
     });
 
-    group.MapDelete("/messages/{id:guid}", async (System.Security.Claims.ClaimsPrincipal principal, Guid id, Guid actorId, IMediator mediator) =>
+    // Igual al borrar: quien actúa es quien tiene el token, no quien diga la URL.
+    group.MapDelete("/messages/{id:guid}", async (Guid id, IUserContext usuario, IMediator mediator) =>
     {
-      var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
-      var command = new DeleteMessageCommand(tenantId, id, actorId);
+      var command = new DeleteMessageCommand(usuario.TenantId, id, usuario.UserId);
       var result = await mediator.Send(command);
       return result.IsSuccess ? Results.NoContent() : Results.BadRequest(result.Error);
     });

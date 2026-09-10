@@ -17,11 +17,19 @@ namespace ApiHost.Services;
 /// exactamente lo que compone una aplicación modular. Meter la referencia dentro del módulo
 /// habría sido el primer paso para que dejaran de ser módulos.
 /// </summary>
-public sealed class EjecutorDeAccionesDeTareas(IMediator mediator) : IEjecutorDeAcciones
+public sealed class EjecutorDeAccionesDeTareas(IMediator mediator, AvisoDeAutomatizacion aviso) : IEjecutorDeAcciones
 {
   public async Task EjecutarAsync(
       Guid tenantId, Guid entityId, string tipoDeAccion, string valor, CancellationToken ct = default)
   {
+    // Avisar no es un cambio en la tarea, así que no pasa por el comando de parcheo: sale por
+    // su propio camino, que además consulta las preferencias de quien va a recibirlo.
+    if (tipoDeAccion == TipoDeAccion.Notificar)
+    {
+      await aviso.AvisarAsync(tenantId, entityId, valor, ct);
+      return;
+    }
+
     // El actor es el sistema: la acción no la hace una persona, la hace una regla que alguien
     // configuró antes. Poner aquí al usuario que movió la tarea le atribuiría cambios que no hizo.
     var comando = new PatchTaskCommand(

@@ -1,4 +1,5 @@
 using System.Linq;
+using BuildingBlocks.Application.Abstractions;
 using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -13,6 +14,14 @@ namespace Projects.Presentation.Endpoints;
 
 public static class ProjectsEndpoints
 {
+  /// <summary>Las rutas de archivo y papelera, con la acción que ejecuta cada una.</summary>
+  private static readonly (string Ruta, BuildingBlocks.Application.AccionDeArchivo Accion)[] AccionesDeArchivo =
+  [
+    ("archivar", BuildingBlocks.Application.AccionDeArchivo.Archivar),
+    ("desarchivar", BuildingBlocks.Application.AccionDeArchivo.Desarchivar),
+    ("restaurar", BuildingBlocks.Application.AccionDeArchivo.RestaurarDePapelera)
+  ];
+
   public static IServiceCollection AddProjectsPresentation(this IServiceCollection services, IConfiguration configuration)
   {
     services.AddProjectsInfrastructure(configuration);
@@ -23,11 +32,14 @@ public static class ProjectsEndpoints
   {
     var group = app.MapGroup("/api/v1/projects").WithTags("Projects").RequireAuthorization();
 
-    group.MapGet("", async (System.Security.Claims.ClaimsPrincipal principal, [Microsoft.AspNetCore.Mvc.FromQuery] string? status, [Microsoft.AspNetCore.Mvc.FromQuery] Guid? ownerId, [Microsoft.AspNetCore.Mvc.FromQuery] Guid? spaceId, [Microsoft.AspNetCore.Mvc.FromQuery] Guid? folderId, [Microsoft.AspNetCore.Mvc.FromQuery] string? filter, IMediator mediator, [Microsoft.AspNetCore.Mvc.FromQuery] int page = 1, [Microsoft.AspNetCore.Mvc.FromQuery] int pageSize = 25) =>
+    group.MapGet("", async (System.Security.Claims.ClaimsPrincipal principal, [Microsoft.AspNetCore.Mvc.FromQuery] string? status, [Microsoft.AspNetCore.Mvc.FromQuery] Guid? ownerId, [Microsoft.AspNetCore.Mvc.FromQuery] Guid? spaceId, [Microsoft.AspNetCore.Mvc.FromQuery] Guid? folderId, [Microsoft.AspNetCore.Mvc.FromQuery] string? filter, BuildingBlocks.Application.Abstractions.IAlcanceDeVista alcances, IMediator mediator, [Microsoft.AspNetCore.Mvc.FromQuery] int page = 1, [Microsoft.AspNetCore.Mvc.FromQuery] int pageSize = 25, [Microsoft.AspNetCore.Mvc.FromQuery] string? search = null) =>
     {
       var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
       var userId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var _uid) ? _uid : Guid.Empty;
-      var result = await mediator.Send(new GetProjectsQuery(tenantId, status, ownerId, spaceId, folderId, filter, userId, new() { Page = page, PageSize = pageSize }));
+      // El resolutor decide en un solo sitio qué hace falta consultar para el filtro pedido.
+      var alcance = await alcances.ResolverAsync(filter, userId, BuildingBlocks.Domain.TiposDeEntidad.Proyecto);
+
+      var result = await mediator.Send(new GetProjectsQuery(tenantId, status, ownerId, spaceId, folderId, alcance, new() { Page = page, PageSize = pageSize, Buscar = search }));
       return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
     });
 
@@ -38,9 +50,27 @@ public static class ProjectsEndpoints
       return result.Value is null ? Results.NotFound() : Results.Ok(result.Value);
     });
 
-    group.MapPost("", async (CreateProjectCommand command, IMediator mediator) =>
+    // El tenant y el dueño salen del token, nunca del cuerpo.
+    //
+    // Antes esto era `mediator.Send(command)` con el comando enlazado tal cual del JSON, y el
+    // comando lleva `TenantId` y `OwnerId` dentro. Dos consecuencias, una peor que la otra:
+    //
+    //  - Quien no los mandaba creaba el proyecto con `Guid.Empty`, así que el filtro global de
+    //    inquilino no volvía a verlo nunca. El alta respondía 201 y el proyecto era invisible
+    //    en la lista inmediatamente después. De ahí que el dashboard contara siempre cero.
+    //  - Quien sí los mandaba **elegía en qué organización escribir**. Cualquier usuario
+    //    autenticado podía plantar datos en el inquilino de otro poniendo un Guid en el JSON.
+    //
+    // `IUserContext` es la abstracción que ya existía para esto, y busca el claim sin distinguir
+    // mayúsculas: no se repite aquí el parseo a mano que en su día dejó el tenant vacío.
+    group.MapPost("", async (CreateProjectCommand command, IUserContext usuario, IMediator mediator) =>
     {
-      var result = await mediator.Send(command);
+      var result = await mediator.Send(command with
+      {
+        TenantId = usuario.TenantId,
+        OwnerId = usuario.UserId,
+      });
+
       return result.IsSuccess
               ? Results.Created($"/api/v1/projects/{result.Value!.Id}", result.Value)
               : Results.BadRequest(result.Error);
@@ -57,9 +87,30 @@ public static class ProjectsEndpoints
     group.MapDelete("/{id:guid}", async (System.Security.Claims.ClaimsPrincipal principal, Guid id, IMediator mediator) =>
     {
       var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
-      var result = await mediator.Send(new DeleteProjectCommand(tenantId, id, tenantId));
+      var actorId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var _uid) ? _uid : Guid.Empty;
+
+      // Quien borra es la persona, no el inquilino. Aquí iba el TenantId en el hueco de
+      // «DeletedBy», así que el registro de quién borró un proyecto decía el nombre de la
+      // empresa en todas las filas.
+      var result = await mediator.Send(new DeleteProjectCommand(tenantId, id, actorId));
       return result.IsSuccess ? Results.NoContent() : Results.NotFound(result.Error);
     });
+
+    // Archivar, desarchivar y restaurar de la papelera. En una tabla y no en tres bloques
+    // copiados: son idénticos salvo el verbo.
+    foreach (var (ruta, accion) in AccionesDeArchivo)
+    {
+      group.MapPost("/{id:guid}/" + ruta, async (System.Security.Claims.ClaimsPrincipal principal, Guid id, IMediator mediator) =>
+      {
+        var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
+        var actorId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var _uid) ? _uid : Guid.Empty;
+
+        var result = await mediator.Send(
+            new Projects.Application.CambiarArchivoDeProyectoCommand(tenantId, id, actorId, accion));
+
+        return result.IsSuccess ? Results.NoContent() : Results.NotFound(result.Error);
+      });
+    }
 
     var spacesGroup = app.MapGroup("/api/v1/spaces").WithTags("Spaces").RequireAuthorization();
 
@@ -70,16 +121,17 @@ public static class ProjectsEndpoints
       return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
     });
 
-    spacesGroup.MapPost("", async (CreateSpaceCommand command, IMediator mediator) =>
+    spacesGroup.MapPost("", async (CreateSpaceCommand command, IUserContext usuario, IMediator mediator) =>
     {
-      var result = await mediator.Send(command);
+      var result = await mediator.Send(command with { TenantId = usuario.TenantId });
       return result.IsSuccess ? Results.Created($"/api/v1/spaces/{result.Value!.Id}", result.Value) : Results.BadRequest(result.Error);
     });
 
-    spacesGroup.MapPatch("/{id:guid}", async (Guid id, UpdateSpaceCommand command, IMediator mediator) =>
+    // El identificador va en la ruta y el inquilino en el token: del cuerpo no se acepta
+    // ninguno de los dos. Si no, se podría renombrar el espacio de otra organización.
+    spacesGroup.MapPatch("/{id:guid}", async (Guid id, UpdateSpaceCommand command, IUserContext usuario, IMediator mediator) =>
     {
-      var actualCommand = command with { SpaceId = id };
-      var result = await mediator.Send(actualCommand);
+      var result = await mediator.Send(command with { SpaceId = id, TenantId = usuario.TenantId });
       return result.IsSuccess ? Results.Ok() : Results.NotFound(result.Error);
     });
 
@@ -92,9 +144,9 @@ public static class ProjectsEndpoints
       return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
     });
 
-    foldersGroup.MapPost("", async (CreateFolderCommand command, IMediator mediator) =>
+    foldersGroup.MapPost("", async (CreateFolderCommand command, IUserContext usuario, IMediator mediator) =>
     {
-      var result = await mediator.Send(command);
+      var result = await mediator.Send(command with { TenantId = usuario.TenantId });
       return result.IsSuccess ? Results.Created($"/api/v1/folders/{result.Value!.Id}", result.Value) : Results.BadRequest(result.Error);
     });
 

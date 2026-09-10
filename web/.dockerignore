@@ -1,0 +1,32 @@
+# Qué NO entra en el contexto de construcción de la imagen del frontend.
+#
+# `node_modules` es lo importante de esta lista. Sin ella, `COPY . .` metía en la imagen el
+# árbol de dependencias instalado en el anfitrión —con los binarios nativos de Windows de
+# esbuild y rollup— pisando el que `npm ci` acababa de instalar para Linux. El resultado es
+# un fallo de compilación que habla de un módulo nativo y no de la causa. Es primo del
+# problema del lockfile que ya vigila el CI.
+
+node_modules/
+dist/
+.angular/
+coverage/
+
+# Resultados de las pruebas de extremo a extremo
+playwright-report/
+test-results/
+blob-report/
+playwright/.cache/
+
+.git/
+.github/
+.vscode/
+.idea/
+**/.DS_Store
+
+.env
+.env.*
+!.env.example
+
+Dockerfile
+.dockerignore
+*.md

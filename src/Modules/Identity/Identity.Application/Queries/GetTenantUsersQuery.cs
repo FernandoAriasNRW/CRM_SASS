@@ -5,4 +5,7 @@ using System.Collections.Generic;
 
 namespace Identity.Application.Queries;
 
-public sealed record GetTenantUsersQuery(Guid TenantId) : IQuery<IReadOnlyList<UserDto>>;
+/// <param name="Buscar">Texto a buscar en el nombre y el correo, o nulo para traerlos todos.</param>
+/// <param name="Tope">Cuántas devolver como mucho, o nulo para no recortar.</param>
+public sealed record GetTenantUsersQuery(Guid TenantId, string? Buscar = null, int? Tope = null)
+    : IQuery<IReadOnlyList<UserDto>>;

@@ -25,21 +25,17 @@ import { UsersService, type TenantUser } from '../../core/users.service';
 import { ClickableDirective } from '../../shared/directives/clickable.directive';
 import { CustomFieldsFormComponent } from '../../shared/ui/custom-fields-form.component';
 import { ComentariosComponent } from '../../shared/ui/comentarios.component';
-
-const STATUSES = ['To Do', 'In Progress', 'In Review', 'Done'];
+import { MencionadoEnComponent } from '../../shared/ui/mencionado-en.component';
+import { ESTADOS_DE_TAREA, insigniaDelEstadoDeTarea, nombreDelEstadoDeTarea } from './vocabulario-de-tareas';
 
 /** Los dos estados entre los que alterna el check de una subtarea. Los define el backend. */
 const ESTADO_COMPLETADO = 'Done';
 const ESTADO_INICIAL = 'To Do';
 
-const STATUS_BADGE: Record<string, BadgeVariant> = {
-  'To Do': 'secondary', 'In Progress': 'default', 'In Review': 'warning', 'Done': 'success'
-};
-
 @Component({
   selector: 'app-task-detail-panel',
   standalone: true,
-  imports: [ClickableDirective, FormsModule, DatePipe, BadgeComponent, AvatarComponent, NgIconComponent, SkeletonComponent, DrawerComponent, CustomFieldsFormComponent, ComentariosComponent],
+  imports: [MencionadoEnComponent, ClickableDirective, FormsModule, DatePipe, BadgeComponent, AvatarComponent, NgIconComponent, SkeletonComponent, DrawerComponent, CustomFieldsFormComponent, ComentariosComponent],
   viewProviders: [provideIcons({
     lucideX, lucideCheck, lucideCalendar, lucideClock, lucideUser,
     lucideTag, lucideFlag, lucideMessageSquare, lucidePaperclip,
@@ -94,14 +90,16 @@ export class TaskDetailPanelComponent implements OnInit {
   activeTab = signal<'comments' | 'activity'>('comments');
 
   readonly priorities = PRIORIDADES;
-  readonly statuses = STATUSES;
+  readonly statuses = ESTADOS_DE_TAREA;
   readonly availableTags = TASK_TAGS;
 
   readonly currentPriority = computed(() =>
     PRIORIDADES.find(p => p.key === this.priority) ?? PRIORIDADES[2]
   );
 
-  statusBadge(s: string): BadgeVariant { return STATUS_BADGE[s] ?? 'outline'; }
+  statusBadge(s: string): BadgeVariant { return insigniaDelEstadoDeTarea(s); }
+
+  readonly nombreDelEstado = nombreDelEstadoDeTarea;
 
   ngOnInit(): void {
     const t = this.task();
@@ -553,7 +551,7 @@ export class TaskDetailPanelComponent implements OnInit {
     this.api.post(`/tasks/${this.task().id}/move`, { newStatus }).subscribe({
       next: () => {
         this.updated.emit({ ...this.task(), status: newStatus });
-        this.toast.success('Estado actualizado', `La tarea ahora está en ${newStatus}`);
+        this.toast.success($localize`Estado actualizado`, `La tarea ahora está en ${newStatus}`);
       },
       error: () => {
         this.toast.error('Error', 'No se pudo cambiar el estado');

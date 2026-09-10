@@ -61,7 +61,7 @@ import { CommandPaletteService, type Command } from './command-palette.service';
 
           <div id="paleta-opciones" role="listbox" aria-label="Resultados"
                class="max-h-[22rem] overflow-y-auto p-2">
-            @for (grupo of svc.agrupados(); track grupo.nombre) {
+            @for (grupo of svc.agrupados(); track grupo.clave) {
               <div class="px-2 pb-1 pt-3 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground"
                    aria-hidden="true">{{ grupo.nombre }}</div>
               @for (cmd of grupo.comandos; track cmd.id) {

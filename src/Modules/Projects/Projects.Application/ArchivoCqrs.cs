@@ -1,0 +1,53 @@
+using BuildingBlocks.Application;
+using BuildingBlocks.Application.Abstractions;
+using BuildingBlocks.Domain;
+using Projects.Application.Abstractions;
+using Projects.Application.Abstractions.Repositories;
+
+namespace Projects.Application;
+
+/// <summary>
+/// Archivar y desarchivar un proyecto, y sacarlo de la papelera.
+///
+/// La papelera del proyecto ya existía —<c>Delete</c> y <c>Restore</c> en el agregado, con su
+/// evento de dominio— así que aquí no se duplica: enviar a la papelera sigue siendo
+/// <c>DeleteProjectCommand</c>. Lo que faltaba era el archivo, y una forma de restaurar desde
+/// la pantalla de la papelera.
+/// </summary>
+public sealed record CambiarArchivoDeProyectoCommand(
+    Guid TenantId,
+    Guid Id,
+    Guid ActorId,
+    AccionDeArchivo Accion) : ICommand<bool>;
+
+public sealed class CambiarArchivoDeProyectoHandler(
+    IProjectRepository repository,
+    IProjectsUnitOfWork unitOfWork) : ICommandHandler<CambiarArchivoDeProyectoCommand, bool>
+{
+    public async Task<Result<bool>> Handle(CambiarArchivoDeProyectoCommand request, CancellationToken ct)
+    {
+        var proyecto = await repository.GetByIdAsync(request.TenantId, request.Id, includeDeleted: true, ct);
+        if (proyecto is null)
+            return Result<bool>.Failure("Proyecto no encontrado");
+
+        try
+        {
+            switch (request.Accion)
+            {
+                case AccionDeArchivo.Archivar: proyecto.Archivar(); break;
+                case AccionDeArchivo.Desarchivar: proyecto.Desarchivar(); break;
+
+                // El agregado lanza si ya está borrado o si no lo está. Se traduce a un fallo
+                // con mensaje en vez de dejar salir la excepción: pulsar dos veces «restaurar»
+                // no es un error del programa, es una pantalla con datos de hace un segundo.
+                case AccionDeArchivo.EnviarAPapelera: proyecto.Delete(request.ActorId); break;
+                case AccionDeArchivo.RestaurarDePapelera: proyecto.Restore(); break;
+            }
+        }
+        catch (InvalidOperationException ex) { return Result<bool>.Failure(ex.Message); }
+
+        await repository.UpdateAsync(proyecto, ct);
+        await unitOfWork.SaveChangesAsync(ct);
+        return Result<bool>.Success(true);
+    }
+}

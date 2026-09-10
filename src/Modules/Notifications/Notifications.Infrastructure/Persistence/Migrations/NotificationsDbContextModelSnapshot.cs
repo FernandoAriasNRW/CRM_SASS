@@ -78,6 +78,66 @@ namespace Notifications.Infrastructure.Persistence.Migrations
 
                     b.ToTable("Notifications");
                 });
+
+            modelBuilder.Entity("Notifications.Domain.Entities.PreferenciasDeNotificacion", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<bool>("EmailEnabled")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("ExportacionLista")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("MentionEnabled")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("ProjectUpdated")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("PushEnabled")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("QuietHoursEnabled")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<TimeOnly>("QuietHoursEnd")
+                        .HasColumnType("time");
+
+                    b.Property<TimeOnly>("QuietHoursStart")
+                        .HasColumnType("time");
+
+                    b.Property<bool>("TaskAssigned")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("TaskCompleted")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("TaskDueSoon")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<bool>("TicketCreated")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("TicketUpdated")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("char(36)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId", "UserId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_NotificationPreferences_Tenant_User");
+
+                    b.ToTable("NotificationPreferences", (string)null);
+                });
 #pragma warning restore 612, 618
         }
     }

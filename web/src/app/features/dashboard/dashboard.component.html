@@ -53,40 +53,90 @@
     }
   </div>
 
-  <!-- Charts Grid -->
-  <div class="grid gap-6 lg:grid-cols-2">
-    <!-- Task Distribution Chart -->
+  <!--
+    La rejilla del panel: un recuadro por widget, colocado donde su dueño lo dejó.
+
+    Aquí había tres gráficas fijas —distribución de tareas, progreso de proyectos y burndown— que
+    no se podían quitar ni cambiar, y al lado un gestor de paneles donde se podían crear y nombrar
+    paneles que **al pulsarlos no hacían nada**: la selección se guardaba en una señal que no
+    pintaba nada y la columna de widgets no la leía nadie.
+
+    Ahora cada recuadro es **un informe**: se abre en el constructor y se ajusta, o se quita.
+  -->
+  <div class="flex items-center justify-between">
+    <h3 class="text-lg font-medium" i18n>Mis gráficas</h3>
+
+    @if (panel()) {
+      <button uiButton variant="outline" size="sm" (click)="recargarPanel()">
+        <ng-icon name="lucideActivity" size="14" class="mr-1.5" />
+        <span i18n>Actualizar</span>
+      </button>
+    }
+  </div>
+
+  @if (cargandoPanel()) {
+    <p class="text-sm text-muted-foreground" i18n>Preparando tu panel…</p>
+  } @else if (widgets().length === 0) {
     <ui-card>
-      <ui-card-header>
-        <div class="flex items-center justify-between">
-          <ui-card-title class="flex items-center gap-2">
-            <ng-icon name="lucidePieChart" size="18" class="text-muted-foreground" />
-            Distribución de Tareas
-          </ui-card-title>
-        </div>
-      </ui-card-header>
       <ui-card-content>
-        @if (doughnutData()) {
-          <div class="h-64">
-            <app-doughnut-chart [data]="doughnutData()!" />
-          </div>
-        } @else {
-          <div class="h-64 flex items-center justify-center text-muted-foreground">
-            <p i18n>Sin datos de tareas</p>
-          </div>
-        }
+        <p class="py-8 text-center text-sm text-muted-foreground" i18n>
+          Tu panel está vacío. Añade informes desde la pantalla de Reportes.
+        </p>
       </ui-card-content>
     </ui-card>
+  } @else {
+    <!-- Doce columnas, que es la rejilla que valida el servidor. -->
+    <div class="grid grid-cols-12 gap-4 auto-rows-[5rem]">
+      @for (w of widgets(); track w.widgetId) {
+        <div [style.grid-column]="columnaDe(w)" [style.grid-row]="filaDe(w)">
+          <ui-card class="h-full flex flex-col">
+            <ui-card-header>
+              <div class="flex items-start justify-between gap-2">
+                <div class="min-w-0">
+                  <ui-card-title class="text-sm truncate">{{ w.titulo }}</ui-card-title>
+                  @if (w.subtitulo) {
+                    <p class="text-[11px] text-muted-foreground truncate" [title]="w.subtitulo">
+                      {{ w.subtitulo }}
+                    </p>
+                  }
+                </div>
 
-    <!-- Project Progress -->
+                <button type="button"
+                        class="text-muted-foreground hover:text-destructive text-xs px-1 shrink-0"
+                        (click)="quitarWidget(w.widgetId)"
+                        i18n-aria-label aria-label="Quitar del panel">✕</button>
+              </div>
+            </ui-card-header>
+
+            <ui-card-content class="flex-1 min-h-0">
+              <app-grafica-de-informe [datos]="w" class="block h-full" />
+            </ui-card-content>
+          </ui-card>
+        </div>
+      }
+    </div>
+  }
+  <!--
+    Estas dos siguen fijas **porque el motor de informes todavía no las sabe expresar**, y quitarlas
+    para dejar la rejilla más limpia habría sido perder funcionalidad que sí funciona:
+
+     - El avance por proyecto necesita un porcentaje de completado por proyecto, y el catálogo sólo
+       ofrece contar, sumar y promediar.
+     - El burndown necesita dos series a la vez —lo que queda y lo ideal— y el catálogo ofrece una.
+
+    La tarta de distribución de tareas que había aquí sí se ha quitado: eso es «tareas por estado,
+    en tarta», que es exactamente uno de los recuadros de partida. Tenerla dos veces sería enseñar
+    lo mismo en dos sitios y que un día discreparan.
+
+    Cuando el catálogo crezca, estas dos se convierten en widgets y esta sección desaparece.
+  -->
+  <div class="grid gap-6 lg:grid-cols-2">
     <ui-card>
       <ui-card-header>
-        <div class="flex items-center justify-between">
-          <ui-card-title class="flex items-center gap-2">
-            <ng-icon name="lucideBarChart3" size="18" class="text-muted-foreground" />
-            Progreso de Proyectos
-          </ui-card-title>
-        </div>
+        <ui-card-title class="flex items-center gap-2">
+          <ng-icon name="lucideBarChart3" size="18" class="text-muted-foreground" />
+          <span i18n>Progreso de Proyectos</span>
+        </ui-card-title>
       </ui-card-header>
       <ui-card-content>
         <div class="space-y-4 max-h-64 overflow-y-auto">
@@ -103,40 +153,40 @@
         </div>
       </ui-card-content>
     </ui-card>
+
+    <ui-card>
+      <ui-card-header>
+        <div class="flex items-center justify-between">
+          <ui-card-title class="flex items-center gap-2">
+            <ng-icon name="lucideActivity" size="18" class="text-muted-foreground" />
+            <span i18n>Burndown del Proyecto</span>
+          </ui-card-title>
+          @if (projectProgress().length > 0) {
+            <select
+              class="h-8 px-3 text-sm rounded-md border border-input bg-background"
+              [value]="selectedProjectId()"
+              (change)="selectProject(($any($event.target)).value)">
+              @for (project of projectProgress(); track project.id) {
+                <option [value]="project.id">{{ project.name }}</option>
+              }
+            </select>
+          }
+        </div>
+      </ui-card-header>
+      <ui-card-content>
+        @if (burndownData().length > 0) {
+          <div class="h-64">
+            <app-line-chart [data]="burndownData()" />
+          </div>
+        } @else {
+          <div class="h-64 flex items-center justify-center text-muted-foreground">
+            <p i18n>Selecciona un proyecto para ver el burndown</p>
+          </div>
+        }
+      </ui-card-content>
+    </ui-card>
   </div>
 
-  <!-- Burndown Chart -->
-  <ui-card>
-    <ui-card-header>
-      <div class="flex items-center justify-between">
-        <ui-card-title class="flex items-center gap-2">
-          <ng-icon name="lucideActivity" size="18" class="text-muted-foreground" />
-          Burndown del Proyecto
-        </ui-card-title>
-        @if (projectProgress().length > 0) {
-          <select
-            class="h-8 px-3 text-sm rounded-md border border-input bg-background"
-            [value]="selectedProjectId()"
-            (change)="selectProject(($any($event.target)).value)">
-            @for (project of projectProgress(); track project.id) {
-              <option [value]="project.id">{{ project.name }}</option>
-            }
-          </select>
-        }
-      </div>
-    </ui-card-header>
-    <ui-card-content>
-      @if (burndownData().length > 0) {
-        <div class="h-72">
-          <app-line-chart [data]="burndownData()" />
-        </div>
-      } @else {
-        <div class="h-72 flex items-center justify-center text-muted-foreground">
-          <p i18n>Selecciona un proyecto para ver el burndown</p>
-        </div>
-      }
-    </ui-card-content>
-  </ui-card>
   } @else {
     <!-- Custom Dashboards List -->
     <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -150,7 +200,7 @@
               </div>
             </div>
             <p class="text-sm text-muted-foreground mb-4">
-              Creado el {{ dashboard.createdById === authStore.userInfo()?.id ? 'Por ti' : 'Por otro usuario' }}
+              Creado el @if (dashboard.createdById === authStore.userInfo()?.id) { <span i18n>Por ti</span> } @else { <span i18n>Por otro usuario</span> }
             </p>
             <div class="flex items-center justify-between mt-4">
               <button uiButton variant="outline" size="sm" class="w-full">

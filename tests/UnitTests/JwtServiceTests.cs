@@ -214,7 +214,6 @@ public class JwtServiceTests
         Name: "Test User",
         Email: "test@example.com",
         Role: "Admin",
-        PasswordHash: null,
         IsActive: true,
         CreatedAt: DateTime.UtcNow
     );

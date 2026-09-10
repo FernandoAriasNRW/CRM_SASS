@@ -21,7 +21,7 @@
           </h2>
           @if (recentViewsStore.views().length > 5) {
             <button (click)="toggleRecents()" class="text-sm text-primary hover:underline font-medium">
-              {{ showAllRecents ? 'Ver menos' : 'Ver más' }}
+              @if (showAllRecents) { <span i18n>Ver menos</span> } @else { <span i18n>Ver más</span> }
             </button>
           }
         </div>
@@ -37,7 +37,7 @@
                       <div class="w-8 h-8 rounded bg-muted flex items-center justify-center group-hover:bg-primary/10 transition-colors">
                         <ng-icon [name]="view.icon" size="16" class="text-muted-foreground group-hover:text-primary transition-colors"></ng-icon>
                       </div>
-                      <span class="text-sm font-medium group-hover:text-primary transition-colors">{{ view.label }}</span>
+                      <span class="text-sm font-medium group-hover:text-primary transition-colors">{{ recentViewsStore.nombreDe(view) }}</span>
                     </div>
                   </a>
                 }

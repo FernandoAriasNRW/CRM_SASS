@@ -5,7 +5,22 @@ import { Subject } from 'rxjs';
 import { NavigationSignalStore } from './navigation-signal.store';
 
 export interface RecentView {
+  /**
+   * El identificador del módulo, del que se saca el nombre al pintarlo.
+   *
+   * <b>Antes se guardaba el nombre ya escrito</b>, y como esto se persiste en el servidor, la
+   * palabra quedaba grabada en el idioma en que se visitó: entrabas una vez a «Proyectos» en
+   * español y la lista de recientes seguía diciendo «Proyectos» en la versión inglesa. Guardar
+   * texto de pantalla en la base congela el idioma del día en que se guardó.
+   */
+  id?: string;
+
+  /**
+   * El nombre. Se conserva para no perder lo ya guardado por quien tenga recientes de antes;
+   * cuando hay `id`, manda el `id`.
+   */
   label: string;
+
   route: string;
   icon: string;
   url: string; // The exact URL they visited
@@ -20,6 +35,18 @@ export class RecentViewsService {
   private readonly navStore = inject(NavigationSignalStore);
   
   readonly views = signal<RecentView[]>([]);
+
+  /**
+   * El nombre que se pinta.
+   *
+   * Sale del menú lateral, que es donde los nombres están traducidos. Si la entrada guardada es
+   * antigua y no tiene `id`, se cae al texto que se guardó: es lo único que hay, y enseñarlo en
+   * el idioma equivocado es mejor que dejar el hueco en blanco.
+   */
+  nombreDe(vista: RecentView): string {
+    const item = vista.id ? this.navStore.allItems().find(i => i.id === vista.id) : undefined;
+    return item?.label ?? vista.label;
+  }
   private readonly saveSubject = new Subject<RecentView[]>();
   private initialized = false;
 
@@ -67,6 +94,7 @@ export class RecentViewsService {
       
       if (item) {
         const newView: RecentView = {
+          id: item.id,
           label: item.label,
           route: item.route,
           icon: item.icon,

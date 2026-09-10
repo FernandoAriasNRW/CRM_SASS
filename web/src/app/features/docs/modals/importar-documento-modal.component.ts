@@ -30,7 +30,7 @@ const TIPO_DOCUMENTO = 1;
             <div class="w-8 h-8 rounded-lg bg-primary-subtle text-primary-subtle-fg flex items-center justify-center">
               <ng-icon name="lucideUpload" class="w-4 h-4" aria-hidden="true" />
             </div>
-            <h3 id="titulo-importar" class="text-base font-bold text-foreground" i18n>Import Document</h3>
+            <h3 id="titulo-importar" class="text-base font-bold text-foreground" i18n>Importar documento</h3>
           </div>
           <button type="button" (click)="cerrar.emit()"
                   i18n-aria-label aria-label="Cerrar"
@@ -53,9 +53,9 @@ const TIPO_DOCUMENTO = 1;
           </div>
 
           <div>
-            <label for="importar-titulo" class="block text-xs font-medium text-muted-foreground mb-1" i18n>Document Title</label>
+            <label for="importar-titulo" class="block text-xs font-medium text-muted-foreground mb-1" i18n>Título del documento</label>
             <input id="importar-titulo" type="text" [(ngModel)]="titulo"
-                   i18n-placeholder placeholder="Document title..."
+                   i18n-placeholder placeholder="Título del documento…"
                    class="w-full px-3 py-2 text-sm bg-muted border border-border rounded-lg
                           focus:outline-none focus:ring-2 focus:ring-ring" />
           </div>
@@ -65,7 +65,7 @@ const TIPO_DOCUMENTO = 1;
               Content Preview / Paste Text
             </label>
             <textarea id="importar-contenido" rows="5" [(ngModel)]="contenido"
-                      i18n-placeholder placeholder="Paste raw Markdown, HTML, or plain text here..."
+                      i18n-placeholder placeholder="Pega aquí Markdown, HTML o texto sin formato…"
                       class="w-full px-3 py-2 text-xs font-mono bg-muted border border-border rounded-lg
                              focus:outline-none focus:ring-2 focus:ring-ring"></textarea>
           </div>
@@ -79,13 +79,13 @@ const TIPO_DOCUMENTO = 1;
           <button type="button" (click)="cerrar.emit()"
                   class="px-4 py-2 text-xs font-medium text-muted-foreground hover:bg-muted rounded-lg
                          focus:outline-none focus:ring-2 focus:ring-ring" i18n>
-            Cancel
+            Cancelar
           </button>
           <button type="button" (click)="importar()" [disabled]="importando()"
                   class="px-4 py-2 text-xs font-medium text-primary-foreground bg-primary rounded-lg shadow-sm
                          hover:bg-primary/90 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-ring">
-            @if (importando()) { <ng-container i18n>Saving...</ng-container> }
-            @else { <ng-container i18n>Import Now</ng-container> }
+            @if (importando()) { <ng-container i18n>Guardando…</ng-container> }
+            @else { <ng-container i18n>Importar</ng-container> }
           </button>
         </div>
       </div>

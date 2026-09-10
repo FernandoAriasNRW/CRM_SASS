@@ -1,4 +1,4 @@
-import { Component, HostListener, OnInit, inject } from '@angular/core';
+import { Component, HostListener, OnInit, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet, NavigationEnd } from '@angular/router';
 import { filter, map } from 'rxjs/operators';
@@ -13,12 +13,13 @@ import { ToastService } from './shared/services/toast.service';
 import { UserAvatarComponent } from './shared/ui/user-avatar.component';
 import { SidebarCustomizerComponent } from './shared/ui/sidebar-customizer.component';
 import { SubmenuCustomizerComponent } from './shared/ui/submenu-customizer.component';
+import { PanelDeNavegacionComponent } from './shared/ui/panel-de-navegacion/panel-de-navegacion.component';
 import {
   lucideLayoutDashboard, lucideFolderKanban, lucideCheckSquare,
   lucideTicket, lucideLogOut, lucideMenu, lucideX,
   lucideMessageSquare, lucideCalendar, lucideBarChart2, lucideUser, lucideSettings,
   lucideWebhook, lucideChevronDown, lucideChevronRight, lucideFileText,
-  lucideUsers, lucideHome, lucideMoreHorizontal, lucideChartBar
+  lucideUsers, lucideHome, lucideMoreHorizontal, lucideChartBar, lucidePlus, lucideShieldCheck
 } from '@ng-icons/lucide';
 import { HierarchySignalStore } from './core/hierarchy-signal.store';
 import { NavigationSignalStore } from './core/navigation-signal.store';
@@ -41,13 +42,18 @@ import { CommandPaletteService } from './shared/ui/command-palette/command-palet
     SidebarCustomizerComponent,
     SubmenuCustomizerComponent,
     UpperCasePipe,
-    CommandPaletteComponent
+    CommandPaletteComponent, PanelDeNavegacionComponent
   ],
   viewProviders: [provideIcons({
     lucideLayoutDashboard, lucideFolderKanban, lucideCheckSquare,
     lucideTicket, lucideLogOut, lucideMenu, lucideX,
     lucideMessageSquare, lucideCalendar, lucideBarChart2, lucideUser, lucideSettings, lucideWebhook,
-    lucideChevronDown, lucideChevronRight, lucideFileText, lucideUsers, lucideHome, lucideMoreHorizontal, lucideChartBar
+    lucideChevronDown, lucideChevronRight, lucideFileText, lucideUsers, lucideHome, lucideMoreHorizontal, lucideChartBar,
+    lucideShieldCheck,
+    // `lucidePlus` lo usa el «+» de añadir al submenú. Faltaba, y `ng-icon` no falla cuando no
+    // encuentra un icono: sólo escribe un aviso en la consola y deja el hueco. Era el ruido que
+    // salía siete veces en cada carga.
+    lucidePlus
   })],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss',
@@ -80,6 +86,20 @@ export class AppComponent implements OnInit {
   readonly hierarchyStore = inject(HierarchySignalStore);
   readonly navStore = inject(NavigationSignalStore);
 
+  /**
+   * La URL actual, cruda.
+   *
+   * Hace falta aparte de `currentRouteName`, que devuelve la etiqueta traducida —«Tareas»— y no
+   * sirve para saber de qué módulo se trata.
+   */
+  readonly currentRouteUrl = toSignal(
+    this.router.events.pipe(
+      filter(e => e instanceof NavigationEnd),
+      map((e: any) => (e.urlAfterRedirects || e.url || '') as string)
+    ),
+    { initialValue: this.router.url }
+  );
+
   readonly currentRouteName = toSignal(
     this.router.events.pipe(
       filter(e => e instanceof NavigationEnd),
@@ -96,6 +116,107 @@ export class AppComponent implements OnInit {
     ),
     { initialValue: 'Dashboard' }
   );
+
+  // ── El panel de navegación del módulo ──────────────────────────────────────
+
+  /**
+   * Qué módulo se está señalando en la barra lateral, o nulo si ninguno.
+   *
+   * Se separa de la ruta para que asomar el panel de Tickets estando en Tareas enseñe el de
+   * Tickets. Al salir del ratón se vuelve a la ruta actual, que es lo que se espera ver.
+   */
+  private readonly moduloSenalado = signal<string | null>(null);
+
+  /** Si el ratón está encima del panel. Sin esto, al ir hacia él se cerraría por el camino. */
+  protected readonly raton = signal(false);
+
+  /**
+   * Qué paneles están anclados, <b>uno por módulo</b>.
+   *
+   * Antes era una sola bandera para todos, y eso hacía dos cosas mal: anclar en Tareas anclaba
+   * también en Documentos —donde a lo mejor estorba— y desanclar en uno lo desanclaba en todos.
+   * Cada módulo se usa de una manera; el de Documentos se quiere fijo y el de Tickets al vuelo.
+   *
+   * Arranca anclado para el módulo en el que se entra: un panel que empieza escondido en una
+   * pantalla nueva es un panel que nadie descubre.
+   */
+  private readonly anclados = signal<Record<string, boolean>>({});
+
+  /** El módulo de la ruta actual. Todos los del menú tienen panel. */
+  protected readonly moduloDeLaRuta = computed(() => {
+    const url = (this.currentRouteUrl() ?? '').split('?')[0];
+    const segmento = url.split('/')[1] ?? '';
+
+    // La raíz es Inicio, que en el menú se llama `home` y no tiene segmento.
+    if (!segmento) return 'home';
+
+    return this.navStore.allItems().some(i => i.id === segmento) ? segmento : null;
+  });
+
+  /**
+   * El módulo cuyo panel se pinta: el señalado con el ratón, y si no, el de la pantalla.
+   *
+   * Se prefiere el señalado porque es una intención explícita —alguien acaba de llevar el ratón
+   * ahí— mientras que la ruta es sólo dónde se está.
+   */
+  protected readonly moduloDelPanel = computed(
+    () => this.moduloSenalado() ?? this.moduloDeLaRuta());
+
+  /** La entrada del menú del panel que se está enseñando, para su nombre y su ruta. */
+  protected readonly itemDelPanel = computed(() => {
+    const modulo = this.moduloDelPanel();
+    return modulo ? this.navStore.allItems().find(i => i.id === modulo) ?? null : null;
+  });
+
+  /** Si el panel del módulo que se está enseñando está anclado. */
+  protected readonly panelAnclado = computed(() => {
+    const modulo = this.moduloDelPanel();
+    return modulo ? this.anclados()[modulo] ?? true : false;
+  });
+
+  /**
+   * Si el panel se ve ahora mismo.
+   *
+   * <b>El anclaje que manda es el del módulo de la pantalla, no el del que se está asomando.</b>
+   * Es lo que hace que al cambiar de módulo el panel se quede o se recoja según cómo esté ese: si
+   * mandara el señalado, asomar uno anclado dejaría el panel abierto para siempre.
+   *
+   * Sin anclar, se ve mientras el ratón esté en la barra o en el propio panel. Lo segundo hace
+   * falta o el panel se cerraría al mover el ratón hacia él.
+   */
+  protected readonly panelVisible = computed(() => {
+    const deLaRuta = this.moduloDeLaRuta();
+    const ancladoAqui = deLaRuta ? this.anclados()[deLaRuta] ?? true : false;
+
+    return ancladoAqui || this.moduloSenalado() !== null || this.raton();
+  });
+
+  /**
+   * El panel empuja el contenido sólo cuando está anclado <b>en la pantalla actual</b>.
+   *
+   * Asomándose por encima no empuja: si lo hiciera, la página entera se movería cada vez que el
+   * ratón roza la barra lateral.
+   */
+  protected readonly panelEmpuja = computed(() => {
+    const deLaRuta = this.moduloDeLaRuta();
+    return !!deLaRuta && (this.anclados()[deLaRuta] ?? true);
+  });
+
+  protected alEntrarEnModulo(id: string): void {
+    this.moduloSenalado.set(id);
+  }
+
+  /** Al salir de la barra lateral, el panel vuelve a ser el de la pantalla en la que se está. */
+  protected alSalirDeLaBarra(): void {
+    this.moduloSenalado.set(null);
+  }
+
+  protected alternarAnclado(anclado: boolean): void {
+    const modulo = this.moduloDelPanel();
+    if (!modulo) return;
+
+    this.anclados.update(actuales => ({ ...actuales, [modulo]: anclado }));
+  }
 
   // Drawer state for sidebar customizer
   isCustomizerOpen = false;

@@ -156,7 +156,7 @@ export class AdminUsersComponent implements OnInit {
           this.loading.set(false);
         },
         error: () => {
-          this.error.set('Error al cargar usuarios');
+          this.error.set($localize`Error al cargar usuarios`);
           this.loading.set(false);
         }
       });
@@ -187,7 +187,7 @@ export class AdminUsersComponent implements OnInit {
 
   saveUser(): void {
     if (!this.formName || !this.formEmail) {
-      this.error.set('Nombre y email son requeridos');
+      this.error.set($localize`Nombre y email son requeridos`);
       return;
     }
     const isEditing = this.editingUser() !== null;
@@ -204,7 +204,7 @@ export class AdminUsersComponent implements OnInit {
       });
     } else {
       if (!this.formPassword || this.formPassword.length < 6) {
-        this.error.set('Contraseña debe tener al menos 6 caracteres');
+        this.error.set($localize`Contraseña debe tener al menos 6 caracteres`);
         return;
       }
       this.api.post<UserDto>('/users', {
@@ -223,7 +223,7 @@ export class AdminUsersComponent implements OnInit {
     if (!confirm('¿Estás seguro de eliminar este usuario?')) return;
     this.api.delete(`/users/${userId}`).subscribe({
       next: () => this.users.update(users => users.filter(u => u.id !== userId)),
-      error: () => this.error.set('Error al eliminar usuario')
+      error: () => this.error.set($localize`Error al eliminar usuario`)
     });
   }
 

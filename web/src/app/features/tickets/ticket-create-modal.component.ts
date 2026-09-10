@@ -5,6 +5,7 @@ import { ButtonComponent } from '../../shared/ui/button.component';
 import { InputComponent } from '../../shared/ui/input.component';
 import { LabelComponent } from '../../shared/ui/label.component';
 import { DrawerComponent } from '../../shared/ui/drawer.component';
+import { PRIORIDADES_DE_TICKET } from './vocabulario-de-tickets';
 
 export interface Ticket {
   id: string;
@@ -17,7 +18,14 @@ export interface Ticket {
   createdAt: string;
 }
 
-const PRIORITIES = ['Low', 'Medium', 'High', 'Urgent'];
+/**
+ * Las prioridades salen del vocabulario compartido.
+ *
+ * Aquí estaba escrito `['Low', 'Medium', 'High', 'Urgent']`, y **«Urgent» no existe** en el
+ * servidor —se llama «Critical»—. El comando lo recibía, no casaba con ningún valor y el ticket
+ * se creaba con la prioridad por defecto sin avisar de nada.
+ */
+const PRIORITIES = PRIORIDADES_DE_TICKET;
 
 @Component({
   selector: 'app-ticket-create-modal',
@@ -33,7 +41,7 @@ export class TicketCreateModalComponent {
 
   title = '';
   description = '';
-  priority = PRIORITIES[1];
+  priority = 'Medium';
 
   loading = signal(false);
   error = signal('');
@@ -42,7 +50,7 @@ export class TicketCreateModalComponent {
 
   submit(): void {
     if (!this.title.trim() || !this.description.trim()) {
-      this.error.set('Título y descripción son requeridos');
+      this.error.set($localize`Título y descripción son requeridos`);
       return;
     }
     this.loading.set(true);
@@ -51,7 +59,7 @@ export class TicketCreateModalComponent {
       title: this.title, description: this.description, priority: this.priority
     }).subscribe({
       next: ticket => { this.created.emit(ticket); this.closed.emit(); },
-      error: () => { this.error.set('Error al crear el ticket'); this.loading.set(false); },
+      error: () => { this.error.set($localize`Error al crear el ticket`); this.loading.set(false); },
     });
   }
 

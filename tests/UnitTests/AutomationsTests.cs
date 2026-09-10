@@ -271,4 +271,132 @@ public sealed class AutomationRuleTests
         accion.Should().Throw<InvalidOperationException>()
             .WithMessage(AutomationRule.Reglas.DemasiadasAcciones);
     }
+
+    #region Comparaciones numéricas y disparador por tiempo
+
+    // Todo esto llega con el disparador de vencimiento, que es el primero que trae un campo
+    // numérico. El comentario de Operador decía que las comparaciones numéricas se añadirían
+    // «cuando haya un campo numérico»; éstas comprueban que se añadieron bien.
+
+    [Theory]
+    [InlineData(Operador.MenorOIgual, "2", "2", true)]
+    [InlineData(Operador.MenorOIgual, "1", "2", true)]
+    [InlineData(Operador.MenorOIgual, "3", "2", false)]
+    [InlineData(Operador.MenorOIgual, "-5", "2", true)]     // vencida hace cinco días
+    [InlineData(Operador.MayorOIgual, "10", "10", true)]
+    [InlineData(Operador.MayorOIgual, "9", "10", false)]
+    public void Los_dias_para_vencer_se_comparan_como_numero(
+        string operador, string valorDelEvento, string esperado, bool cumple)
+    {
+        var condicion = new CondicionDeAutomatizacion(CampoDelEvento.DiasParaVencer, operador, esperado);
+
+        var datos = new Dictionary<string, string?> { [CampoDelEvento.DiasParaVencer] = valorDelEvento };
+
+        EvaluadorDeCondiciones.Cumple([condicion], datos).Should().Be(cumple);
+    }
+
+    /// <summary>
+    /// La razón de ser de la comparación numérica: sobre texto, «-1» sale mayor que «10» porque
+    /// se compara carácter a carácter, y una regla de «lleva más de diez días de retraso» no
+    /// saltaría nunca sin dar ningún error.
+    /// </summary>
+    [Fact]
+    public void Una_tarea_muy_vencida_no_cuenta_como_muy_adelantada()
+    {
+        var condicion = new CondicionDeAutomatizacion(
+            CampoDelEvento.DiasParaVencer, Operador.MayorOIgual, "10");
+
+        var datos = new Dictionary<string, string?> { [CampoDelEvento.DiasParaVencer] = "-30" };
+
+        EvaluadorDeCondiciones.Cumple([condicion], datos).Should().BeFalse(
+            "faltan menos treinta días, o sea que venció hace un mes: no es «diez o más»");
+    }
+
+    [Fact]
+    public void Un_operador_numerico_sobre_un_campo_de_texto_no_se_puede_guardar()
+    {
+        var accion = () => new CondicionDeAutomatizacion(
+            CampoDelEvento.Estado, Operador.MenorOIgual, "Done");
+
+        accion.Should().Throw<InvalidOperationException>()
+            .WithMessage(AutomationRule.Reglas.OperadorNumericoSobreTexto);
+    }
+
+    [Fact]
+    public void Un_campo_numerico_no_se_compara_con_texto()
+    {
+        var accion = () => new CondicionDeAutomatizacion(
+            CampoDelEvento.DiasParaVencer, Operador.Igual, "pronto");
+
+        accion.Should().Throw<InvalidOperationException>()
+            .WithMessage(AutomationRule.Reglas.ValorNoNumerico);
+    }
+
+    [Fact]
+    public void El_disparador_por_vencimiento_se_reconoce_como_de_tiempo()
+    {
+        TipoDeDisparador.EsPorTiempo(TipoDeDisparador.TareaPorVencer).Should().BeTrue();
+
+        TipoDeDisparador.EsPorTiempo(TipoDeDisparador.TareaCreada).Should().BeFalse(
+            "los de evento saltan una vez porque el evento ocurre una vez; no necesitan memoria");
+    }
+
+    [Fact]
+    public void Se_puede_configurar_avisar_al_responsable()
+    {
+        var regla = NuevaRegla(
+            disparador: TipoDeDisparador.TareaPorVencer,
+            acciones: [new AccionDeAutomatizacion(TipoDeAccion.Notificar, TipoDeAccion.DestinatarioResponsable)]);
+
+        regla.Acciones.Should().ContainSingle()
+            .Which.Valor.Should().Be(TipoDeAccion.DestinatarioResponsable);
+    }
+
+    #endregion
+
+    #region Registro de ejecuciones
+
+    [Theory]
+    [InlineData(ResultadoDeEjecucion.Aplicada)]
+    [InlineData(ResultadoDeEjecucion.NoCumplioCondiciones)]
+    [InlineData(ResultadoDeEjecucion.Fallida)]
+    public void Una_ejecucion_se_anota_con_su_resultado(string resultado)
+    {
+        var cuando = new DateTime(2026, 8, 14, 10, 30, 0, DateTimeKind.Utc);
+
+        var ejecucion = EjecucionDeAutomatizacion.Anotar(
+            Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), resultado, null, cuando);
+
+        ejecucion.Resultado.Should().Be(resultado);
+        ejecucion.CuandoUtc.Should().Be(cuando);
+        ejecucion.Dia.Should().Be(new DateOnly(2026, 8, 14),
+            "el día se guarda aparte para poder preguntar «¿ya se ejecutó hoy?» con una igualdad");
+    }
+
+    [Fact]
+    public void Un_resultado_inventado_no_se_admite()
+    {
+        var accion = () => EjecucionDeAutomatizacion.Anotar(
+            Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), "MasOMenos", null, DateTime.UtcNow);
+
+        accion.Should().Throw<InvalidOperationException>();
+    }
+
+    /// <summary>
+    /// Un mensaje de error puede traer un volcado entero. Se recorta para que una regla mal
+    /// configurada no llene la tabla con la misma pila de llamadas repetida cada hora.
+    /// </summary>
+    [Fact]
+    public void El_detalle_se_recorta_en_vez_de_crecer_sin_limite()
+    {
+        var larguisimo = new string('x', EjecucionDeAutomatizacion.LargoMaximoDelDetalle + 500);
+
+        var ejecucion = EjecucionDeAutomatizacion.Anotar(
+            Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(),
+            ResultadoDeEjecucion.Fallida, larguisimo, DateTime.UtcNow);
+
+        ejecucion.Detalle!.Length.Should().Be(EjecucionDeAutomatizacion.LargoMaximoDelDetalle);
+    }
+
+    #endregion
 }

@@ -9,6 +9,13 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.5" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
+    <!-- Sin este paquete, la opción de recolección "XPlat Code Coverage" no encuentra el
+         recopilador y no produce nada: el CI subía un artefacto de cobertura vacío y nadie
+         lo notó, porque dotnet test avisa por consola pero devuelve código 0. -->
+    <PackageReference Include="coverlet.collector" Version="6.0.2">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
     <PackageReference Include="xunit" Version="2.9.3" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2">
       <PrivateAssets>all</PrivateAssets>
@@ -31,6 +38,9 @@
     <!-- Comments -->
     <ProjectReference Include="..\..\src\Modules\Comments\Comments.Domain\Comments.Domain.csproj" />
 
+    <!-- Notifications -->
+    <ProjectReference Include="..\..\src\Modules\Notifications\Notifications.Domain\Notifications.Domain.csproj" />
+
     <!-- Identity -->
     <ProjectReference Include="..\..\src\Modules\Identity\Identity.Infrastructure\Identity.Infrastructure.csproj" />
     <ProjectReference Include="..\..\src\Modules\Identity\Identity.Application\Identity.Application.csproj" />
@@ -52,6 +62,10 @@
     <ProjectReference Include="..\..\src\Modules\WorkItems\WorkItems.Domain\WorkItems.Domain.csproj" />
 
     <!-- Ticketing -->
+    <ProjectReference Include="..\..\src\Modules\Reporting\Reporting.Infrastructure\Reporting.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Reporting\Reporting.Application\Reporting.Application.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Reporting\Reporting.Domain\Reporting.Domain.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Docs\Docs.Domain\Docs.Domain.csproj" />
     <ProjectReference Include="..\..\src\Modules\Ticketing\Ticketing.Infrastructure\Ticketing.Infrastructure.csproj" />
     <ProjectReference Include="..\..\src\Modules\Ticketing\Ticketing.Application\Ticketing.Application.csproj" />
     <ProjectReference Include="..\..\src\Modules\Ticketing\Ticketing.Domain\Ticketing.Domain.csproj" />

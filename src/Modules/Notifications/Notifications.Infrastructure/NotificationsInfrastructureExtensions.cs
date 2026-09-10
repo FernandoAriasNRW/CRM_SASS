@@ -30,6 +30,8 @@ public static class NotificationsInfrastructureExtensions
 
     services.AddScoped<INotificationRepository, EfNotificationRepository>();
     services.AddScoped<INotificationQueries, NotificationQueries>();
+    services.AddScoped<Notifications.Application.Preferencias.IRepositorioDePreferencias,
+                       Notifications.Infrastructure.Persistence.RepositorioDePreferencias>();
     return services;
   }
 }

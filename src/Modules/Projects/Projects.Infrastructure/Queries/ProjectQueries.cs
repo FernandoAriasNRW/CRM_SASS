@@ -1,3 +1,4 @@
+using BuildingBlocks.Application;
 using BuildingBlocks.Domain;
 using Microsoft.EntityFrameworkCore;
 using Projects.Application.Abstractions.Queries;
@@ -9,9 +10,17 @@ namespace Projects.Infrastructure.Queries;
 public sealed class ProjectQueries(ProjectsDbContext context) : IProjectQueries
 {
     public async Task<PagedResult<ProjectDto>> GetByTenantAsync(
-        Guid tenantId, string? status, Guid? ownerId, Guid? spaceId, Guid? folderId, string? filter, Guid? userId,
-        int page, int pageSize, CancellationToken ct = default)
+        Guid tenantId, string? status, Guid? ownerId, Guid? spaceId, Guid? folderId, AlcanceDeVista? alcance,
+        PaginationRequest pagination, CancellationToken ct = default)
     {
+        var vista = alcance ?? AlcanceDeVista.Ninguno;
+
+        // La papelera y el archivo quedan fuera de lo que el filtro global deja ver, así que hay
+        // que abrir el alcance antes de construir la consulta. El ámbito se cierra al terminar.
+        using var _ = context.VerTambien(
+            borrados: vista.Es(FiltrosDeVista.Papelera),
+            archivados: vista.Es(FiltrosDeVista.Archivados));
+
         var query = context.Projects.AsNoTracking().Where(p => p.TenantId == tenantId);
 
         if (!string.IsNullOrEmpty(status))
@@ -25,27 +34,62 @@ public sealed class ProjectQueries(ProjectsDbContext context) : IProjectQueries
             
         if (folderId.HasValue) query = query.Where(p => p.FolderId == folderId.Value);
 
-        if (!string.IsNullOrWhiteSpace(filter) && userId.HasValue)
+        var yo = vista.UsuarioId;
+
+        if (vista.Es(FiltrosDeVista.Mios) && yo.HasValue)
         {
-            if (filter.Equals("mine", StringComparison.OrdinalIgnoreCase))
-            {
-                query = query.Where(p => p.OwnerId == userId.Value);
-            }
-            else if (filter.Equals("team", StringComparison.OrdinalIgnoreCase))
-            {
-                query = query.Where(p => EF.Functions.JsonContains(p.TagIds, userId.Value.ToString()));
-            }
+            query = query.Where(p => p.OwnerId == yo.Value);
         }
+        else if (vista.Es(FiltrosDeVista.DeMiEquipo) && yo.HasValue)
+        {
+            query = query.Where(p => EF.Functions.JsonContains(p.TagIds, yo.Value.ToString()));
+        }
+        else if (vista.Es(FiltrosDeVista.CreadosPorMi) && yo.HasValue)
+        {
+            // Un proyecto no guarda quién lo creó, sólo quién lo posee. Se usa el dueño, que
+            // es lo más cercano y lo que la gente espera. Si algún día hace falta distinguir
+            // «lo abrí yo» de «lo llevo yo», hará falta una columna nueva: fingir la
+            // diferencia con el dueño daría dos entradas de menú con la misma lista.
+            query = query.Where(p => p.OwnerId == yo.Value);
+        }
+        else if (vista.Es(FiltrosDeVista.Favoritos))
+        {
+            var marcados = vista.Favoritos.ToArray();
+            query = query.Where(p => EF.Constant(marcados).Contains(p.Id));
+        }
+        else if (vista.Es(FiltrosDeVista.CompartidosConmigo))
+        {
+            var conmigo = vista.CompartidosConmigo.ToArray();
+            query = query.Where(p => EF.Constant(conmigo).Contains(p.Id));
+        }
+        else if (vista.Es(FiltrosDeVista.Privados) && yo.HasValue)
+        {
+            var compartidos = vista.CompartidosConAlguien.ToArray();
+            query = query.Where(p => p.OwnerId == yo.Value && !EF.Constant(compartidos).Contains(p.Id));
+        }
+        else if (vista.Es(FiltrosDeVista.Archivados))
+        {
+            query = query.Where(p => p.ArchivadoEnUtc != null);
+        }
+        else if (vista.Es(FiltrosDeVista.Papelera))
+        {
+            query = query.Where(p => p.IsDeleted);
+        }
+
+        // Búsqueda por texto, sobre **todos** los proyectos del inquilino. Ver la nota equivalente
+        // en TicketQueries.
+        if (pagination.TextoBuscado is { } texto)
+            query = query.Where(p => p.Name.Value.Contains(texto) || p.Description.Contains(texto));
 
         var totalCount = await query.CountAsync(ct);
         var items = await query
             .OrderByDescending(p => p.StartDate)
-            .Skip((page - 1) * pageSize).Take(pageSize)
+            .Skip(pagination.Skip).Take(pagination.Take)
             .Select(p => new ProjectDto(p.Id, p.TenantId, p.SpaceId, p.FolderId, p.Name.Value, p.Description,
                 p.StartDate, p.EstimatedEndDate, p.Status.Value, p.OwnerId))
             .ToListAsync(ct);
 
-        return PagedResult<ProjectDto>.Create(items, totalCount, page, pageSize);
+        return PagedResult<ProjectDto>.Create(items, totalCount, pagination.Page, pagination.PageSize);
     }
 
     public async Task<ProjectDto?> GetByIdAsync(Guid tenantId, Guid id, CancellationToken ct = default)

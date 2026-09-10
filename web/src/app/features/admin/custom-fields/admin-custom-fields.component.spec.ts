@@ -12,12 +12,12 @@ import { CustomFieldsService, type CustomFieldDefinition } from '../../../core/c
 describe('AdminCustomFieldsComponent', () => {
   const CLIENTE: CustomFieldDefinition = {
     id: 'def-1', nombre: 'Cliente facturable', tipo: 'Texto', entidadDestino: 'Tarea',
-    obligatorio: false, opciones: [], posicion: 2,
+    obligatorio: false, opciones: [], posicion: 2, formula: null
   };
 
   const CANAL: CustomFieldDefinition = {
     id: 'def-2', nombre: 'Canal', tipo: 'Seleccion', entidadDestino: 'Tarea',
-    obligatorio: true, opciones: ['Web', 'Teléfono'], posicion: 0,
+    obligatorio: true, opciones: ['Web', 'Teléfono'], posicion: 0, formula: null
   };
 
   let servicio: jasmine.SpyObj<CustomFieldsService>;
@@ -136,6 +136,9 @@ describe('AdminCustomFieldsComponent', () => {
       obligatorio: true,
       opciones: ['Web', 'Teléfono'],
       posicion: 3,
+      // Nula porque este campo es de selección: la fórmula sólo se manda en los calculados,
+      // y guardarla en los demás confundiría a quien leyera la definición después.
+      formula: null,
       tipo: 'Seleccion',
       entidadDestino: 'Tarea',
     });
@@ -184,7 +187,7 @@ describe('AdminCustomFieldsComponent', () => {
       nombre: 'Canal de entrada',
       obligatorio: true,
       opciones: ['Web', 'Teléfono'],
-      posicion: 0,
+      posicion: 0, formula: null
     });
   });
 

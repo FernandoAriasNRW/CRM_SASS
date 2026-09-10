@@ -29,6 +29,7 @@ public class CalendarEventConfiguration : IEntityTypeConfiguration<CalendarEvent
         builder.Property(e => e.OrganizerId).HasColumnName("organizer_id").IsRequired();
         builder.Property(e => e.ProjectId).HasColumnName("project_id");
         builder.Property(e => e.TaskId).HasColumnName("task_id");
+        builder.Property(e => e.TicketId).HasColumnName("ticket_id");
         builder.Property(e => e.Title).HasColumnName("title").HasMaxLength(100).IsRequired();
         builder.Property(e => e.Description).HasColumnName("description").HasMaxLength(2000);
         builder.Property(e => e.TypeValue).HasColumnName("type_value").IsRequired();
@@ -41,6 +42,11 @@ public class CalendarEventConfiguration : IEntityTypeConfiguration<CalendarEvent
         builder.Property(e => e.RecurrenceEndDate).HasColumnName("recurrence_end_date");
         builder.Property(e => e.CreatedAt).HasColumnName("created_at").IsRequired();
 
+        // Anulado: sigue en el calendario, tachado. Distinto de la papelera —ver la entidad—.
+        builder.Property(e => e.CanceladoEnUtc).HasColumnName("cancelado_en_utc");
+        builder.Property(e => e.CanceladoPor).HasColumnName("cancelado_por");
+        builder.Property(e => e.MotivoDeCancelacion).HasColumnName("motivo_de_cancelacion").HasMaxLength(500);
+
         // Soft Delete
         builder.Property(e => e.IsDeleted).HasColumnName("is_deleted").HasDefaultValue(false);
         builder.Property(e => e.DeletedAt).HasColumnName("deleted_at");
@@ -49,5 +55,9 @@ public class CalendarEventConfiguration : IEntityTypeConfiguration<CalendarEvent
         // Ignore de propiedades calculadas (Value Objects)
         builder.Ignore(e => e.Type);
         builder.Ignore(e => e.Recurrence);
+
+        // `EstaCancelado` se calcula de la fecha: guardarlo sería tener el mismo dato dos veces y
+        // poder discrepar consigo mismo.
+        builder.Ignore(e => e.EstaCancelado);
     }
 }

@@ -10,6 +10,8 @@ import { DataTableComponent, ColumnDef, TableState } from '../../shared/ui/data-
 import { AdvancedFiltersComponent, FilterField } from '../../shared/ui/data-table/advanced-filters.component';
 import { ViewsService, SavedView } from '../../shared/services/views.service';
 import { TableColumnService } from '../../shared/services/table-column.service';
+import { ExportacionesService } from './exportaciones.service';
+import { ConstructorDeInformesComponent } from './constructor-de-informes.component';
 
 interface ReportDto {
   id: string;
@@ -22,7 +24,7 @@ interface ReportDto {
 @Component({
   selector: 'app-reports',
   standalone: true,
-  imports: [BadgeComponent, ButtonComponent, NgIconComponent, ReportCreateModalComponent, DataTableComponent, AdvancedFiltersComponent],
+  imports: [ConstructorDeInformesComponent, BadgeComponent, ButtonComponent, NgIconComponent, ReportCreateModalComponent, DataTableComponent, AdvancedFiltersComponent],
   viewProviders: [provideIcons({ lucideRefreshCw, lucidePlus, lucideDownload, lucideFileText, lucideFilter, lucideSave })],
   templateUrl: './reports.component.html',
 })
@@ -30,6 +32,18 @@ export class ReportsComponent implements OnInit {
   private readonly api = inject(ApiService);
   private readonly viewsService = inject(ViewsService);
   private readonly columnService = inject(TableColumnService);
+  readonly exportaciones = inject(ExportacionesService);
+
+  /**
+   * Los formatos que se ofrecen. Salen del servidor —`ReportFormat`— y aquí se escriben una vez.
+   *
+   * Es la misma lección que dejó el desplegable de tipos de informe: ofrecía dos que el enum del
+   * servidor no conocía y pedirlos daba 400. `ContratoDeInformesTests` vigila esa unión.
+   */
+  readonly formatos = ['Pdf', 'Excel', 'Csv'] as const;
+
+  /** El informe que se está construyendo, o nulo si el constructor está cerrado. */
+  readonly enConstruccion = signal<ReportDto | null>(null);
 
   readonly reports = signal<ReportDto[]>([]);
   readonly loading = signal(false);
@@ -153,11 +167,27 @@ export class ReportsComponent implements OnInit {
   closeCreateModal(): void { this.showCreateModal.set(false); }
   onReportCreated(): void { this.load(); }
 
-  generateReport(id: string, format: string): void {
-    this.api.post(`/reports/${id}/generate`, {}).subscribe({
-      next: () => alert(`Reporte en formato ${format} generado.`),
-      error: () => alert('Error al generar el reporte.'),
-    });
+  /**
+   * Pide la exportación y la descarga cuando esté.
+   *
+   * Antes esto llamaba a `/generate` y avisaba con un `alert` de que el informe estaba
+   * «generado». No lo estaba: el servidor guardaba una URL construida a mano que no apuntaba a
+   * ningún fichero y que ningún endpoint servía. No había nada que descargar y la pantalla no
+   * ofrecía descargarlo, así que el engaño no llegaba a notarse.
+   */
+  exportar(id: string, formato: string): void {
+    // Sin `await` a propósito: quien pulsa recupera el control enseguida y el servicio se
+    // encarga de esperar y avisar. Es la primera condición del plan de exportación.
+    void this.exportaciones.exportar(id, formato);
+  }
+
+  abrirConstructor(informe: ReportDto): void { this.enConstruccion.set(informe); }
+  cerrarConstructor(): void { this.enConstruccion.set(null); }
+
+  /** Si este informe tiene una exportación en marcha, para desactivar el botón. */
+  estaExportando(id: string): boolean {
+    const estado = this.exportaciones.enMarcha()[id];
+    return estado === 'Pendiente' || estado === 'Generando';
   }
 
   getFormatBadge(format: string): BadgeVariant {

@@ -9,6 +9,7 @@ import { lucideLoader2, lucideTrash2, lucideEdit3, lucideX } from '@ng-icons/luc
 
 import { DrawerComponent } from '../../shared/ui/drawer.component';
 import { ComentariosComponent } from '../../shared/ui/comentarios.component';
+import { ESTADOS_DE_PROYECTO } from './vocabulario-de-proyectos';
 
 @Component({
   selector: 'app-project-detail-modal',
@@ -31,7 +32,7 @@ export class ProjectDetailModalComponent implements OnInit {
   deleting = signal(false);
   error = signal('');
 
-  readonly statuses = ['Planned', 'In Progress', 'On Hold', 'Done'];
+  readonly statuses = ESTADOS_DE_PROYECTO;
 
   private readonly api = inject(ApiService);
   private readonly store = inject(Store);
@@ -60,8 +61,8 @@ export class ProjectDetailModalComponent implements OnInit {
 
   saveEdit(): void {
     if (!this.editName.trim()) {
-      this.error.set('El nombre es requerido');
-      this.toast.warning('Campo requerido', 'El nombre del proyecto es obligatorio');
+      this.error.set($localize`El nombre es requerido`);
+      this.toast.warning($localize`Campo requerido`, 'El nombre del proyecto es obligatorio');
       return;
     }
     this.loading.set(true);
@@ -76,10 +77,10 @@ export class ProjectDetailModalComponent implements OnInit {
         this.store.dispatch(projectUpdated({ item: updated }));
         this.isEditing.set(false);
         this.loading.set(false);
-        this.toast.success('Proyecto actualizado', `"${updated.name}" se ha actualizado correctamente`);
+        this.toast.success($localize`Proyecto actualizado`, `"${updated.name}" se ha actualizado correctamente`);
       },
       error: () => {
-        this.error.set('Error al actualizar el proyecto');
+        this.error.set($localize`Error al actualizar el proyecto`);
         this.loading.set(false);
         this.toast.error('Error', 'No se pudo actualizar el proyecto');
       },
@@ -94,11 +95,11 @@ export class ProjectDetailModalComponent implements OnInit {
       next: () => {
         this.store.dispatch(projectDeleted({ id: this.project().id }));
         this.deleting.set(false);
-        this.toast.success('Proyecto eliminado', 'El proyecto ha sido eliminado correctamente');
+        this.toast.success($localize`Proyecto eliminado`, 'El proyecto ha sido eliminado correctamente');
         this.closed.emit();
       },
       error: () => {
-        this.error.set('Error al eliminar el proyecto');
+        this.error.set($localize`Error al eliminar el proyecto`);
         this.deleting.set(false);
         this.toast.error('Error', 'No se pudo eliminar el proyecto');
       },

@@ -5,7 +5,7 @@ using Ticketing.Domain.Events;
 
 namespace Ticketing.Domain.Entities;
 
-public sealed class Ticket : AggregateRoot, ITenantEntity
+public sealed class Ticket : AggregateRoot, ITenantEntity, ISoftDeletable, IArchivable
 {
     public Guid TenantId { get; private set; }
     public Guid CustomerId { get; private set; }
@@ -92,4 +92,53 @@ public sealed class Ticket : AggregateRoot, ITenantEntity
             TagIds.Remove(tagId);
         }
     }
+
+    #region Archivo y papelera
+
+    /// <summary>Cuándo se archivó, o <c>null</c> si está a la vista. Ver <see cref="IArchivable"/>.</summary>
+    public DateTime? ArchivadoEnUtc { get; private set; }
+
+    /// <summary>Si está en la papelera. El filtro global lo esconde salvo que se pida verlo.</summary>
+    public bool IsDeleted { get; private set; }
+
+    /// <summary>Cuándo se envió a la papelera, para poder vaciarla por antigüedad algún día.</summary>
+    public DateTime? BorradoEnUtc { get; private set; }
+
+    /// <summary>
+    /// Aparta el ticket de las listas sin borrarlo.
+    ///
+    /// Es idempotente: archivar dos veces no cambia la fecha original. Importa porque dos
+    /// pestañas abiertas pueden mandar la misma orden, y reescribir la fecha haría parecer
+    /// reciente algo archivado hace meses.
+    /// </summary>
+    public void Archivar()
+    {
+        if (ArchivadoEnUtc is not null) return;
+        ArchivadoEnUtc = DateTime.UtcNow;
+    }
+
+    /// <summary>Devuelve el ticket a las listas.</summary>
+    public void Desarchivar() => ArchivadoEnUtc = null;
+
+    /// <summary>
+    /// Manda el ticket a la papelera: deja de verse pero se puede recuperar.
+    ///
+    /// Archivar y borrar no se pisan. Un ticket archivado que se borra sigue archivado al
+    /// restaurarlo, que es lo que espera quien lo archivó.
+    /// </summary>
+    public void EnviarAPapelera()
+    {
+        if (IsDeleted) return;
+        IsDeleted = true;
+        BorradoEnUtc = DateTime.UtcNow;
+    }
+
+    /// <summary>Saca el ticket de la papelera y lo deja como estaba.</summary>
+    public void RestaurarDePapelera()
+    {
+        IsDeleted = false;
+        BorradoEnUtc = null;
+    }
+
+    #endregion
 }

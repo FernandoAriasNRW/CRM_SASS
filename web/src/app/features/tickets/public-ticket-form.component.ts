@@ -37,7 +37,7 @@ export class PublicTicketFormComponent {
 
   submit(): void {
     if (!this.title || !this.description) {
-      this.error.set('Título y descripción son requeridos');
+      this.error.set($localize`Título y descripción son requeridos`);
       return;
     }
     this.loading.set(true);
@@ -46,7 +46,7 @@ export class PublicTicketFormComponent {
       title: this.title, description: this.description, priority: this.priority
     }).subscribe({
       next: () => { this.success.set(true); this.loading.set(false); },
-      error: () => { this.error.set('Error al enviar el ticket. Intenta nuevamente.'); this.loading.set(false); },
+      error: () => { this.error.set($localize`Error al enviar el ticket. Intenta nuevamente.`); this.loading.set(false); },
     });
   }
 }

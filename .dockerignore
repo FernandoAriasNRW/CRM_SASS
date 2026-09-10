@@ -1,0 +1,49 @@
+# Qué NO entra en el contexto de construcción de la imagen de la API.
+#
+# No había ninguno, y el Dockerfile hace `COPY . .`: se enviaban al demonio de Docker el
+# repositorio entero, los `bin/` y `obj/` de sesenta y ocho proyectos, `web/node_modules` y
+# todo el historial de git. Además de tardar, es incorrecto: los `obj/` compilados en el
+# anfitrión llevan rutas absolutas de Windows dentro de `*.nuget.g.props`, y al reutilizarlos
+# dentro de un contenedor Linux la restauración puede resolver hacia carpetas que no existen.
+# El fallo aparece como un error de NuGet que no menciona la causa.
+
+# ── Salidas de compilación ────────────────────────────────────────────────────────────────
+**/bin/
+**/obj/
+**/out/
+artifacts/
+TestResults/
+**/*.trx
+
+# ── Frontend: no forma parte de la imagen de la API ───────────────────────────────────────
+web/
+
+# ── Control de versiones y herramientas ───────────────────────────────────────────────────
+.git/
+.github/
+.vs/
+.vscode/
+.idea/
+.claude/
+**/.DS_Store
+
+# ── Cobertura ─────────────────────────────────────────────────────────────────────────────
+coverage/
+**/*.coverage
+
+# ── Secretos: que no puedan colarse en una capa de la imagen ──────────────────────────────
+# Una capa es pública para quien tenga la imagen, y borrar el archivo en una capa posterior
+# no lo quita de la anterior.
+.env
+**/appsettings.Development.json
+**/appsettings.Local.json
+**/appsettings.*.local.json
+**/*.pfx
+**/*.key
+
+# ── Documentación y contenedores ──────────────────────────────────────────────────────────
+docs/
+*.md
+docker-compose*.yml
+**/Dockerfile
+.dockerignore

@@ -6,15 +6,21 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <!-- Sin referencias a otros módulos. Había seis —a Projects, WorkItems y Ticketing, con sus
+       capas de infraestructura incluidas— para que DashboardRepository pudiera consultar sus
+       DbContext directamente, lo que rompía de lleno la regla de aislamiento: un cambio en el
+       esquema de otro módulo llegaba hasta aquí sin pasar por ningún contrato.
+
+       Esas consultas viven ahora en ApiHost/Reporting/ConsultasDelPanel.cs. El host es donde el
+       proyecto compone lo que cruza módulos, igual que PuenteDeAutomatizaciones. Reporting
+       sigue declarando el contrato; sólo cambia quién lo implementa. -->
   <ItemGroup>
     <ProjectReference Include="..\Reporting.Application\Reporting.Application.csproj" />
     <ProjectReference Include="..\..\..\BuildingBlocks\BuildingBlocks.Infrastructure\BuildingBlocks.Infrastructure.csproj" />
-    <ProjectReference Include="..\..\Projects\Projects.Domain\Projects.Domain.csproj" />
-    <ProjectReference Include="..\..\Projects\Projects.Infrastructure\Projects.Infrastructure.csproj" />
-    <ProjectReference Include="..\..\WorkItems\WorkItems.Domain\WorkItems.Domain.csproj" />
-    <ProjectReference Include="..\..\WorkItems\WorkItems.Infrastructure\WorkItems.Infrastructure.csproj" />
-    <ProjectReference Include="..\..\Ticketing\Ticketing.Domain\Ticketing.Domain.csproj" />
-    <ProjectReference Include="..\..\Ticketing\Ticketing.Infrastructure\Ticketing.Infrastructure.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="ClosedXML" Version="0.104.2" />
+    <PackageReference Include="QuestPDF" Version="2024.12.3" />
   </ItemGroup>
 
 </Project>

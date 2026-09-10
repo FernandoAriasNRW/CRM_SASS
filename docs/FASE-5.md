@@ -13,7 +13,16 @@ copiar pantallas.
 
 ---
 
-## 5A — Un solo menú de navegación
+## 5A — Un solo menú de navegación  ✅ **hecho** (2026-09-04)
+
+> **Estado.** Los cuatro pasos del orden sugerido están construidos y verificados contra la API
+> levantada. Lo que queda es interfaz, no cimientos: no hay botones para archivar, borrar ni
+> compartir desde la pantalla —sólo desde la API—, y Docs conserva su panel propio. Está anotado
+> en `AUDITORIA.md` §10.
+>
+> Lo que sí se cumple, que era la condición de esta fase: **las ocho entradas del menú filtran de
+> verdad**. Comprobado en los tres módulos, con `/tickets?filter=mine` pasando de devolver 190 de
+> 190 a devolver 5.
 
 **El problema:** hoy hay dos menús que hacen lo mismo y no se parecen. El desplegable que sale
 al pasar el ratón por un icono del sidebar (`app.component.html`, `NavigationSignalStore`) y el
@@ -64,18 +73,49 @@ nuevos que atraviesan todos los módulos:
 **Sin eso, el menú tendría entradas que no filtran nada.** Es lo que hay que evitar: un menú que
 promete y devuelve la misma lista es peor que un menú corto.
 
-### Orden sugerido
+### Orden sugerido — y cómo quedó
 
-1. Componente `app-panel-de-navegacion` compartido, alimentado por un vocabulario por módulo,
-   con las entradas que **hoy sí** se pueden filtrar (ver todo, asignado a mí, creado por mí, y
-   las particulares que salen de datos existentes).
-2. Archivado y papelera, transversales, con su columna y su filtro por defecto.
-3. Visibilidad y compartición.
-4. Favoritos.
+1. ✅ Componente `app-panel-de-navegacion` compartido, en Tareas, Tickets y Proyectos. El
+   vocabulario vive en `vocabulario-del-menu.ts` y **sólo admite filtros que el servidor sabe
+   aplicar**. El filtro activo vive en la URL, así que una vista filtrada se comparte por enlace
+   y el botón de atrás funciona.
+2. ✅ Archivado y papelera. La decisión que importa: **van en el filtro global**
+   (`TenantQueryFilter`), no en un `Where` por consulta. El plan avisaba de que ésta era «la
+   parte que se rompe en silencio», y componerlo en el filtro global significa que **ninguna
+   consulta puede olvidarse**: para ver lo escondido hay que pedirlo con `VerTambien`, que no es
+   `IgnoreQueryFilters()` —eso apagaría también el aislamiento por inquilino—.
+3. ✅ Visibilidad y compartición, sobre la tabla `EntityPermissions` que ya existía. No se creó
+   una tabla nueva: dos tablas diciendo quién ve qué acabarían discrepando. «Privado» se calcula
+   restando lo compartido en lugar de guardar un campo, que sería una segunda fuente de verdad.
+4. ✅ Favoritos (hecho antes, en el commit `9f63a0d`).
+
+**Las entradas propias de cada módulo del cuadro de arriba —«Vencen esta semana», «Sin asignar»,
+«Vencidos de SLA», «En riesgo»— no están.** El servidor no las sabe filtrar todavía, y ponerlas
+sería justo lo que esta fase viene a quitar.
 
 ---
 
-## 5B — Editor tipo Notion
+## 5B — Editor tipo Notion  ◐ **parcial** (2026-09-07)
+
+> **Estado por punto**, sobre la lista de abajo:
+>
+> | | | |
+> |---|---|---|
+> | 1 | Menú `/` | ✅ Ya existía y funciona |
+> | 2 | Bloques arrastrables | ❌ **No hecho** |
+> | 3 | Menú flotante de selección | ✅ Ya existía |
+> | 4 | Barra lateral de esquema | ✅ Hecha |
+> | 5 | Comentarios en línea | ❌ **No hecho** |
+> | 6 | Menciones `@` y `#` | ✅ Hechas, **con la vuelta** |
+>
+> Se atacó primero el 6 porque es donde el plan sitúa el diferencial, y con él el 4, que es barato
+> y de valor inmediato. Quedan el 2 y el 5.
+>
+> **Lo que hace especial al 6 es la vuelta.** Escribir `#tarea` y que quede un enlace lo hace
+> cualquiera; que la tarea sepa qué documentos hablan de ella no se puede resolver leyendo el
+> documento —habría que abrir todos los del inquilino y buscar dentro—, así que las menciones se
+> guardan en su propia tabla, **derivadas del contenido al guardar**. Aceptar una lista del cliente
+> habría permitido que el documento dijera una cosa y el índice otra.
 
 **Lo que hay:** TipTap, y es la causa de casi todos los `any` de la deuda medida (§6).
 
@@ -93,9 +133,31 @@ promete y devuelve la misma lista es peor que un menú corto.
 
 TipTap tiene extensiones para 1, 2 y 3. Las 4, 5 y 6 son trabajo propio.
 
+> **Sobre el 2 y el 5, que quedan pendientes.** El arrastre de bloques necesita
+> `@tiptap/extension-drag-handle`, que es una dependencia más y un gesto que hay que probar en el
+> navegador con cuidado. Los comentarios en línea necesitan **anclar un comentario a un bloque**,
+> y el módulo `Comments` que ya existe comenta entidades enteras —tarea, ticket, proyecto—: haría
+> falta ampliarlo con el identificador del bloque y decidir qué pasa cuando ese bloque se borra.
+> Ninguno de los dos es difícil; los dos son más de lo que cabía aquí.
+
 ---
 
-## 5C — Dashboard
+## 5C — Dashboard  ✅ **hecho** (2026-09-07)
+
+> **Estado.** La rejilla se guarda por persona, cada recuadro es un informe, los datos de todos
+> llegan en una sola petición y las gráficas son ECharts con los módulos justos. Los seis
+> recuadros de partida enseñan datos reales el primer día; hay una prueba que lo comprueba y que
+> falla si alguno viene vacío o roto.
+>
+> **Lo que se ha quitado:** la tarta fija de «distribución de tareas», que ahora es uno de los
+> recuadros. **Lo que se ha conservado fijo:** el avance por proyecto y el burndown, porque el
+> catálogo de informes todavía no los sabe expresar —el primero necesita un porcentaje de
+> completado, el segundo dos series a la vez— y quitarlos habría sido perder algo que funciona.
+>
+> **Lo que había antes y no hacía nada:** un gestor de paneles donde se podían crear, nombrar y
+> marcar como públicos, y **al pulsarlos no pasaba nada** —la selección iba a una señal que no
+> pintaba nada y la columna de widgets no la leía nadie—. Nunca llegó a haber una fila en esa
+> tabla.
 
 **Lo que pidió el usuario:** un resumen personalizable de los reportes, donde se ven estadísticas
 que faciliten el análisis —tickets por área, por ejemplo—, con unas por defecto y libertad para
@@ -116,20 +178,66 @@ añadir y quitar.
 **Widgets de partida:** tickets por área, tickets por estado, tareas por responsable, carga de
 la semana, cumplimiento de fechas, tiempo medio de resolución de tickets.
 
+> **Los que salieron, y por qué no son todos ésos.** El criterio manda: «sólo se ofrece de serie
+> lo que los datos de hoy pueden responder». Están tickets por estado, tickets por prioridad,
+> tareas por estado, tareas por responsable, tareas por proyecto y tickets abiertos por mes.
+>
+> Fuera: **tickets por área**, que necesita campos personalizados en tickets; **cumplimiento de
+> fechas** y **tiempo medio de resolución**, que el motor sabe calcular pero que sin tickets
+> resueltos salen con una raya en todos los meses — estrenar el producto con una gráfica vacía es
+> justo lo que el plan prohibía.
+
 **Herramienta de gráficas:** hay dos componentes propios (`doughnut-chart`, `line-chart`). Para
 lo que viene —barras apiladas, series temporales, tablas dinámicas— conviene decidir si se
 crecen o se adopta una librería. Recomiendo decidirlo con la lista de widgets delante y no
 antes.
 
+> **Cómo quedó.** ECharts con `ngx-echarts@21` —la que corresponde a este Angular—, importada con
+> los módulos justos: tres tipos de gráfica, cuatro componentes y el renderizador de canvas. El
+> mapa de módulos vive en un solo fichero (`echarts-modulos.ts`), que era la condición del estudio.
+>
+> **El coste, medido:** el paquete del panel pasa de 62 kB a 789 kB en bruto, **224 kB por la
+> red**, y sólo se descarga al abrir el panel. Se le ha dado presupuesto propio (aviso a 850 kB,
+> error a 1 MB) en vez de subir el de todas las pantallas.
+>
+> `line-chart` se conserva para el burndown, que no es expresable como informe todavía;
+> `doughnut-chart` se ha quedado sin uso y queda anotado.
+
 ---
 
 ## 5D — Reportes
 
-- **Lista de todos los reportes**, los de serie y los creados.
-- **Constructor**: origen de datos, filtros, agrupación, medida, forma de pintarlo.
-- **Exportación** a Excel, PDF y CSV.
-- **Programación**: que un reporte se genere y se envíe solo. El módulo `Communication` ya manda
-  correo y la Fase 4 dejó un motor de reglas del que se puede aprender.
+- [x] **Lista de todos los reportes**, los de serie y los creados. Ya existía.
+- [x] **Constructor**: origen de datos, filtros, agrupación, medida, forma de pintarlo.
+- [x] **Exportación** a Excel, PDF y CSV — asíncrona, del servidor, con estado y aviso.
+- [x] **Programación**: que un reporte se genere y se envíe solo.
+
+> **Estado de la exportación.** Construida entera: se pide y se recupera el control al instante,
+> un trabajador de segundo plano genera el fichero, y al terminar avisa respetando las
+> preferencias de notificación. Los tres formatos producen ficheros reales —comprobado
+> descargándolos y mirando su firma: BOM en el CSV, `PK` en el `.xlsx`, `%PDF-` en el PDF—.
+>
+> **Lo que había antes no exportaba nada.** `MarkAsGenerated` guardaba una URL construida a mano
+> (`/reports/{id}/{nombre}.pdf`) que no apuntaba a ningún fichero y que ningún endpoint servía.
+> El informe constaba como generado y no había nada que descargar. Los cuatro campos que
+> guardaban ese estado se han quitado del informe: el estado vive ahora en `Exportacion`, una por
+> petición y por formato, porque un informe se exporta muchas veces.
+>
+> **El constructor** guarda una definición neutra —origen, filtros, agrupación, medida, forma— y
+> nunca SQL ni opciones de ECharts. Cada pieza se valida contra un catálogo que el servidor
+> **sirve a la pantalla**: ninguna lista de opciones está escrita en el frontend, que es lo que
+> impide repetir el fallo de ofrecer algo que el motor no sabe hacer. Hay vista previa antes de
+> guardar y una prueba que recorre el catálogo entero comprobando que todo lo que ofrece se puede
+> calcular.
+>
+> **La programación** deja la exportación pedida y el generador que ya existía la recoge: un
+> informe programado y uno pedido a mano recorren el mismo camino, para que no haya dos motores
+> que se separen. Diaria, semanal o mensual; nada de «cada hora», que sería un generador de correo
+> no deseado.
+>
+> **Lo que sigue sin poderse hacer** es el ejemplo de «tickets por área»: requiere campos
+> personalizados en tickets como dimensión de análisis, y hoy los campos personalizados son de
+> tareas y proyectos. Está anotado en la auditoría.
 
 **Sobre la exportación, una advertencia:** hacerla en el cliente es rápido de escribir y se
 rompe con volumen —el navegador no puede con cien mil filas— y además no sirve para la
@@ -204,6 +312,12 @@ Como pediste:
 **Lo que hay que cuidar, porque es donde estas cosas se pudren:** un trabajo que falla tiene que
 decir **por qué** y quedar visible, no desaparecer. Una exportación que se queda en «generando»
 para siempre es peor que un error, porque nadie sabe si esperar.
+
+> **Cómo quedó (2026-09-04).** Los cuatro puntos están construidos. Sobre el aviso de arriba: una
+> exportación que lleve más de diez minutos «generando» se vuelve a coger, y agotados tres
+> intentos se marca fallida **con el motivo guardado en la fila**, no sólo en el registro del
+> servidor —quien pregunta «¿por qué no salió mi informe?» no tiene acceso a los registros—. Hay
+> prueba de integración que provoca un fallo real y comprueba que el motivo explica qué pasa.
 
 ---
 

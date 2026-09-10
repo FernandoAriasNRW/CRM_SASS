@@ -12,7 +12,15 @@ export interface NotificationPreferences {
   ticketUpdated: boolean;
   projectUpdated: boolean;
   mentionEnabled: boolean;
+  /**
+   * El aviso de que una exportación terminó.
+   *
+   * Viene encendido porque es la respuesta a algo que la persona pidió —las exportaciones se
+   * generan en segundo plano y pueden tardar—, y se puede apagar como cualquier otro.
+   */
+  exportReady: boolean;
   quietHoursEnabled: boolean;
+  /** «HH:mm», que es lo que produce un <input type="time">. */
   quietHoursStart: string;
   quietHoursEnd: string;
 }

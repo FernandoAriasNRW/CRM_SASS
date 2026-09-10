@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { AuthSignalStore } from './auth-signal.store';
@@ -59,6 +59,22 @@ export class ApiService {
       params: httpParams,
       withCredentials: true, // Important: sends cookies automatically
       ...this.contexto(opciones)
+    });
+  }
+
+  /**
+   * Descarga un fichero, con su nombre.
+   *
+   * Existe porque `get` pide y devuelve JSON, y un `.xlsx` que pase por ahí llega convertido en
+   * un objeto vacío sin dar ningún error. Se observa la respuesta entera —y no sólo el cuerpo—
+   * para poder leer el nombre del fichero de la cabecera `Content-Disposition`: sin él, el
+   * navegador guarda el fichero con el identificador de la exportación por nombre.
+   */
+  descargarFichero(path: string): Observable<HttpResponse<Blob>> {
+    return this.http.get(`${this.baseUrl}${path}`, {
+      responseType: 'blob',
+      observe: 'response',
+      withCredentials: true
     });
   }
 

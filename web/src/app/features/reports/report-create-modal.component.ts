@@ -26,7 +26,7 @@ export class ReportCreateModalComponent {
 
   submit(): void {
     if (!this.name.trim() || !this.type || !this.format) {
-      this.error.set('Nombre, Tipo y Formato son requeridos');
+      this.error.set($localize`Nombre, Tipo y Formato son requeridos`);
       return;
     }
     this.loading.set(true);

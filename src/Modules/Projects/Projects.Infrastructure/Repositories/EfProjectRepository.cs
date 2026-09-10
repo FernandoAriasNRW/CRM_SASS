@@ -11,7 +11,12 @@ public sealed class EfProjectRepository(ProjectsDbContext context) : IProjectRep
   {
     if (includeDeleted)
     {
-      return await context.Projects.IgnoreQueryFilters().FirstOrDefaultAsync(p => p.TenantId == tenantId && p.Id == id, ct);
+      // Antes esto era `IgnoreQueryFilters()`, que apaga **todos** los filtros —el de inquilino
+      // incluido— y sólo se salvaba porque la condición repetía el TenantId a mano. El ámbito
+      // abre lo justo: la papelera y el archivo, con el aislamiento intacto.
+      using var _ = context.VerTambien(borrados: true, archivados: true);
+
+      return await context.Projects.FirstOrDefaultAsync(p => p.TenantId == tenantId && p.Id == id, ct);
     }
 
     return await context.Projects.FirstOrDefaultAsync(p => p.TenantId == tenantId && p.Id == id, ct);

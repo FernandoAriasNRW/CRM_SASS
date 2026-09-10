@@ -69,6 +69,38 @@ namespace Identity.Infrastructure.Persistence.Migrations
                     b.ToTable("EntityPermissions", (string)null);
                 });
 
+            modelBuilder.Entity("Identity.Domain.Entities.Favorito", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid>("EntityId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTime>("MarcadoUtc")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<string>("Tipo")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("varchar(30)");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("char(36)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId", "UserId", "Tipo", "EntityId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_Favoritos_Usuario_Entidad");
+
+                    b.ToTable("Favoritos", (string)null);
+                });
+
             modelBuilder.Entity("Identity.Domain.Entities.SavedView", b =>
                 {
                     b.Property<Guid>("Id")
@@ -150,7 +182,8 @@ namespace Identity.Infrastructure.Persistence.Migrations
 
                             b1.Property<string>("Value")
                                 .IsRequired()
-                                .HasColumnType("longtext")
+                                .HasMaxLength(320)
+                                .HasColumnType("varchar(320)")
                                 .HasColumnName("Email");
                         });
 

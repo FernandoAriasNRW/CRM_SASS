@@ -172,6 +172,11 @@ public sealed class DeleteTaskCommandHandler(
     if (task is null)
       return Result<bool>.Failure("Tarea no encontrada");
 
+    // Este handler cargaba la tarea, la volvía a guardar **sin tocarla** y devolvía éxito: el
+    // endpoint contestaba 204 y la tarea seguía en la lista al recargar. Borrar es mandarla a
+    // la papelera, que es además lo que la pantalla promete al decir que se puede recuperar.
+    task.EnviarAPapelera();
+
     await repository.UpdateAsync(task, cancellationToken);
     await unitOfWork.SaveChangesAsync(cancellationToken);
     return Result<bool>.Success(true);

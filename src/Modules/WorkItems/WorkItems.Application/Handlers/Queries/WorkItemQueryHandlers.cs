@@ -13,7 +13,7 @@ public sealed class GetTasksQueryHandler(ITaskQueries queries)
   {
     var result = await queries.GetByTenantWithPaginationAsync(
         request.TenantId, request.ProjectId, request.AssigneeId, request.Status,
-        request.Priority, request.Filter, request.UserId,
+        request.Priority, request.Alcance,
         request.ParentTaskId, request.IncluirSubtareas,
         request.Pagination, cancellationToken);
 

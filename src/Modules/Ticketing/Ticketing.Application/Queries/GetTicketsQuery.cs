@@ -10,5 +10,13 @@ public sealed record GetTicketsQuery(
     Guid? AgentId,
     string? Priority,
     string? Status,
-    PaginationRequest Pagination
+    PaginationRequest Pagination,
+    /// <summary>
+    /// La entrada del panel de navegación que se ha pulsado, ya resuelta: qué filtro es, quién
+    /// pregunta y las listas que sólo se pueden saber fuera del módulo.
+    ///
+    /// Iba como tres parámetros sueltos —filtro, usuario, favoritos— y cada concepto nuevo del
+    /// menú añadía otro. Ver <c>AlcanceDeVista</c>.
+    /// </summary>
+    BuildingBlocks.Application.AlcanceDeVista? Alcance = null
 ) : IQuery<PagedResult<TicketDto>>;

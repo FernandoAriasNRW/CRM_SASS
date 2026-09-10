@@ -169,7 +169,7 @@ public sealed class ValidadorDeValorTests
     public void El_tipo_y_la_entidad_se_validan_al_definir()
     {
         var tipoRaro = () => CustomFieldDefinition.Create(
-            Guid.NewGuid(), "X", "Formula", TipoDeEntidad.Tarea, false, null, 0);
+            Guid.NewGuid(), "X", "Semaforo", TipoDeEntidad.Tarea, false, null, 0);
         var entidadRara = () => CustomFieldDefinition.Create(
             Guid.NewGuid(), "X", TipoDeCampo.Texto, "Factura", false, null, 0);
 
@@ -177,11 +177,49 @@ public sealed class ValidadorDeValorTests
         entidadRara.Should().Throw<InvalidOperationException>().WithMessage("*Tarea o Proyecto*");
     }
 
+    /// <summary>
+    /// La fórmula estuvo fuera de la lista de tipos mientras no hubo motor detrás, y esta
+    /// prueba lo vigilaba. Ya lo hay —analizador, evaluador y detector de ciclos, con sus
+    /// pruebas en FormulasTests—, así que lo que hay que vigilar ahora es lo contrario: que un
+    /// campo calculado no se pueda definir sin fórmula, que era justo el «tipo que se puede
+    /// elegir y no calcula nada» que se quería evitar.
+    /// </summary>
     [Fact]
-    public void La_formula_no_esta_entre_los_tipos()
+    public void Un_campo_calculado_no_se_puede_definir_sin_formula()
     {
-        // Queda fuera a propósito: un campo calculado necesita un motor de expresiones, y
-        // ofrecerlo a medias sería un tipo que se puede elegir y no calcula nada.
-        TipoDeCampo.Todos().Should().NotContain("Formula");
+        TipoDeCampo.Todos().Should().Contain(TipoDeCampo.Formula);
+
+        var sinFormula = () => CustomFieldDefinition.Create(
+            Guid.NewGuid(), "Total", TipoDeCampo.Formula, TipoDeEntidad.Tarea, false, null, 0);
+
+        sinFormula.Should().Throw<InvalidOperationException>()
+            .WithMessage(CustomFieldDefinition.Reglas.SinFormula);
+    }
+
+    /// <summary>
+    /// Y que la fórmula se comprueba al definirla, no al leerla: quien la escribe es quien
+    /// puede arreglarla, y sólo la tiene delante en ese momento.
+    /// </summary>
+    [Fact]
+    public void Una_formula_ilegible_se_rechaza_al_definir_el_campo()
+    {
+        var rota = () => CustomFieldDefinition.Create(
+            Guid.NewGuid(), "Total", TipoDeCampo.Formula, TipoDeEntidad.Tarea, false, null, 0, "2 * (3 +");
+
+        rota.Should().Throw<InvalidOperationException>();
+    }
+
+    /// <summary>
+    /// Un campo calculado nunca es obligatorio: no hay a quién exigírselo, y marcarlo dejaría
+    /// el formulario sin poder guardarse jamás.
+    /// </summary>
+    [Fact]
+    public void Un_campo_calculado_no_puede_ser_obligatorio()
+    {
+        var campo = CustomFieldDefinition.Create(
+            Guid.NewGuid(), "Total", TipoDeCampo.Formula, TipoDeEntidad.Tarea,
+            obligatorio: true, null, 0, "1 + 1");
+
+        campo.Obligatorio.Should().BeFalse();
     }
 }

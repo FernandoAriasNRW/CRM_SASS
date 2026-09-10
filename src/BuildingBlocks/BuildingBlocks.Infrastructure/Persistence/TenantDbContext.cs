@@ -4,9 +4,9 @@ using Microsoft.EntityFrameworkCore;
 namespace BuildingBlocks.Infrastructure.Persistence;
 
 /// <summary>
-/// Base de los <c>DbContext</c> de módulo. Aplica automáticamente el filtro de tenant y
-/// el de soft delete a toda entidad que implemente <c>ITenantEntity</c> o
-/// <c>ISoftDeletable</c>.
+/// Base de los <c>DbContext</c> de módulo. Aplica automáticamente el filtro de tenant, el de
+/// papelera y el de archivado a toda entidad que implemente <c>ITenantEntity</c>,
+/// <c>ISoftDeletable</c> o <c>IArchivable</c>.
 ///
 /// Heredar de aquí es lo que sustituye al filtrado manual por <c>TenantId</c> repetido
 /// en cada consulta: el aislamiento pasa a ser el comportamiento por defecto en lugar de
@@ -24,7 +24,88 @@ public abstract class TenantDbContext(DbContextOptions options, IUserContext? us
     /// defecto. Un proceso que legítimamente deba cruzar tenants ha de declararlo
     /// explícitamente con <c>IgnoreQueryFilters()</c>.
     /// </summary>
-    public Guid CurrentTenantId => userContext?.TenantId ?? Guid.Empty;
+    public Guid CurrentTenantId => _inquilinoForzado ?? userContext?.TenantId ?? Guid.Empty;
+
+    private Guid? _inquilinoForzado;
+
+    /// <summary>
+    /// Ejecuta las consultas de este contexto como si fueran de un inquilino concreto, y lo
+    /// deshace al salir del <c>using</c>.
+    ///
+    /// <b>Existe para los trabajos de segundo plano</b>, que no tienen petición y por tanto no
+    /// tienen usuario: sin esto, <see cref="CurrentTenantId"/> vale <c>Guid.Empty</c>, el filtro
+    /// global no casa con ninguna fila y **todas las consultas devuelven cero sin dar ningún
+    /// error**. Pasó exactamente eso: el generador de exportaciones producía ficheros correctos,
+    /// con su aviso y todo, y **vacíos** —la API decía 15 tareas y el informe exportado decía 0—.
+    ///
+    /// La alternativa era <c>IgnoreQueryFilters()</c> con el <c>TenantId</c> repetido a mano en
+    /// cada consulta. Se descartó porque apaga **todos** los filtros: lo archivado y lo borrado
+    /// volverían a salir, y un informe con tareas de la papelera dentro es peor que uno vacío,
+    /// porque nadie lo nota.
+    ///
+    /// Sólo debe usarlo un proceso que sepa de qué inquilino es el trabajo que está haciendo.
+    /// </summary>
+    public IDisposable ComoInquilino(Guid tenantId)
+    {
+        var previo = _inquilinoForzado;
+        _inquilinoForzado = tenantId;
+
+        return new AmbitoDeAlcance(() => _inquilinoForzado = previo);
+    }
+
+    /// <summary>
+    /// Si las consultas de este contexto deben dejar pasar lo que está en la papelera.
+    ///
+    /// No se toca a mano: se abre con <see cref="VerTambien"/>, que lo devuelve a su sitio al
+    /// cerrar el ámbito. Dejarlo encendido por descuido enseñaría borrados en las listas
+    /// normales, que es justo lo que este filtro existe para impedir.
+    /// </summary>
+    public bool IncluirBorrados { get; private set; }
+
+    /// <summary>Si las consultas de este contexto deben dejar pasar lo archivado.</summary>
+    public bool IncluirArchivados { get; private set; }
+
+    /// <summary>
+    /// Abre un ámbito en el que las consultas ven además lo borrado o lo archivado, y lo cierra
+    /// al salir del <c>using</c>.
+    ///
+    /// <b>Es la única forma de ver la papelera y el archivo, y eso es deliberado.</b> La
+    /// alternativa evidente —<c>IgnoreQueryFilters()</c>— apaga <b>todos</b> los filtros, el de
+    /// tenant incluido: la pantalla de la papelera habría enseñado los borrados de todos los
+    /// inquilinos. Este proyecto ya pagó una fuga de tenant en la Fase 4A; no se repite por
+    /// ahorrarse un método.
+    ///
+    /// Los ámbitos no se anidan: al cerrar se restaura el valor que había, así que un ámbito
+    /// dentro de otro deja el de fuera como estaba.
+    /// </summary>
+    public IDisposable VerTambien(bool borrados = false, bool archivados = false)
+    {
+        var previoBorrados = IncluirBorrados;
+        var previoArchivados = IncluirArchivados;
+
+        IncluirBorrados = borrados;
+        IncluirArchivados = archivados;
+
+        return new AmbitoDeAlcance(() =>
+        {
+            IncluirBorrados = previoBorrados;
+            IncluirArchivados = previoArchivados;
+        });
+    }
+
+    private sealed class AmbitoDeAlcance(Action alCerrar) : IDisposable
+    {
+        private bool _cerrado;
+
+        public void Dispose()
+        {
+            // Un `using` mal anidado puede llamar a Dispose dos veces; la segunda no debe
+            // volver a escribir el estado del contexto.
+            if (_cerrado) return;
+            _cerrado = true;
+            alCerrar();
+        }
+    }
 
     /// <summary>
     /// Debe invocarse al final de <c>OnModelCreating</c> en las clases derivadas, después
@@ -36,5 +117,9 @@ public abstract class TenantDbContext(DbContextOptions options, IUserContext? us
     /// fuera, de modo que olvidar esta llamada rompe el arranque en vez de filtrar datos.
     /// </summary>
     protected void ApplyTenantFilters(ModelBuilder modelBuilder)
-        => TenantQueryFilter.ApplyGlobalFilters(modelBuilder, () => CurrentTenantId);
+        => TenantQueryFilter.ApplyGlobalFilters(
+            modelBuilder,
+            () => CurrentTenantId,
+            () => IncluirBorrados,
+            () => IncluirArchivados);
 }

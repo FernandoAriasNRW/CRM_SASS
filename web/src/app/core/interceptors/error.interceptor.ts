@@ -46,7 +46,7 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
             catchError((refreshError) => {
               isRefreshing = false;
               authStore.logout();
-              toast.error('Sesión expirada', 'Por favor, inicia sesión nuevamente.');
+              toast.error($localize`Sesión expirada`, 'Por favor, inicia sesión nuevamente.');
               return throwError(() => refreshError);
             })
           );
@@ -55,7 +55,7 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
 
       // Handle 403 Forbidden
       if (error.status === 403) {
-        toast.warning('Acceso denegado', 'No tienes permisos para realizar esta acción.');
+        toast.warning($localize`Acceso denegado`, 'No tienes permisos para realizar esta acción.');
         router.navigate(['/']);
       }
 

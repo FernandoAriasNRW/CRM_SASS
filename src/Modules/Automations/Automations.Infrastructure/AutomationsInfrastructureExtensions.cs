@@ -56,6 +56,37 @@ public sealed class EfAutomationRuleRepository(AutomationsDbContext context) : I
   }
 }
 
+public sealed class EfRepositorioDeEjecuciones(AutomationsDbContext context) : IRepositorioDeEjecuciones
+{
+  public async Task AnotarAsync(EjecucionDeAutomatizacion ejecucion, CancellationToken ct = default)
+      => await context.Ejecuciones.AddAsync(ejecucion, ct);
+
+  /// <summary>
+  /// Se pregunta sólo por las que llegaron a aplicarse.
+  ///
+  /// Una que no cumplió condiciones no debe bloquear el aviso de mañana: si hoy la tarea no
+  /// cumplía y mañana sí, el aviso tiene que salir. Contar cualquier ejecución como «ya hecha»
+  /// silenciaría precisamente el día en que la regla empieza a tener razón.
+  /// </summary>
+  public Task<bool> YaSeEjecutoHoyAsync(
+      Guid tenantId, Guid ruleId, Guid entityId, DateOnly dia, CancellationToken ct = default)
+      => context.Ejecuciones.AnyAsync(
+          x => x.TenantId == tenantId
+            && x.RuleId == ruleId
+            && x.EntityId == entityId
+            && x.Dia == dia
+            && x.Resultado == ResultadoDeEjecucion.Aplicada, ct);
+
+  public async Task<IReadOnlyList<EjecucionDeAutomatizacion>> UltimasDeLaReglaAsync(
+      Guid tenantId, Guid ruleId, int cuantas, CancellationToken ct = default)
+      => await context.Ejecuciones
+          .AsNoTracking()
+          .Where(x => x.TenantId == tenantId && x.RuleId == ruleId)
+          .OrderByDescending(x => x.CuandoUtc)
+          .Take(cuantas)
+          .ToListAsync(ct);
+}
+
 public static class AutomationsInfrastructureExtensions
 {
   public static IServiceCollection AddAutomationsInfrastructure(
@@ -68,6 +99,7 @@ public static class AutomationsInfrastructureExtensions
     services.AddScoped<IOutboxService, OutboxService>();
     services.AddScoped<IAutomationsUnitOfWork, AutomationsModuleUnitOfWork>();
     services.AddScoped<IAutomationRuleRepository, EfAutomationRuleRepository>();
+    services.AddScoped<IRepositorioDeEjecuciones, EfRepositorioDeEjecuciones>();
     services.AddScoped<IMotorDeAutomatizaciones, MotorDeAutomatizaciones>();
 
     return services;

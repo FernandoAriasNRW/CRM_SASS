@@ -8,6 +8,17 @@ import { IDIOMAS, idiomaActual, urlEnIdioma } from '../../../core/idioma';
 
 export type CommandGroup = 'Ir a' | 'Acciones' | 'Proyectos' | 'Tareas' | 'Tickets';
 
+/** Cómo se lee cada grupo. La clave se queda como está: es con lo que se agrupa. */
+export function nombreDelGrupo(grupo: CommandGroup): string {
+  switch (grupo) {
+    case 'Ir a': return $localize`Ir a`;
+    case 'Acciones': return $localize`Acciones`;
+    case 'Proyectos': return $localize`Proyectos`;
+    case 'Tareas': return $localize`Tareas`;
+    case 'Tickets': return $localize`Tickets`;
+  }
+}
+
 export interface Command {
   id: string;
   label: string;
@@ -160,7 +171,16 @@ export class CommandPaletteService {
     for (const c of this.resultados()) {
       (grupos.get(c.group) ?? grupos.set(c.group, []).get(c.group)!).push(c);
     }
-    return [...grupos.entries()].map(([nombre, comandos]) => ({ nombre, comandos }));
+    // El nombre que se lee se traduce; la clave del grupo no.
+    //
+    // `CommandGroup` es a la vez la clave con la que se agrupa y lo que se pintaba en pantalla,
+    // así que en la versión inglesa salían «Proyectos» y «Tareas» en medio de todo lo demás.
+    // Traducir la clave habría roto el agrupado; por eso van separados.
+    return [...grupos.entries()].map(([clave, comandos]) => ({
+      clave,
+      nombre: nombreDelGrupo(clave),
+      comandos
+    }));
   });
 
   /**

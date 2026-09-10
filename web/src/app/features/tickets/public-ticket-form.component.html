@@ -57,7 +57,7 @@
           }
 
           <button uiButton type="submit" class="w-full" [disabled]="loading()">
-            {{ loading() ? 'Enviando...' : 'Enviar ticket' }}
+            @if (loading()) { <span i18n>Enviando...</span> } @else { <span i18n>Enviar ticket</span> }
           </button>
         </form>
       </ui-card-content>

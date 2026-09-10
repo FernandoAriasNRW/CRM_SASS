@@ -56,8 +56,22 @@ namespace WorkItems.Infrastructure.Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("char(36)");
 
+                    b.Property<DateTime?>("ArchivadoEnUtc")
+                        .HasColumnType("datetime(6)");
+
                     b.Property<Guid>("AssigneeId")
                         .HasColumnType("char(36)");
+
+                    b.Property<DateTime?>("BorradoEnUtc")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("CompletedAtUtc")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime(6)")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP(6)");
 
                     b.Property<Guid>("CreatedById")
                         .HasColumnType("char(36)");
@@ -71,6 +85,9 @@ namespace WorkItems.Infrastructure.Persistence.Migrations
 
                     b.Property<decimal>("EstimatedHours")
                         .HasColumnType("decimal(65,30)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("tinyint(1)");
 
                     b.Property<Guid?>("ParentTaskId")
                         .HasColumnType("char(36)");
@@ -131,8 +148,14 @@ namespace WorkItems.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("TenantId", "CompletedAtUtc")
+                        .HasDatabaseName("IX_Tasks_TenantId_CompletedAtUtc");
+
                     b.HasIndex("TenantId", "ParentTaskId")
                         .HasDatabaseName("IX_Tasks_TenantId_ParentTaskId");
+
+                    b.HasIndex("TenantId", "ArchivadoEnUtc", "IsDeleted")
+                        .HasDatabaseName("IX_Tasks_TenantId_Archivado_Borrado");
 
                     b.ToTable("Tasks");
                 });

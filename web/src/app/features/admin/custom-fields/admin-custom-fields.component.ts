@@ -7,7 +7,7 @@ import {
   lucideLoader2, lucideCircleAlert, lucideX,
 } from '@ng-icons/lucide';
 import {
-  CustomFieldsService, ENTIDADES, TIPOS_DE_CAMPO, type CustomFieldDefinition,
+  CustomFieldsService, ENTIDADES, seCalcula, TIPOS_DE_CAMPO, type CustomFieldDefinition,
 } from '../../../core/custom-fields.service';
 import { mensajeDeError } from '../../../shared/utils/mensaje-de-error';
 
@@ -63,12 +63,32 @@ export class AdminCustomFieldsComponent implements OnInit {
   /** Una opción por línea: es lo más rápido de escribir y de reordenar. */
   opciones = '';
   posicion = 0;
+  /** La expresión de un campo calculado. */
+  formula = '';
 
   readonly esNuevo = computed(() => this.editando() === '');
 
   // `tipo`, `nombre` y `opciones` son campos normales atados con ngModel, no señales, así que lo
   // que dependa de ellos tiene que ser un getter: un computed() no volvería a calcularse nunca.
   get usaOpciones(): boolean { return TIPOS_CON_OPCIONES.includes(this.tipo); }
+  get usaFormula(): boolean { return seCalcula(this.tipo); }
+
+  /**
+   * Los campos que una fórmula puede usar: los numéricos y otros calculados. Se ofrecen para
+   * insertarlos con un clic en vez de tener que teclear el nombre exacto entre corchetes, que
+   * es donde se cometen las erratas.
+   *
+   * Se excluye el que se está editando: ofrecerlo sería invitar a escribir un ciclo que el
+   * servidor va a rechazar.
+   */
+  get camposUsables(): CustomFieldDefinition[] {
+    const id = this.editando();
+    return this.ordenadas().filter(d => (d.tipo === 'Numero' || seCalcula(d.tipo)) && d.id !== id);
+  }
+
+  insertarReferencia(nombre: string): void {
+    this.formula = `${this.formula}[${nombre}]`;
+  }
 
   readonly ordenadas = computed(() =>
     [...this.definiciones()].sort((a, b) => a.posicion - b.posicion || a.nombre.localeCompare(b.nombre))
@@ -111,6 +131,7 @@ export class AdminCustomFieldsComponent implements OnInit {
     this.tipo = TIPOS_DE_CAMPO[0].key;
     this.obligatorio = false;
     this.opciones = '';
+    this.formula = '';
     // Detrás del último, que es donde se espera que aparezca un campo recién creado.
     this.posicion = this.ordenadas().length
       ? Math.max(...this.ordenadas().map(d => d.posicion)) + 1
@@ -159,6 +180,10 @@ export class AdminCustomFieldsComponent implements OnInit {
       return $localize`El nombre del campo no puede pasar de ${LARGO_MAXIMO_DEL_NOMBRE} caracteres`;
     }
 
+    if (this.usaFormula && !this.formula.trim()) {
+      return $localize`Un campo calculado necesita una fórmula`;
+    }
+
     if (this.usaOpciones) {
       const opciones = this.opcionesLimpias();
       if (!opciones.length) return $localize`Un campo de selección necesita al menos una opción`;
@@ -181,6 +206,9 @@ export class AdminCustomFieldsComponent implements OnInit {
       obligatorio: this.obligatorio,
       opciones: this.opcionesLimpias(),
       posicion: this.posicion,
+      // Sólo si aplica: mandarla en un campo de texto la guardaría para nada y confundiría a
+      // quien leyera la definición después.
+      formula: this.usaFormula ? this.formula.trim() : null,
     };
 
     this.guardando.set(true);

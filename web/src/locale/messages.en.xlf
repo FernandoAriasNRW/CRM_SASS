@@ -1,8 +1,8 @@
-<?xml version="1.0" encoding="UTF-8" ?>
-<xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
+<?xml version='1.0' encoding='utf-8'?>
+<xliff xmlns="urn:oasis:names:tc:xliff:document:1.2" version="1.2">
   <file source-language="es" target-language="en" datatype="plaintext" original="ng2.template">
     <body>
-<trans-unit id="4785173853922515848" datatype="html">
+      <trans-unit id="4785173853922515848" datatype="html">
         <source>Mi Workspace</source>
         <target state="final">My Workspace</target>
         <context-group purpose="location">
@@ -10,7 +10,7 @@
           <context context-type="linenumber">24,25</context>
         </context-group>
       </trans-unit>
-<trans-unit id="4785173853922515848" datatype="html">
+      <trans-unit id="4785173853922515848" datatype="html">
         <source>Mi Workspace</source>
         <target state="final">My Workspace</target>
         <context-group purpose="location">
@@ -18,7 +18,7 @@
           <context context-type="linenumber">24,25</context>
         </context-group>
       </trans-unit>
-<trans-unit id="4785173853922515848" datatype="html">
+      <trans-unit id="4785173853922515848" datatype="html">
         <source>Mi Workspace</source>
         <target state="final">My Workspace</target>
         <context-group purpose="location">
@@ -26,7 +26,7 @@
           <context context-type="linenumber">24,25</context>
         </context-group>
       </trans-unit>
-<trans-unit id="4785173853922515848" datatype="html">
+      <trans-unit id="4785173853922515848" datatype="html">
         <source>Mi Workspace</source>
         <target state="final">My Workspace</target>
         <context-group purpose="location">
@@ -34,7 +34,7 @@
           <context context-type="linenumber">24,25</context>
         </context-group>
       </trans-unit>
-<trans-unit id="4785173853922515848" datatype="html">
+      <trans-unit id="4785173853922515848" datatype="html">
         <source>Mi Workspace</source>
         <target state="final">My Workspace</target>
         <context-group purpose="location">
@@ -42,7 +42,7 @@
           <context context-type="linenumber">24,25</context>
         </context-group>
       </trans-unit>
-<trans-unit id="4785173853922515848" datatype="html">
+      <trans-unit id="4785173853922515848" datatype="html">
         <source>Mi Workspace</source>
         <target state="final">My Workspace</target>
         <context-group purpose="location">
@@ -2387,8 +2387,10 @@
         </context-group>
       </trans-unit>
       <trans-unit id="5908808893708879362" datatype="html">
-        <source> Próxima: <x id="INTERPOLATION" equiv-text="{{ r.proximaOcurrencia }}"/> </source>
-        <target state="final"> Next: <x id="INTERPOLATION" equiv-text="{{ r.proximaOcurrencia }}"/> </target>
+        <source> Próxima: <x id="INTERPOLATION" equiv-text="{{ r.proximaOcurrencia }}" />
+        </source>
+        <target state="final"> Next: <x id="INTERPOLATION" equiv-text="{{ r.proximaOcurrencia }}" />
+        </target>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tasks/task-detail-panel.component.html</context>
           <context context-type="linenumber">101,102</context>
@@ -2871,32 +2873,38 @@
         </context-group>
       </trans-unit>
       <trans-unit id="8121921990776935406" datatype="html">
-        <source><x id="PH" equiv-text="task.checklistDone ?? 0"/> de <x id="PH_1" equiv-text="task.checklistTotal"/> puntos hechos</source>
-        <target state="final"><x id="PH" equiv-text="task.checklistDone ?? 0"/> of <x id="PH_1" equiv-text="task.checklistTotal"/> items done</target>
+        <source>
+          <x id="PH" equiv-text="task.checklistDone ?? 0" /> de <x id="PH_1" equiv-text="task.checklistTotal" /> puntos hechos</source>
+        <target state="final">
+          <x id="PH" equiv-text="task.checklistDone ?? 0" /> of <x id="PH_1" equiv-text="task.checklistTotal" /> items done</target>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tasks/tasks.component.ts</context>
           <context context-type="linenumber">139</context>
         </context-group>
       </trans-unit>
       <trans-unit id="3963746112432770684" datatype="html">
-        <source><x id="PH" equiv-text="task.assignees?.length ?? 0"/> personas responsables</source>
-        <target state="final"><x id="PH" equiv-text="task.assignees?.length ?? 0"/> people assigned</target>
+        <source>
+          <x id="PH" equiv-text="task.assignees?.length ?? 0" /> personas responsables</source>
+        <target state="final">
+          <x id="PH" equiv-text="task.assignees?.length ?? 0" /> people assigned</target>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tasks/tasks.component.ts</context>
           <context context-type="linenumber">144</context>
         </context-group>
       </trans-unit>
       <trans-unit id="171937729494075993" datatype="html">
-        <source>Bloqueada por <x id="PH" equiv-text="task.blockedByCount"/> tarea(s)</source>
-        <target state="final">Blocked by <x id="PH" equiv-text="task.blockedByCount"/> task(s)</target>
+        <source>Bloqueada por <x id="PH" equiv-text="task.blockedByCount" /> tarea(s)</source>
+        <target state="final">Blocked by <x id="PH" equiv-text="task.blockedByCount" /> task(s)</target>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tasks/tasks.component.ts</context>
           <context context-type="linenumber">149</context>
         </context-group>
       </trans-unit>
       <trans-unit id="2435365218649977532" datatype="html">
-        <source><x id="PH" equiv-text="task.completedSubtaskCount ?? 0"/> de <x id="PH_1" equiv-text="task.subtaskCount"/> subtareas completadas</source>
-        <target state="final"><x id="PH" equiv-text="task.completedSubtaskCount ?? 0"/> of <x id="PH_1" equiv-text="task.subtaskCount"/> subtasks completed</target>
+        <source>
+          <x id="PH" equiv-text="task.completedSubtaskCount ?? 0" /> de <x id="PH_1" equiv-text="task.subtaskCount" /> subtareas completadas</source>
+        <target state="final">
+          <x id="PH" equiv-text="task.completedSubtaskCount ?? 0" /> of <x id="PH_1" equiv-text="task.subtaskCount" /> subtasks completed</target>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tasks/tasks.component.ts</context>
           <context context-type="linenumber">154</context>
@@ -3335,8 +3343,10 @@
         </context-group>
       </trans-unit>
       <trans-unit id="7337528189751824652" datatype="html">
-        <source>Cambiar idioma a <x id="idioma" equiv-text="i.nombre"/></source>
-        <target state="final">Switch language to <x id="idioma" equiv-text="i.nombre"/></target>
+        <source>Cambiar idioma a <x id="idioma" equiv-text="i.nombre" />
+        </source>
+        <target state="final">Switch language to <x id="idioma" equiv-text="i.nombre" />
+        </target>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/ui/command-palette/command-palette.service.ts</context>
           <context context-type="linenumber">124</context>
@@ -3767,8 +3777,8 @@ Pending</target>
         </context-group>
       </trans-unit>
       <trans-unit id="3788663778868855463" datatype="html">
-        <source>El nombre del campo no puede pasar de <x id="PH" equiv-text="LARGO_MAXIMO_DEL_NOMBRE" xmlns="urn:oasis:names:tc:xliff:document:1.2" /> caracteres</source>
-        <target state="final">The field name cannot be longer than <x id="PH" equiv-text="LARGO_MAXIMO_DEL_NOMBRE"/> characters</target>
+        <source>El nombre del campo no puede pasar de <x id="PH" equiv-text="LARGO_MAXIMO_DEL_NOMBRE" /> caracteres</source>
+        <target state="final">The field name cannot be longer than <x id="PH" equiv-text="LARGO_MAXIMO_DEL_NOMBRE" /> characters</target>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/admin/custom-fields/admin-custom-fields.component.ts</context>
           <context context-type="linenumber">159</context>
@@ -3783,8 +3793,8 @@ Pending</target>
         </context-group>
       </trans-unit>
       <trans-unit id="6660759049865551823" datatype="html">
-        <source>Un campo de selección no puede tener más de <x id="PH" equiv-text="MAXIMO_DE_OPCIONES" xmlns="urn:oasis:names:tc:xliff:document:1.2" /> opciones</source>
-        <target state="final">A select field cannot have more than <x id="PH" equiv-text="MAXIMO_DE_OPCIONES"/> options</target>
+        <source>Un campo de selección no puede tener más de <x id="PH" equiv-text="MAXIMO_DE_OPCIONES" /> opciones</source>
+        <target state="final">A select field cannot have more than <x id="PH" equiv-text="MAXIMO_DE_OPCIONES" /> options</target>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/admin/custom-fields/admin-custom-fields.component.ts</context>
           <context context-type="linenumber">166</context>
@@ -3831,16 +3841,16 @@ Pending</target>
         </context-group>
       </trans-unit>
       <trans-unit id="7646590756920030055" datatype="html">
-        <source>«<x id="PH" equiv-text="valor" xmlns="urn:oasis:names:tc:xliff:document:1.2" />» no es un número de horas.</source>
-        <target state="final">"<x id="PH" equiv-text="valor"/>" is not a number of hours.</target>
+        <source>«<x id="PH" equiv-text="valor" />» no es un número de horas.</source>
+        <target state="final">"<x id="PH" equiv-text="valor" />" is not a number of hours.</target>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tasks/tasks.component.ts</context>
           <context context-type="linenumber">503</context>
         </context-group>
       </trans-unit>
       <trans-unit id="388306122432231988" datatype="html">
-        <source>«<x id="PH" equiv-text="item.title" xmlns="urn:oasis:names:tc:xliff:document:1.2" />» se queda como estaba</source>
-        <target state="final">"<x id="PH" equiv-text="item.title"/>" stays as it was</target>
+        <source>«<x id="PH" equiv-text="item.title" />» se queda como estaba</source>
+        <target state="final">"<x id="PH" equiv-text="item.title" />" stays as it was</target>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tasks/tasks.component.ts</context>
           <context context-type="linenumber">514</context>
@@ -3855,8 +3865,10 @@ Pending</target>
         </context-group>
       </trans-unit>
       <trans-unit id="5324892388519202446" datatype="html">
-        <source>Editar <x id="PH" equiv-text="col.label" xmlns="urn:oasis:names:tc:xliff:document:1.2" /></source>
-        <target state="final">Edit <x id="PH" equiv-text="col.label"/></target>
+        <source>Editar <x id="PH" equiv-text="col.label" />
+        </source>
+        <target state="final">Edit <x id="PH" equiv-text="col.label" />
+        </target>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/ui/data-table/data-table.component.ts</context>
           <context context-type="linenumber">502</context>
@@ -3903,16 +3915,24 @@ Pending</target>
         </context-group>
       </trans-unit>
       <trans-unit id="2061641499271155136" datatype="html">
-        <source><x id="PH" equiv-text="barra.tarea.title" xmlns="urn:oasis:names:tc:xliff:document:1.2" />, vence el <x id="PH_1" equiv-text="vence" xmlns="urn:oasis:names:tc:xliff:document:1.2" /></source>
-        <target state="final"><x id="PH" equiv-text="barra.tarea.title"/>, due on <x id="PH_1" equiv-text="vence"/></target>
+        <source>
+          <x id="PH" equiv-text="barra.tarea.title" />, vence el <x id="PH_1" equiv-text="vence" />
+        </source>
+        <target state="final">
+          <x id="PH" equiv-text="barra.tarea.title" />, due on <x id="PH_1" equiv-text="vence" />
+        </target>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tasks/gantt.component.ts</context>
           <context context-type="linenumber">79</context>
         </context-group>
       </trans-unit>
       <trans-unit id="7114553271619331265" datatype="html">
-        <source><x id="PH" equiv-text="barra.tarea.title" xmlns="urn:oasis:names:tc:xliff:document:1.2" />, del <x id="PH_1" equiv-text="empieza" xmlns="urn:oasis:names:tc:xliff:document:1.2" /> al <x id="PH_2" equiv-text="vence" xmlns="urn:oasis:names:tc:xliff:document:1.2" /></source>
-        <target state="final"><x id="PH" equiv-text="barra.tarea.title"/>, from <x id="PH_1" equiv-text="empieza"/> to <x id="PH_2" equiv-text="vence"/></target>
+        <source>
+          <x id="PH" equiv-text="barra.tarea.title" />, del <x id="PH_1" equiv-text="empieza" /> al <x id="PH_2" equiv-text="vence" />
+        </source>
+        <target state="final">
+          <x id="PH" equiv-text="barra.tarea.title" />, from <x id="PH_1" equiv-text="empieza" /> to <x id="PH_2" equiv-text="vence" />
+        </target>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tasks/gantt.component.ts</context>
           <context context-type="linenumber">84</context>
@@ -3967,8 +3987,8 @@ Pending</target>
         </context-group>
       </trans-unit>
       <trans-unit id="9066396735664877269" datatype="html">
-        <source> Quedan <x id="INTERPOLATION" equiv-text="{{ carga().sinFecha }}" xmlns="urn:oasis:names:tc:xliff:document:1.2" /> tareas pendientes sin fecha límite, que no se reparten en ninguna semana. La carga real es mayor que la de esta tabla. </source>
-        <target state="final"> There are <x id="INTERPOLATION" equiv-text="{{ carga().sinFecha }}"/> pending tasks with no due date, which are not spread across any week. The real workload is higher than this table shows. </target>
+        <source> Quedan <x id="INTERPOLATION" equiv-text="{{ carga().sinFecha }}" /> tareas pendientes sin fecha límite, que no se reparten en ninguna semana. La carga real es mayor que la de esta tabla. </source>
+        <target state="final"> There are <x id="INTERPOLATION" equiv-text="{{ carga().sinFecha }}" /> pending tasks with no due date, which are not spread across any week. The real workload is higher than this table shows. </target>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tasks/carga.component.html</context>
           <context context-type="linenumber">54,57</context>
@@ -4235,8 +4255,8 @@ Pending</target>
         </context-group>
       </trans-unit>
       <trans-unit id="8326018324196237073" datatype="html">
-        <source>El nombre no puede pasar de <x id="PH" equiv-text="LARGO_MAXIMO_DEL_NOMBRE" xmlns="urn:oasis:names:tc:xliff:document:1.2" /> caracteres</source>
-        <target state="final">The name cannot be longer than <x id="PH" equiv-text="LARGO_MAXIMO_DEL_NOMBRE"/> characters</target>
+        <source>El nombre no puede pasar de <x id="PH" equiv-text="LARGO_MAXIMO_DEL_NOMBRE" /> caracteres</source>
+        <target state="final">The name cannot be longer than <x id="PH" equiv-text="LARGO_MAXIMO_DEL_NOMBRE" /> characters</target>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/admin/automations/admin-automations.component.ts</context>
           <context context-type="linenumber">159</context>
@@ -4428,6 +4448,2347 @@ Pending</target>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/ui/comentarios.component.ts</context>
           <context context-type="linenumber">160</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6851449099375470083" datatype="html">
+        <source>Calculado</source>
+        <target state="translated">Calculated</target>
+      </trans-unit>
+      <trans-unit id="2586802895442748747" datatype="html">
+        <source>(un campo calculado no se rellena)</source>
+        <target state="translated">(a calculated field is not filled in)</target>
+      </trans-unit>
+      <trans-unit id="1797046512591361682" datatype="html">
+        <source>Fórmula</source>
+        <target state="translated">Formula</target>
+      </trans-unit>
+      <trans-unit id="8886438892184710844" datatype="html">
+        <source>[Horas] * [Precio por hora]</source>
+        <target state="translated">[Hours] * [Price per hour]</target>
+      </trans-unit>
+      <trans-unit id="3017505670099393773" datatype="html">
+        <source>Operaciones: + - * / y paréntesis. Funciones: SI, REDONDEAR, MIN, MAX, ABS. Los argumentos se separan con punto y coma, porque la coma es el separador decimal.</source>
+        <target state="translated">Operators: + - * / and parentheses. Functions: SI, REDONDEAR, MIN, MAX, ABS. Arguments are separated by semicolons, because the comma is the decimal separator.</target>
+      </trans-unit>
+      <trans-unit id="7446909147263222998" datatype="html">
+        <source>Campos disponibles:</source>
+        <target state="translated">Available fields:</target>
+      </trans-unit>
+      <trans-unit id="9082252567794559724" datatype="html">
+        <source>Todavía no hay campos numéricos en esta entidad. Una fórmula sólo puede usar campos de tipo Número u otros campos calculados.</source>
+        <target state="translated">There are no numeric fields in this entity yet. A formula can only use Number fields or other calculated fields.</target>
+      </trans-unit>
+      <trans-unit id="6654572487120227264" datatype="html">
+        <source>Un campo calculado necesita una fórmula</source>
+        <target state="translated">A calculated field needs a formula</target>
+      </trans-unit>
+      <trans-unit id="961894320051389133" datatype="html">
+        <source>Faltan datos para calcularlo</source>
+        <target state="translated">Missing data to calculate it</target>
+      </trans-unit>
+      <trans-unit id="8752683350539801997" datatype="html">
+        <source>Ver todo</source>
+        <target state="final">View all</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/panel-de-navegacion/vocabulario-del-menu.ts</context>
+          <context context-type="linenumber">1</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1807916332018437555" datatype="html">
+        <source>Asignado a mí</source>
+        <target state="final">Assigned to me</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/panel-de-navegacion/vocabulario-del-menu.ts</context>
+          <context context-type="linenumber">1</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6686527627555450047" datatype="html">
+        <source>Creado por mí</source>
+        <target state="final">Created by me</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/panel-de-navegacion/vocabulario-del-menu.ts</context>
+          <context context-type="linenumber">1</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8307013293442796509" datatype="html">
+        <source>Favoritos</source>
+        <target state="final">Favorites</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/panel-de-navegacion/vocabulario-del-menu.ts</context>
+          <context context-type="linenumber">1</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5297831694845247371" datatype="html">
+        <source>Compartido conmigo</source>
+        <target state="final">Shared with me</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/panel-de-navegacion/vocabulario-del-menu.ts</context>
+          <context context-type="linenumber">1</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4760056198413288553" datatype="html">
+        <source>Privado</source>
+        <target state="final">Private</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/panel-de-navegacion/vocabulario-del-menu.ts</context>
+          <context context-type="linenumber">1</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2352471522276607242" datatype="html">
+        <source>Archivado</source>
+        <target state="final">Archived</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/panel-de-navegacion/vocabulario-del-menu.ts</context>
+          <context context-type="linenumber">1</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2482040009896677134" datatype="html">
+        <source>Papelera</source>
+        <target state="final">Trash</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/panel-de-navegacion/vocabulario-del-menu.ts</context>
+          <context context-type="linenumber">1</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="204224406769681528" datatype="html">
+        <source>Fijar el panel de navegación</source>
+        <target state="final">Pin the navigation panel</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/panel-de-navegacion/vocabulario-del-menu.ts</context>
+          <context context-type="linenumber">1</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8125674636147739761" datatype="html">
+        <source>Vistas</source>
+        <target state="final">Views</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/panel-de-navegacion/vocabulario-del-menu.ts</context>
+          <context context-type="linenumber">1</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1453124955640330010" datatype="html">
+        <source>Preparando el informe. Te avisamos cuando esté.</source>
+        <target state="final">Preparing the report. We&apos;ll let you know when it&apos;s ready.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/reports/exportaciones.service.ts</context>
+          <context context-type="linenumber">1</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2949724591621687468" datatype="html">
+        <source>El informe está tardando. Seguirá generándose; búscalo en la lista de exportaciones.</source>
+        <target state="final">The report is taking a while. It will keep generating; look for it in the exports list.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/reports/exportaciones.service.ts</context>
+          <context context-type="linenumber">1</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4031195481505711637" datatype="html">
+        <source>La exportación falló.</source>
+        <target state="final">The export failed.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/reports/exportaciones.service.ts</context>
+          <context context-type="linenumber">1</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1040816601604727882" datatype="html">
+        <source>No se pudo exportar el informe.</source>
+        <target state="final">The report could not be exported.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/reports/exportaciones.service.ts</context>
+          <context context-type="linenumber">1</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2889892981467670610" datatype="html">
+        <source>La descarga llegó vacía.</source>
+        <target state="final">The download came through empty.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/reports/exportaciones.service.ts</context>
+          <context context-type="linenumber">1</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6578227001858936794" datatype="html">
+        <source>Informe descargado.</source>
+        <target state="final">Report downloaded.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/reports/exportaciones.service.ts</context>
+          <context context-type="linenumber">1</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="378781101181427302" datatype="html">
+        <source>Generando…</source>
+        <target state="final">Generating…</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/reports/exportaciones.service.ts</context>
+          <context context-type="linenumber">1</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1269796934540024401" datatype="html">
+        <source>Datos de</source>
+        <target state="final">Data from</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/reports/constructor-de-informes.component.ts</context>
+          <context context-type="linenumber">1</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1723345460413587971" datatype="html">
+        <source> Con estos filtros no hay datos. No es un error: es lo que hay. </source>
+        <target state="final"> No data matches these filters. That is not an error — there simply is none. </target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/reports/constructor-de-informes.component.ts</context>
+          <context context-type="linenumber">1</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3060157024170002439" datatype="html">
+        <source>No se pudo guardar el informe.</source>
+        <target state="final">The report could not be saved.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/reports/constructor-de-informes.component.ts</context>
+          <context context-type="linenumber">1</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3328248801624290650" datatype="html">
+        <source>Cargando el catálogo…</source>
+        <target state="final">Loading the catalogue…</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/reports/constructor-de-informes.component.ts</context>
+          <context context-type="linenumber">1</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3736855329730769907" datatype="html">
+        <source>No se pudo calcular el resultado.</source>
+        <target state="final">The result could not be calculated.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/reports/constructor-de-informes.component.ts</context>
+          <context context-type="linenumber">1</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4107384700089437803" datatype="html">
+        <source>Construir</source>
+        <target state="final">Build</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/reports/constructor-de-informes.component.ts</context>
+          <context context-type="linenumber">1</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4113182804267037649" datatype="html">
+        <source> Guardar </source>
+        <target state="final"> Save </target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/reports/constructor-de-informes.component.ts</context>
+          <context context-type="linenumber">1</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4192686494150703383" datatype="html">
+        <source> Añadir filtro </source>
+        <target state="final"> Add filter </target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/reports/constructor-de-informes.component.ts</context>
+          <context context-type="linenumber">1</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4358480477665851139" datatype="html">
+        <source>Pintado como</source>
+        <target state="final">Shown as</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/reports/constructor-de-informes.component.ts</context>
+          <context context-type="linenumber">1</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5022839333651225030" datatype="html">
+        <source>Informe guardado.</source>
+        <target state="final">Report saved.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/reports/constructor-de-informes.component.ts</context>
+          <context context-type="linenumber">1</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5387803419583567166" datatype="html">
+        <source>Midiendo</source>
+        <target state="final">Measuring</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/reports/constructor-de-informes.component.ts</context>
+          <context context-type="linenumber">1</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5597953777025318659" datatype="html">
+        <source> Ver resultado </source>
+        <target state="final"> Preview result </target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/reports/constructor-de-informes.component.ts</context>
+          <context context-type="linenumber">1</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6645958179466305844" datatype="html">
+        <source>Quitar filtro</source>
+        <target state="final">Remove filter</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/reports/constructor-de-informes.component.ts</context>
+          <context context-type="linenumber">1</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7108391386114972654" datatype="html">
+        <source>Sin filtros: entra todo.</source>
+        <target state="final">No filters: everything is included.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/reports/constructor-de-informes.component.ts</context>
+          <context context-type="linenumber">1</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7335656071404909669" datatype="html">
+        <source>Constructor de informes</source>
+        <target state="final">Report builder</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/reports/constructor-de-informes.component.ts</context>
+          <context context-type="linenumber">1</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7532911879405106084" datatype="html">
+        <source>Filtros</source>
+        <target state="final">Filters</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/reports/constructor-de-informes.component.ts</context>
+          <context context-type="linenumber">1</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7660603056288412235" datatype="html">
+        <source>Agrupado por</source>
+        <target state="final">Grouped by</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/reports/constructor-de-informes.component.ts</context>
+          <context context-type="linenumber">1</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7719677780114462028" datatype="html">
+        <source>No se pudo cargar el catálogo.</source>
+        <target state="final">The catalogue could not be loaded.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/reports/constructor-de-informes.component.ts</context>
+          <context context-type="linenumber">1</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8166312070079305013" datatype="html">
+        <source>No se pudo cargar el catálogo de informes.</source>
+        <target state="final">The report catalogue could not be loaded.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/reports/constructor-de-informes.component.ts</context>
+          <context context-type="linenumber">1</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8194276986070945206" datatype="html">
+        <source>Agrupar la fecha</source>
+        <target state="final">Group the date</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/reports/constructor-de-informes.component.ts</context>
+          <context context-type="linenumber">1</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8584365803247449019" datatype="html">
+        <source>Configurar qué enseña este informe</source>
+        <target state="final">Configure what this report shows</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/reports/constructor-de-informes.component.ts</context>
+          <context context-type="linenumber">1</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8962914386906245107" datatype="html">
+        <source>Valor</source>
+        <target state="final">Value</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/reports/constructor-de-informes.component.ts</context>
+          <context context-type="linenumber">1</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3024677306715062969" datatype="html">
+        <source>Sin datos para este informe.</source>
+        <target state="final">No data for this report.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/dashboard/dashboard.component.html</context>
+          <context context-type="linenumber">1</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3075410358527505008" datatype="html">
+        <source> Tu panel está vacío. Añade informes desde la pantalla de Reportes. </source>
+        <target state="final"> Your dashboard is empty. Add reports from the Reports screen. </target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/dashboard/dashboard.component.html</context>
+          <context context-type="linenumber">1</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5130509794228032729" datatype="html">
+        <source>Burndown del Proyecto</source>
+        <target state="final">Project burndown</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/dashboard/dashboard.component.html</context>
+          <context context-type="linenumber">1</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7616113205741469471" datatype="html">
+        <source>Preparando tu panel…</source>
+        <target state="final">Preparing your dashboard…</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/dashboard/dashboard.component.html</context>
+          <context context-type="linenumber">1</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7661673596607955806" datatype="html">
+        <source>Quitar del panel</source>
+        <target state="final">Remove from dashboard</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/dashboard/dashboard.component.html</context>
+          <context context-type="linenumber">1</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8884726332823413356" datatype="html">
+        <source>Mis gráficas</source>
+        <target state="final">My charts</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/dashboard/dashboard.component.html</context>
+          <context context-type="linenumber">1</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5251603998857396173" datatype="html">
+        <source> Ningún documento habla de esto todavía. </source>
+        <target state="final"> No document mentions this yet. </target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/mencionado-en.component.ts</context>
+          <context context-type="linenumber">1</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="529667311654384782" datatype="html">
+        <source> En esta página </source>
+        <target state="final"> On this page </target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/mencionado-en.component.ts</context>
+          <context context-type="linenumber">1</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6935789183777436891" datatype="html">
+        <source> Sin encabezados. Usa / para añadir uno. </source>
+        <target state="final"> No headings. Use / to add one. </target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/mencionado-en.component.ts</context>
+          <context context-type="linenumber">1</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8219135222715725188" datatype="html">
+        <source> Mencionado en </source>
+        <target state="final"> Mentioned in </target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/mencionado-en.component.ts</context>
+          <context context-type="linenumber">1</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8945437521514466384" datatype="html">
+        <source>Buscando…</source>
+        <target state="final">Searching…</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/mencionado-en.component.ts</context>
+          <context context-type="linenumber">1</context>
+        </context-group>
+      </trans-unit>
+    
+      <trans-unit id="1926157928707021468" datatype="html">
+        <source>Inicio</source>
+        <target>Home</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/core/navigation-signal.store.ts</context>
+          <context context-type="linenumber">44</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/panel-de-navegacion/vocabulario-del-menu.ts</context>
+          <context context-type="linenumber">147</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5767446336938113608" datatype="html">
+        <source>Panel</source>
+        <target>Dashboard</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/core/navigation-signal.store.ts</context>
+          <context context-type="linenumber">45</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/panel-de-navegacion/vocabulario-del-menu.ts</context>
+          <context context-type="linenumber">148</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6178062946820219167" datatype="html">
+        <source>Documentos</source>
+        <target>Docs</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/core/navigation-signal.store.ts</context>
+          <context context-type="linenumber">46</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">26,27</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/panel-de-navegacion/vocabulario-del-menu.ts</context>
+          <context context-type="linenumber">149</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2299187798995800780" datatype="html">
+        <source>Chat</source>
+        <target>Chat</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/core/navigation-signal.store.ts</context>
+          <context context-type="linenumber">51</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2835076381637945586" datatype="html">
+        <source>Calendario</source>
+        <target>Calendar</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/core/navigation-signal.store.ts</context>
+          <context context-type="linenumber">52</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7838748802290050050" datatype="html">
+        <source>Informes</source>
+        <target>Reports</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/core/navigation-signal.store.ts</context>
+          <context context-type="linenumber">53</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="891493515225602031" datatype="html">
+        <source>Mis proyectos</source>
+        <target>My projects</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/core/navigation-signal.store.ts</context>
+          <context context-type="linenumber">60</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/panel-de-navegacion/vocabulario-del-menu.ts</context>
+          <context context-type="linenumber">121</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1985868555670150606" datatype="html">
+        <source>Mis tareas</source>
+        <target>My tasks</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/core/navigation-signal.store.ts</context>
+          <context context-type="linenumber">61</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/panel-de-navegacion/vocabulario-del-menu.ts</context>
+          <context context-type="linenumber">122</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="242736258636932181" datatype="html">
+        <source>Mis tickets</source>
+        <target>My tickets</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/core/navigation-signal.store.ts</context>
+          <context context-type="linenumber">62</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/panel-de-navegacion/vocabulario-del-menu.ts</context>
+          <context context-type="linenumber">123</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2975016556673138449" datatype="html">
+        <source>Todos</source>
+        <target>All</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/core/navigation-signal.store.ts</context>
+          <context context-type="linenumber">67</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/panel-de-navegacion/vocabulario-del-menu.ts</context>
+          <context context-type="linenumber">131</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2531538945704920418" datatype="html">
+        <source>Mis paneles</source>
+        <target>My dashboards</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/core/navigation-signal.store.ts</context>
+          <context context-type="linenumber">68</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/panel-de-navegacion/vocabulario-del-menu.ts</context>
+          <context context-type="linenumber">132</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6095501492320223989" datatype="html">
+        <source>Del equipo</source>
+        <target>Team</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/core/navigation-signal.store.ts</context>
+          <context context-type="linenumber">69</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/panel-de-navegacion/vocabulario-del-menu.ts</context>
+          <context context-type="linenumber">133</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="59263784021573736" datatype="html">
+        <source>Ver</source>
+        <target>View</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/permissions/granular-permissions-modal.component.html</context>
+          <context context-type="linenumber">92,93</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8640238881320541056" datatype="html">
+        <source>Ninguno</source>
+        <target>None</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/permissions/granular-permissions-modal.component.html</context>
+          <context context-type="linenumber">101,102</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1484017304205005449" datatype="html">
+        <source> Hoy </source>
+        <target>Today</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/calendar/calendar.component.html</context>
+          <context context-type="linenumber">24,25</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7903107589011690575" datatype="html">
+        <source>Eventos en la papelera</source>
+        <target>Events in the trash</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/calendar/calendar.component.html</context>
+          <context context-type="linenumber">47,48</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4689693893885400163" datatype="html">
+        <source> Volver al mes </source>
+        <target>Back to the month</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/calendar/calendar.component.html</context>
+          <context context-type="linenumber">51,52</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3687525252719144398" datatype="html">
+        <source> La papelera está vacía. </source>
+        <target>The trash is empty.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/calendar/calendar.component.html</context>
+          <context context-type="linenumber">57,58</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2745751215671376169" datatype="html">
+        <source>Recuperar</source>
+        <target>Restore</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/calendar/calendar.component.html</context>
+          <context context-type="linenumber">71,72</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4220556629908322784" datatype="html">
+        <source> Este mes no tiene eventos. Pulsa un día para crear uno. </source>
+        <target>No events this month. Click a day to create one.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/calendar/calendar.component.html</context>
+          <context context-type="linenumber">160,161</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3228025428429513828" datatype="html">
+        <source>Volver al mes</source>
+        <target>Back to the month</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/calendar/dia-desplegado.component.ts</context>
+          <context context-type="linenumber">44,45</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8267856735391074182" datatype="html">
+        <source> Vence hoy </source>
+        <target>Due today</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/calendar/dia-desplegado.component.ts</context>
+          <context context-type="linenumber">54</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5030661329539421997" datatype="html">
+        <source>Anulado</source>
+        <target>Cancelled</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/calendar/dia-desplegado.component.ts</context>
+          <context context-type="linenumber">98,99</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8331458230102334089" datatype="html">
+        <source>Título</source>
+        <target>Title</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/calendar/evento-drawer.component.ts</context>
+          <context context-type="linenumber">54,55</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/tasks.component.ts</context>
+          <context context-type="linenumber">142</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tickets/tickets.component.ts</context>
+          <context context-type="linenumber">107</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1701224484578422690" datatype="html">
+        <source>El título necesita al menos 3 caracteres.</source>
+        <target>The title needs at least 3 characters.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/calendar/evento-drawer.component.ts</context>
+          <context context-type="linenumber">64,65</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="323759764195407110" datatype="html">
+        <source>Empieza</source>
+        <target>Starts</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/calendar/evento-drawer.component.ts</context>
+          <context context-type="linenumber">70,71</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2494569077305823573" datatype="html">
+        <source>Termina</source>
+        <target>Ends</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/calendar/evento-drawer.component.ts</context>
+          <context context-type="linenumber">76,77</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4929128828185379320" datatype="html">
+        <source>Tiene que terminar después de empezar.</source>
+        <target>It has to end after it starts.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/calendar/evento-drawer.component.ts</context>
+          <context context-type="linenumber">81,82</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4541209356441692141" datatype="html">
+        <source>Dónde</source>
+        <target>Where</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/calendar/evento-drawer.component.ts</context>
+          <context context-type="linenumber">98,99</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7578100985936373503" datatype="html">
+        <source>Enlazar con</source>
+        <target>Link to</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/calendar/evento-drawer.component.ts</context>
+          <context context-type="linenumber">115,116</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6463899696901206081" datatype="html">
+        <source> Escribe para buscar una tarea, un ticket o un proyecto. </source>
+        <target>Type to search for a task, a ticket or a project.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/calendar/evento-drawer.component.ts</context>
+          <context context-type="linenumber">119</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4816444728661292008" datatype="html">
+        <source>Buscar…</source>
+        <target>Search…</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/calendar/evento-drawer.component.ts</context>
+          <context context-type="linenumber">137</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/data-table/data-table.component.ts</context>
+          <context context-type="linenumber">65,66</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="357912206619907479" datatype="html">
+        <source>Todos los documentos</source>
+        <target>All docs</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">101,102</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/panel-de-navegacion/vocabulario-del-menu.ts</context>
+          <context context-type="linenumber">106</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5009616764677200208" datatype="html">
+        <source>Mis documentos</source>
+        <target>My docs</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">102,103</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/panel-de-navegacion/vocabulario-del-menu.ts</context>
+          <context context-type="linenumber">107</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3929454211238980419" datatype="html">
+        <source>Compartidos conmigo</source>
+        <target>Shared with me</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">103,104</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/panel-de-navegacion/vocabulario-del-menu.ts</context>
+          <context context-type="linenumber">108</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4277862429365033233" datatype="html">
+        <source>Privados</source>
+        <target>Private</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">104,105</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/panel-de-navegacion/vocabulario-del-menu.ts</context>
+          <context context-type="linenumber">109</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8298154933527741082" datatype="html">
+        <source>Actas de reunión</source>
+        <target>Meeting notes</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">105,106</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/panel-de-navegacion/vocabulario-del-menu.ts</context>
+          <context context-type="linenumber">110</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7868651453066060158" datatype="html">
+        <source>Archivados</source>
+        <target>Archived</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">106,107</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/panel-de-navegacion/vocabulario-del-menu.ts</context>
+          <context context-type="linenumber">111</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2152959986601647241" datatype="html">
+        <source>Importar</source>
+        <target>Import</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">118,119</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">161,162</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1252553035901898105" datatype="html">
+        <source>Nuevo documento</source>
+        <target>New doc</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">127,128</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8136758772583935856" datatype="html">
+        <source> Plantillas </source>
+        <target>Templates</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">167</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3637488852320492756" datatype="html">
+        <source>Plantillas</source>
+        <target>Templates</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">192,193</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2023551610334539495" datatype="html">
+        <source>Mis plantillas</source>
+        <target>My templates</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">221,222</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2390245933811334922" datatype="html">
+        <source>Abrir</source>
+        <target>Open</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">364,365</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7099780434896458019" datatype="html">
+        <source>Borrar</source>
+        <target>Delete</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">373,374</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1379815571052291075" datatype="html">
+        <source>Marca un documento con la estrella para verlo aquí.</source>
+        <target>Star a doc to see it here.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.ts</context>
+          <context context-type="linenumber">311</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="742558317880526807" datatype="html">
+        <source>Páginas recientes</source>
+        <target>Recent pages</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.ts</context>
+          <context context-type="linenumber">320</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6597520566647669940" datatype="html">
+        <source>Correo</source>
+        <target>Email</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/login/login.component.html</context>
+          <context context-type="linenumber">11,12</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8687776702387367781" datatype="html">
+        <source>Vistas guardadas:</source>
+        <target>Saved views:</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/projects/projects.component.html</context>
+          <context context-type="linenumber">38,39</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="987823001782896119" datatype="html">
+        <source>Propietario</source>
+        <target>Owner</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/projects/projects.component.ts</context>
+          <context context-type="linenumber">63</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5313518042879240945" datatype="html">
+        <source>Detalle de tarea y comentarios</source>
+        <target>Task detail and comments</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/task-detail-panel.component.html</context>
+          <context context-type="linenumber">2</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2833174116642647240" datatype="html">
+        <source>Fecha límite</source>
+        <target>Due date</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/task-detail-panel.component.html</context>
+          <context context-type="linenumber">121,122</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/tasks.component.ts</context>
+          <context context-type="linenumber">154</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7310099750613863144" datatype="html">
+        <source>Horas est.</source>
+        <target>Est. hours</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/task-detail-panel.component.html</context>
+          <context context-type="linenumber">131,132</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1843037166883285564" datatype="html">
+        <source>Etiquetas</source>
+        <target>Labels</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/task-detail-panel.component.html</context>
+          <context context-type="linenumber">141,142</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2295568220238618223" datatype="html">
+        <source>Tablero</source>
+        <target>Board</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/tasks.component.ts</context>
+          <context context-type="linenumber">109</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tickets/tickets.component.ts</context>
+          <context context-type="linenumber">93</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1802619862731601881" datatype="html">
+        <source>Lista</source>
+        <target>List</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/tasks.component.ts</context>
+          <context context-type="linenumber">110</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tickets/tickets.component.ts</context>
+          <context context-type="linenumber">94</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4703412002234796149" datatype="html">
+        <source>Gantt</source>
+        <target>Gantt</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/tasks.component.ts</context>
+          <context context-type="linenumber">111</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8180710318857613171" datatype="html">
+        <source>Asignado</source>
+        <target>Assignee</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/tasks.component.ts</context>
+          <context context-type="linenumber">152</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1552992431454668792" datatype="html">
+        <source>Horas</source>
+        <target>Hours</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/tasks.component.ts</context>
+          <context context-type="linenumber">153</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6284275986149864078" datatype="html">
+        <source>Proyecto</source>
+        <target>Project</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/tasks.component.ts</context>
+          <context context-type="linenumber">159</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4155087585589578541" datatype="html">
+        <source>Desde</source>
+        <target>From</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/tasks.component.ts</context>
+          <context context-type="linenumber">162</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tickets/tickets.component.ts</context>
+          <context context-type="linenumber">119</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2987084982624145537" datatype="html">
+        <source>Hasta</source>
+        <target>To</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/tasks.component.ts</context>
+          <context context-type="linenumber">163</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tickets/tickets.component.ts</context>
+          <context context-type="linenumber">120</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1723658886772029414" datatype="html">
+        <source>Por hacer</source>
+        <target>To do</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/vocabulario-de-tareas.ts</context>
+          <context context-type="linenumber">21</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2740386368302753507" datatype="html">
+        <source>En progreso</source>
+        <target>In progress</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/vocabulario-de-tareas.ts</context>
+          <context context-type="linenumber">22</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tickets/vocabulario-de-tickets.ts</context>
+          <context context-type="linenumber">31</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4579807014926424032" datatype="html">
+        <source>En revisión</source>
+        <target>In review</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/vocabulario-de-tareas.ts</context>
+          <context context-type="linenumber">23</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8619073148765294456" datatype="html">
+        <source>Completado</source>
+        <target>Done</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/vocabulario-de-tareas.ts</context>
+          <context context-type="linenumber">24</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6646156196549445884" datatype="html">
+        <source>Describe el problema…</source>
+        <target>Describe the problem…</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tickets/ticket-detail-panel.component.html</context>
+          <context context-type="linenumber">113,114</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2465153570780698301" datatype="html">
+        <source>Agente</source>
+        <target>Agent</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tickets/tickets.component.ts</context>
+          <context context-type="linenumber">111</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7284413204045478097" datatype="html">
+        <source>Creado</source>
+        <target>Created</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tickets/tickets.component.ts</context>
+          <context context-type="linenumber">112</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6094136722135432235" datatype="html">
+        <source>Abierto</source>
+        <target>Open</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tickets/vocabulario-de-tickets.ts</context>
+          <context context-type="linenumber">30</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6939444703953260849" datatype="html">
+        <source>Esperando información</source>
+        <target>Waiting for info</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tickets/vocabulario-de-tickets.ts</context>
+          <context context-type="linenumber">32</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3368108646487453123" datatype="html">
+        <source>Resuelto</source>
+        <target>Resolved</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tickets/vocabulario-de-tickets.ts</context>
+          <context context-type="linenumber">33</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6053116908327766499" datatype="html">
+        <source>Cerrado</source>
+        <target>Closed</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tickets/vocabulario-de-tickets.ts</context>
+          <context context-type="linenumber">34</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3489340601148426788" datatype="html">
+        <source>Crítica</source>
+        <target>Critical</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tickets/vocabulario-de-tickets.ts</context>
+          <context context-type="linenumber">50</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3250391385569692601" datatype="html">
+        <source>Media</source>
+        <target>Medium</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tickets/vocabulario-de-tickets.ts</context>
+          <context context-type="linenumber">52</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4199506752830523171" datatype="html">
+        <source>Nombre de la vista</source>
+        <target>View name</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/barra-de-vistas/barra-de-vistas.component.ts</context>
+          <context context-type="linenumber">108,109</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6151922057201998410" datatype="html">
+        <source>Cómo se verá</source>
+        <target>How it will look</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/barra-de-vistas/barra-de-vistas.component.ts</context>
+          <context context-type="linenumber">115,116</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1224564890882671342" datatype="html">
+        <source>Guardar la vista</source>
+        <target>Save the view</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/barra-de-vistas/barra-de-vistas.component.ts</context>
+          <context context-type="linenumber">127,128</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1831668866980053360" datatype="html">
+        <source>Vista</source>
+        <target>View</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/barra-de-vistas/barra-de-vistas.component.ts</context>
+          <context context-type="linenumber">142,143</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4976882786535379843" datatype="html">
+        <source>Limpiar</source>
+        <target>Clear</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/data-table/advanced-filters.component.ts</context>
+          <context context-type="linenumber">27,28</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1413235091287305408" datatype="html">
+        <source>Guardar vista</source>
+        <target>Save view</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/data-table/data-table.component.ts</context>
+          <context context-type="linenumber">75,76</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5444632241000218160" datatype="html">
+        <source>Columnas</source>
+        <target>Columns</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/data-table/data-table.component.ts</context>
+          <context context-type="linenumber">81,82</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1293777288050495196" datatype="html">
+        <source>Columnas visibles</source>
+        <target>Visible columns</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/data-table/data-table.component.ts</context>
+          <context context-type="linenumber">88,89</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2862644391545078849" datatype="html">
+        <source> Mostrando <x id="START_TAG_SPAN" ctype="x-span" equiv-text="&lt;span class=&quot;font-medium&quot;&gt;"/><x id="INTERPOLATION" equiv-text="{{ startItem() }}"/><x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/> - <x id="START_TAG_SPAN" ctype="x-span" equiv-text="&lt;span class=&quot;font-medium&quot;&gt;"/><x id="INTERPOLATION_1" equiv-text="{{ endItem() }}"/><x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/> de <x id="START_TAG_SPAN" ctype="x-span" equiv-text="&lt;span class=&quot;font-medium&quot;&gt;"/><x id="INTERPOLATION_2" equiv-text="{{ state().totalCount }}"/><x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/> resultados </source>
+        <target> Showing <x id="START_TAG_SPAN" ctype="x-span" equiv-text="&lt;span class=&quot;font-medium&quot;&gt;"/><x id="INTERPOLATION" equiv-text="{{ startItem() }}"/><x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/> - <x id="START_TAG_SPAN" ctype="x-span" equiv-text="&lt;span class=&quot;font-medium&quot;&gt;"/><x id="INTERPOLATION_1" equiv-text="{{ endItem() }}"/><x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/> of <x id="START_TAG_SPAN" ctype="x-span" equiv-text="&lt;span class=&quot;font-medium&quot;&gt;"/><x id="INTERPOLATION_2" equiv-text="{{ state().totalCount }}"/><x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/> results </target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/pagination.component.ts</context>
+          <context context-type="linenumber">36,43</context>
+        </context-group>
+      </trans-unit>
+    
+      <trans-unit id="1706499661209882749" datatype="html">
+        <source>Total activos</source>
+        <target>Active in total</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/dashboard/dashboard.component.ts</context>
+          <context context-type="linenumber">138</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5119593957887787524" datatype="html">
+        <source>Tickets abiertos</source>
+        <target>Open tickets</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/dashboard/dashboard.component.ts</context>
+          <context context-type="linenumber">140</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="826038789217753375" datatype="html">
+        <source>Rendimiento</source>
+        <target>Throughput</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/dashboard/dashboard.component.ts</context>
+          <context context-type="linenumber">141</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6826965268666715390" datatype="html">
+        <source>Tareas completadas</source>
+        <target>Completed tasks</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/dashboard/dashboard.component.ts</context>
+          <context context-type="linenumber">141</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3820796346389532136" datatype="html">
+        <source>Tiempo de entrega</source>
+        <target>Lead time</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/dashboard/dashboard.component.ts</context>
+          <context context-type="linenumber">146</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2666820742510947046" datatype="html">
+        <source>Promedio</source>
+        <target>Average</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/dashboard/dashboard.component.ts</context>
+          <context context-type="linenumber">146</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/dashboard/dashboard.component.ts</context>
+          <context context-type="linenumber">147</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="312339005767267761" datatype="html">
+        <source>Tiempo de ciclo</source>
+        <target>Cycle time</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/dashboard/dashboard.component.ts</context>
+          <context context-type="linenumber">147</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3067930309989544614" datatype="html">
+        <source>Fin estimado</source>
+        <target>Estimated end</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/projects/projects.component.ts</context>
+          <context context-type="linenumber">68</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="745228954667272084" datatype="html">
+        <source>Planificado</source>
+        <target>Planned</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/projects/vocabulario-de-proyectos.ts</context>
+          <context context-type="linenumber">16</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4981267489405883309" datatype="html">
+        <source>En pausa</source>
+        <target>On hold</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/projects/vocabulario-de-proyectos.ts</context>
+          <context context-type="linenumber">18</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3348885058742055564" datatype="html">
+        <source>Guardando…</source>
+        <target>Saving…</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/teams/team-form.component.html</context>
+          <context context-type="linenumber">19</context>
+        </context-group>
+      </trans-unit>
+    
+      <trans-unit id="8409820895575024043" datatype="html">
+        <source><x id="COMPLETADAS" equiv-text="k?.doneTasks ?? 0"/> completadas</source>
+        <target><x id="COMPLETADAS" equiv-text="k?.doneTasks ?? 0"/> completed</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/dashboard/dashboard.component.ts</context>
+          <context context-type="linenumber">139</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7471738920704821307" datatype="html">
+        <source><x id="ENPROGRESO" equiv-text="k?.inProgressTickets ?? 0"/> en progreso</source>
+        <target><x id="ENPROGRESO" equiv-text="k?.inProgressTickets ?? 0"/> in progress</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/dashboard/dashboard.component.ts</context>
+          <context context-type="linenumber">140</context>
+        </context-group>
+      </trans-unit>
+    
+      <trans-unit id="6792949945167720378" datatype="html">
+        <source>Ir a</source>
+        <target>Go to</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/command-palette/command-palette.service.ts</context>
+          <context context-type="linenumber">14</context>
+        </context-group>
+      </trans-unit>
+    
+      <trans-unit id="809093542329110362" datatype="html">
+        <source>Lun</source>
+        <target>Mon</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/calendar/calendar.component.ts</context>
+          <context context-type="linenumber">81</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6438827956918137617" datatype="html">
+        <source>Mar</source>
+        <target>Tue</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/calendar/calendar.component.ts</context>
+          <context context-type="linenumber">81</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="132239003422683085" datatype="html">
+        <source>Mié</source>
+        <target>Wed</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/calendar/calendar.component.ts</context>
+          <context context-type="linenumber">81</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8332932196794374287" datatype="html">
+        <source>Jue</source>
+        <target>Thu</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/calendar/calendar.component.ts</context>
+          <context context-type="linenumber">82</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="668959659844542446" datatype="html">
+        <source>Vie</source>
+        <target>Fri</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/calendar/calendar.component.ts</context>
+          <context context-type="linenumber">82</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8373295009149202297" datatype="html">
+        <source>Sáb</source>
+        <target>Sat</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/calendar/calendar.component.ts</context>
+          <context context-type="linenumber">82</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="725711008713274821" datatype="html">
+        <source>Dom</source>
+        <target>Sun</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/calendar/calendar.component.ts</context>
+          <context context-type="linenumber">82</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="902070586281448184" datatype="html">
+        <source>Modificar</source>
+        <target>Edit</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/calendar/calendar.component.ts</context>
+          <context context-type="linenumber">127</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="209968357504838440" datatype="html">
+        <source>Enlazar con tarea, ticket o proyecto</source>
+        <target>Link to a task, ticket or project</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/calendar/calendar.component.ts</context>
+          <context context-type="linenumber">128</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4681309556697640440" datatype="html">
+        <source>Deshacer la anulación</source>
+        <target>Undo the cancellation</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/calendar/calendar.component.ts</context>
+          <context context-type="linenumber">130</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7720570289901546447" datatype="html">
+        <source>Cancelar el evento</source>
+        <target>Cancel the event</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/calendar/calendar.component.ts</context>
+          <context context-type="linenumber">131</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="184055288226531069" datatype="html">
+        <source>Enviar a la papelera</source>
+        <target>Move to trash</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/calendar/calendar.component.ts</context>
+          <context context-type="linenumber">132</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2813873459662280234" datatype="html">
+        <source>Crear nuevo evento</source>
+        <target>Create new event</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/calendar/calendar.component.ts</context>
+          <context context-type="linenumber">138</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8953668578789861065" datatype="html">
+        <source>Ver eventos</source>
+        <target>View events</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/calendar/calendar.component.ts</context>
+          <context context-type="linenumber">139</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8464636900866407831" datatype="html">
+        <source>Ver agenda del día</source>
+        <target>View the day's agenda</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/calendar/calendar.component.ts</context>
+          <context context-type="linenumber">140</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="718872497758685452" datatype="html">
+        <source>Tareas para entregar hoy</source>
+        <target>Tasks due today</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/calendar/calendar.component.ts</context>
+          <context context-type="linenumber">141</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5262163685480483617" datatype="html">
+        <source>Tickets del día</source>
+        <target>Today's tickets</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/calendar/calendar.component.ts</context>
+          <context context-type="linenumber">142</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2968078721888778354" datatype="html">
+        <source>Proyectos a finalizar hoy</source>
+        <target>Projects ending today</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/calendar/calendar.component.ts</context>
+          <context context-type="linenumber">143</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6741067624647576049" datatype="html">
+        <source>Ajustes</source>
+        <target>Settings</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/calendar/calendar.component.ts</context>
+          <context context-type="linenumber">144</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7853752115201481027" datatype="html">
+        <source>Enviar a la papelera los eventos</source>
+        <target>Move the events to trash</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/calendar/calendar.component.ts</context>
+          <context context-type="linenumber">145</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1800598825835636784" datatype="html">
+        <source>Evento anulado</source>
+        <target>Event cancelled</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/calendar/calendar.component.ts</context>
+          <context context-type="linenumber">372</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5254060703446476395" datatype="html">
+        <source>Evento reactivado</source>
+        <target>Event reactivated</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/calendar/calendar.component.ts</context>
+          <context context-type="linenumber">378</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2380814172631866466" datatype="html">
+        <source>En la papelera</source>
+        <target>In the trash</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/calendar/calendar.component.ts</context>
+          <context context-type="linenumber">386</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/calendar/calendar.component.ts</context>
+          <context context-type="linenumber">412</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6183108371086298930" datatype="html">
+        <source>Nada que enviar</source>
+        <target>Nothing to move</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/calendar/calendar.component.ts</context>
+          <context context-type="linenumber">400</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1169453340205974113" datatype="html">
+        <source>Evento recuperado</source>
+        <target>Event restored</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/calendar/calendar.component.ts</context>
+          <context context-type="linenumber">429</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5041800446022304878" datatype="html">
+        <source>Reunión</source>
+        <target>Meeting</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/calendar/evento-drawer.component.ts</context>
+          <context context-type="linenumber">17</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7681441480164444212" datatype="html">
+        <source>Cita</source>
+        <target>Appointment</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/calendar/evento-drawer.component.ts</context>
+          <context context-type="linenumber">18</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7286380839815943277" datatype="html">
+        <source>Recordatorio</source>
+        <target>Reminder</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/calendar/evento-drawer.component.ts</context>
+          <context context-type="linenumber">20</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2146283688063610663" datatype="html">
+        <source>Fuera de oficina</source>
+        <target>Out of office</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/calendar/evento-drawer.component.ts</context>
+          <context context-type="linenumber">21</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2907835938617280864" datatype="html">
+        <source>Día festivo</source>
+        <target>Holiday</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/calendar/evento-drawer.component.ts</context>
+          <context context-type="linenumber">22</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6524126258216133372" datatype="html">
+        <source>Modificar evento</source>
+        <target>Edit event</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/calendar/evento-drawer.component.ts</context>
+          <context context-type="linenumber">249</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7678138894707121061" datatype="html">
+        <source>Evento modificado</source>
+        <target>Event updated</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/calendar/evento-drawer.component.ts</context>
+          <context context-type="linenumber">321</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="9105545273739284325" datatype="html">
+        <source>Evento creado</source>
+        <target>Event created</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/calendar/evento-drawer.component.ts</context>
+          <context context-type="linenumber">321</context>
+        </context-group>
+      </trans-unit>
+    
+      <trans-unit id="7069705998625865227" datatype="html">
+        <source>Sesión expirada</source>
+        <target>Session expired</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/core/interceptors/error.interceptor.ts</context>
+          <context context-type="linenumber">49</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3274854140688687265" datatype="html">
+        <source>Acceso denegado</source>
+        <target>Access denied</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/core/interceptors/error.interceptor.ts</context>
+          <context context-type="linenumber">58</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8470167714752910061" datatype="html">
+        <source>Untitled Wiki</source>
+        <target>Wiki sin título</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.ts</context>
+          <context context-type="linenumber">395</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6426244299766531645" datatype="html">
+        <source>Untitled Document</source>
+        <target>Documento sin título</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.ts</context>
+          <context context-type="linenumber">395</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4029035379032765481" datatype="html">
+        <source>Campo requerido</source>
+        <target>Required field</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/projects/project-detail-modal.component.ts</context>
+          <context context-type="linenumber">65</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4341746739325885924" datatype="html">
+        <source>Proyecto actualizado</source>
+        <target>Project updated</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/projects/project-detail-modal.component.ts</context>
+          <context context-type="linenumber">80</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2956582930623865574" datatype="html">
+        <source>Proyecto eliminado</source>
+        <target>Project deleted</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/projects/project-detail-modal.component.ts</context>
+          <context context-type="linenumber">98</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2847077683453313988" datatype="html">
+        <source>Estado actualizado</source>
+        <target>Status updated</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/task-detail-panel.component.ts</context>
+          <context context-type="linenumber">554</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3296241950953848248" datatype="html">
+        <source>No se pudo mover la tarea</source>
+        <target>The task could not be moved</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/tasks.component.ts</context>
+          <context context-type="linenumber">540</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8593116484969132330" datatype="html">
+        <source>No se pudo mover el ticket</source>
+        <target>The ticket could not be moved</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tickets/tickets.component.ts</context>
+          <context context-type="linenumber">416</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4805347537486370999" datatype="html">
+        <source>Webhook creado</source>
+        <target>Webhook created</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhook.service.ts</context>
+          <context context-type="linenumber">44</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6684101098622261258" datatype="html">
+        <source>Webhook actualizado</source>
+        <target>Webhook updated</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhook.service.ts</context>
+          <context context-type="linenumber">68</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2670779913612796222" datatype="html">
+        <source>Webhook eliminado</source>
+        <target>Webhook deleted</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhook.service.ts</context>
+          <context context-type="linenumber">85</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4471183086350618982" datatype="html">
+        <source>Secret regenerado</source>
+        <target>Secret regenerated</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhook.service.ts</context>
+          <context context-type="linenumber">107</context>
+        </context-group>
+      </trans-unit>
+    
+      <trans-unit id="8253475360221692409" datatype="html">
+        <source>Preferencias guardadas</source>
+        <target>Preferences saved</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/notification-preferences.component.ts</context>
+          <context context-type="linenumber">366</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3894733885576770296" datatype="html">
+        <source>Permiso denegado</source>
+        <target>Permission denied</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/notification-preferences.component.ts</context>
+          <context context-type="linenumber">382</context>
+        </context-group>
+      </trans-unit>
+    
+      <trans-unit id="1306442824926171361" datatype="html">
+        <source>Crear Equipo</source>
+        <target>Create team</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/teams/admin-teams.component.html</context>
+          <context context-type="linenumber">167,168</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7951841412707127889" datatype="html">
+        <source>Crear Usuario</source>
+        <target>Create user</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/users/admin-users.component.html</context>
+          <context context-type="linenumber">158,159</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2441077106515766073" datatype="html">
+        <source>Por ti</source>
+        <target>By you</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/dashboard/dashboard.component.html</context>
+          <context context-type="linenumber">203</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4180542281402327395" datatype="html">
+        <source>Por otro usuario</source>
+        <target>By someone else</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/dashboard/dashboard.component.html</context>
+          <context context-type="linenumber">203,204</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7116706284843267694" datatype="html">
+        <source>Ver menos</source>
+        <target>Show less</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/home/home.component.html</context>
+          <context context-type="linenumber">24</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1024247362185678516" datatype="html">
+        <source>Ver más</source>
+        <target>Show more</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/home/home.component.html</context>
+          <context context-type="linenumber">24,25</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3460274298981111730" datatype="html">
+        <source>Credenciales inválidas</source>
+        <target>Invalid credentials</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/login/login.component.ts</context>
+          <context context-type="linenumber">61</context>
+        </context-group>
+      </trans-unit>
+    
+      <trans-unit id="9089392450232532076" datatype="html">
+        <source>Error al cargar equipos</source>
+        <target>Could not load teams</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/teams/admin-teams.component.ts</context>
+          <context context-type="linenumber">89</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3292037566535394774" datatype="html">
+        <source>Error al cargar usuarios</source>
+        <target>Could not load users</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/users/admin-users.component.ts</context>
+          <context context-type="linenumber">159</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8939479126520271535" datatype="html">
+        <source>Nombre y email son requeridos</source>
+        <target>Name and email are required</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/users/admin-users.component.ts</context>
+          <context context-type="linenumber">190</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4242655153231244036" datatype="html">
+        <source>Contraseña debe tener al menos 6 caracteres</source>
+        <target>The password must be at least 6 characters</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/users/admin-users.component.ts</context>
+          <context context-type="linenumber">207</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="528331292965930772" datatype="html">
+        <source>Error al eliminar usuario</source>
+        <target>Could not delete the user</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/users/admin-users.component.ts</context>
+          <context context-type="linenumber">226</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7258805583531226804" datatype="html">
+        <source>Todos los campos son requeridos</source>
+        <target>All fields are required</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/profile/profile.component.ts</context>
+          <context context-type="linenumber">92</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="728039864504584525" datatype="html">
+        <source>Las contraseñas no coinciden</source>
+        <target>The passwords do not match</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/profile/profile.component.ts</context>
+          <context context-type="linenumber">97</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6924547426369527262" datatype="html">
+        <source>La nueva contraseña debe tener al menos 6 caracteres</source>
+        <target>The new password must be at least 6 characters</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/profile/profile.component.ts</context>
+          <context context-type="linenumber">102</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8303678207011254244" datatype="html">
+        <source>Nombre, espacio y fecha estimada son requeridos</source>
+        <target>Name, space and estimated date are required</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/projects/project-create-modal.component.ts</context>
+          <context context-type="linenumber">56</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1400580463632329409" datatype="html">
+        <source>Error al crear el proyecto</source>
+        <target>Could not create the project</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/projects/project-create-modal.component.ts</context>
+          <context context-type="linenumber">73</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8165394627161186491" datatype="html">
+        <source>El nombre es requerido</source>
+        <target>The name is required</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/projects/project-detail-modal.component.ts</context>
+          <context context-type="linenumber">64</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7139392404157802065" datatype="html">
+        <source>Error al actualizar el proyecto</source>
+        <target>Could not update the project</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/projects/project-detail-modal.component.ts</context>
+          <context context-type="linenumber">83</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1553473407617369163" datatype="html">
+        <source>Error al eliminar el proyecto</source>
+        <target>Could not delete the project</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/projects/project-detail-modal.component.ts</context>
+          <context context-type="linenumber">102</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2081802057056614240" datatype="html">
+        <source>Nombre, Tipo y Formato son requeridos</source>
+        <target>Name, type and format are required</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/reports/report-create-modal.component.ts</context>
+          <context context-type="linenumber">29</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3785410349325603724" datatype="html">
+        <source>Título, proyecto y fecha son requeridos</source>
+        <target>Title, project and date are required</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/task-create-modal.component.ts</context>
+          <context context-type="linenumber">126</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5036559741043532327" datatype="html">
+        <source>Error al crear la tarea</source>
+        <target>Could not create the task</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/task-create-modal.component.ts</context>
+          <context context-type="linenumber">145</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7447487462866802751" datatype="html">
+        <source>Todos los equipos de la organización.</source>
+        <target>All the teams in the organisation.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/teams/teams-list.component.html</context>
+          <context context-type="linenumber">6</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5536107171220025805" datatype="html">
+        <source>Equipos a los que perteneces.</source>
+        <target>Teams you belong to.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/teams/teams-list.component.html</context>
+          <context context-type="linenumber">6,7</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="896881483860073034" datatype="html">
+        <source>Título y descripción son requeridos</source>
+        <target>Title and description are required</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tickets/public-ticket-form.component.ts</context>
+          <context context-type="linenumber">40</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tickets/ticket-create-modal.component.ts</context>
+          <context context-type="linenumber">53</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5643872947175261461" datatype="html">
+        <source>Error al enviar el ticket. Intenta nuevamente.</source>
+        <target>Could not send the ticket. Try again.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tickets/public-ticket-form.component.ts</context>
+          <context context-type="linenumber">49</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5970800071004442472" datatype="html">
+        <source>Error al crear el ticket</source>
+        <target>Could not create the ticket</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tickets/ticket-create-modal.component.ts</context>
+          <context context-type="linenumber">62</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8793935281119945353" datatype="html">
+        <source>Crear Webhook</source>
+        <target>Create webhook</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhook-form-modal.component.html</context>
+          <context context-type="linenumber">164</context>
+        </context-group>
+      </trans-unit>
+    
+      <trans-unit id="664780012845067435" datatype="html">
+        <source>Generando...</source>
+        <target>Generating…</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/users/admin-users.component.html</context>
+          <context context-type="linenumber">16</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5297124083776880246" datatype="html">
+        <source>Data Falsa</source>
+        <target>Sample data</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/users/admin-users.component.html</context>
+          <context context-type="linenumber">16,17</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7312609951190169202" datatype="html">
+        <source>Ingresando...</source>
+        <target>Signing in…</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/login/login.component.html</context>
+          <context context-type="linenumber">26</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5752331855682104921" datatype="html">
+        <source>Ingresar</source>
+        <target>Sign in</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/login/login.component.html</context>
+          <context context-type="linenumber">26,27</context>
+        </context-group>
+      </trans-unit>
+    
+      <trans-unit id="363820252500379092" datatype="html">
+        <source>Creando...</source>
+        <target>Creating…</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/projects/project-create-modal.component.html</context>
+          <context context-type="linenumber">41</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/task-create-modal.component.html</context>
+          <context context-type="linenumber">48</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tickets/ticket-create-modal.component.html</context>
+          <context context-type="linenumber">34</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6814964665127907933" datatype="html">
+        <source>Crear Proyecto</source>
+        <target>Create project</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/projects/project-create-modal.component.html</context>
+          <context context-type="linenumber">41,42</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2774691647875290300" datatype="html">
+        <source>Solicitando...</source>
+        <target>Requesting…</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/reports/report-create-modal.component.html</context>
+          <context context-type="linenumber">46</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6392388544698759014" datatype="html">
+        <source>Solicitar Generación</source>
+        <target>Request generation</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/reports/report-create-modal.component.html</context>
+          <context context-type="linenumber">46,47</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5681806080715171360" datatype="html">
+        <source>Crear tarea</source>
+        <target>Create task</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/task-create-modal.component.html</context>
+          <context context-type="linenumber">48,49</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5731405754389427571" datatype="html">
+        <source>Enviando...</source>
+        <target>Sending…</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tickets/public-ticket-form.component.html</context>
+          <context context-type="linenumber">60</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1171917328452868156" datatype="html">
+        <source>Enviar ticket</source>
+        <target>Send ticket</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tickets/public-ticket-form.component.html</context>
+          <context context-type="linenumber">60,61</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1649524416602275388" datatype="html">
+        <source>Crear ticket</source>
+        <target>Create ticket</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tickets/ticket-create-modal.component.html</context>
+          <context context-type="linenumber">34,35</context>
+        </context-group>
+      </trans-unit>
+    
+      <trans-unit id="3906034958359540712" datatype="html">
+        <source>Claro</source>
+        <target>Light</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/core/tema.service.ts</context>
+          <context context-type="linenumber">8</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4560550641194494267" datatype="html">
+        <source>Oscuro</source>
+        <target>Dark</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/core/tema.service.ts</context>
+          <context context-type="linenumber">9</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1835230877853006184" datatype="html">
+        <source>El del sistema</source>
+        <target>Match the system</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/core/tema.service.ts</context>
+          <context context-type="linenumber">10</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="771879419236270848" datatype="html">
+        <source>Mi perfil</source>
+        <target>My profile</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/profile/profile.component.html</context>
+          <context context-type="linenumber">6,7</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4001703361246884590" datatype="html">
+        <source>Tus datos y tus preferencias.</source>
+        <target>Your details and your preferences.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/profile/profile.component.html</context>
+          <context context-type="linenumber">7,8</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="99190041010817482" datatype="html">
+        <source>Información personal</source>
+        <target>Personal information</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/profile/profile.component.html</context>
+          <context context-type="linenumber">41,43</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6636683595176968390" datatype="html">
+        <source> Es con lo que inicias sesión, así que no se cambia desde aquí. </source>
+        <target>It is what you sign in with, so it is not changed from here.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/profile/profile.component.html</context>
+          <context context-type="linenumber">62</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6781504143506783940" datatype="html">
+        <source>Sobre ti</source>
+        <target>About you</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/profile/profile.component.html</context>
+          <context context-type="linenumber">74,75</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7786297859370373412" datatype="html">
+        <source>Un par de líneas sobre a qué te dedicas…</source>
+        <target>A couple of lines about what you do…</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/profile/profile.component.html</context>
+          <context context-type="linenumber">76,77</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2473708249335920209" datatype="html">
+        <source>Tema</source>
+        <target>Theme</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/profile/profile.component.html</context>
+          <context context-type="linenumber">104,105</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2805760957814082248" datatype="html">
+        <source> «El del sistema» sigue lo que tengas configurado en el ordenador. </source>
+        <target>“Match the system” follows whatever your computer is set to.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/profile/profile.component.html</context>
+          <context context-type="linenumber">106</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1500181871307171807" datatype="html">
+        <source>Idioma</source>
+        <target>Language</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/profile/profile.component.html</context>
+          <context context-type="linenumber">126,127</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6262729743879597698" datatype="html">
+        <source> La aplicación se recarga al cambiarlo, y se queda elegido para la próxima vez. </source>
+        <target>The app reloads when you change it, and remembers your choice.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/profile/profile.component.html</context>
+          <context context-type="linenumber">128</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="290313232585469193" datatype="html">
+        <source>Cambiar la contraseña</source>
+        <target>Change your password</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/profile/profile.component.html</context>
+          <context context-type="linenumber">153,154</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="776923865543362672" datatype="html">
+        <source> Hace falta la actual: es lo que impide que alguien la cambie desde una sesión que dejaste abierta. </source>
+        <target>The current one is required: it is what stops someone changing it from a session you left open.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/profile/profile.component.html</context>
+          <context context-type="linenumber">155,156</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4540451997494300520" datatype="html">
+        <source>Contraseña actual</source>
+        <target>Current password</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/profile/profile.component.html</context>
+          <context context-type="linenumber">162,163</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8375244175220500411" datatype="html">
+        <source>Nueva contraseña</source>
+        <target>New password</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/profile/profile.component.html</context>
+          <context context-type="linenumber">169,170</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2046899843400134158" datatype="html">
+        <source>Repite la nueva</source>
+        <target>Repeat the new one</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/profile/profile.component.html</context>
+          <context context-type="linenumber">176,177</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7349065148301340370" datatype="html">
+        <source>Cambiar contraseña</source>
+        <target>Change password</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/profile/profile.component.html</context>
+          <context context-type="linenumber">196,197</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6313734668493507850" datatype="html">
+        <source>Cuenta</source>
+        <target>Account</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/profile/profile.component.ts</context>
+          <context context-type="linenumber">58</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="615851232113116780" datatype="html">
+        <source>Apariencia e idioma</source>
+        <target>Appearance and language</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/profile/profile.component.ts</context>
+          <context context-type="linenumber">59</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1822994600677553424" datatype="html">
+        <source>Seguridad</source>
+        <target>Security</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/profile/profile.component.ts</context>
+          <context context-type="linenumber">60</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6377259224948564303" datatype="html">
+        <source>Avisos</source>
+        <target>Notifications</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/profile/profile.component.ts</context>
+          <context context-type="linenumber">61</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6305259579532338904" datatype="html">
+        <source>Perfil actualizado</source>
+        <target>Profile updated</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/profile/profile.component.ts</context>
+          <context context-type="linenumber">111</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5261093163124669853" datatype="html">
+        <source>Rellena los tres campos.</source>
+        <target>Fill in the three fields.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/profile/profile.component.ts</context>
+          <context context-type="linenumber">140</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1544723926025083665" datatype="html">
+        <source>Las contraseñas no coinciden.</source>
+        <target>The passwords do not match.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/profile/profile.component.ts</context>
+          <context context-type="linenumber">145</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="202308503087398456" datatype="html">
+        <source>La nueva contraseña necesita al menos 6 caracteres.</source>
+        <target>The new password needs at least 6 characters.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/profile/profile.component.ts</context>
+          <context context-type="linenumber">150</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4948878802944895632" datatype="html">
+        <source>Contraseña cambiada</source>
+        <target>Password changed</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/profile/profile.component.ts</context>
+          <context context-type="linenumber">162</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="124495435934889901" datatype="html">
+        <source>No se pudo cambiar la contraseña.</source>
+        <target>The password could not be changed.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/profile/profile.component.ts</context>
+          <context context-type="linenumber">175</context>
+        </context-group>
+      </trans-unit>
+    
+      <trans-unit id="5197937797202822691" datatype="html">
+        <source>Importar documento</source>
+        <target>Import document</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/modals/importar-documento-modal.component.ts</context>
+          <context context-type="linenumber">33,34</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5055898310912492901" datatype="html">
+        <source>Título del documento</source>
+        <target>Document title</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/modals/importar-documento-modal.component.ts</context>
+          <context context-type="linenumber">56,57</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7098730968228999528" datatype="html">
+        <source>Título del documento…</source>
+        <target>Document title…</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/modals/importar-documento-modal.component.ts</context>
+          <context context-type="linenumber">58,59</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4404572577798664243" datatype="html">
+        <source>Pega aquí Markdown, HTML o texto sin formato…</source>
+        <target>Paste Markdown, HTML or plain text here…</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/modals/importar-documento-modal.component.ts</context>
+          <context context-type="linenumber">68,69</context>
         </context-group>
       </trans-unit>
     </body>

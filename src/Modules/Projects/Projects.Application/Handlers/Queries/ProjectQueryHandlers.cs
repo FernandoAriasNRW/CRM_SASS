@@ -12,8 +12,8 @@ public sealed class GetProjectsQueryHandler(IProjectQueries queries)
   public async Task<Result<PagedResult<ProjectDto>>> Handle(GetProjectsQuery request, CancellationToken cancellationToken)
   {
     var result = await queries.GetByTenantAsync(
-        request.TenantId, request.Status, request.OwnerId, request.SpaceId, request.FolderId, request.Filter, request.UserId,
-        request.Pagination.Page, request.Pagination.PageSize, cancellationToken);
+        request.TenantId, request.Status, request.OwnerId, request.SpaceId, request.FolderId, request.Alcance,
+        request.Pagination, cancellationToken);
 
     return Result<PagedResult<ProjectDto>>.Success(result);
   }

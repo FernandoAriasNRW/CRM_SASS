@@ -12,27 +12,22 @@ import {
 } from '@ng-icons/lucide';
 import type { Ticket } from './ticket-create-modal.component';
 import { TICKET_TAGS, type Tag } from '../../shared/utils/tags';
+import {
+  ESTADOS_DE_TICKET, PRIORIDADES_DE_TICKET, insigniaDelEstado,
+  nombreDeLaPrioridad, nombreDelEstado
+} from './vocabulario-de-tickets';
 
 
-const STATUSES = ['New', 'In Progress', 'Resolved', 'Closed'];
-const PRIORITIES = [
-  { key: 'urgent', label: 'Urgente' },
-  { key: 'high',   label: 'Alta'    },
-  { key: 'normal', label: 'Normal'  },
-  { key: 'low',    label: 'Baja'    },
-];
-const STATUS_BADGE: Record<string, BadgeVariant> = {
-  'New': 'secondary', 'In Progress': 'default', 'Resolved': 'success', 'Closed': 'outline'
-};
 
 import { DrawerComponent } from '../../shared/ui/drawer.component';
 import { ClickableDirective } from '../../shared/directives/clickable.directive';
 import { ComentariosComponent } from '../../shared/ui/comentarios.component';
+import { MencionadoEnComponent } from '../../shared/ui/mencionado-en.component';
 
 @Component({
   selector: 'app-ticket-detail-panel',
   standalone: true,
-  imports: [ComentariosComponent, ClickableDirective, FormsModule, DatePipe, BadgeComponent, AvatarComponent, NgIconComponent, DrawerComponent],
+  imports: [MencionadoEnComponent, ComentariosComponent, ClickableDirective, FormsModule, DatePipe, BadgeComponent, AvatarComponent, NgIconComponent, DrawerComponent],
   viewProviders: [provideIcons({
     lucideX, lucideCheck, lucideUser, lucideTag,
     lucideFlag, lucideMessageSquare, lucidePaperclip,
@@ -57,11 +52,14 @@ export class TicketDetailPanelComponent implements OnInit {
   showTagPicker = signal(false);
   activeTab = signal<'comments' | 'activity'>('comments');
 
-  readonly statuses = STATUSES;
-  readonly priorities = PRIORITIES;
+  readonly statuses = ESTADOS_DE_TICKET;
+  readonly priorities = PRIORIDADES_DE_TICKET;
   readonly availableTags = TICKET_TAGS;
 
-  statusBadge(s: string): BadgeVariant { return STATUS_BADGE[s] ?? 'outline'; }
+  statusBadge(s: string): BadgeVariant { return insigniaDelEstado(s); }
+
+  readonly nombreDelEstado = nombreDelEstado;
+  readonly nombreDeLaPrioridad = nombreDeLaPrioridad;
 
   ngOnInit(): void {
     const t = this.ticket();

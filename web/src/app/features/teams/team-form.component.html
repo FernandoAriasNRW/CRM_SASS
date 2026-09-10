@@ -16,7 +16,7 @@
   <div drawer-footer class="flex justify-end gap-2 w-full">
     <button class="px-4 py-2 border rounded hover:bg-muted" (click)="close.emit()" [disabled]="isSaving" i18n>Cancelar</button>
     <button class="px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90" (click)="save()" [disabled]="isSaving || !formData.name">
-      {{ isSaving ? 'Guardando...' : 'Guardar' }}
+      @if (isSaving) { <span i18n>Guardando…</span> } @else { <span i18n>Guardar</span> }
     </button>
   </div>
 </app-drawer>

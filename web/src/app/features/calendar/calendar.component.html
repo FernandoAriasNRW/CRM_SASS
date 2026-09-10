@@ -1,115 +1,177 @@
-<div class="space-y-6">
-  <div class="flex items-center justify-between">
-    <div>
-      <h2 class="text-2xl font-semibold tracking-tight capitalize">{{ monthLabel() }}</h2>
-      <p class="text-sm text-muted-foreground">{{ events().length }} eventos este mes</p>
-    </div>
+<div class="space-y-4">
+  <!-- Cabecera -->
+  <div class="flex flex-wrap items-center justify-between gap-3">
     <div class="flex items-center gap-2">
-      <button uiButton variant="outline" size="icon" i18n-aria-label aria-label="Mes anterior" (click)="prevMonth()">
-        <ng-icon name="lucideChevronLeft" size="16" />
+      <button type="button" (click)="mesAnterior()"
+        class="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground
+               focus:outline-none focus:ring-2 focus:ring-ring"
+        i18n-title title="Mes anterior">
+        <ng-icon name="lucideChevronLeft" size="18" />
       </button>
-      <button uiButton variant="outline" size="icon" i18n-aria-label aria-label="Mes siguiente" (click)="nextMonth()">
-        <ng-icon name="lucideChevronRight" size="16" />
+
+      <h2 class="min-w-48 text-center text-lg font-semibold capitalize">{{ mesLegible() }}</h2>
+
+      <button type="button" (click)="mesSiguiente()"
+        class="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground
+               focus:outline-none focus:ring-2 focus:ring-ring"
+        i18n-title title="Mes siguiente">
+        <ng-icon name="lucideChevronRight" size="18" />
       </button>
-      <button uiButton size="sm" (click)="showModal.set(true)">
-        <ng-icon name="lucidePlus" size="14" />
-        Nuevo evento
+
+      <button type="button" (click)="irAHoy()"
+        class="ml-1 rounded-md border border-border px-3 py-1.5 text-xs font-medium
+               hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring" i18n>
+        Hoy
+      </button>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <button type="button" (click)="verPapelera()"
+        class="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-sm
+               font-medium hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring">
+        <ng-icon name="lucideTrash2" size="14" /> <span i18n>Papelera</span>
+      </button>
+
+      <button type="button" (click)="crearEvento()"
+        class="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-sm font-medium
+               text-primary-foreground hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring">
+        <ng-icon name="lucideCalendarPlus" size="14" /> <span i18n>Nuevo evento</span>
       </button>
     </div>
   </div>
 
-  <!-- Grid del calendario -->
-  <div class="rounded-lg border border-border overflow-hidden">
-    <!-- Cabecera días -->
-    <div class="grid grid-cols-7 bg-muted/50">
-      @for (day of ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb']; track day) {
-        <div class="px-2 py-2 text-center text-xs font-medium text-muted-foreground">{{ day }}</div>
-      }
-    </div>
+  @if (enPapelera(); as borrados) {
+    <!-- La papelera -->
+    <div class="rounded-lg border border-border">
+      <div class="flex items-center justify-between border-b border-border px-4 py-3">
+        <h3 class="text-base font-semibold" i18n>Eventos en la papelera</h3>
+        <button type="button" (click)="cerrarPapelera()"
+          class="rounded-md px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-accent
+                 focus:outline-none focus:ring-2 focus:ring-ring" i18n>
+          Volver al mes
+        </button>
+      </div>
 
-    <!-- Días del mes -->
-    <div class="grid grid-cols-7 divide-x divide-y divide-border">
-      @for (day of calendarDays(); track $index) {
-        <div class="min-h-24 p-1.5 relative" [class.bg-muted/20]="!day">
-          @if (day) {
-            <span class="text-xs font-medium text-muted-foreground">{{ day }}</span>
-            <div class="mt-1 space-y-0.5">
-              @for (ev of eventsForDay(day); track ev.id) {
-                <div class="rounded px-1.5 py-0.5 bg-primary-subtle text-primary-subtle-fg text-xs truncate cursor-pointer hover:bg-primary-subtle transition-colors"
-                     [title]="ev.title">
-                  {{ ev.title }}
-                </div>
-              }
-            </div>
+      @if (borrados.length === 0) {
+        <p class="px-4 py-6 text-center text-sm text-muted-foreground" i18n>
+          La papelera está vacía.
+        </p>
+      } @else {
+        <ul class="divide-y divide-border">
+          @for (evento of borrados; track evento.id) {
+            <li class="flex items-center justify-between gap-3 px-4 py-2.5">
+              <div class="min-w-0">
+                <p class="truncate text-sm font-medium">{{ evento.title }}</p>
+                <p class="text-xs text-muted-foreground">{{ evento.startTime | date:'d MMM y, HH:mm' }}</p>
+              </div>
+
+              <button type="button" (click)="restaurar(evento)"
+                class="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5
+                       text-xs font-medium hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring">
+                <ng-icon name="lucideRotateCcw" size="12" /> <span i18n>Recuperar</span>
+              </button>
+            </li>
           }
-        </div>
+        </ul>
       }
     </div>
-  </div>
+  } @else if (diaAbierto(); as agenda) {
+    <!-- Un día desplegado -->
+    <div class="h-[640px] rounded-lg border border-border">
+      <app-dia-desplegado
+        [agenda]="agenda"
+        (cerrar)="cerrarDia()"
+        (crearAlas)="crearAlas($event)"
+        (abrirCosa)="abrirCosa($event)"
+        (menuEnEvento)="menuEnCosaDelDia($event)"
+        (menuEnHora)="menuEnHora($event)" />
+    </div>
+  } @else {
+    <!-- La rejilla del mes -->
+    <div class="overflow-hidden rounded-lg border border-border">
+      <div class="grid grid-cols-7 border-b border-border bg-muted/40">
+        @for (dia of DIAS_SEMANA; track dia) {
+          <div class="px-2 py-2 text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            {{ dia }}
+          </div>
+        }
+      </div>
 
-  <!-- Lista de eventos del mes -->
-  @if (events().length > 0) {
-    <div class="space-y-2">
-      <h3 class="text-sm font-medium text-muted-foreground" i18n>Próximos eventos</h3>
-      @for (ev of events(); track ev.id) {
-        <div class="flex items-start gap-3 rounded-lg border border-border p-3 hover:bg-muted/30 transition-colors">
-          <div class="shrink-0 text-center bg-primary/10 rounded-md px-2 py-1 min-w-12">
-            <p class="text-xs text-primary font-bold">
-              {{ ev.startsAtUtc | date:'d' }}
-            </p>
-            <p class="text-xs text-muted-foreground capitalize">
-              {{ ev.startsAtUtc | date:'MMM' }}
-            </p>
-          </div>
-          <div class="min-w-0">
-            <p class="text-sm font-medium">{{ ev.title }}</p>
-            @if (ev.description) {
-              <p class="text-xs text-muted-foreground mt-0.5">{{ ev.description }}</p>
-            }
-            <p class="text-xs text-muted-foreground mt-1">
-              {{ ev.startsAtUtc | date:'HH:mm' }} — {{ ev.endsAtUtc | date:'HH:mm' }}
-            </p>
-          </div>
-        </div>
-      }
+      <div class="grid grid-cols-7">
+        @for (dia of diasDelMes(); track $index) {
+          @if (dia) {
+            <!--
+              Pulsar abre el día; el botón derecho abre el menú. Es un `div` con `role="button"`
+              y no un `<button>` porque dentro hay otros botones —los eventos— y un botón dentro
+              de otro no es HTML válido: el navegador lo desanida y los clics dejan de llegar.
+            -->
+            <div
+              role="button"
+              tabindex="0"
+              (click)="abrirDia(dia.fecha)"
+              (keydown.enter)="abrirDia(dia.fecha)"
+              (contextmenu)="menuEnDia($event, dia.fecha)"
+              class="min-h-28 cursor-pointer border-b border-r border-border p-1.5 transition-colors
+                     hover:bg-accent/40 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-ring"
+              [class.bg-primary]="false">
+
+              <div class="mb-1 flex items-center justify-between">
+                <span
+                  class="inline-flex h-6 w-6 items-center justify-center rounded-full text-xs"
+                  [class]="dia.esHoy ? 'bg-primary font-semibold text-primary-foreground' : 'text-muted-foreground'">
+                  {{ dia.numero }}
+                </span>
+
+                @if (dia.eventos.length > 2) {
+                  <span class="text-[10px] text-muted-foreground">+{{ dia.eventos.length - 2 }}</span>
+                }
+              </div>
+
+              <div class="space-y-1">
+                <!--
+                  Sólo dos por celda: una celda con siete eventos se estira y descuadra la
+                  semana entera. El resto se cuenta arriba y se ve al abrir el día.
+                -->
+                @for (evento of dia.eventos.slice(0, 2); track evento.id) {
+                  <button type="button"
+                    (click)="$event.stopPropagation(); abrirCosa({ tipo: 'Evento', id: evento.id, titulo: evento.title, detalle: null, hora: evento.startTime, horaFin: evento.endTime, anulado: !!evento.canceladoEnUtc })"
+                    (contextmenu)="menuEnEvento($event, evento, dia.fecha)"
+                    class="block w-full truncate rounded px-1.5 py-0.5 text-left text-[11px] transition-colors
+                           focus:outline-none focus:ring-2 focus:ring-ring"
+                    [class]="evento.canceladoEnUtc
+                      ? 'bg-muted text-muted-foreground line-through'
+                      : 'bg-primary/15 text-foreground hover:bg-primary/25'">
+                    {{ evento.startTime | date:'HH:mm' }} {{ evento.title }}
+                  </button>
+                }
+              </div>
+            </div>
+          } @else {
+            <div class="min-h-28 border-b border-r border-border bg-muted/20"></div>
+          }
+        }
+      </div>
     </div>
+
+    @if (cargando()) {
+      <p class="text-center text-sm text-muted-foreground" i18n>Cargando…</p>
+    } @else if (eventos().length === 0) {
+      <p class="text-center text-sm text-muted-foreground" i18n>
+        Este mes no tiene eventos. Pulsa un día para crear uno.
+      </p>
+    }
   }
 </div>
 
-<!-- Modal nuevo evento -->
-@if (showModal()) {
-  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
-    <div class="w-full max-w-md rounded-lg border border-border bg-card shadow-xl">
-      <div class="flex items-center justify-between px-6 py-4 border-b border-border">
-        <h3 class="text-base font-semibold" i18n>Nuevo evento</h3>
-        <button (click)="showModal.set(false)" class="text-muted-foreground hover:text-foreground text-lg leading-none" i18n>&times;</button>
-      </div>
-      <div class="px-6 py-4 space-y-4">
-        <div class="space-y-1.5">
-          <label uiLabel for="ev-title" i18n>Título *</label>
-          <input uiInput id="ev-title" [(ngModel)]="newTitle" i18n-placeholder placeholder="Título del evento" />
-        </div>
-        <div class="space-y-1.5">
-          <label uiLabel for="ev-desc" i18n>Descripción</label>
-          <input uiInput id="ev-desc" [(ngModel)]="newDescription" i18n-placeholder placeholder="Descripción opcional" />
-        </div>
-        <div class="grid grid-cols-2 gap-3">
-          <div class="space-y-1.5">
-            <label uiLabel for="ev-start" i18n>Inicio *</label>
-            <input uiInput id="ev-start" type="datetime-local" [(ngModel)]="newStartsAt" />
-          </div>
-          <div class="space-y-1.5">
-            <label uiLabel for="ev-end" i18n>Fin *</label>
-            <input uiInput id="ev-end" type="datetime-local" [(ngModel)]="newEndsAt" />
-          </div>
-        </div>
-      </div>
-      <div class="flex justify-end gap-2 px-6 py-4 border-t border-border">
-        <button uiButton variant="outline" (click)="showModal.set(false)" i18n>Cancelar</button>
-        <button uiButton (click)="createEvent()" [disabled]="saving()">
-          {{ saving() ? 'Guardando...' : 'Crear evento' }}
-        </button>
-      </div>
-    </div>
-  </div>
-}
+<!-- El menú del botón derecho, uno solo para toda la pantalla -->
+<app-menu-contextual
+  [opciones]="opcionesDelMenu()"
+  [titulo]="tituloDelMenu()"
+  (elegida)="alElegirDelMenu($event)" />
+
+<app-evento-drawer
+  [abierto]="drawerAbierto()"
+  [evento]="eventoEnEdicion()"
+  [momentoPropuesto]="momentoPropuesto()"
+  (cerrar)="cerrarFormulario()"
+  (guardado)="alGuardar()" />

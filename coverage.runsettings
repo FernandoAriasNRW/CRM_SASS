@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Configuración de cobertura compartida por las dos suites de backend.
+
+  Existe porque el número por defecto no significaba nada: 7.366 de las 16.278
+  líneas que contaba el informe eran migraciones de Entity Framework —código
+  generado, que nadie escribió y que ninguna prueba puede ni debe ejecutar—. Con
+  ellas dentro, la cobertura del código propio salía como 18 % cuando era 32,9 %.
+
+  Una métrica que mide código generado no mide el trabajo de nadie; y si además
+  la meta se fija sobre ella, el camino más corto para subirla es escribir
+  pruebas que no sirven. Aquí se decide explícitamente qué cuenta.
+-->
+<RunSettings>
+  <DataCollectionRunSettings>
+    <DataCollectors>
+      <DataCollector friendlyName="XPlat code coverage">
+        <Configuration>
+          <Format>cobertura</Format>
+
+          <!-- Qué no cuenta, y por qué:
+               - Migrations: las escribe `dotnet ef`, no una persona.
+               - Program.cs / *ModuleExtensions: arranque y registro en el
+                 contenedor. Se ejercitan enteros en cuanto la API levanta, así
+                 que las de integración ya los tocan; contarlos en las unitarias
+                 sólo mete ruido.
+               - Los .Designer.cs y el ModelSnapshot son del mismo generador. -->
+          <ExcludeByFile>
+            **/Migrations/**/*.cs,
+            **/*.Designer.cs,
+            **/*ModelSnapshot.cs,
+            **/Program.cs
+          </ExcludeByFile>
+
+          <!-- El compilador marca así lo que genera él (records, iteradores,
+               closures). Medirlo es medir a Roslyn. -->
+          <ExcludeByAttribute>
+            Obsolete,
+            GeneratedCodeAttribute,
+            CompilerGeneratedAttribute,
+            ExcludeFromCodeCoverageAttribute
+          </ExcludeByAttribute>
+
+          <!-- Los proyectos de prueba no se miden a sí mismos. -->
+          <Exclude>[UnitTests]*,[IntegrationTests]*,[*]*.Migrations.*</Exclude>
+
+          <SingleHit>false</SingleHit>
+          <UseSourceLink>true</UseSourceLink>
+          <IncludeTestAssembly>false</IncludeTestAssembly>
+        </Configuration>
+      </DataCollector>
+    </DataCollectors>
+  </DataCollectionRunSettings>
+</RunSettings>

@@ -11,6 +11,15 @@ public sealed class CalendarEvent : AggregateRoot, ITenantEntity, ISoftDeletable
   public Guid OrganizerId { get; private set; }
   public Guid? ProjectId { get; private set; }
   public Guid? TaskId { get; private set; }
+
+  /// <summary>
+  /// El ticket con el que está enlazado, si lo está.
+  ///
+  /// Faltaba: había enlace a proyecto y a tarea pero no a ticket, y el ticket es justamente el
+  /// diferencial de este producto. Una llamada de seguimiento con un cliente cuelga de su ticket,
+  /// no de una tarea interna.
+  /// </summary>
+  public Guid? TicketId { get; private set; }
   public string Title { get; private set; } = string.Empty;
   public string? Description { get; private set; }
   public int TypeValue { get; private set; }
@@ -22,6 +31,27 @@ public sealed class CalendarEvent : AggregateRoot, ITenantEntity, ISoftDeletable
   public int? RecurrenceInterval { get; private set; }
   public DateTime? RecurrenceEndDate { get; private set; }
   public DateTime CreatedAt { get; private set; }
+
+  /// <summary>
+  /// Cuándo se canceló, o nulo si sigue en pie.
+  ///
+  /// <b>Cancelar y tirar a la papelera no son lo mismo, y hasta ahora sí lo eran.</b> Un evento
+  /// cancelado <b>se sigue viendo</b>, tachado: quien mira el jueves necesita saber que la reunión
+  /// se anuló, no que nunca existió —si desaparece, la gente se presenta igual—. La papelera es
+  /// para lo que no debería estar ahí, un evento creado por error.
+  ///
+  /// Por eso son dos marcas y no un estado: un evento puede estar cancelado y además acabar en la
+  /// papelera, y el orden en que pase no cambia lo que significa cada cosa.
+  /// </summary>
+  public DateTime? CanceladoEnUtc { get; private set; }
+
+  public Guid? CanceladoPor { get; private set; }
+
+  /// <summary>Por qué se canceló. Se enseña junto al evento tachado.</summary>
+  public string? MotivoDeCancelacion { get; private set; }
+
+  public bool EstaCancelado => CanceladoEnUtc is not null;
+
   public bool IsDeleted { get; private set; }
   public DateTime? DeletedAt { get; private set; }
   public Guid? DeletedBy { get; private set; }
@@ -41,6 +71,7 @@ public sealed class CalendarEvent : AggregateRoot, ITenantEntity, ISoftDeletable
       CalendarEventType type,
       Guid? projectId = null,
       Guid? taskId = null,
+      Guid? ticketId = null,
       string? description = null,
       string? location = null,
       bool isAllDay = false,
@@ -60,6 +91,7 @@ public sealed class CalendarEvent : AggregateRoot, ITenantEntity, ISoftDeletable
       OrganizerId = organizerId,
       ProjectId = projectId,
       TaskId = taskId,
+      TicketId = ticketId,
       Title = title,
       Description = description,
       TypeValue = type.Value,
@@ -86,16 +118,77 @@ public sealed class CalendarEvent : AggregateRoot, ITenantEntity, ISoftDeletable
     return Result<CalendarEvent>.Success(this);
   }
 
-  public void Cancel(Guid deletedBy)
+  /// <summary>
+  /// Manda el evento a la papelera: deja de verse, y se puede recuperar.
+  ///
+  /// Antes se llamaba <c>Cancel</c> y hacía esto mismo, de modo que cancelar una reunión la hacía
+  /// desaparecer del calendario. Ver <see cref="CanceladoEnUtc"/> para por qué son cosas distintas.
+  /// </summary>
+  public void EnviarAPapelera(Guid porQuien)
   {
     if (IsDeleted)
-      throw new InvalidOperationException("The calendar event is already cancelled");
+      throw new InvalidOperationException("El evento ya está en la papelera");
 
     IsDeleted = true;
     DeletedAt = DateTime.UtcNow;
-    DeletedBy = deletedBy;
+    DeletedBy = porQuien;
 
-    RaiseDomainEvent(new CalendarCancelledEvent(Id, TenantId, deletedBy));
+    RaiseDomainEvent(new CalendarCancelledEvent(Id, TenantId, porQuien));
+  }
+
+  /// <summary>
+  /// Anula el evento sin quitarlo del calendario.
+  ///
+  /// Se permite cancelar un evento ya pasado a propósito: a veces se anota después de que la
+  /// reunión no llegara a celebrarse, y prohibirlo obligaría a borrarla, que es peor —quedaría
+  /// como si se hubiera hecho—.
+  /// </summary>
+  public Result<CalendarEvent> Cancelar(Guid porQuien, string? motivo = null)
+  {
+    if (IsDeleted)
+      return Result<CalendarEvent>.Failure("No se puede cancelar un evento que está en la papelera");
+
+    if (EstaCancelado)
+      return Result<CalendarEvent>.Failure("El evento ya está cancelado");
+
+    CanceladoEnUtc = DateTime.UtcNow;
+    CanceladoPor = porQuien;
+    MotivoDeCancelacion = string.IsNullOrWhiteSpace(motivo) ? null : motivo.Trim();
+
+    RaiseDomainEvent(new EventoCanceladoEvent(Id, TenantId, porQuien, MotivoDeCancelacion));
+    return Result<CalendarEvent>.Success(this);
+  }
+
+  /// <summary>Deshace la cancelación: la reunión vuelve a estar en pie.</summary>
+  public Result<CalendarEvent> Reactivar()
+  {
+    if (!EstaCancelado)
+      return Result<CalendarEvent>.Failure("El evento no está cancelado");
+
+    CanceladoEnUtc = null;
+    CanceladoPor = null;
+    MotivoDeCancelacion = null;
+
+    return Result<CalendarEvent>.Success(this);
+  }
+
+  /// <summary>
+  /// Enlaza el evento con un proyecto, una tarea o un ticket —o quita el enlace pasando nulo.
+  ///
+  /// Los tres a la vez están permitidos: una reunión puede ser sobre un ticket dentro de un
+  /// proyecto, y obligar a elegir uno haría que la información se perdiera en la descripción,
+  /// donde no la encuentra ninguna consulta.
+  /// </summary>
+  public Result<CalendarEvent> Enlazar(Guid? proyectoId, Guid? tareaId, Guid? ticketId)
+  {
+    if (IsDeleted)
+      return Result<CalendarEvent>.Failure("No se puede enlazar un evento que está en la papelera");
+
+    ProjectId = proyectoId;
+    TaskId = tareaId;
+    TicketId = ticketId;
+
+    return Result<CalendarEvent>.Success(this);
   }
 
   public Result<CalendarEvent> Update(string? title, DateTime? startTime, DateTime? endTime, string? description, string? location)

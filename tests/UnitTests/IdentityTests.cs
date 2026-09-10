@@ -189,8 +189,7 @@ public class IdentityTests
             Name: "Test User",
             Email: "test@test.com",
             Role: "Member",
-            PasswordHash: null,
-            IsActive: true,
+                IsActive: true,
             CreatedAt: DateTime.UtcNow
         );
         _userQueriesMock.GetByIdAsync(_userId, Arg.Any<CancellationToken>()).Returns(userDto);

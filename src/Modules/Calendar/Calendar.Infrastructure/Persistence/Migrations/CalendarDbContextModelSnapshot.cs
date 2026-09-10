@@ -29,6 +29,14 @@ namespace Calendar.Infrastructure.Persistence.Migrations
                         .HasColumnType("char(36)")
                         .HasColumnName("id");
 
+                    b.Property<DateTime?>("CanceladoEnUtc")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("cancelado_en_utc");
+
+                    b.Property<Guid?>("CanceladoPor")
+                        .HasColumnType("char(36)")
+                        .HasColumnName("cancelado_por");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime(6)")
                         .HasColumnName("created_at");
@@ -67,6 +75,11 @@ namespace Calendar.Infrastructure.Persistence.Migrations
                         .HasColumnType("varchar(500)")
                         .HasColumnName("location");
 
+                    b.Property<string>("MotivoDeCancelacion")
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)")
+                        .HasColumnName("motivo_de_cancelacion");
+
                     b.Property<Guid>("OrganizerId")
                         .HasColumnType("char(36)")
                         .HasColumnName("organizer_id");
@@ -100,6 +113,10 @@ namespace Calendar.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("TenantId")
                         .HasColumnType("char(36)")
                         .HasColumnName("tenant_id");
+
+                    b.Property<Guid?>("TicketId")
+                        .HasColumnType("char(36)")
+                        .HasColumnName("ticket_id");
 
                     b.Property<string>("Title")
                         .IsRequired()

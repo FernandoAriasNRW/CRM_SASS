@@ -84,17 +84,17 @@ test('muestra los documentos que devuelve la API', async ({ page }) => {
 test('el modal de importar se abre, valida y se cierra', async ({ page }) => {
   await entrarADocs(page);
 
-  await page.getByRole('button', { name: /^import$/i }).first().click();
-  const modal = page.getByRole('dialog', { name: /import document/i });
+  await page.getByRole('button', { name: /^importar$/i }).first().click();
+  const modal = page.getByRole('dialog', { name: /importar documento/i });
   await expect(modal).toBeVisible();
 
   // Importar sin contenido no debe crear nada: el aviso sale dentro del modal, no en un
   // `alert` que bloquea la página y no dice qué falta.
-  await modal.getByRole('button', { name: /import now/i }).click();
+  await modal.getByRole('button', { name: /^importar$/i }).click();
   await expect(modal.getByRole('alert')).toBeVisible();
   await expect(modal).toBeVisible();
 
-  await modal.getByRole('button', { name: /^cancel$/i }).click();
+  await modal.getByRole('button', { name: /^cancelar$/i }).click();
   await expect(modal).toBeHidden();
 });
 

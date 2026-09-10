@@ -62,10 +62,14 @@ services:
         condition: service_healthy
     networks:
       - crm_network
+    # La imagen ya trae su propia comprobación (ver el Dockerfile) y esto la repetía... con
+    # `curl`, que la imagen de ASP.NET no incluye: llevaba 1.590 fallos consecutivos y el
+    # contenedor figuraba como «unhealthy» permanentemente. Se deja que mande la de la imagen,
+    # que es la que viaja a cualquier otra plataforma.
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/health/live"]
+      test: ["CMD", "dotnet", "ApiHost.dll", "--health-check"]
       interval: 15s
-      timeout: 5s
+      timeout: 10s
       retries: 5
       start_period: 40s
 
@@ -75,9 +79,16 @@ services:
       dockerfile: Dockerfile
     container_name: crm_saas_web
     ports:
-      - "4200:80" # 4200 local -> 80 del contenedor (nginx)
+      # 8080 dentro: la imagen es nginx-unprivileged y un proceso sin privilegios no puede
+      # abrir un puerto por debajo de 1024. Fuera sigue siendo 4200, que es lo que esperan
+      # los CORS de la API y las pruebas de extremo a extremo.
+      - "4200:8080"
     depends_on:
-      - api
+      # Ahora que la comprobación de la API funciona de verdad, se puede esperar a que esté
+      # sana en lugar de a que el contenedor exista. Antes esto habría colgado el arranque
+      # para siempre.
+      api:
+        condition: service_healthy
     networks:
       - crm_network
 

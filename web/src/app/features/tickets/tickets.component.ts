@@ -10,6 +10,7 @@ import { BadgeComponent, type BadgeVariant } from '../../shared/ui/badge.compone
 import { ButtonComponent } from '../../shared/ui/button.component';
 import { TicketCreateModalComponent, type Ticket } from './ticket-create-modal.component';
 import { TicketDetailPanelComponent } from './ticket-detail-panel.component';
+import { ESTADOS_DE_TICKET, insigniaDelEstado, nombreDeLaPrioridad, nombreDelEstado } from './vocabulario-de-tickets';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import {
   lucideRefreshCw, lucidePlus, lucideList,
@@ -23,6 +24,7 @@ import { TableColumnService } from '../../shared/services/table-column.service';
 import { ClickableDirective } from '../../shared/directives/clickable.directive';
 import { ToastService } from '../../shared/services/toast.service';
 import { EmptyInlineComponent } from '../../shared/ui/empty-state.component';
+import { BarraDeVistasComponent, type VistaIntegrada } from '../../shared/ui/barra-de-vistas/barra-de-vistas.component';
 
 interface Column {
   key: string;
@@ -37,16 +39,20 @@ interface Column {
 /** Tarjetas por columna antes de pedir más. Ver el mismo razonamiento en tasks. */
 const POR_TANDA = 25;
 
-const COLUMN_DEFS: Omit<Column, 'tickets' | 'pendientes'>[] = [
-  { key: 'Open',         label: 'Abierto',      badge: 'secondary' },
-  { key: 'InProgress',   label: 'En progreso',  badge: 'default'   },
-  { key: 'Resolved',     label: 'Resuelto',     badge: 'success'   },
-  { key: 'Closed',       label: 'Cerrado',      badge: 'outline'   },
-];
+/**
+ * Las columnas del tablero, sacadas del vocabulario compartido.
+ *
+ * Estaban escritas aquí a mano y **faltaba `PendingInfo`**: un ticket esperando información no
+ * caía en ninguna columna, así que desaparecía del tablero sin estar borrado ni archivado. Ahora
+ * salen de la misma lista que usan el cajón de detalle y el alta.
+ */
+const COLUMN_DEFS: Omit<Column, 'tickets' | 'pendientes'>[] = ESTADOS_DE_TICKET.map(e => ({
+  key: e.clave,
+  label: e.etiqueta,
+  badge: e.badge
+}));
 
-const STATUS_BADGE: Record<string, BadgeVariant> = {
-  'Open': 'secondary', 'InProgress': 'default', 'Resolved': 'success', 'Closed': 'outline'
-};
+
 
 @Component({
   selector: 'app-tickets',
@@ -54,7 +60,7 @@ const STATUS_BADGE: Record<string, BadgeVariant> = {
   imports: [ClickableDirective, 
     CommonModule, FormsModule, BadgeComponent, ButtonComponent,
     NgIconComponent, DragDropModule, TicketCreateModalComponent, TicketDetailPanelComponent,
-    DataTableComponent, HasPermissionDirective, EmptyInlineComponent
+    DataTableComponent, HasPermissionDirective, EmptyInlineComponent, BarraDeVistasComponent
   ],
   viewProviders: [provideIcons({
     lucideRefreshCw, lucidePlus, lucideList,
@@ -63,6 +69,7 @@ const STATUS_BADGE: Record<string, BadgeVariant> = {
   templateUrl: './tickets.component.html',
 })
 export class TicketsComponent implements OnInit {
+
   private readonly toast = inject(ToastService);
   private readonly api = inject(ApiService);
   private readonly realtime = inject(RealtimeService);
@@ -74,6 +81,18 @@ export class TicketsComponent implements OnInit {
   readonly showModal = signal(false);
   readonly selectedTicket = signal<Ticket | null>(null);
   readonly viewMode = signal<'board' | 'list'>('board');
+
+  /**
+   * Las formas de ver que este módulo sabe pintar.
+   *
+   * Se declaran aquí y no dentro de la barra porque cada módulo tiene las suyas: tareas añade
+   * Gantt y carga de trabajo, y una barra que las supiese todas ofrecería en tickets pestañas que
+   * no llevan a ninguna parte.
+   */
+  readonly VISTAS_INTEGRADAS: VistaIntegrada[] = [
+    { clave: 'board', etiqueta: $localize`Tablero`, icono: 'lucideLayoutDashboard' },
+    { clave: 'list',  etiqueta: $localize`Lista`,   icono: 'lucideList' }
+  ];
   readonly isLoading = signal(false);
 
   // Table State
@@ -85,20 +104,20 @@ export class TicketsComponent implements OnInit {
 
   // DataTable columns definition
   tableColumns: ColumnDef[] = this.columnService.buildColumns<Ticket>({
-    title: { label: 'Title' },
-    description: { label: 'Description', visible: false },
-    status: { label: 'Status', type: 'custom' },
-    priority: { label: 'Priority', type: 'custom' },
-    assignedAgentId: { label: 'Agente', type: 'user' },
-    createdAt: { label: 'Created At', type: 'date' }
+    title: { label: $localize`Título` },
+    description: { label: $localize`Descripción`, visible: false },
+    status: { label: $localize`Estado`, type: 'custom' },
+    priority: { label: $localize`Prioridad`, type: 'custom' },
+    assignedAgentId: { label: $localize`Agente`, type: 'user' },
+    createdAt: { label: $localize`Creado`, type: 'date' }
   });
 
   // Advanced Filters definition
   filterFields = computed<FilterField[]>(() => [
     { key: 'priority', label: 'Priority', type: 'select', options: this.priorities().map(p => ({ label: p, value: p })) },
     { key: 'status', label: 'Status', type: 'select', options: this.statuses.map(s => ({ label: s, value: s })) },
-    { key: 'startDate', label: 'Start Date', type: 'date' },
-    { key: 'endDate', label: 'End Date', type: 'date' }
+    { key: 'startDate', label: $localize`Desde`, type: 'date' },
+    { key: 'endDate', label: $localize`Hasta`, type: 'date' }
   ]);
 
   // Saved Views
@@ -118,7 +137,10 @@ export class TicketsComponent implements OnInit {
 
   readonly statuses = ['Open', 'InProgress', 'Resolved', 'Closed'];
 
-  statusBadge(status: string): BadgeVariant { return STATUS_BADGE[status] ?? 'outline'; }
+  statusBadge(status: string): BadgeVariant { return insigniaDelEstado(status); }
+
+  readonly nombreDelEstado = nombreDelEstado;
+  readonly nombreDeLaPrioridad = nombreDeLaPrioridad;
 
   @ViewChild('statusTemplate', { static: true }) statusTemplate!: TemplateRef<any>;
   @ViewChild('priorityTemplate', { static: true }) priorityTemplate!: TemplateRef<any>;
@@ -184,38 +206,53 @@ export class TicketsComponent implements OnInit {
     });
   }
 
-  getIconForView(view: SavedView): string {
-    try {
-      const state = JSON.parse(view.stateJson);
-      return state.viewType === 'board' ? 'lucideLayoutDashboard' : 'lucideList';
-    } catch {
-      return 'lucideList';
-    }
+  /**
+   * Cambia a una vista de fábrica, y deja de estar en una guardada.
+   *
+   * Limpiar `activeViewId` importa: si no, la pestaña guardada seguiría marcada mientras se está
+   * viendo otra cosa, que es enseñar dos verdades a la vez.
+   */
+  verComo(modo: string): void {
+    this.viewMode.set(modo as 'board' | 'list');
+    this.activeViewId.set(null);
   }
 
-  createNewView(type: 'list' | 'board'): void {
-    const name = prompt('Nombre de la nueva vista:');
-    if (!name) return;
-    
-    this.viewMode.set(type);
-    
-    const newState = {
-      ...this.tableState(),
-      viewType: type
-    };
-    
-    const payload = {
+  crearVista({ nombre, tipo }: { nombre: string; tipo: string }): void {
+    this.viewMode.set(tipo as 'board' | 'list');
+
+    const estado = { ...this.tableState(), viewType: tipo };
+
+    this.viewsService.saveView({
       moduleName: 'Tickets',
-      viewName: name,
-      stateJson: JSON.stringify(newState),
+      viewName: nombre,
+      stateJson: JSON.stringify(estado),
       isDefault: false
-    };
-    
-    this.viewsService.saveView(payload).subscribe({
+    }).subscribe({
       next: (view) => {
         this.savedViews.update(views => [...views, view]);
         this.activeViewId.set(view.id);
-        this.tableState.set(newState);
+        this.tableState.set(estado as TableState);
+      }
+    });
+  }
+
+  /**
+   * Borra una vista guardada.
+   *
+   * La API tenía el endpoint desde el principio y **no lo llamaba nadie**: se podían crear vistas
+   * y no quitarlas. Si además la que estaba puesta era la borrada, se vuelve al tablero; dejar
+   * marcada una pestaña que ya no existe deja la pantalla enseñando algo sin nombre.
+   */
+  borrarVista(vista: SavedView): void {
+    this.viewsService.deleteView(vista.id).subscribe({
+      next: () => {
+        this.savedViews.update(views => views.filter(v => v.id !== vista.id));
+
+        if (this.activeViewId() === vista.id) {
+          this.activeViewId.set(null);
+          this.viewMode.set('board');
+          this.loadTickets();
+        }
       }
     });
   }
@@ -376,8 +413,7 @@ export class TicketsComponent implements OnInit {
           tickets.map(t => t.id === ticket.id ? { ...t, status: estadoAnterior } : t)
         );
 
-        this.toast.error(
-          'No se pudo mover el ticket',
+        this.toast.error($localize`No se pudo mover el ticket`,
           `«${ticket.title}» sigue en ${estadoAnterior}.`);
       },
     });

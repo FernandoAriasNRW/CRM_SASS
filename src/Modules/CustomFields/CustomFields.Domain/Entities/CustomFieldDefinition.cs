@@ -37,11 +37,20 @@ public sealed class CustomFieldDefinition : AggregateRoot, ITenantEntity
     /// <summary>Orden en que aparece el campo en el formulario.</summary>
     public int Posicion { get; private set; }
 
+    /// <summary>
+    /// La expresión de un campo calculado, o <c>null</c> en los demás.
+    ///
+    /// Se guarda el texto tal como se escribió, no el árbol: es lo que hay que volver a enseñar
+    /// para editarla, y un árbol serializado quedaría atado a la forma interna del analizador.
+    /// Se vuelve a analizar al leer, que cuesta microsegundos.
+    /// </summary>
+    public string? Formula { get; private set; }
+
     private CustomFieldDefinition() { }
 
     public static CustomFieldDefinition Create(
         Guid tenantId, string nombre, string tipo, string entidadDestino,
-        bool obligatorio, IEnumerable<string>? opciones, int posicion)
+        bool obligatorio, IEnumerable<string>? opciones, int posicion, string? formula = null)
     {
         var nombreLimpio = (nombre ?? string.Empty).Trim();
 
@@ -58,6 +67,7 @@ public sealed class CustomFieldDefinition : AggregateRoot, ITenantEntity
             throw new InvalidOperationException(Reglas.EntidadDesconocida);
 
         var listaDeOpciones = NormalizarOpciones(tipo, opciones);
+        var formulaLimpia = NormalizarFormula(tipo, formula);
 
         var definicion = new CustomFieldDefinition
         {
@@ -66,9 +76,12 @@ public sealed class CustomFieldDefinition : AggregateRoot, ITenantEntity
             Nombre = nombreLimpio,
             Tipo = tipo,
             EntidadDestino = entidadDestino,
-            Obligatorio = obligatorio,
+            // Un campo calculado no se rellena, así que exigirlo no tendría a quién
+            // exigírselo: marcarlo obligatorio dejaría el formulario sin poder guardarse.
+            Obligatorio = !TipoDeCampo.SeCalcula(tipo) && obligatorio,
             Opciones = listaDeOpciones,
-            Posicion = posicion
+            Posicion = posicion,
+            Formula = formulaLimpia
         };
 
         definicion.RaiseDomainEvent(new CustomFieldDefinedEvent(definicion.Id, tenantId, nombreLimpio, tipo, entidadDestino));
@@ -84,7 +97,8 @@ public sealed class CustomFieldDefinition : AggregateRoot, ITenantEntity
     /// la anterior. Para eso se borra el campo y se crea otro, que además deja claro que los
     /// datos viejos se pierden.
     /// </summary>
-    public void Actualizar(string nombre, bool obligatorio, IEnumerable<string>? opciones, int posicion)
+    public void Actualizar(string nombre, bool obligatorio, IEnumerable<string>? opciones, int posicion,
+        string? formula = null)
     {
         var nombreLimpio = (nombre ?? string.Empty).Trim();
 
@@ -95,11 +109,37 @@ public sealed class CustomFieldDefinition : AggregateRoot, ITenantEntity
             throw new InvalidOperationException(Reglas.NombreDemasiadoLargo);
 
         Nombre = nombreLimpio;
-        Obligatorio = obligatorio;
+        Obligatorio = !TipoDeCampo.SeCalcula(Tipo) && obligatorio;
         Opciones = NormalizarOpciones(Tipo, opciones);
         Posicion = posicion;
+        Formula = NormalizarFormula(Tipo, formula);
 
         RaiseDomainEvent(new CustomFieldUpdatedEvent(Id, TenantId, Nombre));
+    }
+
+    /// <summary>
+    /// Comprueba que la fórmula se puede leer, y la rechaza si no.
+    ///
+    /// Sólo el análisis: que las referencias apunten a campos que existen y que no formen un
+    /// ciclo se comprueba en la capa de aplicación, que es la única que ve los demás campos del
+    /// inquilino. El dominio comprueba lo que puede comprobar solo.
+    /// </summary>
+    private static string? NormalizarFormula(string tipo, string? formula)
+    {
+        if (!TipoDeCampo.SeCalcula(tipo))
+            return null;
+
+        var texto = (formula ?? string.Empty).Trim();
+
+        if (texto.Length == 0)
+            throw new InvalidOperationException(Reglas.SinFormula);
+
+        var analisis = Servicios.AnalizadorDeFormula.Analizar(texto);
+
+        if (!analisis.EsValida)
+            throw new InvalidOperationException(analisis.Error);
+
+        return texto;
     }
 
     private static List<string> NormalizarOpciones(string tipo, IEnumerable<string>? opciones)
@@ -133,5 +173,12 @@ public sealed class CustomFieldDefinition : AggregateRoot, ITenantEntity
         public static readonly string DemasiadasOpciones =
             $"Un campo de selección no puede tener más de {MaximoDeOpciones} opciones";
         public const string NombreRepetido = "Ya hay un campo con ese nombre para esa entidad";
+        public const string SinFormula = "Un campo calculado necesita una fórmula";
+        public const string FormulaEnCiclo =
+            "La fórmula se refiere a sí misma, directa o indirectamente, y no se podría calcular";
+        public static readonly string ReferenciaNoNumerica =
+            "Una fórmula sólo puede usar campos de tipo Número u otros campos calculados";
+        public const string NoSeRellenaUnCalculado =
+            "Un campo calculado no se rellena: su valor sale de su fórmula";
     }
 }

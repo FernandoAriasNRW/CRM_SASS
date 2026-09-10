@@ -53,7 +53,7 @@ export class ProjectCreateModalComponent implements OnInit {
 
   submit(): void {
     if (!this.name.trim() || !this.estimatedEndDate || !this.spaceId) {
-      this.error.set('Nombre, espacio y fecha estimada son requeridos');
+      this.error.set($localize`Nombre, espacio y fecha estimada son requeridos`);
       return;
     }
     this.loading.set(true);
@@ -70,7 +70,7 @@ export class ProjectCreateModalComponent implements OnInit {
         this.closed.emit();
       },
       error: () => {
-        this.error.set('Error al crear el proyecto');
+        this.error.set($localize`Error al crear el proyecto`);
         this.loading.set(false);
       },
     });
