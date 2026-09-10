@@ -12,6 +12,12 @@ public class CreateFromTemplateHandler(IDocumentRepository repository)
 {
     public async Task<Result<Guid>> Handle(CreateFromTemplateCommand request, CancellationToken cancellationToken)
     {
+        // La misma clave que usa la galería para pedir la plantilla es la que se cuenta: la del
+        // sistema tal cual, o el identificador del documento plantilla en texto.
+        var claveDeLaPlantilla = request.TemplateDocumentId.HasValue && request.TemplateDocumentId.Value != Guid.Empty
+            ? request.TemplateDocumentId.Value.ToString()
+            : (request.TemplateKey ?? "").ToLowerInvariant();
+
         string docTitle;
         string docDescription = "";
         DocumentType docType = DocumentType.List;
@@ -155,6 +161,11 @@ public class CreateFromTemplateHandler(IDocumentRepository repository)
             var page = Page.Create(document.Id, null, pageData.PageTitle, pageData.Content, order++);
             await repository.AddPageAsync(page, cancellationToken);
         }
+
+        // Se apunta el uso en la misma transacción que la creación. Contarlo desde el cliente
+        // dejaría el contador a merced de una pestaña que se cierra a media petición: la galería
+        // ordenaría por «veces que alguien pulsó», no por «documentos que salieron de aquí».
+        await repository.RegistrarUsoDePlantillaAsync(request.TenantId, claveDeLaPlantilla, cancellationToken);
 
         await repository.SaveChangesAsync(cancellationToken);
 

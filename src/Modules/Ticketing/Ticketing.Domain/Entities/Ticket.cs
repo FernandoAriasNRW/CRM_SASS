@@ -50,6 +50,36 @@ public sealed class Ticket : AggregateRoot, ITenantEntity, ISoftDeletable, IArch
         return Result<Ticket>.Success(ticket);
     }
 
+    /// <summary>
+    /// Cambia lo que se edita desde la ficha: título, descripción y prioridad.
+    ///
+    /// Es una actualización parcial: lo que llega como <c>null</c> se queda como estaba. La
+    /// pantalla manda a veces sólo un campo —al arrastrar una tarjeta va sólo el estado— y con
+    /// una actualización total eso borraría la descripción del ticket sin que nadie lo pidiera.
+    ///
+    /// El título pasa por <see cref="TicketTitle"/> en vez de asignarse a pelo, que es lo que ya
+    /// hace la creación: si no, un título de dos letras entraría por la edición y no por el alta.
+    /// </summary>
+    public Result<bool> Actualizar(string? title, string? description, TicketPriority? priority)
+    {
+        if (title is not null)
+        {
+            var titleResult = TicketTitle.Create(title);
+            if (titleResult.IsFailure)
+                return Result<bool>.Failure(titleResult.Error!);
+
+            Title = title;
+        }
+
+        if (description is not null)
+            Description = description;
+
+        if (priority is not null)
+            PriorityValue = priority.Value;
+
+        return Result<bool>.Success(true);
+    }
+
     public bool ChangeStatus(TicketStatus newStatus)
     {
         if (!Status.CanTransitionTo(newStatus))

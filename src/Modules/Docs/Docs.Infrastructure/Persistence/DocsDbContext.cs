@@ -12,6 +12,9 @@ public sealed class DocsDbContext(DbContextOptions<DocsDbContext> options, IUser
     public DbSet<Page> Pages => Set<Page>();
     public DbSet<DocumentPermission> DocumentPermissions => Set<DocumentPermission>();
 
+    /// <summary>Cuánto se usa cada plantilla. Ver <see cref="UsoDePlantilla"/>.</summary>
+    public DbSet<UsoDePlantilla> UsosDePlantilla => Set<UsoDePlantilla>();
+
     /// <summary>Lo que cada página menciona. Ver <see cref="Domain.Menciones.MencionEnDocumento"/>.</summary>
     public DbSet<Domain.Menciones.MencionEnDocumento> MencionesEnDocumentos
         => Set<Domain.Menciones.MencionEnDocumento>();
@@ -34,6 +37,19 @@ public sealed class DocsDbContext(DbContextOptions<DocsDbContext> options, IUser
       modelBuilder.Entity<Domain.Menciones.MencionEnDocumento>()
           .HasIndex(m => new { m.TenantId, m.TipoMencionado, m.EntidadMencionadaId })
           .HasDatabaseName("IX_Menciones_TenantId_Tipo_Entidad");
+
+      // Una fila por plantilla y por inquilino. La unicidad va en la base y no sólo en el
+      // código porque dos personas creando a la vez desde la misma plantilla harían dos filas,
+      // y a partir de ahí el contador se reparte entre ambas y nunca sube.
+      modelBuilder.Entity<UsoDePlantilla>()
+          .HasIndex(u => new { u.TenantId, u.Clave })
+          .IsUnique()
+          .HasDatabaseName("IX_UsosDePlantilla_TenantId_Clave");
+
+      modelBuilder.Entity<UsoDePlantilla>()
+          .Property(u => u.Clave)
+          .HasMaxLength(100)
+          .IsRequired();
 
       ApplyTenantFilters(modelBuilder);
     }

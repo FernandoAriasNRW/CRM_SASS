@@ -32,6 +32,73 @@ public sealed class CreateTicketHandler(
   }
 }
 
+/// <summary>
+/// La edición de un ticket: título, descripción, prioridad, estado y responsable.
+///
+/// <b>No existía.</b> El endpoint <c>PATCH /tickets/{id}</c> estaba publicado y la pantalla lo
+/// usaba —al guardar la ficha y al arrastrar una tarjeta entre columnas— pero MediatR no tenía a
+/// quién entregarle el comando, así que cada intento acababa en un 500 con «No service for type
+/// IRequestHandler». El tablero devolvía la tarjeta a su sitio y decía «no se pudo mover», sin
+/// más pista.
+///
+/// Acepta campos sueltos a propósito. Arrastrar manda sólo el estado, y la ficha manda los
+/// cuatro; un comando por campo multiplicaría los viajes sin ganar nada.
+/// </summary>
+public sealed class UpdateTicketHandler(
+    ITicketRepository repository,
+    ITicketingUnitOfWork unitOfWork) : ICommandHandler<UpdateTicketCommand, bool>
+{
+  public async Task<Result<bool>> Handle(UpdateTicketCommand request, CancellationToken cancellationToken)
+  {
+    var ticket = await repository.GetByIdAsync(request.TenantId, request.TicketId, cancellationToken);
+    if (ticket is null)
+      return Result<bool>.Failure("Ticket not found");
+
+    TicketPriority? priority = null;
+    if (!string.IsNullOrWhiteSpace(request.Priority))
+    {
+      priority = TicketPriority.FromName<TicketPriority>(request.Priority);
+      if (priority is null)
+        return Result<bool>.Failure($"Invalid priority: {request.Priority}");
+    }
+
+    // Se valida el estado **antes** de tocar nada. Si se aplicaran los campos uno a uno y el
+    // estado resultara inválido, el ticket se quedaría con el título nuevo y el estado viejo:
+    // medio guardado, y la pantalla enseñando un error como si no se hubiera guardado nada.
+    TicketStatus? status = null;
+    if (!string.IsNullOrWhiteSpace(request.Status))
+    {
+      status = TicketStatus.FromName<TicketStatus>(request.Status);
+      if (status is null)
+        return Result<bool>.Failure($"Invalid status: {request.Status}");
+    }
+
+    var actualizado = ticket.Actualizar(request.Title, request.Description, priority);
+    if (actualizado.IsFailure)
+      return Result<bool>.Failure(actualizado.Error!);
+
+    if (status is not null && status.Value != ticket.Status.Value)
+    {
+      // Por el método del dominio, no asignando el valor: es el que levanta el evento que
+      // disparan las automatizaciones y las notificaciones de «tu ticket cambió de estado».
+      if (!ticket.ChangeStatus(status))
+        return Result<bool>.Failure($"Cannot transition from {ticket.Status.Name} to {request.Status}");
+    }
+
+    if (request.AssignedAgentId is not null)
+    {
+      if (request.AssignedAgentId == Guid.Empty)
+        ticket.Unassign();
+      else if (request.AssignedAgentId != ticket.AssignedAgentId)
+        ticket.AssignTo(request.AssignedAgentId.Value);
+    }
+
+    await repository.UpdateAsync(ticket, cancellationToken);
+    await unitOfWork.SaveChangesAsync(cancellationToken);
+    return Result<bool>.Success(true);
+  }
+}
+
 public sealed class ChangeTicketStatusHandler(
     ITicketRepository repository,
     ITicketingUnitOfWork unitOfWork) : ICommandHandler<ChangeTicketStatusCommand, bool>

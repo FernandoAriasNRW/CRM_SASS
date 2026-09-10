@@ -1293,3 +1293,93 @@ en el portátil de noche y claro en el monitor de la oficina.
 
 «Admin» y «Customizar menú» usaban los dos el engranaje, uno encima del otro y con destinos
 distintos. Admin pasa a un escudo.
+
+## 20. Las plantillas repetidas, y el ticket que no se dejaba mover
+
+### 20.1 Cuarenta y cinco copias de cada documento sembrado
+
+«Mis plantillas» era una cuadrícula que no acababa: la misma tarjeta, «Plantilla: Especificación de
+Producto (PRD)», cuarenta y cinco veces. Debajo estaba el listado de documentos, fuera de la vista.
+
+Es la cuarta aparición del mismo fallo, con la misma causa que los 695 usuarios y los 184 eventos:
+sin petición HTTP el inquilino vale `Guid.Empty`, la comprobación «¿ya hay documentos?» respondía
+que no, y los tres documentos de demostración se creaban otra vez en cada arranque. La base de
+desarrollo llegó a 162 documentos con nueve títulos.
+
+El sembrador dejó de crearlos hace dos entregas —abre `ComoInquilino` antes de mirar— pero lo ya
+creado se queda: 132 filas que ninguna pantalla iba a limpiar sola. La migración
+`LimpiarDocumentosSembradosDuplicados` conserva la copia más antigua de cada
+(inquilino, título, tipo).
+
+**Sólo toca los tres títulos que siembra el sembrador, y sólo en sus tipos.** Un documento creado
+*a partir* de una plantilla se llama igual que ella, y borrar por título a secas se llevaría por
+delante el trabajo de alguien. Tampoco se añade un índice único, a diferencia del correo de
+usuario: dos documentos con el mismo título son perfectamente legítimos.
+
+### 20.2 Cuatro plantillas, y que sean las que se usan
+
+La galería enseñaba las cuatro predefinidas y, debajo, **todas** las del equipo en otra rejilla
+aparte. Dos sitios donde mirar antes de elegir, y ninguno de los dos con un límite.
+
+Ahora las dos clases son la misma lista: cuatro tarjetas a la vista y el resto detrás de «Ver más»,
+que abre un cajón —como el resto de los módulos— con buscador y agrupadas por procedencia. Dentro
+del cajón sí importa de dónde sale cada una: una plantilla del equipo se puede editar y borrar, y
+una del sistema no.
+
+Las cuatro que se ven son las más usadas. Eso necesitaba un contador que no existía, y ahí estaba
+la decisión: **guardarlo en el navegador habría sido más barato**, pero entonces cada persona vería
+un orden distinto y quien entrara nuevo vería cuatro plantillas al azar. La tabla `UsosDePlantilla`
+cuenta por inquilino, con una fila por plantilla y unicidad en la base — sin ella, dos personas
+creando a la vez desde la misma plantilla harían dos filas y el contador se repartiría entre ambas
+sin subir nunca.
+
+La clave es de texto porque las predefinidas **no son filas**: viven en el código, identificadas
+por clave. Una sola columna admite las dos y evita tener dos contadores que se cuentan distinto.
+
+El contador sube dentro de la misma transacción que la creación. Contarlo desde el cliente dejaría
+la galería ordenada por «veces que alguien pulsó», no por «documentos que salieron de aquí».
+
+Y una entrada nueva en el panel de Documentos, «Mis plantillas», que lista sólo las del equipo.
+
+### 20.3 El ticket que no se dejaba mover
+
+Arrastrar una tarjeta entre columnas soltaba dos avisos: uno rojo con
+`No service for type 'MediatR.IRequestHandler\`2[Ticketing.Application.Commands.UpdateTicketCommand...`
+y otro diciendo «No se pudo mover el ticket».
+
+`PATCH /tickets/{id}` estaba publicado, el comando existía y **el handler no**. MediatR no tenía a
+quién entregarle el comando, así que cada intento acababa en 500. Guardar la ficha de un ticket
+tampoco guardaba nada, por lo mismo. Es el patrón de siempre en este proyecto: la pantalla ofrece
+algo que el servidor nunca honró.
+
+La actualización es parcial a propósito. Arrastrar manda sólo el estado, y una actualización total
+borraría la descripción del ticket cada vez que alguien mueve una tarjeta.
+
+El estado se valida **antes** de tocar nada. Aplicando los campos uno a uno, un estado inválido
+dejaría el ticket con el título nuevo y el estado viejo: medio guardado, con la pantalla enseñando
+un error como si no se hubiera guardado nada.
+
+Y el endpoint devolvía 404 ante cualquier fallo, así que un título de tres letras se leía como si el
+ticket hubiera desaparecido. Ahora el 404 es sólo para el ticket que no existe.
+
+### 20.4 El cajón no decía que era un diálogo
+
+El modal de plantillas al que sustituye sí llevaba `role="dialog"`. Al pasarlo a cajón se habría
+perdido: un lector de pantalla leería un grupo cualquiera en vez de «diálogo, Plantillas». Se
+arregla en el cajón compartido, así que lo heredan los de todos los módulos.
+
+### 20.5 Lo que quedaba en inglés en Documentos
+
+«Save as Template», «Sort: Updated», «Filters», «Location», «Date updated», los nombres de las
+cuatro plantillas predefinidas. Estaban marcadas para traducir pero **escritas en inglés**, y el
+idioma de origen del proyecto es el español: se veían en inglés dentro de la versión española y no
+había forma de traducirlas al inglés porque ya lo estaban.
+
+El contenido que genera cada plantilla predefinida sigue en inglés dentro del handler. Eso es un
+arreglo aparte y más grande: son documentos enteros.
+
+### 20.6 Lo que queda
+
+**Los tickets sembrados están duplicados igual**: 230 en «Abierto» con cinco títulos. El sembrador
+ya no los crea, pero la limpieza no se ha hecho — borrar 225 tickets es una decisión de quien es
+dueño de los datos, no una consecuencia de arreglar las plantillas.

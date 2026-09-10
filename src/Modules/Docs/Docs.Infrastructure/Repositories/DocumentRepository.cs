@@ -45,6 +45,31 @@ public class DocumentRepository(DocsDbContext dbContext) : IDocumentRepository
             .ToListAsync(cancellationToken);
     }
 
+    public async Task RegistrarUsoDePlantillaAsync(Guid tenantId, string clave, CancellationToken cancellationToken = default)
+    {
+        // Se busca sin el filtro de inquilino puesto porque este contador también se toca desde
+        // sitios sin petición HTTP; el `tenantId` va explícito en la comparación, así que el
+        // aislamiento no depende del filtro.
+        var uso = await dbContext.UsosDePlantilla
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(u => u.TenantId == tenantId && u.Clave == clave, cancellationToken);
+
+        if (uso is null)
+            await dbContext.UsosDePlantilla.AddAsync(UsoDePlantilla.Primera(tenantId, clave), cancellationToken);
+        else
+            uso.Sumar();
+    }
+
+    public async Task<List<UsoDePlantilla>> GetUsosDePlantillaAsync(Guid tenantId, CancellationToken cancellationToken = default)
+    {
+        return await dbContext.UsosDePlantilla
+            .IgnoreQueryFilters()
+            .Where(u => u.TenantId == tenantId)
+            .OrderByDescending(u => u.Veces)
+            .ThenByDescending(u => u.UltimoUsoUtc)
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         await dbContext.SaveChangesAsync(cancellationToken);
