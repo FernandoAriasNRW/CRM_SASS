@@ -10,11 +10,15 @@ import type {} from '@tiptap/extension-youtube';
 import type {} from '@tiptap/starter-kit';
 import type {} from '@tiptap/extension-table';
 import type {} from '@tiptap/extension-task-list';
+import type {} from '@tiptap/extension-details';
+import type {} from '@tiptap/extension-highlight';
 import {
-  lucideCode, lucideHeading1, lucideHeading2, lucideHeading3, lucideImage, lucideList,
-  lucideListChecks, lucideListOrdered, lucideMinus, lucidePaperclip, lucideQuote, lucideTable,
-  lucideType, lucideYoutube
+  lucideBan, lucideChevronRight, lucideCircleCheck, lucideCode, lucideHeading1, lucideHeading2,
+  lucideHeading3, lucideImage, lucideLightbulb, lucideList, lucideListChecks, lucideListOrdered,
+  lucideMinus, lucidePaperclip, lucideQuote, lucideTable, lucideTriangleAlert, lucideType,
+  lucideYoutube
 } from '@ng-icons/lucide';
+import type {} from './aviso';
 
 /**
  * Qué se le pide al componente cuando hace falta una dirección.
@@ -155,6 +159,51 @@ export const COMANDOS_DEL_EDITOR: readonly ComandoDelEditor[] = [
     ejecutar: ({ editor, range }) =>
       editor.chain().focus().deleteRange(range)
         .insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()
+  },
+  {
+    clave: 'desplegable',
+    titulo: $localize`Desplegable`,
+    descripcion: $localize`Contenido que se abre y se cierra`,
+    icono: lucideChevronRight,
+    grupo: GRUPO_BLOQUES,
+    alias: ['desplegable', 'toggle', 'details', 'acordeon', 'acordeón', 'plegar'],
+    ejecutar: ({ editor, range }) => editor.chain().focus().deleteRange(range).setDetails().run()
+  },
+  {
+    clave: 'aviso',
+    titulo: $localize`Aviso`,
+    descripcion: $localize`Un recuadro para lo importante`,
+    icono: lucideLightbulb,
+    grupo: GRUPO_BLOQUES,
+    alias: ['aviso', 'nota', 'callout', 'recuadro', 'destacado'],
+    ejecutar: ({ editor, range }) => editor.chain().focus().deleteRange(range).toggleAviso('nota').run()
+  },
+  {
+    clave: 'aviso-ojo',
+    titulo: $localize`Aviso de atención`,
+    descripcion: $localize`Un recuadro de «ojo con esto»`,
+    icono: lucideTriangleAlert,
+    grupo: GRUPO_BLOQUES,
+    alias: ['aviso', 'atencion', 'atención', 'ojo', 'cuidado', 'warning'],
+    ejecutar: ({ editor, range }) => editor.chain().focus().deleteRange(range).toggleAviso('ojo').run()
+  },
+  {
+    clave: 'aviso-peligro',
+    titulo: $localize`Aviso de peligro`,
+    descripcion: $localize`Un recuadro de «no hagas esto»`,
+    icono: lucideBan,
+    grupo: GRUPO_BLOQUES,
+    alias: ['aviso', 'peligro', 'danger', 'error', 'no'],
+    ejecutar: ({ editor, range }) => editor.chain().focus().deleteRange(range).toggleAviso('peligro').run()
+  },
+  {
+    clave: 'aviso-bien',
+    titulo: $localize`Aviso de acierto`,
+    descripcion: $localize`Un recuadro de «así sí»`,
+    icono: lucideCircleCheck,
+    grupo: GRUPO_BLOQUES,
+    alias: ['aviso', 'bien', 'acierto', 'ok', 'success', 'correcto'],
+    ejecutar: ({ editor, range }) => editor.chain().focus().deleteRange(range).toggleAviso('bien').run()
   },
   {
     clave: 'separador',

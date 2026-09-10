@@ -38,6 +38,14 @@ import TaskItem from '@tiptap/extension-task-item';
 import Link from '@tiptap/extension-link';
 import Placeholder from '@tiptap/extension-placeholder';
 import BubbleMenu from '@tiptap/extension-bubble-menu';
+import { Details, DetailsContent, DetailsSummary } from '@tiptap/extension-details';
+import { DragHandle } from '@tiptap/extension-drag-handle';
+import Highlight from '@tiptap/extension-highlight';
+import Typography from '@tiptap/extension-typography';
+import CharacterCount from '@tiptap/extension-character-count';
+import { createLowlight, common } from 'lowlight';
+import { Aviso } from './extensions/aviso';
+import { BloqueDeCodigo } from './extensions/bloque-de-codigo';
 import { EmojiPickerComponent } from './extensions/emoji-picker.component';
 import { Subject, debounceTime } from 'rxjs';
 import { ClickableDirective } from '../../shared/directives/clickable.directive';
@@ -115,6 +123,9 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
 
   /** Para desactivar los botones de exportar mientras se genera el fichero. */
   readonly exportando = signal(false);
+
+  /** Cuántas palabras lleva la página abierta. */
+  readonly palabras = signal(0);
 
   /** Qué está pidiendo el modal de dirección, o `null` si no hay ninguno abierto. */
   readonly urlPedida = signal<ClaseDeUrl | null>(null);
@@ -325,6 +336,50 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
       // porque la extensión no puede —ni debe— saber llamar a la API: sabe escribir el nodo con
       // el formato que el servidor lee, y nada más.
       Mencion.configure({ buscador: (disparador, consulta) => this.menciones.buscar(disparador, consulta) }),
+      // ── Los bloques que faltaban ──────────────────────────────────────────────────────────
+      //
+      // Sin ellos el editor sólo daba formato al texto; con ellos se puede estructurar un
+      // documento largo, que es lo que se pedía de Notion y de ClickUp.
+
+      /** Desplegables: la forma de tener un documento largo que no abruma. */
+      Details.configure({ persist: true, HTMLAttributes: { class: 'desplegable' } }),
+      DetailsSummary,
+      DetailsContent,
+
+      /** El recuadro de «ojo con esto». Escrito aquí: no hay extensión oficial. */
+      Aviso,
+
+      /**
+       * Código coloreado, con el lenguaje elegible.
+       *
+       * `common` trae los lenguajes habituales en vez de los ~190 de `all`, que pesan más que el
+       * resto del editor junto.
+       */
+      BloqueDeCodigo.configure({ lowlight: createLowlight(common) }),
+
+      Highlight.configure({ multicolor: false }),
+
+      /** Comillas, guiones y flechas al escribir. No cambia lo guardado: cambia lo que se teclea. */
+      Typography,
+
+      CharacterCount,
+
+      /**
+       * El asa para arrastrar bloques.
+       *
+       * Es lo que define a estos editores: cada bloque es un objeto que se puede agarrar. Hasta
+       * ahora reordenar dos párrafos era cortar y pegar.
+       */
+      DragHandle.configure({
+        render: () => {
+          const asa = document.createElement('div');
+          asa.className = 'asa-de-bloque';
+          asa.setAttribute('aria-hidden', 'true');
+          asa.textContent = '⠿';
+          return asa;
+        }
+      }),
+
       Table.configure({ resizable: true }),
       TableRow,
       TableHeader,
@@ -348,6 +403,11 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
     },
     onUpdate: ({ editor }) => {
       if (this.cargandoPagina) return;
+
+      // El contador se lee del editor en cada cambio: la extensión lo calcula igual, y sin esto
+      // `CharacterCount` sería otra extensión cargada que no hace nada, que es justo lo que hemos
+      // estado quitando.
+      this.palabras.set(editor.storage['characterCount'].words());
 
       const page = this.activePage();
       const doc = this.activeDocument();
@@ -726,6 +786,9 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
     setTimeout(() => {
       this.editor.commands.focus();
       this.cargandoPagina = false;
+
+      // Al abrir tampoco lo cuenta nadie, porque `onUpdate` no llega a ejecutarse.
+      this.palabras.set(this.editor.storage['characterCount'].words());
     }, 50);
   }
 

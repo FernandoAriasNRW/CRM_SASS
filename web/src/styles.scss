@@ -193,3 +193,227 @@
     background: transparent;
   }
 }
+
+/**
+ * El editor de Documentos: los bloques que no existían.
+ *
+ * Todo lo que hay aquí toma el color de los tokens semánticos, nunca de un color escrito a mano.
+ * Es lo mismo que se arregló en el menú `/`, que iba pintado con `background = 'white'` desde
+ * JavaScript y por eso no respetaba el tema oscuro.
+ */
+
+/* El asa para arrastrar un bloque. */
+.asa-de-bloque {
+  width: 1.25rem;
+  height: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  color: hsl(var(--muted-foreground));
+  font-size: 0.9rem;
+  line-height: 1;
+  border-radius: 0.25rem;
+
+  cursor: grab;
+  user-select: none;
+
+  /* Se aparta del texto: encima del margen izquierdo, no dentro de la columna de lectura. */
+  margin-right: 0.25rem;
+
+  &:hover {
+    background-color: hsl(var(--accent));
+    color: hsl(var(--foreground));
+  }
+
+  &:active {
+    cursor: grabbing;
+  }
+}
+
+.ProseMirror {
+  /* Los bloques de aviso. El tono viaja como palabra; el color lo pone esta hoja. */
+  .aviso {
+    display: flex;
+    gap: 0.75rem;
+    padding: 0.875rem 1rem;
+    margin: 1rem 0;
+
+    border-radius: 0.5rem;
+    border-left: 3px solid;
+
+    /*
+      El icono va en `::before` y no como contenido del documento. Dentro sería texto de verdad:
+      se podría borrar dejando el aviso sin icono, y viajaría a las exportaciones como un
+      carácter suelto delante del párrafo.
+    */
+    &::before {
+      flex-shrink: 0;
+      font-size: 1rem;
+      line-height: 1.6;
+    }
+
+    > :first-child { margin-top: 0; }
+    > :last-child { margin-bottom: 0; }
+
+    &[data-tono='nota'] {
+      background-color: hsl(var(--primary) / 0.08);
+      border-left-color: hsl(var(--primary));
+      &::before { content: '💡'; }
+    }
+
+    &[data-tono='ojo'] {
+      background-color: hsl(var(--warning) / 0.12);
+      border-left-color: hsl(var(--warning));
+      &::before { content: '⚠️'; }
+    }
+
+    &[data-tono='peligro'] {
+      background-color: hsl(var(--destructive) / 0.1);
+      border-left-color: hsl(var(--destructive));
+      &::before { content: '🚫'; }
+    }
+
+    &[data-tono='bien'] {
+      background-color: hsl(var(--success) / 0.12);
+      border-left-color: hsl(var(--success));
+      &::before { content: '✅'; }
+    }
+  }
+
+  /* Los desplegables. */
+  .desplegable {
+    display: flex;
+    gap: 0.5rem;
+    padding: 0.5rem 0;
+    margin: 0.5rem 0;
+
+    > button {
+      flex-shrink: 0;
+      width: 1.25rem;
+      height: 1.5rem;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      background: transparent;
+      border: 0;
+      cursor: pointer;
+      color: hsl(var(--muted-foreground));
+      border-radius: 0.25rem;
+
+      &:hover { background-color: hsl(var(--accent)); }
+
+      /* El triángulo: gira al abrirse, que es la única señal de que hay algo dentro. */
+      &::before {
+        content: '▸';
+        transition: transform 0.15s ease;
+      }
+    }
+
+    &.is-open > button::before {
+      transform: rotate(90deg);
+    }
+
+    > div { flex: 1; min-width: 0; }
+
+    summary {
+      font-weight: 600;
+      cursor: pointer;
+      list-style: none;
+      &::-webkit-details-marker { display: none; }
+    }
+  }
+
+  /*
+    Código coloreado.
+    Los nombres de clase los pone lowlight (highlight.js); los colores salen de los tokens, así
+    que el bloque se lee igual en claro y en oscuro sin dos paletas separadas.
+  */
+  /* El bloque de código, con su desplegable de lenguaje encima. */
+  .bloque-de-codigo {
+    position: relative;
+    margin: 1rem 0;
+
+    &__lenguaje {
+      position: absolute;
+      top: 0.5rem;
+      right: 0.5rem;
+
+      font-size: 0.7rem;
+      padding: 0.15rem 0.35rem;
+      border-radius: 0.25rem;
+
+      background-color: hsl(var(--card));
+      color: hsl(var(--muted-foreground));
+      border: 1px solid hsl(var(--border));
+
+      /* Discreto hasta que hace falta: encima de un bloque de código, un desplegable a plena
+         opacidad compite con el propio código por la atención. */
+      opacity: 0;
+      transition: opacity 0.15s ease;
+    }
+
+    &:hover &__lenguaje,
+    &__lenguaje:focus {
+      opacity: 1;
+    }
+
+    pre { margin: 0; }
+  }
+
+  pre {
+    background-color: hsl(var(--muted));
+    color: hsl(var(--foreground));
+    border: 1px solid hsl(var(--border));
+    border-radius: 0.5rem;
+    padding: 0.875rem 1rem;
+    overflow-x: auto;
+
+    code {
+      background: none;
+      padding: 0;
+      font-size: 0.85em;
+    }
+
+    .hljs-comment,
+    .hljs-quote { color: hsl(var(--muted-foreground)); font-style: italic; }
+
+    .hljs-keyword,
+    .hljs-selector-tag,
+    .hljs-literal,
+    .hljs-section,
+    .hljs-doctag,
+    .hljs-type,
+    .hljs-name,
+    .hljs-strong { color: hsl(var(--primary)); font-weight: 600; }
+
+    .hljs-string,
+    .hljs-title,
+    .hljs-attr,
+    .hljs-attribute,
+    .hljs-symbol,
+    .hljs-bullet,
+    .hljs-addition { color: hsl(var(--success)); }
+
+    .hljs-number,
+    .hljs-variable,
+    .hljs-template-variable,
+    .hljs-regexp,
+    .hljs-deletion { color: hsl(var(--warning)); }
+
+    .hljs-built_in,
+    .hljs-class .hljs-title,
+    .hljs-meta { color: hsl(var(--destructive)); }
+
+    .hljs-emphasis { font-style: italic; }
+  }
+
+  mark {
+    background-color: hsl(var(--warning) / 0.35);
+    color: inherit;
+    padding: 0.05em 0.15em;
+    border-radius: 0.15rem;
+  }
+}

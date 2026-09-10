@@ -38,6 +38,8 @@
 
       <!-- Right Actions -->
       <div class="flex items-center gap-3">
+        <span class="text-xs text-muted-foreground tabular-nums" i18n>{palabras(), plural, =0 {Sin palabras} =1 {1 palabra} other {{{ palabras() }} palabras}}</span>
+
         <!--
           El estado real del guardado. Antes aquí ponía «Saved just now», una cadena escrita a
           mano que se pintaba siempre, dijera lo que dijera el servidor, encima de un guardado que

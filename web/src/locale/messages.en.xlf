@@ -7683,6 +7683,110 @@ Pending</target>
           <context context-type="linenumber">142</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="7254224394534548277" datatype="html">
+        <source>Desplegable</source>
+        <target state="final">Toggle</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/extensions/comandos-del-editor.ts</context>
+          <context context-type="linenumber">165</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3182174756215315743" datatype="html">
+        <source>Contenido que se abre y se cierra</source>
+        <target state="final">Content that opens and closes</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/extensions/comandos-del-editor.ts</context>
+          <context context-type="linenumber">166</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="378994111667349795" datatype="html">
+        <source>Aviso</source>
+        <target state="final">Callout</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/extensions/comandos-del-editor.ts</context>
+          <context context-type="linenumber">174</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="755999251052351938" datatype="html">
+        <source>Un recuadro para lo importante</source>
+        <target state="final">A box for what matters</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/extensions/comandos-del-editor.ts</context>
+          <context context-type="linenumber">175</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5998271600696444559" datatype="html">
+        <source>Aviso de atención</source>
+        <target state="final">Warning callout</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/extensions/comandos-del-editor.ts</context>
+          <context context-type="linenumber">183</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8767781607949772851" datatype="html">
+        <source>Un recuadro de «ojo con esto»</source>
+        <target state="final">A box for “watch out for this”</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/extensions/comandos-del-editor.ts</context>
+          <context context-type="linenumber">184</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3990541224479785413" datatype="html">
+        <source>Aviso de peligro</source>
+        <target state="final">Danger callout</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/extensions/comandos-del-editor.ts</context>
+          <context context-type="linenumber">192</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2153578471834282418" datatype="html">
+        <source>Un recuadro de «no hagas esto»</source>
+        <target state="final">A box for “do not do this”</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/extensions/comandos-del-editor.ts</context>
+          <context context-type="linenumber">193</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7304807335557462434" datatype="html">
+        <source>Aviso de acierto</source>
+        <target state="final">Success callout</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/extensions/comandos-del-editor.ts</context>
+          <context context-type="linenumber">201</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2257001474282810237" datatype="html">
+        <source>Un recuadro de «así sí»</source>
+        <target state="final">A box for “this is the way”</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/extensions/comandos-del-editor.ts</context>
+          <context context-type="linenumber">202</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="596202917501368638" datatype="html">
+        <source>{VAR_PLURAL, plural, =0 {Sin palabras} =1 {1 palabra} other {<x id="INTERPOLATION"/> palabras}}</source>
+        <target state="final">{VAR_PLURAL, plural, =0 {No words} =1 {1 word} other {<x id="INTERPOLATION"/> words}}</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">41,43</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3932708515405932890" datatype="html">
+        <source>Lenguaje del bloque de código</source>
+        <target state="final">Code block language</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/extensions/bloque-de-codigo.ts</context>
+          <context context-type="linenumber">45</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="805898533016841362" datatype="html">
+        <source>Automático</source>
+        <target state="final">Automatic</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/extensions/bloque-de-codigo.ts</context>
+          <context context-type="linenumber">50</context>
+        </context-group>
+      </trans-unit>
     </body>
   </file>
 </xliff>
