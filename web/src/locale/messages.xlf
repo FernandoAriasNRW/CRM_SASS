@@ -703,6 +703,14 @@
           <context context-type="linenumber">162,163</context>
         </context-group>
         <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/modals/guardar-plantilla-modal.component.ts</context>
+          <context context-type="linenumber">68</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/modals/importar-documento-modal.component.ts</context>
+          <context context-type="linenumber">82</context>
+        </context-group>
+        <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/projects/project-detail-modal.component.html</context>
           <context context-type="linenumber">121,122</context>
         </context-group>
@@ -1471,6 +1479,10 @@ Pendiente</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/calendar/evento-drawer.component.ts</context>
           <context context-type="linenumber">106,107</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/modals/guardar-plantilla-modal.component.ts</context>
+          <context context-type="linenumber">52,53</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/projects/project-create-modal.component.html</context>
@@ -2472,10 +2484,6 @@ Pendiente</source>
           <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
           <context context-type="linenumber">69,70</context>
         </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/docs/modals/importar-documento-modal.component.ts</context>
-          <context context-type="linenumber">56,57</context>
-        </context-group>
       </trans-unit>
       <trans-unit id="357912206619907479" datatype="html">
         <source>Todos los documentos</source>
@@ -2552,6 +2560,10 @@ Pendiente</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
           <context context-type="linenumber">161,162</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/modals/importar-documento-modal.component.ts</context>
+          <context context-type="linenumber">88</context>
         </context-group>
       </trans-unit>
       <trans-unit id="1252553035901898105" datatype="html">
@@ -2827,7 +2839,7 @@ Pendiente</source>
         <source> Convert this document into a reusable template for your workspace. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/docs/modals/guardar-plantilla-modal.component.ts</context>
-          <context context-type="linenumber">40,41</context>
+          <context context-type="linenumber">40</context>
         </context-group>
       </trans-unit>
       <trans-unit id="8496679166012942026" datatype="html">
@@ -2837,13 +2849,6 @@ Pendiente</source>
           <context context-type="linenumber">45,46</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="4902817035128594900" datatype="html">
-        <source>Description</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/docs/modals/guardar-plantilla-modal.component.ts</context>
-          <context context-type="linenumber">52,53</context>
-        </context-group>
-      </trans-unit>
       <trans-unit id="5095200996423488514" datatype="html">
         <source>Briefly describe what this template is used for...</source>
         <context-group purpose="location">
@@ -2851,19 +2856,8 @@ Pendiente</source>
           <context context-type="linenumber">54,55</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="2330577642930707695" datatype="html">
-        <source> Cancel </source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/docs/modals/guardar-plantilla-modal.component.ts</context>
-          <context context-type="linenumber">68</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/docs/modals/importar-documento-modal.component.ts</context>
-          <context context-type="linenumber">82</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="3407061818321766940" datatype="html">
-        <source>Saving...</source>
+      <trans-unit id="3348885058742055564" datatype="html">
+        <source>Guardando…</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/docs/modals/guardar-plantilla-modal.component.ts</context>
           <context context-type="linenumber">73</context>
@@ -2871,6 +2865,10 @@ Pendiente</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/docs/modals/importar-documento-modal.component.ts</context>
           <context context-type="linenumber">87</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/teams/team-form.component.html</context>
+          <context context-type="linenumber">19</context>
         </context-group>
       </trans-unit>
       <trans-unit id="1036586810617210056" datatype="html">
@@ -2894,8 +2892,8 @@ Pendiente</source>
           <context context-type="linenumber">128</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="3893994986303966321" datatype="html">
-        <source>Import Document</source>
+      <trans-unit id="5197937797202822691" datatype="html">
+        <source>Importar documento</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/docs/modals/importar-documento-modal.component.ts</context>
           <context context-type="linenumber">33,34</context>
@@ -2908,8 +2906,15 @@ Pendiente</source>
           <context context-type="linenumber">45</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="3652771791107161042" datatype="html">
-        <source>Document title...</source>
+      <trans-unit id="5055898310912492901" datatype="html">
+        <source>Título del documento</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/modals/importar-documento-modal.component.ts</context>
+          <context context-type="linenumber">56,57</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7098730968228999528" datatype="html">
+        <source>Título del documento…</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/docs/modals/importar-documento-modal.component.ts</context>
           <context context-type="linenumber">58,59</context>
@@ -2922,18 +2927,11 @@ Pendiente</source>
           <context context-type="linenumber">65</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="1167256119870125658" datatype="html">
-        <source>Paste raw Markdown, HTML, or plain text here...</source>
+      <trans-unit id="4404572577798664243" datatype="html">
+        <source>Pega aquí Markdown, HTML o texto sin formato…</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/docs/modals/importar-documento-modal.component.ts</context>
           <context context-type="linenumber">68,69</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="41171508559592647" datatype="html">
-        <source>Import Now</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/docs/modals/importar-documento-modal.component.ts</context>
-          <context context-type="linenumber">88</context>
         </context-group>
       </trans-unit>
       <trans-unit id="5106210477788225297" datatype="html">
@@ -4977,13 +4975,6 @@ Pendiente</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/teams/team-form.component.html</context>
           <context context-type="linenumber">11,12</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="3348885058742055564" datatype="html">
-        <source>Guardando…</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/teams/team-form.component.html</context>
-          <context context-type="linenumber">19</context>
         </context-group>
       </trans-unit>
       <trans-unit id="7447487462866802751" datatype="html">

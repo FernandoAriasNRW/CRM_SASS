@@ -6758,6 +6758,39 @@ Pending</target>
           <context context-type="linenumber">175</context>
         </context-group>
       </trans-unit>
+    
+      <trans-unit id="5197937797202822691" datatype="html">
+        <source>Importar documento</source>
+        <target>Import document</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/modals/importar-documento-modal.component.ts</context>
+          <context context-type="linenumber">33,34</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5055898310912492901" datatype="html">
+        <source>Título del documento</source>
+        <target>Document title</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/modals/importar-documento-modal.component.ts</context>
+          <context context-type="linenumber">56,57</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7098730968228999528" datatype="html">
+        <source>Título del documento…</source>
+        <target>Document title…</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/modals/importar-documento-modal.component.ts</context>
+          <context context-type="linenumber">58,59</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4404572577798664243" datatype="html">
+        <source>Pega aquí Markdown, HTML o texto sin formato…</source>
+        <target>Paste Markdown, HTML or plain text here…</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/modals/importar-documento-modal.component.ts</context>
+          <context context-type="linenumber">68,69</context>
+        </context-group>
+      </trans-unit>
     </body>
   </file>
 </xliff>

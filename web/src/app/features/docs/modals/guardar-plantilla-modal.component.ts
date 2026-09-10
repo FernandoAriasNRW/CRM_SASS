@@ -49,7 +49,7 @@ import { DocsService, type DocumentDto } from '../docs.service';
           </div>
 
           <div>
-            <label for="plantilla-descripcion" class="block text-xs font-medium text-muted-foreground mb-1" i18n>Description</label>
+            <label for="plantilla-descripcion" class="block text-xs font-medium text-muted-foreground mb-1" i18n>Descripción</label>
             <textarea id="plantilla-descripcion" rows="2" [(ngModel)]="descripcion"
                       i18n-placeholder placeholder="Briefly describe what this template is used for..."
                       class="w-full px-3 py-2 text-sm bg-muted border border-border rounded-lg
@@ -65,12 +65,12 @@ import { DocsService, type DocumentDto } from '../docs.service';
           <button type="button" (click)="cerrar.emit()"
                   class="px-4 py-2 text-xs font-medium text-muted-foreground hover:bg-muted rounded-lg
                          focus:outline-none focus:ring-2 focus:ring-ring" i18n>
-            Cancel
+            Cancelar
           </button>
           <button type="button" (click)="guardar()" [disabled]="guardando()"
                   class="px-4 py-2 text-xs font-medium text-primary-foreground bg-primary rounded-lg shadow-sm
                          hover:bg-primary/90 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-ring">
-            @if (guardando()) { <ng-container i18n>Saving...</ng-container> }
+            @if (guardando()) { <ng-container i18n>Guardando…</ng-container> }
             @else { <ng-container i18n>Save Template</ng-container> }
           </button>
         </div>
