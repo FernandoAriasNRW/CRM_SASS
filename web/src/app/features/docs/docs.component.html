@@ -455,30 +455,124 @@
     (importado)="alImportar($event)" />
 }
 
+@if (urlPedida(); as clase) {
+  <app-pedir-url-modal
+    [clase]="clase"
+    (cancelar)="responderUrl(null)"
+    (aceptado)="responderUrl($event)" />
+}
+
 <app-plantillas-drawer
   [abierto]="isTemplatePickerOpen()"
   [plantillas]="plantillas()"
   (cerrar)="isTemplatePickerOpen.set(false)"
   (elegir)="usarPlantilla($event)" />
 
-<!-- Bubble Menu Wrapper for Tiptap -->
+<!--
+  La barra que sale al seleccionar texto.
+
+  Tenía cinco botones: negrita, cursiva, tachado, H1 y H2. **Ni siquiera enlace**, aunque la
+  extensión `Link` lleva cargada y configurada desde el principio. Eso era literalmente lo que
+  hacía que el editor «estuviera muy simple».
+-->
 <div style="display: none">
-  <div #bubbleMenu class="flex items-center gap-1 bg-white dark:bg-muted border border-border shadow-lg rounded-md p-1">
-    <button (click)="editor.chain().focus().toggleBold().run()" [class.bg-muted]="editor.isActive('bold')" [class.dark:bg-muted]="editor.isActive('bold')" class="p-1.5 rounded hover:bg-muted text-muted-foreground transition-colors">
+  <div #bubbleMenu
+       class="flex items-center gap-0.5 bg-card border border-border shadow-lg rounded-lg p-1">
+
+    <button type="button" (click)="editor.chain().focus().toggleBold().run()"
+            [class.bg-secondary]="editor.isActive('bold')"
+            i18n-title title="Negrita"
+            i18n-aria-label aria-label="Negrita"
+            class="p-1.5 rounded hover:bg-accent text-muted-foreground transition-colors
+                   focus:outline-none focus:ring-2 focus:ring-ring">
       <ng-icon name="lucideBold" class="w-4 h-4"></ng-icon>
     </button>
-    <button (click)="editor.chain().focus().toggleItalic().run()" [class.bg-muted]="editor.isActive('italic')" [class.dark:bg-muted]="editor.isActive('italic')" class="p-1.5 rounded hover:bg-muted text-muted-foreground transition-colors">
+
+    <button type="button" (click)="editor.chain().focus().toggleItalic().run()"
+            [class.bg-secondary]="editor.isActive('italic')"
+            i18n-title title="Cursiva"
+            i18n-aria-label aria-label="Cursiva"
+            class="p-1.5 rounded hover:bg-accent text-muted-foreground transition-colors
+                   focus:outline-none focus:ring-2 focus:ring-ring">
       <ng-icon name="lucideItalic" class="w-4 h-4"></ng-icon>
     </button>
-    <button (click)="editor.chain().focus().toggleStrike().run()" [class.bg-muted]="editor.isActive('strike')" [class.dark:bg-muted]="editor.isActive('strike')" class="p-1.5 rounded hover:bg-muted text-muted-foreground transition-colors">
+
+    <button type="button" (click)="editor.chain().focus().toggleStrike().run()"
+            [class.bg-secondary]="editor.isActive('strike')"
+            i18n-title title="Tachado"
+            i18n-aria-label aria-label="Tachado"
+            class="p-1.5 rounded hover:bg-accent text-muted-foreground transition-colors
+                   focus:outline-none focus:ring-2 focus:ring-ring">
       <ng-icon name="lucideStrikethrough" class="w-4 h-4"></ng-icon>
     </button>
-    <div class="w-px h-4 bg-secondary mx-1"></div>
-    <button (click)="editor.chain().focus().toggleHeading({ level: 1 }).run()" [class.bg-muted]="editor.isActive('heading', { level: 1 })" [class.dark:bg-muted]="editor.isActive('heading', { level: 1 })" class="px-2 py-1 text-xs font-semibold rounded hover:bg-muted text-muted-foreground transition-colors">
+
+    <button type="button" (click)="editor.chain().focus().toggleCode().run()"
+            [class.bg-secondary]="editor.isActive('code')"
+            i18n-title title="Código en línea"
+            i18n-aria-label aria-label="Código en línea"
+            class="p-1.5 rounded hover:bg-accent text-muted-foreground transition-colors
+                   focus:outline-none focus:ring-2 focus:ring-ring">
+      <ng-icon name="lucideCode" class="w-4 h-4"></ng-icon>
+    </button>
+
+    <div class="w-px h-4 bg-border mx-1"></div>
+
+    <button type="button" (click)="editor.chain().focus().toggleHeading({ level: 1 }).run()"
+            [class.bg-secondary]="editor.isActive('heading', { level: 1 })"
+            i18n-title title="Título 1"
+            class="px-2 py-1 text-xs font-semibold rounded hover:bg-accent text-muted-foreground
+                   transition-colors focus:outline-none focus:ring-2 focus:ring-ring">
       H1
     </button>
-    <button (click)="editor.chain().focus().toggleHeading({ level: 2 }).run()" [class.bg-muted]="editor.isActive('heading', { level: 2 })" [class.dark:bg-muted]="editor.isActive('heading', { level: 2 })" class="px-2 py-1 text-xs font-semibold rounded hover:bg-muted text-muted-foreground transition-colors">
+
+    <button type="button" (click)="editor.chain().focus().toggleHeading({ level: 2 }).run()"
+            [class.bg-secondary]="editor.isActive('heading', { level: 2 })"
+            i18n-title title="Título 2"
+            class="px-2 py-1 text-xs font-semibold rounded hover:bg-accent text-muted-foreground
+                   transition-colors focus:outline-none focus:ring-2 focus:ring-ring">
       H2
+    </button>
+
+    <button type="button" (click)="editor.chain().focus().toggleBlockquote().run()"
+            [class.bg-secondary]="editor.isActive('blockquote')"
+            i18n-title title="Cita"
+            i18n-aria-label aria-label="Cita"
+            class="p-1.5 rounded hover:bg-accent text-muted-foreground transition-colors
+                   focus:outline-none focus:ring-2 focus:ring-ring">
+      <ng-icon name="lucideQuote" class="w-4 h-4"></ng-icon>
+    </button>
+
+    <div class="w-px h-4 bg-border mx-1"></div>
+
+    <!--
+      Enlazar y quitar el enlace son dos botones y no uno que alterna: con uno solo hay que
+      adivinar qué va a hacer, y quitar un enlace sin querer obliga a volver a escribirlo.
+    -->
+    <button type="button" (click)="enlazarSeleccion()"
+            [class.bg-secondary]="editor.isActive('link')"
+            i18n-title title="Enlazar"
+            i18n-aria-label aria-label="Enlazar"
+            class="p-1.5 rounded hover:bg-accent text-muted-foreground transition-colors
+                   focus:outline-none focus:ring-2 focus:ring-ring">
+      <ng-icon name="lucideLink" class="w-4 h-4"></ng-icon>
+    </button>
+
+    @if (editor.isActive('link')) {
+      <button type="button" (click)="editor.chain().focus().unsetLink().run()"
+              i18n-title title="Quitar el enlace"
+              i18n-aria-label aria-label="Quitar el enlace"
+              class="p-1.5 rounded hover:bg-accent text-muted-foreground transition-colors
+                     focus:outline-none focus:ring-2 focus:ring-ring">
+        <ng-icon name="lucideUnlink" class="w-4 h-4"></ng-icon>
+      </button>
+    }
+
+    <button type="button" (click)="editor.chain().focus().unsetAllMarks().run()"
+            i18n-title title="Quitar el formato"
+            i18n-aria-label aria-label="Quitar el formato"
+            class="p-1.5 rounded hover:bg-accent text-muted-foreground transition-colors
+                   focus:outline-none focus:ring-2 focus:ring-ring">
+      <ng-icon name="lucideRemoveFormatting" class="w-4 h-4"></ng-icon>
     </button>
   </div>
 </div>

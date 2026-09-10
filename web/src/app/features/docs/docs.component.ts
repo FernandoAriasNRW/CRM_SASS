@@ -12,7 +12,7 @@ import {
   lucideUpload, lucideWand2, lucideLayoutTemplate, lucideCopy, lucideBookOpen,
   lucideUsers, lucideCalendar, lucideCheckCircle2, lucideStar, lucideFilter,
   lucideArrowUpDown, lucideTag, lucideX, lucideFileUp, lucideBriefcase, lucideCheck,
-  lucideTriangleAlert
+  lucideTriangleAlert, lucideCode, lucideQuote, lucideUnlink, lucideRemoveFormatting
 } from '@ng-icons/lucide';
 import { DocsService, DocumentDto, PageDto } from './docs.service';
 import { SeccionesDelPanelService } from '../../shared/ui/panel-de-navegacion/secciones-del-panel.service';
@@ -45,6 +45,7 @@ import { GuardarPlantillaModalComponent } from './modals/guardar-plantilla-modal
 import { ImportarDocumentoModalComponent } from './modals/importar-documento-modal.component';
 import { PlantillasDrawerComponent } from './plantillas-drawer.component';
 import { ArbolDePaginasComponent, MovimientoDePagina } from './arbol-de-paginas.component';
+import { ClaseDeUrl, PedirUrlModalComponent } from './modals/pedir-url-modal.component';
 import { ToastService } from '../../shared/services/toast.service';
 import { PLANTILLAS_A_LA_VISTA, PlantillaDisponible, plantillasDisponibles } from './plantillas';
 
@@ -53,7 +54,7 @@ import { PLANTILLAS_A_LA_VISTA, PlantillaDisponible, plantillasDisponibles } fro
   standalone: true,
   imports: [EsquemaDelDocumentoComponent, 
     GuardarPlantillaModalComponent, ImportarDocumentoModalComponent, PlantillasDrawerComponent,
-    ArbolDePaginasComponent, ClickableDirective, CommonModule, FormsModule, NgIconComponent, TiptapEditorDirective, EmojiPickerComponent],
+    ArbolDePaginasComponent, PedirUrlModalComponent, ClickableDirective, CommonModule, FormsModule, NgIconComponent, TiptapEditorDirective, EmojiPickerComponent],
   providers: [
     provideIcons({
       lucideFileText, lucidePlus, lucideFolder, lucideMoreVertical,
@@ -63,7 +64,7 @@ import { PLANTILLAS_A_LA_VISTA, PlantillaDisponible, plantillasDisponibles } fro
       lucideUpload, lucideWand2, lucideLayoutTemplate, lucideCopy, lucideBookOpen,
       lucideUsers, lucideCalendar, lucideCheckCircle2, lucideStar, lucideFilter,
       lucideArrowUpDown, lucideTag, lucideX, lucideFileUp, lucideBriefcase, lucideCheck,
-      lucideTriangleAlert
+      lucideTriangleAlert, lucideCode, lucideQuote, lucideUnlink, lucideRemoveFormatting
     })
   ],
   templateUrl: './docs.component.html',
@@ -114,6 +115,54 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
 
   /** Para desactivar los botones de exportar mientras se genera el fichero. */
   readonly exportando = signal(false);
+
+  /** Qué está pidiendo el modal de dirección, o `null` si no hay ninguno abierto. */
+  readonly urlPedida = signal<ClaseDeUrl | null>(null);
+
+  /** Cómo se le contesta al comando que está esperando la dirección. */
+  private resolverUrl: ((url: string | null) => void) | null = null;
+
+  /**
+   * Abre el modal y espera a que se conteste.
+   *
+   * Devuelve una promesa porque el comando del editor la espera dentro de su `ejecutar`, que es lo
+   * que permite que el rango donde se escribió la barra siga siendo válido al insertar.
+   */
+  private pedirUrl(clase: ClaseDeUrl): Promise<string | null> {
+    // Si ya había uno abierto se cierra contestando que no: dejar la promesa anterior colgada
+    // mantendría vivo un comando que ya nadie va a completar.
+    this.resolverUrl?.(null);
+
+    this.urlPedida.set(clase);
+    return new Promise<string | null>(resolver => { this.resolverUrl = resolver; });
+  }
+
+  /**
+   * Enlaza lo que hay seleccionado.
+   *
+   * Reutiliza el mismo modal que el menú `/`: es la misma pregunta —«¿qué dirección?»— y tener dos
+   * formas distintas de hacerla acabaría con una validando y la otra no.
+   *
+   * Guarda la selección antes de abrir el modal. Al enfocarse el campo, el editor la pierde, y sin
+   * esto el enlace se aplicaría al cursor en vez de al texto elegido.
+   */
+  async enlazarSeleccion() {
+    const { from, to } = this.editor.state.selection;
+    if (from === to) return;
+
+    const url = await this.pedirUrl('enlace');
+    if (!url) return;
+
+    this.editor.chain().focus().setTextSelection({ from, to }).setLink({ href: url }).run();
+  }
+
+  /** Contesta al comando que esperaba y cierra el modal. */
+  responderUrl(url: string | null) {
+    this.urlPedida.set(null);
+    const resolver = this.resolverUrl;
+    this.resolverUrl = null;
+    resolver?.(url);
+  }
 
   /** Lo último que no se pudo guardar, para poder reintentarlo sin perderlo. */
   private pendienteDeReintento: { pageId: string; title: string; content: string } | null = null;
@@ -267,7 +316,10 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
       Image,
       Youtube,
       FileAttachment,
-      SlashCommand,
+
+      // El menú `/` no sabe pedir una dirección: se le inyecta cómo, igual que a las menciones se
+      // les inyecta el buscador. Antes lo hacía con `window.prompt`, que bloquea la pestaña.
+      SlashCommand.configure({ pedirUrl: (clase) => this.pedirUrl(clase) }),
 
       // Menciones `@persona` y `#tarea`. El buscador se inyecta aquí y no dentro de la extensión
       // porque la extensión no puede —ni debe— saber llamar a la API: sabe escribir el nodo con
