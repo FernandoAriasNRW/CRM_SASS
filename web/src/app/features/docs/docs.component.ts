@@ -17,7 +17,7 @@ import { DocsService, DocumentDto, PageDto } from './docs.service';
 import { SeccionesDelPanelService } from '../../shared/ui/panel-de-navegacion/secciones-del-panel.service';
 
 /** Las pestañas que el panel de Documentos sabe abrir. Cualquier otra cosa en `?tab=` cae en «all». */
-const TABS_DE_DOCS = ['all', 'my', 'shared', 'private', 'meeting-notes', 'archived'] as const;
+const TABS_DE_DOCS = ['all', 'my', 'shared', 'private', 'meeting-notes', 'templates', 'archived'] as const;
 import { Editor } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
 import Image from '@tiptap/extension-image';
@@ -42,24 +42,14 @@ import { Subject, debounceTime } from 'rxjs';
 import { ClickableDirective } from '../../shared/directives/clickable.directive';
 import { GuardarPlantillaModalComponent } from './modals/guardar-plantilla-modal.component';
 import { ImportarDocumentoModalComponent } from './modals/importar-documento-modal.component';
-import { SelectorPlantillaModalComponent } from './modals/selector-plantilla-modal.component';
-
-export interface PresetTemplate {
-  key: string;
-  title: string;
-  description: string;
-  bgGradient: string;
-  borderColor: string;
-  iconBg: string;
-  icon: string;
-  badgeText: string | null;
-}
+import { PlantillasDrawerComponent } from './plantillas-drawer.component';
+import { PLANTILLAS_A_LA_VISTA, PlantillaDisponible, plantillasDisponibles } from './plantillas';
 
 @Component({
   selector: 'app-docs',
   standalone: true,
   imports: [EsquemaDelDocumentoComponent, 
-    GuardarPlantillaModalComponent, ImportarDocumentoModalComponent, SelectorPlantillaModalComponent,ClickableDirective, CommonModule, FormsModule, NgIconComponent, TiptapEditorDirective, EmojiPickerComponent],
+    GuardarPlantillaModalComponent, ImportarDocumentoModalComponent, PlantillasDrawerComponent, ClickableDirective, CommonModule, FormsModule, NgIconComponent, TiptapEditorDirective, EmojiPickerComponent],
   providers: [
     provideIcons({
       lucideFileText, lucidePlus, lucideFolder, lucideMoreVertical,
@@ -125,7 +115,7 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
   /** `effect` fuera del constructor necesita inyector explícito. */
   private readonly inyector = inject(Injector);
 
-  readonly activeSidebarTab = computed<'all' | 'my' | 'shared' | 'private' | 'meeting-notes' | 'archived'>(() => {
+  readonly activeSidebarTab = computed<'all' | 'my' | 'shared' | 'private' | 'meeting-notes' | 'templates' | 'archived'>(() => {
     const tab = this.parametrosDeLaUrl()['tab'];
     return TABS_DE_DOCS.includes(tab as never) ? tab as never : 'all';
   });
@@ -140,6 +130,7 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
   // Dropdowns & Modals
   isNewDocDropdownOpen = signal(false);
   isImportModalOpen = signal(false);
+  /** El cajón con todas las plantillas: se abre desde «Ver más» y desde el menú de «Nuevo». */
   isTemplatePickerOpen = signal(false);
   isSaveAsTemplateModalOpen = signal(false);
   activeRowMenuId = signal<string | null>(null);
@@ -153,54 +144,42 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
   selectedTypeFilter = signal<number | null>(null);
   starredDocIds = signal<Set<string>>(new Set<string>());
 
-  presetTemplates: PresetTemplate[] = [
-    {
-      key: 'project-overview',
-      title: 'Project Overview',
-      description: 'Summarize goals, scope, and milestones',
-      bgGradient: 'from-amber-500/10 via-orange-500/5 to-transparent dark:from-amber-500/20 dark:via-orange-500/10',
-      borderColor: 'border-warning dark:border-warning/50 hover:border-warning dark:hover:border-warning',
-      iconBg: 'bg-warning text-white shadow-amber-500/30',
-      icon: 'lucideFileText',
-      badgeText: null
-    },
-    {
-      key: 'meeting-notes',
-      title: 'Meeting Notes',
-      description: 'Capture an agenda, notes, and action items',
-      bgGradient: 'from-yellow-500/10 via-amber-500/5 to-transparent dark:from-yellow-500/20 dark:via-amber-500/10',
-      borderColor: 'border-warning dark:border-warning/50 hover:border-warning dark:hover:border-warning',
-      iconBg: 'bg-warning text-white shadow-yellow-500/30',
-      icon: 'lucideCalendar',
-      badgeText: null
-    },
-    {
-      key: 'wiki',
-      title: 'Wiki',
-      description: 'Organize information in one place',
-      bgGradient: 'from-blue-500/10 via-indigo-500/5 to-transparent dark:from-blue-500/20 dark:via-indigo-500/10',
-      borderColor: 'border-primary dark:border-primary/50 hover:border-primary dark:hover:border-primary',
-      iconBg: 'bg-primary text-white shadow-blue-600/30',
-      icon: 'lucideBookOpen',
-      badgeText: '✓'
-    },
-    {
-      key: 'client-onboarding',
-      title: 'Client Onboarding',
-      description: 'Client summary, requirements, and handover',
-      bgGradient: 'from-purple-500/10 via-pink-500/5 to-transparent dark:from-purple-500/20 dark:via-pink-500/10',
-      borderColor: 'border-primary dark:border-primary/50 hover:border-primary dark:hover:border-primary',
-      iconBg: 'bg-primary text-white shadow-purple-600/30',
-      icon: 'lucideBriefcase',
-      badgeText: null
-    }
-  ];
-
   @ViewChild('bubbleMenu', { static: false }) bubbleMenuElement!: ElementRef;
 
   customTemplates = computed(() => {
     return this.documents().filter(d => d.type === 4);
   });
+
+  /**
+   * Cuántas veces se ha usado cada plantilla, tal como lo cuenta el servidor.
+   *
+   * Se pide una vez al entrar y se vuelve a pedir cada vez que se crea desde una plantilla, que
+   * es lo único que lo cambia.
+   */
+  private readonly usosDePlantilla = signal<ReadonlyMap<string, number>>(new Map());
+
+  /** Las del sistema y las del equipo, mezcladas y ordenadas por uso. */
+  readonly plantillas = computed<PlantillaDisponible[]>(
+    () => plantillasDisponibles(this.customTemplates(), this.usosDePlantilla()));
+
+  /** Las cuatro de la galería. El resto vive detrás de «Ver más». */
+  readonly plantillasDestacadas = computed(() => this.plantillas().slice(0, PLANTILLAS_A_LA_VISTA));
+
+  readonly hayMasPlantillas = computed(() => this.plantillas().length > PLANTILLAS_A_LA_VISTA);
+
+  private cargarUsosDePlantilla(): void {
+    this.docsService.getUsosDePlantilla().subscribe({
+      // Se comprueba la forma antes de recorrerla. Una respuesta que no sea la lista esperada
+      // —un proxy que devuelve un objeto de error con 200, por ejemplo— reventaría aquí dentro y
+      // se llevaría por delante la pantalla entera de Documentos por un contador de adorno.
+      next: (usos) => this.usosDePlantilla.set(Array.isArray(usos)
+        ? new Map(usos.map(u => [u.clave, u.veces]))
+        : new Map()),
+      // Sin contadores la galería sigue siendo utilizable: se ve el orden de declaración. No
+      // merece parar la pantalla ni enseñar un error por esto.
+      error: (err) => console.warn('No se pudieron leer los usos de las plantillas', err)
+    });
+  }
 
   filteredDocuments = computed(() => {
     let docs = this.documents();
@@ -213,6 +192,8 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
       docs = docs.filter(d => d.type === 3);
     } else if (tab === 'private') {
       docs = docs.filter(d => d.type === 1);
+    } else if (tab === 'templates') {
+      docs = docs.filter(d => d.type === 4);
     }
 
     // Filter by Type dropdown
@@ -298,6 +279,7 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
 
   ngOnInit() {
     this.loadDocuments();
+    this.cargarUsosDePlantilla();
 
     // Los favoritos y las páginas recientes se le entregan al panel compartido. Son datos de
     // Documentos, así que los pone Documentos; el panel sólo sabe pintar secciones.
@@ -415,14 +397,19 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
     });
   }
 
-  createFromPreset(presetKey: string, event?: Event) {
+  /**
+   * Crea desde una plantilla de la galería o del cajón, sea del sistema o del equipo.
+   *
+   * De dónde sale se sabe por `esPropia`, no adivinando si la clave parece un identificador:
+   * el título de una plantilla del equipo puede ser cualquier cosa, y la clave del sistema
+   * también podría serlo el día que alguien añada una.
+   */
+  usarPlantilla(plantilla: PlantillaDisponible, event?: Event) {
     if (event) event.stopPropagation();
-    this.crearDesdePlantilla({ templateKey: presetKey });
-  }
 
-  createFromCustomTemplate(templateDocId: string, event?: Event) {
-    if (event) event.stopPropagation();
-    this.crearDesdePlantilla({ templateDocumentId: templateDocId });
+    this.crearDesdePlantilla(plantilla.esPropia
+      ? { templateDocumentId: plantilla.clave }
+      : { templateKey: plantilla.clave });
   }
 
   /**
@@ -437,7 +424,12 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
     this.isLoading.set(true);
 
     this.docsService.createFromTemplate(req).subscribe({
-      next: (id) => this.abrirDocumentoCreado(id),
+      next: (id) => {
+        // El contador que acaba de subir es el que ordena la galería; sin releerlo, la plantilla
+        // recién usada no se movería de sitio hasta la siguiente visita.
+        this.cargarUsosDePlantilla();
+        this.abrirDocumentoCreado(id);
+      },
       error: (err) => {
         console.error('Error creating from template:', err);
         this.isLoading.set(false);

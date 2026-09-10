@@ -89,6 +89,16 @@ public static class DocsEndpointsExtensions
             return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
         });
 
+        // Cuánto se usa cada plantilla, para que la galería enseñe cuatro que valgan la pena.
+        group.MapGet("/plantillas/usos", async (HttpContext context, IMediator mediator) =>
+        {
+            var tenantIdStr = context.User.FindFirst("tenantId")?.Value;
+            if (string.IsNullOrEmpty(tenantIdStr)) return Results.Unauthorized();
+
+            var result = await mediator.Send(new GetUsosDePlantillaQuery(Guid.Parse(tenantIdStr)));
+            return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
+        });
+
         group.MapPost("/from-template", async ([FromBody] CreateFromTemplateRequest req, HttpContext context, IMediator mediator) =>
         {
             var tenantIdStr = context.User.FindFirst("tenantId")?.Value;

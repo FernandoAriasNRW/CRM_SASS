@@ -4,9 +4,9 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
-  lucideArchive, lucideCalendarDays, lucideFileText, lucideFolderKanban, lucideList, lucideLock,
-  lucidePenLine, lucidePin, lucidePinOff, lucideShare2, lucideSquareCheck, lucideStar,
-  lucideTicket, lucideTrash2, lucideUser, lucideUsers
+  lucideArchive, lucideCalendarDays, lucideFileText, lucideFolderKanban, lucideLayoutTemplate,
+  lucideList, lucideLock, lucidePenLine, lucidePin, lucidePinOff, lucideShare2, lucideSquareCheck,
+  lucideStar, lucideTicket, lucideTrash2, lucideUser, lucideUsers
 } from '@ng-icons/lucide';
 
 import { EntradaDeMenu, VocabularioDeModulo, vocabularioDe } from './vocabulario-del-menu';
@@ -37,9 +37,9 @@ import { SeccionesDelPanelService } from './secciones-del-panel.service';
   standalone: true,
   imports: [CommonModule, NgIcon],
   viewProviders: [provideIcons({
-    lucideArchive, lucideCalendarDays, lucideFileText, lucideFolderKanban, lucideList, lucideLock,
-    lucidePenLine, lucidePin, lucidePinOff, lucideShare2, lucideSquareCheck, lucideStar,
-    lucideTicket, lucideTrash2, lucideUser, lucideUsers
+    lucideArchive, lucideCalendarDays, lucideFileText, lucideFolderKanban, lucideLayoutTemplate,
+    lucideList, lucideLock, lucidePenLine, lucidePin, lucidePinOff, lucideShare2, lucideSquareCheck,
+    lucideStar, lucideTicket, lucideTrash2, lucideUser, lucideUsers
   })],
   template: `
     <div

@@ -41,6 +41,11 @@ async function entrarADocs(page: Page) {
     if (/\/views\//.test(u)) {
       return r.fulfill({ status: 200, contentType: 'application/json', body: '[]' });
     }
+    // El contador de plantillas también es un array plano, y va antes que la regla de `/docs`
+    // porque esa no casa con las rutas de debajo.
+    if (/\/docs\/plantillas\/usos/.test(u)) {
+      return r.fulfill({ status: 200, contentType: 'application/json', body: '[]' });
+    }
     // Array plano: es lo que devuelve este módulo, a diferencia del resto.
     if (/\/docs(\?|$)/.test(u)) {
       return r.fulfill({
@@ -98,19 +103,29 @@ test('el modal de importar se abre, valida y se cierra', async ({ page }) => {
   await expect(modal).toBeHidden();
 });
 
-test('el selector de plantillas ofrece las predefinidas y se recorre con teclado', async ({ page }) => {
+test('el cajón de plantillas las ofrece todas, se filtran y se recorren con teclado', async ({ page }) => {
   await entrarADocs(page);
 
   await page.getByRole('button', { name: /más opciones de documento nuevo/i }).click();
-  await page.getByRole('button', { name: /apply a template/i }).first().click();
+  await page.getByRole('button', { name: /ver todas las plantillas/i }).first().click();
 
-  const modal = page.getByRole('dialog', { name: /apply a template/i });
-  await expect(modal).toBeVisible();
+  const cajon = page.getByRole('dialog', { name: /^plantillas$/i });
+  await expect(cajon).toBeVisible();
+
+  // La galería sólo enseña cuatro; el cajón tiene que enseñar también las del equipo, que es
+  // justamente lo que no cabía fuera.
+  await expect(cajon.getByRole('heading', { name: /del sistema/i })).toBeVisible();
 
   // Son <button> nativos, así que reciben foco sin ayuda añadida.
-  const primera = modal.getByRole('button', { name: /project overview/i });
+  const primera = cajon.getByRole('button', { name: /resumen de proyecto/i });
   await primera.focus();
   await expect(primera).toBeFocused();
+
+  // Filtrar deja sólo la que coincide. Sin esto, el buscador podría no estar conectado a nada y
+  // el cajón seguiría pareciendo correcto.
+  await cajon.getByRole('searchbox', { name: /buscar plantilla/i }).fill('wiki');
+  await expect(cajon.getByRole('button', { name: /^wiki/i })).toBeVisible();
+  await expect(cajon.getByRole('button', { name: /resumen de proyecto/i })).toBeHidden();
 });
 
 test('no tiene violaciones graves de accesibilidad', async ({ page }) => {
