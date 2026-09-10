@@ -1,4 +1,4 @@
-import { Component, input, output, signal } from '@angular/core';
+import { Component, ElementRef, effect, input, output, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
@@ -107,8 +107,7 @@ export interface VistaIntegrada {
             (keydown.escape)="cancelarCreacion()"
             i18n-placeholder placeholder="Nombre de la vista"
             class="h-8 w-44 rounded-md border border-border bg-background px-2 text-sm
-                   focus:outline-none focus:ring-2 focus:ring-ring"
-            autofocus />
+                   focus:outline-none focus:ring-2 focus:ring-ring" />
 
           <select
             [(ngModel)]="tipoNuevo"
@@ -165,6 +164,22 @@ export class BarraDeVistasComponent {
   readonly creando = signal(false);
   nombreNuevo = '';
   tipoNuevo = '';
+
+  private readonly campo = viewChild<ElementRef<HTMLInputElement>>('campo');
+
+  constructor() {
+    /*
+     * El foco se pone desde aquí y no con `autofocus`.
+     *
+     * `autofocus` sólo actúa al cargar la página, así que en un campo que aparece al pulsar no
+     * hace nada —y el lint lo prohíbe por accesibilidad: roba el foco sin que nadie lo pida—.
+     * Aquí es al revés: acabas de pulsar «Vista» para escribir un nombre, así que llevarte el
+     * cursor allí es exactamente lo que esperas.
+     */
+    effect(() => {
+      if (this.creando()) this.campo()?.nativeElement.focus();
+    });
+  }
 
   /**
    * El icono sale del estado guardado, no del nombre: una vista llamada «Urgentes» puede ser un
