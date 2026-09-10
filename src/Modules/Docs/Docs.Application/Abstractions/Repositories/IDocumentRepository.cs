@@ -10,5 +10,11 @@ public interface IDocumentRepository
     Task<Page?> GetPageByIdAsync(Guid id, CancellationToken cancellationToken = default);
     Task AddPageAsync(Page page, CancellationToken cancellationToken = default);
     Task<List<Page>> GetPagesByDocumentIdAsync(Guid documentId, CancellationToken cancellationToken = default);
+    /// <summary>Suma uno al contador de la plantilla, creando la fila si es la primera vez.</summary>
+    Task RegistrarUsoDePlantillaAsync(Guid tenantId, string clave, CancellationToken cancellationToken = default);
+
+    /// <summary>Cuánto se ha usado cada plantilla en este inquilino.</summary>
+    Task<List<UsoDePlantilla>> GetUsosDePlantillaAsync(Guid tenantId, CancellationToken cancellationToken = default);
+
     Task SaveChangesAsync(CancellationToken cancellationToken = default);
 }

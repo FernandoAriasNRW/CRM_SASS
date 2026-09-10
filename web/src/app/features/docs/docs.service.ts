@@ -53,6 +53,13 @@ export interface CreateFromTemplateRequest {
   customTitle?: string;
 }
 
+/** Cuánto se ha usado una plantilla en este inquilino. Ver `plantillas.ts`. */
+export interface UsoDePlantillaDto {
+  clave: string;
+  veces: number;
+  ultimoUsoUtc: string;
+}
+
 export interface ImportDocumentRequest {
   title: string;
   content: string;
@@ -100,6 +107,10 @@ export class DocsService {
 
   createFromTemplate(req: CreateFromTemplateRequest): Observable<string> {
     return this.api.post<string>(`${this.endpoint}/from-template`, req).pipe(map(idLimpio));
+  }
+
+  getUsosDePlantilla(): Observable<UsoDePlantillaDto[]> {
+    return this.api.get<UsoDePlantillaDto[]>(`${this.endpoint}/plantillas/usos`);
   }
 
   importDocument(req: ImportDocumentRequest): Observable<string> {

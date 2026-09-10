@@ -108,6 +108,7 @@ export const ENTRADAS_DE_DOCUMENTOS: readonly EntradaDeMenu[] = [
   { etiqueta: $localize`Compartidos conmigo`, icono: 'lucideShare2', filtro: null, params: { tab: 'shared' } },
   { etiqueta: $localize`Privados`, icono: 'lucideLock', filtro: null, params: { tab: 'private' } },
   { etiqueta: $localize`Actas de reunión`, icono: 'lucideCalendarDays', filtro: null, params: { tab: 'meeting-notes' } },
+  { etiqueta: $localize`Mis plantillas`, icono: 'lucideLayoutTemplate', filtro: null, params: { tab: 'templates' } },
   { etiqueta: $localize`Archivados`, icono: 'lucideArchive', filtro: null, params: { tab: 'archived' }, separadorAntes: true }
 ];
 

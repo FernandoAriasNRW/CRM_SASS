@@ -91,7 +91,14 @@ public static class TicketingEndpoints
       var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
       var actualCommand = new UpdateTicketCommand(tenantId, id, command.Title, command.Description, command.Priority, command.Status, command.AssignedAgentId);
       var result = await mediator.Send(actualCommand);
-      return result.IsSuccess ? Results.Ok() : Results.NotFound(result.Error);
+      if (result.IsSuccess) return Results.Ok();
+
+      // Un 404 sólo cuando el ticket no existe. Antes cualquier fallo salía como «no encontrado»,
+      // así que un título de tres letras o una prioridad mal escrita se leían como si el ticket
+      // hubiera desaparecido, y la pantalla no tenía forma de explicar qué corregir.
+      return result.Error == "Ticket not found"
+          ? Results.NotFound(result.Error)
+          : Results.BadRequest(result.Error);
     });
 
     group.MapPatch("/{id:guid}/status", async (System.Security.Claims.ClaimsPrincipal principal, Guid id, ChangeTicketStatusCommand command, IMediator mediator) =>

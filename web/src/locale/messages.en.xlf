@@ -6791,6 +6791,226 @@ Pending</target>
           <context context-type="linenumber">68,69</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="4963170874896902269" datatype="html">
+        <source>Guardar como plantilla</source>
+        <target state="final">Save as template</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">49,50</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">360,361</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8193575699088472774" datatype="html">
+        <source>Ver todas las plantillas</source>
+        <target state="final">See all templates</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">181,182</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5656265501179877938" datatype="html">
+        <source>Filtrar</source>
+        <target state="final">Filter</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">243,244</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="9182328466579883447" datatype="html">
+        <source>Documento</source>
+        <target state="final">Document</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">244,245</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4871571573427035383" datatype="html">
+        <source>Acta de reunión</source>
+        <target state="final">Meeting notes</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">246,247</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/plantillas.ts</context>
+          <context context-type="linenumber">51</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7313937549948117200" datatype="html">
+        <source>Plantilla</source>
+        <target state="final">Template</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">247,248</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2690081715253314445" datatype="html">
+        <source>Crea un documento o elige una plantilla para empezar.</source>
+        <target state="final">Create a document or pick a template to get started.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">379,380</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7653637181118355023" datatype="html">
+        <source>Buscar plantilla</source>
+        <target state="final">Search templates</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/plantillas-drawer.component.ts</context>
+          <context context-type="linenumber">37,38</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/plantillas-drawer.component.ts</context>
+          <context context-type="linenumber">42,43</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2294885702079385608" datatype="html">
+        <source> Ninguna plantilla coincide con la búsqueda. </source>
+        <target state="final"> No template matches your search. </target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/plantillas-drawer.component.ts</context>
+          <context context-type="linenumber">76</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8045672860133106874" datatype="html">
+        <source>Del sistema</source>
+        <target state="final">Built in</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/plantillas-drawer.component.ts</context>
+          <context context-type="linenumber">113</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3815043518386701646" datatype="html">
+        <source><x id="PH" equiv-text="total"/> plantillas disponibles</source>
+        <target state="final"><x id="PH" equiv-text="total"/> templates available</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/plantillas-drawer.component.ts</context>
+          <context context-type="linenumber">120</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4475294745643922652" datatype="html">
+        <source>Usada 1 vez</source>
+        <target state="final">Used once</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/plantillas-drawer.component.ts</context>
+          <context context-type="linenumber">124</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8200137406682428513" datatype="html">
+        <source>Usada <x id="PH" equiv-text="veces"/> veces</source>
+        <target state="final">Used <x id="PH" equiv-text="veces"/> times</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/plantillas-drawer.component.ts</context>
+          <context context-type="linenumber">124</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7377672200025641628" datatype="html">
+        <source>Resumen de proyecto</source>
+        <target state="final">Project overview</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/plantillas.ts</context>
+          <context context-type="linenumber">40</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8151077926194281199" datatype="html">
+        <source>Objetivos, alcance e hitos</source>
+        <target state="final">Goals, scope and milestones</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/plantillas.ts</context>
+          <context context-type="linenumber">41</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3441590658624091738" datatype="html">
+        <source>Orden del día, notas y acuerdos</source>
+        <target state="final">Agenda, notes and decisions</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/plantillas.ts</context>
+          <context context-type="linenumber">52</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7152037884771419706" datatype="html">
+        <source>Toda la información en un sitio</source>
+        <target state="final">Everything in one place</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/plantillas.ts</context>
+          <context context-type="linenumber">63</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6950256753741395259" datatype="html">
+        <source>Alta de cliente</source>
+        <target state="final">Client onboarding</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/plantillas.ts</context>
+          <context context-type="linenumber">73</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="552664902303774149" datatype="html">
+        <source>Ficha, requisitos y traspaso</source>
+        <target state="final">Profile, requirements and handover</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/plantillas.ts</context>
+          <context context-type="linenumber">74</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4633154020724945687" datatype="html">
+        <source>Plantilla guardada por el equipo</source>
+        <target state="final">Template saved by the team</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/plantillas.ts</context>
+          <context context-type="linenumber">87</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6556215974372782904" datatype="html">
+        <source>Ordenar: actualización</source>
+        <target state="final">Sort: updated</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">260,261</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7488594571834280382" datatype="html">
+        <source>Ordenar: nombre</source>
+        <target state="final">Sort: name</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">261,262</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2710602111886090707" datatype="html">
+        <source>Ordenar: tipo</source>
+        <target state="final">Sort: type</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">262,263</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7821918242287871676" datatype="html">
+        <source>Etiquetas: <x id="START_TAG_SPAN" ctype="x-span" equiv-text="&lt;span class=&quot;text-muted-foreground&quot;&gt;"/>—<x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/></source>
+        <target state="final">Tags: <x id="START_TAG_SPAN" ctype="x-span" equiv-text="&lt;span class=&quot;text-muted-foreground&quot;&gt;"/>—<x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/></target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">267,268</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8887144634091745639" datatype="html">
+        <source>Ubicación</source>
+        <target state="final">Location</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">288,289</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="59252392519280698" datatype="html">
+        <source>Actualizado</source>
+        <target state="final">Updated</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">290,291</context>
+        </context-group>
+      </trans-unit>
     </body>
   </file>
 </xliff>
