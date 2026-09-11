@@ -180,6 +180,51 @@ public static class DocsEndpointsExtensions
             return result.IsSuccess ? Results.Ok() : Results.BadRequest(result.Error);
         });
 
+        // ── Comentarios en línea ────────────────────────────────────────────────────────────
+        //
+        // Docs guarda **dónde** está pegado el comentario; el hilo lo guarda el módulo Comments,
+        // con el identificador de la anotación como entidad comentada. Son dos cosas distintas y
+        // se piden por separado: juntarlas aquí obligaría a Docs a conocer a Comments.
+
+        group.MapGet("/pages/{pageId:guid}/anotaciones", async (Guid pageId, IMediator mediator) =>
+        {
+            var result = await mediator.Send(new Docs.Application.Anotaciones.GetAnotacionesQuery(pageId));
+            return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
+        });
+
+        group.MapPost("/pages/{pageId:guid}/anotaciones", async (
+            Guid pageId, [FromBody] NuevaAnotacionRequest req, HttpContext context, IMediator mediator) =>
+        {
+            var tenantIdStr = context.User.FindFirst("tenantId")?.Value;
+            var userIdStr = context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(tenantIdStr) || string.IsNullOrEmpty(userIdStr)) return Results.Unauthorized();
+
+            var command = new Docs.Application.Anotaciones.CrearAnotacionCommand(
+                Guid.Parse(tenantIdStr), Guid.Empty, pageId, Guid.Parse(userIdStr), req.TextoCitado);
+
+            var result = await mediator.Send(command);
+            return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
+        });
+
+        group.MapPut("/anotaciones/{id:guid}/resolver", async (
+            Guid id, [FromBody] ResolverAnotacionRequest req, HttpContext context, IMediator mediator) =>
+        {
+            var userIdStr = context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdStr)) return Results.Unauthorized();
+
+            var command = new Docs.Application.Anotaciones.ResolverAnotacionCommand(
+                id, Guid.Parse(userIdStr), req.Resuelta);
+
+            var result = await mediator.Send(command);
+            return result.IsSuccess ? Results.NoContent() : Results.BadRequest(result.Error);
+        });
+
+        group.MapDelete("/anotaciones/{id:guid}", async (Guid id, IMediator mediator) =>
+        {
+            var result = await mediator.Send(new Docs.Application.Anotaciones.BorrarAnotacionCommand(id));
+            return result.IsSuccess ? Results.NoContent() : Results.BadRequest(result.Error);
+        });
+
         // ── Menciones ───────────────────────────────────────────────────────────────────────
         //
         // «¿Qué documentos hablan de esta tarea?». Va bajo /docs y no bajo la tarea porque la
@@ -228,6 +273,11 @@ public record UpdatePageRequest(string Title, string Content);
 public record RenameDocumentRequest(string Title, string? Description);
 
 public record MovePageRequest(Guid? ParentPageId, int Order);
+
+/// <summary>El documento no viaja: se saca de la página, para que no pueda venir mal desde fuera.</summary>
+public record NuevaAnotacionRequest(string TextoCitado);
+
+public record ResolverAnotacionRequest(bool Resuelta);
 public record SaveAsTemplateRequest(string? CustomTitle, string? Description);
 public record CreateFromTemplateRequest(string? TemplateKey, Guid? TemplateDocumentId, string? CustomTitle);
 public record ImportDocumentRequest(string Title, string Content, int Type = 1);

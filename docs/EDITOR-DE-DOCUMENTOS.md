@@ -251,7 +251,7 @@ que no tener bloques desplegables.
 
 ## 7. Qué se hizo, y en qué me equivoqué al auditar
 
-Fases A, B, C y D implementadas. La E queda pendiente.
+Las cinco fases implementadas.
 
 ### Una corrección al apartado 1.6
 
@@ -286,11 +286,27 @@ el servidor arranca igual.
   elegible y coloreado, tipografía automática, resaltado y contador de palabras.
 - **D.** Subida de ficheros por arrastre, pegado y selector, con almacenamiento en disco como
   reserva cuando no hay credenciales.
+- **E.** Comentarios en línea: una marca sobre el texto, un panel al lado con la cita y el hilo, y
+  resolver sin borrar.
+
+### Cómo quedó repartida la Fase E
+
+El trabajo se parte en dos a propósito. **Docs guarda dónde está pegado** el comentario —qué
+página, qué texto se citó, si está resuelto— y **Comments guarda la conversación**, con el
+identificador de la anotación como entidad comentada.
+
+Comentar ya existía para tareas, tickets y proyectos, con sus reglas de quién edita y quién borra,
+y ese módulo dice en su propio código por qué es uno solo para los tres: «triplicarla daría tres
+sitios donde arreglar el mismo fallo». Un cuarto para los documentos habría sido el mismo error.
+El panel reutiliza el componente del hilo tal cual; lo único nuevo es el anclaje.
+
+**El texto citado se copia** en vez de leerse del documento. Si alguien reescribe el párrafo, el
+panel puede seguir diciendo sobre qué se comentó en vez de señalar otra cosa sin avisar.
 
 ### Lo que sigue pendiente
 
-- **Fase E**, los comentarios en línea. La edición simultánea sigue sin recomendarse por ahora:
-  exige Y.js, un servidor de sincronización y cambiar cómo persiste el módulo entero.
+- La **edición simultánea**, que sigue sin recomendarse: exige Y.js, un servidor de sincronización
+  y cambiar cómo persiste el módulo entero.
 - **El contenido de las plantillas predefinidas sigue en inglés** dentro del handler. Son
   documentos enteros, y es un arreglo aparte.
 - **El bloque de columnas**, que ya dejé para el final por ser el más caro y el que menos se usa.

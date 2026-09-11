@@ -12,9 +12,10 @@ import {
   lucideUpload, lucideWand2, lucideLayoutTemplate, lucideCopy, lucideBookOpen,
   lucideUsers, lucideCalendar, lucideCheckCircle2, lucideStar, lucideFilter,
   lucideArrowUpDown, lucideTag, lucideX, lucideFileUp, lucideBriefcase, lucideCheck,
-  lucideTriangleAlert, lucideCode, lucideQuote, lucideUnlink, lucideRemoveFormatting
+  lucideTriangleAlert, lucideCode, lucideQuote, lucideUnlink, lucideRemoveFormatting,
+  lucideMessageSquare
 } from '@ng-icons/lucide';
-import { DocsService, DocumentDto, PageDto } from './docs.service';
+import { AnotacionDto, DocsService, DocumentDto, PageDto } from './docs.service';
 import { SeccionesDelPanelService } from '../../shared/ui/panel-de-navegacion/secciones-del-panel.service';
 
 /** Las pestañas que el panel de Documentos sabe abrir. Cualquier otra cosa en `?tab=` cae en «all». */
@@ -47,6 +48,8 @@ import { createLowlight, common } from 'lowlight';
 import { Aviso } from './extensions/aviso';
 import { BloqueDeCodigo } from './extensions/bloque-de-codigo';
 import FileHandler from '@tiptap/extension-file-handler';
+import { Comentario } from './extensions/comentario';
+import { ComentariosDelDocumentoComponent } from './comentarios-del-documento.component';
 import { EmojiPickerComponent } from './extensions/emoji-picker.component';
 import { Subject, debounceTime, firstValueFrom } from 'rxjs';
 import { ClickableDirective } from '../../shared/directives/clickable.directive';
@@ -63,7 +66,8 @@ import { PLANTILLAS_A_LA_VISTA, PlantillaDisponible, plantillasDisponibles } fro
   standalone: true,
   imports: [EsquemaDelDocumentoComponent, 
     GuardarPlantillaModalComponent, ImportarDocumentoModalComponent, PlantillasDrawerComponent,
-    ArbolDePaginasComponent, PedirUrlModalComponent, ClickableDirective, CommonModule, FormsModule, NgIconComponent, TiptapEditorDirective, EmojiPickerComponent],
+    ArbolDePaginasComponent, PedirUrlModalComponent, ComentariosDelDocumentoComponent,
+    ClickableDirective, CommonModule, FormsModule, NgIconComponent, TiptapEditorDirective, EmojiPickerComponent],
   providers: [
     provideIcons({
       lucideFileText, lucidePlus, lucideFolder, lucideMoreVertical,
@@ -73,7 +77,8 @@ import { PLANTILLAS_A_LA_VISTA, PlantillaDisponible, plantillasDisponibles } fro
       lucideUpload, lucideWand2, lucideLayoutTemplate, lucideCopy, lucideBookOpen,
       lucideUsers, lucideCalendar, lucideCheckCircle2, lucideStar, lucideFilter,
       lucideArrowUpDown, lucideTag, lucideX, lucideFileUp, lucideBriefcase, lucideCheck,
-      lucideTriangleAlert, lucideCode, lucideQuote, lucideUnlink, lucideRemoveFormatting
+      lucideTriangleAlert, lucideCode, lucideQuote, lucideUnlink, lucideRemoveFormatting,
+      lucideMessageSquare
     })
   ],
   templateUrl: './docs.component.html',
@@ -130,6 +135,17 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
 
   /** Si hay una subida en marcha, para poder avisarlo en la cabecera. */
   readonly subiendo = signal(false);
+
+  /** Los comentarios en línea de la página abierta. */
+  readonly anotaciones = signal<AnotacionDto[]>([]);
+
+  /** Sobre cuál está el cursor ahora mismo, para destacarla en el panel. */
+  readonly anotacionActivaId = signal<string | null>(null);
+
+  /** Si el panel lateral enseña el índice o los comentarios. */
+  readonly panelLateral = signal<'esquema' | 'comentarios'>('esquema');
+
+  readonly comentariosAbiertos = computed(() => this.anotaciones().filter(a => !a.resueltaUtc).length);
 
   /** Qué está pidiendo el modal de dirección, o `null` si no hay ninguno abierto. */
   readonly urlPedida = signal<ClaseDeUrl | null>(null);
@@ -229,6 +245,110 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
     } finally {
       this.subiendo.set(false);
     }
+  }
+
+  /**
+   * Comenta el texto seleccionado.
+   *
+   * La anotación se crea en el servidor **antes** de marcar el texto, y no al revés: el
+   * identificador con el que se marca es el suyo. Marcando primero con uno inventado, un fallo al
+   * crear dejaría el documento con una marca que no apunta a ninguna conversación.
+   */
+  async comentarSeleccion() {
+    const pagina = this.activePage();
+    if (!pagina) return;
+
+    const { from, to } = this.editor.state.selection;
+    if (from === to) return;
+
+    const citado = this.editor.state.doc.textBetween(from, to, ' ').trim();
+    if (!citado) return;
+
+    try {
+      const anotacionId = await firstValueFrom(this.docsService.crearAnotacion(pagina.id, citado));
+
+      this.editor.chain().focus()
+        .setTextSelection({ from, to })
+        .marcarComentario(anotacionId)
+        .run();
+
+      this.panelLateral.set('comentarios');
+      this.anotacionActivaId.set(anotacionId);
+      this.cargarAnotaciones(pagina.id);
+    } catch (err) {
+      this.toast.error($localize`No se pudo crear el comentario`);
+      console.error('No se pudo crear la anotación', err);
+    }
+  }
+
+  /** Lleva el cursor hasta el texto señalado por una anotación. */
+  irAAnotacion(anotacion: AnotacionDto) {
+    this.anotacionActivaId.set(anotacion.id);
+
+    let encontrada: { from: number; to: number } | null = null;
+
+    this.editor.state.doc.descendants((nodo, pos) => {
+      if (encontrada || !nodo.isText) return;
+
+      const tiene = nodo.marks.some(
+        m => m.type.name === 'comentario' && m.attrs['anotacionId'] === anotacion.id);
+
+      if (tiene) encontrada = { from: pos, to: pos + nodo.nodeSize };
+    });
+
+    // Puede no estar: si alguien borró el texto comentado, la marca se fue con él. La anotación
+    // sigue en el panel con su cita, que es justamente para esto.
+    if (!encontrada) {
+      this.toast.info($localize`El texto comentado ya no está en la página`);
+      return;
+    }
+
+    const rango = encontrada as { from: number; to: number };
+    this.editor.chain().focus().setTextSelection(rango).scrollIntoView().run();
+  }
+
+  /** Marca una anotación como resuelta, o la vuelve a abrir. */
+  resolverAnotacion(anotacion: AnotacionDto) {
+    const pagina = this.activePage();
+    if (!pagina) return;
+
+    this.docsService.resolverAnotacion(anotacion.id, !anotacion.resueltaUtc).subscribe({
+      next: () => this.cargarAnotaciones(pagina.id),
+      error: (err) => {
+        this.toast.error($localize`No se pudo cambiar el estado del comentario`);
+        console.error('No se pudo resolver la anotación', err);
+      }
+    });
+  }
+
+  /**
+   * Quita un comentario en línea: la anotación y su marca en el texto.
+   *
+   * Las dos cosas, y en este orden. Quitar sólo la anotación dejaría el texto subrayado
+   * apuntando a una conversación que ya no existe.
+   */
+  borrarAnotacion(anotacion: AnotacionDto) {
+    const pagina = this.activePage();
+    if (!pagina) return;
+
+    this.docsService.borrarAnotacion(anotacion.id).subscribe({
+      next: () => {
+        this.editor.chain().focus().quitarComentario(anotacion.id).run();
+        this.cargarAnotaciones(pagina.id);
+      },
+      error: (err) => {
+        this.toast.error($localize`No se pudo quitar el comentario`);
+        console.error('No se pudo borrar la anotación', err);
+      }
+    });
+  }
+
+  private cargarAnotaciones(pageId: string) {
+    this.docsService.getAnotaciones(pageId).subscribe({
+      next: (anotaciones) => this.anotaciones.set(Array.isArray(anotaciones) ? anotaciones : []),
+      // Sin anotaciones el editor sigue siendo utilizable; no merece parar la pantalla.
+      error: (err) => console.warn('No se pudieron leer los comentarios del documento', err)
+    });
   }
 
   /** Contesta al comando que esperaba y cierra el modal. */
@@ -430,6 +550,14 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
 
       /** El recuadro de «ojo con esto». Escrito aquí: no hay extensión oficial. */
       Aviso,
+
+      /**
+       * La marca de los comentarios en línea.
+       *
+       * Sólo dice «aquí hay una conversación y se llama así». El hilo lo guarda el módulo
+       * Comments y el anclaje —qué se citó, si está resuelto— lo guarda Docs.
+       */
+      Comentario,
 
       /**
        * Código coloreado, con el lenguaje elegible.
@@ -872,6 +1000,9 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
       // Al abrir tampoco lo cuenta nadie, porque `onUpdate` no llega a ejecutarse.
       this.palabras.set(this.editor.storage['characterCount'].words());
     }, 50);
+
+    this.anotacionActivaId.set(null);
+    this.cargarAnotaciones(page.id);
   }
 
   closeEditorView() {

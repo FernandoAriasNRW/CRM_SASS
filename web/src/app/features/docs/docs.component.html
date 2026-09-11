@@ -139,9 +139,58 @@
             <tiptap-editor [editor]="editor"></tiptap-editor>
           </div>
 
-          <aside class="hidden xl:block w-56 shrink-0 pt-2">
-            <div class="sticky top-4">
-              <app-esquema-del-documento [editor]="editor" [version]="versionDelEsquema()" />
+          <!--
+            El panel de la derecha: el índice de la página o sus comentarios.
+
+            Son dos pestañas y no dos columnas porque compiten por el mismo sitio y se usan en
+            momentos distintos: el índice mientras se escribe, los comentarios mientras se revisa.
+            Con las dos a la vez el texto se queda sin ancho.
+          -->
+          <aside class="hidden xl:block w-64 shrink-0 pt-2">
+            <div class="sticky top-4 flex flex-col gap-3">
+              <div role="tablist" class="flex items-center gap-1 border-b border-border">
+                <button type="button" role="tab"
+                        [attr.aria-selected]="panelLateral() === 'esquema'"
+                        (click)="panelLateral.set('esquema')"
+                        class="px-2 py-1.5 text-xs font-medium border-b-2 -mb-px transition-colors
+                               focus:outline-none focus:ring-2 focus:ring-ring rounded-t"
+                        [class.border-primary]="panelLateral() === 'esquema'"
+                        [class.text-foreground]="panelLateral() === 'esquema'"
+                        [class.border-transparent]="panelLateral() !== 'esquema'"
+                        [class.text-muted-foreground]="panelLateral() !== 'esquema'"
+                        i18n>
+                  Índice
+                </button>
+
+                <button type="button" role="tab"
+                        [attr.aria-selected]="panelLateral() === 'comentarios'"
+                        (click)="panelLateral.set('comentarios')"
+                        class="px-2 py-1.5 text-xs font-medium border-b-2 -mb-px transition-colors
+                               flex items-center gap-1.5
+                               focus:outline-none focus:ring-2 focus:ring-ring rounded-t"
+                        [class.border-primary]="panelLateral() === 'comentarios'"
+                        [class.text-foreground]="panelLateral() === 'comentarios'"
+                        [class.border-transparent]="panelLateral() !== 'comentarios'"
+                        [class.text-muted-foreground]="panelLateral() !== 'comentarios'">
+                  <span i18n>Comentarios</span>
+                  @if (comentariosAbiertos() > 0) {
+                    <span class="px-1.5 rounded-full bg-primary text-primary-foreground text-[10px] tabular-nums">
+                      {{ comentariosAbiertos() }}
+                    </span>
+                  }
+                </button>
+              </div>
+
+              @if (panelLateral() === 'esquema') {
+                <app-esquema-del-documento [editor]="editor" [version]="versionDelEsquema()" />
+              } @else {
+                <app-comentarios-del-documento
+                  [anotaciones]="anotaciones()"
+                  [anotacionActivaId]="anotacionActivaId()"
+                  (irA)="irAAnotacion($event)"
+                  (resolver)="resolverAnotacion($event)"
+                  (borrar)="borrarAnotacion($event)" />
+              }
             </div>
           </aside>
         </div>
@@ -575,6 +624,14 @@
         <ng-icon name="lucideUnlink" class="w-4 h-4"></ng-icon>
       </button>
     }
+
+    <button type="button" (click)="comentarSeleccion()"
+            i18n-title title="Comentar"
+            i18n-aria-label aria-label="Comentar"
+            class="p-1.5 rounded hover:bg-accent text-muted-foreground transition-colors
+                   focus:outline-none focus:ring-2 focus:ring-ring">
+      <ng-icon name="lucideMessageSquare" class="w-4 h-4"></ng-icon>
+    </button>
 
     <button type="button" (click)="editor.chain().focus().unsetAllMarks().run()"
             i18n-title title="Quitar el formato"

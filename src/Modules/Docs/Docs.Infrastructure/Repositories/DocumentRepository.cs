@@ -70,6 +70,35 @@ public class DocumentRepository(DocsDbContext dbContext) : IDocumentRepository
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<List<AnotacionEnDocumento>> GetAnotacionesDePaginaAsync(
+        Guid pageId, CancellationToken cancellationToken = default)
+    {
+        return await dbContext.AnotacionesEnDocumentos
+            .Where(a => a.PageId == pageId)
+            .OrderBy(a => a.CreadaUtc)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<AnotacionEnDocumento?> GetAnotacionAsync(
+        Guid id, CancellationToken cancellationToken = default)
+    {
+        return await dbContext.AnotacionesEnDocumentos
+            .FirstOrDefaultAsync(a => a.Id == id, cancellationToken);
+    }
+
+    public async Task AddAnotacionAsync(
+        AnotacionEnDocumento anotacion, CancellationToken cancellationToken = default)
+    {
+        await dbContext.AnotacionesEnDocumentos.AddAsync(anotacion, cancellationToken);
+    }
+
+    public Task RemoveAnotacionAsync(
+        AnotacionEnDocumento anotacion, CancellationToken cancellationToken = default)
+    {
+        dbContext.AnotacionesEnDocumentos.Remove(anotacion);
+        return Task.CompletedTask;
+    }
+
     public async Task SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         await dbContext.SaveChangesAsync(cancellationToken);

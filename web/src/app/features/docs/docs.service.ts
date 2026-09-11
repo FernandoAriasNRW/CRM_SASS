@@ -43,6 +43,17 @@ export interface UpdatePageRequest {
   content: string;
 }
 
+/** Una anotación: dónde está pegado un comentario en línea. El hilo se pide a `/comments`. */
+export interface AnotacionDto {
+  id: string;
+  documentId: string;
+  pageId: string;
+  textoCitado: string;
+  creadaPor: string;
+  creadaUtc: string;
+  resueltaUtc: string | null;
+}
+
 export interface RenameDocumentRequest {
   title: string;
   description?: string | null;
@@ -153,6 +164,23 @@ export class DocsService {
       // La dirección se completa aquí, donde entra el dato, y no en cada sitio que la use: lo que
       // se guarda dentro del documento tiene que poder abrirse desde cualquier parte.
       map(respuesta => ({ url: this.api.urlDeFichero(respuesta.url) })));
+  }
+
+  getAnotaciones(pageId: string): Observable<AnotacionDto[]> {
+    return this.api.get<AnotacionDto[]>(`${this.endpoint}/pages/${pageId}/anotaciones`);
+  }
+
+  crearAnotacion(pageId: string, textoCitado: string): Observable<string> {
+    return this.api.post<string>(`${this.endpoint}/pages/${pageId}/anotaciones`, { textoCitado })
+      .pipe(map(idLimpio));
+  }
+
+  resolverAnotacion(anotacionId: string, resuelta: boolean): Observable<void> {
+    return this.api.put<void>(`${this.endpoint}/anotaciones/${anotacionId}/resolver`, { resuelta });
+  }
+
+  borrarAnotacion(anotacionId: string): Observable<void> {
+    return this.api.delete<void>(`${this.endpoint}/anotaciones/${anotacionId}`);
   }
 
   getUsosDePlantilla(): Observable<UsoDePlantillaDto[]> {

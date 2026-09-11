@@ -8,8 +8,14 @@ import { ApiService } from './api.service';
  */
 const SIN_AVISO = { sinAviso: true };
 
-/** Sobre qué se puede comentar. Lo fija el backend. */
-export const ENTIDADES_COMENTABLES = ['Tarea', 'Ticket', 'Proyecto'] as const;
+/**
+ * Sobre qué se puede comentar. Lo fija el backend.
+ *
+ * `Anotacion` es un comentario en línea dentro de un documento: lo comentado es el trozo de texto
+ * señalado, no el documento entero, porque un documento tiene muchas conversaciones a la vez
+ * pegadas a sitios distintos.
+ */
+export const ENTIDADES_COMENTABLES = ['Tarea', 'Ticket', 'Proyecto', 'Anotacion'] as const;
 export type EntidadComentable = (typeof ENTIDADES_COMENTABLES)[number];
 
 export interface Comentario {

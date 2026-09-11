@@ -15,7 +15,16 @@ public static class TipoDeEntidadComentable
     public const string Ticket = "Ticket";
     public const string Proyecto = "Proyecto";
 
-    public static IReadOnlyList<string> Todos() => [Tarea, Ticket, Proyecto];
+    /// <summary>
+    /// Un comentario en línea dentro de un documento.
+    ///
+    /// La entidad comentada es la <b>anotación</b> —el trozo de texto señalado—, no el documento:
+    /// un documento tiene muchas conversaciones a la vez, cada una pegada a un sitio distinto.
+    /// Dónde está pegada lo guarda Docs; el hilo, este módulo.
+    /// </summary>
+    public const string Anotacion = "Anotacion";
+
+    public static IReadOnlyList<string> Todos() => [Tarea, Ticket, Proyecto, Anotacion];
 
     public static bool Existe(string tipo) => Todos().Contains(tipo);
 }
@@ -140,7 +149,7 @@ public sealed class Comment : AggregateRoot, ITenantEntity
         public static readonly string TextoDemasiadoLargo =
             $"Un comentario no puede pasar de {LargoMaximo} caracteres";
         public const string EntidadDesconocida =
-            "Sólo se puede comentar sobre una tarea, un ticket o un proyecto";
+            "Sólo se puede comentar sobre una tarea, un ticket, un proyecto o una anotación";
         public const string SinEntidad = "Falta sobre qué se comenta";
         public const string SinAutor = "Un comentario necesita autor";
         public const string SoloElAutorEdita = "Sólo quien escribió un comentario puede editarlo";

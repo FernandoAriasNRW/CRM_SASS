@@ -7827,6 +7827,134 @@ Pending</target>
           <context context-type="linenumber">260</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="1305965028187905812" datatype="html">
+        <source> Comentarios </source>
+        <target state="final"> Comments </target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/comentarios-del-documento.component.ts</context>
+          <context context-type="linenumber">32,33</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8112900326919817744" datatype="html">
+        <source> Selecciona texto y pulsa el bocadillo para comentar sobre él. </source>
+        <target state="final"> Select some text and press the speech bubble to comment on it. </target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/comentarios-del-documento.component.ts</context>
+          <context context-type="linenumber">46,47</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7129192231855866910" datatype="html">
+        <source>Quitar el comentario</source>
+        <target state="final">Remove the comment</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/comentarios-del-documento.component.ts</context>
+          <context context-type="linenumber">78,79</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/comentarios-del-documento.component.ts</context>
+          <context context-type="linenumber">79,80</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8722081405998396418" datatype="html">
+        <source>Resuelto el <x id="INTERPOLATION" equiv-text="{{ cuando | date:&apos;d MMM, HH:mm&apos; }}"/></source>
+        <target state="final">Resolved on <x id="INTERPOLATION" equiv-text="{{ cuando | date:&apos;d MMM, HH:mm&apos; }}"/></target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/comentarios-del-documento.component.ts</context>
+          <context context-type="linenumber">90,91</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1798678284157159610" datatype="html">
+        <source>Volver a abrir</source>
+        <target state="final">Reopen</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/comentarios-del-documento.component.ts</context>
+          <context context-type="linenumber">112</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4975628601659488801" datatype="html">
+        <source>Dar por resuelta</source>
+        <target state="final">Mark as resolved</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/comentarios-del-documento.component.ts</context>
+          <context context-type="linenumber">113</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4344585199388192897" datatype="html">
+        <source>Ocultar las resueltas</source>
+        <target state="final">Hide the resolved ones</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/comentarios-del-documento.component.ts</context>
+          <context context-type="linenumber">114</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4752619315886117199" datatype="html">
+        <source>Ver 1 resuelta</source>
+        <target state="final">Show 1 resolved</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/comentarios-del-documento.component.ts</context>
+          <context context-type="linenumber">125</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1916932493603218579" datatype="html">
+        <source>Ver <x id="PH" equiv-text="cuantas"/> resueltas</source>
+        <target state="final">Show <x id="PH" equiv-text="cuantas"/> resolved</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/comentarios-del-documento.component.ts</context>
+          <context context-type="linenumber">126</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6532729371325351697" datatype="html">
+        <source> Índice </source>
+        <target state="final"> Outline </target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">162</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8052680568603491579" datatype="html">
+        <source>Comentar</source>
+        <target state="final">Comment</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">629,630</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">630,631</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2628556760851951567" datatype="html">
+        <source>No se pudo crear el comentario</source>
+        <target state="final">The comment could not be created</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.ts</context>
+          <context context-type="linenumber">279</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="215376949794144614" datatype="html">
+        <source>El texto comentado ya no está en la página</source>
+        <target state="final">The commented text is no longer on the page</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.ts</context>
+          <context context-type="linenumber">302</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3978952260472288956" datatype="html">
+        <source>No se pudo cambiar el estado del comentario</source>
+        <target state="final">The comment status could not be changed</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.ts</context>
+          <context context-type="linenumber">318</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="9156513657614284282" datatype="html">
+        <source>No se pudo quitar el comentario</source>
+        <target state="final">The comment could not be removed</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.ts</context>
+          <context context-type="linenumber">340</context>
+        </context-group>
+      </trans-unit>
     </body>
   </file>
 </xliff>

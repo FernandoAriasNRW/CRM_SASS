@@ -410,6 +410,17 @@
     .hljs-emphasis { font-style: italic; }
   }
 
+  /*
+    El texto con un comentario encima.
+    Subrayado y no resaltado: un fondo de color compite con el bloque de aviso y con la marca de
+    resaltado, y sobre un párrafo largo cansa. El subrayado dice «aquí hay algo» sin taparlo.
+  */
+  .comentado {
+    background-color: hsl(var(--warning) / 0.14);
+    border-bottom: 2px solid hsl(var(--warning));
+    cursor: pointer;
+  }
+
   mark {
     background-color: hsl(var(--warning) / 0.35);
     color: inherit;

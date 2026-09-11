@@ -16,5 +16,14 @@ public interface IDocumentRepository
     /// <summary>Cuánto se ha usado cada plantilla en este inquilino.</summary>
     Task<List<UsoDePlantilla>> GetUsosDePlantillaAsync(Guid tenantId, CancellationToken cancellationToken = default);
 
+    /// <summary>Las anotaciones pegadas a una página, resueltas incluidas.</summary>
+    Task<List<AnotacionEnDocumento>> GetAnotacionesDePaginaAsync(Guid pageId, CancellationToken cancellationToken = default);
+
+    Task<AnotacionEnDocumento?> GetAnotacionAsync(Guid id, CancellationToken cancellationToken = default);
+
+    Task AddAnotacionAsync(AnotacionEnDocumento anotacion, CancellationToken cancellationToken = default);
+
+    Task RemoveAnotacionAsync(AnotacionEnDocumento anotacion, CancellationToken cancellationToken = default);
+
     Task SaveChangesAsync(CancellationToken cancellationToken = default);
 }
