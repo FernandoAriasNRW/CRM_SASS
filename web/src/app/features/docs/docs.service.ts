@@ -1,5 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { ApiService } from '../../core/api.service';
+import { IdiomaService } from '../../core/idioma.service';
 import { HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -73,6 +74,12 @@ export interface CreateFromTemplateRequest {
   templateKey?: string;
   templateDocumentId?: string;
   customTitle?: string;
+  /**
+   * El idioma del contenido de las plantillas del sistema. Lo pone el servicio, no quien llama:
+   * el servidor no puede saber en qué idioma está la aplicación —el del navegador no es el que
+   * se eligió—, y cada paquete compilado sí lo sabe con certeza.
+   */
+  idioma?: string;
 }
 
 /** Cuánto se ha usado una plantilla en este inquilino. Ver `plantillas.ts`. */
@@ -93,6 +100,7 @@ export interface ImportDocumentRequest {
 })
 export class DocsService {
   private api = inject(ApiService);
+  private idioma = inject(IdiomaService);
   private endpoint = '/docs';
 
   getDocuments(): Observable<DocumentDto[]> {
@@ -147,7 +155,8 @@ export class DocsService {
   }
 
   createFromTemplate(req: CreateFromTemplateRequest): Observable<string> {
-    return this.api.post<string>(`${this.endpoint}/from-template`, req).pipe(map(idLimpio));
+    return this.api.post<string>(
+      `${this.endpoint}/from-template`, { ...req, idioma: this.idioma.actual }).pipe(map(idLimpio));
   }
 
   /**

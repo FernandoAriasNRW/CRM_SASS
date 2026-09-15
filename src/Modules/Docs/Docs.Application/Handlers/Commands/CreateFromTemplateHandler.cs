@@ -41,104 +41,19 @@ public class CreateFromTemplateHandler(IDocumentRepository repository)
         }
         else
         {
-            var key = (request.TemplateKey ?? "").ToLowerInvariant();
-            switch (key)
-            {
-                case "project-overview":
-                    docTitle = request.CustomTitle ?? "Project Overview";
-                    docDescription = "Summarize goals, scope, and milestones";
-                    docType = DocumentType.List;
-                    templatePages.Add(("Overview & Scope", @"
-                        <h1>📌 Project Overview</h1>
-                        <p>Welcome to your new project workspace! Use this document to clarify objectives, scope, and key deliverables.</p>
-                        <h2>🎯 Project Objectives</h2>
-                        <ul>
-                            <li><strong>Objective 1:</strong> Deliver core product features on schedule.</li>
-                            <li><strong>Objective 2:</strong> Maintain high quality standards and user satisfaction.</li>
-                        </ul>
-                        <h2>📅 Key Milestones</h2>
-                        <ul>
-                            <li>[ ] Kickoff & Architecture Review</li>
-                            <li>[ ] MVP Sprint Completion</li>
-                            <li>[ ] QA & User Acceptance Testing</li>
-                            <li>[ ] Production Release</li>
-                        </ul>
-                        <h2>⚠️ Risks & Dependencies</h2>
-                        <p>Document any technical or timeline risks here...</p>
-                    "));
-                    break;
+            var contenido = Plantillas.PlantillasPredefinidas.Para(
+                request.TemplateKey ?? string.Empty, request.Idioma, DateTime.UtcNow);
 
-                case "meeting-notes":
-                    docTitle = request.CustomTitle ?? "Meeting Notes";
-                    docDescription = "Capture an agenda, notes, and action items";
-                    docType = DocumentType.MeetingNote;
-                    templatePages.Add(("Meeting Notes", $@"
-                        <h1>📝 Meeting Notes - {DateTime.UtcNow:yyyy-MM-dd}</h1>
-                        <p><strong>Attendees:</strong> @Team</p>
-                        <p><strong>Facilitator:</strong> Workspace Owner</p>
-                        <hr/>
-                        <h2>📋 Agenda</h2>
-                        <ol>
-                            <li>Review sprint updates & roadmap</li>
-                            <li>Discuss key technical roadblocks</li>
-                            <li>Assign upcoming tasks and responsibilities</li>
-                        </ol>
-                        <h2>💡 Key Decisions</h2>
-                        <ul>
-                            <li>Decision 1: Approved architecture adjustments.</li>
-                        </ul>
-                        <h2>✅ Action Items</h2>
-                        <ul>
-                            <li>[ ] Follow up with client regarding integration specs</li>
-                            <li>[ ] Schedule review meeting for next Tuesday</li>
-                        </ul>
-                    "));
-                    break;
+            // Una clave que no existe es un error, no un documento en blanco. Antes caía en un
+            // `default` que creaba «Untitled Document» y le contaba un uso a una plantilla
+            // inexistente: la petición respondía bien haciendo otra cosa.
+            if (contenido is null)
+                return Result<Guid>.Failure($"No existe la plantilla «{request.TemplateKey}».");
 
-                case "wiki":
-                    docTitle = request.CustomTitle ?? "Team Wiki";
-                    docDescription = "Organize information in one place";
-                    docType = DocumentType.Wiki;
-                    templatePages.Add(("Getting Started", @"
-                        <h1>📚 Team Knowledge Base</h1>
-                        <p>Welcome to our workspace wiki! This central hub holds documentation, SOPs, and developer guidelines.</p>
-                        <h2>🚀 Quick Links</h2>
-                        <ul>
-                            <li><a href='#'>Onboarding Guide</a></li>
-                            <li><a href='#'>API Documentation</a></li>
-                            <li><a href='#'>Design System Specs</a></li>
-                        </ul>
-                        <h2>📌 Coding Standards</h2>
-                        <p>Ensure all code follows Clean Architecture, CQRS, and Angular best practices.</p>
-                    "));
-                    break;
-
-                case "client-onboarding":
-                    docTitle = request.CustomTitle ?? "Client Onboarding";
-                    docDescription = "Client summary, requirements, and handover";
-                    docType = DocumentType.List;
-                    templatePages.Add(("Client Profile", @"
-                        <h1>🏢 Client Onboarding Brief</h1>
-                        <h2>👤 Client Information</h2>
-                        <p><strong>Company Name:</strong> Enterprise Client</p>
-                        <p><strong>Key Stakeholders:</strong> John Doe (Project Manager)</p>
-                        <h2>📋 Onboarding Checklist</h2>
-                        <ul>
-                            <li>[ ] Account setup & permissions granted</li>
-                            <li>[ ] Kickoff call completed</li>
-                            <li>[ ] Requirements gather & signed off</li>
-                            <li>[ ] Initial CRM integration live</li>
-                        </ul>
-                    "));
-                    break;
-
-                default:
-                    docTitle = request.CustomTitle ?? "Untitled Document";
-                    docDescription = "";
-                    docType = DocumentType.List;
-                    templatePages.Add(("Page 1", "<p>Start typing or use / for commands...</p>"));
-                    break;
-            }
+            docTitle = !string.IsNullOrWhiteSpace(request.CustomTitle) ? request.CustomTitle : contenido.Titulo;
+            docDescription = contenido.Descripcion;
+            docType = contenido.Tipo;
+            templatePages.AddRange(contenido.Paginas);
         }
 
         var document = Document.Create(
