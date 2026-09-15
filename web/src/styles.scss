@@ -232,6 +232,133 @@
 }
 
 .ProseMirror {
+  /*
+    La tipografía del documento.
+
+    **No existía.** El editor lleva `prose prose-sm dark:prose-invert` desde el principio, pero
+    `@tailwindcss/typography` —el plugin que define esas clases— no está instalado, así que no
+    hacían nada. Y el reinicio de estilos de Tailwind deja los `h1`, `h2` y las listas sin tamaño ni
+    viñetas: un título se veía igual que un párrafo, y una lista como líneas sueltas. Buena parte de
+    «el editor está muy simple» era esto.
+
+    Se escribe aquí y no instalando el plugin porque sus colores son su propia escala de grises, no
+    los tokens del proyecto: en tema oscuro habría que corregirlo entero.
+  */
+  color: hsl(var(--foreground));
+  line-height: 1.7;
+
+  > * + * { margin-top: 0.6em; }
+
+  h1, h2, h3 {
+    color: hsl(var(--foreground));
+    font-weight: 700;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+  }
+
+  h1 { font-size: 1.75rem; margin-top: 1.6em; }
+  h2 { font-size: 1.35rem; margin-top: 1.4em; }
+  h3 { font-size: 1.1rem;  margin-top: 1.2em; }
+
+  /* El primer bloque no empuja hacia abajo: pegaría un hueco bajo el título del documento. */
+  > :first-child { margin-top: 0; }
+
+  ul, ol { padding-left: 1.5rem; }
+  ul { list-style: disc; }
+  ol { list-style: decimal; }
+  li + li { margin-top: 0.25em; }
+  li > p { margin: 0; }
+
+  /* Las listas de tareas: la casilla en la misma línea que el texto, no encima. */
+  ul[data-type='taskList'] {
+    list-style: none;
+    padding-left: 0.25rem;
+
+    li {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.5rem;
+
+      > label {
+        flex-shrink: 0;
+        margin-top: 0.3em;
+        user-select: none;
+      }
+
+      > div { flex: 1; min-width: 0; }
+
+      &[data-checked='true'] > div {
+        color: hsl(var(--muted-foreground));
+        text-decoration: line-through;
+      }
+    }
+
+    input[type='checkbox'] {
+      width: 1rem;
+      height: 1rem;
+      accent-color: hsl(var(--primary));
+      cursor: pointer;
+    }
+  }
+
+  blockquote {
+    border-left: 3px solid hsl(var(--border));
+    padding-left: 1rem;
+    color: hsl(var(--muted-foreground));
+    font-style: italic;
+  }
+
+  a {
+    color: hsl(var(--primary));
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  hr {
+    border: 0;
+    border-top: 1px solid hsl(var(--border));
+    margin: 1.5em 0;
+  }
+
+  :not(pre) > code {
+    background-color: hsl(var(--muted));
+    padding: 0.1em 0.35em;
+    border-radius: 0.25rem;
+    font-size: 0.875em;
+  }
+
+  img {
+    border-radius: 0.5rem;
+    max-width: 100%;
+  }
+
+  table {
+    border-collapse: collapse;
+    width: 100%;
+
+    td, th {
+      border: 1px solid hsl(var(--border));
+      padding: 0.4rem 0.6rem;
+      vertical-align: top;
+    }
+
+    th {
+      background-color: hsl(var(--muted));
+      font-weight: 600;
+      text-align: left;
+    }
+  }
+
+  /* El aviso de «escribe / para los comandos» que pone la extensión Placeholder. */
+  p.is-editor-empty:first-child::before,
+  .is-empty::before {
+    content: attr(data-placeholder);
+    color: hsl(var(--muted-foreground));
+    pointer-events: none;
+    float: left;
+    height: 0;
+  }
+
   /* Los bloques de aviso. El tono viaja como palabra; el color lo pone esta hoja. */
   .aviso {
     display: flex;
@@ -279,6 +406,41 @@
       border-left-color: hsl(var(--success));
       &::before { content: '✅'; }
     }
+  }
+
+  /*
+    Las columnas. De ancho igual y apiladas en pantallas estrechas: tres columnas en un móvil
+    son tres tiras que no se pueden leer.
+  */
+  .columnas {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.25rem;
+    margin: 1rem 0;
+
+    &[data-cantidad='3'] {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    @media (max-width: 768px) {
+      &,
+      &[data-cantidad='3'] {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+  }
+
+  .columna {
+    min-width: 0;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.375rem;
+
+    /* Un borde discontinuo al editar, para ver dónde acaba cada columna: sin él, dos columnas de
+       texto parecen un párrafo con un hueco raro en medio. */
+    outline: 1px dashed hsl(var(--border));
+    outline-offset: 2px;
+
+    > :first-child { margin-top: 0; }
   }
 
   /* Los desplegables. */

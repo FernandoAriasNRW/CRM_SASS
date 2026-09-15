@@ -14,8 +14,19 @@ import { COMANDOS_DEL_EDITOR, comandosQueCasan } from './comandos-del-editor';
 describe('comandosQueCasan', () => {
   const claves = (consulta: string) => comandosQueCasan(consulta).map(c => c.clave);
 
-  it('sin nada escrito ofrece todos los comandos', () => {
-    expect(comandosQueCasan('').length).toBe(COMANDOS_DEL_EDITOR.length);
+  it('sin nada escrito ofrece todos los comandos que valen donde está el cursor', () => {
+    const contextuales = COMANDOS_DEL_EDITOR.filter(c => c.soloDentroDe).length;
+
+    expect(comandosQueCasan('').length).toBe(COMANDOS_DEL_EDITOR.length - contextuales);
+    expect(comandosQueCasan('', { dentroDeColumnas: true }).length).toBe(COMANDOS_DEL_EDITOR.length);
+  });
+
+  it('«Deshacer columnas» sólo aparece con el cursor dentro de unas columnas', () => {
+    // Fuera de unas columnas no hace nada: ofrecerlo sería poner en el menú un botón que no
+    // responde, que es el tipo de fallo que esta tanda ha ido quitando.
+    expect(claves('columnas')).not.toContain('columnas-deshacer');
+    expect(comandosQueCasan('columnas', { dentroDeColumnas: true }).map(c => c.clave))
+      .toContain('columnas-deshacer');
   });
 
   it('encuentra por el título en español', () => {

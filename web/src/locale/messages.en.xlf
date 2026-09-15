@@ -7955,6 +7955,54 @@ Pending</target>
           <context context-type="linenumber">340</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="1655334207945944809" datatype="html">
+        <source>Dos columnas</source>
+        <target state="final">Two columns</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/extensions/comandos-del-editor.ts</context>
+          <context context-type="linenumber">231</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8172867510954387117" datatype="html">
+        <source>Contenido lado a lado</source>
+        <target state="final">Content side by side</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/extensions/comandos-del-editor.ts</context>
+          <context context-type="linenumber">232</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1828038475098661297" datatype="html">
+        <source>Tres columnas</source>
+        <target state="final">Three columns</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/extensions/comandos-del-editor.ts</context>
+          <context context-type="linenumber">240</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7118096496640057949" datatype="html">
+        <source>Tres bloques del mismo ancho</source>
+        <target state="final">Three blocks of equal width</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/extensions/comandos-del-editor.ts</context>
+          <context context-type="linenumber">241</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="907309518087023984" datatype="html">
+        <source>Deshacer columnas</source>
+        <target state="final">Remove columns</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/extensions/comandos-del-editor.ts</context>
+          <context context-type="linenumber">249</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6743682666137031498" datatype="html">
+        <source>Deja el contenido seguido, sin borrarlo</source>
+        <target state="final">Keeps the content in sequence, without deleting it</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/extensions/comandos-del-editor.ts</context>
+          <context context-type="linenumber">250</context>
+        </context-group>
+      </trans-unit>
     </body>
   </file>
 </xliff>
