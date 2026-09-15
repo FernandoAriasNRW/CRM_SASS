@@ -599,7 +599,7 @@ que es tanto como no guardarlo.
 Los tres están arreglados y los tres tienen prueba de integración que comprueba **que
 desaparece de la lista**, no que responda 204: responder 204 ya lo hacían.
 
-### 9.2 Un desajuste de vocabulario en los permisos, anotado y sin tocar
+### 9.2 Un desajuste de vocabulario en los permisos — resuelto
 
 La tabla `EntityPermissions` guarda hoy 185 filas, todas por rol y de módulo entero, con
 `EntityType` en plural: `"Tasks"`, `"Projects"`, `"Docs"`. Los comandos, en cambio, piden
@@ -613,6 +613,38 @@ No se ha cambiado aquí a propósito: unificar el vocabulario altera quién pued
 la aplicación, y eso merece su propio trabajo con sus propias pruebas, no un arreglo de paso
 dentro de otra cosa. La compartición nueva escribe en **singular**, que es el vocabulario que sí
 se consulta, para que compartir algo conceda acceso de verdad donde se comprueba.
+
+**Resuelto en septiembre de 2026.** La tabla tiene un solo vocabulario, en singular
+(`TiposDePermiso`), y se normaliza al crear cada permiso y al consultarlo, no sólo en la
+migración: una pestaña abierta desde antes del cambio sigue mandando «Tasks» y no debe volver a
+crear una fila huérfana. La migración `PermisosEnSingular` convierte las filas existentes y, si una
+persona o un rol ya tenía las dos, conserva la del singular, que era la única que se aplicaba.
+
+De paso, el servicio no ordenaba: con un permiso sobre una tarea y otro sobre todas las tareas,
+MySQL devolvía cualquiera de los dos. Ahora gana el concreto.
+
+**Cambia lo que puede hacer la gente.** Los niveles por rol empiezan a aplicarse tal como están
+guardados. Con los sembrados, un miembro sigue igual (edita tareas, proyectos y documentos) y un
+invitado pasa de no poder editar tareas a poder hacerlo, que es lo que la pantalla ya decía.
+
+### 9.2 bis Personas y permisos, abiertos a cualquier miembro — resuelto
+
+Encontrado al preparar las pruebas de lo anterior, con un miembro contra la aplicación levantada.
+La pantalla de administración tenía guarda; **la API no**. `POST /users` con rol «Admin»
+respondía 201 a un miembro, igual que cambiarse el rol con `PUT /users/{id}`, borrar personas o
+leer y cambiar `/permissions`. Cualquiera de la organización podía hacerse administrador en dos
+peticiones.
+
+Esos endpoints exigen ahora el rol «Admin». El directorio (`/users/tenant`) y el perfil propio
+siguen abiertos, porque los usan las menciones y los selectores de responsable.
+
+Salieron dos fallos más al limpiar los datos de la sonda: **no se podía borrar a ningún
+administrador** —la cuenta que protege al último no se traducía a SQL— y **se podía quitar el rol
+al último administrador**, dejando la organización sin nadie que la gestione.
+
+Queda anotado, sin tocar: `POST /auth/guest-token` emite un token que pasa cualquier
+`RequireAuthorization()`. Hoy no se puede pedir porque su política de límite de peticiones no
+existe y responde 409, pero el día que se arregle esa política el token abriría toda la API.
 
 ### 9.3 El sembrador falla al arrancar sobre una base ya sembrada
 
@@ -824,8 +856,10 @@ datos. Se detalla en la sección 15.
 - **El árbol de trabajo de git abandonado** (2.4).
 - **167 avisos de lint** en el frontend, heredados.
 - **Un paquete del frontend supera el presupuesto** de tamaño en 120 kB.
-- **El vocabulario de `EntityType` no casa entre los permisos sembrados y los comandos** (9.2).
-  Es lo más serio de esta lista: la autorización granular por rol no llega a aplicarse.
+- **El token de invitado abriría la API entera** (9.2 bis). Hoy no se emite porque falta su
+  política de límite de peticiones; hay que acotarlo antes de arreglar eso.
+- **Sólo las tareas piden autorización por entidad.** Proyectos, documentos y tickets no
+  implementan `IAuthorizeEntity`, así que sus niveles por rol se guardan y todavía no se aplican.
 - **Compartir no tiene interfaz todavía.** Los endpoints existen y están probados, y los filtros
   «compartido conmigo» y «privado» funcionan contra ellos, pero no hay ningún botón en la
   aplicación que comparta. Hasta que lo haya, esas dos entradas del menú responden bien y
