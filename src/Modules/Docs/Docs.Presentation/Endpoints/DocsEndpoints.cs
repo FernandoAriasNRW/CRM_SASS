@@ -110,7 +110,8 @@ public static class DocsEndpointsExtensions
                 Guid.Parse(userIdStr),
                 req.TemplateKey,
                 req.TemplateDocumentId,
-                req.CustomTitle);
+                req.CustomTitle,
+                req.Idioma);
 
             var result = await mediator.Send(command);
             return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
@@ -279,5 +280,5 @@ public record NuevaAnotacionRequest(string TextoCitado);
 
 public record ResolverAnotacionRequest(bool Resuelta);
 public record SaveAsTemplateRequest(string? CustomTitle, string? Description);
-public record CreateFromTemplateRequest(string? TemplateKey, Guid? TemplateDocumentId, string? CustomTitle);
+public record CreateFromTemplateRequest(string? TemplateKey, Guid? TemplateDocumentId, string? CustomTitle, string? Idioma = null);
 public record ImportDocumentRequest(string Title, string Content, int Type = 1);
