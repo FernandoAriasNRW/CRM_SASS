@@ -1,5 +1,6 @@
 using BuildingBlocks.Application.Authorization;
 using Identity.Domain.Entities;
+using Identity.Domain.Permisos;
 using Identity.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -21,14 +22,20 @@ public sealed class EntityPermissionService(IdentityDbContext context) : IEntity
         if (user.Role == Identity.Domain.ValueObjects.UserRole.Admin)
             return true;
 
+        entityType = TiposDePermiso.Normalizar(entityType);
+
         // Check user-specific permission first
         var userPermission = await context.EntityPermissions
-            .FirstOrDefaultAsync(p => 
+            .Where(p => 
                 p.TenantId == tenantId && 
                 p.UserId == userId && 
                 p.EntityType == entityType && 
-                (p.EntityId == entityId || p.EntityId == Guid.Empty), 
-                cancellationToken);
+                (p.EntityId == entityId || p.EntityId == Guid.Empty))
+            // Lo concreto antes que lo general. Sin orden, con un permiso sobre esta tarea y otro
+            // sobre todas las tareas, MySQL devolvía el que le venía bien, y compartir una tarea
+            // con alguien podía no servir de nada.
+            .OrderByDescending(p => p.EntityId == entityId)
+            .FirstOrDefaultAsync(cancellationToken);
 
         if (userPermission != null)
         {
@@ -37,12 +44,13 @@ public sealed class EntityPermissionService(IdentityDbContext context) : IEntity
 
         // Check role-specific default permission
         var rolePermission = await context.EntityPermissions
-            .FirstOrDefaultAsync(p =>
+            .Where(p =>
                 p.TenantId == tenantId &&
                 p.RoleName == user.Role.Name &&
                 p.EntityType == entityType &&
-                (p.EntityId == entityId || p.EntityId == Guid.Empty),
-                cancellationToken);
+                (p.EntityId == entityId || p.EntityId == Guid.Empty))
+            .OrderByDescending(p => p.EntityId == entityId)
+            .FirstOrDefaultAsync(cancellationToken);
 
         if (rolePermission != null)
         {

@@ -1,4 +1,5 @@
 using BuildingBlocks.Domain.Primitives;
+using Identity.Domain.Permisos;
 
 namespace Identity.Domain.Entities;
 
@@ -9,7 +10,7 @@ public sealed class EntityPermission : AggregateRoot, ITenantEntity
     public Guid? TeamId { get; private set; }
     public string? RoleName { get; private set; }
     public string TargetType { get; private set; } = "User"; // "User", "Team", "Role"
-    public string EntityType { get; private set; } = string.Empty; // "Projects", "Tasks", "Docs", "Webhooks", "Teams", "Reports", "Settings"
+    public string EntityType { get; private set; } = string.Empty; // Ver TiposDePermiso: siempre en singular
     public Guid EntityId { get; private set; } // Guid.Empty for module level
     public string PermissionLevel { get; private set; } = string.Empty; // "Full", "Edit", "View", "None"
 
@@ -25,7 +26,7 @@ public sealed class EntityPermission : AggregateRoot, ITenantEntity
             TeamId = null,
             RoleName = null,
             TargetType = "User",
-            EntityType = entityType,
+            EntityType = TiposDePermiso.Normalizar(entityType),
             EntityId = entityId,
             PermissionLevel = permissionLevel
         };
@@ -41,7 +42,7 @@ public sealed class EntityPermission : AggregateRoot, ITenantEntity
             TeamId = teamId,
             RoleName = null,
             TargetType = "Team",
-            EntityType = entityType,
+            EntityType = TiposDePermiso.Normalizar(entityType),
             EntityId = entityId,
             PermissionLevel = permissionLevel
         };
@@ -57,7 +58,7 @@ public sealed class EntityPermission : AggregateRoot, ITenantEntity
             TeamId = null,
             RoleName = roleName,
             TargetType = "Role",
-            EntityType = entityType,
+            EntityType = TiposDePermiso.Normalizar(entityType),
             EntityId = entityId,
             PermissionLevel = permissionLevel
         };

@@ -66,6 +66,14 @@ public sealed class EfUserRepository(IdentityDbContext context) : IUserRepositor
   public async Task<bool> ExistsAsync(Guid id, CancellationToken ct = default)
       => await context.User.AnyAsync(u => u.Id == id, ct);
 
+  /// <summary>
+  /// Cuántos administradores quedan en la organización.
+  ///
+  /// Se compara el rol entero y no <c>u.Role.Value</c>: el rol se guarda con una conversión de
+  /// valor, y EF no sabe entrar en la propiedad de un valor convertido. Con <c>.Value</c> la
+  /// consulta no se podía traducir y <b>borrar a cualquier administrador daba error</b>, incluso
+  /// habiendo otros.
+  /// </summary>
   public Task<int> GetAdminCountAsync(CancellationToken ct)
-      => context.User.CountAsync(u => !u.IsDeleted && u.Role.Value == UserRole.Admin.Value, ct);
+      => context.User.CountAsync(u => !u.IsDeleted && u.Role == UserRole.Admin, ct);
 }

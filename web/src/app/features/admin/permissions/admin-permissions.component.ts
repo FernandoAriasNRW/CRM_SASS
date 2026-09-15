@@ -45,9 +45,12 @@ export class AdminPermissionsComponent implements OnInit {
   showRoleModal = signal(false);
   selectedRoleForModal = signal<'Member' | 'Guest' | null>(null);
 
+  // Las claves van en singular porque es lo que preguntan los comandos al autorizar. En plural
+  // —como estaban— la fila se guardaba y no la consultaba nadie: cambiar un nivel aquí no
+  // cambiaba lo que la persona podía hacer.
   matrix = signal<RoleMatrixRow[]>([
     {
-      key: 'Projects',
+      key: 'Project',
       name: 'Proyectos & Espacios',
       description: 'Crear, editar, eliminar y configurar proyectos del workspace',
       icon: 'lucideFolderKanban',
@@ -56,7 +59,7 @@ export class AdminPermissionsComponent implements OnInit {
       guestLevel: 'View'
     },
     {
-      key: 'Tasks',
+      key: 'Task',
       name: 'Tareas & Elementos',
       description: 'Creación, edición de estado, asignaciones y comentarios',
       icon: 'lucideCheckSquare',
@@ -65,7 +68,7 @@ export class AdminPermissionsComponent implements OnInit {
       guestLevel: 'Edit'
     },
     {
-      key: 'Docs',
+      key: 'Document',
       name: 'Documentación & Wikis',
       description: 'Creación, edición y compartido de documentos TippTap',
       icon: 'lucideFileText',
@@ -74,7 +77,7 @@ export class AdminPermissionsComponent implements OnInit {
       guestLevel: 'View'
     },
     {
-      key: 'Webhooks',
+      key: 'Webhook',
       name: 'Webhooks & Integraciones API',
       description: 'Configuración de webhooks, llaves HMAC y eventos de integración',
       icon: 'lucideWebhook',
@@ -83,7 +86,7 @@ export class AdminPermissionsComponent implements OnInit {
       guestLevel: 'None'
     },
     {
-      key: 'Teams',
+      key: 'Team',
       name: 'Gestión de Equipos & Miembros',
       description: 'Creación de equipos y asignación de usuarios',
       icon: 'lucideUsers',
@@ -92,7 +95,7 @@ export class AdminPermissionsComponent implements OnInit {
       guestLevel: 'None'
     },
     {
-      key: 'Reports',
+      key: 'Report',
       name: 'Reportes & Analíticas',
       description: 'Acceso a tableros de métricas y exportaciones',
       icon: 'lucideBarChart3',

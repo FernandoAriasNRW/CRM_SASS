@@ -165,6 +165,14 @@ public sealed class UpdateUserCommandHandler(
     if (!string.IsNullOrEmpty(request.Role))
     {
       var newRole = UserRole.FromName<UserRole>(request.Role) ?? UserRole.Member;
+
+      // La misma regla que al borrar: quitarle el rol al último administrador deja la
+      // organización sin nadie que pueda gestionar personas ni permisos, y sin forma de arreglarlo
+      // desde la aplicación.
+      if (user.Role == UserRole.Admin && newRole != UserRole.Admin
+          && await _userRepository.GetAdminCountAsync(cancellationToken) <= 1)
+        return Result<UserDto>.Failure("No se puede quitar el rol al último administrador");
+
       var roleResult = user.ChangeRole(newRole);
       if (roleResult.IsFailure)
         return Result<UserDto>.Failure(roleResult.Error!);

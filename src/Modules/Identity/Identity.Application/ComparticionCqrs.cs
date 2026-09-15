@@ -25,17 +25,15 @@ public static class VocabularioDePermisos
     /// Cómo llama la tabla de permisos a cada tipo de entidad.
     ///
     /// Se usa el nombre en singular —«Task», no «Tasks»— porque es el que emiten los comandos al
-    /// pedir autorización (<c>IAuthorizeEntity.EntityType</c>), y por tanto el único con el que
-    /// una fila de permiso llega a consultarse de verdad. Ojo: los permisos por rol que siembra
-    /// la aplicación usan el plural, así que hoy no casan con ninguna comprobación. Está
-    /// anotado en la auditoría; cambiarlo toca la autorización entera y no es cosa de aquí.
+    /// pedir autorización (<c>IAuthorizeEntity.EntityType</c>). Es el vocabulario único de la
+    /// tabla; ver <see cref="Identity.Domain.Permisos.TiposDePermiso"/>.
     /// </summary>
     public static string ComoLoLlamaElPermiso(string tipoDeEntidad) => tipoDeEntidad switch
     {
-        TiposDeEntidad.Tarea => "Task",
-        TiposDeEntidad.Proyecto => "Project",
-        TiposDeEntidad.Ticket => "Ticket",
-        TiposDeEntidad.Documento => "Document",
+        TiposDeEntidad.Tarea => Identity.Domain.Permisos.TiposDePermiso.Tarea,
+        TiposDeEntidad.Proyecto => Identity.Domain.Permisos.TiposDePermiso.Proyecto,
+        TiposDeEntidad.Ticket => Identity.Domain.Permisos.TiposDePermiso.Ticket,
+        TiposDeEntidad.Documento => Identity.Domain.Permisos.TiposDePermiso.Documento,
         _ => tipoDeEntidad
     };
 }
