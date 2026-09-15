@@ -307,6 +307,15 @@ panel puede seguir diciendo sobre qué se comentó en vez de señalar otra cosa 
 
 - La **edición simultánea**, que sigue sin recomendarse: exige Y.js, un servidor de sincronización
   y cambiar cómo persiste el módulo entero.
-- **El contenido de las plantillas predefinidas sigue en inglés** dentro del handler. Son
-  documentos enteros, y es un arreglo aparte.
-- **El bloque de columnas**, que ya dejé para el final por ser el más caro y el que menos se usa.
+### Lo que se hizo después, con lo que había quedado apartado
+
+- **Las plantillas predefinidas, en los dos idiomas.** El idioma lo manda la pantalla: el servidor
+  no puede deducirlo, porque la cabecera del navegador no es el idioma que se eligió en la
+  aplicación. Las casillas pasan a ser listas de tareas de verdad y una clave desconocida devuelve
+  error en vez de crear un documento en blanco.
+- **La tipografía del editor, que no existía.** Salió al comprobar las plantillas en el navegador:
+  el editor lleva clases `prose`, pero `@tailwindcss/typography` nunca se instaló, así que un
+  título se veía igual que un párrafo y las listas no tenían viñetas. Buena parte de «el editor
+  está muy simple» era esto, y la auditoría no lo vio porque se hizo leyendo el código.
+- **Las columnas**, limitadas a dos o tres de ancho igual. Deshacerlas deja el contenido seguido
+  en vez de borrarlo, y se apilan en pantallas estrechas.
