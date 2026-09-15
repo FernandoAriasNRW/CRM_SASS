@@ -58,5 +58,10 @@ Desktop.ini
 # Playwright
 web/test-results/
 web/playwright-report/
+
+# Playwright escribe también en la raíz cuando se le llama desde fuera de `web/`, que es lo que
+# pasa al lanzar la suite desde el directorio del proyecto.
+test-results/
+playwright-report/
 web/blob-report/
 web/.playwright/

@@ -29,13 +29,25 @@ public class CloudinaryStorageService : IStorageService
     {
         _logger.LogInformation("Uploading file {FileName} to Cloudinary", fileName);
         
-        var uploadParams = new ImageUploadParams()
-        {
-            File = new FileDescription(fileName, fileStream),
-            Folder = "crm-saas-suite"
-        };
+        // Las imágenes van por el endpoint de imágenes y todo lo demás por el de ficheros en
+        // bruto. Antes todo subía como imagen, así que un PDF o un CSV los rechazaba Cloudinary:
+        // como nunca hubo credenciales configuradas, eso no lo había sufrido nadie todavía.
+        var esImagen = contentType?.StartsWith("image/", StringComparison.OrdinalIgnoreCase) == true;
 
-        var uploadResult = await _cloudinary.UploadAsync(uploadParams, ct);
+        var fichero = new FileDescription(fileName, fileStream);
+
+        // Dos `await` y no un ternario: el ternario obliga a los dos lados al mismo tipo y el
+        // compilador elige el de la izquierda, así que un `RawUploadParams` acababa donde se
+        // esperaba un `ImageUploadParams`.
+        RawUploadResult uploadResult;
+        if (esImagen)
+            uploadResult = await _cloudinary.UploadAsync(
+                new ImageUploadParams { File = fichero, Folder = "crm-saas-suite" }, ct);
+        else
+            // «raw» es el tipo de recurso: es lo que hace que Cloudinary acepte un PDF o un CSV
+            // sin intentar tratarlos como imagen.
+            uploadResult = await _cloudinary.UploadAsync(
+                new RawUploadParams { File = fichero, Folder = "crm-saas-suite" }, "raw", ct);
         
         if (uploadResult.Error != null)
         {

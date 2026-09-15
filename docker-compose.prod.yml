@@ -76,6 +76,16 @@ services:
       - RabbitMQ__Host=rabbitmq
       - RabbitMQ__Username=${RABBITMQ_USER:-guest}
       - RabbitMQ__Password=${RABBITMQ_PASSWORD}
+
+      # Los ficheros que se adjuntan a un documento. Con credenciales van a Cloudinary; sin ellas,
+      # al volumen de disco, que aquí es la reserva y no el plan: un disco local no se comparte
+      # entre réplicas.
+      - Cloudinary__CloudName=${CLOUDINARY_CLOUD_NAME:-}
+      - Cloudinary__ApiKey=${CLOUDINARY_API_KEY:-}
+      - Cloudinary__ApiSecret=${CLOUDINARY_API_SECRET:-}
+      - AlmacenEnDisco__Carpeta=/var/almacen
+    volumes:
+      - almacen_data:/var/almacen
     ports:
       - "${API_PORT:-8080}:8080"
     depends_on:
@@ -108,6 +118,7 @@ services:
 
 volumes:
   db_data:
+  almacen_data:
 
 networks:
   crm_network:

@@ -128,6 +128,92 @@ test('el cajón de plantillas las ofrece todas, se filtran y se recorren con tec
   await expect(cajon.getByRole('button', { name: /resumen de proyecto/i })).toBeHidden();
 });
 
+/**
+ * El fallo más grave que tenía el editor: el guardado se suscribía **sin manejador de error**, y
+ * la cabecera decía «Saved just now» —una cadena escrita a mano— pasara lo que pasara. Se podía
+ * escribir media hora con la sesión caducada y perderlo entero al recargar.
+ *
+ * La prueba fuerza el fallo del servidor. Una que sólo comprobara el camino bueno la pasaba
+ * también la versión rota.
+ */
+test('si el guardado falla, la cabecera lo dice y ofrece reintentar', async ({ page }) => {
+  const PAGINA = {
+    id: '00000000-0000-0000-0000-0000000000a1',
+    documentId: DOCUMENTOS[0].id,
+    parentPageId: null,
+    title: 'Página de prueba',
+    content: '<p>Contenido</p>',
+    order: 0,
+  };
+
+  let guardadosPedidos = 0;
+
+  await entrarADocs(page);
+
+  // Después de `entrarADocs` a propósito: en Playwright gana la ruta registrada más tarde, y la
+  // de dentro es un comodín sobre `/api/v1/` que si no se tragaría éstas.
+  await page.route(/\/api\/v1\/docs\/[^/]+\/pages/, r =>
+    r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([PAGINA]) }));
+
+  await page.route(/\/api\/v1\/docs\/pages\//, r => {
+    guardadosPedidos++;
+    // Falla siempre: lo que se comprueba es que el fallo llega a la pantalla, no que se recupere.
+    return r.fulfill({ status: 500, contentType: 'application/json', body: '"Error del servidor"' });
+  });
+
+  await page.getByText('Manual de arquitectura').first().click();
+  await expect(page.getByRole('textbox', { name: /título del documento/i })).toBeVisible({ timeout: 15_000 });
+
+  await page.locator('.ProseMirror').click();
+  await page.keyboard.type('esto no se va a poder guardar');
+
+  const reintentar = page.getByRole('button', { name: /no se guardó\. reintentar/i });
+  await expect(reintentar).toBeVisible({ timeout: 15_000 });
+
+  // Y el texto sigue en pantalla: perderlo al fallar sería el mismo desastre con otro cartel.
+  await expect(page.locator('.ProseMirror')).toContainText('esto no se va a poder guardar');
+
+  const antes = guardadosPedidos;
+  await reintentar.click();
+  await expect.poll(() => guardadosPedidos).toBeGreaterThan(antes);
+});
+
+/**
+ * El árbol de páginas no existía: `POST /docs/{id}/pages` estaba publicado y la plantilla no lo
+ * llamaba desde ningún sitio, así que cada documento se quedaba con la página que le creó la
+ * plantilla y no había forma de organizarlo.
+ */
+test('el árbol permite crear una página nueva', async ({ page }) => {
+  const PAGINA = {
+    id: '00000000-0000-0000-0000-0000000000a1',
+    documentId: DOCUMENTOS[0].id,
+    parentPageId: null,
+    title: 'Primera página',
+    content: '<p>Contenido</p>',
+    order: 0,
+  };
+
+  let creaciones = 0;
+
+  await entrarADocs(page);
+
+  await page.route(/\/api\/v1\/docs\/[^/]+\/pages/, r => {
+    if (r.request().method() === 'POST') {
+      creaciones++;
+      return r.fulfill({ status: 200, contentType: 'application/json', body: '"00000000-0000-0000-0000-0000000000a2"' });
+    }
+    return r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([PAGINA]) });
+  });
+
+  await page.getByText('Manual de arquitectura').first().click();
+
+  const arbol = page.getByRole('button', { name: /^nueva página$/i });
+  await expect(arbol).toBeVisible({ timeout: 15_000 });
+  await arbol.click();
+
+  await expect.poll(() => creaciones).toBe(1);
+});
+
 test('no tiene violaciones graves de accesibilidad', async ({ page }) => {
   const { default: AxeBuilder } = await import('@axe-core/playwright');
   await entrarADocs(page);

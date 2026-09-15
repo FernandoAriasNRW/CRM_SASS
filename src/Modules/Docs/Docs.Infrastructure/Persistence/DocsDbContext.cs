@@ -12,6 +12,9 @@ public sealed class DocsDbContext(DbContextOptions<DocsDbContext> options, IUser
     public DbSet<Page> Pages => Set<Page>();
     public DbSet<DocumentPermission> DocumentPermissions => Set<DocumentPermission>();
 
+    /// <summary>Dónde está pegado cada comentario en línea. Ver <see cref="AnotacionEnDocumento"/>.</summary>
+    public DbSet<AnotacionEnDocumento> AnotacionesEnDocumentos => Set<AnotacionEnDocumento>();
+
     /// <summary>Cuánto se usa cada plantilla. Ver <see cref="UsoDePlantilla"/>.</summary>
     public DbSet<UsoDePlantilla> UsosDePlantilla => Set<UsoDePlantilla>();
 
@@ -49,6 +52,18 @@ public sealed class DocsDbContext(DbContextOptions<DocsDbContext> options, IUser
       modelBuilder.Entity<UsoDePlantilla>()
           .Property(u => u.Clave)
           .HasMaxLength(100)
+          .IsRequired();
+
+      // La pregunta que se hace sobre esta tabla es siempre la misma —«qué se ha comentado en
+      // esta página»— y se hace al abrir cada página, así que sin este índice cada apertura
+      // recorre las anotaciones del inquilino entero.
+      modelBuilder.Entity<AnotacionEnDocumento>()
+          .HasIndex(a => new { a.TenantId, a.PageId })
+          .HasDatabaseName("IX_Anotaciones_TenantId_PageId");
+
+      modelBuilder.Entity<AnotacionEnDocumento>()
+          .Property(a => a.TextoCitado)
+          .HasMaxLength(AnotacionEnDocumento.LargoDeLaCita)
           .IsRequired();
 
       ApplyTenantFilters(modelBuilder);

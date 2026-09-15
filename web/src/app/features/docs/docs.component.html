@@ -30,17 +30,56 @@
         <input 
           type="text" 
           [ngModel]="activePage()?.title" 
-          (ngModelChange)="updateDocumentTitle($event)"
+          (ngModelChange)="renombrarPagina($event)"
+          i18n-aria-label aria-label="Título de la página"
           class="bg-transparent border-none outline-none text-foreground font-semibold focus:ring-1 focus:ring-primary/50 rounded px-1 -ml-1 w-48"
-          i18n-placeholder placeholder="Page title...">
+          i18n-placeholder placeholder="Título de la página">
       </div>
 
       <!-- Right Actions -->
       <div class="flex items-center gap-3">
-        <span class="text-xs text-muted-foreground flex items-center gap-1">
-          <ng-icon name="lucideClock" class="w-3.5 h-3.5"></ng-icon>
-          Saved just now
-        </span>
+        @if (subiendo()) {
+          <span class="text-xs text-muted-foreground flex items-center gap-1.5">
+            <ng-icon name="lucideUpload" class="w-3.5 h-3.5"></ng-icon>
+            <span i18n>Subiendo…</span>
+          </span>
+        }
+
+        <span class="text-xs text-muted-foreground tabular-nums" i18n>{palabras(), plural, =0 {Sin palabras} =1 {1 palabra} other {{{ palabras() }} palabras}}</span>
+
+        <!--
+          El estado real del guardado. Antes aquí ponía «Saved just now», una cadena escrita a
+          mano que se pintaba siempre, dijera lo que dijera el servidor, encima de un guardado que
+          se suscribía sin manejador de error.
+        -->
+        @switch (estadoDeGuardado()) {
+          @case ('guardando') {
+            <span class="text-xs text-muted-foreground flex items-center gap-1.5">
+              <ng-icon name="lucideClock" class="w-3.5 h-3.5"></ng-icon>
+              <span i18n>Guardando…</span>
+            </span>
+          }
+          @case ('pendiente') {
+            <span class="text-xs text-muted-foreground flex items-center gap-1.5">
+              <ng-icon name="lucideClock" class="w-3.5 h-3.5"></ng-icon>
+              <span i18n>Cambios sin guardar</span>
+            </span>
+          }
+          @case ('guardado') {
+            <span class="text-xs text-muted-foreground flex items-center gap-1.5">
+              <ng-icon name="lucideCheck" class="w-3.5 h-3.5"></ng-icon>
+              <span i18n>Guardado a las {{ guardadoA() | date:'HH:mm' }}</span>
+            </span>
+          }
+          @case ('error') {
+            <button type="button" (click)="reintentarGuardado()"
+                    class="text-xs font-medium text-destructive flex items-center gap-1.5 px-2 py-1
+                           rounded hover:bg-destructive/10 focus:outline-none focus:ring-2 focus:ring-ring">
+              <ng-icon name="lucideTriangleAlert" class="w-3.5 h-3.5"></ng-icon>
+              <span i18n>No se guardó. Reintentar</span>
+            </button>
+          }
+        }
         <div class="w-px h-4 bg-secondary"></div>
         <button 
           (click)="openSaveAsTemplateModal(activeDocument()!)"
@@ -49,43 +88,112 @@
           <span i18n>Guardar como plantilla</span>
         </button>
         <app-emoji-picker (emojiSelected)="insertEmoji($event)"></app-emoji-picker>
-        <button class="text-xs font-medium text-muted-foreground bg-muted hover:bg-secondary px-3 py-1.5 rounded-md transition-colors" (click)="exportHtml()" i18n>
-          Export HTML
+        <button [disabled]="exportando()"
+                class="text-xs font-medium text-muted-foreground bg-muted hover:bg-secondary px-3 py-1.5 rounded-md transition-colors disabled:opacity-50 disabled:pointer-events-none"
+                (click)="exportHtml()" i18n>
+          Exportar HTML
         </button>
-        <button class="text-xs font-medium text-white bg-primary hover:bg-primary px-3 py-1.5 rounded-md transition-colors" (click)="exportPdf()" i18n>
-          Export PDF
+        <button [disabled]="exportando()"
+                class="text-xs font-medium text-white bg-primary hover:bg-primary px-3 py-1.5 rounded-md transition-colors disabled:opacity-50 disabled:pointer-events-none"
+                (click)="exportPdf()" i18n>
+          Exportar PDF
         </button>
       </div>
     </div>
 
-    <!-- Editor Content -->
-    <div class="flex-1 overflow-y-auto">
-      <div class="max-w-3xl mx-auto px-8 pt-10 pb-4">
-        <input 
-          type="text" 
-          [ngModel]="activeDocument()?.title" 
-          (ngModelChange)="updateDocumentTitle($event)" 
-          class="w-full text-4xl font-bold bg-transparent outline-none text-foreground placeholder-zinc-300 dark:placeholder-zinc-700 tracking-tight" 
-          i18n-placeholder placeholder="Document Title">
-      </div>
-      <!--
-        El editor con su índice al lado. El esquema va a la derecha y no en la barra lateral
-        izquierda porque ésa ya la ocupa la navegación entre documentos: dos árboles a la izquierda
-        obligarían a distinguir cuál es cuál cada vez.
+    <!--
+      El cuerpo del editor: el árbol de páginas, el texto, y el índice de la página.
 
-        Se esconde en pantallas estrechas: un índice que roba la mitad del ancho al texto estorba
-        más de lo que ayuda.
-      -->
-      <div class="flex gap-8 px-8 pb-12">
-        <div class="flex-1 min-w-0 max-w-3xl mx-auto editor-container">
-          <tiptap-editor [editor]="editor"></tiptap-editor>
+      Tres columnas y no dos porque son tres cosas distintas: **entre** páginas se navega a la
+      izquierda, **dentro** de una página a la derecha. Juntarlas en un solo panel obligaba a
+      distinguir cada vez si un título era una página o un encabezado.
+
+      Las dos laterales se esconden en pantallas estrechas: cualquiera de ellas robándole la mitad
+      del ancho al texto estorba más de lo que ayuda.
+    -->
+    <div class="flex-1 flex min-h-0 overflow-hidden">
+
+      <aside class="hidden lg:block w-60 shrink-0 border-r border-border overflow-y-auto p-3">
+        <app-arbol-de-paginas
+          [paginas]="paginasDelDocumento()"
+          [paginaActivaId]="activePage()?.id ?? null"
+          (abrir)="selectPage($event)"
+          (crear)="crearPaginaDesdeElArbol($event)"
+          (mover)="moverPagina($event)"
+          (borrar)="borrarPagina($event)" />
+      </aside>
+
+      <div class="flex-1 min-w-0 overflow-y-auto">
+        <div class="max-w-3xl mx-auto px-8 pt-10 pb-4">
+          <input 
+            type="text" 
+            [ngModel]="activeDocument()?.title" 
+            (ngModelChange)="renombrarDocumento($event)" 
+            i18n-aria-label aria-label="Título del documento"
+            class="w-full text-4xl font-bold bg-transparent outline-none text-foreground placeholder-zinc-300 dark:placeholder-zinc-700 tracking-tight" 
+            i18n-placeholder placeholder="Título del documento">
         </div>
 
-        <aside class="hidden xl:block w-56 shrink-0 pt-2">
-          <div class="sticky top-4">
-            <app-esquema-del-documento [editor]="editor" [version]="versionDelEsquema()" />
+        <div class="flex gap-8 px-8 pb-12">
+          <div class="flex-1 min-w-0 max-w-3xl mx-auto editor-container">
+            <tiptap-editor [editor]="editor"></tiptap-editor>
           </div>
-        </aside>
+
+          <!--
+            El panel de la derecha: el índice de la página o sus comentarios.
+
+            Son dos pestañas y no dos columnas porque compiten por el mismo sitio y se usan en
+            momentos distintos: el índice mientras se escribe, los comentarios mientras se revisa.
+            Con las dos a la vez el texto se queda sin ancho.
+          -->
+          <aside class="hidden xl:block w-64 shrink-0 pt-2">
+            <div class="sticky top-4 flex flex-col gap-3">
+              <div role="tablist" class="flex items-center gap-1 border-b border-border">
+                <button type="button" role="tab"
+                        [attr.aria-selected]="panelLateral() === 'esquema'"
+                        (click)="panelLateral.set('esquema')"
+                        class="px-2 py-1.5 text-xs font-medium border-b-2 -mb-px transition-colors
+                               focus:outline-none focus:ring-2 focus:ring-ring rounded-t"
+                        [class.border-primary]="panelLateral() === 'esquema'"
+                        [class.text-foreground]="panelLateral() === 'esquema'"
+                        [class.border-transparent]="panelLateral() !== 'esquema'"
+                        [class.text-muted-foreground]="panelLateral() !== 'esquema'"
+                        i18n>
+                  Índice
+                </button>
+
+                <button type="button" role="tab"
+                        [attr.aria-selected]="panelLateral() === 'comentarios'"
+                        (click)="panelLateral.set('comentarios')"
+                        class="px-2 py-1.5 text-xs font-medium border-b-2 -mb-px transition-colors
+                               flex items-center gap-1.5
+                               focus:outline-none focus:ring-2 focus:ring-ring rounded-t"
+                        [class.border-primary]="panelLateral() === 'comentarios'"
+                        [class.text-foreground]="panelLateral() === 'comentarios'"
+                        [class.border-transparent]="panelLateral() !== 'comentarios'"
+                        [class.text-muted-foreground]="panelLateral() !== 'comentarios'">
+                  <span i18n>Comentarios</span>
+                  @if (comentariosAbiertos() > 0) {
+                    <span class="px-1.5 rounded-full bg-primary text-primary-foreground text-[10px] tabular-nums">
+                      {{ comentariosAbiertos() }}
+                    </span>
+                  }
+                </button>
+              </div>
+
+              @if (panelLateral() === 'esquema') {
+                <app-esquema-del-documento [editor]="editor" [version]="versionDelEsquema()" />
+              } @else {
+                <app-comentarios-del-documento
+                  [anotaciones]="anotaciones()"
+                  [anotacionActivaId]="anotacionActivaId()"
+                  (irA)="irAAnotacion($event)"
+                  (resolver)="resolverAnotacion($event)"
+                  (borrar)="borrarAnotacion($event)" />
+              }
+            </div>
+          </aside>
+        </div>
       </div>
     </div>
 
@@ -405,30 +513,132 @@
     (importado)="alImportar($event)" />
 }
 
+@if (urlPedida(); as clase) {
+  <app-pedir-url-modal
+    [clase]="clase"
+    (cancelar)="responderUrl(null)"
+    (aceptado)="responderUrl($event)" />
+}
+
 <app-plantillas-drawer
   [abierto]="isTemplatePickerOpen()"
   [plantillas]="plantillas()"
   (cerrar)="isTemplatePickerOpen.set(false)"
   (elegir)="usarPlantilla($event)" />
 
-<!-- Bubble Menu Wrapper for Tiptap -->
+<!--
+  La barra que sale al seleccionar texto.
+
+  Tenía cinco botones: negrita, cursiva, tachado, H1 y H2. **Ni siquiera enlace**, aunque la
+  extensión `Link` lleva cargada y configurada desde el principio. Eso era literalmente lo que
+  hacía que el editor «estuviera muy simple».
+-->
 <div style="display: none">
-  <div #bubbleMenu class="flex items-center gap-1 bg-white dark:bg-muted border border-border shadow-lg rounded-md p-1">
-    <button (click)="editor.chain().focus().toggleBold().run()" [class.bg-muted]="editor.isActive('bold')" [class.dark:bg-muted]="editor.isActive('bold')" class="p-1.5 rounded hover:bg-muted text-muted-foreground transition-colors">
+  <div #bubbleMenu
+       class="flex items-center gap-0.5 bg-card border border-border shadow-lg rounded-lg p-1">
+
+    <button type="button" (click)="editor.chain().focus().toggleBold().run()"
+            [class.bg-secondary]="editor.isActive('bold')"
+            i18n-title title="Negrita"
+            i18n-aria-label aria-label="Negrita"
+            class="p-1.5 rounded hover:bg-accent text-muted-foreground transition-colors
+                   focus:outline-none focus:ring-2 focus:ring-ring">
       <ng-icon name="lucideBold" class="w-4 h-4"></ng-icon>
     </button>
-    <button (click)="editor.chain().focus().toggleItalic().run()" [class.bg-muted]="editor.isActive('italic')" [class.dark:bg-muted]="editor.isActive('italic')" class="p-1.5 rounded hover:bg-muted text-muted-foreground transition-colors">
+
+    <button type="button" (click)="editor.chain().focus().toggleItalic().run()"
+            [class.bg-secondary]="editor.isActive('italic')"
+            i18n-title title="Cursiva"
+            i18n-aria-label aria-label="Cursiva"
+            class="p-1.5 rounded hover:bg-accent text-muted-foreground transition-colors
+                   focus:outline-none focus:ring-2 focus:ring-ring">
       <ng-icon name="lucideItalic" class="w-4 h-4"></ng-icon>
     </button>
-    <button (click)="editor.chain().focus().toggleStrike().run()" [class.bg-muted]="editor.isActive('strike')" [class.dark:bg-muted]="editor.isActive('strike')" class="p-1.5 rounded hover:bg-muted text-muted-foreground transition-colors">
+
+    <button type="button" (click)="editor.chain().focus().toggleStrike().run()"
+            [class.bg-secondary]="editor.isActive('strike')"
+            i18n-title title="Tachado"
+            i18n-aria-label aria-label="Tachado"
+            class="p-1.5 rounded hover:bg-accent text-muted-foreground transition-colors
+                   focus:outline-none focus:ring-2 focus:ring-ring">
       <ng-icon name="lucideStrikethrough" class="w-4 h-4"></ng-icon>
     </button>
-    <div class="w-px h-4 bg-secondary mx-1"></div>
-    <button (click)="editor.chain().focus().toggleHeading({ level: 1 }).run()" [class.bg-muted]="editor.isActive('heading', { level: 1 })" [class.dark:bg-muted]="editor.isActive('heading', { level: 1 })" class="px-2 py-1 text-xs font-semibold rounded hover:bg-muted text-muted-foreground transition-colors">
+
+    <button type="button" (click)="editor.chain().focus().toggleCode().run()"
+            [class.bg-secondary]="editor.isActive('code')"
+            i18n-title title="Código en línea"
+            i18n-aria-label aria-label="Código en línea"
+            class="p-1.5 rounded hover:bg-accent text-muted-foreground transition-colors
+                   focus:outline-none focus:ring-2 focus:ring-ring">
+      <ng-icon name="lucideCode" class="w-4 h-4"></ng-icon>
+    </button>
+
+    <div class="w-px h-4 bg-border mx-1"></div>
+
+    <button type="button" (click)="editor.chain().focus().toggleHeading({ level: 1 }).run()"
+            [class.bg-secondary]="editor.isActive('heading', { level: 1 })"
+            i18n-title title="Título 1"
+            class="px-2 py-1 text-xs font-semibold rounded hover:bg-accent text-muted-foreground
+                   transition-colors focus:outline-none focus:ring-2 focus:ring-ring">
       H1
     </button>
-    <button (click)="editor.chain().focus().toggleHeading({ level: 2 }).run()" [class.bg-muted]="editor.isActive('heading', { level: 2 })" [class.dark:bg-muted]="editor.isActive('heading', { level: 2 })" class="px-2 py-1 text-xs font-semibold rounded hover:bg-muted text-muted-foreground transition-colors">
+
+    <button type="button" (click)="editor.chain().focus().toggleHeading({ level: 2 }).run()"
+            [class.bg-secondary]="editor.isActive('heading', { level: 2 })"
+            i18n-title title="Título 2"
+            class="px-2 py-1 text-xs font-semibold rounded hover:bg-accent text-muted-foreground
+                   transition-colors focus:outline-none focus:ring-2 focus:ring-ring">
       H2
+    </button>
+
+    <button type="button" (click)="editor.chain().focus().toggleBlockquote().run()"
+            [class.bg-secondary]="editor.isActive('blockquote')"
+            i18n-title title="Cita"
+            i18n-aria-label aria-label="Cita"
+            class="p-1.5 rounded hover:bg-accent text-muted-foreground transition-colors
+                   focus:outline-none focus:ring-2 focus:ring-ring">
+      <ng-icon name="lucideQuote" class="w-4 h-4"></ng-icon>
+    </button>
+
+    <div class="w-px h-4 bg-border mx-1"></div>
+
+    <!--
+      Enlazar y quitar el enlace son dos botones y no uno que alterna: con uno solo hay que
+      adivinar qué va a hacer, y quitar un enlace sin querer obliga a volver a escribirlo.
+    -->
+    <button type="button" (click)="enlazarSeleccion()"
+            [class.bg-secondary]="editor.isActive('link')"
+            i18n-title title="Enlazar"
+            i18n-aria-label aria-label="Enlazar"
+            class="p-1.5 rounded hover:bg-accent text-muted-foreground transition-colors
+                   focus:outline-none focus:ring-2 focus:ring-ring">
+      <ng-icon name="lucideLink" class="w-4 h-4"></ng-icon>
+    </button>
+
+    @if (editor.isActive('link')) {
+      <button type="button" (click)="editor.chain().focus().unsetLink().run()"
+              i18n-title title="Quitar el enlace"
+              i18n-aria-label aria-label="Quitar el enlace"
+              class="p-1.5 rounded hover:bg-accent text-muted-foreground transition-colors
+                     focus:outline-none focus:ring-2 focus:ring-ring">
+        <ng-icon name="lucideUnlink" class="w-4 h-4"></ng-icon>
+      </button>
+    }
+
+    <button type="button" (click)="comentarSeleccion()"
+            i18n-title title="Comentar"
+            i18n-aria-label aria-label="Comentar"
+            class="p-1.5 rounded hover:bg-accent text-muted-foreground transition-colors
+                   focus:outline-none focus:ring-2 focus:ring-ring">
+      <ng-icon name="lucideMessageSquare" class="w-4 h-4"></ng-icon>
+    </button>
+
+    <button type="button" (click)="editor.chain().focus().unsetAllMarks().run()"
+            i18n-title title="Quitar el formato"
+            i18n-aria-label aria-label="Quitar el formato"
+            class="p-1.5 rounded hover:bg-accent text-muted-foreground transition-colors
+                   focus:outline-none focus:ring-2 focus:ring-ring">
+      <ng-icon name="lucideRemoveFormatting" class="w-4 h-4"></ng-icon>
     </button>
   </div>
 </div>

@@ -1,209 +1,199 @@
-// We are in Angular, so we can't use VueRenderer or ReactRenderer easily.
-// Instead, we will use vanilla JS DOM elements with Tippy for the suggestion menu.
-import tippy from 'tippy.js';
+import type { Editor, Range } from '@tiptap/core';
+import tippy, { type Instance } from 'tippy.js';
+import { type ComandoDelEditor, type PedirUrl, comandosQueCasan } from './comandos-del-editor';
 
-export const getSuggestionItems = ({ query }: { query: string }) => {
-  return [
-    {
-      title: 'Heading 1',
-      command: ({ editor, range }: any) => {
-        editor.chain().focus().deleteRange(range).setNode('heading', { level: 1 }).run();
-      },
-    },
-    {
-      title: 'Heading 2',
-      command: ({ editor, range }: any) => {
-        editor.chain().focus().deleteRange(range).setNode('heading', { level: 2 }).run();
-      },
-    },
-    {
-      title: 'Heading 3',
-      command: ({ editor, range }: any) => {
-        editor.chain().focus().deleteRange(range).setNode('heading', { level: 3 }).run();
-      },
-    },
-    {
-      title: 'Bullet List',
-      command: ({ editor, range }: any) => {
-        editor.chain().focus().deleteRange(range).toggleBulletList().run();
-      },
-    },
-    {
-      title: 'Numbered List',
-      command: ({ editor, range }: any) => {
-        editor.chain().focus().deleteRange(range).toggleOrderedList().run();
-      },
-    },
-    {
-      title: 'Image',
-      command: ({ editor, range }: any) => {
-        const url = window.prompt('Image URL');
-        if (url) {
-          editor.chain().focus().deleteRange(range).setImage({ src: url }).run();
-        }
-      },
-    },
-    {
-      title: 'Table',
-      command: ({ editor, range }: any) => {
-        editor.chain().focus().deleteRange(range).insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
-      },
-    },
-    {
-      title: 'Task List',
-      command: ({ editor, range }: any) => {
-        editor.chain().focus().deleteRange(range).toggleTaskList().run();
-      },
-    },
-    {
-      title: 'Code Block',
-      command: ({ editor, range }: any) => {
-        editor.chain().focus().deleteRange(range).toggleCodeBlock().run();
-      },
-    },
-    {
-      title: 'Quote',
-      command: ({ editor, range }: any) => {
-        editor.chain().focus().deleteRange(range).toggleBlockquote().run();
-      },
-    },
-    {
-      title: 'Divider',
-      command: ({ editor, range }: any) => {
-        editor.chain().focus().deleteRange(range).setHorizontalRule().run();
-      },
-    },
-    {
-      title: 'YouTube Video',
-      command: ({ editor, range }: any) => {
-        const url = window.prompt('YouTube URL');
-        if (url) {
-          editor.chain().focus().deleteRange(range).setYoutubeVideo({ src: url }).run();
-        }
-      },
-    }
-  ].filter(item => item.title.toLowerCase().startsWith(query.toLowerCase())).slice(0, 10);
-};
+/**
+ * Los comandos que casan con lo escrito detrás de la barra.
+ *
+ * Vive aquí por compatibilidad con la extensión, que espera esta forma; la lógica está en
+ * `comandos-del-editor.ts`, que es donde se puede probar sin montar un editor.
+ */
+export const getSuggestionItems = ({ query }: { query: string }) => comandosQueCasan(query);
 
-export const renderItems = () => {
-  let component: HTMLElement;
-  let popup: any;
+interface PropsDeSugerencia {
+  items: ComandoDelEditor[];
+  command: (comando: ComandoDelEditor) => void;
+  clientRect?: (() => DOMRect | null) | null;
+  editor?: Editor;
+  range?: Range;
+}
 
-  return {
-    onStart: (props: any) => {
-      component = document.createElement('div');
-      component.classList.add('slash-menu');
-      component.style.background = 'white';
-      component.style.border = '1px solid #e4e4e7';
-      component.style.borderRadius = '0.5rem';
-      component.style.boxShadow = '0 10px 15px -3px rgb(0 0 0 / 0.1)';
-      component.style.padding = '4px';
-      component.style.display = 'flex';
-      component.style.flexDirection = 'column';
-      component.style.gap = '2px';
-      component.style.minWidth = '200px';
+/**
+ * El desplegable del menú <code>/</code>.
+ *
+ * <b>Antes no se podía usar con el teclado.</b> Su manejador de teclas sólo atendía `Escape`: las
+ * flechas y el Enter no hacían nada y no había ningún elemento resaltado, así que escribías `/`,
+ * aparecía el menú, y tenías que soltar el teclado e ir al ratón. En un editor donde el menú `/`
+ * es la vía principal para todo, eso es justo lo contrario de para qué existe.
+ *
+ * Y estaba pintado con estilos escritos a mano en JavaScript —`background = 'white'`,
+ * `color = '#18181b'`—, así que <b>no respetaba el tema oscuro</b>. Ahora usa las clases del
+ * proyecto, como el desplegable de menciones, que ya lo hacía bien.
+ *
+ * Se construye con DOM a mano porque TipTap espera un renderizador síncrono y en Angular no hay un
+ * equivalente cómodo a `ReactRenderer`. Es la misma técnica que usa `mencion.ts`.
+ */
+export function renderItems(pedirUrl: PedirUrl) {
+  return () => {
+    let caja: HTMLElement;
+    let popup: Instance[] | undefined;
+    let comandos: ComandoDelEditor[] = [];
+    let seleccionado = 0;
+    let alElegir: ((comando: ComandoDelEditor) => void) | null = null;
 
-      const updateItems = (items: any[]) => {
-        component.innerHTML = '';
-        if (!items.length) {
-          component.innerHTML = '<div style="padding: 4px 8px; color: #71717a; font-size: 14px;">No results</div>';
-          return;
-        }
+    const elegir = (comando: ComandoDelEditor) => alElegir?.(comando);
 
-        items.forEach((item, index) => {
-          const btn = document.createElement('button');
-          btn.textContent = item.title;
-          btn.style.padding = '8px';
-          btn.style.textAlign = 'left';
-          btn.style.background = 'transparent';
-          btn.style.border = 'none';
-          btn.style.cursor = 'pointer';
-          btn.style.borderRadius = '0.25rem';
-          btn.style.fontSize = '14px';
-          btn.style.color = '#18181b';
-          
-          btn.addEventListener('mouseenter', () => {
-            btn.style.background = '#f4f4f5';
-          });
-          btn.addEventListener('mouseleave', () => {
-            btn.style.background = 'transparent';
-          });
-          btn.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            item.command(props);
-            popup[0].hide();
-          });
-          
-          component.appendChild(btn);
-        });
-      };
+    const pintar = () => {
+      caja.innerHTML = '';
 
-      updateItems(props.items);
-
-      popup = tippy('body', {
-        getReferenceClientRect: props.clientRect,
-        appendTo: () => document.body,
-        content: component,
-        showOnCreate: true,
-        interactive: true,
-        trigger: 'manual',
-        placement: 'bottom-start',
-      });
-    },
-
-    onUpdate(props: any) {
-      if (!props.clientRect) {
+      if (comandos.length === 0) {
+        const vacio = document.createElement('div');
+        vacio.className = 'px-2 py-3 text-sm text-muted-foreground text-center';
+        vacio.textContent = $localize`Ningún comando coincide`;
+        caja.appendChild(vacio);
         return;
       }
-      
-      const component = popup[0].props.content;
-      component.innerHTML = '';
-      if (!props.items.length) {
-        component.innerHTML = '<div style="padding: 4px 8px; color: #71717a; font-size: 14px;">No results</div>';
-      } else {
-        props.items.forEach((item: any, index: number) => {
-          const btn = document.createElement('button');
-          btn.textContent = item.title;
-          btn.style.padding = '8px';
-          btn.style.textAlign = 'left';
-          btn.style.background = 'transparent';
-          btn.style.border = 'none';
-          btn.style.cursor = 'pointer';
-          btn.style.borderRadius = '0.25rem';
-          btn.style.fontSize = '14px';
-          btn.style.color = '#18181b';
-          
-          btn.addEventListener('mouseenter', () => {
-            btn.style.background = '#f4f4f5';
-          });
-          btn.addEventListener('mouseleave', () => {
-            btn.style.background = 'transparent';
-          });
-          btn.addEventListener('click', () => {
-            item.command(props);
-            popup[0].hide();
-          });
-          
-          component.appendChild(btn);
+
+      let grupoPintado: string | null = null;
+
+      comandos.forEach((comando, i) => {
+        // El grupo se pinta al cambiar, no una vez por comando: al filtrar, los grupos que se
+        // quedan sin nada desaparecen solos.
+        if (comando.grupo !== grupoPintado) {
+          grupoPintado = comando.grupo;
+
+          const titulo = document.createElement('div');
+          titulo.className =
+            'px-2 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground';
+          titulo.textContent = comando.grupo;
+          caja.appendChild(titulo);
+        }
+
+        const boton = document.createElement('button');
+        boton.type = 'button';
+        boton.setAttribute('role', 'option');
+        boton.setAttribute('aria-selected', String(i === seleccionado));
+        boton.className =
+          'w-full text-left px-2 py-1.5 rounded flex items-center gap-2.5 transition-colors ' +
+          (i === seleccionado ? 'bg-secondary' : 'bg-transparent');
+
+        const icono = document.createElement('span');
+        icono.className =
+          'w-7 h-7 shrink-0 rounded border border-border bg-card flex items-center justify-center '
+          + 'text-muted-foreground [&>svg]:w-4 [&>svg]:h-4';
+        // La variable la define `ng-icon` en sus propios elementos; aquí el SVG va suelto, así que
+        // sin esto el trazo sale con el grosor que herede y los iconos se ven descuadrados.
+        icono.style.setProperty('--ng-icon__stroke-width', '2');
+        icono.innerHTML = comando.icono;
+        boton.appendChild(icono);
+
+        const textos = document.createElement('span');
+        textos.className = 'flex flex-col min-w-0';
+
+        const titulo = document.createElement('span');
+        titulo.className = 'text-sm text-foreground truncate';
+        titulo.textContent = comando.titulo;
+        textos.appendChild(titulo);
+
+        const descripcion = document.createElement('span');
+        descripcion.className = 'text-xs text-muted-foreground truncate';
+        descripcion.textContent = comando.descripcion;
+        textos.appendChild(descripcion);
+
+        boton.appendChild(textos);
+
+        boton.addEventListener('mousedown', (e) => {
+          // `mousedown` y no `click`: al pulsar, el editor pierde el foco antes de que llegue el
+          // `click`, y el comando se aplicaba en el sitio equivocado o no se aplicaba.
+          e.preventDefault();
+          elegir(comando);
         });
-      }
 
-      popup[0].setProps({
-        getReferenceClientRect: props.clientRect,
+        boton.addEventListener('mouseenter', () => {
+          seleccionado = i;
+          pintar();
+        });
+
+        caja.appendChild(boton);
       });
-    },
 
-    onKeyDown(props: any) {
-      if (props.event.key === 'Escape') {
-        popup[0].hide();
-        return true;
+      // Mantener a la vista el resaltado al recorrer con las flechas. Sin esto, la selección se
+      // va por debajo del borde y parece que el menú ha dejado de responder.
+      caja.querySelector('[aria-selected="true"]')?.scrollIntoView({ block: 'nearest' });
+    };
+
+    const mover = (paso: number) => {
+      if (comandos.length === 0) return;
+      seleccionado = (seleccionado + paso + comandos.length) % comandos.length;
+      pintar();
+    };
+
+    return {
+      onStart: (props: PropsDeSugerencia) => {
+        comandos = props.items;
+        seleccionado = 0;
+        alElegir = props.command;
+
+        caja = document.createElement('div');
+        caja.setAttribute('role', 'listbox');
+        caja.setAttribute('aria-label', $localize`Comandos del editor`);
+        caja.className =
+          'bg-card border border-border rounded-lg shadow-lg p-1 w-72 max-h-80 overflow-y-auto';
+
+        pintar();
+
+        popup = tippy('body', {
+          getReferenceClientRect: props.clientRect as () => DOMRect,
+          appendTo: () => document.body,
+          content: caja,
+          showOnCreate: true,
+          interactive: true,
+          trigger: 'manual',
+          placement: 'bottom-start'
+        });
+      },
+
+      onUpdate: (props: PropsDeSugerencia) => {
+        comandos = props.items;
+        seleccionado = 0;
+        alElegir = props.command;
+        pintar();
+
+        popup?.[0]?.setProps({ getReferenceClientRect: props.clientRect as () => DOMRect });
+      },
+
+      onKeyDown: (props: { event: KeyboardEvent }) => {
+        if (props.event.key === 'ArrowDown') { mover(1); return true; }
+        if (props.event.key === 'ArrowUp') { mover(-1); return true; }
+
+        // Tabulador también, porque en un desplegable de autocompletado es lo que mucha gente
+        // pulsa por costumbre.
+        if (props.event.key === 'Tab') {
+          mover(props.event.shiftKey ? -1 : 1);
+          return true;
+        }
+
+        if (props.event.key === 'Enter') {
+          const elegido = comandos[seleccionado];
+          if (!elegido) return false;
+          elegir(elegido);
+          return true;
+        }
+
+        if (props.event.key === 'Escape') {
+          popup?.[0]?.hide();
+          return true;
+        }
+
+        return false;
+      },
+
+      onExit: () => {
+        popup?.[0]?.destroy();
+        popup = undefined;
       }
-      return false;
-    },
-
-    onExit() {
-      popup[0].destroy();
-    },
+    };
   };
-};
+}
+
+export type { PedirUrl };
