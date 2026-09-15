@@ -49,6 +49,7 @@ import { Aviso } from './extensions/aviso';
 import { BloqueDeCodigo } from './extensions/bloque-de-codigo';
 import FileHandler from '@tiptap/extension-file-handler';
 import { Comentario } from './extensions/comentario';
+import { Columna, Columnas } from './extensions/columnas';
 import { ComentariosDelDocumentoComponent } from './comentarios-del-documento.component';
 import { EmojiPickerComponent } from './extensions/emoji-picker.component';
 import { Subject, debounceTime, firstValueFrom } from 'rxjs';
@@ -550,6 +551,10 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
 
       /** El recuadro de «ojo con esto». Escrito aquí: no hay extensión oficial. */
       Aviso,
+
+      /** Dos o tres columnas lado a lado. Tampoco hay extensión oficial. */
+      Columnas,
+      Columna,
 
       /**
        * La marca de los comentarios en línea.

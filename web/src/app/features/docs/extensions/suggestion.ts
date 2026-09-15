@@ -8,7 +8,8 @@ import { type ComandoDelEditor, type PedirUrl, comandosQueCasan } from './comand
  * Vive aquí por compatibilidad con la extensión, que espera esta forma; la lógica está en
  * `comandos-del-editor.ts`, que es donde se puede probar sin montar un editor.
  */
-export const getSuggestionItems = ({ query }: { query: string }) => comandosQueCasan(query);
+export const getSuggestionItems = ({ query, editor }: { query: string; editor: Editor }) =>
+  comandosQueCasan(query, { dentroDeColumnas: editor.isActive('columnas') });
 
 interface PropsDeSugerencia {
   items: ComandoDelEditor[];

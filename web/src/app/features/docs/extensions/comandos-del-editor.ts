@@ -16,9 +16,10 @@ import {
   lucideBan, lucideChevronRight, lucideCircleCheck, lucideCode, lucideHeading1, lucideHeading2,
   lucideHeading3, lucideImage, lucideLightbulb, lucideList, lucideListChecks, lucideListOrdered,
   lucideMinus, lucidePaperclip, lucideQuote, lucideTable, lucideTriangleAlert, lucideType,
-  lucideUpload, lucideYoutube
+  lucideUpload, lucideYoutube, lucideColumns2, lucideColumns3, lucideRows3
 } from '@ng-icons/lucide';
 import type {} from './aviso';
+import type {} from './columnas';
 
 /**
  * Qué se le pide al componente cuando hace falta una dirección.
@@ -52,6 +53,13 @@ export interface ComandoDelEditor {
    * acertaba quien supiera de memoria la primera palabra en inglés.
    */
   alias: readonly string[];
+  /**
+   * Si el comando sólo tiene sentido con el cursor dentro de un bloque concreto.
+   *
+   * «Deshacer columnas» fuera de unas columnas no hace nada, y ofrecerlo en todas partes sería
+   * poner en el menú un botón que no responde.
+   */
+  soloDentroDe?: 'columnas';
   /**
    * Aplica el comando. El resultado se ignora: `run()` devuelve si la cadena se pudo aplicar, y
    * eso no es el resultado del comando.
@@ -219,6 +227,34 @@ export const COMANDOS_DEL_EDITOR: readonly ComandoDelEditor[] = [
     ejecutar: ({ editor, range }) => editor.chain().focus().deleteRange(range).toggleAviso('bien').run()
   },
   {
+    clave: 'columnas-2',
+    titulo: $localize`Dos columnas`,
+    descripcion: $localize`Contenido lado a lado`,
+    icono: lucideColumns2,
+    grupo: GRUPO_BLOQUES,
+    alias: ['columnas', 'columns', 'dos', 'lado'],
+    ejecutar: ({ editor, range }) => editor.chain().focus().deleteRange(range).insertarColumnas(2).run()
+  },
+  {
+    clave: 'columnas-3',
+    titulo: $localize`Tres columnas`,
+    descripcion: $localize`Tres bloques del mismo ancho`,
+    icono: lucideColumns3,
+    grupo: GRUPO_BLOQUES,
+    alias: ['columnas', 'columns', 'tres'],
+    ejecutar: ({ editor, range }) => editor.chain().focus().deleteRange(range).insertarColumnas(3).run()
+  },
+  {
+    clave: 'columnas-deshacer',
+    titulo: $localize`Deshacer columnas`,
+    descripcion: $localize`Deja el contenido seguido, sin borrarlo`,
+    icono: lucideRows3,
+    grupo: GRUPO_BLOQUES,
+    alias: ['deshacer', 'quitar', 'columnas', 'unir'],
+    soloDentroDe: 'columnas',
+    ejecutar: ({ editor, range }) => editor.chain().focus().deleteRange(range).deshacerColumnas().run()
+  },
+  {
     clave: 'separador',
     titulo: $localize`Separador`,
     descripcion: $localize`Una línea entre secciones`,
@@ -312,11 +348,16 @@ function nombreDelFichero(url: string): string {
  * entero, que era lo que hacía que casi ninguna búsqueda encontrara nada. Sin acentos y sin
  * mayúsculas: quien escribe deprisa dentro del texto no va a poner la tilde de «vídeo».
  */
-export function comandosQueCasan(consulta: string): ComandoDelEditor[] {
-  const texto = normalizar(consulta);
-  if (!texto) return [...COMANDOS_DEL_EDITOR];
+export function comandosQueCasan(
+  consulta: string, contexto: { dentroDeColumnas?: boolean } = {}
+): ComandoDelEditor[] {
+  const disponibles = COMANDOS_DEL_EDITOR.filter(comando =>
+    comando.soloDentroDe !== 'columnas' || contexto.dentroDeColumnas === true);
 
-  return COMANDOS_DEL_EDITOR.filter(comando =>
+  const texto = normalizar(consulta);
+  if (!texto) return disponibles;
+
+  return disponibles.filter(comando =>
     normalizar(comando.titulo).includes(texto) ||
     comando.alias.some(alias => normalizar(alias).includes(texto)));
 }

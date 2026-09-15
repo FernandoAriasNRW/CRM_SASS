@@ -408,6 +408,41 @@
     }
   }
 
+  /*
+    Las columnas. De ancho igual y apiladas en pantallas estrechas: tres columnas en un móvil
+    son tres tiras que no se pueden leer.
+  */
+  .columnas {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.25rem;
+    margin: 1rem 0;
+
+    &[data-cantidad='3'] {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    @media (max-width: 768px) {
+      &,
+      &[data-cantidad='3'] {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+  }
+
+  .columna {
+    min-width: 0;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.375rem;
+
+    /* Un borde discontinuo al editar, para ver dónde acaba cada columna: sin él, dos columnas de
+       texto parecen un párrafo con un hueco raro en medio. */
+    outline: 1px dashed hsl(var(--border));
+    outline-offset: 2px;
+
+    > :first-child { margin-top: 0; }
+  }
+
   /* Los desplegables. */
   .desplegable {
     display: flex;
