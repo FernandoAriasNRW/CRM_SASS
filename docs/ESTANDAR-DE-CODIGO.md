@@ -295,3 +295,40 @@ suites completas en verde, catálogo i18n re-extraído al final.
   no está desplegada), así que **no se mantienen alias** de las rutas viejas.
 - Si antes de llegar al PR 3 alguien integra la entrada de tickets, se mantiene
   `/api/v1/entrada/tickets` como alias durante una versión.
+
+---
+
+## 6. Cómo se hace cada bloque (aprendido en el bloque 1)
+
+**Renombrar con Roslyn, no con buscar y reemplazar.** Hay una herramienta que abre la solución y usa
+`Renamer.RenameSymbolAsync`, como el IDE: cambia la declaración y todas sus referencias, y no toca
+textos ni comentarios. Se le pasa un mapa `fichero → nombre viejo → nombre nuevo`.
+
+**El renombrado se propaga, y hay que medirlo.** Renombrar un método de una interfaz renombra
+también el de cualquier clase que lo implemente, aunque venga de otra interfaz de otro módulo. En el
+bloque 1 eso cambió una propiedad de una entidad de Docs, que es una columna: la aplicación
+compilaba y las menciones daban 500. Después de cada renombrado:
+
+1. `dotnet ef migrations has-pending-model-changes` en **todos** los contextos. Si alguno tiene
+   cambios, es una columna renombrada sin migración.
+2. Comparar las propiedades públicas de los tipos de `main` y de la rama (lo que sale en el JSON).
+   Cada campo renombrado se busca en el frontend por su nombre viejo.
+3. Las suites completas.
+
+**Cada nombre se renombra en el bloque del módulo dueño, en todo el repositorio a la vez.** Muchos
+ficheros del Host pertenecen a otro módulo (las exportaciones a Reporting, los avisos de
+automatización a Automations, la agenda a Calendar) y van con él.
+
+**Los valores guardados no son nombres.** `EntityTypes.Task` se renombró, pero su valor sigue
+siendo `"Tarea"`: está escrito dentro del HTML de los documentos (`data-mencion-tipo`) y en las
+tablas de favoritos y menciones. Cambiarlo exige migrar ese contenido, y va con el bloque de Docs.
+
+### Hecho en el bloque 1
+
+- BuildingBlocks y Host genérico en inglés; columnas `ArchivedAtUtc` y `DeletedAtUtc`.
+- `IUserContext` en todos los endpoints (≈130 lecturas de claims a mano).
+- `Program.cs` dividido en `Startup/`; el sembrador, en un `IModuleSeeder` por módulo.
+- `TimeProvider` registrado y usado en el outbox; los usos en entidades de dominio van con su módulo.
+- Borrado: el segundo sistema de webhooks de `BuildingBlocks.Infrastructure/Webhooks`, que nadie
+  registraba y enviaba a la URL literal `"URL_DESTINO"`, y `DbSeeder.cs`, comentado entero.
+

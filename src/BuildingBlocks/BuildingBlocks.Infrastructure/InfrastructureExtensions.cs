@@ -17,6 +17,10 @@ public static class InfrastructureExtensions
   {
     // 1. Servicios Transversales (Singleton/Scoped que no dependen del DBContext)
     services.AddScoped<IEmailService, SmtpEmailService>();
+
+    // La hora del sistema, inyectada: quien la necesite la pide en vez de leer DateTime.UtcNow,
+    // y las pruebas pueden fijarla.
+    services.AddSingleton(TimeProvider.System);
     services.AddScoped<IDomainEventDispatcher, DomainEventDispatcher>();
 
     // Quien resuelve las entradas del menú de navegación en todos los módulos.
@@ -101,9 +105,6 @@ public static class InfrastructureExtensions
         cfg.ConfigureEndpoints(context);
       });
     });
-
-    // 2. Registro de Webhooks (usa HttpClient interno)
-    //services.AddWebhookServices(configuration);
 
     return services;
   }

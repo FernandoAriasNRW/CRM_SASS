@@ -87,9 +87,26 @@ public static class ModuleRegistration
 
         services.AddCommandsAndQueries();
 
-        services.AddScoped<Services.DataSeederService>();
+        services.AddDemoDataSeeding();
 
         return services;
+    }
+
+    /// <summary>Un sembrador por módulo; <see cref="Services.DataSeederService"/> los ordena.</summary>
+    private static void AddDemoDataSeeding(this IServiceCollection services)
+    {
+        services.AddScoped<Seeding.IModuleSeeder, Seeding.IdentitySeeder>();
+        services.AddScoped<Seeding.IModuleSeeder, Seeding.TeamsSeeder>();
+        services.AddScoped<Seeding.IModuleSeeder, Seeding.ProjectsSeeder>();
+        services.AddScoped<Seeding.IModuleSeeder, Seeding.WorkItemsSeeder>();
+        services.AddScoped<Seeding.IModuleSeeder, Seeding.DocsSeeder>();
+        services.AddScoped<Seeding.IModuleSeeder, Seeding.TicketingSeeder>();
+        services.AddScoped<Seeding.IModuleSeeder, Seeding.CalendarSeeder>();
+        services.AddScoped<Seeding.IModuleSeeder, Seeding.CommunicationSeeder>();
+        services.AddScoped<Seeding.IModuleSeeder, Seeding.NotificationsSeeder>();
+        services.AddScoped<Seeding.IModuleSeeder, Seeding.WebhookSeeder>();
+        services.AddScoped<Seeding.IModuleSeeder, Seeding.TagsSeeder>();
+        services.AddScoped<Services.DataSeederService>();
     }
 
     private static void AddCrossModuleAdapters(this IServiceCollection services)
