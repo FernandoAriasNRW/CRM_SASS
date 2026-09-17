@@ -282,6 +282,7 @@ suites completas en verde, catálogo i18n re-extraído al final.
 | 7 | **Reporting** (motor, exportaciones, programaciones, paneles) | El bloque más grande del Host |
 | 8 | **CustomFields + Automations + Webhook + Tags** | Fórmulas y reglas |
 | 9 | **Frontend transversal** (`shared/`, `core/`, e2e) | Lo que no arrastraron los PRs anteriores |
+| 10 | **Nombres de las pruebas** | Son frases, no identificadores de producción; traducirlas dentro de cada bloque ensucia el diff de revisión |
 
 ### Migraciones de renombrado
 
@@ -331,4 +332,23 @@ tablas de favoritos y menciones. Cambiarlo exige migrar ese contenido, y va con 
 - `TimeProvider` registrado y usado en el outbox; los usos en entidades de dominio van con su módulo.
 - Borrado: el segundo sistema de webhooks de `BuildingBlocks.Infrastructure/Webhooks`, que nadie
   registraba y enviaba a la URL literal `"URL_DESTINO"`, y `DbSeeder.cs`, comentado entero.
+
+---
+
+## 7. La skill y las herramientas
+
+Este documento es la referencia; lo que hay que **hacer y comprobar** en cada cambio está en la
+skill del proyecto, `.claude/skills/estandar-de-codigo/SKILL.md`, que se comparte en el repositorio
+a propósito (el resto de `.claude/` está ignorado). `CLAUDE.md` apunta a las dos cosas.
+
+Las herramientas viven en `tools/` y están documentadas en `tools/README.md`:
+
+| Herramienta | Para qué |
+|---|---|
+| `tools/rename-symbols` | Renombrar con Roslyn: declaración y todas las referencias, sin tocar textos ni comentarios |
+| `tools/contract-snapshot` | Ver qué campos del JSON cambian entre `main` y la rama |
+| `tools/scripts/split-types.py` | Un tipo público por fichero, conservando sus comentarios |
+| `tools/scripts/spanish-identifiers.py` | Qué identificadores siguen en español |
+
+**Nada de esto entra en el CI ni en la aplicación**: `tools/` no forma parte de `CrmSaaS.sln`.
 

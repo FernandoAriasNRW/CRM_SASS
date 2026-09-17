@@ -1,0 +1,16 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <!--
+      SDK web aunque no sirva peticiones: los tipos del proyecto heredan de ASP.NET (resultados,
+      opciones) y sin el framework compartido la reflexión no puede cargarlos.
+    -->
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyName>contract-snapshot</AssemblyName>
+    <RootNamespace>CrmSaaS.Tools.ContractSnapshot</RootNamespace>
+  </PropertyGroup>
+
+</Project>
