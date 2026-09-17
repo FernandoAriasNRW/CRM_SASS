@@ -1,5 +1,5 @@
 using WorkItems.Domain.Entities;
-using WorkItems.Domain.Servicios;
+using WorkItems.Domain.Services;
 
 namespace WorkItems.Application.Abstractions.Repositories;
 
@@ -19,5 +19,5 @@ public interface ITaskDependencyRepository
   /// salto hace N+1 dentro de la petición, y las dependencias de un proyecto son pocas —del
   /// orden de las tareas que tiene—.
   /// </summary>
-  Task<IReadOnlyList<DetectorDeCiclos.Arista>> GetAristasDelProyectoAsync(Guid tenantId, Guid projectId, CancellationToken ct = default);
+  Task<IReadOnlyList<CycleDetector.Edge>> GetProjectEdgesAsync(Guid tenantId, Guid projectId, CancellationToken ct = default);
 }

@@ -105,7 +105,7 @@
 
               @if (recurrencia(); as r) {
                 <span class="text-xs text-muted-foreground" i18n>
-                  Próxima: {{ r.proximaOcurrencia }}
+                  Próxima: {{ r.nextOccurrence }}
                 </span>
                 <button (click)="quitarRecurrencia()"
                         class="text-xs text-muted-foreground hover:text-destructive transition-colors" i18n>
@@ -289,11 +289,11 @@
             <div class="space-y-1">
               @for (punto of checklist(); track punto.id) {
                 <div class="flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-accent/40 transition-colors">
-                  <input type="checkbox" [checked]="punto.hecho" (change)="alternarPunto(punto)"
-                         [attr.aria-label]="punto.texto"
+                  <input type="checkbox" [checked]="punto.isDone" (change)="alternarPunto(punto)"
+                         [attr.aria-label]="punto.text"
                          class="h-3.5 w-3.5 rounded border-border accent-primary cursor-pointer" />
-                  <span class="text-sm flex-1" [class.line-through]="punto.hecho"
-                        [class.text-muted-foreground]="punto.hecho">{{ punto.texto }}</span>
+                  <span class="text-sm flex-1" [class.line-through]="punto.isDone"
+                        [class.text-muted-foreground]="punto.isDone">{{ punto.text }}</span>
                   <button (click)="quitarPunto(punto)"
                           i18n-aria-label aria-label="Quitar el punto"
                           class="text-muted-foreground hover:text-destructive transition-colors">

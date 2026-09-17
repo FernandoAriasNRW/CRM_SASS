@@ -10,7 +10,7 @@ public sealed record AddChecklistItemCommand(
     Guid Id,
     Guid ActorId,
     string ActorRole,
-    string Texto
+    string Text
 ) : ICommand<ChecklistItemDto>, IWebhookTriggered, IAuthorizeEntity
 {
     public string WebhookEventName => "workitem.checklist.added";
@@ -32,8 +32,8 @@ public sealed record UpdateChecklistItemCommand(
     Guid ActorId,
     string ActorRole,
     Guid ItemId,
-    bool? Hecho,
-    string? Texto
+    bool? IsDone,
+    string? Text
 ) : ICommand<bool>, IWebhookTriggered, IAuthorizeEntity
 {
     public string WebhookEventName => "workitem.checklist.updated";

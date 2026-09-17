@@ -52,8 +52,8 @@ public sealed record TaskDto(
 
 /// <summary>El patrón de repetición tal como lo ve la interfaz.</summary>
 public sealed record RecurrenceDto(
-    string Frecuencia,
-    int Intervalo,
-    DateOnly ProximaOcurrencia,
-    DateOnly? FechaFin
+    string Frequency,
+    int Interval,
+    DateOnly NextOccurrence,
+    DateOnly? EndDate
 );

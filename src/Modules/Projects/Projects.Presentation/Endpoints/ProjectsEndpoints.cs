@@ -15,11 +15,11 @@ namespace Projects.Presentation.Endpoints;
 public static class ProjectsEndpoints
 {
   /// <summary>Las rutas de archivo y papelera, con la acción que ejecuta cada una.</summary>
-  private static readonly (string Ruta, BuildingBlocks.Application.ArchiveAction Accion)[] AccionesDeArchivo =
+  private static readonly (string Ruta, BuildingBlocks.Application.ArchiveAction Accion)[] ArchiveActions =
   [
-    ("archivar", BuildingBlocks.Application.ArchiveAction.Archive),
-    ("desarchivar", BuildingBlocks.Application.ArchiveAction.Unarchive),
-    ("restaurar", BuildingBlocks.Application.ArchiveAction.RestoreFromTrash)
+    ("archive", BuildingBlocks.Application.ArchiveAction.Archive),
+    ("unarchive", BuildingBlocks.Application.ArchiveAction.Unarchive),
+    ("restore", BuildingBlocks.Application.ArchiveAction.RestoreFromTrash)
   ];
 
   public static IServiceCollection AddProjectsPresentation(this IServiceCollection services, IConfiguration configuration)
@@ -32,14 +32,14 @@ public static class ProjectsEndpoints
   {
     var group = app.MapGroup("/api/v1/projects").WithTags("Projects").RequireAuthorization();
 
-    group.MapGet("", async (IUserContext currentUser, [Microsoft.AspNetCore.Mvc.FromQuery] string? status, [Microsoft.AspNetCore.Mvc.FromQuery] Guid? ownerId, [Microsoft.AspNetCore.Mvc.FromQuery] Guid? spaceId, [Microsoft.AspNetCore.Mvc.FromQuery] Guid? folderId, [Microsoft.AspNetCore.Mvc.FromQuery] string? filter, BuildingBlocks.Application.Abstractions.IViewScopeResolver alcances, IMediator mediator, [Microsoft.AspNetCore.Mvc.FromQuery] int page = 1, [Microsoft.AspNetCore.Mvc.FromQuery] int pageSize = 25, [Microsoft.AspNetCore.Mvc.FromQuery] string? search = null) =>
+    group.MapGet("", async (IUserContext currentUser, [Microsoft.AspNetCore.Mvc.FromQuery] string? status, [Microsoft.AspNetCore.Mvc.FromQuery] Guid? ownerId, [Microsoft.AspNetCore.Mvc.FromQuery] Guid? spaceId, [Microsoft.AspNetCore.Mvc.FromQuery] Guid? folderId, [Microsoft.AspNetCore.Mvc.FromQuery] string? filter, BuildingBlocks.Application.Abstractions.IViewScopeResolver viewScopes, IMediator mediator, [Microsoft.AspNetCore.Mvc.FromQuery] int page = 1, [Microsoft.AspNetCore.Mvc.FromQuery] int pageSize = 25, [Microsoft.AspNetCore.Mvc.FromQuery] string? search = null) =>
     {
       var tenantId = currentUser.TenantId;
       var userId = currentUser.UserId;
       // El resolutor decide en un solo sitio qué hace falta consultar para el filtro pedido.
-      var alcance = await alcances.ResolveAsync(filter, userId, BuildingBlocks.Domain.EntityTypes.Project);
+      var viewScope = await viewScopes.ResolveAsync(filter, userId, BuildingBlocks.Domain.EntityTypes.Project);
 
-      var result = await mediator.Send(new GetProjectsQuery(tenantId, status, ownerId, spaceId, folderId, alcance, new() { Page = page, PageSize = pageSize, Search = search }));
+      var result = await mediator.Send(new GetProjectsQuery(tenantId, status, ownerId, spaceId, folderId, viewScope, new() { Page = page, PageSize = pageSize, Search = search }));
       return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
     });
 
@@ -63,12 +63,12 @@ public static class ProjectsEndpoints
     //
     // `IUserContext` es la abstracción que ya existía para esto, y busca el claim sin distinguir
     // mayúsculas: no se repite aquí el parseo a mano que en su día dejó el tenant vacío.
-    group.MapPost("", async (CreateProjectCommand command, IUserContext usuario, IMediator mediator) =>
+    group.MapPost("", async (CreateProjectCommand command, IUserContext user, IMediator mediator) =>
     {
       var result = await mediator.Send(command with
       {
-        TenantId = usuario.TenantId,
-        OwnerId = usuario.UserId,
+        TenantId = user.TenantId,
+        OwnerId = user.UserId,
       });
 
       return result.IsSuccess
@@ -98,15 +98,15 @@ public static class ProjectsEndpoints
 
     // Archivar, desarchivar y restaurar de la papelera. En una tabla y no en tres bloques
     // copiados: son idénticos salvo el verbo.
-    foreach (var (ruta, accion) in AccionesDeArchivo)
+    foreach (var (route, action) in ArchiveActions)
     {
-      group.MapPost("/{id:guid}/" + ruta, async (IUserContext currentUser, Guid id, IMediator mediator) =>
+      group.MapPost("/{id:guid}/" + route, async (IUserContext currentUser, Guid id, IMediator mediator) =>
       {
         var tenantId = currentUser.TenantId;
         var actorId = currentUser.UserId;
 
         var result = await mediator.Send(
-            new Projects.Application.CambiarArchivoDeProyectoCommand(tenantId, id, actorId, accion));
+            new Projects.Application.ChangeProjectArchiveStateCommand(tenantId, id, actorId, action));
 
         return result.IsSuccess ? Results.NoContent() : Results.NotFound(result.Error);
       });
@@ -121,17 +121,17 @@ public static class ProjectsEndpoints
       return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
     });
 
-    spacesGroup.MapPost("", async (CreateSpaceCommand command, IUserContext usuario, IMediator mediator) =>
+    spacesGroup.MapPost("", async (CreateSpaceCommand command, IUserContext user, IMediator mediator) =>
     {
-      var result = await mediator.Send(command with { TenantId = usuario.TenantId });
+      var result = await mediator.Send(command with { TenantId = user.TenantId });
       return result.IsSuccess ? Results.Created($"/api/v1/spaces/{result.Value!.Id}", result.Value) : Results.BadRequest(result.Error);
     });
 
     // El identificador va en la ruta y el inquilino en el token: del cuerpo no se acepta
     // ninguno de los dos. Si no, se podría renombrar el espacio de otra organización.
-    spacesGroup.MapPatch("/{id:guid}", async (Guid id, UpdateSpaceCommand command, IUserContext usuario, IMediator mediator) =>
+    spacesGroup.MapPatch("/{id:guid}", async (Guid id, UpdateSpaceCommand command, IUserContext user, IMediator mediator) =>
     {
-      var result = await mediator.Send(command with { SpaceId = id, TenantId = usuario.TenantId });
+      var result = await mediator.Send(command with { SpaceId = id, TenantId = user.TenantId });
       return result.IsSuccess ? Results.Ok() : Results.NotFound(result.Error);
     });
 
@@ -144,9 +144,9 @@ public static class ProjectsEndpoints
       return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
     });
 
-    foldersGroup.MapPost("", async (CreateFolderCommand command, IUserContext usuario, IMediator mediator) =>
+    foldersGroup.MapPost("", async (CreateFolderCommand command, IUserContext user, IMediator mediator) =>
     {
-      var result = await mediator.Send(command with { TenantId = usuario.TenantId });
+      var result = await mediator.Send(command with { TenantId = user.TenantId });
       return result.IsSuccess ? Results.Created($"/api/v1/folders/{result.Value!.Id}", result.Value) : Results.BadRequest(result.Error);
     });
 

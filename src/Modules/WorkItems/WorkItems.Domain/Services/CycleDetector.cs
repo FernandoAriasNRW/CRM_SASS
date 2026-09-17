@@ -1,4 +1,4 @@
-namespace WorkItems.Domain.Servicios;
+namespace WorkItems.Domain.Services;
 
 /// <summary>
 /// Decide si añadir una dependencia cerraría un ciclo.
@@ -12,49 +12,49 @@ namespace WorkItems.Domain.Servicios;
 /// <c>a → b</c> cierra un ciclo si desde <c>b</c> ya se llega a <c>a</c> siguiendo esa misma
 /// dirección.
 /// </summary>
-public static class DetectorDeCiclos
+public static class CycleDetector
 {
-    public readonly record struct Arista(Guid Tarea, Guid DependeDe);
+    public readonly record struct Edge(Guid Task, Guid DependsOn);
 
     /// <summary>
-    /// Si añadir <paramref name="tarea"/> → <paramref name="dependeDe"/> cerraría un ciclo.
+    /// Si añadir <paramref name="task"/> → <paramref name="dependsOn"/> cerraría un ciclo.
     ///
     /// El recorrido es iterativo y con conjunto de visitados: un grafo que ya tuviera un ciclo
     /// —por datos antiguos o por una escritura concurrente— haría girar para siempre a una
     /// versión recursiva ingenua, y esto se ejecuta dentro de una petición.
     /// </summary>
-    public static bool CerrariaUnCiclo(IEnumerable<Arista> aristas, Guid tarea, Guid dependeDe)
+    public static bool WouldCloseCycle(IEnumerable<Edge> edges, Guid task, Guid dependsOn)
     {
-        if (tarea == dependeDe)
+        if (task == dependsOn)
             return true;
 
         // Índice por tarea: a quién espera cada una.
-        var esperaA = new Dictionary<Guid, List<Guid>>();
-        foreach (var arista in aristas)
+        var waitsFor = new Dictionary<Guid, List<Guid>>();
+        foreach (var edge in edges)
         {
-            if (!esperaA.TryGetValue(arista.Tarea, out var lista))
-                esperaA[arista.Tarea] = lista = [];
+            if (!waitsFor.TryGetValue(edge.Task, out var list))
+                waitsFor[edge.Task] = list = [];
 
-            lista.Add(arista.DependeDe);
+            list.Add(edge.DependsOn);
         }
 
-        var visitados = new HashSet<Guid>();
-        var pendientes = new Stack<Guid>();
-        pendientes.Push(dependeDe);
+        var visited = new HashSet<Guid>();
+        var pending = new Stack<Guid>();
+        pending.Push(dependsOn);
 
-        while (pendientes.Count > 0)
+        while (pending.Count > 0)
         {
-            var actual = pendientes.Pop();
+            var current = pending.Pop();
 
-            if (actual == tarea)
+            if (current == task)
                 return true;
 
-            if (!visitados.Add(actual))
+            if (!visited.Add(current))
                 continue;
 
-            if (esperaA.TryGetValue(actual, out var siguientes))
-                foreach (var siguiente in siguientes)
-                    pendientes.Push(siguiente);
+            if (waitsFor.TryGetValue(current, out var nextOnes))
+                foreach (var next in nextOnes)
+                    pending.Push(next);
         }
 
         return false;

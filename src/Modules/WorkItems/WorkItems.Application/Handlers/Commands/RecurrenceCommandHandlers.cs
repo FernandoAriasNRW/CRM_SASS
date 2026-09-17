@@ -18,9 +18,9 @@ public sealed class SetTaskRecurrenceCommandHandler(
 
     // Sin fecha de arranque, la serie empieza en la fecha límite de la tarea: es la que el
     // usuario ya eligió, y pedirla otra vez sería preguntar dos veces lo mismo.
-    var arranque = request.ProximaOcurrencia ?? task.DueDate;
+    var arranque = request.NextOccurrence ?? task.DueDate;
 
-    try { task.Repetir(request.Frecuencia, request.Intervalo, arranque, request.FechaFin); }
+    try { task.SetRecurrence(request.Frequency, request.Interval, arranque, request.EndDate); }
     catch (InvalidOperationException ex) { return Result<bool>.Failure(ex.Message); }
 
     await repository.UpdateAsync(task, cancellationToken);
@@ -39,7 +39,7 @@ public sealed class ClearTaskRecurrenceCommandHandler(
     if (task is null)
       return Result<bool>.Failure("Tarea no encontrada");
 
-    task.DejarDeRepetir();
+    task.ClearRecurrence();
 
     await repository.UpdateAsync(task, cancellationToken);
     await unitOfWork.SaveChangesAsync(cancellationToken);

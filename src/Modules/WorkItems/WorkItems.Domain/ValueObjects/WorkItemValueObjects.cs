@@ -50,7 +50,7 @@ public sealed class TaskStatus : Enumeration<string>
     /// Lo que sí se comprueba es que el estado exista: mover a uno inventado corrompería
     /// los datos, y eso no es política de flujo sino integridad.
     /// </summary>
-    public static bool Existe(string status) =>
+    public static bool Exists(string status) =>
         All().Any(s => s.Value == status);
 
     /// <summary>
@@ -66,7 +66,7 @@ public sealed class TaskStatus : Enumeration<string>
     /// dejaría fuera la mitad de las tareas terminadas, que es justo el error que obligó a
     /// escribir tres comparaciones encadenadas en el repositorio del panel.
     /// </summary>
-    public static bool EsFinal(string? status) =>
+    public static bool IsFinal(string? status) =>
         status is not null &&
         (string.Equals(status, Done.Value, StringComparison.OrdinalIgnoreCase) ||
          string.Equals(status, Done.Name, StringComparison.OrdinalIgnoreCase));
@@ -78,7 +78,7 @@ public sealed class TaskStatus : Enumeration<string>
 /// Sigue el patrón de <see cref="TaskStatus"/>, con una diferencia que importa: la
 /// prioridad **tiene orden**. «Urgent» va antes que «Low», y ese orden es de negocio, no
 /// alfabético —alfabéticamente saldría High, Low, Normal, Urgent, que no significa nada—.
-/// Ese orden vive en <see cref="Orden"/> y es lo que deben usar las listas y los tableros.
+/// Ese orden vive en <see cref="Order"/> y es lo que deben usar las listas y los tableros.
 ///
 /// Como en el estado, no hay reglas sobre qué cambio de prioridad es válido: subir o bajar
 /// una tarea es decisión de quien gestiona el trabajo. Sólo se rechaza una prioridad que no
@@ -95,7 +95,7 @@ public sealed class TaskPriority : Enumeration<string>
     /// La que recibe una tarea que no declara prioridad, y con la que se rellenan las
     /// tareas que ya existían antes de que hubiera prioridades.
     /// </summary>
-    public static readonly TaskPriority PorDefecto = Normal;
+    public static readonly TaskPriority Default = Normal;
 
     private TaskPriority() : base(string.Empty, string.Empty) { }
     public TaskPriority(string value, string name) : base(value, name) { }
@@ -104,7 +104,7 @@ public sealed class TaskPriority : Enumeration<string>
     public static IReadOnlyList<TaskPriority> All() =>
         [Urgent, High, Normal, Low];
 
-    public static bool Existe(string priority) =>
+    public static bool Exists(string priority) =>
         All().Any(p => p.Value == priority);
 
     /// <summary>
@@ -114,7 +114,7 @@ public sealed class TaskPriority : Enumeration<string>
     /// <see cref="TaskStatus"/> al mover una tarea y deja el nombre igual que el valor —una
     /// tarea movida a «Done» acaba con nombre «Done» en lugar de «Completado»—.
     /// </summary>
-    public static TaskPriority Desde(string priority) =>
+    public static TaskPriority From(string priority) =>
         All().FirstOrDefault(p => p.Value == priority)
         ?? throw new InvalidOperationException($"La prioridad '{priority}' no existe");
 
@@ -126,11 +126,11 @@ public sealed class TaskPriority : Enumeration<string>
     /// —donde sólo hay una columna de texto— y hacerlo por esa columna daría el orden
     /// alfabético, que es incorrecto.
     /// </summary>
-    public static int OrdenDe(string priority)
+    public static int OrderOf(string priority)
     {
-        var indice = All().ToList().FindIndex(p => p.Value == priority);
-        return indice >= 0 ? indice : All().Count;
+        var index = All().ToList().FindIndex(p => p.Value == priority);
+        return index >= 0 ? index : All().Count;
     }
 
-    public int Orden => OrdenDe(Value);
+    public int Order => OrderOf(Value);
 }

@@ -7,52 +7,52 @@ namespace WorkItems.Domain.Entities;
 /// orden y el estado de cada punto son cosa de la tarea, y una tabla suelta con su repositorio
 /// permitiría dejar puntos huérfanos o con posiciones repetidas sin que nadie se enterara.
 ///
-/// <see cref="Posicion"/> es explícita porque el orden de una checklist **lo decide quien la
+/// <see cref="Position"/> es explícita porque el orden de una checklist **lo decide quien la
 /// escribe**, y una colección propiedad del agregado no vuelve ordenada de la base de datos.
 /// Confiar en el orden de llegada es lo que ya nos jugó una mala pasada con los responsables.
 /// </summary>
 public sealed class ChecklistItem
 {
-    public const int LargoMaximo = 200;
+    public const int MaxLength = 200;
 
     public Guid Id { get; private set; }
-    public string Texto { get; private set; } = string.Empty;
-    public bool Hecho { get; private set; }
-    public int Posicion { get; private set; }
+    public string Text { get; private set; } = string.Empty;
+    public bool IsDone { get; private set; }
+    public int Position { get; private set; }
 
     private ChecklistItem() { }
 
-    internal ChecklistItem(string texto, int posicion)
+    internal ChecklistItem(string text, int position)
     {
         Id = Guid.NewGuid();
-        Texto = Normalizar(texto);
-        Posicion = posicion;
+        Text = Normalize(text);
+        Position = position;
     }
 
-    internal void Renombrar(string texto) => Texto = Normalizar(texto);
+    internal void Rename(string text) => Text = Normalize(text);
 
-    internal void Marcar(bool hecho) => Hecho = hecho;
+    internal void MarkDone(bool done) => IsDone = done;
 
-    internal void MoverA(int posicion) => Posicion = posicion;
+    internal void MoveTo(int position) => Position = position;
 
-    private static string Normalizar(string texto)
+    private static string Normalize(string text)
     {
-        var limpio = (texto ?? string.Empty).Trim();
+        var trimmed = (text ?? string.Empty).Trim();
 
-        if (limpio.Length == 0)
-            throw new InvalidOperationException(Reglas.TextoObligatorio);
+        if (trimmed.Length == 0)
+            throw new InvalidOperationException(Rules.TextRequired);
 
-        if (limpio.Length > LargoMaximo)
-            throw new InvalidOperationException(Reglas.TextoDemasiadoLargo);
+        if (trimmed.Length > MaxLength)
+            throw new InvalidOperationException(Rules.TextTooLong);
 
-        return limpio;
+        return trimmed;
     }
 
-    public static class Reglas
+    public static class Rules
     {
-        public const string TextoObligatorio = "El punto de la checklist necesita un texto";
-        public static readonly string TextoDemasiadoLargo =
-            $"El punto de la checklist no puede pasar de {LargoMaximo} caracteres";
-        public const string NoExiste = "Ese punto de la checklist no existe";
+        public const string TextRequired = "El punto de la checklist necesita un texto";
+        public static readonly string TextTooLong =
+            $"El punto de la checklist no puede pasar de {MaxLength} caracteres";
+        public const string NotFound = "Ese punto de la checklist no existe";
     }
 }

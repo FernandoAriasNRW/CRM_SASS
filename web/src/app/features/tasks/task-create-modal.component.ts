@@ -44,24 +44,25 @@ export interface TaskItem {
 
 /** Cada cuánto se repite una tarea. Las frecuencias las define el backend. */
 export interface Recurrence {
-  frecuencia: string;
-  intervalo: number;
-  proximaOcurrencia: string;
-  fechaFin?: string | null;
+  frequency: string;
+  interval: number;
+  nextOccurrence: string;
+  endDate?: string | null;
 }
 
+/** Las claves son las que acepta el servidor (`RecurrencePattern.Frequencies`). */
 export const FRECUENCIAS = [
-  { key: 'Diaria', label: $localize`Cada día` },
-  { key: 'Semanal', label: $localize`Cada semana` },
-  { key: 'Mensual', label: $localize`Cada mes` },
+  { key: 'Daily', label: $localize`Cada día` },
+  { key: 'Weekly', label: $localize`Cada semana` },
+  { key: 'Monthly', label: $localize`Cada mes` },
 ] as const;
 
 /** Un punto de la checklist. Llega ordenado por posición desde la API. */
 export interface ChecklistItem {
   id: string;
-  texto: string;
-  hecho: boolean;
-  posicion: number;
+  text: string;
+  isDone: boolean;
+  position: number;
 }
 
 /** Una tarea vista desde el panel de dependencias. */

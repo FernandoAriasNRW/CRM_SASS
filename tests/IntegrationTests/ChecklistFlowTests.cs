@@ -57,7 +57,7 @@ public sealed class ChecklistFlowTests(CrmApiFactory factory)
 
     private static async Task<Guid> AgregarAsync(HttpClient cliente, Guid tarea, string texto)
     {
-        var respuesta = await cliente.PostAsJsonAsync($"/api/v1/tasks/{tarea}/checklist", new { texto });
+        var respuesta = await cliente.PostAsJsonAsync($"/api/v1/tasks/{tarea}/checklist", new { text = texto });
         respuesta.StatusCode.Should().Be(HttpStatusCode.OK);
         return (await respuesta.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetGuid();
     }
@@ -65,7 +65,7 @@ public sealed class ChecklistFlowTests(CrmApiFactory factory)
     private static async Task<List<string>> TextosAsync(HttpClient cliente, Guid tarea)
     {
         var puntos = await cliente.GetFromJsonAsync<JsonElement>($"/api/v1/tasks/{tarea}/checklist");
-        return puntos.EnumerateArray().Select(p => p.GetProperty("texto").GetString()!).ToList();
+        return puntos.EnumerateArray().Select(p => p.GetProperty("text").GetString()!).ToList();
     }
 
     [Fact]
@@ -90,7 +90,7 @@ public sealed class ChecklistFlowTests(CrmApiFactory factory)
         await AgregarAsync(cliente, tarea, "Dos");
         await AgregarAsync(cliente, tarea, "Tres");
 
-        var marcado = await cliente.PatchAsJsonAsync($"/api/v1/tasks/{tarea}/checklist/{uno}", new { hecho = true });
+        var marcado = await cliente.PatchAsJsonAsync($"/api/v1/tasks/{tarea}/checklist/{uno}", new { isDone = true });
         marcado.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var leida = await cliente.GetFromJsonAsync<JsonElement>($"/api/v1/tasks/{tarea}");
@@ -104,14 +104,14 @@ public sealed class ChecklistFlowTests(CrmApiFactory factory)
         var (cliente, tenantId) = await AutenticarAsync();
         var tarea = await CrearTareaAsync(cliente, tenantId, "Con typo");
         var punto = await AgregarAsync(cliente, tarea, "Con typo");
-        await cliente.PatchAsJsonAsync($"/api/v1/tasks/{tarea}/checklist/{punto}", new { hecho = true });
+        await cliente.PatchAsJsonAsync($"/api/v1/tasks/{tarea}/checklist/{punto}", new { isDone = true });
 
-        await cliente.PatchAsJsonAsync($"/api/v1/tasks/{tarea}/checklist/{punto}", new { texto = "Sin typo" });
+        await cliente.PatchAsJsonAsync($"/api/v1/tasks/{tarea}/checklist/{punto}", new { text = "Sin typo" });
 
         var puntos = await cliente.GetFromJsonAsync<JsonElement>($"/api/v1/tasks/{tarea}/checklist");
         var unico = puntos.EnumerateArray().Single();
-        unico.GetProperty("texto").GetString().Should().Be("Sin typo");
-        unico.GetProperty("hecho").GetBoolean().Should().BeTrue();
+        unico.GetProperty("text").GetString().Should().Be("Sin typo");
+        unico.GetProperty("isDone").GetBoolean().Should().BeTrue();
     }
 
     [Fact]
@@ -120,7 +120,7 @@ public sealed class ChecklistFlowTests(CrmApiFactory factory)
         var (cliente, tenantId) = await AutenticarAsync();
         var tarea = await CrearTareaAsync(cliente, tenantId, "Sin texto");
 
-        var respuesta = await cliente.PostAsJsonAsync($"/api/v1/tasks/{tarea}/checklist", new { texto = "   " });
+        var respuesta = await cliente.PostAsJsonAsync($"/api/v1/tasks/{tarea}/checklist", new { text = "   " });
 
         respuesta.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         (await TextosAsync(cliente, tarea)).Should().BeEmpty();
@@ -148,7 +148,7 @@ public sealed class ChecklistFlowTests(CrmApiFactory factory)
         var (cliente, tenantId) = await AutenticarAsync();
         var tarea = await CrearTareaAsync(cliente, tenantId, "Vacía");
 
-        var patch = await cliente.PatchAsJsonAsync($"/api/v1/tasks/{tarea}/checklist/{Guid.NewGuid()}", new { hecho = true });
+        var patch = await cliente.PatchAsJsonAsync($"/api/v1/tasks/{tarea}/checklist/{Guid.NewGuid()}", new { isDone = true });
         var borrado = await cliente.DeleteAsync($"/api/v1/tasks/{tarea}/checklist/{Guid.NewGuid()}");
 
         patch.StatusCode.Should().Be(HttpStatusCode.BadRequest);

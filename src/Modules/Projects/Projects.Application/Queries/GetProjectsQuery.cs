@@ -13,6 +13,6 @@ public sealed record GetProjectsQuery(
     /// <summary>
     /// La entrada del panel de navegación ya resuelta. Ver <c>ViewScope</c>.
     /// </summary>
-    BuildingBlocks.Application.ViewScope? Alcance,
+    BuildingBlocks.Application.ViewScope? ViewScope,
     PaginationRequest Pagination
 ) : IQuery<PagedResult<ProjectDto>>;

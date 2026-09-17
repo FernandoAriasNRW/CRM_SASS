@@ -22,14 +22,14 @@ public sealed class AddChecklistItemCommandHandler(
       return Result<ChecklistItemDto>.Failure("Tarea no encontrada");
 
     Domain.Entities.ChecklistItem punto;
-    try { punto = task.AddChecklistItem(request.Texto); }
+    try { punto = task.AddChecklistItem(request.Text); }
     catch (InvalidOperationException ex) { return Result<ChecklistItemDto>.Failure(ex.Message); }
 
     await repository.UpdateAsync(task, cancellationToken);
     await unitOfWork.SaveChangesAsync(cancellationToken);
 
     return Result<ChecklistItemDto>.Success(
-        new ChecklistItemDto(punto.Id, punto.Texto, punto.Hecho, punto.Posicion));
+        new ChecklistItemDto(punto.Id, punto.Text, punto.IsDone, punto.Position));
   }
 }
 
@@ -43,7 +43,7 @@ public sealed class UpdateChecklistItemCommandHandler(
     if (task is null)
       return Result<bool>.Failure("Tarea no encontrada");
 
-    try { task.UpdateChecklistItem(request.ItemId, request.Hecho, request.Texto); }
+    try { task.UpdateChecklistItem(request.ItemId, request.IsDone, request.Text); }
     catch (InvalidOperationException ex) { return Result<bool>.Failure(ex.Message); }
 
     await repository.UpdateAsync(task, cancellationToken);

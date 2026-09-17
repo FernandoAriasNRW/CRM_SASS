@@ -31,9 +31,9 @@ public sealed class TaskDependency : AggregateRoot, ITenantEntity
             throw new InvalidOperationException("Las dos tareas de una dependencia son obligatorias");
 
         if (taskId == dependsOnTaskId)
-            throw new InvalidOperationException(Reglas.NoPuedeBloquearseASiMisma);
+            throw new InvalidOperationException(Rules.CannotBlockItself);
 
-        var dependencia = new TaskDependency
+        var dependency = new TaskDependency
         {
             Id = Guid.NewGuid(),
             TenantId = tenantId,
@@ -41,9 +41,9 @@ public sealed class TaskDependency : AggregateRoot, ITenantEntity
             DependsOnTaskId = dependsOnTaskId
         };
 
-        dependencia.RaiseDomainEvent(new TaskDependencyAddedEvent(dependencia.Id, tenantId, taskId, dependsOnTaskId));
+        dependency.RaiseDomainEvent(new TaskDependencyAddedEvent(dependency.Id, tenantId, taskId, dependsOnTaskId));
 
-        return dependencia;
+        return dependency;
     }
 
     /// <summary>
@@ -52,19 +52,19 @@ public sealed class TaskDependency : AggregateRoot, ITenantEntity
     /// El evento lo emite el agregado y no el handler: quien lo cuenta es quien lo sabe, y así
     /// las automatizaciones de la 4D reciben la misma forma que en el alta.
     /// </summary>
-    public void MarcarComoRetirada()
+    public void MarkAsRemoved()
         => RaiseDomainEvent(new TaskDependencyRemovedEvent(Id, TenantId, TaskId, DependsOnTaskId));
 
     /// <summary>
     /// Los motivos por los que se rechaza una dependencia, en un solo sitio para que el
     /// dominio y el handler que consulta las otras filas digan lo mismo.
     /// </summary>
-    public static class Reglas
+    public static class Rules
     {
-        public const string NoPuedeBloquearseASiMisma = "Una tarea no puede bloquearse a sí misma";
-        public const string CrearariaUnCiclo = "La dependencia crearía un ciclo: la otra tarea ya depende de ésta, directa o indirectamente";
-        public const string TareaNoExiste = "Alguna de las dos tareas no existe";
-        public const string DeOtroProyecto = "Las dependencias sólo se pueden establecer entre tareas del mismo proyecto";
-        public const string YaExiste = "Esa dependencia ya está registrada";
+        public const string CannotBlockItself = "Una tarea no puede bloquearse a sí misma";
+        public const string WouldCreateCycle = "La dependencia crearía un ciclo: la otra tarea ya depende de ésta, directa o indirectamente";
+        public const string TaskNotFound = "Alguna de las dos tareas no existe";
+        public const string FromAnotherProject = "Las dependencias sólo se pueden establecer entre tareas del mismo proyecto";
+        public const string AlreadyExists = "Esa dependencia ya está registrada";
     }
 }

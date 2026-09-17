@@ -20,14 +20,14 @@ public sealed record TaskAssigneeAddedEvent(Guid TaskId, Guid TenantId, Guid Use
 
 public sealed record TaskAssigneeRemovedEvent(Guid TaskId, Guid TenantId, Guid UserId) : DomainEvent;
 
-public sealed record TaskChecklistItemAddedEvent(Guid TaskId, Guid TenantId, Guid ItemId, string Texto) : DomainEvent;
+public sealed record TaskChecklistItemAddedEvent(Guid TaskId, Guid TenantId, Guid ItemId, string Text) : DomainEvent;
 
-public sealed record TaskChecklistItemToggledEvent(Guid TaskId, Guid TenantId, Guid ItemId, bool Hecho) : DomainEvent;
+public sealed record TaskChecklistItemToggledEvent(Guid TaskId, Guid TenantId, Guid ItemId, bool IsDone) : DomainEvent;
 
 public sealed record TaskChecklistItemRemovedEvent(Guid TaskId, Guid TenantId, Guid ItemId) : DomainEvent;
 
-public sealed record TaskRecurrenceSetEvent(Guid TaskId, Guid TenantId, string Frecuencia, int Intervalo, DateOnly ProximaOcurrencia) : DomainEvent;
+public sealed record TaskRecurrenceSetEvent(Guid TaskId, Guid TenantId, string Frequency, int Interval, DateOnly NextOccurrence) : DomainEvent;
 
 public sealed record TaskRecurrenceClearedEvent(Guid TaskId, Guid TenantId) : DomainEvent;
 
-public sealed record TaskOccurrencesGeneratedEvent(Guid TaskId, Guid TenantId, int Cuantas, DateOnly SiguienteOcurrencia) : DomainEvent;
+public sealed record TaskOccurrencesGeneratedEvent(Guid TaskId, Guid TenantId, int Count, DateOnly NextOccurrence) : DomainEvent;

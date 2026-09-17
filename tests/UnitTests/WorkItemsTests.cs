@@ -192,7 +192,7 @@ public class WorkItemsTests
             new ReparentTaskCommand(_tenantId, tarea.Id, _adminId, "Admin", subtarea.Id), CancellationToken.None);
 
         result.IsSuccess.Should().BeFalse();
-        result.Error.Should().Be(WorkTask.ReglasDeAnidamiento.PadreEsSubtarea);
+        result.Error.Should().Be(WorkTask.NestingRules.ParentIsSubtask);
         tarea.ParentTaskId.Should().BeNull("un rechazo no debe dejar la tarea a medio colgar");
         await _unitOfWorkMock.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
     }
@@ -211,7 +211,7 @@ public class WorkItemsTests
             new ReparentTaskCommand(_tenantId, tarea.Id, _adminId, "Admin", futuroPadre.Id), CancellationToken.None);
 
         result.IsSuccess.Should().BeFalse();
-        result.Error.Should().Be(WorkTask.ReglasDeAnidamiento.TieneSubtareas);
+        result.Error.Should().Be(WorkTask.NestingRules.HasSubtasks);
     }
 
     [Fact]
@@ -229,7 +229,7 @@ public class WorkItemsTests
             new ReparentTaskCommand(_tenantId, tarea.Id, _adminId, "Admin", deOtroProyecto.Id), CancellationToken.None);
 
         result.IsSuccess.Should().BeFalse();
-        result.Error.Should().Be(WorkTask.ReglasDeAnidamiento.PadreDeOtroProyecto);
+        result.Error.Should().Be(WorkTask.NestingRules.ParentFromAnotherProject);
     }
 
     [Fact]
@@ -243,7 +243,7 @@ public class WorkItemsTests
             new ReparentTaskCommand(_tenantId, tarea.Id, _adminId, "Admin", null), CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
-        tarea.EsSubtarea.Should().BeFalse();
+        tarea.IsSubtask.Should().BeFalse();
         await _unitOfWorkMock.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
     }
 
@@ -261,7 +261,7 @@ public class WorkItemsTests
             Priority: null, ParentTaskId: Guid.NewGuid()), CancellationToken.None);
 
         result.IsSuccess.Should().BeFalse();
-        result.Error.Should().Be(WorkTask.ReglasDeAnidamiento.PadreNoExiste);
+        result.Error.Should().Be(WorkTask.NestingRules.ParentNotFound);
         await _repositoryMock.DidNotReceive().AddAsync(Arg.Any<WorkTask>(), Arg.Any<CancellationToken>());
     }
 

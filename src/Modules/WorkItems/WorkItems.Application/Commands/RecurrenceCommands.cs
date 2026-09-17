@@ -12,10 +12,10 @@ public sealed record SetTaskRecurrenceCommand(
     Guid Id,
     Guid ActorId,
     string ActorRole,
-    string Frecuencia,
-    int Intervalo,
-    DateOnly? ProximaOcurrencia,
-    DateOnly? FechaFin
+    string Frequency,
+    int Interval,
+    DateOnly? NextOccurrence,
+    DateOnly? EndDate
 ) : ICommand<bool>, IWebhookTriggered, IAuthorizeEntity
 {
     public string WebhookEventName => "workitem.recurrence.set";

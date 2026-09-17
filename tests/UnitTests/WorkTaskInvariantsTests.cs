@@ -254,7 +254,7 @@ public sealed class WorkTaskInvariantsTests
             .Should().ContainInOrder("Urgent", "High", "Normal", "Low")
             .And.HaveCount(4);
 
-        TaskPriority.OrdenDe("Urgent").Should().BeLessThan(TaskPriority.OrdenDe("Low"));
+        TaskPriority.OrderOf("Urgent").Should().BeLessThan(TaskPriority.OrderOf("Low"));
     }
 
     [Fact]
@@ -262,7 +262,7 @@ public sealed class WorkTaskInvariantsTests
     {
         // Cubre las filas antiguas que pudieran tener la columna vacía: deben caer al fondo,
         // no colarse en la cabecera como si fueran lo más urgente.
-        TaskPriority.OrdenDe("").Should().BeGreaterThan(TaskPriority.OrdenDe("Low"));
+        TaskPriority.OrderOf("").Should().BeGreaterThan(TaskPriority.OrderOf("Low"));
     }
 
     #endregion
@@ -275,7 +275,7 @@ public sealed class WorkTaskInvariantsTests
         var tarea = NuevaTarea();
 
         tarea.ParentTaskId.Should().BeNull();
-        tarea.EsSubtarea.Should().BeFalse();
+        tarea.IsSubtask.Should().BeFalse();
     }
 
     [Fact]
@@ -289,7 +289,7 @@ public sealed class WorkTaskInvariantsTests
             DateOnly.FromDateTime(DateTime.UtcNow), null, padre);
 
         tarea.ParentTaskId.Should().Be(padre);
-        tarea.EsSubtarea.Should().BeTrue();
+        tarea.IsSubtask.Should().BeTrue();
     }
 
     [Fact]
@@ -330,7 +330,7 @@ public sealed class WorkTaskInvariantsTests
 
         tarea.Reparent(null);
 
-        tarea.EsSubtarea.Should().BeFalse();
+        tarea.IsSubtask.Should().BeFalse();
         tarea.DomainEvents.Should().ContainSingle()
             .Which.Should().BeOfType<TaskParentChangedEvent>()
             .Which.NewParentTaskId.Should().BeNull();
@@ -366,8 +366,8 @@ public sealed class WorkTaskInvariantsTests
     {
         // Las reglas viven en un solo sitio para que el handler que las aplica no las
         // reinvente con otros mensajes.
-        WorkTask.ReglasDeAnidamiento.ProfundidadMaxima.Should().Be(2);
-        WorkTask.ReglasDeAnidamiento.PadreEsSubtarea.Should().Contain("un solo nivel");
+        WorkTask.NestingRules.MaxDepth.Should().Be(2);
+        WorkTask.NestingRules.ParentIsSubtask.Should().Contain("un solo nivel");
     }
 
     #endregion
@@ -387,7 +387,7 @@ public sealed class WorkTaskInvariantsTests
 
         tarea.AssigneeId.Should().Be(responsable);
         tarea.Assignees.Select(a => a.UserId).Should().ContainSingle().Which.Should().Be(responsable);
-        tarea.EsResponsable(responsable).Should().BeTrue();
+        tarea.IsAssignee(responsable).Should().BeTrue();
     }
 
     [Fact]
@@ -486,7 +486,7 @@ public sealed class WorkTaskInvariantsTests
         tarea.Assign(nuevo);
 
         tarea.AssigneeId.Should().Be(nuevo);
-        tarea.EsResponsable(nuevo).Should().BeTrue("el principal figura siempre entre los responsables");
+        tarea.IsAssignee(nuevo).Should().BeTrue("el principal figura siempre entre los responsables");
         tarea.Assignees.Should().HaveCount(2, "el anterior sigue siendo responsable, sólo deja de ser el principal");
     }
 
@@ -549,9 +549,9 @@ public sealed class WorkTaskInvariantsTests
         tarea.AddChecklistItem("Segundo");
         tarea.AddChecklistItem("Tercero");
 
-        tarea.Checklist.OrderBy(i => i.Posicion).Select(i => i.Texto)
+        tarea.Checklist.OrderBy(i => i.Position).Select(i => i.Text)
             .Should().ContainInOrder("Primero", "Segundo", "Tercero");
-        tarea.Checklist.Select(i => i.Posicion).Should().OnlyHaveUniqueItems();
+        tarea.Checklist.Select(i => i.Position).Should().OnlyHaveUniqueItems();
     }
 
     [Fact]
@@ -568,8 +568,8 @@ public sealed class WorkTaskInvariantsTests
         tarea.RemoveChecklistItem(delMedio.Id);
         tarea.AddChecklistItem("Cuarto");
 
-        tarea.Checklist.Select(i => i.Posicion).Should().OnlyHaveUniqueItems();
-        tarea.Checklist.OrderBy(i => i.Posicion).Last().Texto.Should().Be("Cuarto");
+        tarea.Checklist.Select(i => i.Position).Should().OnlyHaveUniqueItems();
+        tarea.Checklist.OrderBy(i => i.Position).Last().Text.Should().Be("Cuarto");
     }
 
     [Fact]
@@ -588,7 +588,7 @@ public sealed class WorkTaskInvariantsTests
     {
         var tarea = NuevaTarea();
 
-        var largo = () => tarea.AddChecklistItem(new string('x', ChecklistItem.LargoMaximo + 1));
+        var largo = () => tarea.AddChecklistItem(new string('x', ChecklistItem.MaxLength + 1));
 
         largo.Should().Throw<InvalidOperationException>().WithMessage("*no puede pasar de*");
     }
@@ -600,7 +600,7 @@ public sealed class WorkTaskInvariantsTests
 
         var punto = tarea.AddChecklistItem("  con espacios  ");
 
-        punto.Texto.Should().Be("con espacios");
+        punto.Text.Should().Be("con espacios");
     }
 
     [Fact]
@@ -611,12 +611,12 @@ public sealed class WorkTaskInvariantsTests
         tarea.AddChecklistItem("Dos");
         tarea.ClearDomainEvents();
 
-        tarea.UpdateChecklistItem(uno.Id, hecho: true, texto: null);
+        tarea.UpdateChecklistItem(uno.Id, done: true, text: null);
 
-        tarea.ProgresoDeChecklist().Should().Be((2, 1));
+        tarea.ChecklistProgress().Should().Be((2, 1));
         tarea.DomainEvents.Should().ContainSingle()
             .Which.Should().BeOfType<TaskChecklistItemToggledEvent>()
-            .Which.Hecho.Should().BeTrue();
+            .Which.IsDone.Should().BeTrue();
     }
 
     [Fact]
@@ -624,10 +624,10 @@ public sealed class WorkTaskInvariantsTests
     {
         var tarea = NuevaTarea();
         var uno = tarea.AddChecklistItem("Uno");
-        tarea.UpdateChecklistItem(uno.Id, hecho: true, texto: null);
+        tarea.UpdateChecklistItem(uno.Id, done: true, text: null);
         tarea.ClearDomainEvents();
 
-        tarea.UpdateChecklistItem(uno.Id, hecho: true, texto: null);
+        tarea.UpdateChecklistItem(uno.Id, done: true, text: null);
 
         tarea.DomainEvents.Should().BeEmpty("sin cambio real no hay nada que contar");
     }
@@ -637,13 +637,13 @@ public sealed class WorkTaskInvariantsTests
     {
         var tarea = NuevaTarea();
         var uno = tarea.AddChecklistItem("Con typo");
-        tarea.UpdateChecklistItem(uno.Id, hecho: true, texto: null);
+        tarea.UpdateChecklistItem(uno.Id, done: true, text: null);
 
-        tarea.UpdateChecklistItem(uno.Id, hecho: null, texto: "Sin typo");
+        tarea.UpdateChecklistItem(uno.Id, done: null, text: "Sin typo");
 
         var punto = tarea.Checklist.Single();
-        punto.Texto.Should().Be("Sin typo");
-        punto.Hecho.Should().BeTrue();
+        punto.Text.Should().Be("Sin typo");
+        punto.IsDone.Should().BeTrue();
     }
 
     [Fact]
@@ -665,7 +665,7 @@ public sealed class WorkTaskInvariantsTests
     private static WorkTask TareaQueSeRepite(string frecuencia, int intervalo, DateOnly desde, DateOnly? fin = null)
     {
         var tarea = NuevaTarea();
-        tarea.Repetir(frecuencia, intervalo, desde, fin);
+        tarea.SetRecurrence(frecuencia, intervalo, desde, fin);
         return tarea;
     }
 
@@ -678,9 +678,9 @@ public sealed class WorkTaskInvariantsTests
     [Fact]
     public void Sin_llegar_la_fecha_no_se_genera_nada()
     {
-        var tarea = TareaQueSeRepite(PatronDeRecurrencia.Frecuencias.Diaria, 1, new DateOnly(2026, 8, 20));
+        var tarea = TareaQueSeRepite(RecurrencePattern.Frequencies.Daily, 1, new DateOnly(2026, 8, 20));
 
-        tarea.GenerarOcurrenciasHasta(new DateOnly(2026, 8, 19)).Should().BeEmpty();
+        tarea.GenerateOccurrencesUntil(new DateOnly(2026, 8, 19)).Should().BeEmpty();
     }
 
     [Fact]
@@ -688,15 +688,15 @@ public sealed class WorkTaskInvariantsTests
     {
         // Si la aplicación estuvo parada, saltarse las atrasadas dejaría huecos que nadie va a
         // reclamar pero que falsean cualquier informe.
-        var tarea = TareaQueSeRepite(PatronDeRecurrencia.Frecuencias.Diaria, 1, new DateOnly(2026, 8, 10));
+        var tarea = TareaQueSeRepite(RecurrencePattern.Frequencies.Daily, 1, new DateOnly(2026, 8, 10));
 
-        var generadas = tarea.GenerarOcurrenciasHasta(new DateOnly(2026, 8, 13));
+        var generadas = tarea.GenerateOccurrencesUntil(new DateOnly(2026, 8, 13));
 
         generadas.Should().HaveCount(4);
         generadas.Select(t => t.DueDate).Should().ContainInOrder(
             new DateOnly(2026, 8, 10), new DateOnly(2026, 8, 11),
             new DateOnly(2026, 8, 12), new DateOnly(2026, 8, 13));
-        tarea.Recurrence!.ProximaOcurrencia.Should().Be(new DateOnly(2026, 8, 14));
+        tarea.Recurrence!.NextOccurrence.Should().Be(new DateOnly(2026, 8, 14));
     }
 
     [Fact]
@@ -704,9 +704,9 @@ public sealed class WorkTaskInvariantsTests
     {
         // Si la heredaran, cada ocurrencia empezaría a generar las suyas y la serie se
         // multiplicaría sola hasta llenar el tablero.
-        var tarea = TareaQueSeRepite(PatronDeRecurrencia.Frecuencias.Diaria, 1, new DateOnly(2026, 8, 12));
+        var tarea = TareaQueSeRepite(RecurrencePattern.Frequencies.Daily, 1, new DateOnly(2026, 8, 12));
 
-        var generadas = tarea.GenerarOcurrenciasHasta(new DateOnly(2026, 8, 12));
+        var generadas = tarea.GenerateOccurrencesUntil(new DateOnly(2026, 8, 12));
 
         generadas.Should().ContainSingle().Which.Recurrence.Should().BeNull();
     }
@@ -715,14 +715,14 @@ public sealed class WorkTaskInvariantsTests
     public void La_fecha_de_fin_corta_la_serie()
     {
         var tarea = TareaQueSeRepite(
-            PatronDeRecurrencia.Frecuencias.Diaria, 1,
+            RecurrencePattern.Frequencies.Daily, 1,
             new DateOnly(2026, 8, 10), fin: new DateOnly(2026, 8, 11));
 
-        var generadas = tarea.GenerarOcurrenciasHasta(new DateOnly(2026, 8, 31));
+        var generadas = tarea.GenerateOccurrencesUntil(new DateOnly(2026, 8, 31));
 
         generadas.Should().HaveCount(2);
-        tarea.Recurrence!.Agotado.Should().BeTrue();
-        tarea.GenerarOcurrenciasHasta(new DateOnly(2026, 9, 30)).Should().BeEmpty();
+        tarea.Recurrence!.IsExhausted.Should().BeTrue();
+        tarea.GenerateOccurrencesUntil(new DateOnly(2026, 9, 30)).Should().BeEmpty();
     }
 
     [Fact]
@@ -733,17 +733,17 @@ public sealed class WorkTaskInvariantsTests
         tarea.AddAssignee(companero);
         tarea.AddChecklistItem("Preparar sala");
         var punto = tarea.AddChecklistItem("Enviar acta");
-        tarea.UpdateChecklistItem(punto.Id, hecho: true, texto: null);
+        tarea.UpdateChecklistItem(punto.Id, done: true, text: null);
         tarea.Reprioritize("High");
-        tarea.Repetir(PatronDeRecurrencia.Frecuencias.Semanal, 1, new DateOnly(2026, 8, 12), null);
+        tarea.SetRecurrence(RecurrencePattern.Frequencies.Weekly, 1, new DateOnly(2026, 8, 12), null);
 
-        var ocurrencia = tarea.GenerarOcurrenciasHasta(new DateOnly(2026, 8, 12)).Single();
+        var ocurrencia = tarea.GenerateOccurrencesUntil(new DateOnly(2026, 8, 12)).Single();
 
         ocurrencia.Title.Value.Should().Be(tarea.Title.Value);
         ocurrencia.Priority.Value.Should().Be("High");
         ocurrencia.Assignees.Select(a => a.UserId).Should().BeEquivalentTo(tarea.Assignees.Select(a => a.UserId));
-        ocurrencia.Checklist.Select(p => p.Texto).Should().BeEquivalentTo(["Preparar sala", "Enviar acta"]);
-        ocurrencia.Checklist.Should().OnlyContain(p => !p.Hecho,
+        ocurrencia.Checklist.Select(p => p.Text).Should().BeEquivalentTo(["Preparar sala", "Enviar acta"]);
+        ocurrencia.Checklist.Should().OnlyContain(p => !p.IsDone,
             "la copia empieza sin marcar; heredar lo hecho daría por completado trabajo que no se ha tocado");
     }
 
@@ -752,9 +752,9 @@ public sealed class WorkTaskInvariantsTests
     {
         var tarea = NuevaTarea();
         tarea.Reparent(Guid.NewGuid());
-        tarea.Repetir(PatronDeRecurrencia.Frecuencias.Diaria, 1, new DateOnly(2026, 8, 12), null);
+        tarea.SetRecurrence(RecurrencePattern.Frequencies.Daily, 1, new DateOnly(2026, 8, 12), null);
 
-        var ocurrencia = tarea.GenerarOcurrenciasHasta(new DateOnly(2026, 8, 12)).Single();
+        var ocurrencia = tarea.GenerateOccurrencesUntil(new DateOnly(2026, 8, 12)).Single();
 
         ocurrencia.ParentTaskId.Should().BeNull();
     }
@@ -762,12 +762,12 @@ public sealed class WorkTaskInvariantsTests
     [Fact]
     public void Dejar_de_repetir_para_la_serie()
     {
-        var tarea = TareaQueSeRepite(PatronDeRecurrencia.Frecuencias.Diaria, 1, new DateOnly(2026, 8, 10));
+        var tarea = TareaQueSeRepite(RecurrencePattern.Frequencies.Daily, 1, new DateOnly(2026, 8, 10));
 
-        tarea.DejarDeRepetir();
+        tarea.ClearRecurrence();
 
         tarea.Recurrence.Should().BeNull();
-        tarea.GenerarOcurrenciasHasta(new DateOnly(2026, 12, 31)).Should().BeEmpty();
+        tarea.GenerateOccurrencesUntil(new DateOnly(2026, 12, 31)).Should().BeEmpty();
     }
 
     #endregion
@@ -785,7 +785,7 @@ public sealed class WorkTaskInvariantsTests
     {
         var tarea = NuevaTarea();
 
-        tarea.ActualizarDetalles(horasEstimadas: 13m);
+        tarea.UpdateDetails(estimatedHours: 13m);
 
         tarea.EstimatedHours.Should().Be(13m);
         tarea.Title.Value.Should().Be("Tarea de prueba");
@@ -798,7 +798,7 @@ public sealed class WorkTaskInvariantsTests
         var tarea = NuevaTarea();
         var fecha = new DateOnly(2027, 1, 15);
 
-        tarea.ActualizarDetalles("Otro título", "otra descripción", 3.5m, fecha);
+        tarea.UpdateDetails("Otro título", "otra descripción", 3.5m, fecha);
 
         tarea.Title.Value.Should().Be("Otro título");
         tarea.Description.Should().Be("otra descripción");
@@ -811,7 +811,7 @@ public sealed class WorkTaskInvariantsTests
     {
         var tarea = NuevaTarea();
 
-        var accion = () => tarea.ActualizarDetalles(titulo: "   ");
+        var accion = () => tarea.UpdateDetails(title: "   ");
 
         accion.Should().Throw<InvalidOperationException>();
         tarea.Title.Value.Should().Be("Tarea de prueba");
@@ -822,7 +822,7 @@ public sealed class WorkTaskInvariantsTests
     {
         var tarea = NuevaTarea();
 
-        var accion = () => tarea.ActualizarDetalles(titulo: new string('x', 201));
+        var accion = () => tarea.UpdateDetails(title: new string('x', 201));
 
         accion.Should().Throw<InvalidOperationException>();
     }
@@ -836,10 +836,10 @@ public sealed class WorkTaskInvariantsTests
     {
         var tarea = NuevaTarea();
 
-        var accion = () => tarea.ActualizarDetalles(horasEstimadas: -1m);
+        var accion = () => tarea.UpdateDetails(estimatedHours: -1m);
 
         accion.Should().Throw<InvalidOperationException>()
-            .WithMessage(WorkTask.ReglasDeDetalle.HorasNegativas);
+            .WithMessage(WorkTask.DetailRules.NegativeHours);
         tarea.EstimatedHours.Should().Be(8m);
     }
 
@@ -848,7 +848,7 @@ public sealed class WorkTaskInvariantsTests
     {
         var tarea = NuevaTarea();
 
-        tarea.ActualizarDetalles(horasEstimadas: 0m);
+        tarea.UpdateDetails(estimatedHours: 0m);
 
         tarea.EstimatedHours.Should().Be(0m);
     }
@@ -862,7 +862,7 @@ public sealed class WorkTaskInvariantsTests
     {
         var tarea = NuevaTarea();
 
-        tarea.ActualizarDetalles(descripcion: string.Empty);
+        tarea.UpdateDetails(description: string.Empty);
 
         tarea.Description.Should().BeEmpty();
     }
@@ -877,7 +877,7 @@ public sealed class WorkTaskInvariantsTests
         var tarea = NuevaTarea();
         tarea.ClearDomainEvents();
 
-        tarea.ActualizarDetalles("Otro título", "otra", 1m, new DateOnly(2027, 3, 1));
+        tarea.UpdateDetails("Otro título", "otra", 1m, new DateOnly(2027, 3, 1));
 
         tarea.DomainEvents.Should().BeEmpty();
     }
@@ -929,7 +929,7 @@ public sealed class WorkTaskInvariantsTests
         var accion = () => TareaQueVence(new DateOnly(2026, 9, 1), new DateOnly(2026, 9, 10));
 
         accion.Should().Throw<InvalidOperationException>()
-            .WithMessage(WorkTask.ReglasDeDetalle.InicioDespuesDelVencimiento);
+            .WithMessage(WorkTask.DetailRules.StartAfterDueDate);
     }
 
     [Fact]
@@ -937,7 +937,7 @@ public sealed class WorkTaskInvariantsTests
     {
         var tarea = TareaQueVence(new DateOnly(2026, 9, 1));
 
-        var accion = () => tarea.ActualizarDetalles(fechaInicio: new DateOnly(2026, 9, 10));
+        var accion = () => tarea.UpdateDetails(startDate: new DateOnly(2026, 9, 10));
 
         accion.Should().Throw<InvalidOperationException>();
         tarea.StartDate.Should().BeNull();
@@ -953,10 +953,10 @@ public sealed class WorkTaskInvariantsTests
     {
         var tarea = TareaQueVence(new DateOnly(2026, 9, 10), new DateOnly(2026, 9, 5));
 
-        var accion = () => tarea.ActualizarDetalles(fechaLimite: new DateOnly(2026, 9, 1));
+        var accion = () => tarea.UpdateDetails(dueDate: new DateOnly(2026, 9, 1));
 
         accion.Should().Throw<InvalidOperationException>()
-            .WithMessage(WorkTask.ReglasDeDetalle.VencimientoAntesDelInicio);
+            .WithMessage(WorkTask.DetailRules.DueDateBeforeStart);
     }
 
     /// <summary>
@@ -968,9 +968,9 @@ public sealed class WorkTaskInvariantsTests
     {
         var tarea = TareaQueVence(new DateOnly(2026, 9, 10), new DateOnly(2026, 9, 5));
 
-        tarea.ActualizarDetalles(
-            fechaLimite: new DateOnly(2026, 10, 10),
-            fechaInicio: new DateOnly(2026, 10, 5));
+        tarea.UpdateDetails(
+            dueDate: new DateOnly(2026, 10, 10),
+            startDate: new DateOnly(2026, 10, 5));
 
         tarea.StartDate.Should().Be(new DateOnly(2026, 10, 5));
         tarea.DueDate.Should().Be(new DateOnly(2026, 10, 10));
@@ -981,7 +981,7 @@ public sealed class WorkTaskInvariantsTests
     {
         var tarea = TareaQueVence(new DateOnly(2026, 9, 10), new DateOnly(2026, 9, 5));
 
-        tarea.ActualizarDetalles(quitarFechaInicio: true);
+        tarea.UpdateDetails(clearStartDate: true);
 
         tarea.StartDate.Should().BeNull();
     }
@@ -991,7 +991,7 @@ public sealed class WorkTaskInvariantsTests
     {
         var tarea = TareaQueVence(new DateOnly(2026, 9, 10), new DateOnly(2026, 9, 5));
 
-        tarea.ActualizarDetalles(titulo: "Otro título");
+        tarea.UpdateDetails(title: "Otro título");
 
         tarea.StartDate.Should().Be(new DateOnly(2026, 9, 5));
     }
@@ -1010,9 +1010,9 @@ public sealed class WorkTaskInvariantsTests
             dueDate: new DateOnly(2026, 8, 10), priority: null, parentTaskId: null,
             startDate: new DateOnly(2026, 8, 7));
 
-        tarea.Repetir(PatronDeRecurrencia.Frecuencias.Mensual, 1, new DateOnly(2026, 9, 10), null);
+        tarea.SetRecurrence(RecurrencePattern.Frequencies.Monthly, 1, new DateOnly(2026, 9, 10), null);
 
-        var ocurrencia = tarea.GenerarOcurrenciasHasta(new DateOnly(2026, 9, 10)).Single();
+        var ocurrencia = tarea.GenerateOccurrencesUntil(new DateOnly(2026, 9, 10)).Single();
 
         ocurrencia.DueDate.Should().Be(new DateOnly(2026, 9, 10));
         ocurrencia.StartDate.Should().Be(new DateOnly(2026, 9, 7), "dura los mismos tres días");
@@ -1021,9 +1021,9 @@ public sealed class WorkTaskInvariantsTests
     [Fact]
     public void Una_ocurrencia_de_una_tarea_sin_inicio_tampoco_lo_tiene()
     {
-        var tarea = TareaQueSeRepite(PatronDeRecurrencia.Frecuencias.Diaria, 1, new DateOnly(2026, 8, 10));
+        var tarea = TareaQueSeRepite(RecurrencePattern.Frequencies.Daily, 1, new DateOnly(2026, 8, 10));
 
-        var ocurrencia = tarea.GenerarOcurrenciasHasta(new DateOnly(2026, 8, 10)).First();
+        var ocurrencia = tarea.GenerateOccurrencesUntil(new DateOnly(2026, 8, 10)).First();
 
         ocurrencia.StartDate.Should().BeNull();
     }

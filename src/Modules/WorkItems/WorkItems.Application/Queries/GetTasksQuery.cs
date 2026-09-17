@@ -14,8 +14,8 @@ public sealed record GetTasksQuery(
     /// La entrada del panel de navegación ya resuelta: filtro, quién pregunta y las listas que
     /// sólo se pueden saber fuera del módulo. Ver <c>ViewScope</c>.
     /// </summary>
-    BuildingBlocks.Application.ViewScope? Alcance,
+    BuildingBlocks.Application.ViewScope? ViewScope,
     PaginationRequest Pagination,
     Guid? ParentTaskId = null,
-    bool IncluirSubtareas = false
+    bool IncludeSubtasks = false
 ) : IQuery<PagedResult<TaskDto>>;

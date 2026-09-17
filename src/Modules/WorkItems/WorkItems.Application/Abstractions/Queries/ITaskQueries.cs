@@ -15,11 +15,11 @@ public interface ITaskQueries
       CancellationToken ct = default);
 
   /// <param name="parentTaskId">Si viene, devuelve las subtareas de esa tarea.</param>
-  /// <param name="incluirSubtareas">
+  /// <param name="includeSubtasks">
   /// Sin <paramref name="parentTaskId"/>, por defecto se devuelven sólo las tareas de primer
   /// nivel. Con <c>true</c> se mezclan también las subtareas.
   /// </param>
-  Task<PagedResult<TaskDto>> GetByTenantWithPaginationAsync(Guid tenantId, Guid? projectId, Guid? assigneeId, string? status, string? priority, BuildingBlocks.Application.ViewScope? alcance, Guid? parentTaskId, bool incluirSubtareas, PaginationRequest pagination, CancellationToken ct = default);
+  Task<PagedResult<TaskDto>> GetByTenantWithPaginationAsync(Guid tenantId, Guid? projectId, Guid? assigneeId, string? status, string? priority, BuildingBlocks.Application.ViewScope? viewScope, Guid? parentTaskId, bool includeSubtasks, PaginationRequest pagination, CancellationToken ct = default);
 
   Task<TaskDto?> GetByIdAsync(Guid tenantId, Guid id, CancellationToken ct = default);
 
