@@ -1,3 +1,4 @@
+using BuildingBlocks.Application.Authorization;
 using BuildingBlocks.Domain;
 using Docs.Application.Abstractions.Repositories;
 using Docs.Domain.Entities;
@@ -5,7 +6,12 @@ using MediatR;
 
 namespace Docs.Application.Handlers.Commands;
 
-public record CreatePageCommand(Guid DocumentId, Guid? ParentPageId, string Title) : IRequest<Result<Guid>>;
+public record CreatePageCommand(Guid DocumentId, Guid? ParentPageId, string Title) : IRequest<Result<Guid>>, IAuthorizeEntity
+{
+    public string EntityType => "Document";
+    public Guid EntityId => DocumentId;
+    public string RequiredPermission => "Write";
+}
 
 public class CreatePageHandler(IDocumentRepository documentRepository) : IRequestHandler<CreatePageCommand, Result<Guid>>
 {

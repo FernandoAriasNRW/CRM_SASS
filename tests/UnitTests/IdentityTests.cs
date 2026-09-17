@@ -204,25 +204,4 @@ public class IdentityTests
     }
 
     #endregion
-
-    #region GuestToken Tests
-
-    [Fact]
-    public async Task GuestToken_WithValidTenant_ReturnsToken()
-    {
-        // Arrange
-        var handler = new GuestTokenCommandHandler(_jwtServiceMock);
-        var command = new GuestTokenCommand("test-tenant");
-
-        _jwtServiceMock.GenerateGuestToken(Guid.Empty, "test-tenant").Returns("guest-token");
-
-        // Act
-        var result = await handler.Handle(command, CancellationToken.None);
-
-        // Assert
-        result.IsSuccess.Should().BeTrue();
-        result.Value!.AccessToken.Should().Be("guest-token");
-    }
-
-    #endregion
 }

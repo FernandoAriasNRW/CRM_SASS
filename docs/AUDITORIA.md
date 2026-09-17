@@ -599,7 +599,7 @@ que es tanto como no guardarlo.
 Los tres están arreglados y los tres tienen prueba de integración que comprueba **que
 desaparece de la lista**, no que responda 204: responder 204 ya lo hacían.
 
-### 9.2 Un desajuste de vocabulario en los permisos, anotado y sin tocar
+### 9.2 Un desajuste de vocabulario en los permisos — resuelto
 
 La tabla `EntityPermissions` guarda hoy 185 filas, todas por rol y de módulo entero, con
 `EntityType` en plural: `"Tasks"`, `"Projects"`, `"Docs"`. Los comandos, en cambio, piden
@@ -613,6 +613,69 @@ No se ha cambiado aquí a propósito: unificar el vocabulario altera quién pued
 la aplicación, y eso merece su propio trabajo con sus propias pruebas, no un arreglo de paso
 dentro de otra cosa. La compartición nueva escribe en **singular**, que es el vocabulario que sí
 se consulta, para que compartir algo conceda acceso de verdad donde se comprueba.
+
+**Resuelto en septiembre de 2026.** La tabla tiene un solo vocabulario, en singular
+(`TiposDePermiso`), y se normaliza al crear cada permiso y al consultarlo, no sólo en la
+migración: una pestaña abierta desde antes del cambio sigue mandando «Tasks» y no debe volver a
+crear una fila huérfana. La migración `PermisosEnSingular` convierte las filas existentes y, si una
+persona o un rol ya tenía las dos, conserva la del singular, que era la única que se aplicaba.
+
+De paso, el servicio no ordenaba: con un permiso sobre una tarea y otro sobre todas las tareas,
+MySQL devolvía cualquiera de los dos. Ahora gana el concreto.
+
+**Cambia lo que puede hacer la gente.** Los niveles por rol empiezan a aplicarse tal como están
+guardados. Con los sembrados, un miembro sigue igual (edita tareas, proyectos y documentos) y un
+invitado pasa de no poder editar tareas a poder hacerlo, que es lo que la pantalla ya decía.
+
+### 9.2 bis Personas y permisos, abiertos a cualquier miembro — resuelto
+
+Encontrado al preparar las pruebas de lo anterior, con un miembro contra la aplicación levantada.
+La pantalla de administración tenía guarda; **la API no**. `POST /users` con rol «Admin»
+respondía 201 a un miembro, igual que cambiarse el rol con `PUT /users/{id}`, borrar personas o
+leer y cambiar `/permissions`. Cualquiera de la organización podía hacerse administrador en dos
+peticiones.
+
+Esos endpoints exigen ahora el rol «Admin». El directorio (`/users/tenant`) y el perfil propio
+siguen abiertos, porque los usan las menciones y los selectores de responsable.
+
+Salieron dos fallos más al limpiar los datos de la sonda: **no se podía borrar a ningún
+administrador** —la cuenta que protege al último no se traducía a SQL— y **se podía quitar el rol
+al último administrador**, dejando la organización sin nadie que la gestione.
+
+**El token de invitado se ha quitado.** `POST /auth/guest-token` emitía, a cualquiera y sin
+credenciales, un token con rol «Guest» que pasaba todas las comprobaciones de sesión de la API. No
+llegó a funcionar —su política de límite de peticiones no existía y respondía 409—, así que se
+quitó antes de que alguien arreglara esa política y abriera la API entera.
+
+**En su lugar, la entrada de tickets.** Los clientes de una organización abren tickets desde su
+propia web o su backend con `POST /api/v1/entrada/tickets` y una **clave de entrada** en la cabecera
+`X-Api-Key`:
+
+- La clave **sólo sirve para crear tickets** y **fija la organización**: no hace falta identificador
+  público de organización y quien llama no puede elegir dónde cae el ticket. Se guarda su hash, se
+  enseña una vez, se puede revocar y la gestiona un administrador (pestaña «Entrada de tickets»).
+- **Obligatorio**: asunto, mensaje, nombre, email, teléfono y empresa. **Opcional**: adjuntos
+  (hasta 10 imágenes o vídeos de 50 MB), clasificación, etiquetas, equipo, estado y prioridad.
+- Acepta JSON y multipart. CORS abierto sólo en ese endpoint, sin credenciales, y límite de
+  peticiones por clave.
+- La página `/support` se quitó: la sustituyen los ejemplos que da la pantalla de claves, con la
+  URL y la clave ya puestas.
+
+Probado desde un navegador en otro origen con una imagen y un vídeo reales, guardados en
+Cloudinary. Salió un fallo: un vídeo corrupto hacía responder 500; ahora es un 400 con el nombre del
+fichero, y lo ya subido se borra.
+
+De paso, dos cosas de la ficha del ticket: **las etiquetas no se guardaban nunca** (la pantalla las
+mandaba y el comando no tenía dónde recibirlas) y **el botón «Adjuntar» no hacía nada**. El botón
+«Nuevo ticket» sólo lo veían los administradores por una directiva que no consultaba permisos de
+verdad; ahora lo ve todo el mundo, como el de tareas, y decide el servidor.
+
+**Proyectos, tickets y documentos piden autorización**, como ya hacían las tareas. Sus comandos de
+escritura implementan `IAuthorizeEntity`, y el inquilino se toma de la sesión, no de la petición.
+Los comandos de páginas de Documentos no llevan el documento, así que comprueban el nivel sobre los
+documentos en general: compartir un documento concreto con permiso de edición no basta para editar
+sus páginas si el rol tiene sólo lectura. La pantalla gana la fila de tickets, y la migración
+`PermisosDeTickets` siembra «Edit» para miembros e invitados, que es lo que ya podían hacer.
 
 ### 9.3 El sembrador falla al arrancar sobre una base ya sembrada
 
@@ -824,8 +887,14 @@ datos. Se detalla en la sección 15.
 - **El árbol de trabajo de git abandonado** (2.4).
 - **167 avisos de lint** en el frontend, heredados.
 - **Un paquete del frontend supera el presupuesto** de tamaño en 120 kB.
-- **El vocabulario de `EntityType` no casa entre los permisos sembrados y los comandos** (9.2).
-  Es lo más serio de esta lista: la autorización granular por rol no llega a aplicarse.
+- **El equipo de un ticket no se valida**: Ticketing guarda el identificador sin poder consultar el
+  módulo de equipos. Un identificador inventado se guarda tal cual.
+- **Las etiquetas de los tickets son claves de la pantalla** («billing»), no las entidades del
+  módulo de etiquetas. Conviven dos sistemas y habrá que unificarlos.
+- **Los adjuntos de un ticket no se pueden quitar**, y no hay nada que los borre del almacenamiento
+  si algún día se vacía la papelera de tickets.
+- **Espacios, carpetas, anotaciones y subidas no piden autorización por entidad**, y los
+  permisos de páginas de documentos se comprueban sobre el módulo, no sobre el documento.
 - **Compartir no tiene interfaz todavía.** Los endpoints existen y están probados, y los filtros
   «compartido conmigo» y «privado» funcionan contra ellos, pero no hay ningún botón en la
   aplicación que comparta. Hasta que lo haya, esas dos entradas del menú responden bien y

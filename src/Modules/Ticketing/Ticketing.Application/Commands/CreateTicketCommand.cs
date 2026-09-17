@@ -1,3 +1,4 @@
+using BuildingBlocks.Application.Authorization;
 using BuildingBlocks.Application.Abstractions;
 using Ticketing.Domain.Entities;
 
@@ -10,7 +11,11 @@ public sealed record CreateTicketCommand(
     string Title,
     string Description,
     string Priority
-) : ICommand<Ticket>, IWebhookTriggered
+) : ICommand<Ticket>, IWebhookTriggered, IAuthorizeEntity
 {
+    public string EntityType => "Ticket";
+    public Guid EntityId => Guid.Empty;
+    public string RequiredPermission => "Write";
+
     public string WebhookEventName => "ticket.created";
 }

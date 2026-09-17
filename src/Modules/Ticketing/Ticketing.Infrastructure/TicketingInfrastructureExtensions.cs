@@ -28,6 +28,8 @@ public static class TicketingInfrastructureExtensions
     services.AddScoped<ITicketingUnitOfWork, TicketingModuleUnitOfWork>();
 
     services.AddScoped<ITicketRepository, EfTicketRepository>();
+    services.AddScoped<Ticketing.Application.Entrada.IClavesDeEntradaRepository, EfClavesDeEntradaRepository>();
+    services.AddScoped<Ticketing.Application.Entrada.IAdjuntosDeTicketRepository, EfAdjuntosDeTicketRepository>();
     services.AddScoped<ITicketQueries, TicketQueries>();
     return services;
   }

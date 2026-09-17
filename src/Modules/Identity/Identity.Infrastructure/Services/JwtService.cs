@@ -107,25 +107,6 @@ public sealed class JwtService : IJwtService
         }
     }
 
-    public string GenerateGuestToken(Guid tenantId, string tenantSlug)
-    {
-        var credentials = new SigningCredentials(_securityKey, SecurityAlgorithms.HmacSha256);
-
-        var claims = new[]
-        {
-            new Claim(JwtRegisteredClaimNames.Sub, Guid.NewGuid().ToString()),
-            new Claim("tenantId", tenantId.ToString()),
-            new Claim(ClaimTypes.Role, "Guest"),
-            new Claim("scope", "tickets:create"),
-            new Claim("tenantSlug", tenantSlug)
-        };
-
-        var expires = DateTime.UtcNow.AddMinutes(15);
-        var token = new JwtSecurityToken(_issuer, _audience, claims, expires: expires, signingCredentials: credentials);
-
-        return new JwtSecurityTokenHandler().WriteToken(token);
-    }
-
     private static string GenerateSecureToken()
     {
         var randomBytes = new byte[64];

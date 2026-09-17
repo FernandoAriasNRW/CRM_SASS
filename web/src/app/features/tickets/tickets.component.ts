@@ -18,7 +18,6 @@ import {
 } from '@ng-icons/lucide';
 import { DataTableComponent, ColumnDef, TableState } from '../../shared/ui/data-table/data-table.component';
 import { FilterField } from '../../shared/ui/data-table/advanced-filters.component';
-import { HasPermissionDirective } from '../../shared/directives/has-permission.directive';
 import { ViewsService, SavedView } from '../../shared/services/views.service';
 import { TableColumnService } from '../../shared/services/table-column.service';
 import { ClickableDirective } from '../../shared/directives/clickable.directive';
@@ -60,7 +59,7 @@ const COLUMN_DEFS: Omit<Column, 'tickets' | 'pendientes'>[] = ESTADOS_DE_TICKET.
   imports: [ClickableDirective, 
     CommonModule, FormsModule, BadgeComponent, ButtonComponent,
     NgIconComponent, DragDropModule, TicketCreateModalComponent, TicketDetailPanelComponent,
-    DataTableComponent, HasPermissionDirective, EmptyInlineComponent, BarraDeVistasComponent
+    DataTableComponent, EmptyInlineComponent, BarraDeVistasComponent
   ],
   viewProviders: [provideIcons({
     lucideRefreshCw, lucidePlus, lucideList,

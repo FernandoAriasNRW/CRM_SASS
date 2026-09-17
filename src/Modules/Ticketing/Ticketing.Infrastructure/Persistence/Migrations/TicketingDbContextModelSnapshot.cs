@@ -22,6 +22,95 @@ namespace Ticketing.Infrastructure.Persistence.Migrations
 
             MySqlModelBuilderExtensions.AutoIncrementColumns(modelBuilder);
 
+            modelBuilder.Entity("Ticketing.Domain.Entities.AdjuntoDeTicket", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<Guid?>("SubidoPor")
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTime>("SubidoUtc")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<long>("Tamano")
+                        .HasColumnType("bigint");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid>("TicketId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<string>("TipoDeContenido")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<string>("Url")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("varchar(1000)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId", "TicketId");
+
+                    b.ToTable("AdjuntosDeTicket", (string)null);
+                });
+
+            modelBuilder.Entity("Ticketing.Domain.Entities.ClaveDeEntrada", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid>("CreadaPor")
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTime>("CreadaUtc")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Hash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("varchar(64)");
+
+                    b.Property<string>("Inicio")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<DateTime?>("RevocadaUtc")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTime?>("UltimoUsoUtc")
+                        .HasColumnType("datetime(6)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Hash")
+                        .IsUnique();
+
+                    b.HasIndex("TenantId");
+
+                    b.ToTable("ClavesDeEntrada", (string)null);
+                });
+
             modelBuilder.Entity("Ticketing.Domain.Entities.Ticket", b =>
                 {
                     b.Property<Guid>("Id")
@@ -37,6 +126,13 @@ namespace Ticketing.Infrastructure.Persistence.Migrations
                     b.Property<DateTime?>("BorradoEnUtc")
                         .HasColumnType("datetime(6)");
 
+                    b.Property<string>("Clasificacion")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<Guid?>("ClaveDeEntradaId")
+                        .HasColumnType("char(36)");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime(6)");
 
@@ -47,8 +143,22 @@ namespace Ticketing.Infrastructure.Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
+                    b.Property<string>("Etiquetas")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(1000)
+                        .HasColumnType("varchar(1000)")
+                        .HasDefaultValue("");
+
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("Origen")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)")
+                        .HasDefaultValue("Aplicacion");
 
                     b.Property<int>("PriorityValue")
                         .HasColumnType("int");
@@ -56,12 +166,31 @@ namespace Ticketing.Infrastructure.Persistence.Migrations
                     b.Property<DateTime?>("ResolvedAt")
                         .HasColumnType("datetime(6)");
 
+                    b.Property<string>("SolicitanteEmail")
+                        .HasMaxLength(320)
+                        .HasColumnType("varchar(320)");
+
+                    b.Property<string>("SolicitanteEmpresa")
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)");
+
+                    b.Property<string>("SolicitanteNombre")
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)");
+
+                    b.Property<string>("SolicitanteTelefono")
+                        .HasMaxLength(40)
+                        .HasColumnType("varchar(40)");
+
                     b.Property<int>("StatusValue")
                         .HasColumnType("int");
 
                     b.PrimitiveCollection<string>("TagIds")
                         .IsRequired()
                         .HasColumnType("longtext");
+
+                    b.Property<Guid?>("TeamId")
+                        .HasColumnType("char(36)");
 
                     b.Property<Guid>("TenantId")
                         .HasColumnType("char(36)");

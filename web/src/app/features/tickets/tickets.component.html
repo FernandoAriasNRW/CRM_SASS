@@ -17,7 +17,12 @@
         <button uiButton variant="outline" size="sm" (click)="loadTickets()">
           <ng-icon name="lucideRefreshCw" size="14" class="mr-1.5" /> Actualizar
         </button>
-        <button uiButton size="sm" (click)="showModal.set(true)" *appHasPermission="'Write'; entityType: 'Ticket'">
+        <!--
+          Sin directiva de permisos, como el botón de tareas. La que tenía sólo se lo enseñaba a los
+          administradores, así que un miembro no podía abrir tickets desde la aplicación aunque la
+          API se lo permitiera. Quién puede crear lo decide el servidor con el nivel del rol.
+        -->
+        <button uiButton size="sm" (click)="showModal.set(true)">
           <ng-icon name="lucidePlus" size="14" class="mr-1.5" /> Nuevo ticket
         </button>
       </div>

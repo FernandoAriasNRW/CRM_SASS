@@ -18,6 +18,17 @@ public static class IdentityEndpoints
 {
   private const string RefreshTokenCookieName = "crm_refresh_token";
 
+  /// <summary>
+  /// Gestionar personas y permisos es cosa de administradores.
+  ///
+  /// <b>Hasta septiembre de 2026 bastaba con haber iniciado sesión.</b> La pantalla de
+  /// administración tenía su guarda, pero la API no: cualquier miembro podía crear un usuario con
+  /// rol «Admin» —comprobado contra la aplicación levantada, respondía 201—, cambiarse el rol a sí
+  /// mismo o darse permisos. Esconder el botón no protege nada si el endpoint contesta.
+  /// </summary>
+  private static void SoloAdministradores(Microsoft.AspNetCore.Authorization.AuthorizationPolicyBuilder politica)
+    => politica.RequireRole("Admin");
+
   public static IServiceCollection AddIdentityPresentation(this IServiceCollection services, IConfiguration configuration)
   {
     services.AddIdentityInfrastructure(configuration);
@@ -94,11 +105,10 @@ public static class IdentityEndpoints
       return Results.Ok();
     });
 
-    authGroup.MapPost("/guest-token", async (GuestTokenCommand command, IMediator mediator) =>
-    {
-      var result = await mediator.Send(command);
-      return result.IsSuccess ? Results.Ok(result.Value) : Results.NotFound(result.Error);
-    }).RequireRateLimiting("guest-token");
+    // Aquí había un POST /auth/guest-token, anónimo, que emitía un token con rol «Guest». Ese token
+    // pasaba cualquier RequireAuthorization() de la API, no sólo el alta de tickets para la que se
+    // pensó. Nunca llegó a funcionar —su política de límite de peticiones no existía y respondía
+    // 409— y se quitó antes de que alguien la arreglara y abriera la API entera.
 
     authGroup.MapGet("/users/me", async (IMediator mediator, ClaimsPrincipal principal) =>
     {
@@ -259,7 +269,7 @@ public static class IdentityEndpoints
       return result.IsSuccess
               ? Results.Created($"/api/v1/users/{result.Value!.Id}", result.Value)
               : Results.BadRequest(result.Error);
-    }).RequireAuthorization();
+    }).RequireAuthorization(SoloAdministradores);
 
     usersGroup.MapPut("/{id:guid}", async (Guid id, UpdateUserRequest req, IMediator mediator, ClaimsPrincipal principal) =>
     {
@@ -267,7 +277,7 @@ public static class IdentityEndpoints
       var command = new UpdateUserCommand(tenantId, id, req.Name, req.Email, req.Role);
       var result = await mediator.Send(command);
       return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
-    }).RequireAuthorization();
+    }).RequireAuthorization(SoloAdministradores);
 
     usersGroup.MapDelete("/{id:guid}", async (Guid id, IMediator mediator, ClaimsPrincipal principal) =>
     {
@@ -276,10 +286,10 @@ public static class IdentityEndpoints
       var command = new DeleteUserCommand(tenantId, id, currentUserId);
       var result = await mediator.Send(command);
       return result.IsSuccess ? Results.NoContent() : Results.BadRequest(result.Error);
-    }).RequireAuthorization();
+    }).RequireAuthorization(SoloAdministradores);
 
     // Permissions endpoints
-    var permissionsGroup = app.MapGroup("/api/v1/permissions").WithTags("Permissions").RequireAuthorization();
+    var permissionsGroup = app.MapGroup("/api/v1/permissions").WithTags("Permissions").RequireAuthorization(SoloAdministradores);
 
     permissionsGroup.MapGet("", async (string? targetType, Guid? targetId, string? roleName, IMediator mediator, ClaimsPrincipal principal) =>
     {

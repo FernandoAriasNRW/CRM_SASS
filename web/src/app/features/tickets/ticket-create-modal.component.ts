@@ -16,6 +16,29 @@ export interface Ticket {
   assignedAgentId?: string;
   customerId?: string;
   createdAt: string;
+  /** «Aplicacion» o «Externo»: si lo abrió alguien con sesión o llegó con una clave de entrada. */
+  origen?: string;
+  /** Quién lo pidió, cuando llegó desde fuera. Un cliente de la organización no es un usuario. */
+  solicitanteNombre?: string | null;
+  solicitanteEmail?: string | null;
+  solicitanteTelefono?: string | null;
+  solicitanteEmpresa?: string | null;
+  clasificacion?: string | null;
+  teamId?: string | null;
+  /** Las claves de las etiquetas separadas por comas, como las guarda el servidor. */
+  etiquetas?: string;
+}
+
+/** Una imagen o un vídeo adjunto a un ticket. */
+export interface AdjuntoDeTicket {
+  id: string;
+  nombre: string;
+  url: string;
+  tipoDeContenido: string;
+  tamano: number;
+  subidoUtc: string;
+  /** Si llegó con el ticket desde fuera, desde la web o el backend del cliente. */
+  desdeFuera: boolean;
 }
 
 /**

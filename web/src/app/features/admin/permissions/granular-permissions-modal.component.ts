@@ -57,44 +57,54 @@ export class GranularPermissionsModalComponent implements OnInit {
   error = signal('');
   successMsg = signal('');
 
+  // Las claves van en singular porque es lo que preguntan los comandos al autorizar. En plural
+  // —como estaban— la fila se guardaba y no la consultaba nadie: cambiar un nivel aquí no
+  // cambiaba lo que la persona podía hacer.
   resources = signal<ResourcePermissionItem[]>([
     {
-      key: 'Projects',
+      key: 'Project',
       name: 'Proyectos & Espacios',
       description: 'Crear, editar, borrar y administrar proyectos y espacios del workspace',
       icon: 'lucideFolderKanban',
       level: 'Edit'
     },
     {
-      key: 'Tasks',
+      key: 'Task',
       name: 'Tareas & Elementos',
       description: 'Gestión de tareas, asignaciones, estados y tableros',
       icon: 'lucideCheckSquare',
       level: 'Edit'
     },
     {
-      key: 'Docs',
+      key: 'Ticket',
+      name: 'Tickets & Soporte',
+      description: 'Abrir, asignar, cambiar de estado y cerrar tickets',
+      icon: 'lucideCheckSquare',
+      level: 'Edit'
+    },
+    {
+      key: 'Document',
       name: 'Documentación & Wikis',
       description: 'Crear, editar, compartir y eliminar documentos y plantillas',
       icon: 'lucideFileText',
       level: 'Edit'
     },
     {
-      key: 'Webhooks',
+      key: 'Webhook',
       name: 'Webhooks & Integraciones',
       description: 'Configurar suscripciones de webhook, secretos HMAC y eventos globales',
       icon: 'lucideWebhook',
       level: 'View'
     },
     {
-      key: 'Teams',
+      key: 'Team',
       name: 'Equipos & Miembros',
       description: 'Gestión de grupos de trabajo y asignación de usuarios',
       icon: 'lucideUsers',
       level: 'View'
     },
     {
-      key: 'Reports',
+      key: 'Report',
       name: 'Reportes & Analíticas',
       description: 'Visualización de tableros de rendimiento, exportación y métricas',
       icon: 'lucideBarChart3',

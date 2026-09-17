@@ -3,7 +3,6 @@ import { authGuard, adminGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
   { path: 'login',   loadComponent: () => import('./features/login/login.component').then(m => m.LoginComponent) },
-  { path: 'support', loadComponent: () => import('./features/tickets/public-ticket-form.component').then(m => m.PublicTicketFormComponent) },
   {
     path: '',
     canActivate: [authGuard],

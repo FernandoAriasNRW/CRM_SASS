@@ -33,6 +33,7 @@ public class CloudinaryStorageService : IStorageService
         // bruto. Antes todo subía como imagen, así que un PDF o un CSV los rechazaba Cloudinary:
         // como nunca hubo credenciales configuradas, eso no lo había sufrido nadie todavía.
         var esImagen = contentType?.StartsWith("image/", StringComparison.OrdinalIgnoreCase) == true;
+        var esVideo = contentType?.StartsWith("video/", StringComparison.OrdinalIgnoreCase) == true;
 
         var fichero = new FileDescription(fileName, fileStream);
 
@@ -43,6 +44,11 @@ public class CloudinaryStorageService : IStorageService
         if (esImagen)
             uploadResult = await _cloudinary.UploadAsync(
                 new ImageUploadParams { File = fichero, Folder = "crm-saas-suite" }, ct);
+        else if (esVideo)
+            // Los vídeos por su propio endpoint: como fichero en bruto el límite de tamaño es
+            // mucho menor, y una grabación de pantalla de un minuto ya no cabría.
+            uploadResult = await _cloudinary.UploadLargeAsync(
+                new VideoUploadParams { File = fichero, Folder = "crm-saas-suite" }, cancellationToken: ct);
         else
             // «raw» es el tipo de recurso: es lo que hace que Cloudinary acepte un PDF o un CSV
             // sin intentar tratarlos como imagen.

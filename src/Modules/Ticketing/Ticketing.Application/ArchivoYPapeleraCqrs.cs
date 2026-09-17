@@ -1,3 +1,4 @@
+using BuildingBlocks.Application.Authorization;
 using BuildingBlocks.Application;
 using BuildingBlocks.Application.Abstractions;
 using BuildingBlocks.Domain;
@@ -15,7 +16,12 @@ namespace Ticketing.Application;
 public sealed record CambiarArchivoDeTicketCommand(
     Guid TenantId,
     Guid Id,
-    AccionDeArchivo Accion) : ICommand<bool>;
+    AccionDeArchivo Accion) : ICommand<bool>, IAuthorizeEntity
+{
+    public string EntityType => "Ticket";
+    public Guid EntityId => Id;
+    public string RequiredPermission => "Write";
+}
 
 public sealed class CambiarArchivoDeTicketHandler(
     ITicketRepository repository,

@@ -135,7 +135,7 @@ public sealed class TicketQueries(TicketingDbContext context) : ITicketQueries
                 t.Title, t.Description, 
                 t.PriorityValue == 1 ? "Low" : t.PriorityValue == 2 ? "Medium" : t.PriorityValue == 3 ? "High" : t.PriorityValue == 4 ? "Urgent" : "Unknown", 
                 t.StatusValue == 1 ? "Open" : t.StatusValue == 2 ? "InProgress" : t.StatusValue == 3 ? "PendingInfo" : t.StatusValue == 4 ? "Resolved" : t.StatusValue == 5 ? "Closed" : "Unknown", 
-                t.CreatedAt, t.ResolvedAt))
+                t.CreatedAt, t.ResolvedAt, t.Origen, t.SolicitanteNombre, t.SolicitanteEmail, t.SolicitanteTelefono, t.SolicitanteEmpresa, t.Clasificacion, t.TeamId, t.Etiquetas))
             .ToListAsync(ct);
 
         return PagedResult<TicketDto>.Create(items, totalCount, pagination.Page, pagination.PageSize);
@@ -149,7 +149,7 @@ public sealed class TicketQueries(TicketingDbContext context) : ITicketQueries
                 t.Title, t.Description, 
                 t.PriorityValue == 1 ? "Low" : t.PriorityValue == 2 ? "Medium" : t.PriorityValue == 3 ? "High" : t.PriorityValue == 4 ? "Urgent" : "Unknown", 
                 t.StatusValue == 1 ? "Open" : t.StatusValue == 2 ? "InProgress" : t.StatusValue == 3 ? "PendingInfo" : t.StatusValue == 4 ? "Resolved" : t.StatusValue == 5 ? "Closed" : "Unknown", 
-                t.CreatedAt, t.ResolvedAt))
+                t.CreatedAt, t.ResolvedAt, t.Origen, t.SolicitanteNombre, t.SolicitanteEmail, t.SolicitanteTelefono, t.SolicitanteEmpresa, t.Clasificacion, t.TeamId, t.Etiquetas))
             .FirstOrDefaultAsync(ct);
     }
 }

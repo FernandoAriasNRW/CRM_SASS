@@ -1,3 +1,4 @@
+using BuildingBlocks.Application.Authorization;
 using BuildingBlocks.Application.Abstractions;
 using BuildingBlocks.Domain;
 using MediatR;
@@ -9,4 +10,9 @@ public record SaveAsTemplateCommand(
     Guid OwnerId,
     Guid DocumentId,
     string? CustomTitle = null,
-    string? Description = null) : IRequest<Result<Guid>>;
+    string? Description = null) : IRequest<Result<Guid>>, IAuthorizeEntity
+{
+    public string EntityType => "Document";
+    public Guid EntityId => DocumentId;
+    public string RequiredPermission => "Write";
+}

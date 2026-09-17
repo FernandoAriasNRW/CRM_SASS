@@ -1,3 +1,4 @@
+using BuildingBlocks.Application.Authorization;
 using BuildingBlocks.Application.Abstractions;
 using BuildingBlocks.Domain;
 
@@ -10,7 +11,11 @@ public sealed record PatchProjectCommand(
     string? Description,
     string? Status,
     DateOnly? EstimatedEndDate
-) : ICommand<bool>, IWebhookTriggered
+) : ICommand<bool>, IWebhookTriggered, IAuthorizeEntity
 {
+    public string EntityType => "Project";
+    public Guid EntityId => Id;
+    public string RequiredPermission => "Write";
+
     public string WebhookEventName => "project.updated";
 }

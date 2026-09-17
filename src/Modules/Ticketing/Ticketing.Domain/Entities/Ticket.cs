@@ -18,6 +18,45 @@ public sealed class Ticket : AggregateRoot, ITenantEntity, ISoftDeletable, IArch
     public DateTime? ResolvedAt { get; private set; }
     public List<Guid> TagIds { get; private set; } = new();
 
+    /// <summary>
+    /// Por dónde entró: <see cref="OrigenAplicacion"/> si lo abrió alguien con sesión, o
+    /// <see cref="OrigenExterno"/> si llegó con una clave de entrada desde fuera.
+    /// </summary>
+    public string Origen { get; private set; } = OrigenAplicacion;
+
+    public const string OrigenAplicacion = "Aplicacion";
+    public const string OrigenExterno = "Externo";
+
+    /// <summary>
+    /// Quién lo pidió, cuando viene de fuera. Un cliente de la organización no es un usuario de la
+    /// aplicación, así que no tiene <see cref="CustomerId"/>: sin esto no habría a quién contestar.
+    /// </summary>
+    public string? SolicitanteNombre { get; private set; }
+    public string? SolicitanteEmail { get; private set; }
+    public string? SolicitanteTelefono { get; private set; }
+    public string? SolicitanteEmpresa { get; private set; }
+
+    /// <summary>De qué va: «Facturación», «Acceso», lo que use la organización. Texto libre y opcional.</summary>
+    public string? Clasificacion { get; private set; }
+
+    /// <summary>
+    /// El equipo que lo atiende. Sólo el identificador: los equipos viven en otro módulo, y este no
+    /// puede consultarlos para validarlo.
+    /// </summary>
+    public Guid? TeamId { get; private set; }
+
+    /// <summary>
+    /// Las etiquetas por su clave («billing», «bug»), separadas por comas. Son las del vocabulario
+    /// de la pantalla, que no son las entidades del módulo de etiquetas de <see cref="TagIds"/>.
+    /// </summary>
+    public string Etiquetas { get; private set; } = string.Empty;
+
+    public IReadOnlyList<string> ListaDeEtiquetas =>
+        Etiquetas.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+    /// <summary>Con qué clave entró, para saber qué integración lo envió y revocarla si abusa.</summary>
+    public Guid? ClaveDeEntradaId { get; private set; }
+
     public TicketPriority Priority => TicketPriority.FromValue<TicketPriority>(PriorityValue);
     public TicketStatus Status => TicketStatus.FromValue<TicketStatus>(StatusValue);
 
@@ -49,6 +88,50 @@ public sealed class Ticket : AggregateRoot, ITenantEntity, ISoftDeletable, IArch
         ticket.RaiseDomainEvent(new TicketCreatedEvent(ticket.Id, tenantId));
         return Result<Ticket>.Success(ticket);
     }
+
+    /// <summary>
+    /// Un ticket enviado desde fuera de la aplicación con una clave de entrada.
+    ///
+    /// La organización es la de la clave, nunca un dato de la petición. No hay usuario detrás,
+    /// así que <see cref="CustomerId"/> queda vacío y el contacto va en los campos del solicitante.
+    /// Qué es obligatorio lo decide quien recibe la petición; aquí sólo se guarda.
+    /// </summary>
+    public static Result<Ticket> CrearDesdeFuera(ClaveDeEntrada clave, SolicitudExterna solicitud)
+    {
+        var creado = Create(clave.TenantId, Guid.Empty, solicitud.Titulo, solicitud.Descripcion, solicitud.Prioridad);
+        if (creado.IsFailure)
+            return creado;
+
+        var ticket = creado.Value!;
+        ticket.Origen = OrigenExterno;
+        ticket.ClaveDeEntradaId = clave.Id;
+        ticket.SolicitanteNombre = Limpio(solicitud.Nombre);
+        ticket.SolicitanteEmail = Limpio(solicitud.Email);
+        ticket.SolicitanteTelefono = Limpio(solicitud.Telefono);
+        ticket.SolicitanteEmpresa = Limpio(solicitud.Empresa);
+        ticket.Clasificar(solicitud.Clasificacion);
+        ticket.AsignarEquipo(solicitud.TeamId);
+        ticket.CambiarEtiquetas(solicitud.Etiquetas);
+
+        // Es el alta: no hay estado anterior del que venir, así que no pasa por las transiciones.
+        if (solicitud.Estado is not null)
+            ticket.StatusValue = solicitud.Estado.Value;
+
+        return Result<Ticket>.Success(ticket);
+    }
+
+    public void Clasificar(string? clasificacion) => Clasificacion = Limpio(clasificacion);
+
+    public void AsignarEquipo(Guid? teamId) => TeamId = teamId == Guid.Empty ? null : teamId;
+
+    /// <summary>Sustituye las etiquetas. Sin repetidas, en minúsculas y en el orden en que llegan.</summary>
+    public void CambiarEtiquetas(IEnumerable<string>? etiquetas)
+        => Etiquetas = string.Join(',', (etiquetas ?? [])
+            .Select(e => e.Trim().ToLowerInvariant())
+            .Where(e => e.Length > 0 && !e.Contains(','))
+            .Distinct());
+
+    private static string? Limpio(string? texto) => string.IsNullOrWhiteSpace(texto) ? null : texto.Trim();
 
     /// <summary>
     /// Cambia lo que se edita desde la ficha: título, descripción y prioridad.

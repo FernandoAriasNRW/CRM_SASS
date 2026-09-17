@@ -49,4 +49,3 @@ public sealed record LoginResult(
     DateTime RefreshTokenExpiresAtUtc
 );
 
-public sealed record GuestTokenResult(string AccessToken, DateTime ExpiresAtUtc);

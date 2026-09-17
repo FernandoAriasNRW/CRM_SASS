@@ -1,3 +1,4 @@
+using BuildingBlocks.Application.Authorization;
 using BuildingBlocks.Application.Abstractions;
 using BuildingBlocks.Domain;
 using MediatR;
@@ -12,7 +13,11 @@ public sealed record CreateProjectCommand(
     string Name,
     string Description,
     DateOnly EstimatedEndDate
-) : ICommand<Project>, IWebhookTriggered
+) : ICommand<Project>, IWebhookTriggered, IAuthorizeEntity
 {
+    public string EntityType => "Project";
+    public Guid EntityId => Guid.Empty;
+    public string RequiredPermission => "Write";
+
     public string WebhookEventName => "project.created";
 }

@@ -16,7 +16,8 @@ import AxeBuilder from '@axe-core/playwright';
 
 const RUTAS_PUBLICAS = [
   { nombre: 'login', url: '/login' },
-  { nombre: 'alta pública de tickets', url: '/support' },
+  // «/support» se quitó: pedía un token de invitado que nunca funcionó. Los tickets de fuera
+  // entran ahora desde la web de cada cliente con una clave de entrada.
 ];
 
 for (const ruta of RUTAS_PUBLICAS) {

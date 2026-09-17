@@ -27,7 +27,7 @@ public sealed class AuthorizationBehavior<TRequest, TResponse>(
         }
 
         bool hasAccess = await permissionService.HasPermissionAsync(
-            request.TenantId,
+            userContext.TenantId != Guid.Empty ? userContext.TenantId : request.TenantId,
             userId,
             request.EntityType,
             request.EntityId,

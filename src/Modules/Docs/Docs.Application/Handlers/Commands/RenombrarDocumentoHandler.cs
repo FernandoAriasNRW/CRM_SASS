@@ -1,3 +1,4 @@
+using BuildingBlocks.Application.Authorization;
 using BuildingBlocks.Domain;
 using Docs.Application.Abstractions.Repositories;
 using MediatR;
@@ -14,7 +15,12 @@ namespace Docs.Application.Handlers.Commands;
 /// que lo llamara nadie.
 /// </summary>
 public record RenombrarDocumentoCommand(Guid DocumentId, string Title, string? Description)
-    : IRequest<Result>;
+    : IRequest<Result>, IAuthorizeEntity
+{
+    public string EntityType => "Document";
+    public Guid EntityId => DocumentId;
+    public string RequiredPermission => "Write";
+}
 
 public class RenombrarDocumentoHandler(IDocumentRepository repository)
     : IRequestHandler<RenombrarDocumentoCommand, Result>

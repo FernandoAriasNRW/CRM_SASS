@@ -1,3 +1,4 @@
+using BuildingBlocks.Application.Authorization;
 using BuildingBlocks.Application;
 using BuildingBlocks.Application.Abstractions;
 using BuildingBlocks.Domain;
@@ -18,7 +19,12 @@ public sealed record CambiarArchivoDeProyectoCommand(
     Guid TenantId,
     Guid Id,
     Guid ActorId,
-    AccionDeArchivo Accion) : ICommand<bool>;
+    AccionDeArchivo Accion) : ICommand<bool>, IAuthorizeEntity
+{
+    public string EntityType => "Project";
+    public Guid EntityId => Id;
+    public string RequiredPermission => "Write";
+}
 
 public sealed class CambiarArchivoDeProyectoHandler(
     IProjectRepository repository,
