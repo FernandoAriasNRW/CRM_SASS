@@ -16,7 +16,12 @@ public sealed record TicketDto(
     /// <summary>«Aplicacion» o «Externo». Ver <c>Ticket.Origen</c>.</summary>
     string Origen = "Aplicacion",
     string? SolicitanteNombre = null,
-    string? SolicitanteEmail = null
+    string? SolicitanteEmail = null,
+    string? SolicitanteTelefono = null,
+    string? SolicitanteEmpresa = null,
+    string? Clasificacion = null,
+    Guid? TeamId = null,
+    string Etiquetas = ""
 )
 {
   internal static TicketDto? FromEntity(Ticket ticket)
@@ -34,7 +39,12 @@ public sealed record TicketDto(
       ticket.ResolvedAt,
       ticket.Origen,
       ticket.SolicitanteNombre,
-      ticket.SolicitanteEmail
+      ticket.SolicitanteEmail,
+      ticket.SolicitanteTelefono,
+      ticket.SolicitanteEmpresa,
+      ticket.Clasificacion,
+      ticket.TeamId,
+      ticket.Etiquetas
     );
   }
 }

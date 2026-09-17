@@ -26,3 +26,15 @@ public sealed class EfClavesDeEntradaRepository(TicketingDbContext context) : IC
     public async Task AddAsync(ClaveDeEntrada clave, CancellationToken ct)
         => await context.ClavesDeEntrada.AddAsync(clave, ct);
 }
+
+public sealed class EfAdjuntosDeTicketRepository(TicketingDbContext context) : IAdjuntosDeTicketRepository
+{
+    public Task<List<AdjuntoDeTicket>> DelTicketAsync(Guid tenantId, Guid ticketId, CancellationToken ct)
+        => context.AdjuntosDeTicket.AsNoTracking()
+            .Where(a => a.TenantId == tenantId && a.TicketId == ticketId)
+            .OrderBy(a => a.SubidoUtc)
+            .ToListAsync(ct);
+
+    public async Task AddAsync(AdjuntoDeTicket adjunto, CancellationToken ct)
+        => await context.AdjuntosDeTicket.AddAsync(adjunto, ct);
+}

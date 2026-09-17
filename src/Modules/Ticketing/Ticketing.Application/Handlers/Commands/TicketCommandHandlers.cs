@@ -85,6 +85,19 @@ public sealed class UpdateTicketHandler(
         return Result<bool>.Failure($"Cannot transition from {ticket.Status.Name} to {request.Status}");
     }
 
+    if (request.Classification is not null)
+    {
+      if (request.Classification.Trim().Length > 100)
+        return Result<bool>.Failure("La clasificación admite hasta 100 caracteres");
+      ticket.Clasificar(request.Classification);
+    }
+
+    if (request.TeamId is not null)
+      ticket.AsignarEquipo(request.TeamId);
+
+    if (request.Tags is not null)
+      ticket.CambiarEtiquetas(request.Tags);
+
     if (request.AssignedAgentId is not null)
     {
       if (request.AssignedAgentId == Guid.Empty)

@@ -10,7 +10,8 @@ import {
   lucideFlag, lucideMessageSquare, lucidePaperclip,
   lucideSend, lucideChevronDown, lucideMail, lucidePhone, lucideBuilding
 } from '@ng-icons/lucide';
-import type { Ticket } from './ticket-create-modal.component';
+import type { AdjuntoDeTicket, Ticket } from './ticket-create-modal.component';
+import { mensajeDeError } from '../../shared/utils/mensaje-de-error';
 import { TICKET_TAGS, type Tag } from '../../shared/utils/tags';
 import {
   ESTADOS_DE_TICKET, PRIORIDADES_DE_TICKET, insigniaDelEstado,
@@ -55,6 +56,12 @@ export class TicketDetailPanelComponent implements OnInit {
   readonly statuses = ESTADOS_DE_TICKET;
   readonly priorities = PRIORIDADES_DE_TICKET;
   readonly availableTags = TICKET_TAGS;
+  readonly desconocido = $localize`Sin datos de contacto`;
+
+  clasificacion = '';
+  readonly adjuntos = signal<AdjuntoDeTicket[]>([]);
+  readonly subiendo = signal(false);
+  readonly errorDeAdjuntos = signal('');
 
   statusBadge(s: string): BadgeVariant { return insigniaDelEstado(s); }
 
@@ -67,9 +74,59 @@ export class TicketDetailPanelComponent implements OnInit {
     this.description = t.description ?? '';
     this.status = t.status;
     this.priority = t.priority ?? 'normal';
-    if ((t as any).tags) {
-      this.selectedTags.set(String((t as any).tags).split(',').map((s: string) => s.trim()).filter(Boolean));
-    }
+    this.clasificacion = t.clasificacion ?? '';
+    // Leía `tags`, un campo que el servidor nunca mandó: la ficha abría siempre sin etiquetas.
+    this.selectedTags.set((t.etiquetas ?? '').split(',').map(s => s.trim()).filter(Boolean));
+    this.cargarAdjuntos();
+  }
+
+  cargarAdjuntos(): void {
+    this.api.get<AdjuntoDeTicket[]>(`/tickets/${this.ticket().id}/adjuntos`).subscribe({
+      next: adjuntos => this.adjuntos.set(adjuntos),
+      error: () => this.adjuntos.set([]),
+    });
+  }
+
+  /** La dirección con la que se abre: el almacenamiento en disco devuelve rutas relativas a la API. */
+  urlDe(adjunto: AdjuntoDeTicket): string {
+    return this.api.urlDeFichero(adjunto.url);
+  }
+
+  esVideo(adjunto: AdjuntoDeTicket): boolean {
+    return adjunto.tipoDeContenido.startsWith('video/');
+  }
+
+  subirAdjuntos(entrada: HTMLInputElement): void {
+    const ficheros = Array.from(entrada.files ?? []);
+    if (ficheros.length === 0) return;
+
+    const cuerpo = new FormData();
+    for (const fichero of ficheros) cuerpo.append('attachments', fichero, fichero.name);
+
+    this.subiendo.set(true);
+    this.errorDeAdjuntos.set('');
+    this.api.post<AdjuntoDeTicket[]>(`/tickets/${this.ticket().id}/adjuntos`, cuerpo).subscribe({
+      next: nuevos => {
+        this.adjuntos.update(actuales => [...actuales, ...nuevos]);
+        this.subiendo.set(false);
+        entrada.value = '';
+      },
+      error: err => {
+        this.errorDeAdjuntos.set(mensajeDeError(err, $localize`No se pudieron subir los adjuntos`));
+        this.subiendo.set(false);
+        entrada.value = '';
+      },
+    });
+  }
+
+  guardarClasificacion(): void {
+    const clasificacion = this.clasificacion.trim();
+    if (clasificacion === (this.ticket().clasificacion ?? '')) return;
+
+    this.api.patch(`/tickets/${this.ticket().id}`, { classification: clasificacion }).subscribe({
+      next: () => this.updated.emit({ ...this.ticket(), clasificacion }),
+      error: () => {},
+    });
   }
 
 
@@ -99,7 +156,13 @@ export class TicketDetailPanelComponent implements OnInit {
     this.selectedTags.update(tags =>
       tags.includes(key) ? tags.filter(t => t !== key) : [...tags, key]
     );
-    this.saveField('tags', this.selectedTags().join(','));
+    // Como lista y en su propio PATCH. Antes iba por `saveField`, que no mandaba las etiquetas:
+    // se veían marcadas y al volver a abrir el ticket no estaban.
+    const etiquetas = this.selectedTags();
+    this.api.patch(`/tickets/${this.ticket().id}`, { tags: etiquetas }).subscribe({
+      next: () => this.updated.emit({ ...this.ticket(), etiquetas: etiquetas.join(',') }),
+      error: () => {},
+    });
   }
 
   isTagSelected(key: string): boolean {

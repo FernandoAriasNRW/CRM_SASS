@@ -49,13 +49,27 @@ public sealed class ClaveDeEntradaTests
         var tenant = Guid.NewGuid();
         var (clave, _) = ClaveDeEntrada.Generar(tenant, "a", Guid.NewGuid(), DateTime.UtcNow);
 
-        var ticket = Ticket.CrearDesdeFuera(clave, "Título suficiente", "Descripción",
-            TicketPriority.Medium, "  Ana  ", " ").Value!;
+        var ticket = Ticket.CrearDesdeFuera(clave, new SolicitudExterna(
+            "Título suficiente", "Descripción", TicketPriority.Medium, TicketStatus.PendingInfo,
+            "  Ana  ", "ana@cliente.com", " ", "Cliente S.L.", "Acceso", Guid.Empty, [" Bug ", "bug", "billing"])).Value!;
 
         ticket.TenantId.Should().Be(tenant);
         ticket.Origen.Should().Be(Ticket.OrigenExterno);
         ticket.ClaveDeEntradaId.Should().Be(clave.Id);
         ticket.SolicitanteNombre.Should().Be("Ana");
-        ticket.SolicitanteEmail.Should().BeNull();
+        ticket.SolicitanteTelefono.Should().BeNull("un espacio no es un teléfono");
+        ticket.Status.Should().Be(TicketStatus.PendingInfo);
+        ticket.TeamId.Should().BeNull("Guid.Empty no es un equipo");
+        ticket.ListaDeEtiquetas.Should().Equal("bug", "billing");
     }
+
+    [Theory]
+    [InlineData("captura.png", "image/png", 1024, true)]
+    [InlineData("video.mp4", "video/mp4", 1024, true)]
+    [InlineData("factura.exe", "image/png", 1024, false)]
+    [InlineData("informe.pdf", "application/pdf", 1024, false)]
+    [InlineData("vacia.png", "image/png", 0, false)]
+    [InlineData("enorme.mov", "video/quicktime", ReglasDeAdjuntos.MaximoPorFichero + 1, false)]
+    public void Solo_se_admiten_imagenes_y_videos_de_tamano_razonable(string nombre, string tipo, long tamano, bool admitido)
+        => (ReglasDeAdjuntos.Rechazo(nombre, tipo, tamano) is null).Should().Be(admitido);
 }

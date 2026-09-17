@@ -88,6 +88,15 @@ export class ApiService {
    * Una dirección absoluta se devuelve tal cual: cuando el almacenamiento es Cloudinary, lo que
    * llega ya es una URL completa a otro dominio.
    */
+  /**
+   * La dirección completa de un endpoint, para enseñársela a quien integra desde fuera: los
+   * ejemplos de la entrada de tickets tienen que llevar la URL real, no una ruta relativa que en
+   * la web del cliente apuntaría a su propio dominio.
+   */
+  urlDeLaApi(ruta: string): string {
+    return `${this.baseUrl}${ruta}`;
+  }
+
   urlDeFichero(ruta: string): string {
     if (/^https?:\/\//i.test(ruta)) return ruta;
 

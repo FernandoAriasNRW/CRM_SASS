@@ -647,10 +647,28 @@ credenciales, un token con rol «Guest» que pasaba todas las comprobaciones de 
 llegó a funcionar —su política de límite de peticiones no existía y respondía 409—, así que se
 quitó antes de que alguien arreglara esa política y abriera la API entera.
 
-Con él deja de tener camino el formulario público `/support`, que **nunca funcionó**: pedía ese
-token, que siempre fallaba, y aunque se hubiera emitido llevaba el inquilino vacío, porque no
-existe ninguna tabla de organizaciones con identificador público («slug»). Si se quiere un portal
-de soporte sin sesión, necesita esa tabla y un endpoint propio que sólo pueda abrir tickets.
+**En su lugar, la entrada de tickets.** Los clientes de una organización abren tickets desde su
+propia web o su backend con `POST /api/v1/entrada/tickets` y una **clave de entrada** en la cabecera
+`X-Api-Key`:
+
+- La clave **sólo sirve para crear tickets** y **fija la organización**: no hace falta identificador
+  público de organización y quien llama no puede elegir dónde cae el ticket. Se guarda su hash, se
+  enseña una vez, se puede revocar y la gestiona un administrador (pestaña «Entrada de tickets»).
+- **Obligatorio**: asunto, mensaje, nombre, email, teléfono y empresa. **Opcional**: adjuntos
+  (hasta 10 imágenes o vídeos de 50 MB), clasificación, etiquetas, equipo, estado y prioridad.
+- Acepta JSON y multipart. CORS abierto sólo en ese endpoint, sin credenciales, y límite de
+  peticiones por clave.
+- La página `/support` se quitó: la sustituyen los ejemplos que da la pantalla de claves, con la
+  URL y la clave ya puestas.
+
+Probado desde un navegador en otro origen con una imagen y un vídeo reales, guardados en
+Cloudinary. Salió un fallo: un vídeo corrupto hacía responder 500; ahora es un 400 con el nombre del
+fichero, y lo ya subido se borra.
+
+De paso, dos cosas de la ficha del ticket: **las etiquetas no se guardaban nunca** (la pantalla las
+mandaba y el comando no tenía dónde recibirlas) y **el botón «Adjuntar» no hacía nada**. El botón
+«Nuevo ticket» sólo lo veían los administradores por una directiva que no consultaba permisos de
+verdad; ahora lo ve todo el mundo, como el de tareas, y decide el servidor.
 
 **Proyectos, tickets y documentos piden autorización**, como ya hacían las tareas. Sus comandos de
 escritura implementan `IAuthorizeEntity`, y el inquilino se toma de la sesión, no de la petición.
@@ -869,8 +887,12 @@ datos. Se detalla en la sección 15.
 - **El árbol de trabajo de git abandonado** (2.4).
 - **167 avisos de lint** en el frontend, heredados.
 - **Un paquete del frontend supera el presupuesto** de tamaño en 120 kB.
-- **El formulario público `/support` no tiene backend** (9.2 bis): nunca funcionó y hace falta
-  una tabla de organizaciones con identificador público para hacerlo bien.
+- **El equipo de un ticket no se valida**: Ticketing guarda el identificador sin poder consultar el
+  módulo de equipos. Un identificador inventado se guarda tal cual.
+- **Las etiquetas de los tickets son claves de la pantalla** («billing»), no las entidades del
+  módulo de etiquetas. Conviven dos sistemas y habrá que unificarlos.
+- **Los adjuntos de un ticket no se pueden quitar**, y no hay nada que los borre del almacenamiento
+  si algún día se vacía la papelera de tickets.
 - **Espacios, carpetas, anotaciones y subidas no piden autorización por entidad**, y los
   permisos de páginas de documentos se comprueban sobre el módulo, no sobre el documento.
 - **Compartir no tiene interfaz todavía.** Los endpoints existen y están probados, y los filtros

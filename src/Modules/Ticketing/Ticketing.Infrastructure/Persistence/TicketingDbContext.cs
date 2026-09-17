@@ -10,6 +10,7 @@ public sealed class TicketingDbContext(DbContextOptions<TicketingDbContext> opti
 {
     public DbSet<Ticket> Tickets => Set<Ticket>();
     public DbSet<ClaveDeEntrada> ClavesDeEntrada => Set<ClaveDeEntrada>();
+    public DbSet<AdjuntoDeTicket> AdjuntosDeTicket => Set<AdjuntoDeTicket>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -28,6 +29,21 @@ public sealed class TicketingDbContext(DbContextOptions<TicketingDbContext> opti
             t.Property(x => x.Origen).HasMaxLength(20).HasDefaultValue(Ticket.OrigenAplicacion);
             t.Property(x => x.SolicitanteNombre).HasMaxLength(200);
             t.Property(x => x.SolicitanteEmail).HasMaxLength(320);
+            t.Property(x => x.SolicitanteTelefono).HasMaxLength(40);
+            t.Property(x => x.SolicitanteEmpresa).HasMaxLength(200);
+            t.Property(x => x.Clasificacion).HasMaxLength(100);
+            t.Property(x => x.Etiquetas).HasMaxLength(1000).HasDefaultValue(string.Empty);
+            t.Ignore(x => x.ListaDeEtiquetas);
+        });
+
+        modelBuilder.Entity<AdjuntoDeTicket>(a =>
+        {
+            a.ToTable("AdjuntosDeTicket");
+            a.HasKey(x => x.Id);
+            a.Property(x => x.Nombre).HasMaxLength(255).IsRequired();
+            a.Property(x => x.Url).HasMaxLength(1000).IsRequired();
+            a.Property(x => x.TipoDeContenido).HasMaxLength(100).IsRequired();
+            a.HasIndex(x => new { x.TenantId, x.TicketId });
         });
 
         modelBuilder.Entity<ClaveDeEntrada>(c =>
