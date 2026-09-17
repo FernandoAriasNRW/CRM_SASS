@@ -226,6 +226,16 @@ builder.Services.AddScoped<BuildingBlocks.Application.Abstractions.IUserContext,
 builder.Services.AddCors(options =>
 {
     var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? Array.Empty<string>();
+    // La entrada de tickets se llama desde la web de cada cliente, en un dominio que la
+    // aplicación no conoce. Sin credenciales —no hay cookies ni sesión que proteger— y sólo con
+    // lo que ese endpoint necesita. El resto de la API sigue con su lista de orígenes.
+    options.AddPolicy(Ticketing.Presentation.Endpoints.TicketingEndpoints.PoliticaCorsDeEntrada, policy =>
+    {
+        policy.AllowAnyOrigin()
+              .WithMethods("POST")
+              .WithHeaders("Content-Type", Ticketing.Presentation.Endpoints.TicketingEndpoints.CabeceraDeClave);
+    });
+
     options.AddPolicy("AllowSpecificOrigins", policy =>
     {
         policy.WithOrigins(allowedOrigins)
@@ -379,11 +389,22 @@ builder.Services.AddRateLimiter(options =>
                 Window = TimeSpan.FromMinutes(1)
             }));
 
-    options.AddFixedWindowLimiter("public-tickets", limiterOptions =>
+    // Tickets que llegan desde fuera con una clave de entrada. Se reparte por clave y, sin clave,
+    // por IP: una ventana única para todos —como la que había— dejaría que el formulario de un
+    // cliente con tráfico agotara el cupo de todas las organizaciones.
+    options.AddPolicy(Ticketing.Presentation.Endpoints.TicketingEndpoints.LimiteDeEntrada, context =>
     {
-        limiterOptions.PermitLimit = 5;
-        limiterOptions.Window = TimeSpan.FromMinutes(1);
-        limiterOptions.QueueLimit = 0;
+        var clave = context.Request.Headers[Ticketing.Presentation.Endpoints.TicketingEndpoints.CabeceraDeClave].ToString();
+        var particion = string.IsNullOrEmpty(clave)
+            ? "ip:" + (context.Connection.RemoteIpAddress?.ToString() ?? "anonymous")
+            : "clave:" + Ticketing.Domain.Entities.ClaveDeEntrada.HashDe(clave);
+
+        return RateLimitPartition.GetFixedWindowLimiter(particion, _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = builder.Configuration.GetValue("EntradaDeTickets:PeticionesPorMinuto", 30),
+            Window = TimeSpan.FromMinutes(1),
+            QueueLimit = 0
+        });
     });
 
     options.AddFixedWindowLimiter("auth", limiterOptions =>

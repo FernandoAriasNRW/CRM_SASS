@@ -18,6 +18,25 @@ public sealed class Ticket : AggregateRoot, ITenantEntity, ISoftDeletable, IArch
     public DateTime? ResolvedAt { get; private set; }
     public List<Guid> TagIds { get; private set; } = new();
 
+    /// <summary>
+    /// Por dónde entró: <see cref="OrigenAplicacion"/> si lo abrió alguien con sesión, o
+    /// <see cref="OrigenExterno"/> si llegó con una clave de entrada desde fuera.
+    /// </summary>
+    public string Origen { get; private set; } = OrigenAplicacion;
+
+    public const string OrigenAplicacion = "Aplicacion";
+    public const string OrigenExterno = "Externo";
+
+    /// <summary>
+    /// Quién lo pidió, cuando viene de fuera. Un cliente de la organización no es un usuario de la
+    /// aplicación, así que no tiene <see cref="CustomerId"/>: sin esto no habría a quién contestar.
+    /// </summary>
+    public string? SolicitanteNombre { get; private set; }
+    public string? SolicitanteEmail { get; private set; }
+
+    /// <summary>Con qué clave entró, para saber qué integración lo envió y revocarla si abusa.</summary>
+    public Guid? ClaveDeEntradaId { get; private set; }
+
     public TicketPriority Priority => TicketPriority.FromValue<TicketPriority>(PriorityValue);
     public TicketStatus Status => TicketStatus.FromValue<TicketStatus>(StatusValue);
 
@@ -47,6 +66,32 @@ public sealed class Ticket : AggregateRoot, ITenantEntity, ISoftDeletable, IArch
         };
 
         ticket.RaiseDomainEvent(new TicketCreatedEvent(ticket.Id, tenantId));
+        return Result<Ticket>.Success(ticket);
+    }
+
+    /// <summary>
+    /// Un ticket enviado desde fuera de la aplicación con una clave de entrada.
+    ///
+    /// La organización es la de la clave, nunca un dato de la petición. No hay usuario detrás,
+    /// así que <see cref="CustomerId"/> queda vacío y el contacto va en los campos del solicitante.
+    /// </summary>
+    public static Result<Ticket> CrearDesdeFuera(
+        ClaveDeEntrada clave,
+        string title,
+        string description,
+        TicketPriority priority,
+        string? solicitanteNombre,
+        string? solicitanteEmail)
+    {
+        var creado = Create(clave.TenantId, Guid.Empty, title, description, priority);
+        if (creado.IsFailure)
+            return creado;
+
+        var ticket = creado.Value!;
+        ticket.Origen = OrigenExterno;
+        ticket.ClaveDeEntradaId = clave.Id;
+        ticket.SolicitanteNombre = string.IsNullOrWhiteSpace(solicitanteNombre) ? null : solicitanteNombre.Trim();
+        ticket.SolicitanteEmail = string.IsNullOrWhiteSpace(solicitanteEmail) ? null : solicitanteEmail.Trim();
         return Result<Ticket>.Success(ticket);
     }
 

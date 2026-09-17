@@ -146,6 +146,82 @@ public static class TicketingEndpoints
       });
     }
 
+    MapEntradaDeTickets(app);
+
     return app;
   }
+
+  /// <summary>Cabecera en la que llega la clave de entrada.</summary>
+  public const string CabeceraDeClave = "X-Api-Key";
+
+  /// <summary>
+  /// La política de CORS del endpoint público. La registra el host: la entrada se llama desde
+  /// páginas de clientes cuyo dominio la aplicación no conoce.
+  /// </summary>
+  public const string PoliticaCorsDeEntrada = "EntradaDeTickets";
+
+  /// <summary>Política de límite de peticiones del endpoint público. La registra el host.</summary>
+  public const string LimiteDeEntrada = "entrada-de-tickets";
+
+  /// <summary>
+  /// Tickets que llegan desde fuera de la aplicación, y las claves con las que llegan.
+  ///
+  /// El endpoint público no pide sesión: lo llama el formulario de soporte de la web de un
+  /// cliente, o su backend, con una clave de entrada en <see cref="CabeceraDeClave"/>. La clave
+  /// sólo sirve para crear tickets y fija la organización. Ver <c>ClaveDeEntrada</c>.
+  ///
+  /// Las claves las gestiona un administrador: quien las tiene puede escribir en la bandeja de
+  /// tickets de la organización.
+  /// </summary>
+  private static void MapEntradaDeTickets(IEndpointRouteBuilder app)
+  {
+    app.MapPost("/api/v1/entrada/tickets", async (HttpContext http, TicketExternoRequest req, IMediator mediator) =>
+    {
+      var clave = http.Request.Headers[CabeceraDeClave].ToString();
+      var result = await mediator.Send(new Ticketing.Application.Entrada.CrearTicketExternoCommand(
+          clave, req.Title ?? string.Empty, req.Description ?? string.Empty, req.Priority, req.RequesterName, req.RequesterEmail));
+
+      if (result.IsSuccess)
+        return Results.Created($"/api/v1/tickets/{result.Value!.Id}", result.Value);
+
+      return result.Error == Ticketing.Application.Entrada.ErroresDeEntrada.ClaveNoValida
+          ? Results.Problem(statusCode: StatusCodes.Status401Unauthorized, title: result.Error)
+          : Results.Problem(statusCode: StatusCodes.Status400BadRequest, title: result.Error);
+    })
+    .AllowAnonymous()
+    .RequireCors(PoliticaCorsDeEntrada)
+    .RequireRateLimiting(LimiteDeEntrada)
+    .WithTags("Entrada de tickets");
+
+    var claves = app.MapGroup("/api/v1/tickets/claves-de-entrada")
+        .WithTags("Entrada de tickets")
+        .RequireAuthorization(politica => politica.RequireRole("Admin"));
+
+    claves.MapGet("", async (BuildingBlocks.Application.Abstractions.IUserContext usuario, IMediator mediator) =>
+    {
+      var result = await mediator.Send(new Ticketing.Application.Entrada.GetClavesDeEntradaQuery(usuario.TenantId));
+      return Results.Ok(result.Value);
+    });
+
+    claves.MapPost("", async (CrearClaveDeEntradaRequest req, BuildingBlocks.Application.Abstractions.IUserContext usuario, IMediator mediator) =>
+    {
+      var result = await mediator.Send(new Ticketing.Application.Entrada.CrearClaveDeEntradaCommand(usuario.TenantId, usuario.UserId, req.Nombre ?? string.Empty));
+      return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
+    });
+
+    claves.MapDelete("/{id:guid}", async (Guid id, BuildingBlocks.Application.Abstractions.IUserContext usuario, IMediator mediator) =>
+    {
+      var result = await mediator.Send(new Ticketing.Application.Entrada.RevocarClaveDeEntradaCommand(usuario.TenantId, id));
+      return result.IsSuccess ? Results.NoContent() : Results.NotFound(result.Error);
+    });
+  }
 }
+
+/// <summary>
+/// El cuerpo del endpoint público, en inglés como el resto de la API: lo van a escribir
+/// integradores de fuera, y los nombres son los que ya tienen los tickets.
+/// </summary>
+public sealed record TicketExternoRequest(
+    string? Title, string? Description, string? Priority, string? RequesterName, string? RequesterEmail);
+
+public sealed record CrearClaveDeEntradaRequest(string? Nombre);

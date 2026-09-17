@@ -12,7 +12,11 @@ public sealed record TicketDto(
     string Priority,
     string Status,
     DateTime CreatedAt,
-    DateTime? ResolvedAt
+    DateTime? ResolvedAt,
+    /// <summary>«Aplicacion» o «Externo». Ver <c>Ticket.Origen</c>.</summary>
+    string Origen = "Aplicacion",
+    string? SolicitanteNombre = null,
+    string? SolicitanteEmail = null
 )
 {
   internal static TicketDto? FromEntity(Ticket ticket)
@@ -27,7 +31,10 @@ public sealed record TicketDto(
       ticket.Priority.ToString(),
       ticket.Status.ToString(),
       ticket.CreatedAt,
-      ticket.ResolvedAt
+      ticket.ResolvedAt,
+      ticket.Origen,
+      ticket.SolicitanteNombre,
+      ticket.SolicitanteEmail
     );
   }
 }
