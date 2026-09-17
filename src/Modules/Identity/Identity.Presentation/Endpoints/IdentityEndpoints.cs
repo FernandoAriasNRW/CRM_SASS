@@ -1,5 +1,5 @@
 using BuildingBlocks.Application.Abstractions;
-using Identity.Application.Favoritos;
+using Identity.Application.Favorites;
 using Identity.Application.Commands;
 using Identity.Application.Queries;
 using Identity.Infrastructure;
@@ -24,8 +24,8 @@ public static class IdentityEndpoints
   /// rol «Admin» —comprobado contra la aplicación levantada, respondía 201—, cambiarse el rol a sí
   /// mismo o darse permisos. Esconder el botón no protege nada si el endpoint contesta.
   /// </summary>
-  private static void SoloAdministradores(Microsoft.AspNetCore.Authorization.AuthorizationPolicyBuilder politica)
-    => politica.RequireRole("Admin");
+  private static void AdminsOnly(Microsoft.AspNetCore.Authorization.AuthorizationPolicyBuilder policy)
+    => policy.RequireRole("Admin");
 
   public static IServiceCollection AddIdentityPresentation(this IServiceCollection services, IConfiguration configuration)
   {
@@ -121,57 +121,57 @@ public static class IdentityEndpoints
 
     // Favoritos. Van bajo el usuario y no bajo cada módulo porque una estrella no es un atributo
     // de la tarea: es algo que una persona decidió sobre ella. Ver Favorito para el porqué.
-    usersGroup.MapGet("/me/favoritos/{tipo}", async (
-        string tipo, IUserContext usuario, IMediator mediator) =>
+    usersGroup.MapGet("/me/favorites/{entityType}", async (
+        string entityType, IUserContext currentUser, IMediator mediator) =>
     {
-      var result = await mediator.Send(new GetFavoritosQuery(usuario.TenantId, usuario.UserId, tipo));
+      var result = await mediator.Send(new GetFavoritesQuery(currentUser.TenantId, currentUser.UserId, entityType));
       return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
     }).RequireAuthorization();
 
     // Un solo endpoint que alterna, no uno para marcar y otro para desmarcar: la estrella es un
     // interruptor, y con dos endpoints dos pestañas abiertas acaban peleándose.
-    usersGroup.MapPost("/me/favoritos/{tipo}/{entityId:guid}", async (
-        string tipo, Guid entityId, IUserContext usuario, IMediator mediator) =>
+    usersGroup.MapPost("/me/favorites/{entityType}/{entityId:guid}", async (
+        string entityType, Guid entityId, IUserContext currentUser, IMediator mediator) =>
     {
       var result = await mediator.Send(
-          new AlternarFavoritoCommand(usuario.TenantId, usuario.UserId, tipo, entityId));
+          new ToggleFavoriteCommand(currentUser.TenantId, currentUser.UserId, entityType, entityId));
 
       return result.IsSuccess
-          ? Results.Ok(new { marcado = result.Value })
+          ? Results.Ok(new { isFavorite = result.Value })
           : Results.BadRequest(result.Error);
     }).RequireAuthorization();
 
     // Compartición. Va bajo el elemento y no bajo el usuario, al revés que los favoritos: un
     // favorito es una decisión sobre mí, y compartir es una decisión sobre la cosa.
-    var comparticionGroup = app.MapGroup("/api/v1/comparticion").WithTags("Comparticion");
+    var sharingGroup = app.MapGroup("/api/v1/sharing").WithTags("Sharing");
 
-    comparticionGroup.MapGet("/{tipo}/{entityId:guid}", async (
-        string tipo, Guid entityId, IUserContext usuario, IMediator mediator) =>
+    sharingGroup.MapGet("/{entityType}/{entityId:guid}", async (
+        string entityType, Guid entityId, IUserContext currentUser, IMediator mediator) =>
     {
       var result = await mediator.Send(
-          new Identity.Application.Comparticion.GetCompartidoConQuery(usuario.TenantId, tipo, entityId));
+          new Identity.Application.Sharing.GetSharedWithQuery(currentUser.TenantId, entityType, entityId));
 
       return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
     }).RequireAuthorization();
 
-    comparticionGroup.MapPut("/{tipo}/{entityId:guid}/{conUsuarioId:guid}", async (
-        string tipo, Guid entityId, Guid conUsuarioId, CompartirRequest cuerpo,
-        IUserContext usuario, IMediator mediator) =>
+    sharingGroup.MapPut("/{entityType}/{entityId:guid}/{withUserId:guid}", async (
+        string entityType, Guid entityId, Guid withUserId, ShareRequest body,
+        IUserContext currentUser, IMediator mediator) =>
     {
       // PUT y no POST: compartir con la misma persona dos veces deja el mismo estado, cambiando
       // el nivel si hace falta. Con POST, la segunda llamada tendría que decidir si es un
       // conflicto, y no lo es.
-      var result = await mediator.Send(new Identity.Application.Comparticion.CompartirCommand(
-          usuario.TenantId, tipo, entityId, conUsuarioId, cuerpo.Nivel));
+      var result = await mediator.Send(new Identity.Application.Sharing.ShareCommand(
+          currentUser.TenantId, entityType, entityId, withUserId, body.Level));
 
       return result.IsSuccess ? Results.NoContent() : Results.BadRequest(result.Error);
     }).RequireAuthorization();
 
-    comparticionGroup.MapDelete("/{tipo}/{entityId:guid}/{conUsuarioId:guid}", async (
-        string tipo, Guid entityId, Guid conUsuarioId, IUserContext usuario, IMediator mediator) =>
+    sharingGroup.MapDelete("/{entityType}/{entityId:guid}/{withUserId:guid}", async (
+        string entityType, Guid entityId, Guid withUserId, IUserContext currentUser, IMediator mediator) =>
     {
-      var result = await mediator.Send(new Identity.Application.Comparticion.DejarDeCompartirCommand(
-          usuario.TenantId, tipo, entityId, conUsuarioId));
+      var result = await mediator.Send(new Identity.Application.Sharing.UnshareCommand(
+          currentUser.TenantId, entityType, entityId, withUserId));
 
       return result.IsSuccess ? Results.NoContent() : Results.BadRequest(result.Error);
     }).RequireAuthorization();
@@ -238,7 +238,7 @@ public static class IdentityEndpoints
     /// El identificador sale del token y no del cuerpo: si viniera de fuera, cualquiera podría
     /// mandar el de otra persona y cambiarle la contraseña conociendo sólo la suya.
     /// </summary>
-    usersGroup.MapPut("/me/password", async (CambiarContrasenaRequest req, IMediator mediator, IUserContext currentUser) =>
+    usersGroup.MapPut("/me/password", async (ChangePasswordRequest req, IMediator mediator, IUserContext currentUser) =>
     {
       var userId = currentUser.UserId;
       if (userId == Guid.Empty) return Results.Unauthorized();
@@ -266,7 +266,7 @@ public static class IdentityEndpoints
       return result.IsSuccess
               ? Results.Created($"/api/v1/users/{result.Value!.Id}", result.Value)
               : Results.BadRequest(result.Error);
-    }).RequireAuthorization(SoloAdministradores);
+    }).RequireAuthorization(AdminsOnly);
 
     usersGroup.MapPut("/{id:guid}", async (Guid id, UpdateUserRequest req, IMediator mediator, IUserContext currentUser) =>
     {
@@ -274,7 +274,7 @@ public static class IdentityEndpoints
       var command = new UpdateUserCommand(tenantId, id, req.Name, req.Email, req.Role);
       var result = await mediator.Send(command);
       return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
-    }).RequireAuthorization(SoloAdministradores);
+    }).RequireAuthorization(AdminsOnly);
 
     usersGroup.MapDelete("/{id:guid}", async (Guid id, IMediator mediator, IUserContext currentUser) =>
     {
@@ -283,10 +283,10 @@ public static class IdentityEndpoints
       var command = new DeleteUserCommand(tenantId, id, currentUserId);
       var result = await mediator.Send(command);
       return result.IsSuccess ? Results.NoContent() : Results.BadRequest(result.Error);
-    }).RequireAuthorization(SoloAdministradores);
+    }).RequireAuthorization(AdminsOnly);
 
     // Permissions endpoints
-    var permissionsGroup = app.MapGroup("/api/v1/permissions").WithTags("Permissions").RequireAuthorization(SoloAdministradores);
+    var permissionsGroup = app.MapGroup("/api/v1/permissions").WithTags("Permissions").RequireAuthorization(AdminsOnly);
 
     permissionsGroup.MapGet("", async (string? targetType, Guid? targetId, string? roleName, IMediator mediator, IUserContext currentUser) =>
     {
@@ -340,9 +340,9 @@ public static class IdentityEndpoints
 public record CreateUserRequest(string Name, string Email, string Password, string Role);
 
 /// <summary>Lo que hace falta para cambiar la propia contraseña. El usuario sale del token.</summary>
-public record CambiarContrasenaRequest(string CurrentPassword, string NewPassword);
+public record ChangePasswordRequest(string CurrentPassword, string NewPassword);
 public record UpdateUserRequest(string Name, string Email, string Role);
 public record SaveGranularPermissionsRequest(string TargetType, Guid? UserId, Guid? TeamId, string? RoleName, List<GranularPermissionInputItem> Permissions);
 
 /// <summary>Con qué nivel se comparte: «View», «Edit» o «Full».</summary>
-public sealed record CompartirRequest(string Nivel);
+public sealed record ShareRequest(string Level);

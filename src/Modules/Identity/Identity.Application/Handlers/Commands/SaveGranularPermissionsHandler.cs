@@ -3,7 +3,7 @@ using Identity.Application.Abstractions;
 using Identity.Application.Abstractions.Repositories;
 using Identity.Application.Commands;
 using Identity.Domain.Entities;
-using Identity.Domain.Permisos;
+using Identity.Domain.Permissions;
 using MediatR;
 
 namespace Identity.Application.Handlers.Commands;
@@ -28,7 +28,7 @@ public class SaveGranularPermissionsHandler(
         foreach (var item in request.Permissions)
         {
             var existing = existingPermissions.FirstOrDefault(p => 
-                p.EntityType == TiposDePermiso.Normalizar(item.EntityType) && p.EntityId == item.EntityId);
+                p.EntityType == PermissionTypes.Normalize(item.EntityType) && p.EntityId == item.EntityId);
 
             if (existing != null)
             {

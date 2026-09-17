@@ -102,13 +102,13 @@ public sealed class FiltrosDelMenuFlowTests(CrmApiFactory factory)
         var (cliente, _) = await AutenticarAsync();
         var algo = Guid.NewGuid();
 
-        var primera = await cliente.PostAsync($"/api/v1/users/me/favoritos/Tarea/{algo}", null);
+        var primera = await cliente.PostAsync($"/api/v1/users/me/favorites/Tarea/{algo}", null);
         primera.StatusCode.Should().Be(HttpStatusCode.OK);
-        (await primera.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("marcado").GetBoolean()
+        (await primera.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("isFavorite").GetBoolean()
             .Should().BeTrue();
 
-        var segunda = await cliente.PostAsync($"/api/v1/users/me/favoritos/Tarea/{algo}", null);
-        (await segunda.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("marcado").GetBoolean()
+        var segunda = await cliente.PostAsync($"/api/v1/users/me/favorites/Tarea/{algo}", null);
+        (await segunda.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("isFavorite").GetBoolean()
             .Should().BeFalse("la segunda pulsación desmarca");
     }
 
@@ -118,9 +118,9 @@ public sealed class FiltrosDelMenuFlowTests(CrmApiFactory factory)
         var (cliente, _) = await AutenticarAsync();
         var algo = Guid.NewGuid();
 
-        await cliente.PostAsync($"/api/v1/users/me/favoritos/Proyecto/{algo}", null);
+        await cliente.PostAsync($"/api/v1/users/me/favorites/Proyecto/{algo}", null);
 
-        var marcados = await cliente.GetFromJsonAsync<JsonElement>("/api/v1/users/me/favoritos/Proyecto");
+        var marcados = await cliente.GetFromJsonAsync<JsonElement>("/api/v1/users/me/favorites/Proyecto");
 
         marcados.EnumerateArray().Select(e => e.GetGuid()).Should().Contain(algo);
     }
@@ -135,9 +135,9 @@ public sealed class FiltrosDelMenuFlowTests(CrmApiFactory factory)
         var (cliente, _) = await AutenticarAsync();
         var algo = Guid.NewGuid();
 
-        await cliente.PostAsync($"/api/v1/users/me/favoritos/Tarea/{algo}", null);
+        await cliente.PostAsync($"/api/v1/users/me/favorites/Tarea/{algo}", null);
 
-        var proyectos = await cliente.GetFromJsonAsync<JsonElement>("/api/v1/users/me/favoritos/Proyecto");
+        var proyectos = await cliente.GetFromJsonAsync<JsonElement>("/api/v1/users/me/favorites/Proyecto");
 
         proyectos.EnumerateArray().Select(e => e.GetGuid()).Should().NotContain(algo);
     }
@@ -147,7 +147,7 @@ public sealed class FiltrosDelMenuFlowTests(CrmApiFactory factory)
     {
         var (cliente, _) = await AutenticarAsync();
 
-        var respuesta = await cliente.PostAsync($"/api/v1/users/me/favoritos/Factura/{Guid.NewGuid()}", null);
+        var respuesta = await cliente.PostAsync($"/api/v1/users/me/favorites/Factura/{Guid.NewGuid()}", null);
 
         respuesta.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
@@ -172,7 +172,7 @@ public sealed class FiltrosDelMenuFlowTests(CrmApiFactory factory)
         alguno.ValueKind.Should().NotBe(JsonValueKind.Undefined, "hace falta al menos un ticket");
         var ticketId = alguno.GetProperty("id").GetGuid();
 
-        await cliente.PostAsync($"/api/v1/users/me/favoritos/Ticket/{ticketId}", null);
+        await cliente.PostAsync($"/api/v1/users/me/favorites/Ticket/{ticketId}", null);
 
         var favoritos = await cliente.GetFromJsonAsync<JsonElement>("/api/v1/tickets?pageSize=100&filter=favorites");
         var ids = favoritos.GetProperty("items").EnumerateArray().Select(t => t.GetProperty("id").GetGuid());
@@ -182,7 +182,7 @@ public sealed class FiltrosDelMenuFlowTests(CrmApiFactory factory)
             + "está devolviendo vacío en silencio");
 
         // Se desmarca para no dejar rastro a las demás pruebas de la colección.
-        await cliente.PostAsync($"/api/v1/users/me/favoritos/Ticket/{ticketId}", null);
+        await cliente.PostAsync($"/api/v1/users/me/favorites/Ticket/{ticketId}", null);
     }
 
     /// <summary>
@@ -206,10 +206,10 @@ public sealed class FiltrosDelMenuFlowTests(CrmApiFactory factory)
     {
         var anonimo = factory.CreateClient();
 
-        (await anonimo.GetAsync("/api/v1/users/me/favoritos/Tarea")).StatusCode
+        (await anonimo.GetAsync("/api/v1/users/me/favorites/Tarea")).StatusCode
             .Should().Be(HttpStatusCode.Unauthorized);
 
-        (await anonimo.PostAsync($"/api/v1/users/me/favoritos/Tarea/{Guid.NewGuid()}", null)).StatusCode
+        (await anonimo.PostAsync($"/api/v1/users/me/favorites/Tarea/{Guid.NewGuid()}", null)).StatusCode
             .Should().Be(HttpStatusCode.Unauthorized);
     }
 

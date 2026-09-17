@@ -1,6 +1,6 @@
 using FluentAssertions;
 using Identity.Domain.Entities;
-using Identity.Domain.Permisos;
+using Identity.Domain.Permissions;
 using Xunit;
 
 namespace UnitTests;
@@ -22,7 +22,7 @@ public sealed class TiposDePermisoTests
     [InlineData("Task", "Task")]
     [InlineData("Settings", "Settings")]
     public void El_plural_se_guarda_en_singular(string recibido, string guardado)
-        => TiposDePermiso.Normalizar(recibido).Should().Be(guardado);
+        => PermissionTypes.Normalize(recibido).Should().Be(guardado);
 
     /// <summary>
     /// Se normaliza en la entidad, no en un handler: cualquier camino que cree un permiso —la

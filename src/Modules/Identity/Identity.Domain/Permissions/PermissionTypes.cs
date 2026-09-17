@@ -1,4 +1,4 @@
-namespace Identity.Domain.Permisos;
+namespace Identity.Domain.Permissions;
 
 /// <summary>
 /// Cómo se llama cada cosa en la tabla de permisos. <b>Un solo vocabulario, en singular.</b>
@@ -13,16 +13,16 @@ namespace Identity.Domain.Permisos;
 /// compartición; cambiar los comandos habría sido tocar trece ficheros de otro módulo para lo
 /// mismo.
 /// </summary>
-public static class TiposDePermiso
+public static class PermissionTypes
 {
-    public const string Tarea = "Task";
-    public const string Proyecto = "Project";
+    public const string Task = "Task";
+    public const string Project = "Project";
     public const string Ticket = "Ticket";
-    public const string Documento = "Document";
+    public const string Document = "Document";
     public const string Webhook = "Webhook";
-    public const string Equipo = "Team";
-    public const string Informe = "Report";
-    public const string Configuracion = "Settings";
+    public const string Team = "Team";
+    public const string Report = "Report";
+    public const string Settings = "Settings";
 
     /// <summary>
     /// El nombre en el vocabulario de la tabla, acepte lo que acepte.
@@ -31,15 +31,32 @@ public static class TiposDePermiso
     /// integración o una pestaña abierta desde antes del cambio pueden seguir mandando el plural,
     /// y con eso volvería a nacer una fila que no consulta nadie.
     /// </summary>
-    public static string Normalizar(string tipo) => tipo switch
+    /// <summary>
+    /// El tipo de permiso de una entidad de <see cref="BuildingBlocks.Domain.EntityTypes"/>.
+    ///
+    /// Vivía en Application como <c>VocabularioDePermisos</c>, separado de <see cref="Normalize"/>:
+    /// dos traductores para el mismo vocabulario, en dos capas. Mientras los valores de
+    /// <c>EntityTypes</c> sigan en español («Tarea») esto traduce; cuando pasen a inglés, será la
+    /// identidad.
+    /// </summary>
+    public static string FromEntityType(string entityType) => entityType switch
     {
-        "Tasks" => Tarea,
-        "Projects" => Proyecto,
+        BuildingBlocks.Domain.EntityTypes.Task => Task,
+        BuildingBlocks.Domain.EntityTypes.Project => Project,
+        BuildingBlocks.Domain.EntityTypes.Ticket => Ticket,
+        BuildingBlocks.Domain.EntityTypes.Document => Document,
+        _ => entityType
+    };
+
+    public static string Normalize(string type) => type switch
+    {
+        "Tasks" => Task,
+        "Projects" => Project,
         "Tickets" => Ticket,
-        "Docs" or "Documents" => Documento,
+        "Docs" or "Documents" => Document,
         "Webhooks" => Webhook,
-        "Teams" => Equipo,
-        "Reports" => Informe,
-        _ => tipo
+        "Teams" => Team,
+        "Reports" => Report,
+        _ => type
     };
 }

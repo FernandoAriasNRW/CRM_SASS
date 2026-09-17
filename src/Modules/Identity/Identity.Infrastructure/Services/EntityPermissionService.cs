@@ -1,6 +1,6 @@
 using BuildingBlocks.Application.Authorization;
 using Identity.Domain.Entities;
-using Identity.Domain.Permisos;
+using Identity.Domain.Permissions;
 using Identity.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -22,7 +22,7 @@ public sealed class EntityPermissionService(IdentityDbContext context) : IEntity
         if (user.Role == Identity.Domain.ValueObjects.UserRole.Admin)
             return true;
 
-        entityType = TiposDePermiso.Normalizar(entityType);
+        entityType = PermissionTypes.Normalize(entityType);
 
         // Check user-specific permission first
         var userPermission = await context.EntityPermissions
