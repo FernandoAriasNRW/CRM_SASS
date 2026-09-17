@@ -16,11 +16,11 @@ public static class CorsSetup
             // La entrada de tickets se llama desde la web de cada cliente, en un dominio que la
             // aplicación no conoce. Sin credenciales —no hay cookies ni sesión que proteger— y sólo con
             // lo que ese endpoint necesita. El resto de la API sigue con su lista de orígenes.
-            options.AddPolicy(TicketingEndpoints.PoliticaCorsDeEntrada, policy =>
+            options.AddPolicy(TicketingEndpoints.IntakeCorsPolicy, policy =>
             {
                 policy.AllowAnyOrigin()
                       .WithMethods("POST")
-                      .WithHeaders("Content-Type", TicketingEndpoints.CabeceraDeClave);
+                      .WithHeaders("Content-Type", TicketingEndpoints.ApiKeyHeader);
             });
 
             options.AddPolicy(DefaultPolicy, policy =>

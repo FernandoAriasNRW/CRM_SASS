@@ -73,9 +73,9 @@ public sealed class UpdateTicketHandler(
         return Result<bool>.Failure($"Invalid status: {request.Status}");
     }
 
-    var actualizado = ticket.Actualizar(request.Title, request.Description, priority);
-    if (actualizado.IsFailure)
-      return Result<bool>.Failure(actualizado.Error!);
+    var updated = ticket.Update(request.Title, request.Description, priority);
+    if (updated.IsFailure)
+      return Result<bool>.Failure(updated.Error!);
 
     if (status is not null && status.Value != ticket.Status.Value)
     {
@@ -89,14 +89,14 @@ public sealed class UpdateTicketHandler(
     {
       if (request.Classification.Trim().Length > 100)
         return Result<bool>.Failure("La clasificación admite hasta 100 caracteres");
-      ticket.Clasificar(request.Classification);
+      ticket.Classify(request.Classification);
     }
 
     if (request.TeamId is not null)
-      ticket.AsignarEquipo(request.TeamId);
+      ticket.AssignTeam(request.TeamId);
 
     if (request.Tags is not null)
-      ticket.CambiarEtiquetas(request.Tags);
+      ticket.ChangeTags(request.Tags);
 
     if (request.AssignedAgentId is not null)
     {

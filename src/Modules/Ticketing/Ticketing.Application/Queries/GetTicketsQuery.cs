@@ -18,5 +18,5 @@ public sealed record GetTicketsQuery(
     /// Iba como tres parámetros sueltos —filtro, usuario, favoritos— y cada concepto nuevo del
     /// menú añadía otro. Ver <c>ViewScope</c>.
     /// </summary>
-    BuildingBlocks.Application.ViewScope? Alcance = null
+    BuildingBlocks.Application.ViewScope? ViewScope = null
 ) : IQuery<PagedResult<TicketDto>>;

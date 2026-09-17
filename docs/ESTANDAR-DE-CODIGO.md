@@ -35,12 +35,13 @@ real está entre 226 y ~300.
 `/comparticion`, `/me/favoritos`, `/exportaciones`, `/programaciones`, `/docs/plantillas/usos`,
 `/docs/pages/{id}/anotaciones`, `/docs/anotaciones/{id}/resolver`, `/docs/pages/{id}/mover`,
 `/calendar/agenda/{dia}`, `/papelera`, `/{id}/restaurar`, `/archivar`, `/desarchivar`,
-`/tickets/claves-de-entrada`, `/entrada/tickets`, `/tickets/{id}/adjuntos`.
+~~`/tickets/claves-de-entrada`, `/entrada/tickets`, `/tickets/{id}/adjuntos`~~ (bloque 3).
 
 **Tablas en español**: `Favoritos`, `Exportaciones`, `ContenidosDeExportacion`, `Programaciones`,
-`UsosDePlantilla`, `AnotacionesEnDocumentos`, `MencionesEnDocumentos`, `ClavesDeEntrada`,
-`AdjuntosDeTicket`. Además hay **columnas** en español en tablas con nombre inglés
-(`Tickets.Origen`, `Tickets.SolicitanteNombre`, `…ArchivadoEnUtc`, `…BorradoEnUtc`, etc.).
+`UsosDePlantilla`, `AnotacionesEnDocumentos`, `MencionesEnDocumentos`. ~~`ClavesDeEntrada`,
+`AdjuntosDeTicket`~~ (bloque 3). Además hay **columnas** en español en tablas con nombre inglés
+(~~`Tickets.Origen`, `Tickets.SolicitanteNombre`~~ (bloque 3), `…ArchivadoEnUtc`,
+`…BorradoEnUtc`, etc.).
 
 ---
 
@@ -104,6 +105,7 @@ Un concepto, un nombre. Ordenado por área.
 | restaurar | `Restore` |
 | archivado en, borrado en | `ArchivedAtUtc`, `DeletedAtUtc` |
 | acción de archivo | `ArchiveAction` |
+| cambiar archivo/papelera (comando) | `Change<Entidad>ArchiveStateCommand` |
 | vista guardada | `SavedView` |
 | vocabulario | `Vocabulary` (o `…Options` si es una lista de opciones) |
 | etiqueta (de texto visible) | `Label` |
@@ -171,6 +173,13 @@ Un concepto, un nombre. Ordenado por área.
 | adjunto de ticket | `TicketAttachment` |
 | reglas de adjuntos | `AttachmentRules` |
 | fichero recibido | `IncomingFile` |
+| marcar usada (clave) | `MarkUsed` |
+| tamaño (de un fichero) | `Size` |
+| lista de etiquetas (derivada) | `TagList` |
+| cuerpo HTTP del ticket externo | `ExternalTicketBody` (el contrato; `ExternalTicketRequest` es el del dominio) |
+| guardado de adjuntos | `AttachmentStorage` |
+| motivo de rechazo | `RejectionReason` |
+| errores de la entrada | `IntakeErrors` |
 
 ### Documentos
 
@@ -273,9 +282,9 @@ suites completas en verde, catálogo i18n re-extraído al final.
 
 | # | Bloque | Por qué en este orden |
 |---|---|---|
-| 1 | **BuildingBlocks + Host** (`IAlcanceDeVista`, `TenantDbContext.ComoInquilino`, `AlmacenamientoEnDisco`, `IUserContext` en todos los endpoints, `TimeProvider`) | Lo usan todos los módulos; renombrarlo después obligaría a tocarlos dos veces |
-| 2 | **Identity** (favoritos, compartición, permisos) | Rutas `/comparticion` y `/me/favoritos`, tabla `Favoritos` |
-| 3 | **Ticketing** (entrada, claves, adjuntos) | Lo más reciente; rutas públicas `/entrada/tickets` |
+| 1 ✅ | **BuildingBlocks + Host** (`IAlcanceDeVista`, `TenantDbContext.ComoInquilino`, `AlmacenamientoEnDisco`, `IUserContext` en todos los endpoints, `TimeProvider`) | Lo usan todos los módulos; renombrarlo después obligaría a tocarlos dos veces |
+| 2 ✅ | **Identity** (favoritos, compartición, permisos) | Rutas `/comparticion` y `/me/favoritos`, tabla `Favoritos` |
+| 3 ✅ | **Ticketing** (entrada, claves, adjuntos) | Lo más reciente; rutas públicas `/entrada/tickets` |
 | 4 | **WorkItems + Projects + Teams** | Archivo/papelera compartidos |
 | 5 | **Docs** (plantillas, anotaciones, árbol) + **Comments** | Editor y extensiones del frontend |
 | 6 | **Calendar + Notifications + Communication** | Agenda |
@@ -283,6 +292,7 @@ suites completas en verde, catálogo i18n re-extraído al final.
 | 8 | **CustomFields + Automations + Webhook + Tags** | Fórmulas y reglas |
 | 9 | **Frontend transversal** (`shared/`, `core/`, e2e) | Lo que no arrastraron los PRs anteriores |
 | 10 | **Nombres de las pruebas** | Son frases, no identificadores de producción; traducirlas dentro de cada bloque ensucia el diff de revisión |
+| 11 | **`TimeProvider` en todos los módulos** | Cambiar el reloj módulo a módulo deja dos formas de dar la hora conviviendo; va de una vez, al final |
 
 ### Migraciones de renombrado
 
@@ -294,8 +304,9 @@ suites completas en verde, catálogo i18n re-extraído al final.
 
 - La API cambia de rutas y de campos. No hay integradores externos todavía (la entrada de tickets
   no está desplegada), así que **no se mantienen alias** de las rutas viejas.
-- Si antes de llegar al PR 3 alguien integra la entrada de tickets, se mantiene
-  `/api/v1/entrada/tickets` como alias durante una versión.
+- La entrada de tickets ya cambió de ruta (bloque 3) sin dejar alias, porque nadie la había
+  integrado todavía. Quien la integre desde ahora usa `/api/v1/ticket-intake`, y esa ruta ya no se
+  cambia sin alias.
 
 ---
 
@@ -332,6 +343,45 @@ tablas de favoritos y menciones. Cambiarlo exige migrar ese contenido, y va con 
 - `TimeProvider` registrado y usado en el outbox; los usos en entidades de dominio van con su módulo.
 - Borrado: el segundo sistema de webhooks de `BuildingBlocks.Infrastructure/Webhooks`, que nadie
   registraba y enviaba a la URL literal `"URL_DESTINO"`, y `DbSeeder.cs`, comentado entero.
+
+### Hecho en el bloque 2
+
+- Favoritos, compartición y permisos en inglés; tabla `Favoritos` → `Favorites` con migración de
+  renombrado escrita a mano, porque EF proponía borrarla y crearla.
+- Rutas `/comparticion` → `/sharing` y `/users/me/favoritos` → `/me/favorites`; campos `marcado` →
+  `isFavorite` y `nivel` → `level`.
+- Un solo vocabulario de tipos de entidad y un solo traductor a permisos.
+
+### Hecho en el bloque 3
+
+- Ticketing entero: dominio, aplicación, infraestructura, endpoints, frontend y pruebas.
+  `ClaveDeEntrada` → `IntakeKey`, `AdjuntoDeTicket` → `TicketAttachment`, `SolicitudExterna` →
+  `ExternalTicketRequest`, `Solicitante*` → `Requester*`, `Origen` → `Source`.
+- Rutas: `/entrada/tickets` → `/ticket-intake`, `/tickets/claves-de-entrada` →
+  `/tickets/intake-keys`, `/tickets/{id}/adjuntos` → `/tickets/{id}/attachments`, y
+  `archivar`/`desarchivar`/`restaurar` → `archive`/`unarchive`/`restore`.
+- Tablas `ClavesDeEntrada` → `IntakeKeys` y `AdjuntosDeTicket` → `TicketAttachments`, con sus
+  columnas y sus índices. **La migración se escribió a mano**: EF proponía `DropTable` +
+  `CreateTable` para las dos y `DropColumn` para `Origen`, que habría borrado 1 clave, 2 adjuntos y
+  el origen de 232 tickets de la base de desarrollo.
+- **Un valor guardado también cambió**: `Origen` valía «Aplicacion»/«Externo» y `Source` vale
+  «App»/«External». Va con un `UPDATE` en la propia migración; sin él, un ticket externo dejaría de
+  reconocerse como tal y la ficha no enseñaría al solicitante. Ver la nota de «los valores
+  guardados no son nombres» de más arriba: aquí sí se podía migrar, porque el valor sólo vive en
+  esa columna.
+- `EntradaDeTicketsCqrs.cs` (21 tipos en un fichero) dividido en `Intake/`, un tipo por fichero;
+  `ArchivoYPapeleraCqrs.cs`, en `Archiving/`.
+- Dos funciones del vocabulario del frontend pasaron a exponerse tal cual en los componentes: un
+  método con el mismo nombre que la función importada (`statusBadge`) se llamaba a sí mismo.
+- **Pendiente y a propósito: el reloj.** Las entidades de Ticketing siguen llamando a
+  `DateTime.UtcNow` (`Ticket.Create`, `Archive`, `MoveToTrash`) y los handlers de la entrada se lo
+  pasan a mano. El bloque 2 dejó igual `Favorite.Mark`. Convertirlo módulo a módulo deja el
+  repositorio con dos formas de dar la hora a la vez, que es justo lo que el estándar quiere
+  evitar, así que va en **un cambio propio para todos los módulos** —con `TimeProvider` inyectado
+  y las entidades recibiendo `nowUtc`— después del bloque 8. Anotado también en el bloque 10.
+- Lo que sigue en español dentro de estas pantallas es de otros bloques: la barra de vistas
+  (`BarraDeVistasComponent`, `VistaIntegrada` y sus campos `clave`/`etiqueta`/`icono`),
+  `mensajeDeError`, `urlDeFichero`, los comentarios y las menciones. Van con el bloque 9.
 
 ---
 

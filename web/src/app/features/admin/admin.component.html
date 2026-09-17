@@ -108,15 +108,15 @@
 
       <!-- Entrada de tickets -->
       <button 
-        (click)="setTab('entrada-de-tickets')"
-        [class.bg-white]="activeTab() === 'entrada-de-tickets'"
-        [class.text-foreground]="activeTab() === 'entrada-de-tickets'"
-        [class.font-bold]="activeTab() === 'entrada-de-tickets'"
-        [class.bg-white/10]="activeTab() !== 'entrada-de-tickets'"
-        [class.text-white/80]="activeTab() !== 'entrada-de-tickets'"
-        [class.hover:bg-white/20]="activeTab() !== 'entrada-de-tickets'"
+        (click)="setTab('ticket-intake')"
+        [class.bg-white]="activeTab() === 'ticket-intake'"
+        [class.text-foreground]="activeTab() === 'ticket-intake'"
+        [class.font-bold]="activeTab() === 'ticket-intake'"
+        [class.bg-white/10]="activeTab() !== 'ticket-intake'"
+        [class.text-white/80]="activeTab() !== 'ticket-intake'"
+        [class.hover:bg-white/20]="activeTab() !== 'ticket-intake'"
         class="px-4 py-2 rounded-xl text-xs font-medium transition-all flex items-center gap-2 shadow-sm shrink-0">
-        <ng-icon name="lucideKeyRound" class="w-4 h-4" [class.text-primary]="activeTab() === 'entrada-de-tickets'"></ng-icon>
+        <ng-icon name="lucideKeyRound" class="w-4 h-4" [class.text-primary]="activeTab() === 'ticket-intake'"></ng-icon>
         <span i18n>Entrada de tickets</span>
       </button>
 
@@ -137,8 +137,8 @@
       <app-admin-automations></app-admin-automations>
     } @else if (activeTab() === 'webhooks') {
       <app-webhooks></app-webhooks>
-    } @else if (activeTab() === 'entrada-de-tickets') {
-      <app-admin-entrada-de-tickets></app-admin-entrada-de-tickets>
+    } @else if (activeTab() === 'ticket-intake') {
+      <app-admin-ticket-intake></app-admin-ticket-intake>
     }
   </div>
 

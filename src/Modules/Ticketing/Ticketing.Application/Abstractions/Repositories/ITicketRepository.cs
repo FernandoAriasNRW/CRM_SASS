@@ -12,7 +12,7 @@ public interface ITicketRepository
     /// Existe porque el filtro global esconde las dos cosas y restaurar algo exige poder
     /// encontrarlo primero. Es la excepción, no la norma.
     /// </summary>
-    Task<Ticket?> GetIncluyendoOcultosAsync(Guid tenantId, Guid id, CancellationToken ct = default);
+    Task<Ticket?> GetIncludingHiddenAsync(Guid tenantId, Guid id, CancellationToken ct = default);
 
     Task AddAsync(Ticket ticket, CancellationToken ct = default);
 

@@ -1,22 +1,20 @@
 import { Component, inject, input, output, signal, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { DatePipe } from '@angular/common';
 import { ApiService } from '../../core/api.service';
-import { BadgeComponent, type BadgeVariant } from '../../shared/ui/badge.component';
-import { AvatarComponent } from '../../shared/ui/avatar.component';
+import { BadgeComponent } from '../../shared/ui/badge.component';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import {
   lucideX, lucideCheck, lucideUser, lucideTag,
   lucideFlag, lucideMessageSquare, lucidePaperclip,
   lucideSend, lucideChevronDown, lucideMail, lucidePhone, lucideBuilding
 } from '@ng-icons/lucide';
-import type { AdjuntoDeTicket, Ticket } from './ticket-create-modal.component';
+import type { TicketAttachment, Ticket } from './ticket-create-modal.component';
 import { mensajeDeError } from '../../shared/utils/mensaje-de-error';
 import { TICKET_TAGS, type Tag } from '../../shared/utils/tags';
 import {
-  ESTADOS_DE_TICKET, PRIORIDADES_DE_TICKET, insigniaDelEstado,
-  nombreDeLaPrioridad, nombreDelEstado
-} from './vocabulario-de-tickets';
+  TICKET_STATUSES, TICKET_PRIORITIES, statusBadge,
+  priorityLabel, statusLabel
+} from './ticket-vocabulary';
 
 
 
@@ -28,7 +26,7 @@ import { MencionadoEnComponent } from '../../shared/ui/mencionado-en.component';
 @Component({
   selector: 'app-ticket-detail-panel',
   standalone: true,
-  imports: [MencionadoEnComponent, ComentariosComponent, ClickableDirective, FormsModule, DatePipe, BadgeComponent, AvatarComponent, NgIconComponent, DrawerComponent],
+  imports: [MencionadoEnComponent, ComentariosComponent, ClickableDirective, FormsModule, BadgeComponent, NgIconComponent, DrawerComponent],
   viewProviders: [provideIcons({
     lucideX, lucideCheck, lucideUser, lucideTag,
     lucideFlag, lucideMessageSquare, lucidePaperclip,
@@ -53,20 +51,21 @@ export class TicketDetailPanelComponent implements OnInit {
   showTagPicker = signal(false);
   activeTab = signal<'comments' | 'activity'>('comments');
 
-  readonly statuses = ESTADOS_DE_TICKET;
-  readonly priorities = PRIORIDADES_DE_TICKET;
+  readonly statuses = TICKET_STATUSES;
+  readonly priorities = TICKET_PRIORITIES;
   readonly availableTags = TICKET_TAGS;
-  readonly desconocido = $localize`Sin datos de contacto`;
+  readonly noContactData = $localize`Sin datos de contacto`;
 
-  clasificacion = '';
-  readonly adjuntos = signal<AdjuntoDeTicket[]>([]);
-  readonly subiendo = signal(false);
-  readonly errorDeAdjuntos = signal('');
+  classification = '';
+  readonly attachments = signal<TicketAttachment[]>([]);
+  readonly uploading = signal(false);
+  readonly attachmentsError = signal('');
 
-  statusBadge(s: string): BadgeVariant { return insigniaDelEstado(s); }
-
-  readonly nombreDelEstado = nombreDelEstado;
-  readonly nombreDeLaPrioridad = nombreDeLaPrioridad;
+  // Las tres se exponen tal cual, sin envolverlas en un método: un método con el mismo nombre
+  // que la función importada se llamaría a sí mismo.
+  readonly statusBadge = statusBadge;
+  readonly statusLabel = statusLabel;
+  readonly priorityLabel = priorityLabel;
 
   ngOnInit(): void {
     const t = this.ticket();
@@ -74,57 +73,57 @@ export class TicketDetailPanelComponent implements OnInit {
     this.description = t.description ?? '';
     this.status = t.status;
     this.priority = t.priority ?? 'normal';
-    this.clasificacion = t.clasificacion ?? '';
+    this.classification = t.classification ?? '';
     // Leía `tags`, un campo que el servidor nunca mandó: la ficha abría siempre sin etiquetas.
-    this.selectedTags.set((t.etiquetas ?? '').split(',').map(s => s.trim()).filter(Boolean));
-    this.cargarAdjuntos();
+    this.selectedTags.set((t.tags ?? '').split(',').map(s => s.trim()).filter(Boolean));
+    this.loadAttachments();
   }
 
-  cargarAdjuntos(): void {
-    this.api.get<AdjuntoDeTicket[]>(`/tickets/${this.ticket().id}/adjuntos`).subscribe({
-      next: adjuntos => this.adjuntos.set(adjuntos),
-      error: () => this.adjuntos.set([]),
+  loadAttachments(): void {
+    this.api.get<TicketAttachment[]>(`/tickets/${this.ticket().id}/attachments`).subscribe({
+      next: attachments => this.attachments.set(attachments),
+      error: () => this.attachments.set([]),
     });
   }
 
   /** La dirección con la que se abre: el almacenamiento en disco devuelve rutas relativas a la API. */
-  urlDe(adjunto: AdjuntoDeTicket): string {
-    return this.api.urlDeFichero(adjunto.url);
+  fileUrl(attachment: TicketAttachment): string {
+    return this.api.urlDeFichero(attachment.url);
   }
 
-  esVideo(adjunto: AdjuntoDeTicket): boolean {
-    return adjunto.tipoDeContenido.startsWith('video/');
+  isVideo(attachment: TicketAttachment): boolean {
+    return attachment.contentType.startsWith('video/');
   }
 
-  subirAdjuntos(entrada: HTMLInputElement): void {
-    const ficheros = Array.from(entrada.files ?? []);
-    if (ficheros.length === 0) return;
+  uploadAttachments(picker: HTMLInputElement): void {
+    const files = Array.from(picker.files ?? []);
+    if (files.length === 0) return;
 
-    const cuerpo = new FormData();
-    for (const fichero of ficheros) cuerpo.append('attachments', fichero, fichero.name);
+    const body = new FormData();
+    for (const file of files) body.append('attachments', file, file.name);
 
-    this.subiendo.set(true);
-    this.errorDeAdjuntos.set('');
-    this.api.post<AdjuntoDeTicket[]>(`/tickets/${this.ticket().id}/adjuntos`, cuerpo).subscribe({
-      next: nuevos => {
-        this.adjuntos.update(actuales => [...actuales, ...nuevos]);
-        this.subiendo.set(false);
-        entrada.value = '';
+    this.uploading.set(true);
+    this.attachmentsError.set('');
+    this.api.post<TicketAttachment[]>(`/tickets/${this.ticket().id}/attachments`, body).subscribe({
+      next: added => {
+        this.attachments.update(current => [...current, ...added]);
+        this.uploading.set(false);
+        picker.value = '';
       },
       error: err => {
-        this.errorDeAdjuntos.set(mensajeDeError(err, $localize`No se pudieron subir los adjuntos`));
-        this.subiendo.set(false);
-        entrada.value = '';
+        this.attachmentsError.set(mensajeDeError(err, $localize`No se pudieron subir los adjuntos`));
+        this.uploading.set(false);
+        picker.value = '';
       },
     });
   }
 
-  guardarClasificacion(): void {
-    const clasificacion = this.clasificacion.trim();
-    if (clasificacion === (this.ticket().clasificacion ?? '')) return;
+  saveClassification(): void {
+    const classification = this.classification.trim();
+    if (classification === (this.ticket().classification ?? '')) return;
 
-    this.api.patch(`/tickets/${this.ticket().id}`, { classification: clasificacion }).subscribe({
-      next: () => this.updated.emit({ ...this.ticket(), clasificacion }),
+    this.api.patch(`/tickets/${this.ticket().id}`, { classification }).subscribe({
+      next: () => this.updated.emit({ ...this.ticket(), classification }),
       error: () => {},
     });
   }
@@ -158,9 +157,9 @@ export class TicketDetailPanelComponent implements OnInit {
     );
     // Como lista y en su propio PATCH. Antes iba por `saveField`, que no mandaba las etiquetas:
     // se veían marcadas y al volver a abrir el ticket no estaban.
-    const etiquetas = this.selectedTags();
-    this.api.patch(`/tickets/${this.ticket().id}`, { tags: etiquetas }).subscribe({
-      next: () => this.updated.emit({ ...this.ticket(), etiquetas: etiquetas.join(',') }),
+    const keys = this.selectedTags();
+    this.api.patch(`/tickets/${this.ticket().id}`, { tags: keys }).subscribe({
+      next: () => this.updated.emit({ ...this.ticket(), tags: keys.join(',') }),
       error: () => {},
     });
   }

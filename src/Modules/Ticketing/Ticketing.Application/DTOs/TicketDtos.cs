@@ -14,14 +14,14 @@ public sealed record TicketDto(
     DateTime CreatedAt,
     DateTime? ResolvedAt,
     /// <summary>«Aplicacion» o «Externo». Ver <c>Ticket.Origen</c>.</summary>
-    string Origen = "Aplicacion",
-    string? SolicitanteNombre = null,
-    string? SolicitanteEmail = null,
-    string? SolicitanteTelefono = null,
-    string? SolicitanteEmpresa = null,
-    string? Clasificacion = null,
+    string Source = "Aplicacion",
+    string? RequesterName = null,
+    string? RequesterEmail = null,
+    string? RequesterPhone = null,
+    string? RequesterCompany = null,
+    string? Classification = null,
     Guid? TeamId = null,
-    string Etiquetas = ""
+    string Tags = ""
 )
 {
   internal static TicketDto? FromEntity(Ticket ticket)
@@ -37,14 +37,14 @@ public sealed record TicketDto(
       ticket.Status.ToString(),
       ticket.CreatedAt,
       ticket.ResolvedAt,
-      ticket.Origen,
-      ticket.SolicitanteNombre,
-      ticket.SolicitanteEmail,
-      ticket.SolicitanteTelefono,
-      ticket.SolicitanteEmpresa,
-      ticket.Clasificacion,
+      ticket.Source,
+      ticket.RequesterName,
+      ticket.RequesterEmail,
+      ticket.RequesterPhone,
+      ticket.RequesterCompany,
+      ticket.Classification,
       ticket.TeamId,
-      ticket.Etiquetas
+      ticket.Tags
     );
   }
 }

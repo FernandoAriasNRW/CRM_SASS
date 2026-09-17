@@ -10,7 +10,7 @@ import { BadgeComponent, type BadgeVariant } from '../../shared/ui/badge.compone
 import { ButtonComponent } from '../../shared/ui/button.component';
 import { TicketCreateModalComponent, type Ticket } from './ticket-create-modal.component';
 import { TicketDetailPanelComponent } from './ticket-detail-panel.component';
-import { ESTADOS_DE_TICKET, insigniaDelEstado, nombreDeLaPrioridad, nombreDelEstado } from './vocabulario-de-tickets';
+import { TICKET_STATUSES, statusBadge, priorityLabel, statusLabel } from './ticket-vocabulary';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import {
   lucideRefreshCw, lucidePlus, lucideList,
@@ -32,11 +32,11 @@ interface Column {
   /** Lo que se pinta y sobre lo que opera el arrastre. */
   tickets: Ticket[];
   /** El resto, aún sin pintar. Se revela por tandas con «mostrar más». */
-  pendientes: Ticket[];
+  pending: Ticket[];
 }
 
 /** Tarjetas por columna antes de pedir más. Ver el mismo razonamiento en tasks. */
-const POR_TANDA = 25;
+const BATCH_SIZE = 25;
 
 /**
  * Las columnas del tablero, sacadas del vocabulario compartido.
@@ -45,10 +45,10 @@ const POR_TANDA = 25;
  * caía en ninguna columna, así que desaparecía del tablero sin estar borrado ni archivado. Ahora
  * salen de la misma lista que usan el cajón de detalle y el alta.
  */
-const COLUMN_DEFS: Omit<Column, 'tickets' | 'pendientes'>[] = ESTADOS_DE_TICKET.map(e => ({
-  key: e.clave,
-  label: e.etiqueta,
-  badge: e.badge
+const COLUMN_DEFS: Omit<Column, 'tickets' | 'pending'>[] = TICKET_STATUSES.map(s => ({
+  key: s.key,
+  label: s.label,
+  badge: s.badge
 }));
 
 
@@ -88,7 +88,7 @@ export class TicketsComponent implements OnInit {
    * Gantt y carga de trabajo, y una barra que las supiese todas ofrecería en tickets pestañas que
    * no llevan a ninguna parte.
    */
-  readonly VISTAS_INTEGRADAS: VistaIntegrada[] = [
+  readonly BUILT_IN_VIEWS: VistaIntegrada[] = [
     { clave: 'board', etiqueta: $localize`Tablero`, icono: 'lucideLayoutDashboard' },
     { clave: 'list',  etiqueta: $localize`Lista`,   icono: 'lucideList' }
   ];
@@ -127,7 +127,7 @@ export class TicketsComponent implements OnInit {
   readonly allTickets = signal<Ticket[]>([]);
   totalItems = signal(0);
   
-  cols: Column[] = COLUMN_DEFS.map(c => ({ ...c, tickets: [] as Ticket[], pendientes: [] as Ticket[] }));
+  cols: Column[] = COLUMN_DEFS.map(c => ({ ...c, tickets: [] as Ticket[], pending: [] as Ticket[] }));
   readonly columnIds = COLUMN_DEFS.map(c => c.key);
 
   readonly priorities = computed(() =>
@@ -136,10 +136,10 @@ export class TicketsComponent implements OnInit {
 
   readonly statuses = ['Open', 'InProgress', 'Resolved', 'Closed'];
 
-  statusBadge(status: string): BadgeVariant { return insigniaDelEstado(status); }
-
-  readonly nombreDelEstado = nombreDelEstado;
-  readonly nombreDeLaPrioridad = nombreDeLaPrioridad;
+  // Sin envolverlas en métodos del mismo nombre, que se llamarían a sí mismos.
+  readonly statusBadge = statusBadge;
+  readonly statusLabel = statusLabel;
+  readonly priorityLabel = priorityLabel;
 
   @ViewChild('statusTemplate', { static: true }) statusTemplate!: TemplateRef<any>;
   @ViewChild('priorityTemplate', { static: true }) priorityTemplate!: TemplateRef<any>;
@@ -211,26 +211,26 @@ export class TicketsComponent implements OnInit {
    * Limpiar `activeViewId` importa: si no, la pestaña guardada seguiría marcada mientras se está
    * viendo otra cosa, que es enseñar dos verdades a la vez.
    */
-  verComo(modo: string): void {
-    this.viewMode.set(modo as 'board' | 'list');
+  viewAs(mode: string): void {
+    this.viewMode.set(mode as 'board' | 'list');
     this.activeViewId.set(null);
   }
 
-  crearVista({ nombre, tipo }: { nombre: string; tipo: string }): void {
+  createView({ nombre, tipo }: { nombre: string; tipo: string }): void {
     this.viewMode.set(tipo as 'board' | 'list');
 
-    const estado = { ...this.tableState(), viewType: tipo };
+    const state = { ...this.tableState(), viewType: tipo };
 
     this.viewsService.saveView({
       moduleName: 'Tickets',
       viewName: nombre,
-      stateJson: JSON.stringify(estado),
+      stateJson: JSON.stringify(state),
       isDefault: false
     }).subscribe({
       next: (view) => {
         this.savedViews.update(views => [...views, view]);
         this.activeViewId.set(view.id);
-        this.tableState.set(estado as TableState);
+        this.tableState.set(state as TableState);
       }
     });
   }
@@ -242,12 +242,12 @@ export class TicketsComponent implements OnInit {
    * y no quitarlas. Si además la que estaba puesta era la borrada, se vuelve al tablero; dejar
    * marcada una pestaña que ya no existe deja la pantalla enseñando algo sin nombre.
    */
-  borrarVista(vista: SavedView): void {
-    this.viewsService.deleteView(vista.id).subscribe({
+  deleteView(view: SavedView): void {
+    this.viewsService.deleteView(view.id).subscribe({
       next: () => {
-        this.savedViews.update(views => views.filter(v => v.id !== vista.id));
+        this.savedViews.update(views => views.filter(v => v.id !== view.id));
 
-        if (this.activeViewId() === vista.id) {
+        if (this.activeViewId() === view.id) {
           this.activeViewId.set(null);
           this.viewMode.set('board');
           this.loadTickets();
@@ -336,22 +336,22 @@ export class TicketsComponent implements OnInit {
   private distributeTicketsToColumns() {
     const tickets = this.allTickets();
     this.cols = COLUMN_DEFS.map(c => {
-      const suyos = tickets.filter(t => t.status === c.key);
-      const yaVisibles = this.cols.find(x => x.key === c.key)?.tickets.length ?? 0;
-      const corte = Math.max(POR_TANDA, yaVisibles);
-      return { ...c, tickets: suyos.slice(0, corte), pendientes: suyos.slice(corte) };
+      const matching = tickets.filter(t => t.status === c.key);
+      const alreadyVisible = this.cols.find(x => x.key === c.key)?.tickets.length ?? 0;
+      const cutoff = Math.max(BATCH_SIZE, alreadyVisible);
+      return { ...c, tickets: matching.slice(0, cutoff), pending: matching.slice(cutoff) };
     });
   }
 
   /** Revela la siguiente tanda de una columna. */
-  mostrarMas(col: Column): void {
-    col.tickets = [...col.tickets, ...col.pendientes.slice(0, POR_TANDA)];
-    col.pendientes = col.pendientes.slice(POR_TANDA);
+  showMore(col: Column): void {
+    col.tickets = [...col.tickets, ...col.pending.slice(0, BATCH_SIZE)];
+    col.pending = col.pending.slice(BATCH_SIZE);
   }
 
   /** Total real de la columna, contando lo que aún no se pinta. */
-  totalColumna(col: Column): number {
-    return col.tickets.length + col.pendientes.length;
+  columnTotal(col: Column): number {
+    return col.tickets.length + col.pending.length;
   }
 
   openDetail(ticket: Ticket): void {
@@ -386,7 +386,7 @@ export class TicketsComponent implements OnInit {
     }
 
     const ticket = event.previousContainer.data[event.previousIndex];
-    const estadoAnterior = ticket.status;
+    const previousStatus = ticket.status;
 
     transferArrayItem(
       event.previousContainer.data,
@@ -409,11 +409,11 @@ export class TicketsComponent implements OnInit {
           event.previousIndex
         );
         this.allTickets.update(tickets =>
-          tickets.map(t => t.id === ticket.id ? { ...t, status: estadoAnterior } : t)
+          tickets.map(t => t.id === ticket.id ? { ...t, status: previousStatus } : t)
         );
 
         this.toast.error($localize`No se pudo mover el ticket`,
-          `«${ticket.title}» sigue en ${estadoAnterior}.`);
+          `«${ticket.title}» sigue en ${previousStatus}.`);
       },
     });
   }

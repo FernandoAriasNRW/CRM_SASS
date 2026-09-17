@@ -76,7 +76,7 @@ public sealed class ArchivoYPapeleraFlowTests(CrmApiFactory factory)
         {
             var (antes, _) = await ListarAsync(cliente, "/api/v1/tickets?pageSize=1");
 
-            (await cliente.PostAsync($"/api/v1/tickets/{ticketId}/archivar", null))
+            (await cliente.PostAsync($"/api/v1/tickets/{ticketId}/archive", null))
                 .StatusCode.Should().Be(HttpStatusCode.NoContent);
 
             var (despues, _) = await ListarAsync(cliente, "/api/v1/tickets?pageSize=1");
@@ -88,7 +88,7 @@ public sealed class ArchivoYPapeleraFlowTests(CrmApiFactory factory)
         }
         finally
         {
-            await cliente.PostAsync($"/api/v1/tickets/{ticketId}/desarchivar", null);
+            await cliente.PostAsync($"/api/v1/tickets/{ticketId}/unarchive", null);
         }
     }
 
@@ -98,8 +98,8 @@ public sealed class ArchivoYPapeleraFlowTests(CrmApiFactory factory)
         var cliente = await AutenticarAsync();
         var ticketId = await UnTicketAsync(cliente);
 
-        await cliente.PostAsync($"/api/v1/tickets/{ticketId}/archivar", null);
-        await cliente.PostAsync($"/api/v1/tickets/{ticketId}/desarchivar", null);
+        await cliente.PostAsync($"/api/v1/tickets/{ticketId}/archive", null);
+        await cliente.PostAsync($"/api/v1/tickets/{ticketId}/unarchive", null);
 
         var (_, ids) = await ListarAsync(cliente, "/api/v1/tickets?pageSize=200");
         ids.Should().Contain(ticketId);
@@ -131,9 +131,9 @@ public sealed class ArchivoYPapeleraFlowTests(CrmApiFactory factory)
 
         try
         {
-            await cliente.PostAsync($"/api/v1/tickets/{ticketId}/archivar", null);
+            await cliente.PostAsync($"/api/v1/tickets/{ticketId}/archive", null);
 
-            (await cliente.PostAsync($"/api/v1/tickets/{ticketId}/archivar", null))
+            (await cliente.PostAsync($"/api/v1/tickets/{ticketId}/archive", null))
                 .StatusCode.Should().Be(HttpStatusCode.NoContent);
 
             var (cuantos, _) = await ListarAsync(cliente, "/api/v1/tickets?pageSize=200&filter=archived");
@@ -141,7 +141,7 @@ public sealed class ArchivoYPapeleraFlowTests(CrmApiFactory factory)
         }
         finally
         {
-            await cliente.PostAsync($"/api/v1/tickets/{ticketId}/desarchivar", null);
+            await cliente.PostAsync($"/api/v1/tickets/{ticketId}/unarchive", null);
         }
     }
 
@@ -175,7 +175,7 @@ public sealed class ArchivoYPapeleraFlowTests(CrmApiFactory factory)
         }
         finally
         {
-            await cliente.PostAsync($"/api/v1/tickets/{ticketId}/restaurar", null);
+            await cliente.PostAsync($"/api/v1/tickets/{ticketId}/restore", null);
         }
     }
 
@@ -187,7 +187,7 @@ public sealed class ArchivoYPapeleraFlowTests(CrmApiFactory factory)
 
         await cliente.DeleteAsync($"/api/v1/tickets/{ticketId}");
 
-        (await cliente.PostAsync($"/api/v1/tickets/{ticketId}/restaurar", null))
+        (await cliente.PostAsync($"/api/v1/tickets/{ticketId}/restore", null))
             .StatusCode.Should().Be(HttpStatusCode.NoContent);
 
         var (_, ids) = await ListarAsync(cliente, "/api/v1/tickets?pageSize=200");
@@ -207,9 +207,9 @@ public sealed class ArchivoYPapeleraFlowTests(CrmApiFactory factory)
 
         try
         {
-            await cliente.PostAsync($"/api/v1/tickets/{ticketId}/archivar", null);
+            await cliente.PostAsync($"/api/v1/tickets/{ticketId}/archive", null);
             await cliente.DeleteAsync($"/api/v1/tickets/{ticketId}");
-            await cliente.PostAsync($"/api/v1/tickets/{ticketId}/restaurar", null);
+            await cliente.PostAsync($"/api/v1/tickets/{ticketId}/restore", null);
 
             var (_, visibles) = await ListarAsync(cliente, "/api/v1/tickets?pageSize=200");
             visibles.Should().NotContain(ticketId, "sigue archivado, así que no vuelve a la lista normal");
@@ -219,7 +219,7 @@ public sealed class ArchivoYPapeleraFlowTests(CrmApiFactory factory)
         }
         finally
         {
-            await cliente.PostAsync($"/api/v1/tickets/{ticketId}/desarchivar", null);
+            await cliente.PostAsync($"/api/v1/tickets/{ticketId}/unarchive", null);
         }
     }
 

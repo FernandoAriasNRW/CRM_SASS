@@ -9,8 +9,8 @@ public sealed class TicketingDbContext(DbContextOptions<TicketingDbContext> opti
     : TenantDbContext(options, userContext)
 {
     public DbSet<Ticket> Tickets => Set<Ticket>();
-    public DbSet<ClaveDeEntrada> ClavesDeEntrada => Set<ClaveDeEntrada>();
-    public DbSet<AdjuntoDeTicket> AdjuntosDeTicket => Set<AdjuntoDeTicket>();
+    public DbSet<IntakeKey> IntakeKeys => Set<IntakeKey>();
+    public DbSet<TicketAttachment> TicketAttachments => Set<TicketAttachment>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -22,37 +22,37 @@ public sealed class TicketingDbContext(DbContextOptions<TicketingDbContext> opti
         // fila sobre el resultado del filtro de inquilino en cada listado.
         modelBuilder.Entity<Ticket>()
             .HasIndex(t => new { t.TenantId, t.ArchivedAtUtc, t.IsDeleted })
-            .HasDatabaseName("IX_Tickets_TenantId_Archivado_Borrado");
+            .HasDatabaseName("IX_Tickets_TenantId_ArchivedAtUtc_IsDeleted");
 
         modelBuilder.Entity<Ticket>(t =>
         {
-            t.Property(x => x.Origen).HasMaxLength(20).HasDefaultValue(Ticket.OrigenAplicacion);
-            t.Property(x => x.SolicitanteNombre).HasMaxLength(200);
-            t.Property(x => x.SolicitanteEmail).HasMaxLength(320);
-            t.Property(x => x.SolicitanteTelefono).HasMaxLength(40);
-            t.Property(x => x.SolicitanteEmpresa).HasMaxLength(200);
-            t.Property(x => x.Clasificacion).HasMaxLength(100);
-            t.Property(x => x.Etiquetas).HasMaxLength(1000).HasDefaultValue(string.Empty);
-            t.Ignore(x => x.ListaDeEtiquetas);
+            t.Property(x => x.Source).HasMaxLength(20).HasDefaultValue(Ticket.SourceApp);
+            t.Property(x => x.RequesterName).HasMaxLength(200);
+            t.Property(x => x.RequesterEmail).HasMaxLength(320);
+            t.Property(x => x.RequesterPhone).HasMaxLength(40);
+            t.Property(x => x.RequesterCompany).HasMaxLength(200);
+            t.Property(x => x.Classification).HasMaxLength(100);
+            t.Property(x => x.Tags).HasMaxLength(1000).HasDefaultValue(string.Empty);
+            t.Ignore(x => x.TagList);
         });
 
-        modelBuilder.Entity<AdjuntoDeTicket>(a =>
+        modelBuilder.Entity<TicketAttachment>(a =>
         {
-            a.ToTable("AdjuntosDeTicket");
+            a.ToTable("TicketAttachments");
             a.HasKey(x => x.Id);
-            a.Property(x => x.Nombre).HasMaxLength(255).IsRequired();
+            a.Property(x => x.Name).HasMaxLength(255).IsRequired();
             a.Property(x => x.Url).HasMaxLength(1000).IsRequired();
-            a.Property(x => x.TipoDeContenido).HasMaxLength(100).IsRequired();
+            a.Property(x => x.ContentType).HasMaxLength(100).IsRequired();
             a.HasIndex(x => new { x.TenantId, x.TicketId });
         });
 
-        modelBuilder.Entity<ClaveDeEntrada>(c =>
+        modelBuilder.Entity<IntakeKey>(c =>
         {
-            c.ToTable("ClavesDeEntrada");
+            c.ToTable("IntakeKeys");
             c.HasKey(x => x.Id);
-            c.Ignore(x => x.EstaActiva);
-            c.Property(x => x.Nombre).HasMaxLength(100).IsRequired();
-            c.Property(x => x.Inicio).HasMaxLength(20).IsRequired();
+            c.Ignore(x => x.IsActive);
+            c.Property(x => x.Name).HasMaxLength(100).IsRequired();
+            c.Property(x => x.Prefix).HasMaxLength(20).IsRequired();
             c.Property(x => x.Hash).HasMaxLength(64).IsRequired();
 
             // Único: es por lo que se busca en cada ticket que entra, y dos claves con el mismo

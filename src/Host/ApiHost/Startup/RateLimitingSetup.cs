@@ -39,16 +39,16 @@ public static class RateLimitingSetup
             // Tickets que llegan desde fuera con una clave de entrada. Se reparte por clave y, sin
             // clave, por IP: una ventana única para todos —como la que había— dejaría que el
             // formulario de un cliente con tráfico agotara el cupo de todas las organizaciones.
-            options.AddPolicy(TicketingEndpoints.LimiteDeEntrada, context =>
+            options.AddPolicy(TicketingEndpoints.IntakeRateLimit, context =>
             {
-                var key = context.Request.Headers[TicketingEndpoints.CabeceraDeClave].ToString();
+                var key = context.Request.Headers[TicketingEndpoints.ApiKeyHeader].ToString();
                 var partition = string.IsNullOrEmpty(key)
                     ? "ip:" + (context.Connection.RemoteIpAddress?.ToString() ?? "anonymous")
-                    : "key:" + ClaveDeEntrada.HashDe(key);
+                    : "key:" + IntakeKey.HashOf(key);
 
                 return RateLimitPartition.GetFixedWindowLimiter(partition, _ => new FixedWindowRateLimiterOptions
                 {
-                    PermitLimit = configuration.GetValue("EntradaDeTickets:PeticionesPorMinuto", 30),
+                    PermitLimit = configuration.GetValue("TicketIntake:RequestsPerMinute", 30),
                     Window = TimeSpan.FromMinutes(1),
                     QueueLimit = 0
                 });

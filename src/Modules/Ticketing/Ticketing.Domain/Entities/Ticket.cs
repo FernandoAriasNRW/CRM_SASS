@@ -19,25 +19,25 @@ public sealed class Ticket : AggregateRoot, ITenantEntity, ISoftDeletable, IArch
     public List<Guid> TagIds { get; private set; } = new();
 
     /// <summary>
-    /// Por dónde entró: <see cref="OrigenAplicacion"/> si lo abrió alguien con sesión, o
-    /// <see cref="OrigenExterno"/> si llegó con una clave de entrada desde fuera.
+    /// Por dónde entró: <see cref="SourceApp"/> si lo abrió alguien con sesión, o
+    /// <see cref="SourceExternal"/> si llegó con una clave de entrada desde fuera.
     /// </summary>
-    public string Origen { get; private set; } = OrigenAplicacion;
+    public string Source { get; private set; } = SourceApp;
 
-    public const string OrigenAplicacion = "Aplicacion";
-    public const string OrigenExterno = "Externo";
+    public const string SourceApp = "App";
+    public const string SourceExternal = "External";
 
     /// <summary>
     /// Quién lo pidió, cuando viene de fuera. Un cliente de la organización no es un usuario de la
     /// aplicación, así que no tiene <see cref="CustomerId"/>: sin esto no habría a quién contestar.
     /// </summary>
-    public string? SolicitanteNombre { get; private set; }
-    public string? SolicitanteEmail { get; private set; }
-    public string? SolicitanteTelefono { get; private set; }
-    public string? SolicitanteEmpresa { get; private set; }
+    public string? RequesterName { get; private set; }
+    public string? RequesterEmail { get; private set; }
+    public string? RequesterPhone { get; private set; }
+    public string? RequesterCompany { get; private set; }
 
     /// <summary>De qué va: «Facturación», «Acceso», lo que use la organización. Texto libre y opcional.</summary>
-    public string? Clasificacion { get; private set; }
+    public string? Classification { get; private set; }
 
     /// <summary>
     /// El equipo que lo atiende. Sólo el identificador: los equipos viven en otro módulo, y este no
@@ -49,13 +49,13 @@ public sealed class Ticket : AggregateRoot, ITenantEntity, ISoftDeletable, IArch
     /// Las etiquetas por su clave («billing», «bug»), separadas por comas. Son las del vocabulario
     /// de la pantalla, que no son las entidades del módulo de etiquetas de <see cref="TagIds"/>.
     /// </summary>
-    public string Etiquetas { get; private set; } = string.Empty;
+    public string Tags { get; private set; } = string.Empty;
 
-    public IReadOnlyList<string> ListaDeEtiquetas =>
-        Etiquetas.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+    public IReadOnlyList<string> TagList =>
+        Tags.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
     /// <summary>Con qué clave entró, para saber qué integración lo envió y revocarla si abusa.</summary>
-    public Guid? ClaveDeEntradaId { get; private set; }
+    public Guid? IntakeKeyId { get; private set; }
 
     public TicketPriority Priority => TicketPriority.FromValue<TicketPriority>(PriorityValue);
     public TicketStatus Status => TicketStatus.FromValue<TicketStatus>(StatusValue);
@@ -96,42 +96,42 @@ public sealed class Ticket : AggregateRoot, ITenantEntity, ISoftDeletable, IArch
     /// así que <see cref="CustomerId"/> queda vacío y el contacto va en los campos del solicitante.
     /// Qué es obligatorio lo decide quien recibe la petición; aquí sólo se guarda.
     /// </summary>
-    public static Result<Ticket> CrearDesdeFuera(ClaveDeEntrada clave, SolicitudExterna solicitud)
+    public static Result<Ticket> CreateFromExternal(IntakeKey key, ExternalTicketRequest request)
     {
-        var creado = Create(clave.TenantId, Guid.Empty, solicitud.Titulo, solicitud.Descripcion, solicitud.Prioridad);
-        if (creado.IsFailure)
-            return creado;
+        var created = Create(key.TenantId, Guid.Empty, request.Title, request.Description, request.Priority);
+        if (created.IsFailure)
+            return created;
 
-        var ticket = creado.Value!;
-        ticket.Origen = OrigenExterno;
-        ticket.ClaveDeEntradaId = clave.Id;
-        ticket.SolicitanteNombre = Limpio(solicitud.Nombre);
-        ticket.SolicitanteEmail = Limpio(solicitud.Email);
-        ticket.SolicitanteTelefono = Limpio(solicitud.Telefono);
-        ticket.SolicitanteEmpresa = Limpio(solicitud.Empresa);
-        ticket.Clasificar(solicitud.Clasificacion);
-        ticket.AsignarEquipo(solicitud.TeamId);
-        ticket.CambiarEtiquetas(solicitud.Etiquetas);
+        var ticket = created.Value!;
+        ticket.Source = SourceExternal;
+        ticket.IntakeKeyId = key.Id;
+        ticket.RequesterName = Trimmed(request.RequesterName);
+        ticket.RequesterEmail = Trimmed(request.RequesterEmail);
+        ticket.RequesterPhone = Trimmed(request.RequesterPhone);
+        ticket.RequesterCompany = Trimmed(request.RequesterCompany);
+        ticket.Classify(request.Classification);
+        ticket.AssignTeam(request.TeamId);
+        ticket.ChangeTags(request.Tags);
 
         // Es el alta: no hay estado anterior del que venir, así que no pasa por las transiciones.
-        if (solicitud.Estado is not null)
-            ticket.StatusValue = solicitud.Estado.Value;
+        if (request.Status is not null)
+            ticket.StatusValue = request.Status.Value;
 
         return Result<Ticket>.Success(ticket);
     }
 
-    public void Clasificar(string? clasificacion) => Clasificacion = Limpio(clasificacion);
+    public void Classify(string? classification) => Classification = Trimmed(classification);
 
-    public void AsignarEquipo(Guid? teamId) => TeamId = teamId == Guid.Empty ? null : teamId;
+    public void AssignTeam(Guid? teamId) => TeamId = teamId == Guid.Empty ? null : teamId;
 
     /// <summary>Sustituye las etiquetas. Sin repetidas, en minúsculas y en el orden en que llegan.</summary>
-    public void CambiarEtiquetas(IEnumerable<string>? etiquetas)
-        => Etiquetas = string.Join(',', (etiquetas ?? [])
+    public void ChangeTags(IEnumerable<string>? tags)
+        => Tags = string.Join(',', (tags ?? [])
             .Select(e => e.Trim().ToLowerInvariant())
             .Where(e => e.Length > 0 && !e.Contains(','))
             .Distinct());
 
-    private static string? Limpio(string? texto) => string.IsNullOrWhiteSpace(texto) ? null : texto.Trim();
+    private static string? Trimmed(string? text) => string.IsNullOrWhiteSpace(text) ? null : text.Trim();
 
     /// <summary>
     /// Cambia lo que se edita desde la ficha: título, descripción y prioridad.
@@ -143,7 +143,7 @@ public sealed class Ticket : AggregateRoot, ITenantEntity, ISoftDeletable, IArch
     /// El título pasa por <see cref="TicketTitle"/> en vez de asignarse a pelo, que es lo que ya
     /// hace la creación: si no, un título de dos letras entraría por la edición y no por el alta.
     /// </summary>
-    public Result<bool> Actualizar(string? title, string? description, TicketPriority? priority)
+    public Result<bool> Update(string? title, string? description, TicketPriority? priority)
     {
         if (title is not null)
         {
@@ -224,14 +224,14 @@ public sealed class Ticket : AggregateRoot, ITenantEntity, ISoftDeletable, IArch
     /// pestañas abiertas pueden mandar la misma orden, y reescribir la fecha haría parecer
     /// reciente algo archivado hace meses.
     /// </summary>
-    public void Archivar()
+    public void Archive()
     {
         if (ArchivedAtUtc is not null) return;
         ArchivedAtUtc = DateTime.UtcNow;
     }
 
     /// <summary>Devuelve el ticket a las listas.</summary>
-    public void Desarchivar() => ArchivedAtUtc = null;
+    public void Unarchive() => ArchivedAtUtc = null;
 
     /// <summary>
     /// Manda el ticket a la papelera: deja de verse pero se puede recuperar.

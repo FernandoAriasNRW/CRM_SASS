@@ -648,7 +648,7 @@ llegó a funcionar —su política de límite de peticiones no existía y respon
 quitó antes de que alguien arreglara esa política y abriera la API entera.
 
 **En su lugar, la entrada de tickets.** Los clientes de una organización abren tickets desde su
-propia web o su backend con `POST /api/v1/entrada/tickets` y una **clave de entrada** en la cabecera
+propia web o su backend con `POST /api/v1/ticket-intake` y una **clave de entrada** en la cabecera
 `X-Api-Key`:
 
 - La clave **sólo sirve para crear tickets** y **fija la organización**: no hace falta identificador

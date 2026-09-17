@@ -5,7 +5,7 @@ import { ButtonComponent } from '../../shared/ui/button.component';
 import { InputComponent } from '../../shared/ui/input.component';
 import { LabelComponent } from '../../shared/ui/label.component';
 import { DrawerComponent } from '../../shared/ui/drawer.component';
-import { PRIORIDADES_DE_TICKET } from './vocabulario-de-tickets';
+import { TICKET_PRIORITIES } from './ticket-vocabulary';
 
 export interface Ticket {
   id: string;
@@ -16,29 +16,29 @@ export interface Ticket {
   assignedAgentId?: string;
   customerId?: string;
   createdAt: string;
-  /** «Aplicacion» o «Externo»: si lo abrió alguien con sesión o llegó con una clave de entrada. */
-  origen?: string;
+  /** «App» o «External»: si lo abrió alguien con sesión o llegó con una clave de entrada. */
+  source?: string;
   /** Quién lo pidió, cuando llegó desde fuera. Un cliente de la organización no es un usuario. */
-  solicitanteNombre?: string | null;
-  solicitanteEmail?: string | null;
-  solicitanteTelefono?: string | null;
-  solicitanteEmpresa?: string | null;
-  clasificacion?: string | null;
+  requesterName?: string | null;
+  requesterEmail?: string | null;
+  requesterPhone?: string | null;
+  requesterCompany?: string | null;
+  classification?: string | null;
   teamId?: string | null;
   /** Las claves de las etiquetas separadas por comas, como las guarda el servidor. */
-  etiquetas?: string;
+  tags?: string;
 }
 
 /** Una imagen o un vídeo adjunto a un ticket. */
-export interface AdjuntoDeTicket {
+export interface TicketAttachment {
   id: string;
-  nombre: string;
+  name: string;
   url: string;
-  tipoDeContenido: string;
-  tamano: number;
-  subidoUtc: string;
+  contentType: string;
+  size: number;
+  uploadedAtUtc: string;
   /** Si llegó con el ticket desde fuera, desde la web o el backend del cliente. */
-  desdeFuera: boolean;
+  fromExternal: boolean;
 }
 
 /**
@@ -48,7 +48,7 @@ export interface AdjuntoDeTicket {
  * servidor —se llama «Critical»—. El comando lo recibía, no casaba con ningún valor y el ticket
  * se creaba con la prioridad por defecto sin avisar de nada.
  */
-const PRIORITIES = PRIORIDADES_DE_TICKET;
+const PRIORITIES = TICKET_PRIORITIES;
 
 @Component({
   selector: 'app-ticket-create-modal',
