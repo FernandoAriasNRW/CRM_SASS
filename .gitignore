@@ -53,7 +53,10 @@ Desktop.ini
 .DS_Store
 
 # ─────────────────────────────────────────────────────────── Herramientas
-.claude/
+# Con `.claude/` a secas git no entra en la carpeta y la excepción de abajo no se aplica.
+.claude/*
+# Las skills del proyecto sí se comparten: son el estándar de código, no configuración personal.
+!.claude/skills/
 
 # Playwright
 web/test-results/

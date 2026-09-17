@@ -1,0 +1,27 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <!--
+      net10.0 y no la versión de la aplicación: los paquetes de Roslyn que traen el espacio de
+      trabajo de MSBuild sólo publican para net10.0 y net472.
+    -->
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyName>rename-symbols</AssemblyName>
+    <RootNamespace>CrmSaaS.Tools.RenameSymbols</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Build.Locator" Version="1.11.2" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="5.9.0" />
+    <PackageReference Include="Microsoft.CodeAnalysis.Workspaces.MSBuild" Version="5.9.0" />
+    <!--
+      Sin ExcludeAssets="runtime" la herramienta carga su propia copia de MSBuild y no arranca:
+      el propio Microsoft.Build.Locator lo comprueba y rompe la compilación (MSBL001).
+    -->
+    <PackageReference Include="Microsoft.Build.Framework" Version="17.11.48" ExcludeAssets="runtime" PrivateAssets="all" />
+  </ItemGroup>
+
+</Project>
