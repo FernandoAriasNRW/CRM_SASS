@@ -18,16 +18,16 @@
   }
 
   <!-- Crear -->
-  <form (ngSubmit)="crear()" class="flex flex-col sm:flex-row gap-2 sm:items-end">
+  <form (ngSubmit)="create()" class="flex flex-col sm:flex-row gap-2 sm:items-end">
     <div class="flex-1 space-y-1">
-      <label for="nombre-de-clave" class="text-xs font-medium text-muted-foreground" i18n>Para qué es la clave</label>
-      <input id="nombre-de-clave" name="nombre" [(ngModel)]="nombre" maxlength="100"
+      <label for="key-name" class="text-xs font-medium text-muted-foreground" i18n>Para qué es la clave</label>
+      <input id="key-name" name="name" [(ngModel)]="name" maxlength="100"
              i18n-placeholder placeholder="Ej.: Web de soporte"
              class="w-full h-9 rounded-lg border border-input bg-background px-3 text-sm focus:outline-none focus:ring-1 focus:ring-ring" />
     </div>
-    <button type="submit" [disabled]="creando() || !nombre.trim()"
+    <button type="submit" [disabled]="creating() || !name.trim()"
             class="h-9 px-3.5 bg-primary text-primary-foreground rounded-lg text-xs font-semibold shadow-sm flex items-center justify-center gap-1.5 disabled:opacity-50">
-      @if (creando()) {
+      @if (creating()) {
         <ng-icon name="lucideLoader2" class="w-3.5 h-3.5 animate-spin"></ng-icon>
       } @else {
         <ng-icon name="lucidePlus" class="w-3.5 h-3.5"></ng-icon>
@@ -37,15 +37,15 @@
   </form>
 
   <!-- La clave recién creada: la única vez que se ve -->
-  @if (recienCreada(); as creada) {
+  @if (justCreated(); as created) {
     <div class="rounded-xl border border-warning/50 bg-warning/10 p-4 space-y-2">
-      <p class="text-sm font-semibold text-foreground" i18n>Copia la clave «{{ creada.nombre }}» ahora</p>
+      <p class="text-sm font-semibold text-foreground" i18n>Copia la clave «{{ created.name }}» ahora</p>
       <p class="text-xs text-muted-foreground" i18n>No se vuelve a mostrar. Si la pierdes, revócala y crea otra.</p>
       <div class="flex items-center gap-2">
-        <code class="flex-1 min-w-0 truncate rounded-md bg-background border border-border px-3 py-2 text-xs font-mono" data-testid="clave-creada">{{ creada.clave }}</code>
-        <button type="button" (click)="copiar('clave', creada.clave)"
+        <code class="flex-1 min-w-0 truncate rounded-md bg-background border border-border px-3 py-2 text-xs font-mono" data-testid="created-key">{{ created.key }}</code>
+        <button type="button" (click)="copy('key', created.key)"
                 class="h-8 px-3 border border-border rounded-md text-xs font-medium flex items-center gap-1.5 hover:bg-muted">
-          <ng-icon [name]="copiado() === 'clave' ? 'lucideCheck' : 'lucideCopy'" class="w-3.5 h-3.5"></ng-icon>
+          <ng-icon [name]="copied() === 'key' ? 'lucideCheck' : 'lucideCopy'" class="w-3.5 h-3.5"></ng-icon>
           <span i18n>Copiar</span>
         </button>
       </div>
@@ -65,28 +65,28 @@
         </tr>
       </thead>
       <tbody>
-        @if (cargando()) {
+        @if (loading()) {
           <tr><td colspan="5" class="px-4 py-6 text-center text-xs text-muted-foreground" i18n>Cargando…</td></tr>
         } @else {
-          @for (clave of claves(); track clave.id) {
-            <tr class="border-t border-border" [class.opacity-60]="clave.revocadaUtc">
-              <td class="px-4 py-2 font-medium">{{ clave.nombre }}</td>
-              <td class="px-4 py-2 font-mono text-xs">{{ clave.inicio }}…</td>
-              <td class="px-4 py-2 text-xs text-muted-foreground">{{ clave.creadaUtc | date: 'mediumDate' }}</td>
+          @for (key of keys(); track key.id) {
+            <tr class="border-t border-border" [class.opacity-60]="key.revokedAtUtc">
+              <td class="px-4 py-2 font-medium">{{ key.name }}</td>
+              <td class="px-4 py-2 font-mono text-xs">{{ key.prefix }}…</td>
+              <td class="px-4 py-2 text-xs text-muted-foreground">{{ key.createdAtUtc | date: 'mediumDate' }}</td>
               <td class="px-4 py-2 text-xs text-muted-foreground">
-                @if (clave.ultimoUsoUtc) { {{ clave.ultimoUsoUtc | date: 'short' }} } @else { <span i18n>Nunca</span> }
+                @if (key.lastUsedAtUtc) { {{ key.lastUsedAtUtc | date: 'short' }} } @else { <span i18n>Nunca</span> }
               </td>
               <td class="px-4 py-2 text-right whitespace-nowrap">
-                @if (clave.revocadaUtc) {
+                @if (key.revokedAtUtc) {
                   <span class="text-xs text-muted-foreground" i18n>Revocada</span>
-                } @else if (aRevocar() === clave.id) {
+                } @else if (toRevoke() === key.id) {
                   <span class="text-xs text-muted-foreground mr-2" i18n>Dejará de funcionar ya.</span>
-                  <button type="button" (click)="revocar(clave.id)"
+                  <button type="button" (click)="revoke(key.id)"
                           class="text-xs font-semibold text-destructive hover:underline mr-2" i18n>Revocar</button>
-                  <button type="button" (click)="aRevocar.set(null)"
+                  <button type="button" (click)="toRevoke.set(null)"
                           class="text-xs text-muted-foreground hover:underline" i18n>Cancelar</button>
                 } @else {
-                  <button type="button" (click)="aRevocar.set(clave.id)"
+                  <button type="button" (click)="toRevoke.set(key.id)"
                           class="text-xs text-muted-foreground hover:text-destructive flex items-center gap-1 ml-auto">
                     <ng-icon name="lucideBan" class="w-3.5 h-3.5"></ng-icon>
                     <span i18n>Revocar</span>
@@ -109,9 +109,9 @@
       <p class="text-xs text-muted-foreground" i18n>POST a {{ url }} con la clave en la cabecera X-Api-Key, en JSON o como formulario multipart si lleva adjuntos.</p>
       <dl class="mt-2 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
         <dt class="font-medium text-foreground" i18n>Obligatorios</dt>
-        <dd class="font-mono text-muted-foreground">{{ obligatorios }}</dd>
+        <dd class="font-mono text-muted-foreground">{{ requiredFields }}</dd>
         <dt class="font-medium text-foreground" i18n>Opcionales</dt>
-        <dd class="font-mono text-muted-foreground">{{ opcionales }}</dd>
+        <dd class="font-mono text-muted-foreground">{{ optionalFields }}</dd>
       </dl>
       <p class="mt-1 text-xs text-muted-foreground" i18n>Adjuntos: hasta 10 imágenes o vídeos de 50 MB cada uno. priority: Low, Medium, High o Critical. status: Open, InProgress, PendingInfo, Resolved o Closed.</p>
     </div>
@@ -119,21 +119,21 @@
     <div class="space-y-1.5">
       <div class="flex items-center justify-between">
         <p class="text-xs font-medium text-muted-foreground" i18n>Formulario para tu web</p>
-        <button type="button" (click)="copiar('formulario', formulario())"
+        <button type="button" (click)="copy('form', form())"
                 class="text-xs flex items-center gap-1 text-muted-foreground hover:text-foreground">
-          <ng-icon [name]="copiado() === 'formulario' ? 'lucideCheck' : 'lucideCopy'" class="w-3.5 h-3.5"></ng-icon>
+          <ng-icon [name]="copied() === 'form' ? 'lucideCheck' : 'lucideCopy'" class="w-3.5 h-3.5"></ng-icon>
           <span i18n>Copiar</span>
         </button>
       </div>
-      <pre class="rounded-lg bg-muted/60 border border-border p-3 text-xs font-mono overflow-x-auto" data-testid="ejemplo-formulario">{{ formulario() }}</pre>
+      <pre class="rounded-lg bg-muted/60 border border-border p-3 text-xs font-mono overflow-x-auto" data-testid="form-example">{{ form() }}</pre>
     </div>
 
     <div class="space-y-1.5">
       <div class="flex items-center justify-between">
         <p class="text-xs font-medium text-muted-foreground" i18n>Desde un backend, en JSON</p>
-        <button type="button" (click)="copiar('curl', curl())"
+        <button type="button" (click)="copy('curl', curl())"
                 class="text-xs flex items-center gap-1 text-muted-foreground hover:text-foreground">
-          <ng-icon [name]="copiado() === 'curl' ? 'lucideCheck' : 'lucideCopy'" class="w-3.5 h-3.5"></ng-icon>
+          <ng-icon [name]="copied() === 'curl' ? 'lucideCheck' : 'lucideCopy'" class="w-3.5 h-3.5"></ng-icon>
           <span i18n>Copiar</span>
         </button>
       </div>
@@ -143,13 +143,13 @@
     <div class="space-y-1.5">
       <div class="flex items-center justify-between">
         <p class="text-xs font-medium text-muted-foreground" i18n>Desde un backend, con adjuntos</p>
-        <button type="button" (click)="copiar('curl-adjuntos', curlConAdjuntos())"
+        <button type="button" (click)="copy('curl-attachments', curlWithAttachments())"
                 class="text-xs flex items-center gap-1 text-muted-foreground hover:text-foreground">
-          <ng-icon [name]="copiado() === 'curl-adjuntos' ? 'lucideCheck' : 'lucideCopy'" class="w-3.5 h-3.5"></ng-icon>
+          <ng-icon [name]="copied() === 'curl-attachments' ? 'lucideCheck' : 'lucideCopy'" class="w-3.5 h-3.5"></ng-icon>
           <span i18n>Copiar</span>
         </button>
       </div>
-      <pre class="rounded-lg bg-muted/60 border border-border p-3 text-xs font-mono overflow-x-auto">{{ curlConAdjuntos() }}</pre>
+      <pre class="rounded-lg bg-muted/60 border border-border p-3 text-xs font-mono overflow-x-auto">{{ curlWithAttachments() }}</pre>
     </div>
   </div>
 </div>

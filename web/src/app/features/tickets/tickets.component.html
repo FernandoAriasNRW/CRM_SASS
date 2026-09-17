@@ -32,14 +32,14 @@
          vivían dentro de un @if (savedViews().length === 0) y desaparecían en cuanto había una
          vista guardada, así que no había forma de ver los tickets como lista. -->
     <app-barra-de-vistas
-      [integradas]="VISTAS_INTEGRADAS"
+      [integradas]="BUILT_IN_VIEWS"
       [modo]="viewMode()"
       [guardadas]="savedViews()"
       [vistaActivaId]="activeViewId()"
-      (cambiarModo)="verComo($event)"
+      (cambiarModo)="viewAs($event)"
       (aplicar)="applySavedView($event)"
-      (crear)="crearVista($event)"
-      (borrar)="borrarVista($event)" />
+      (crear)="createView($event)"
+      (borrar)="deleteView($event)" />
   </div>
 
   <!-- VISTA BOARD -->
@@ -49,7 +49,7 @@
         <div class="flex flex-col gap-3">
           <div class="flex items-center justify-between px-1">
             <span class="text-sm font-medium">{{ col.label }}</span>
-            <ui-badge [variant]="col.badge">{{ totalColumna(col) }}</ui-badge>
+            <ui-badge [variant]="col.badge">{{ columnTotal(col) }}</ui-badge>
           </div>
           <div cdkDropList
             [id]="col.key"
@@ -70,7 +70,7 @@
                 <div class="flex items-start justify-between gap-2">
                   <p class="text-sm font-medium leading-snug line-clamp-2">{{ ticket.title }}</p>
                   @if (ticket.priority) {
-                    <ui-badge variant="outline" class="text-[9px] uppercase tracking-wider shrink-0 bg-background">{{ nombreDeLaPrioridad(ticket.priority) }}</ui-badge>
+                    <ui-badge variant="outline" class="text-[9px] uppercase tracking-wider shrink-0 bg-background">{{ priorityLabel(ticket.priority) }}</ui-badge>
                   }
                 </div>
 
@@ -84,7 +84,7 @@
                       <ng-icon name="lucideUser" size="12" />
                       <span class="truncate max-w-[100px]">{{ ticket.assignedAgentId ?? 'Sin asignar' }}</span>
                     </div>
-                    <ui-badge [variant]="statusBadge(ticket.status)" class="text-[10px]">{{ nombreDelEstado(ticket.status) }}</ui-badge>
+                    <ui-badge [variant]="statusBadge(ticket.status)" class="text-[10px]">{{ statusLabel(ticket.status) }}</ui-badge>
                   </div>
                 </div>
               </div>
@@ -92,13 +92,13 @@
               <app-empty-inline message="Sin tickets" />
             }
           </div>
-          @if (col.pendientes.length) {
-            <button type="button" (click)="mostrarMas(col)"
+          @if (col.pending.length) {
+            <button type="button" (click)="showMore(col)"
               class="w-full rounded-lg border border-dashed border-border py-2 text-xs
                      text-muted-foreground hover:bg-accent hover:text-accent-foreground
                      focus:outline-none focus:ring-2 focus:ring-ring transition-colors">
-              Mostrar {{ col.pendientes.length < 25 ? col.pendientes.length : 25 }} más
-              <span class="text-muted-foreground">({{ col.pendientes.length }} sin mostrar)</span>
+              Mostrar {{ col.pending.length < 25 ? col.pending.length : 25 }} más
+              <span class="text-muted-foreground">({{ col.pending.length }} sin mostrar)</span>
             </button>
           }
         </div>
@@ -123,12 +123,12 @@
   }
 
   <ng-template #statusTemplate let-item>
-    <ui-badge [variant]="statusBadge(item.status)">{{ nombreDelEstado(item.status) }}</ui-badge>
+    <ui-badge [variant]="statusBadge(item.status)">{{ statusLabel(item.status) }}</ui-badge>
   </ng-template>
 
   <ng-template #priorityTemplate let-item>
     @if (item.priority) {
-      <ui-badge variant="outline" class="uppercase tracking-wider shrink-0 bg-background">{{ nombreDeLaPrioridad(item.priority) }}</ui-badge>
+      <ui-badge variant="outline" class="uppercase tracking-wider shrink-0 bg-background">{{ priorityLabel(item.priority) }}</ui-badge>
     }
   </ng-template>
 

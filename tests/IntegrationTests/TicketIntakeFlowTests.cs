@@ -18,9 +18,9 @@ namespace IntegrationTests;
 /// o vídeos), clasificación, etiquetas, equipo, estado y prioridad.
 /// </summary>
 [Collection(ApiCollection.Name)]
-public sealed class EntradaDeTicketsFlowTests(CrmApiFactory factory)
+public sealed class TicketIntakeFlowTests(CrmApiFactory factory)
 {
-    private const string Entrada = "/api/v1/entrada/tickets";
+    private const string Entrada = "/api/v1/ticket-intake";
 
     private async Task<HttpClient> AdministradorAsync()
     {
@@ -36,11 +36,11 @@ public sealed class EntradaDeTicketsFlowTests(CrmApiFactory factory)
 
     private static async Task<(Guid id, string clave)> CrearClaveAsync(HttpClient admin, string nombre = "Web de soporte")
     {
-        var respuesta = await admin.PostAsJsonAsync("/api/v1/tickets/claves-de-entrada", new { Nombre = nombre });
+        var respuesta = await admin.PostAsJsonAsync("/api/v1/tickets/intake-keys", new { Name = nombre });
         respuesta.StatusCode.Should().Be(HttpStatusCode.OK, await respuesta.Content.ReadAsStringAsync());
 
         var cuerpo = await respuesta.Content.ReadFromJsonAsync<JsonElement>();
-        return (cuerpo.GetProperty("id").GetGuid(), cuerpo.GetProperty("clave").GetString()!);
+        return (cuerpo.GetProperty("id").GetGuid(), cuerpo.GetProperty("key").GetString()!);
     }
 
     /// <summary>Un cliente sin sesión, como la web de soporte de una organización.</summary>
@@ -81,11 +81,11 @@ public sealed class EntradaDeTicketsFlowTests(CrmApiFactory factory)
         // Lo ve la organización de la clave, desde la aplicación, con los datos de contacto.
         var ticket = await admin.GetFromJsonAsync<JsonElement>($"/api/v1/tickets/{id}");
         ticket.GetProperty("title").GetString().Should().Be((string)cuerpo["title"]!);
-        ticket.GetProperty("origen").GetString().Should().Be("Externo");
-        ticket.GetProperty("solicitanteNombre").GetString().Should().Be("Marta Cliente");
-        ticket.GetProperty("solicitanteEmail").GetString().Should().Be("marta@cliente.example");
-        ticket.GetProperty("solicitanteTelefono").GetString().Should().Be("+34 600 000 000");
-        ticket.GetProperty("solicitanteEmpresa").GetString().Should().Be("Cliente S.L.");
+        ticket.GetProperty("source").GetString().Should().Be("External");
+        ticket.GetProperty("requesterName").GetString().Should().Be("Marta Cliente");
+        ticket.GetProperty("requesterEmail").GetString().Should().Be("marta@cliente.example");
+        ticket.GetProperty("requesterPhone").GetString().Should().Be("+34 600 000 000");
+        ticket.GetProperty("requesterCompany").GetString().Should().Be("Cliente S.L.");
         ticket.GetProperty("priority").GetString().Should().Be("Medium", "sin prioridad, la media");
         ticket.GetProperty("status").GetString().Should().Be("Open");
     }
@@ -125,9 +125,9 @@ public sealed class EntradaDeTicketsFlowTests(CrmApiFactory factory)
         var ticket = await admin.GetFromJsonAsync<JsonElement>($"/api/v1/tickets/{id}");
         ticket.GetProperty("priority").GetString().Should().Be("High");
         ticket.GetProperty("status").GetString().Should().Be("InProgress");
-        ticket.GetProperty("clasificacion").GetString().Should().Be("Facturación");
+        ticket.GetProperty("classification").GetString().Should().Be("Facturación");
         ticket.GetProperty("teamId").GetGuid().Should().Be(equipo);
-        ticket.GetProperty("etiquetas").GetString().Should().Be("billing,urgent", "sin repetidas y en minúsculas");
+        ticket.GetProperty("tags").GetString().Should().Be("billing,urgent", "sin repetidas y en minúsculas");
     }
 
     /// <summary>
@@ -150,13 +150,13 @@ public sealed class EntradaDeTicketsFlowTests(CrmApiFactory factory)
         var respuesta = await ClienteDeFuera(clave).PostAsync(Entrada, formulario);
         var id = await IdCreadoAsync(respuesta);
 
-        var adjuntos = await admin.GetFromJsonAsync<JsonElement>($"/api/v1/tickets/{id}/adjuntos");
-        adjuntos.EnumerateArray().Select(a => a.GetProperty("nombre").GetString())
+        var adjuntos = await admin.GetFromJsonAsync<JsonElement>($"/api/v1/tickets/{id}/attachments");
+        adjuntos.EnumerateArray().Select(a => a.GetProperty("name").GetString())
             .Should().BeEquivalentTo("captura.png", "grabacion.mp4");
-        adjuntos.EnumerateArray().Should().OnlyContain(a => a.GetProperty("desdeFuera").GetBoolean());
+        adjuntos.EnumerateArray().Should().OnlyContain(a => a.GetProperty("fromExternal").GetBoolean());
 
         var ticket = await admin.GetFromJsonAsync<JsonElement>($"/api/v1/tickets/{id}");
-        ticket.GetProperty("etiquetas").GetString().Should().Be("billing,bug");
+        ticket.GetProperty("tags").GetString().Should().Be("billing,bug");
     }
 
     /// <summary>Sólo imágenes y vídeos: un ejecutable disfrazado no entra, y el ticket tampoco.</summary>
@@ -197,15 +197,15 @@ public sealed class EntradaDeTicketsFlowTests(CrmApiFactory factory)
         var admin = await AdministradorAsync();
         var (id, clave) = await CrearClaveAsync(admin, "Clave que se revoca");
 
-        (await admin.DeleteAsync($"/api/v1/tickets/claves-de-entrada/{id}"))
+        (await admin.DeleteAsync($"/api/v1/tickets/intake-keys/{id}"))
             .StatusCode.Should().Be(HttpStatusCode.NoContent);
 
         (await ClienteDeFuera(clave).PostAsJsonAsync(Entrada, Minimo()))
             .StatusCode.Should().Be(HttpStatusCode.Unauthorized);
 
-        var lista = await admin.GetFromJsonAsync<JsonElement>("/api/v1/tickets/claves-de-entrada");
+        var lista = await admin.GetFromJsonAsync<JsonElement>("/api/v1/tickets/intake-keys");
         lista.EnumerateArray().Single(c => c.GetProperty("id").GetGuid() == id)
-            .GetProperty("revocadaUtc").ValueKind.Should().NotBe(JsonValueKind.Null);
+            .GetProperty("revokedAtUtc").ValueKind.Should().NotBe(JsonValueKind.Null);
     }
 
     /// <summary>La clave no se puede volver a leer: la lista enseña sólo el principio.</summary>
@@ -215,12 +215,12 @@ public sealed class EntradaDeTicketsFlowTests(CrmApiFactory factory)
         var admin = await AdministradorAsync();
         var (id, clave) = await CrearClaveAsync(admin, "Clave que no se enseña");
 
-        var texto = await admin.GetStringAsync("/api/v1/tickets/claves-de-entrada");
+        var texto = await admin.GetStringAsync("/api/v1/tickets/intake-keys");
 
         texto.Should().NotContain(clave);
         var laNuestra = JsonDocument.Parse(texto).RootElement.EnumerateArray()
             .Single(c => c.GetProperty("id").GetGuid() == id);
-        clave.Should().StartWith(laNuestra.GetProperty("inicio").GetString());
+        clave.Should().StartWith(laNuestra.GetProperty("prefix").GetString());
     }
 
     /// <summary>La clave es la autorización para crear tickets, y nada más.</summary>
@@ -252,9 +252,9 @@ public sealed class EntradaDeTicketsFlowTests(CrmApiFactory factory)
         var miembro = factory.CreateClient();
         miembro.DefaultRequestHeaders.Authorization = new("Bearer", token);
 
-        (await miembro.PostAsJsonAsync("/api/v1/tickets/claves-de-entrada", new { Nombre = "Colada" }))
+        (await miembro.PostAsJsonAsync("/api/v1/tickets/intake-keys", new { Name = "Colada" }))
             .StatusCode.Should().Be(HttpStatusCode.Forbidden);
-        (await miembro.GetAsync("/api/v1/tickets/claves-de-entrada"))
+        (await miembro.GetAsync("/api/v1/tickets/intake-keys"))
             .StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }
 
@@ -317,20 +317,20 @@ public sealed class EntradaDeTicketsFlowTests(CrmApiFactory factory)
 
         using var formulario = new MultipartFormDataContent();
         formulario.Add(Fichero("pantalla.jpg", "image/jpeg", 512), "attachments", "pantalla.jpg");
-        (await admin.PostAsync($"/api/v1/tickets/{id}/adjuntos", formulario))
+        (await admin.PostAsync($"/api/v1/tickets/{id}/attachments", formulario))
             .StatusCode.Should().Be(HttpStatusCode.OK);
 
-        var adjuntos = await admin.GetFromJsonAsync<JsonElement>($"/api/v1/tickets/{id}/adjuntos");
+        var adjuntos = await admin.GetFromJsonAsync<JsonElement>($"/api/v1/tickets/{id}/attachments");
         adjuntos.EnumerateArray().Should().ContainSingle()
-            .Which.GetProperty("desdeFuera").GetBoolean().Should().BeFalse();
+            .Which.GetProperty("fromExternal").GetBoolean().Should().BeFalse();
 
         (await admin.PatchAsJsonAsync($"/api/v1/tickets/{id}",
             new { Tags = new[] { "billing", "bug" }, Classification = "Acceso" }))
             .StatusCode.Should().Be(HttpStatusCode.OK);
 
         var ticket = await admin.GetFromJsonAsync<JsonElement>($"/api/v1/tickets/{id}");
-        ticket.GetProperty("etiquetas").GetString().Should().Be("billing,bug");
-        ticket.GetProperty("clasificacion").GetString().Should().Be("Acceso");
+        ticket.GetProperty("tags").GetString().Should().Be("billing,bug");
+        ticket.GetProperty("classification").GetString().Should().Be("Acceso");
         ticket.GetProperty("title").GetString().Should().Be("Ticket desde la aplicación", "lo que no se manda no se toca");
     }
 

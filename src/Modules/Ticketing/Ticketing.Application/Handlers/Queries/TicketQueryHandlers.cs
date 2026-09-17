@@ -23,7 +23,7 @@ public sealed class GetTicketsHandler(ITicketQueries queries) : IQueryHandler<Ge
         var result = await queries.GetByTenantWithPaginationAsync(
             request.TenantId, request.CustomerId, request.AgentId,
             request.Priority, request.Status,
-            request.Pagination, request.Alcance,
+            request.Pagination, request.ViewScope,
             cancellationToken);
 
         return Result<PagedResult<TicketDto>>.Success(result);

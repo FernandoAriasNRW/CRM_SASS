@@ -5,25 +5,25 @@
  * pegarlo es peor que ninguno, porque quien integra da por hecho que el fallo es suyo.
  */
 
-/** La cabecera en la que viaja la clave. Tiene que coincidir con `TicketingEndpoints.CabeceraDeClave`. */
-export const CABECERA_DE_CLAVE = 'X-Api-Key';
+/** La cabecera en la que viaja la clave. Tiene que coincidir con `TicketingEndpoints.ApiKeyHeader`. */
+export const API_KEY_HEADER = 'X-Api-Key';
 
 /** Lo que se pone en los ejemplos cuando no hay una clave recién creada a la vista. */
-export const CLAVE_DE_EJEMPLO = 'tke_TU_CLAVE';
+export const SAMPLE_KEY = 'tke_TU_CLAVE';
 
-/** Los campos que la entrada exige. Tienen que coincidir con `CrearTicketExternoHandler`. */
-export const CAMPOS_OBLIGATORIOS = [
+/** Los campos que la entrada exige. Tienen que coincidir con `CreateExternalTicketHandler`. */
+export const REQUIRED_FIELDS = [
   'title', 'description', 'requesterName', 'requesterEmail', 'requesterPhone', 'requesterCompany',
 ] as const;
 
 /** Los que acepta si llegan. */
-export const CAMPOS_OPCIONALES = [
+export const OPTIONAL_FIELDS = [
   'attachments', 'classification', 'tags', 'teamId', 'status', 'priority',
 ] as const;
 
 /** Cómo quedaría una cadena dentro de un literal de JavaScript entre comillas dobles. */
-function comillas(texto: string): string {
-  return JSON.stringify(texto);
+function quoted(text: string): string {
+  return JSON.stringify(text);
 }
 
 /**
@@ -35,7 +35,7 @@ function comillas(texto: string): string {
  * está bien, porque sólo sirve para abrir tickets en esta organización, pero por eso conviene una
  * clave por sitio y revocarla si se abusa de ella.
  */
-export function ejemploDeFormulario(url: string, clave: string): string {
+export function formExample(url: string, key: string): string {
   return [
     '<form id="soporte">',
     '  <input name="requesterName" placeholder="Nombre" required>',
@@ -50,9 +50,9 @@ export function ejemploDeFormulario(url: string, clave: string): string {
     '<script>',
     '  document.getElementById("soporte").addEventListener("submit", async (evento) => {',
     '    evento.preventDefault();',
-    '    const respuesta = await fetch(' + comillas(url) + ', {',
+    '    const respuesta = await fetch(' + quoted(url) + ', {',
     '      method: "POST",',
-    '      headers: { ' + comillas(CABECERA_DE_CLAVE) + ': ' + comillas(clave) + ' },',
+    '      headers: { ' + quoted(API_KEY_HEADER) + ': ' + quoted(key) + ' },',
     '      body: new FormData(evento.target)',
     '    });',
     '    alert(respuesta.ok ? "Hemos recibido tu solicitud" : "No se pudo enviar");',
@@ -62,8 +62,8 @@ export function ejemploDeFormulario(url: string, clave: string): string {
 }
 
 /** La misma llamada desde un backend, en JSON y sin adjuntos. */
-export function ejemploDeCurl(url: string, clave: string): string {
-  const cuerpo = JSON.stringify({
+export function curlExample(url: string, key: string): string {
+  const body = JSON.stringify({
     title: 'No puedo descargar la factura',
     description: 'Al pulsar en descargar no pasa nada',
     requesterName: 'Marta',
@@ -78,16 +78,16 @@ export function ejemploDeCurl(url: string, clave: string): string {
   return [
     'curl -X POST ' + url + ' \\',
     '  -H "Content-Type: application/json" \\',
-    '  -H "' + CABECERA_DE_CLAVE + ': ' + clave + '" \\',
-    "  -d '" + cuerpo + "'",
+    '  -H "' + API_KEY_HEADER + ': ' + key + '" \\',
+    "  -d '" + body + "'",
   ].join('\n');
 }
 
 /** Desde un backend con adjuntos: multipart, un -F por fichero. */
-export function ejemploDeCurlConAdjuntos(url: string, clave: string): string {
+export function curlWithAttachmentsExample(url: string, key: string): string {
   return [
     'curl -X POST ' + url + ' \\',
-    '  -H "' + CABECERA_DE_CLAVE + ': ' + clave + '" \\',
+    '  -H "' + API_KEY_HEADER + ': ' + key + '" \\',
     '  -F "title=No puedo descargar la factura" \\',
     '  -F "description=Al pulsar en descargar no pasa nada" \\',
     '  -F "requesterName=Marta" \\',

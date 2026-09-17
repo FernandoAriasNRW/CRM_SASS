@@ -473,7 +473,7 @@
           <context context-type="linenumber">120,121</context>
         </context-group>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/admin/entrada-de-tickets/admin-entrada-de-tickets.component.html</context>
+          <context context-type="sourcefile">src/app/features/admin/ticket-intake/admin-ticket-intake.component.html</context>
           <context context-type="linenumber">7,8</context>
         </context-group>
       </trans-unit>
@@ -551,7 +551,7 @@
           <context context-type="linenumber">176,177</context>
         </context-group>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/admin/entrada-de-tickets/admin-entrada-de-tickets.component.html</context>
+          <context context-type="sourcefile">src/app/features/admin/ticket-intake/admin-ticket-intake.component.html</context>
           <context context-type="linenumber">60,61</context>
         </context-group>
         <context-group purpose="location">
@@ -792,7 +792,7 @@
           <context context-type="linenumber">169,170</context>
         </context-group>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/admin/entrada-de-tickets/admin-entrada-de-tickets.component.html</context>
+          <context context-type="sourcefile">src/app/features/admin/ticket-intake/admin-ticket-intake.component.html</context>
           <context context-type="linenumber">69,70</context>
         </context-group>
         <context-group purpose="location">
@@ -836,7 +836,7 @@
           <context context-type="linenumber">180</context>
         </context-group>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/admin/entrada-de-tickets/admin-entrada-de-tickets.component.html</context>
+          <context context-type="sourcefile">src/app/features/admin/ticket-intake/admin-ticket-intake.component.html</context>
           <context context-type="linenumber">64</context>
         </context-group>
         <context-group purpose="location">
@@ -1233,266 +1233,6 @@ Pendiente</source>
           <context context-type="linenumber">249</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="183276747283762359" datatype="html">
-        <source> Claves para que el formulario de soporte de tu web, o tu propio backend, abra tickets en esta organización sin iniciar sesión. Una clave sólo sirve para crear tickets. </source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/admin/entrada-de-tickets/admin-entrada-de-tickets.component.html</context>
-          <context context-type="linenumber">10,11</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="5750100465606013807" datatype="html">
-        <source>Para qué es la clave</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/admin/entrada-de-tickets/admin-entrada-de-tickets.component.html</context>
-          <context context-type="linenumber">23,24</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="1439278027122420431" datatype="html">
-        <source>Ej.: Web de soporte</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/admin/entrada-de-tickets/admin-entrada-de-tickets.component.html</context>
-          <context context-type="linenumber">25,26</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="4757063251275039758" datatype="html">
-        <source>Crear clave</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/admin/entrada-de-tickets/admin-entrada-de-tickets.component.html</context>
-          <context context-type="linenumber">35,36</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="6485091171863842662" datatype="html">
-        <source>Copia la clave «<x id="INTERPOLATION" equiv-text="{{ creada.nombre }}"/>» ahora</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/admin/entrada-de-tickets/admin-entrada-de-tickets.component.html</context>
-          <context context-type="linenumber">42,43</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="6870454603299722914" datatype="html">
-        <source>No se vuelve a mostrar. Si la pierdes, revócala y crea otra.</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/admin/entrada-de-tickets/admin-entrada-de-tickets.component.html</context>
-          <context context-type="linenumber">43,44</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="732313523368003935" datatype="html">
-        <source>Copiar</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/admin/entrada-de-tickets/admin-entrada-de-tickets.component.html</context>
-          <context context-type="linenumber">49,50</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/admin/entrada-de-tickets/admin-entrada-de-tickets.component.html</context>
-          <context context-type="linenumber">125,126</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/admin/entrada-de-tickets/admin-entrada-de-tickets.component.html</context>
-          <context context-type="linenumber">137,138</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/admin/entrada-de-tickets/admin-entrada-de-tickets.component.html</context>
-          <context context-type="linenumber">149,150</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/webhooks/webhooks.component.html</context>
-          <context context-type="linenumber">253</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="2917610674171976707" datatype="html">
-        <source>Clave</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/admin/entrada-de-tickets/admin-entrada-de-tickets.component.html</context>
-          <context context-type="linenumber">61,62</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="3585990747238037901" datatype="html">
-        <source>Creada</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/admin/entrada-de-tickets/admin-entrada-de-tickets.component.html</context>
-          <context context-type="linenumber">62,63</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="2221594157925603600" datatype="html">
-        <source>Último uso</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/admin/entrada-de-tickets/admin-entrada-de-tickets.component.html</context>
-          <context context-type="linenumber">63,64</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="5661562245215817640" datatype="html">
-        <source>Nunca</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/admin/entrada-de-tickets/admin-entrada-de-tickets.component.html</context>
-          <context context-type="linenumber">77,78</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="4226422544430717681" datatype="html">
-        <source>Revocada</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/admin/entrada-de-tickets/admin-entrada-de-tickets.component.html</context>
-          <context context-type="linenumber">81,82</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="4802980869466004417" datatype="html">
-        <source>Dejará de funcionar ya.</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/admin/entrada-de-tickets/admin-entrada-de-tickets.component.html</context>
-          <context context-type="linenumber">83,84</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="2527740130438271265" datatype="html">
-        <source>Revocar</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/admin/entrada-de-tickets/admin-entrada-de-tickets.component.html</context>
-          <context context-type="linenumber">85,86</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/admin/entrada-de-tickets/admin-entrada-de-tickets.component.html</context>
-          <context context-type="linenumber">92,93</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="6402951927316857780" datatype="html">
-        <source>Cancelar</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/admin/entrada-de-tickets/admin-entrada-de-tickets.component.html</context>
-          <context context-type="linenumber">87,88</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/admin/users/admin-users.component.html</context>
-          <context context-type="linenumber">156,157</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/dashboard/dashboard.component.html</context>
-          <context context-type="linenumber">250,251</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/projects/project-create-modal.component.html</context>
-          <context context-type="linenumber">39,40</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/reports/constructor-de-informes.component.ts</context>
-          <context context-type="linenumber">253,254</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/reports/report-create-modal.component.html</context>
-          <context context-type="linenumber">44,45</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/tasks/task-create-modal.component.html</context>
-          <context context-type="linenumber">46,47</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/teams/team-form.component.html</context>
-          <context context-type="linenumber">17,18</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/tickets/ticket-create-modal.component.html</context>
-          <context context-type="linenumber">32,33</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/shared/ui/barra-de-vistas/barra-de-vistas.component.ts</context>
-          <context context-type="linenumber">133,134</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/shared/ui/comentarios.component.html</context>
-          <context context-type="linenumber">80,81</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/shared/ui/submenu-customizer.component.html</context>
-          <context context-type="linenumber">77,78</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="7941115229034217505" datatype="html">
-        <source>Todavía no hay claves. Crea una para empezar a recibir tickets desde fuera.</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/admin/entrada-de-tickets/admin-entrada-de-tickets.component.html</context>
-          <context context-type="linenumber">98,99</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="1929351866872636516" datatype="html">
-        <source>Cómo enviar tickets</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/admin/entrada-de-tickets/admin-entrada-de-tickets.component.html</context>
-          <context context-type="linenumber">108,109</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="4804421329377352424" datatype="html">
-        <source>POST a <x id="INTERPOLATION" equiv-text="{{ url }}"/> con la clave en la cabecera X-Api-Key, en JSON o como formulario multipart si lleva adjuntos.</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/admin/entrada-de-tickets/admin-entrada-de-tickets.component.html</context>
-          <context context-type="linenumber">109,110</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="7641304468236654210" datatype="html">
-        <source>Obligatorios</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/admin/entrada-de-tickets/admin-entrada-de-tickets.component.html</context>
-          <context context-type="linenumber">111,112</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="8509934552233292053" datatype="html">
-        <source>Opcionales</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/admin/entrada-de-tickets/admin-entrada-de-tickets.component.html</context>
-          <context context-type="linenumber">113,114</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="6906412391413502064" datatype="html">
-        <source>Adjuntos: hasta 10 imágenes o vídeos de 50 MB cada uno. priority: Low, Medium, High o Critical. status: Open, InProgress, PendingInfo, Resolved o Closed.</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/admin/entrada-de-tickets/admin-entrada-de-tickets.component.html</context>
-          <context context-type="linenumber">116,117</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="8719342396935571981" datatype="html">
-        <source>Formulario para tu web</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/admin/entrada-de-tickets/admin-entrada-de-tickets.component.html</context>
-          <context context-type="linenumber">121,122</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="388563784985335899" datatype="html">
-        <source>Desde un backend, en JSON</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/admin/entrada-de-tickets/admin-entrada-de-tickets.component.html</context>
-          <context context-type="linenumber">133,134</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="1167493946585214478" datatype="html">
-        <source>Desde un backend, con adjuntos</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/admin/entrada-de-tickets/admin-entrada-de-tickets.component.html</context>
-          <context context-type="linenumber">145,146</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="7505660257307973970" datatype="html">
-        <source>No se pudieron cargar las claves</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/admin/entrada-de-tickets/admin-entrada-de-tickets.component.ts</context>
-          <context context-type="linenumber">84</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="941714344931016393" datatype="html">
-        <source>No se pudo crear la clave</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/admin/entrada-de-tickets/admin-entrada-de-tickets.component.ts</context>
-          <context context-type="linenumber">104</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="3022235519054218400" datatype="html">
-        <source>No se pudo revocar la clave</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/admin/entrada-de-tickets/admin-entrada-de-tickets.component.ts</context>
-          <context context-type="linenumber">117</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="6592574752088405626" datatype="html">
-        <source>No se pudo copiar; selecciona el texto y cópialo a mano</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/admin/entrada-de-tickets/admin-entrada-de-tickets.component.ts</context>
-          <context context-type="linenumber">127</context>
-        </context-group>
-      </trans-unit>
       <trans-unit id="4810516250747154868" datatype="html">
         <source>Matriz de Permisos y Seguridad de Roles</source>
         <context-group purpose="location">
@@ -1869,6 +1609,266 @@ Pendiente</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/admin/teams/admin-teams.component.ts</context>
           <context context-type="linenumber">89</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="183276747283762359" datatype="html">
+        <source> Claves para que el formulario de soporte de tu web, o tu propio backend, abra tickets en esta organización sin iniciar sesión. Una clave sólo sirve para crear tickets. </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/ticket-intake/admin-ticket-intake.component.html</context>
+          <context context-type="linenumber">10,11</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5750100465606013807" datatype="html">
+        <source>Para qué es la clave</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/ticket-intake/admin-ticket-intake.component.html</context>
+          <context context-type="linenumber">23,24</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1439278027122420431" datatype="html">
+        <source>Ej.: Web de soporte</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/ticket-intake/admin-ticket-intake.component.html</context>
+          <context context-type="linenumber">25,26</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4757063251275039758" datatype="html">
+        <source>Crear clave</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/ticket-intake/admin-ticket-intake.component.html</context>
+          <context context-type="linenumber">35,36</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6485091171863842662" datatype="html">
+        <source>Copia la clave «<x id="INTERPOLATION" equiv-text="{{ created.name }}"/>» ahora</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/ticket-intake/admin-ticket-intake.component.html</context>
+          <context context-type="linenumber">42,43</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6870454603299722914" datatype="html">
+        <source>No se vuelve a mostrar. Si la pierdes, revócala y crea otra.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/ticket-intake/admin-ticket-intake.component.html</context>
+          <context context-type="linenumber">43,44</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="732313523368003935" datatype="html">
+        <source>Copiar</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/ticket-intake/admin-ticket-intake.component.html</context>
+          <context context-type="linenumber">49,50</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/ticket-intake/admin-ticket-intake.component.html</context>
+          <context context-type="linenumber">125,126</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/ticket-intake/admin-ticket-intake.component.html</context>
+          <context context-type="linenumber">137,138</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/ticket-intake/admin-ticket-intake.component.html</context>
+          <context context-type="linenumber">149,150</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhooks.component.html</context>
+          <context context-type="linenumber">253</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2917610674171976707" datatype="html">
+        <source>Clave</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/ticket-intake/admin-ticket-intake.component.html</context>
+          <context context-type="linenumber">61,62</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3585990747238037901" datatype="html">
+        <source>Creada</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/ticket-intake/admin-ticket-intake.component.html</context>
+          <context context-type="linenumber">62,63</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2221594157925603600" datatype="html">
+        <source>Último uso</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/ticket-intake/admin-ticket-intake.component.html</context>
+          <context context-type="linenumber">63,64</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5661562245215817640" datatype="html">
+        <source>Nunca</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/ticket-intake/admin-ticket-intake.component.html</context>
+          <context context-type="linenumber">77,78</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4226422544430717681" datatype="html">
+        <source>Revocada</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/ticket-intake/admin-ticket-intake.component.html</context>
+          <context context-type="linenumber">81,82</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4802980869466004417" datatype="html">
+        <source>Dejará de funcionar ya.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/ticket-intake/admin-ticket-intake.component.html</context>
+          <context context-type="linenumber">83,84</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2527740130438271265" datatype="html">
+        <source>Revocar</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/ticket-intake/admin-ticket-intake.component.html</context>
+          <context context-type="linenumber">85,86</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/ticket-intake/admin-ticket-intake.component.html</context>
+          <context context-type="linenumber">92,93</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6402951927316857780" datatype="html">
+        <source>Cancelar</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/ticket-intake/admin-ticket-intake.component.html</context>
+          <context context-type="linenumber">87,88</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/users/admin-users.component.html</context>
+          <context context-type="linenumber">156,157</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/dashboard/dashboard.component.html</context>
+          <context context-type="linenumber">250,251</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/projects/project-create-modal.component.html</context>
+          <context context-type="linenumber">39,40</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/reports/constructor-de-informes.component.ts</context>
+          <context context-type="linenumber">253,254</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/reports/report-create-modal.component.html</context>
+          <context context-type="linenumber">44,45</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/task-create-modal.component.html</context>
+          <context context-type="linenumber">46,47</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/teams/team-form.component.html</context>
+          <context context-type="linenumber">17,18</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tickets/ticket-create-modal.component.html</context>
+          <context context-type="linenumber">32,33</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/barra-de-vistas/barra-de-vistas.component.ts</context>
+          <context context-type="linenumber">133,134</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/comentarios.component.html</context>
+          <context context-type="linenumber">80,81</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/submenu-customizer.component.html</context>
+          <context context-type="linenumber">77,78</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7941115229034217505" datatype="html">
+        <source>Todavía no hay claves. Crea una para empezar a recibir tickets desde fuera.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/ticket-intake/admin-ticket-intake.component.html</context>
+          <context context-type="linenumber">98,99</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1929351866872636516" datatype="html">
+        <source>Cómo enviar tickets</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/ticket-intake/admin-ticket-intake.component.html</context>
+          <context context-type="linenumber">108,109</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4804421329377352424" datatype="html">
+        <source>POST a <x id="INTERPOLATION" equiv-text="{{ url }}"/> con la clave en la cabecera X-Api-Key, en JSON o como formulario multipart si lleva adjuntos.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/ticket-intake/admin-ticket-intake.component.html</context>
+          <context context-type="linenumber">109,110</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7641304468236654210" datatype="html">
+        <source>Obligatorios</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/ticket-intake/admin-ticket-intake.component.html</context>
+          <context context-type="linenumber">111,112</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8509934552233292053" datatype="html">
+        <source>Opcionales</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/ticket-intake/admin-ticket-intake.component.html</context>
+          <context context-type="linenumber">113,114</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6906412391413502064" datatype="html">
+        <source>Adjuntos: hasta 10 imágenes o vídeos de 50 MB cada uno. priority: Low, Medium, High o Critical. status: Open, InProgress, PendingInfo, Resolved o Closed.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/ticket-intake/admin-ticket-intake.component.html</context>
+          <context context-type="linenumber">116,117</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8719342396935571981" datatype="html">
+        <source>Formulario para tu web</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/ticket-intake/admin-ticket-intake.component.html</context>
+          <context context-type="linenumber">121,122</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="388563784985335899" datatype="html">
+        <source>Desde un backend, en JSON</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/ticket-intake/admin-ticket-intake.component.html</context>
+          <context context-type="linenumber">133,134</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1167493946585214478" datatype="html">
+        <source>Desde un backend, con adjuntos</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/ticket-intake/admin-ticket-intake.component.html</context>
+          <context context-type="linenumber">145,146</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7505660257307973970" datatype="html">
+        <source>No se pudieron cargar las claves</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/ticket-intake/admin-ticket-intake.component.ts</context>
+          <context context-type="linenumber">84</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="941714344931016393" datatype="html">
+        <source>No se pudo crear la clave</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/ticket-intake/admin-ticket-intake.component.ts</context>
+          <context context-type="linenumber">104</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3022235519054218400" datatype="html">
+        <source>No se pudo revocar la clave</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/ticket-intake/admin-ticket-intake.component.ts</context>
+          <context context-type="linenumber">117</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6592574752088405626" datatype="html">
+        <source>No se pudo copiar; selecciona el texto y cópialo a mano</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/ticket-intake/admin-ticket-intake.component.ts</context>
+          <context context-type="linenumber">127</context>
         </context-group>
       </trans-unit>
       <trans-unit id="2042583211598753699" datatype="html">
@@ -4948,7 +4948,7 @@ Pendiente</source>
           <context context-type="linenumber">22</context>
         </context-group>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/tickets/vocabulario-de-tickets.ts</context>
+          <context context-type="sourcefile">src/app/features/tickets/ticket-vocabulary.ts</context>
           <context context-type="linenumber">31</context>
         </context-group>
       </trans-unit>
@@ -5546,7 +5546,7 @@ Pendiente</source>
           <context context-type="linenumber">92</context>
         </context-group>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/tickets/vocabulario-de-tickets.ts</context>
+          <context context-type="sourcefile">src/app/features/tickets/ticket-vocabulary.ts</context>
           <context context-type="linenumber">51</context>
         </context-group>
       </trans-unit>
@@ -5564,7 +5564,7 @@ Pendiente</source>
           <context context-type="linenumber">94</context>
         </context-group>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/tickets/vocabulario-de-tickets.ts</context>
+          <context context-type="sourcefile">src/app/features/tickets/ticket-vocabulary.ts</context>
           <context context-type="linenumber">53</context>
         </context-group>
       </trans-unit>
@@ -6354,14 +6354,56 @@ Pendiente</source>
         <source>Sin datos de contacto</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tickets/ticket-detail-panel.component.ts</context>
-          <context context-type="linenumber">59</context>
+          <context context-type="linenumber">57</context>
         </context-group>
       </trans-unit>
       <trans-unit id="955496252303817468" datatype="html">
         <source>No se pudieron subir los adjuntos</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tickets/ticket-detail-panel.component.ts</context>
-          <context context-type="linenumber">115</context>
+          <context context-type="linenumber">114</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6094136722135432235" datatype="html">
+        <source>Abierto</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tickets/ticket-vocabulary.ts</context>
+          <context context-type="linenumber">30</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6939444703953260849" datatype="html">
+        <source>Esperando información</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tickets/ticket-vocabulary.ts</context>
+          <context context-type="linenumber">32</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3368108646487453123" datatype="html">
+        <source>Resuelto</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tickets/ticket-vocabulary.ts</context>
+          <context context-type="linenumber">33</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6053116908327766499" datatype="html">
+        <source>Cerrado</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tickets/ticket-vocabulary.ts</context>
+          <context context-type="linenumber">34</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3489340601148426788" datatype="html">
+        <source>Crítica</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tickets/ticket-vocabulary.ts</context>
+          <context context-type="linenumber">50</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3250391385569692601" datatype="html">
+        <source>Media</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tickets/ticket-vocabulary.ts</context>
+          <context context-type="linenumber">52</context>
         </context-group>
       </trans-unit>
       <trans-unit id="2465153570780698301" datatype="html">
@@ -6383,48 +6425,6 @@ Pendiente</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tickets/tickets.component.ts</context>
           <context context-type="linenumber">415</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="6094136722135432235" datatype="html">
-        <source>Abierto</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/tickets/vocabulario-de-tickets.ts</context>
-          <context context-type="linenumber">30</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="6939444703953260849" datatype="html">
-        <source>Esperando información</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/tickets/vocabulario-de-tickets.ts</context>
-          <context context-type="linenumber">32</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="3368108646487453123" datatype="html">
-        <source>Resuelto</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/tickets/vocabulario-de-tickets.ts</context>
-          <context context-type="linenumber">33</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="6053116908327766499" datatype="html">
-        <source>Cerrado</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/tickets/vocabulario-de-tickets.ts</context>
-          <context context-type="linenumber">34</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="3489340601148426788" datatype="html">
-        <source>Crítica</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/tickets/vocabulario-de-tickets.ts</context>
-          <context context-type="linenumber">50</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="3250391385569692601" datatype="html">
-        <source>Media</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/tickets/vocabulario-de-tickets.ts</context>
-          <context context-type="linenumber">52</context>
         </context-group>
       </trans-unit>
       <trans-unit id="3672287793640783844" datatype="html">

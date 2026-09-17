@@ -11,7 +11,7 @@ public sealed class EfTicketRepository(TicketingDbContext context) : ITicketRepo
     public async Task<Ticket?> GetByIdAsync(Guid tenantId, Guid id, CancellationToken ct = default)
         => await context.Tickets.FirstOrDefaultAsync(t => t.TenantId == tenantId && t.Id == id, ct);
 
-    public async Task<Ticket?> GetIncluyendoOcultosAsync(Guid tenantId, Guid id, CancellationToken ct = default)
+    public async Task<Ticket?> GetIncludingHiddenAsync(Guid tenantId, Guid id, CancellationToken ct = default)
     {
         // El ámbito se cierra al salir del `using`. No vale `IgnoreQueryFilters()`: apagaría
         // también el aislamiento por inquilino.

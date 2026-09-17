@@ -4,26 +4,26 @@ using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using Ticketing.Application.Abstractions;
 using Ticketing.Application.Abstractions.Repositories;
-using Ticketing.Application.Entrada;
+using Ticketing.Application.Intake;
 using Ticketing.Domain.Entities;
 using Xunit;
 
 namespace UnitTests;
 
-public sealed class EntradaDeTicketsHandlerTests
+public sealed class TicketIntakeHandlerTests
 {
-    private readonly IClavesDeEntradaRepository _claves = Substitute.For<IClavesDeEntradaRepository>();
+    private readonly IIntakeKeyRepository _claves = Substitute.For<IIntakeKeyRepository>();
     private readonly ITicketRepository _tickets = Substitute.For<ITicketRepository>();
-    private readonly IAdjuntosDeTicketRepository _adjuntos = Substitute.For<IAdjuntosDeTicketRepository>();
+    private readonly ITicketAttachmentRepository _adjuntos = Substitute.For<ITicketAttachmentRepository>();
     private readonly IStorageService _almacen = Substitute.For<IStorageService>();
     private readonly ITicketingUnitOfWork _unidad = Substitute.For<ITicketingUnitOfWork>();
 
-    private CrearTicketExternoHandler Handler() => new(_claves, _tickets, _adjuntos, _almacen, _unidad);
+    private CreateExternalTicketHandler Handler() => new(_claves, _tickets, _adjuntos, _almacen, _unidad);
 
-    private static FicheroRecibido Fichero(string nombre, string tipo)
+    private static IncomingFile Fichero(string nombre, string tipo)
         => new(nombre, tipo, 128, () => new MemoryStream(new byte[128]));
 
-    private CrearTicketExternoCommand Peticion(string clave, params FicheroRecibido[] adjuntos)
+    private CreateExternalTicketCommand Peticion(string clave, params IncomingFile[] adjuntos)
         => new(clave, "Asunto suficiente", "Mensaje", "Marta", "marta@cliente.com", "600000000", "Cliente S.L.",
             null, null, null, null, [], adjuntos);
 
@@ -34,8 +34,8 @@ public sealed class EntradaDeTicketsHandlerTests
     [Fact]
     public async Task Si_el_almacenamiento_rechaza_un_adjunto_no_se_crea_nada_y_se_dice_cual()
     {
-        var (clave, enClaro) = ClaveDeEntrada.Generar(Guid.NewGuid(), "Web", Guid.NewGuid(), DateTime.UtcNow);
-        _claves.BuscarActivaPorHashAsync(ClaveDeEntrada.HashDe(enClaro), Arg.Any<CancellationToken>()).Returns(clave);
+        var (clave, enClaro) = IntakeKey.Generate(Guid.NewGuid(), "Web", Guid.NewGuid(), DateTime.UtcNow);
+        _claves.FindActiveByHashAsync(IntakeKey.HashOf(enClaro), Arg.Any<CancellationToken>()).Returns(clave);
 
         _almacen.UploadFileAsync(Arg.Any<Stream>(), "captura.png", Arg.Any<string>(), Arg.Any<CancellationToken>())
             .Returns("https://almacen/captura.png");
@@ -60,7 +60,7 @@ public sealed class EntradaDeTicketsHandlerTests
             Peticion("tke_desconocida", Fichero("captura.png", "image/png")) with { RequesterPhone = null },
             CancellationToken.None);
 
-        resultado.Error.Should().Be(ErroresDeEntrada.ClaveNoValida);
+        resultado.Error.Should().Be(IntakeErrors.InvalidKey);
         await _almacen.DidNotReceiveWithAnyArgs().UploadFileAsync(default!, default!, default!, default);
     }
 }

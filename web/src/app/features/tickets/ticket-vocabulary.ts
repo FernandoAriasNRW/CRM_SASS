@@ -19,24 +19,24 @@ import type { BadgeVariant } from '../../shared/ui/badge.component';
  * Por eso hay un solo sitio. Cuando el servidor añada un estado, se añade aquí y las tres
  * pantallas se enteran a la vez.
  */
-export interface EstadoDeTicket {
+export interface TicketStatusOption {
   /** La clave exacta que viaja al servidor. */
-  readonly clave: string;
-  readonly etiqueta: string;
+  readonly key: string;
+  readonly label: string;
   readonly badge: BadgeVariant;
 }
 
-export const ESTADOS_DE_TICKET: readonly EstadoDeTicket[] = [
-  { clave: 'Open', etiqueta: $localize`Abierto`, badge: 'secondary' },
-  { clave: 'InProgress', etiqueta: $localize`En progreso`, badge: 'default' },
-  { clave: 'PendingInfo', etiqueta: $localize`Esperando información`, badge: 'warning' },
-  { clave: 'Resolved', etiqueta: $localize`Resuelto`, badge: 'success' },
-  { clave: 'Closed', etiqueta: $localize`Cerrado`, badge: 'outline' }
+export const TICKET_STATUSES: readonly TicketStatusOption[] = [
+  { key: 'Open', label: $localize`Abierto`, badge: 'secondary' },
+  { key: 'InProgress', label: $localize`En progreso`, badge: 'default' },
+  { key: 'PendingInfo', label: $localize`Esperando información`, badge: 'warning' },
+  { key: 'Resolved', label: $localize`Resuelto`, badge: 'success' },
+  { key: 'Closed', label: $localize`Cerrado`, badge: 'outline' }
 ];
 
-export interface PrioridadDeTicket {
-  readonly clave: string;
-  readonly etiqueta: string;
+export interface TicketPriorityOption {
+  readonly key: string;
+  readonly label: string;
 }
 
 /**
@@ -46,16 +46,16 @@ export interface PrioridadDeTicket {
  * comando lo recibía, no casaba con ningún valor y el ticket se creaba con la prioridad por
  * defecto sin decir nada.
  */
-export const PRIORIDADES_DE_TICKET: readonly PrioridadDeTicket[] = [
-  { clave: 'Critical', etiqueta: $localize`Crítica` },
-  { clave: 'High', etiqueta: $localize`Alta` },
-  { clave: 'Medium', etiqueta: $localize`Media` },
-  { clave: 'Low', etiqueta: $localize`Baja` }
+export const TICKET_PRIORITIES: readonly TicketPriorityOption[] = [
+  { key: 'Critical', label: $localize`Crítica` },
+  { key: 'High', label: $localize`Alta` },
+  { key: 'Medium', label: $localize`Media` },
+  { key: 'Low', label: $localize`Baja` }
 ];
 
 /** Cómo se pinta la insignia de un estado. Desconocido cae en «outline», no en un hueco. */
-export function insigniaDelEstado(estado: string): BadgeVariant {
-  return ESTADOS_DE_TICKET.find(e => e.clave === estado)?.badge ?? 'outline';
+export function statusBadge(status: string): BadgeVariant {
+  return TICKET_STATUSES.find(s => s.key === status)?.badge ?? 'outline';
 }
 
 /**
@@ -64,10 +64,10 @@ export function insigniaDelEstado(estado: string): BadgeVariant {
  * Si llega uno que no se conoce se devuelve tal cual en vez de quedarse en blanco: enseñar la
  * clave cruda es feo, pero dice qué pasa; un hueco no.
  */
-export function nombreDelEstado(estado: string): string {
-  return ESTADOS_DE_TICKET.find(e => e.clave === estado)?.etiqueta ?? estado;
+export function statusLabel(status: string): string {
+  return TICKET_STATUSES.find(s => s.key === status)?.label ?? status;
 }
 
-export function nombreDeLaPrioridad(prioridad: string): string {
-  return PRIORIDADES_DE_TICKET.find(p => p.clave === prioridad)?.etiqueta ?? prioridad;
+export function priorityLabel(priority: string): string {
+  return TICKET_PRIORITIES.find(p => p.key === priority)?.label ?? priority;
 }

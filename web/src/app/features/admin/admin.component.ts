@@ -12,11 +12,11 @@ import { AdminPermissionsComponent } from './permissions/admin-permissions.compo
 import { AdminCustomFieldsComponent } from './custom-fields/admin-custom-fields.component';
 import { AdminAutomationsComponent } from './automations/admin-automations.component';
 import { WebhooksComponent } from '../webhooks/webhooks.component';
-import { AdminEntradaDeTicketsComponent } from './entrada-de-tickets/admin-entrada-de-tickets.component';
+import { AdminTicketIntakeComponent } from './ticket-intake/admin-ticket-intake.component';
 
-type PestanaDeAdmin = 'users' | 'teams' | 'permissions' | 'custom-fields' | 'automations' | 'webhooks' | 'entrada-de-tickets';
+type PestanaDeAdmin = 'users' | 'teams' | 'permissions' | 'custom-fields' | 'automations' | 'webhooks' | 'ticket-intake';
 
-const PESTANAS: PestanaDeAdmin[] = ['users', 'teams', 'permissions', 'custom-fields', 'automations', 'webhooks', 'entrada-de-tickets'];
+const PESTANAS: PestanaDeAdmin[] = ['users', 'teams', 'permissions', 'custom-fields', 'automations', 'webhooks', 'ticket-intake'];
 
 @Component({
   selector: 'app-admin',
@@ -30,7 +30,7 @@ const PESTANAS: PestanaDeAdmin[] = ['users', 'teams', 'permissions', 'custom-fie
     AdminCustomFieldsComponent,
     AdminAutomationsComponent,
     WebhooksComponent,
-    AdminEntradaDeTicketsComponent
+    AdminTicketIntakeComponent
 ],
   viewProviders: [
     provideIcons({

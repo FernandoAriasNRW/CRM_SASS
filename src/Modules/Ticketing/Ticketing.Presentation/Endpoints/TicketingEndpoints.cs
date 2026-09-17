@@ -24,7 +24,7 @@ public static class TicketingEndpoints
   /// prueba de integración que marca un ticket y lo busca por el filtro se queda: vigila la
   /// unión entera, no sólo la cadena.
   /// </summary>
-  private const string TipoDeFavoritoTicket = BuildingBlocks.Domain.EntityTypes.Ticket;
+  private const string TicketEntityType = BuildingBlocks.Domain.EntityTypes.Ticket;
 
   /// <summary>
   /// Las rutas de archivo y papelera, con la acción que ejecuta cada una.
@@ -32,11 +32,11 @@ public static class TicketingEndpoints
   /// En una tabla y no en cuatro bloques copiados: los cuatro endpoints son idénticos salvo el
   /// verbo, y copiarlos es como se acaban desincronizando.
   /// </summary>
-  private static readonly (string Ruta, BuildingBlocks.Application.ArchiveAction Accion)[] AccionesDeArchivo =
+  private static readonly (string Route, BuildingBlocks.Application.ArchiveAction Action)[] ArchiveActions =
   [
-    ("archivar", BuildingBlocks.Application.ArchiveAction.Archive),
-    ("desarchivar", BuildingBlocks.Application.ArchiveAction.Unarchive),
-    ("restaurar", BuildingBlocks.Application.ArchiveAction.RestoreFromTrash)
+    ("archive", BuildingBlocks.Application.ArchiveAction.Archive),
+    ("unarchive", BuildingBlocks.Application.ArchiveAction.Unarchive),
+    ("restore", BuildingBlocks.Application.ArchiveAction.RestoreFromTrash)
   ];
 
   public static IServiceCollection AddTicketingPresentation(this IServiceCollection services, IConfiguration configuration)
@@ -49,7 +49,7 @@ public static class TicketingEndpoints
   {
     var group = app.MapGroup("/api/v1/tickets").WithTags("Tickets").RequireAuthorization();
 
-    group.MapGet("", async (IUserContext currentUser, [Microsoft.AspNetCore.Mvc.FromQuery] Guid? customerId, [Microsoft.AspNetCore.Mvc.FromQuery] Guid? agentId, [Microsoft.AspNetCore.Mvc.FromQuery] string? priority, [Microsoft.AspNetCore.Mvc.FromQuery] string? status, [Microsoft.AspNetCore.Mvc.FromQuery] string? filter, BuildingBlocks.Application.Abstractions.IViewScopeResolver alcances, IMediator mediator, [Microsoft.AspNetCore.Mvc.FromQuery] int page = 1, [Microsoft.AspNetCore.Mvc.FromQuery] int pageSize = 25, [Microsoft.AspNetCore.Mvc.FromQuery] string? sortColumn = null, [Microsoft.AspNetCore.Mvc.FromQuery] string? sortDirection = null, [Microsoft.AspNetCore.Mvc.FromQuery] DateTime? startDate = null, [Microsoft.AspNetCore.Mvc.FromQuery] DateTime? endDate = null, [Microsoft.AspNetCore.Mvc.FromQuery] string? search = null) =>
+    group.MapGet("", async (IUserContext currentUser, [Microsoft.AspNetCore.Mvc.FromQuery] Guid? customerId, [Microsoft.AspNetCore.Mvc.FromQuery] Guid? agentId, [Microsoft.AspNetCore.Mvc.FromQuery] string? priority, [Microsoft.AspNetCore.Mvc.FromQuery] string? status, [Microsoft.AspNetCore.Mvc.FromQuery] string? filter, BuildingBlocks.Application.Abstractions.IViewScopeResolver viewScopes, IMediator mediator, [Microsoft.AspNetCore.Mvc.FromQuery] int page = 1, [Microsoft.AspNetCore.Mvc.FromQuery] int pageSize = 25, [Microsoft.AspNetCore.Mvc.FromQuery] string? sortColumn = null, [Microsoft.AspNetCore.Mvc.FromQuery] string? sortDirection = null, [Microsoft.AspNetCore.Mvc.FromQuery] DateTime? startDate = null, [Microsoft.AspNetCore.Mvc.FromQuery] DateTime? endDate = null, [Microsoft.AspNetCore.Mvc.FromQuery] string? search = null) =>
     {
       var tenantId = currentUser.TenantId;
       var userId = currentUser.UserId;
@@ -57,12 +57,12 @@ public static class TicketingEndpoints
       // El resolutor decide qué hace falta consultar para el filtro pedido —favoritos,
       // compartidos, nada— en un solo sitio. Cuando esto lo hacía cada endpoint, el de tickets
       // pedía los favoritos y el de tareas recibía el mismo parámetro sin pedir nada.
-      var alcance = await alcances.ResolveAsync(filter, userId, TipoDeFavoritoTicket);
+      var viewScope = await viewScopes.ResolveAsync(filter, userId, TicketEntityType);
 
       var query = new GetTicketsQuery(
           tenantId, customerId, agentId, priority, status,
           new() { Page = page, PageSize = pageSize, SortColumn = sortColumn, SortDirection = sortDirection, StartDate = startDate, EndDate = endDate, Search = search },
-          alcance);
+          viewScope);
 
       var result = await mediator.Send(query);
       return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
@@ -124,7 +124,7 @@ public static class TicketingEndpoints
     {
       var tenantId = currentUser.TenantId;
 
-      var result = await mediator.Send(new Ticketing.Application.CambiarArchivoDeTicketCommand(
+      var result = await mediator.Send(new Ticketing.Application.ChangeTicketArchiveStateCommand(
           tenantId, id, BuildingBlocks.Application.ArchiveAction.MoveToTrash));
 
       return result.IsSuccess ? Results.NoContent() : Results.NotFound(result.Error);
@@ -133,115 +133,115 @@ public static class TicketingEndpoints
     // Archivar, desarchivar y restaurar. Cuatro acciones, una ruta por cada una: son verbos
     // distintos y meterlos en un PATCH con un campo «accion» obligaría a la pantalla a componer
     // un cuerpo para decir algo que ya dice la URL.
-    foreach (var (ruta, accion) in AccionesDeArchivo)
+    foreach (var (route, action) in ArchiveActions)
     {
-      group.MapPost("/{id:guid}/" + ruta, async (IUserContext currentUser, Guid id, IMediator mediator) =>
+      group.MapPost("/{id:guid}/" + route, async (IUserContext currentUser, Guid id, IMediator mediator) =>
       {
         var tenantId = currentUser.TenantId;
 
-        var result = await mediator.Send(new Ticketing.Application.CambiarArchivoDeTicketCommand(tenantId, id, accion));
+        var result = await mediator.Send(new Ticketing.Application.ChangeTicketArchiveStateCommand(tenantId, id, action));
         return result.IsSuccess ? Results.NoContent() : Results.NotFound(result.Error);
       });
     }
 
-    MapEntradaDeTickets(app);
+    MapTicketIntake(app);
 
     return app;
   }
 
   /// <summary>Cabecera en la que llega la clave de entrada.</summary>
-  public const string CabeceraDeClave = "X-Api-Key";
+  public const string ApiKeyHeader = "X-Api-Key";
 
   /// <summary>
   /// La política de CORS del endpoint público. La registra el host: la entrada se llama desde
   /// páginas de clientes cuyo dominio la aplicación no conoce.
   /// </summary>
-  public const string PoliticaCorsDeEntrada = "EntradaDeTickets";
+  public const string IntakeCorsPolicy = "TicketIntake";
 
   /// <summary>Política de límite de peticiones del endpoint público. La registra el host.</summary>
-  public const string LimiteDeEntrada = "entrada-de-tickets";
+  public const string IntakeRateLimit = "ticket-intake";
 
   /// <summary>
   /// Tickets que llegan desde fuera de la aplicación, y las claves con las que llegan.
   ///
   /// El endpoint público no pide sesión: lo llama el formulario de soporte de la web de un
-  /// cliente, o su backend, con una clave de entrada en <see cref="CabeceraDeClave"/>. La clave
+  /// cliente, o su backend, con una clave de entrada en <see cref="ApiKeyHeader"/>. La clave
   /// sólo sirve para crear tickets y fija la organización. Ver <c>ClaveDeEntrada</c>.
   ///
   /// Las claves las gestiona un administrador: quien las tiene puede escribir en la bandeja de
   /// tickets de la organización.
   /// </summary>
-  private static void MapEntradaDeTickets(IEndpointRouteBuilder app)
+  private static void MapTicketIntake(IEndpointRouteBuilder app)
   {
     // Admite JSON, para un backend, y multipart/form-data, para un formulario con adjuntos. Los
     // campos se llaman igual en los dos; los ficheros van en «attachments», uno o varios.
-    app.MapPost("/api/v1/entrada/tickets", async (HttpContext http, IMediator mediator, CancellationToken ct) =>
+    app.MapPost("/api/v1/ticket-intake", async (HttpContext http, IMediator mediator, CancellationToken ct) =>
     {
-      var peticion = await LeerPeticionExternaAsync(http, ct);
-      if (peticion is null)
+      var request = await ReadExternalRequestAsync(http, ct);
+      if (request is null)
         return Results.Problem(statusCode: StatusCodes.Status400BadRequest, title: "El cuerpo no es JSON ni un formulario válido");
 
-      var result = await mediator.Send(peticion with { Clave = http.Request.Headers[CabeceraDeClave].ToString() }, ct);
+      var result = await mediator.Send(request with { Key = http.Request.Headers[ApiKeyHeader].ToString() }, ct);
 
       if (result.IsSuccess)
         return Results.Created($"/api/v1/tickets/{result.Value!.Id}", result.Value);
 
-      return result.Error == Ticketing.Application.Entrada.ErroresDeEntrada.ClaveNoValida
+      return result.Error == Ticketing.Application.Intake.IntakeErrors.InvalidKey
           ? Results.Problem(statusCode: StatusCodes.Status401Unauthorized, title: result.Error)
           : Results.Problem(statusCode: StatusCodes.Status400BadRequest, title: result.Error);
     })
     .AllowAnonymous()
-    .RequireCors(PoliticaCorsDeEntrada)
-    .RequireRateLimiting(LimiteDeEntrada)
-    .WithMetadata(new Microsoft.AspNetCore.Mvc.RequestSizeLimitAttribute(Ticketing.Domain.Entities.ReglasDeAdjuntos.MaximoDeLaPeticion))
-    .WithTags("Entrada de tickets");
+    .RequireCors(IntakeCorsPolicy)
+    .RequireRateLimiting(IntakeRateLimit)
+    .WithMetadata(new Microsoft.AspNetCore.Mvc.RequestSizeLimitAttribute(Ticketing.Domain.Entities.AttachmentRules.MaxRequestBytes))
+    .WithTags("Ticket intake");
 
     // Adjuntar desde la ficha del ticket, con sesión. Las mismas reglas que desde fuera.
-    app.MapGet("/api/v1/tickets/{id:guid}/adjuntos", async (Guid id, BuildingBlocks.Application.Abstractions.IUserContext usuario, IMediator mediator) =>
+    app.MapGet("/api/v1/tickets/{id:guid}/attachments", async (Guid id, BuildingBlocks.Application.Abstractions.IUserContext user, IMediator mediator) =>
     {
-      var result = await mediator.Send(new Ticketing.Application.Entrada.GetAdjuntosDeTicketQuery(usuario.TenantId, id));
+      var result = await mediator.Send(new Ticketing.Application.Intake.GetTicketAttachmentsQuery(user.TenantId, id));
       return Results.Ok(result.Value);
     })
     .RequireAuthorization()
     .WithTags("Tickets");
 
-    app.MapPost("/api/v1/tickets/{id:guid}/adjuntos", async (Guid id, HttpContext http, BuildingBlocks.Application.Abstractions.IUserContext usuario, IMediator mediator, CancellationToken ct) =>
+    app.MapPost("/api/v1/tickets/{id:guid}/attachments", async (Guid id, HttpContext http, BuildingBlocks.Application.Abstractions.IUserContext user, IMediator mediator, CancellationToken ct) =>
     {
       if (!http.Request.HasFormContentType)
         return Results.BadRequest("Los adjuntos se envían como multipart/form-data");
 
-      var formulario = await http.Request.ReadFormAsync(ct);
-      var result = await mediator.Send(new Ticketing.Application.Entrada.SubirAdjuntosDeTicketCommand(
-          id, usuario.UserId, Ficheros(formulario)), ct);
+      var form = await http.Request.ReadFormAsync(ct);
+      var result = await mediator.Send(new Ticketing.Application.Intake.UploadTicketAttachmentsCommand(
+          id, user.UserId, Files(form)), ct);
 
       if (result.IsSuccess) return Results.Ok(result.Value);
-      return result.Error == Ticketing.Application.Entrada.ErroresDeEntrada.TicketNoEncontrado
+      return result.Error == Ticketing.Application.Intake.IntakeErrors.TicketNotFound
           ? Results.NotFound(result.Error)
           : Results.BadRequest(result.Error);
     })
     .RequireAuthorization()
-    .WithMetadata(new Microsoft.AspNetCore.Mvc.RequestSizeLimitAttribute(Ticketing.Domain.Entities.ReglasDeAdjuntos.MaximoDeLaPeticion))
+    .WithMetadata(new Microsoft.AspNetCore.Mvc.RequestSizeLimitAttribute(Ticketing.Domain.Entities.AttachmentRules.MaxRequestBytes))
     .WithTags("Tickets");
 
-    var claves = app.MapGroup("/api/v1/tickets/claves-de-entrada")
-        .WithTags("Entrada de tickets")
-        .RequireAuthorization(politica => politica.RequireRole("Admin"));
+    var keys = app.MapGroup("/api/v1/tickets/intake-keys")
+        .WithTags("Ticket intake")
+        .RequireAuthorization(policy => policy.RequireRole("Admin"));
 
-    claves.MapGet("", async (BuildingBlocks.Application.Abstractions.IUserContext usuario, IMediator mediator) =>
+    keys.MapGet("", async (BuildingBlocks.Application.Abstractions.IUserContext user, IMediator mediator) =>
     {
-      var result = await mediator.Send(new Ticketing.Application.Entrada.GetClavesDeEntradaQuery(usuario.TenantId));
+      var result = await mediator.Send(new Ticketing.Application.Intake.GetIntakeKeysQuery(user.TenantId));
       return Results.Ok(result.Value);
     });
 
-    claves.MapPost("", async (CrearClaveDeEntradaRequest req, BuildingBlocks.Application.Abstractions.IUserContext usuario, IMediator mediator) =>
+    keys.MapPost("", async (CreateIntakeKeyRequest req, BuildingBlocks.Application.Abstractions.IUserContext user, IMediator mediator) =>
     {
-      var result = await mediator.Send(new Ticketing.Application.Entrada.CrearClaveDeEntradaCommand(usuario.TenantId, usuario.UserId, req.Nombre ?? string.Empty));
+      var result = await mediator.Send(new Ticketing.Application.Intake.CreateIntakeKeyCommand(user.TenantId, user.UserId, req.Name ?? string.Empty));
       return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
     });
 
-    claves.MapDelete("/{id:guid}", async (Guid id, BuildingBlocks.Application.Abstractions.IUserContext usuario, IMediator mediator) =>
+    keys.MapDelete("/{id:guid}", async (Guid id, BuildingBlocks.Application.Abstractions.IUserContext user, IMediator mediator) =>
     {
-      var result = await mediator.Send(new Ticketing.Application.Entrada.RevocarClaveDeEntradaCommand(usuario.TenantId, id));
+      var result = await mediator.Send(new Ticketing.Application.Intake.RevokeIntakeKeyCommand(user.TenantId, id));
       return result.IsSuccess ? Results.NoContent() : Results.NotFound(result.Error);
     });
   }
@@ -249,31 +249,31 @@ public static class TicketingEndpoints
   /// Lee la petición externa sea JSON o formulario. Devuelve <c>null</c> si no es ninguno de los
   /// dos o no se puede leer; la clave la pone quien llama, desde la cabecera.
   /// </summary>
-  private static async Task<Ticketing.Application.Entrada.CrearTicketExternoCommand?> LeerPeticionExternaAsync(HttpContext http, CancellationToken ct)
+  private static async Task<Ticketing.Application.Intake.CreateExternalTicketCommand?> ReadExternalRequestAsync(HttpContext http, CancellationToken ct)
   {
     try
     {
       if (http.Request.HasFormContentType)
       {
         var f = await http.Request.ReadFormAsync(ct);
-        string? Campo(string nombre) => f.TryGetValue(nombre, out var v) ? v.ToString() : null;
+        string? Field(string name) => f.TryGetValue(name, out var v) ? v.ToString() : null;
 
         // Las etiquetas pueden llegar repetidas (tags=a&tags=b) o juntas con comas.
-        var etiquetas = f.TryGetValue("tags", out var t)
+        var tags = f.TryGetValue("tags", out var t)
             ? t.SelectMany(x => (x ?? string.Empty).Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)).ToList()
             : new List<string>();
 
-        return new(string.Empty, Campo("title"), Campo("description"), Campo("requesterName"), Campo("requesterEmail"),
-            Campo("requesterPhone"), Campo("requesterCompany"), Campo("priority"), Campo("status"), Campo("classification"),
-            Guid.TryParse(Campo("teamId"), out var equipo) ? equipo : null, etiquetas, Ficheros(f));
+        return new(string.Empty, Field("title"), Field("description"), Field("requesterName"), Field("requesterEmail"),
+            Field("requesterPhone"), Field("requesterCompany"), Field("priority"), Field("status"), Field("classification"),
+            Guid.TryParse(Field("teamId"), out var teamId) ? teamId : null, tags, Files(f));
       }
 
-      var cuerpo = await http.Request.ReadFromJsonAsync<TicketExternoRequest>(ct);
-      if (cuerpo is null) return null;
+      var body = await http.Request.ReadFromJsonAsync<ExternalTicketBody>(ct);
+      if (body is null) return null;
 
-      return new(string.Empty, cuerpo.Title, cuerpo.Description, cuerpo.RequesterName, cuerpo.RequesterEmail,
-          cuerpo.RequesterPhone, cuerpo.RequesterCompany, cuerpo.Priority, cuerpo.Status, cuerpo.Classification,
-          cuerpo.TeamId, cuerpo.Tags ?? [], []);
+      return new(string.Empty, body.Title, body.Description, body.RequesterName, body.RequesterEmail,
+          body.RequesterPhone, body.RequesterCompany, body.Priority, body.Status, body.Classification,
+          body.TeamId, body.Tags ?? [], []);
     }
     catch (Exception e) when (e is System.Text.Json.JsonException or InvalidDataException or BadHttpRequestException)
     {
@@ -281,10 +281,10 @@ public static class TicketingEndpoints
     }
   }
 
-  private static List<Ticketing.Application.Entrada.FicheroRecibido> Ficheros(IFormCollection formulario)
-      => formulario.Files
+  private static List<Ticketing.Application.Intake.IncomingFile> Files(IFormCollection form)
+      => form.Files
           .Where(f => f.Name is "attachments" or "attachments[]")
-          .Select(f => new Ticketing.Application.Entrada.FicheroRecibido(
+          .Select(f => new Ticketing.Application.Intake.IncomingFile(
               Path.GetFileName(f.FileName), f.ContentType ?? string.Empty, f.Length, f.OpenReadStream))
           .ToList();
 }
@@ -293,7 +293,7 @@ public static class TicketingEndpoints
 /// El cuerpo del endpoint público, en inglés como el resto de la API: lo van a escribir
 /// integradores de fuera, y los nombres son los que ya tienen los tickets.
 /// </summary>
-public sealed record TicketExternoRequest(
+public sealed record ExternalTicketBody(
     string? Title,
     string? Description,
     string? RequesterName,
@@ -306,4 +306,4 @@ public sealed record TicketExternoRequest(
     Guid? TeamId,
     List<string>? Tags);
 
-public sealed record CrearClaveDeEntradaRequest(string? Nombre);
+public sealed record CreateIntakeKeyRequest(string? Name);
