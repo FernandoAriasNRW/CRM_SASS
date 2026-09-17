@@ -14,7 +14,7 @@ public sealed class IdentityDbContext(DbContextOptions<IdentityDbContext> option
     public DbSet<User> User => Set<User>();
     public DbSet<SavedView> SavedViews => Set<SavedView>();
     public DbSet<EntityPermission> EntityPermissions => Set<EntityPermission>();
-    public DbSet<Favorito> Favoritos => Set<Favorito>();
+    public DbSet<Favorite> Favorites => Set<Favorite>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -23,18 +23,18 @@ public sealed class IdentityDbContext(DbContextOptions<IdentityDbContext> option
         // Aplicar configuraciones desde el ensamblado
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(IdentityDbContext).Assembly);
 
-        modelBuilder.Entity<Favorito>(f =>
+        modelBuilder.Entity<Favorite>(f =>
         {
-            f.ToTable("Favoritos");
-            f.Property(x => x.Tipo).HasMaxLength(30).IsRequired();
+            f.ToTable("Favorites");
+            f.Property(x => x.EntityType).HasMaxLength(30).IsRequired();
 
             // Una persona no puede marcar dos veces lo mismo. La restricción va en la base y no
             // sólo en el manejador porque dos pulsaciones seguidas de la estrella pasarían las
             // dos la comprobación previa y dejarían dos filas — y entonces desmarcar borraría
             // una y la estrella seguiría encendida.
-            f.HasIndex(x => new { x.TenantId, x.UserId, x.Tipo, x.EntityId })
+            f.HasIndex(x => new { x.TenantId, x.UserId, x.EntityType, x.EntityId })
              .IsUnique()
-             .HasDatabaseName("UX_Favoritos_Usuario_Entidad");
+             .HasDatabaseName("UX_Favorites_User_Entity");
         });
 
       // Aislamiento por tenant y soft delete, compuestos en un solo filtro.

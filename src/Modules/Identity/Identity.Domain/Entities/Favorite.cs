@@ -4,26 +4,6 @@ using BuildingBlocks.Domain.Primitives;
 namespace Identity.Domain.Entities;
 
 /// <summary>
-/// Sobre qué se puede poner una estrella.
-///
-/// Los nombres son los de <see cref="EntityTypes"/> y no una lista propia: son las mismas
-/// cosas de las que hablan los demás módulos, y dos listas acabarían discrepando en una letra.
-/// Se conserva el nombre <c>TipoDeFavorito</c> porque es lo que dice el dominio de Identity, y
-/// porque no todo tipo de entidad tiene por qué ser marcable el día que aparezca uno nuevo.
-/// </summary>
-public static class TipoDeFavorito
-{
-    public const string Tarea = EntityTypes.Task;
-    public const string Proyecto = EntityTypes.Project;
-    public const string Ticket = EntityTypes.Ticket;
-    public const string Documento = EntityTypes.Document;
-
-    public static IReadOnlyList<string> Todos() => EntityTypes.All();
-
-    public static bool Existe(string tipo) => EntityTypes.Exists(tipo);
-}
-
-/// <summary>
 /// Una estrella: esta persona marcó esta cosa.
 ///
 /// **Vive en Identity y no en cada módulo a propósito.** Un favorito no es un atributo de la
@@ -40,7 +20,7 @@ public static class TipoDeFavorito
 /// La alternativa —una tabla de favoritos por módulo— daría cuatro sitios donde arreglar el
 /// mismo fallo y cuatro formas distintas de contar lo mismo.
 /// </summary>
-public sealed class Favorito : AggregateRoot, ITenantEntity
+public sealed class Favorite : AggregateRoot, ITenantEntity
 {
     /// <summary>
     /// Cuántas estrellas puede tener una persona por tipo.
@@ -49,43 +29,43 @@ public sealed class Favorito : AggregateRoot, ITenantEntity
     /// elementos no es una lista de favoritos, y además es lo que convierte el filtro en una
     /// consulta con dos mil identificadores dentro.
     /// </summary>
-    public const int MaximoPorPersonaYTipo = 200;
+    public const int MaxPerUserAndType = 200;
 
     public Guid TenantId { get; private set; }
     public Guid UserId { get; private set; }
 
     /// <summary>Uno de <see cref="TipoDeFavorito"/>.</summary>
-    public string Tipo { get; private set; } = string.Empty;
+    public string EntityType { get; private set; } = string.Empty;
 
     public Guid EntityId { get; private set; }
-    public DateTime MarcadoUtc { get; private set; }
+    public DateTime MarkedAtUtc { get; private set; }
 
-    private Favorito() { }
+    private Favorite() { }
 
-    public static Favorito Marcar(Guid tenantId, Guid userId, string tipo, Guid entityId)
+    public static Favorite Mark(Guid tenantId, Guid userId, string entityType, Guid entityId)
     {
-        if (!TipoDeFavorito.Existe(tipo))
-            throw new InvalidOperationException(Reglas.TipoDesconocido);
+        if (!EntityTypes.Exists(entityType))
+            throw new InvalidOperationException(Rules.UnknownType);
 
         if (entityId == Guid.Empty)
-            throw new InvalidOperationException(Reglas.SinEntidad);
+            throw new InvalidOperationException(Rules.MissingEntity);
 
-        return new Favorito
+        return new Favorite
         {
             Id = Guid.NewGuid(),
             TenantId = tenantId,
             UserId = userId,
-            Tipo = tipo,
+            EntityType = entityType,
             EntityId = entityId,
-            MarcadoUtc = DateTime.UtcNow,
+            MarkedAtUtc = DateTime.UtcNow,
         };
     }
 
-    public static class Reglas
+    public static class Rules
     {
-        public const string TipoDesconocido = "Ese tipo de elemento no se puede marcar como favorito";
-        public const string SinEntidad = "Falta el elemento que se quiere marcar";
-        public static readonly string Demasiados =
-            $"No se pueden tener más de {MaximoPorPersonaYTipo} favoritos del mismo tipo";
+        public const string UnknownType = "Ese tipo de elemento no se puede marcar como favorito";
+        public const string MissingEntity = "Falta el elemento que se quiere marcar";
+        public static readonly string TooMany =
+            $"No se pueden tener más de {MaxPerUserAndType} favoritos del mismo tipo";
     }
 }

@@ -33,19 +33,19 @@ public static class IdentityInfrastructureExtensions
         services.AddScoped<IUserRepository, EfUserRepository>();
         services.AddScoped<ISavedViewRepository, EfSavedViewRepository>();
         services.AddScoped<IEntityPermissionRepository, EfEntityPermissionRepository>();
-        services.AddScoped<Identity.Application.Favoritos.IRepositorioDeFavoritos,
-                           Identity.Infrastructure.Persistence.RepositorioDeFavoritos>();
+        services.AddScoped<Identity.Application.Favorites.IFavoriteRepository,
+                           Identity.Infrastructure.Persistence.FavoriteRepository>();
 
         // El puerto que consumen los demás módulos para filtrar por favoritos sin conocer a
         // Identity. Ver IUserFavorites.
         services.AddScoped<BuildingBlocks.Application.Abstractions.IUserFavorites,
-                           Identity.Infrastructure.Persistence.FavoritosDelUsuario>();
+                           Identity.Infrastructure.Persistence.UserFavorites>();
 
         // Y el de visibilidad, para «compartido conmigo» y «privado». Misma razón.
-        services.AddScoped<Identity.Application.Comparticion.IRepositorioDeComparticion,
-                           Identity.Infrastructure.Persistence.RepositorioDeComparticion>();
+        services.AddScoped<Identity.Application.Sharing.ISharingRepository,
+                           Identity.Infrastructure.Persistence.SharingRepository>();
         services.AddScoped<BuildingBlocks.Application.Abstractions.IEntityVisibility,
-                           Identity.Infrastructure.Persistence.VisibilidadDeEntidades>();
+                           Identity.Infrastructure.Persistence.EntityVisibility>();
         services.AddScoped<BuildingBlocks.Domain.IUnitOfWork, IdentityUnitOfWork>();
         services.AddScoped<IUserQueries, UserQueries>();
         services.AddScoped<IJwtService, JwtService>();

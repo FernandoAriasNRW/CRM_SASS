@@ -1,5 +1,5 @@
 using BuildingBlocks.Domain.Primitives;
-using Identity.Domain.Permisos;
+using Identity.Domain.Permissions;
 
 namespace Identity.Domain.Entities;
 
@@ -26,7 +26,7 @@ public sealed class EntityPermission : AggregateRoot, ITenantEntity
             TeamId = null,
             RoleName = null,
             TargetType = "User",
-            EntityType = TiposDePermiso.Normalizar(entityType),
+            EntityType = PermissionTypes.Normalize(entityType),
             EntityId = entityId,
             PermissionLevel = permissionLevel
         };
@@ -42,7 +42,7 @@ public sealed class EntityPermission : AggregateRoot, ITenantEntity
             TeamId = teamId,
             RoleName = null,
             TargetType = "Team",
-            EntityType = TiposDePermiso.Normalizar(entityType),
+            EntityType = PermissionTypes.Normalize(entityType),
             EntityId = entityId,
             PermissionLevel = permissionLevel
         };
@@ -58,7 +58,7 @@ public sealed class EntityPermission : AggregateRoot, ITenantEntity
             TeamId = null,
             RoleName = roleName,
             TargetType = "Role",
-            EntityType = TiposDePermiso.Normalizar(entityType),
+            EntityType = PermissionTypes.Normalize(entityType),
             EntityId = entityId,
             PermissionLevel = permissionLevel
         };

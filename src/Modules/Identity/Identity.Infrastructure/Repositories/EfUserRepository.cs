@@ -20,7 +20,7 @@ public sealed class EfUserRepository(IdentityDbContext context) : IUserRepositor
   /// delete, así que hay que reponer <c>!IsDeleted</c> a mano: de lo contrario un usuario
   /// dado de baja volvería a poder iniciar sesión.
   /// </summary>
-  private IQueryable<User> UsuariosDeTodosLosTenants =>
+  private IQueryable<User> UsersAcrossTenants =>
       context.User.IgnoreQueryFilters().Where(u => !u.IsDeleted);
 
   public async Task<User?> GetByIdAsync(Guid id, bool includeDeleted, CancellationToken ct = default)
@@ -36,11 +36,11 @@ public sealed class EfUserRepository(IdentityDbContext context) : IUserRepositor
   public async Task<User?> FindByEmailAsync(string email, CancellationToken ct = default)
   {
     var normalized = email.ToLowerInvariant();
-    return await UsuariosDeTodosLosTenants.FirstOrDefaultAsync(u => u.Email.Value == normalized, ct);
+    return await UsersAcrossTenants.FirstOrDefaultAsync(u => u.Email.Value == normalized, ct);
   }
 
   public async Task<User?> FindForSessionRenewalAsync(Guid userId, CancellationToken ct = default)
-      => await UsuariosDeTodosLosTenants.FirstOrDefaultAsync(u => u.Id == userId, ct);
+      => await UsersAcrossTenants.FirstOrDefaultAsync(u => u.Id == userId, ct);
 
   public async Task<bool> EmailExistsAsync(string email, Guid? excludeUserId = null, CancellationToken ct = default)
   {
@@ -48,7 +48,7 @@ public sealed class EfUserRepository(IdentityDbContext context) : IUserRepositor
     // tenant actual, dos organizaciones podrían registrar el mismo correo y el inicio de
     // sesión, que busca sin filtrar, dejaría de poder distinguirlos.
     var normalized = email.ToLowerInvariant();
-    var query = UsuariosDeTodosLosTenants.Where(u => u.Email.Value == normalized);
+    var query = UsersAcrossTenants.Where(u => u.Email.Value == normalized);
     if (excludeUserId.HasValue)
       query = query.Where(u => u.Id != excludeUserId.Value);
     return await query.AnyAsync(ct);

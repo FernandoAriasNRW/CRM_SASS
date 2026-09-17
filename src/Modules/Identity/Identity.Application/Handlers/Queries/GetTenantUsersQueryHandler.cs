@@ -14,7 +14,7 @@ public sealed class GetTenantUsersQueryHandler(IUserQueries userQueries)
 {
     public async Task<Result<IReadOnlyList<UserDto>>> Handle(GetTenantUsersQuery request, CancellationToken ct)
     {
-        var result = await userQueries.GetByTenantIdAsync(request.TenantId, request.Buscar, request.Tope, ct);
+        var result = await userQueries.GetByTenantIdAsync(request.TenantId, request.Search, request.Limit, ct);
         return Result<IReadOnlyList<UserDto>>.Success(result);
     }
 }
