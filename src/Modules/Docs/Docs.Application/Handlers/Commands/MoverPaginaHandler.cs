@@ -1,3 +1,4 @@
+using BuildingBlocks.Application.Authorization;
 using BuildingBlocks.Domain;
 using Docs.Application.Abstractions.Repositories;
 using Docs.Domain.Entities;
@@ -16,7 +17,13 @@ namespace Docs.Application.Handlers.Commands;
 /// manda el cliente deja huecos y empates —dos páginas con orden 3— y a partir de ahí el listado
 /// se ordena por lo que decida la base, que no es estable.
 /// </summary>
-public record MoverPaginaCommand(Guid PageId, Guid? ParentPageId, int Order) : IRequest<Result>;
+public record MoverPaginaCommand(Guid PageId, Guid? ParentPageId, int Order) : IRequest<Result>, IAuthorizeEntity
+{
+    // La página no lleva el documento, así que se comprueba el nivel sobre los documentos en general.
+    public string EntityType => "Document";
+    public Guid EntityId => Guid.Empty;
+    public string RequiredPermission => "Write";
+}
 
 public class MoverPaginaHandler(IDocumentRepository repository)
     : IRequestHandler<MoverPaginaCommand, Result>

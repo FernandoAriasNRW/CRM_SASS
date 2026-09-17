@@ -34,7 +34,7 @@ public sealed class PermisosPorRolFlowTests(CrmApiFactory factory)
         return cliente;
     }
 
-    private static Task<HttpResponseMessage> NivelDeMiembrosEnTareasAsync(HttpClient admin, string entityType, string nivel)
+    private static Task<HttpResponseMessage> NivelDeMiembrosAsync(HttpClient admin, string entityType, string nivel)
         => admin.PostAsJsonAsync("/api/v1/permissions", new
         {
             TargetType = "Role",
@@ -65,20 +65,20 @@ public sealed class PermisosPorRolFlowTests(CrmApiFactory factory)
         {
             // Se manda en plural a propósito, como lo mandaba la pantalla: una pestaña abierta
             // desde antes del cambio no puede volver a crear una fila que no consulta nadie.
-            (await NivelDeMiembrosEnTareasAsync(admin, "Tasks", "View")).EnsureSuccessStatusCode();
+            (await NivelDeMiembrosAsync(admin, "Tasks", "View")).EnsureSuccessStatusCode();
 
             var editar = await miembro.PatchAsJsonAsync($"/api/v1/tasks/{tarea}", new { EstimatedHours = 3m });
             editar.StatusCode.Should().Be(HttpStatusCode.Forbidden,
                 "el rol Member tiene sólo lectura sobre las tareas");
 
-            (await NivelDeMiembrosEnTareasAsync(admin, "Task", "Edit")).EnsureSuccessStatusCode();
+            (await NivelDeMiembrosAsync(admin, "Task", "Edit")).EnsureSuccessStatusCode();
 
             var editarDeNuevo = await miembro.PatchAsJsonAsync($"/api/v1/tasks/{tarea}", new { EstimatedHours = 3m });
             editarDeNuevo.StatusCode.Should().Be(HttpStatusCode.OK, await editarDeNuevo.Content.ReadAsStringAsync());
         }
         finally
         {
-            await NivelDeMiembrosEnTareasAsync(admin, "Task", "Edit");
+            await NivelDeMiembrosAsync(admin, "Task", "Edit");
         }
     }
 
@@ -93,8 +93,8 @@ public sealed class PermisosPorRolFlowTests(CrmApiFactory factory)
 
         try
         {
-            (await NivelDeMiembrosEnTareasAsync(admin, "Tasks", "View")).EnsureSuccessStatusCode();
-            (await NivelDeMiembrosEnTareasAsync(admin, "Task", "Full")).EnsureSuccessStatusCode();
+            (await NivelDeMiembrosAsync(admin, "Tasks", "View")).EnsureSuccessStatusCode();
+            (await NivelDeMiembrosAsync(admin, "Task", "Full")).EnsureSuccessStatusCode();
 
             var filas = (await admin.GetFromJsonAsync<JsonElement>("/api/v1/permissions?targetType=Role&roleName=Member"))
                 .EnumerateArray()
@@ -108,7 +108,59 @@ public sealed class PermisosPorRolFlowTests(CrmApiFactory factory)
         }
         finally
         {
-            await NivelDeMiembrosEnTareasAsync(admin, "Task", "Edit");
+            await NivelDeMiembrosAsync(admin, "Task", "Edit");
+        }
+    }
+
+    /// <summary>
+    /// Proyectos, tickets y documentos también obedecen al nivel por rol.
+    ///
+    /// Hasta ahora sólo las tareas pedían autorización: en los otros tres módulos el nivel se
+    /// guardaba desde la pantalla y ningún comando lo consultaba.
+    /// </summary>
+    [Theory]
+    [InlineData("Ticket")]
+    [InlineData("Document")]
+    [InlineData("Project")]
+    public async Task Solo_ver_impide_escribir_en_proyectos_tickets_y_documentos(string tipo)
+    {
+        var admin = await ClienteAsync("admin@acme.com", "admin123");
+
+        var email = $"miembro.{tipo.ToLowerInvariant()}.{Guid.NewGuid():N}@acme.com";
+        (await admin.PostAsJsonAsync("/api/v1/users",
+            new { Name = "Miembro sin escritura", Email = email, Password = Contrasena, Role = "Member" }))
+            .StatusCode.Should().Be(HttpStatusCode.Created);
+        var miembro = await ClienteAsync(email, Contrasena);
+
+        Guid? proyecto = null;
+        if (tipo == "Project")
+        {
+            var pagina = await admin.GetFromJsonAsync<JsonElement>("/api/v1/projects?pageSize=1");
+            proyecto = pagina.GetProperty("items").EnumerateArray().First().GetProperty("id").GetGuid();
+        }
+
+        Task<HttpResponseMessage> Escribir() => tipo switch
+        {
+            "Ticket" => miembro.PostAsJsonAsync("/api/v1/tickets",
+                new { Title = "Ticket de la prueba de permisos", Description = "Creado por un miembro", Priority = "Medium" }),
+            "Document" => miembro.PostAsJsonAsync("/api/v1/docs/",
+                new { Title = "Documento de la prueba de permisos", Description = "Creado por un miembro", Type = 1 }),
+            _ => miembro.PatchAsJsonAsync($"/api/v1/projects/{proyecto}", new { Description = (string?)null })
+        };
+
+        try
+        {
+            (await NivelDeMiembrosAsync(admin, tipo, "View")).EnsureSuccessStatusCode();
+            (await Escribir()).StatusCode.Should().Be(HttpStatusCode.Forbidden);
+
+            (await NivelDeMiembrosAsync(admin, tipo, "Edit")).EnsureSuccessStatusCode();
+            var conPermiso = await Escribir();
+            conPermiso.StatusCode.Should().NotBe(HttpStatusCode.Forbidden, await conPermiso.Content.ReadAsStringAsync());
+            conPermiso.IsSuccessStatusCode.Should().BeTrue(await conPermiso.Content.ReadAsStringAsync());
+        }
+        finally
+        {
+            await NivelDeMiembrosAsync(admin, tipo, "Edit");
         }
     }
 }

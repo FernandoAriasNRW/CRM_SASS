@@ -175,8 +175,10 @@ public sealed class DataSeederService(IServiceProvider serviceProvider, ILogger<
                     EntityPermission.CreateForRole(tenantId, "Member", "Task", Guid.Empty, "Edit"),
                     EntityPermission.CreateForRole(tenantId, "Member", "Document", Guid.Empty, "Edit"),
                     EntityPermission.CreateForRole(tenantId, "Member", "Webhook", Guid.Empty, "View"),
+                    EntityPermission.CreateForRole(tenantId, "Member", "Ticket", Guid.Empty, "Edit"),
                     EntityPermission.CreateForRole(tenantId, "Guest", "Project", Guid.Empty, "View"),
                     EntityPermission.CreateForRole(tenantId, "Guest", "Task", Guid.Empty, "Edit"),
+                    EntityPermission.CreateForRole(tenantId, "Guest", "Ticket", Guid.Empty, "Edit"),
                     EntityPermission.CreateForRole(tenantId, "Guest", "Document", Guid.Empty, "View")
                 );
                 await identityDb.SaveChangesAsync(cancellationToken);

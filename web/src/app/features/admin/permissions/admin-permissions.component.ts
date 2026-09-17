@@ -68,6 +68,15 @@ export class AdminPermissionsComponent implements OnInit {
       guestLevel: 'Edit'
     },
     {
+      key: 'Ticket',
+      name: 'Tickets & Soporte',
+      description: 'Abrir, asignar, cambiar de estado y cerrar tickets',
+      icon: 'lucideCheckSquare',
+      adminLevel: 'Full',
+      memberLevel: 'Edit',
+      guestLevel: 'Edit'
+    },
+    {
       key: 'Document',
       name: 'Documentación & Wikis',
       description: 'Creación, edición y compartido de documentos TippTap',

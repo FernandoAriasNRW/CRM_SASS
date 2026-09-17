@@ -1,3 +1,4 @@
+using BuildingBlocks.Application.Authorization;
 using BuildingBlocks.Application.Abstractions;
 using BuildingBlocks.Domain;
 using Docs.Application.Abstractions.Repositories;
@@ -6,7 +7,13 @@ using MediatR;
 
 namespace Docs.Application.Handlers.Commands;
 
-public record UpdatePageCommand(Guid PageId, string Title, string Content) : IRequest<Result>;
+public record UpdatePageCommand(Guid PageId, string Title, string Content) : IRequest<Result>, IAuthorizeEntity
+{
+    // La página no lleva el documento, así que se comprueba el nivel sobre los documentos en general.
+    public string EntityType => "Document";
+    public Guid EntityId => Guid.Empty;
+    public string RequiredPermission => "Write";
+}
 
 public class UpdatePageHandler(
     IDocumentRepository documentRepository,

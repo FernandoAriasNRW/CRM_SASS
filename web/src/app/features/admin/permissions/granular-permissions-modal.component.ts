@@ -76,6 +76,13 @@ export class GranularPermissionsModalComponent implements OnInit {
       level: 'Edit'
     },
     {
+      key: 'Ticket',
+      name: 'Tickets & Soporte',
+      description: 'Abrir, asignar, cambiar de estado y cerrar tickets',
+      icon: 'lucideCheckSquare',
+      level: 'Edit'
+    },
+    {
       key: 'Document',
       name: 'Documentación & Wikis',
       description: 'Crear, editar, compartir y eliminar documentos y plantillas',

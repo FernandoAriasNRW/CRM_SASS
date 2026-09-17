@@ -1,3 +1,4 @@
+using BuildingBlocks.Application.Authorization;
 using BuildingBlocks.Application.Abstractions;
 using BuildingBlocks.Domain;
 using MediatR;
@@ -9,4 +10,9 @@ public record ImportDocumentCommand(
     Guid OwnerId,
     string Title,
     string Content,
-    int Type = 1) : IRequest<Result<Guid>>;
+    int Type = 1) : IRequest<Result<Guid>>, IAuthorizeEntity
+{
+    public string EntityType => "Document";
+    public Guid EntityId => Guid.Empty;
+    public string RequiredPermission => "Write";
+}

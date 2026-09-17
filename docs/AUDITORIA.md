@@ -642,9 +642,22 @@ Salieron dos fallos más al limpiar los datos de la sonda: **no se podía borrar
 administrador** —la cuenta que protege al último no se traducía a SQL— y **se podía quitar el rol
 al último administrador**, dejando la organización sin nadie que la gestione.
 
-Queda anotado, sin tocar: `POST /auth/guest-token` emite un token que pasa cualquier
-`RequireAuthorization()`. Hoy no se puede pedir porque su política de límite de peticiones no
-existe y responde 409, pero el día que se arregle esa política el token abriría toda la API.
+**El token de invitado se ha quitado.** `POST /auth/guest-token` emitía, a cualquiera y sin
+credenciales, un token con rol «Guest» que pasaba todas las comprobaciones de sesión de la API. No
+llegó a funcionar —su política de límite de peticiones no existía y respondía 409—, así que se
+quitó antes de que alguien arreglara esa política y abriera la API entera.
+
+Con él deja de tener camino el formulario público `/support`, que **nunca funcionó**: pedía ese
+token, que siempre fallaba, y aunque se hubiera emitido llevaba el inquilino vacío, porque no
+existe ninguna tabla de organizaciones con identificador público («slug»). Si se quiere un portal
+de soporte sin sesión, necesita esa tabla y un endpoint propio que sólo pueda abrir tickets.
+
+**Proyectos, tickets y documentos piden autorización**, como ya hacían las tareas. Sus comandos de
+escritura implementan `IAuthorizeEntity`, y el inquilino se toma de la sesión, no de la petición.
+Los comandos de páginas de Documentos no llevan el documento, así que comprueban el nivel sobre los
+documentos en general: compartir un documento concreto con permiso de edición no basta para editar
+sus páginas si el rol tiene sólo lectura. La pantalla gana la fila de tickets, y la migración
+`PermisosDeTickets` siembra «Edit» para miembros e invitados, que es lo que ya podían hacer.
 
 ### 9.3 El sembrador falla al arrancar sobre una base ya sembrada
 
@@ -856,10 +869,10 @@ datos. Se detalla en la sección 15.
 - **El árbol de trabajo de git abandonado** (2.4).
 - **167 avisos de lint** en el frontend, heredados.
 - **Un paquete del frontend supera el presupuesto** de tamaño en 120 kB.
-- **El token de invitado abriría la API entera** (9.2 bis). Hoy no se emite porque falta su
-  política de límite de peticiones; hay que acotarlo antes de arreglar eso.
-- **Sólo las tareas piden autorización por entidad.** Proyectos, documentos y tickets no
-  implementan `IAuthorizeEntity`, así que sus niveles por rol se guardan y todavía no se aplican.
+- **El formulario público `/support` no tiene backend** (9.2 bis): nunca funcionó y hace falta
+  una tabla de organizaciones con identificador público para hacerlo bien.
+- **Espacios, carpetas, anotaciones y subidas no piden autorización por entidad**, y los
+  permisos de páginas de documentos se comprueban sobre el módulo, no sobre el documento.
 - **Compartir no tiene interfaz todavía.** Los endpoints existen y están probados, y los filtros
   «compartido conmigo» y «privado» funcionan contra ellos, pero no hay ningún botón en la
   aplicación que comparta. Hasta que lo haya, esas dos entradas del menú responden bien y
