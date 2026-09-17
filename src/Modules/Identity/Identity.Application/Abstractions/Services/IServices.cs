@@ -7,7 +7,6 @@ public interface IJwtService
 {
   (string accessToken, DateTime accessExpires, string refreshToken, DateTime refreshExpires) GenerateTokens(UserDto user);
 
-  string GenerateGuestToken(Guid tenantId, string tenantSlug);
 
   System.Security.Claims.ClaimsPrincipal? ValidateToken(string token);
 }

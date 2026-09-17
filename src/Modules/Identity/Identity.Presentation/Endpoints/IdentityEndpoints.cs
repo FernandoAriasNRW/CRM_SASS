@@ -105,11 +105,10 @@ public static class IdentityEndpoints
       return Results.Ok();
     });
 
-    authGroup.MapPost("/guest-token", async (GuestTokenCommand command, IMediator mediator) =>
-    {
-      var result = await mediator.Send(command);
-      return result.IsSuccess ? Results.Ok(result.Value) : Results.NotFound(result.Error);
-    }).RequireRateLimiting("guest-token");
+    // Aquí había un POST /auth/guest-token, anónimo, que emitía un token con rol «Guest». Ese token
+    // pasaba cualquier RequireAuthorization() de la API, no sólo el alta de tickets para la que se
+    // pensó. Nunca llegó a funcionar —su política de límite de peticiones no existía y respondía
+    // 409— y se quitó antes de que alguien la arreglara y abriera la API entera.
 
     authGroup.MapGet("/users/me", async (IMediator mediator, ClaimsPrincipal principal) =>
     {

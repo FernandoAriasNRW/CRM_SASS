@@ -79,17 +79,6 @@ public sealed class RefreshTokenCommandHandler(IJwtService jwtService, IUserRepo
           refreshExpires));
   }
 }
-public sealed class GuestTokenCommandHandler(IJwtService jwtService)
-    : ICommandHandler<GuestTokenCommand, GuestTokenResult>
-{
-  public Task<Result<GuestTokenResult>> Handle(GuestTokenCommand request, CancellationToken cancellationToken)
-  {
-    var token = jwtService.GenerateGuestToken(Guid.Empty, request.TenantSlug);
-    return Task.FromResult(Result<GuestTokenResult>.Success(
-        new GuestTokenResult(token, DateTime.UtcNow.AddMinutes(15))));
-  }
-}
-
 /// <summary>
 /// Handler para crear un nuevo usuario.
 /// </summary>

@@ -156,4 +156,20 @@ public sealed class AdministracionSoloParaAdministradoresFlowTests(CrmApiFactory
 
         borrado.StatusCode.Should().Be(HttpStatusCode.NoContent, await borrado.Content.ReadAsStringAsync());
     }
+
+    /// <summary>
+    /// No hay forma anónima de conseguir un token.
+    ///
+    /// Existía <c>POST /auth/guest-token</c>: emitía un token con rol «Guest» a cualquiera que lo
+    /// pidiera, y ese token pasaba todas las comprobaciones de «ha iniciado sesión» de la API.
+    /// </summary>
+    [Fact]
+    public async Task No_se_emiten_tokens_de_invitado_anonimos()
+    {
+        var respuesta = await factory.CreateClient()
+            .PostAsJsonAsync("/api/v1/auth/guest-token", new { TenantSlug = "acme" });
+
+        respuesta.IsSuccessStatusCode.Should().BeFalse();
+        (await respuesta.Content.ReadAsStringAsync()).Should().NotContain("accessToken");
+    }
 }

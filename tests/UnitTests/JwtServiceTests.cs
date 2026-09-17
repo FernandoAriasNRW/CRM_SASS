@@ -123,50 +123,6 @@ public class JwtServiceTests
 
   #endregion
 
-  #region GenerateGuestToken Tests
-
-  [Fact]
-  public void GenerateGuestToken_ReturnsValidToken()
-  {
-    // Arrange
-    var tenantId = Guid.NewGuid();
-    var tenantSlug = "test-tenant";
-
-    // Act
-    var token = _jwtService.GenerateGuestToken(tenantId, tenantSlug);
-
-    // Assert
-    token.Should().NotBeNullOrEmpty();
-
-    var handler = new JwtSecurityTokenHandler();
-    var jwt = handler.ReadJwtToken(token);
-
-    jwt.Claims.Should().Contain(c => c.Type == "tenantId" && c.Value == tenantId.ToString());
-    jwt.Claims.Should().Contain(c => c.Type == "tenantSlug" && c.Value == tenantSlug);
-    jwt.Claims.Should().Contain(c => c.Type == ClaimTypes.Role && c.Value == "Guest");
-    jwt.Claims.Should().Contain(c => c.Type == "scope" && c.Value == "tickets:create");
-  }
-
-  [Fact]
-  public void GenerateGuestToken_HasCorrectExpiration()
-  {
-    // Arrange
-    var tenantId = Guid.NewGuid();
-    var beforeGeneration = DateTime.UtcNow;
-
-    // Act
-    var token = _jwtService.GenerateGuestToken(tenantId, "test");
-
-    // Assert
-    var handler = new JwtSecurityTokenHandler();
-    var jwt = handler.ReadJwtToken(token);
-
-    jwt.ValidTo.Should().BeAfter(beforeGeneration.AddMinutes(14));
-    jwt.ValidTo.Should().BeBefore(beforeGeneration.AddMinutes(16)); // 15 min
-  }
-
-  #endregion
-
   #region Configuration Tests
 
   [Fact]
