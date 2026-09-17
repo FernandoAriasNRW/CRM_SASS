@@ -16,30 +16,30 @@ namespace BuildingBlocks.Application;
 /// «no filtres», que devolvería la lista entera y volvería a ser un menú que promete y no
 /// cumple.
 /// </summary>
-public sealed record AlcanceDeVista(
-    string? Filtro = null,
-    Guid? UsuarioId = null,
-    IReadOnlyList<Guid>? IdsFavoritos = null,
-    IReadOnlyList<Guid>? IdsCompartidosConmigo = null,
-    IReadOnlyList<Guid>? IdsCompartidosConAlguien = null)
+public sealed record ViewScope(
+    string? Filter = null,
+    Guid? UserId = null,
+    IReadOnlyList<Guid>? FavoriteIds = null,
+    IReadOnlyList<Guid>? SharedWithMeIds = null,
+    IReadOnlyList<Guid>? SharedWithOthersIds = null)
 {
     /// <summary>Lo que marcó esta persona con la estrella.</summary>
-    public IReadOnlyList<Guid> Favoritos { get; } = IdsFavoritos ?? [];
+    public IReadOnlyList<Guid> Favorites { get; } = FavoriteIds ?? [];
 
     /// <summary>Lo que alguien compartió con esta persona en concreto.</summary>
-    public IReadOnlyList<Guid> CompartidosConmigo { get; } = IdsCompartidosConmigo ?? [];
+    public IReadOnlyList<Guid> SharedWithMe { get; } = SharedWithMeIds ?? [];
 
     /// <summary>
     /// Lo que está compartido con alguien, sea quien sea. Sirve para lo contrario: «privado» es
     /// lo mío que no está aquí.
     /// </summary>
-    public IReadOnlyList<Guid> CompartidosConAlguien { get; } = IdsCompartidosConAlguien ?? [];
+    public IReadOnlyList<Guid> SharedWithOthers { get; } = SharedWithOthersIds ?? [];
 
     /// <summary>Sin entrada de menú pulsada: la lista de siempre.</summary>
-    public static AlcanceDeVista Ninguno { get; } = new();
+    public static ViewScope None { get; } = new();
 
     /// <summary>Si el filtro pide ver la papelera o el archivo, que el filtro global esconde.</summary>
-    public bool AbreElAlcance => FiltrosDeVista.AbreElAlcance(Filtro);
+    public bool IncludesHidden => ViewFilters.IncludesHidden(Filter);
 
-    public bool Es(string cual) => FiltrosDeVista.Es(Filtro, cual);
+    public bool Is(string value) => ViewFilters.Is(Filter, value);
 }

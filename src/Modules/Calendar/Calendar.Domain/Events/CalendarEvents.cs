@@ -25,7 +25,7 @@ public sealed record CalendarRescheduledEvent(
 ///
 /// Conserva el nombre <c>CalendarCancelled</c> porque hay suscriptores fuera —los webhooks lo
 /// publican con ese nombre— y renombrarlo rompería a quien ya escuche. Lo que significa está en
-/// <c>CalendarEvent.EnviarAPapelera</c>: no es la cancelación de la reunión, es quitarla de en
+/// <c>CalendarEvent.MoveToTrash</c>: no es la cancelación de la reunión, es quitarla de en
 /// medio. La cancelación de verdad es <see cref="EventoCanceladoEvent"/>.
 /// </summary>
 public sealed record CalendarCancelledEvent(

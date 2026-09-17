@@ -23,8 +23,8 @@ public interface IRepositorioDeMenciones
         CancellationToken ct = default);
 
     /// <summary>Los documentos que mencionan una entidad. Es lo que responde el puerto.</summary>
-    Task<IReadOnlyList<DocumentoQueMenciona>> QuienMencionaAsync(
-        Guid tenantId, string tipo, Guid entidadId, CancellationToken ct = default);
+    Task<IReadOnlyList<MentioningDocument>> GetMentioningDocumentsAsync(
+        Guid tenantId, string tipo, Guid entityId, CancellationToken ct = default);
 
     /// <summary>Lo que menciona una página, para pintarlo dentro del propio documento.</summary>
     Task<IReadOnlyList<MencionEnDocumento>> DeLaPaginaAsync(
@@ -46,7 +46,7 @@ public sealed class ActualizadorDeMenciones(IRepositorioDeMenciones repositorio)
 
         var menciones = encontradas
             .Select(m => MencionEnDocumento.Crear(
-                tenantId, documentId, pageId, m.Tipo, m.EntidadId, m.TextoVisible))
+                tenantId, documentId, pageId, m.Tipo, m.EntidadId, m.VisibleText))
             .ToList();
 
         // Se llama siempre, aunque no haya ninguna: una página de la que se han borrado todas las

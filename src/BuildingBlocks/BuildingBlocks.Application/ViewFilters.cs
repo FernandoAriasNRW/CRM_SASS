@@ -16,44 +16,44 @@ namespace BuildingBlocks.Application;
 /// proyecto, el agente de un ticket— y eso es correcto: el nombre es común, el significado es
 /// del dominio de cada uno. Lo que no puede variar es el nombre.
 /// </summary>
-public static class FiltrosDeVista
+public static class ViewFilters
 {
     /// <summary>
     /// Lo que me toca a mí. Cada módulo decide qué significa: responsable de la tarea, dueño del
     /// proyecto, agente asignado al ticket.
     /// </summary>
-    public const string Mios = "mine";
+    public const string Mine = "mine";
 
     /// <summary>Lo que yo creé, aunque ahora responda otro.</summary>
-    public const string CreadosPorMi = "created";
+    public const string CreatedByMe = "created";
 
     /// <summary>Lo que marqué con la estrella.</summary>
-    public const string Favoritos = "favorites";
+    public const string Favorites = "favorites";
 
     /// <summary>De mi equipo. Ya existía en tareas y proyectos.</summary>
-    public const string DeMiEquipo = "team";
+    public const string MyTeam = "team";
 
     /// <summary>
     /// Lo que otra persona me compartió explícitamente. No incluye lo que veo por ser de mi
     /// equipo o por mi rol: eso ya se ve en «ver todo», y mezclarlo dejaría esta entrada
     /// devolviendo prácticamente la lista entera.
     /// </summary>
-    public const string CompartidosConmigo = "shared";
+    public const string SharedWithMe = "shared";
 
     /// <summary>Mío y de nadie más: lo que llevo yo y no he compartido con nadie.</summary>
-    public const string Privados = "private";
+    public const string Private = "private";
 
     /// <summary>
     /// Apartado de la vista, sin borrar. Es el único filtro que **añade** filas en vez de
     /// quitarlas: sin él lo archivado no sale por ninguna parte.
     /// </summary>
-    public const string Archivados = "archived";
+    public const string Archived = "archived";
 
-    /// <summary>Borrado y recuperable. Igual que <see cref="Archivados"/>, abre el filtro global.</summary>
-    public const string Papelera = "trash";
+    /// <summary>Borrado y recuperable. Igual que <see cref="Archived"/>, abre el filtro global.</summary>
+    public const string Trash = "trash";
 
-    public static IReadOnlyList<string> Todos() =>
-        [Mios, CreadosPorMi, Favoritos, DeMiEquipo, CompartidosConmigo, Privados, Archivados, Papelera];
+    public static IReadOnlyList<string> All() =>
+        [Mine, CreatedByMe, Favorites, MyTeam, SharedWithMe, Private, Archived, Trash];
 
     /// <summary>
     /// Si el filtro pide ver cosas que el filtro global esconde —la papelera o el archivo—.
@@ -62,12 +62,12 @@ public static class FiltrosDeVista
     /// consciente y no algo que un `Where` pueda hacer por su cuenta: lo que el filtro global
     /// esconde no está en el conjunto que la consulta puede filtrar.
     /// </summary>
-    public static bool AbreElAlcance(string? filtro) =>
-        Es(filtro, Archivados) || Es(filtro, Papelera);
+    public static bool IncludesHidden(string? filter) =>
+        Is(filter, Archived) || Is(filter, Trash);
 
-    public static bool Existe(string? filtro) =>
-        !string.IsNullOrWhiteSpace(filtro) && Todos().Contains(filtro, StringComparer.OrdinalIgnoreCase);
+    public static bool Exists(string? filter) =>
+        !string.IsNullOrWhiteSpace(filter) && All().Contains(filter, StringComparer.OrdinalIgnoreCase);
 
-    public static bool Es(string? filtro, string cual) =>
-        string.Equals(filtro, cual, StringComparison.OrdinalIgnoreCase);
+    public static bool Is(string? filter, string value) =>
+        string.Equals(filter, value, StringComparison.OrdinalIgnoreCase);
 }

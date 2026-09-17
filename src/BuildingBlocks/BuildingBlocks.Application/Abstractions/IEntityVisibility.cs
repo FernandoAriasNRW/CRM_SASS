@@ -3,7 +3,7 @@ namespace BuildingBlocks.Application.Abstractions;
 /// <summary>
 /// Qué le han compartido explícitamente a quien está haciendo la petición.
 ///
-/// **Es un puerto, por la misma razón que <see cref="IFavoritosDelUsuario"/>.** Los permisos por
+/// **Es un puerto, por la misma razón que <see cref="IUserFavorites"/>.** Los permisos por
 /// entidad viven en Identity (<c>EntityPermission</c>), pero «compartido conmigo» y «privado»
 /// son entradas del menú de Tareas, Tickets, Proyectos y Documentos, y ningún módulo referencia
 /// a otro. El contrato se declara aquí y lo implementa quien sabe responderlo.
@@ -12,7 +12,7 @@ namespace BuildingBlocks.Application.Abstractions;
 /// diciendo quién ve qué acabarían discrepando, y entonces la pregunta «¿quién ve esto?» tendría
 /// dos respuestas y ninguna fiable.
 /// </summary>
-public interface IVisibilidadDeEntidades
+public interface IEntityVisibility
 {
     /// <summary>
     /// Los identificadores de ese tipo que alguien me ha compartido a mí en concreto.
@@ -25,7 +25,7 @@ public interface IVisibilidadDeEntidades
     /// Lista vacía si no hay nada compartido, y hay que tratarla como tal: cero resultados, no
     /// todos.
     /// </summary>
-    Task<IReadOnlyList<Guid>> CompartidosConmigoAsync(string tipoDeEntidad, CancellationToken ct = default);
+    Task<IReadOnlyList<Guid>> GetSharedWithMeAsync(string entityType, CancellationToken ct = default);
 
     /// <summary>
     /// Los identificadores de ese tipo que están compartidos **con alguien**, sea quien sea.
@@ -35,5 +35,5 @@ public interface IVisibilidadDeEntidades
     /// segunda fuente de verdad que se desincroniza en cuanto alguien comparte por otra vía y
     /// entonces el menú enseña como privado algo que ya no lo es.
     /// </summary>
-    Task<IReadOnlyList<Guid>> CompartidosConAlguienAsync(string tipoDeEntidad, CancellationToken ct = default);
+    Task<IReadOnlyList<Guid>> GetSharedWithOthersAsync(string entityType, CancellationToken ct = default);
 }

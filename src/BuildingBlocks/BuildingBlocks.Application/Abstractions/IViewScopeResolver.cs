@@ -1,7 +1,7 @@
 namespace BuildingBlocks.Application.Abstractions;
 
 /// <summary>
-/// Prepara el <see cref="AlcanceDeVista"/> de una petición resolviendo las listas que el módulo
+/// Prepara el <see cref="ViewScope"/> de una petición resolviendo las listas que el módulo
 /// no puede resolver por su cuenta.
 ///
 /// Está aquí para que cada endpoint no tenga que acordarse de pedir los favoritos y lo
@@ -9,7 +9,7 @@ namespace BuildingBlocks.Application.Abstractions;
 /// exactamente lo que falló antes: el endpoint de tickets recibía <c>filter=mine</c> y no hacía
 /// nada con él.
 /// </summary>
-public interface IAlcanceDeVista
+public interface IViewScopeResolver
 {
     /// <summary>
     /// Resuelve el alcance para un tipo de entidad —«Tarea», «Ticket», «Proyecto», «Documento»—.
@@ -17,6 +17,6 @@ public interface IAlcanceDeVista
     /// Sólo consulta lo que el filtro pedido necesita: pedir favoritos y compartidos en cada
     /// listado serían dos consultas de más en la pantalla que más se abre.
     /// </summary>
-    Task<AlcanceDeVista> ResolverAsync(
-        string? filtro, Guid? usuarioId, string tipoDeEntidad, CancellationToken ct = default);
+    Task<ViewScope> ResolveAsync(
+        string? filter, Guid? userId, string entityType, CancellationToken ct = default);
 }

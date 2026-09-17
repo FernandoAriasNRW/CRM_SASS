@@ -16,7 +16,7 @@ namespace WorkItems.Application;
 public sealed record CambiarArchivoDeTareaCommand(
     Guid TenantId,
     Guid Id,
-    AccionDeArchivo Accion) : ICommand<bool>;
+    ArchiveAction Accion) : ICommand<bool>;
 
 public sealed class CambiarArchivoDeTareaHandler(
     ITaskRepository repository,
@@ -33,10 +33,10 @@ public sealed class CambiarArchivoDeTareaHandler(
 
         switch (request.Accion)
         {
-            case AccionDeArchivo.Archivar: tarea.Archivar(); break;
-            case AccionDeArchivo.Desarchivar: tarea.Desarchivar(); break;
-            case AccionDeArchivo.EnviarAPapelera: tarea.EnviarAPapelera(); break;
-            case AccionDeArchivo.RestaurarDePapelera: tarea.RestaurarDePapelera(); break;
+            case ArchiveAction.Archive: tarea.Archivar(); break;
+            case ArchiveAction.Unarchive: tarea.Desarchivar(); break;
+            case ArchiveAction.MoveToTrash: tarea.MoveToTrash(); break;
+            case ArchiveAction.RestoreFromTrash: tarea.RestoreFromTrash(); break;
         }
 
         await repository.UpdateAsync(tarea, ct);

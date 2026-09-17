@@ -10,16 +10,16 @@ namespace Projects.Infrastructure.Queries;
 public sealed class ProjectQueries(ProjectsDbContext context) : IProjectQueries
 {
     public async Task<PagedResult<ProjectDto>> GetByTenantAsync(
-        Guid tenantId, string? status, Guid? ownerId, Guid? spaceId, Guid? folderId, AlcanceDeVista? alcance,
+        Guid tenantId, string? status, Guid? ownerId, Guid? spaceId, Guid? folderId, ViewScope? alcance,
         PaginationRequest pagination, CancellationToken ct = default)
     {
-        var vista = alcance ?? AlcanceDeVista.Ninguno;
+        var vista = alcance ?? ViewScope.None;
 
         // La papelera y el archivo quedan fuera de lo que el filtro global deja ver, así que hay
         // que abrir el alcance antes de construir la consulta. El ámbito se cierra al terminar.
-        using var _ = context.VerTambien(
-            borrados: vista.Es(FiltrosDeVista.Papelera),
-            archivados: vista.Es(FiltrosDeVista.Archivados));
+        using var _ = context.IncludeHidden(
+            deleted: vista.Is(ViewFilters.Trash),
+            archived: vista.Is(ViewFilters.Archived));
 
         var query = context.Projects.AsNoTracking().Where(p => p.TenantId == tenantId);
 
@@ -34,17 +34,17 @@ public sealed class ProjectQueries(ProjectsDbContext context) : IProjectQueries
             
         if (folderId.HasValue) query = query.Where(p => p.FolderId == folderId.Value);
 
-        var yo = vista.UsuarioId;
+        var yo = vista.UserId;
 
-        if (vista.Es(FiltrosDeVista.Mios) && yo.HasValue)
+        if (vista.Is(ViewFilters.Mine) && yo.HasValue)
         {
             query = query.Where(p => p.OwnerId == yo.Value);
         }
-        else if (vista.Es(FiltrosDeVista.DeMiEquipo) && yo.HasValue)
+        else if (vista.Is(ViewFilters.MyTeam) && yo.HasValue)
         {
             query = query.Where(p => EF.Functions.JsonContains(p.TagIds, yo.Value.ToString()));
         }
-        else if (vista.Es(FiltrosDeVista.CreadosPorMi) && yo.HasValue)
+        else if (vista.Is(ViewFilters.CreatedByMe) && yo.HasValue)
         {
             // Un proyecto no guarda quién lo creó, sólo quién lo posee. Se usa el dueño, que
             // es lo más cercano y lo que la gente espera. Si algún día hace falta distinguir
@@ -52,33 +52,33 @@ public sealed class ProjectQueries(ProjectsDbContext context) : IProjectQueries
             // diferencia con el dueño daría dos entradas de menú con la misma lista.
             query = query.Where(p => p.OwnerId == yo.Value);
         }
-        else if (vista.Es(FiltrosDeVista.Favoritos))
+        else if (vista.Is(ViewFilters.Favorites))
         {
-            var marcados = vista.Favoritos.ToArray();
+            var marcados = vista.Favorites.ToArray();
             query = query.Where(p => EF.Constant(marcados).Contains(p.Id));
         }
-        else if (vista.Es(FiltrosDeVista.CompartidosConmigo))
+        else if (vista.Is(ViewFilters.SharedWithMe))
         {
-            var conmigo = vista.CompartidosConmigo.ToArray();
+            var conmigo = vista.SharedWithMe.ToArray();
             query = query.Where(p => EF.Constant(conmigo).Contains(p.Id));
         }
-        else if (vista.Es(FiltrosDeVista.Privados) && yo.HasValue)
+        else if (vista.Is(ViewFilters.Private) && yo.HasValue)
         {
-            var compartidos = vista.CompartidosConAlguien.ToArray();
+            var compartidos = vista.SharedWithOthers.ToArray();
             query = query.Where(p => p.OwnerId == yo.Value && !EF.Constant(compartidos).Contains(p.Id));
         }
-        else if (vista.Es(FiltrosDeVista.Archivados))
+        else if (vista.Is(ViewFilters.Archived))
         {
-            query = query.Where(p => p.ArchivadoEnUtc != null);
+            query = query.Where(p => p.ArchivedAtUtc != null);
         }
-        else if (vista.Es(FiltrosDeVista.Papelera))
+        else if (vista.Is(ViewFilters.Trash))
         {
             query = query.Where(p => p.IsDeleted);
         }
 
         // Búsqueda por texto, sobre **todos** los proyectos del inquilino. Ver la nota equivalente
         // en TicketQueries.
-        if (pagination.TextoBuscado is { } texto)
+        if (pagination.SearchText is { } texto)
             query = query.Where(p => p.Name.Value.Contains(texto) || p.Description.Contains(texto));
 
         var totalCount = await query.CountAsync(ct);

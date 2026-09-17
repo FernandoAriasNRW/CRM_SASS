@@ -147,7 +147,7 @@ public sealed class Project : AggregateRoot, ITenantEntity, ISoftDeletable, IArc
     #region Archivo
 
     /// <summary>Cuándo se archivó, o <c>null</c> si está a la vista. Ver <see cref="IArchivable"/>.</summary>
-    public DateTime? ArchivadoEnUtc { get; private set; }
+    public DateTime? ArchivedAtUtc { get; private set; }
 
     /// <summary>
     /// Aparta el proyecto de las listas sin borrarlo.
@@ -160,12 +160,12 @@ public sealed class Project : AggregateRoot, ITenantEntity, ISoftDeletable, IArc
     /// </summary>
     public void Archivar()
     {
-        if (ArchivadoEnUtc is not null) return;
-        ArchivadoEnUtc = DateTime.UtcNow;
+        if (ArchivedAtUtc is not null) return;
+        ArchivedAtUtc = DateTime.UtcNow;
     }
 
     /// <summary>Devuelve el proyecto a las listas.</summary>
-    public void Desarchivar() => ArchivadoEnUtc = null;
+    public void Desarchivar() => ArchivedAtUtc = null;
 
     #endregion
 }

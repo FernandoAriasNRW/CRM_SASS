@@ -46,7 +46,7 @@ public sealed class DatosDelInforme(
     /// <summary>La cultura en que se formatean fechas y números del informe.</summary>
     private static readonly CultureInfo Espanol = CultureInfo.GetCultureInfo("es-ES");
 
-    public async Task<TablaDeInforme> ResolverAsync(Report informe, CancellationToken ct)
+    public async Task<TablaDeInforme> ResolveAsync(Report informe, CancellationToken ct)
     {
         var tenantId = informe.TenantId;
 
@@ -59,9 +59,9 @@ public sealed class DatosDelInforme(
         //
         // Desde una petición HTTP es redundante —el inquilino ya es ése— y no molesta: se pone el
         // mismo valor que ya había.
-        using var _ = tareasDb.ComoInquilino(tenantId);
-        using var __ = ticketsDb.ComoInquilino(tenantId);
-        using var ___ = proyectosDb.ComoInquilino(tenantId);
+        using var _ = tareasDb.AsTenant(tenantId);
+        using var __ = ticketsDb.AsTenant(tenantId);
+        using var ___ = proyectosDb.AsTenant(tenantId);
 
         // El nombre que le puso quien lo creó encabeza el documento; el tipo decide qué datos
         // trae. Son dos cosas distintas y conviene no mezclarlas: dos informes del mismo tipo
@@ -101,7 +101,7 @@ public sealed class DatosDelInforme(
                 + "Ábrelo en el constructor y elige el origen, la agrupación y la medida.");
         }
 
-        return await motor.ResolverAsync(informe.Name, informe.TenantId, definicion, ct);
+        return await motor.ResolveAsync(informe.Name, informe.TenantId, definicion, ct);
     }
 
     private async Task<TablaDeInforme> KpisAsync(Report informe, Guid tenantId, CancellationToken ct)

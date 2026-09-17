@@ -15,7 +15,7 @@ public sealed class EfTicketRepository(TicketingDbContext context) : ITicketRepo
     {
         // El ámbito se cierra al salir del `using`. No vale `IgnoreQueryFilters()`: apagaría
         // también el aislamiento por inquilino.
-        using var _ = context.VerTambien(borrados: true, archivados: true);
+        using var _ = context.IncludeHidden(deleted: true, archived: true);
 
         return await context.Tickets.FirstOrDefaultAsync(t => t.TenantId == tenantId && t.Id == id, ct);
     }

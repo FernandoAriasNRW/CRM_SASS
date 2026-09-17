@@ -535,13 +535,13 @@ public sealed class WorkTask : AggregateRoot, ITenantEntity, ISoftDeletable, IAr
     #region Archivo y papelera
 
     /// <summary>Cuándo se archivó, o <c>null</c> si está a la vista. Ver <see cref="IArchivable"/>.</summary>
-    public DateTime? ArchivadoEnUtc { get; private set; }
+    public DateTime? ArchivedAtUtc { get; private set; }
 
     /// <summary>Si está en la papelera. El filtro global lo esconde salvo que se pida verlo.</summary>
     public bool IsDeleted { get; private set; }
 
     /// <summary>Cuándo se envió a la papelera, para poder vaciarla por antigüedad algún día.</summary>
-    public DateTime? BorradoEnUtc { get; private set; }
+    public DateTime? DeletedAtUtc { get; private set; }
 
     /// <summary>
     /// Aparta la tarea de las listas sin borrarla.
@@ -552,12 +552,12 @@ public sealed class WorkTask : AggregateRoot, ITenantEntity, ISoftDeletable, IAr
     /// </summary>
     public void Archivar()
     {
-        if (ArchivadoEnUtc is not null) return;
-        ArchivadoEnUtc = DateTime.UtcNow;
+        if (ArchivedAtUtc is not null) return;
+        ArchivedAtUtc = DateTime.UtcNow;
     }
 
     /// <summary>Devuelve la tarea a las listas.</summary>
-    public void Desarchivar() => ArchivadoEnUtc = null;
+    public void Desarchivar() => ArchivedAtUtc = null;
 
     /// <summary>
     /// Manda la tarea a la papelera: deja de verse pero se puede recuperar.
@@ -565,18 +565,18 @@ public sealed class WorkTask : AggregateRoot, ITenantEntity, ISoftDeletable, IAr
     /// Archivar y borrar no se pisan. Una tarea archivado que se borra sigue archivado al
     /// restaurarlo, que es lo que espera quien lo archivó.
     /// </summary>
-    public void EnviarAPapelera()
+    public void MoveToTrash()
     {
         if (IsDeleted) return;
         IsDeleted = true;
-        BorradoEnUtc = DateTime.UtcNow;
+        DeletedAtUtc = DateTime.UtcNow;
     }
 
     /// <summary>Saca la tarea de la papelera y la deja como estaba.</summary>
-    public void RestaurarDePapelera()
+    public void RestoreFromTrash()
     {
         IsDeleted = false;
-        BorradoEnUtc = null;
+        DeletedAtUtc = null;
     }
 
     #endregion

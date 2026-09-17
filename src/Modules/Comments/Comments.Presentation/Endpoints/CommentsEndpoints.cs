@@ -1,4 +1,4 @@
-using System.Security.Claims;
+using BuildingBlocks.Application.Abstractions;
 using Comments.Application;
 using Comments.Domain.Entities;
 using Comments.Infrastructure;
@@ -32,15 +32,6 @@ public static class CommentsEndpoints
     // mismo fallo.
     var group = app.MapGroup("/api/v1/comments").WithTags("Comments").RequireAuthorization();
 
-    static Guid TenantDe(ClaimsPrincipal principal)
-        => Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var id) ? id : Guid.Empty;
-
-    static Guid UsuarioDe(ClaimsPrincipal principal)
-        => Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value, out var id) ? id : Guid.Empty;
-
-    static string RolDe(ClaimsPrincipal principal)
-        => principal.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value ?? string.Empty;
-
     static IResult Responder(bool exito, string? error)
     {
       if (exito) return Results.Ok();
@@ -54,36 +45,36 @@ public static class CommentsEndpoints
       return Results.BadRequest(error);
     }
 
-    group.MapGet("/{entidad}/{entityId:guid}", async (ClaimsPrincipal principal, string entidad, Guid entityId, IMediator mediator) =>
+    group.MapGet("/{entidad}/{entityId:guid}", async (IUserContext currentUser, string entidad, Guid entityId, IMediator mediator) =>
     {
-      var result = await mediator.Send(new GetCommentsQuery(TenantDe(principal), entidad, entityId));
+      var result = await mediator.Send(new GetCommentsQuery(currentUser.TenantId, entidad, entityId));
       return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
     });
 
-    group.MapPost("/{entidad}/{entityId:guid}", async (ClaimsPrincipal principal, string entidad, Guid entityId, NuevoComentario cuerpo, IMediator mediator) =>
+    group.MapPost("/{entidad}/{entityId:guid}", async (IUserContext currentUser, string entidad, Guid entityId, NuevoComentario cuerpo, IMediator mediator) =>
     {
       // El autor sale del token y no del cuerpo. Si viniera de fuera, cualquiera podría firmar
       // un comentario con el nombre de otro.
       var result = await mediator.Send(new AddCommentCommand(
-          TenantDe(principal), entidad, entityId, UsuarioDe(principal), cuerpo.Texto, cuerpo.RespondeAId));
+          currentUser.TenantId, entidad, entityId, currentUser.UserId, cuerpo.Texto, cuerpo.RespondeAId));
 
       return result.IsSuccess
           ? Results.Created($"/api/v1/comments/{entidad}/{entityId}", result.Value)
           : Results.BadRequest(result.Error);
     });
 
-    group.MapPut("/{id:guid}", async (ClaimsPrincipal principal, Guid id, TextoDelComentario cuerpo, IMediator mediator) =>
+    group.MapPut("/{id:guid}", async (IUserContext currentUser, Guid id, TextoDelComentario cuerpo, IMediator mediator) =>
     {
       var result = await mediator.Send(new EditCommentCommand(
-          TenantDe(principal), id, UsuarioDe(principal), cuerpo.Texto));
+          currentUser.TenantId, id, currentUser.UserId, cuerpo.Texto));
 
       return Responder(result.IsSuccess, result.Error);
     });
 
-    group.MapDelete("/{id:guid}", async (ClaimsPrincipal principal, Guid id, IMediator mediator) =>
+    group.MapDelete("/{id:guid}", async (IUserContext currentUser, Guid id, IMediator mediator) =>
     {
       var result = await mediator.Send(new RemoveCommentCommand(
-          TenantDe(principal), id, UsuarioDe(principal), RolDe(principal)));
+          currentUser.TenantId, id, currentUser.UserId, currentUser.Role));
 
       return result.IsSuccess ? Results.NoContent() : Responder(false, result.Error);
     });

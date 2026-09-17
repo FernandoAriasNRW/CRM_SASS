@@ -43,7 +43,7 @@ public sealed class RepositorioDeComparticion(IdentityDbContext contexto) : IRep
             .Distinct()
             .ToListAsync(ct);
 
-    public async Task<IReadOnlyList<Guid>> CompartidosConAlguienAsync(Guid tenantId, string tipoEnPermisos, CancellationToken ct)
+    public async Task<IReadOnlyList<Guid>> GetSharedWithOthersAsync(Guid tenantId, string tipoEnPermisos, CancellationToken ct)
         => await Nominales(tenantId, tipoEnPermisos).AsNoTracking()
             .Select(p => p.EntityId)
             .Distinct()
@@ -56,7 +56,7 @@ public sealed class RepositorioDeComparticion(IdentityDbContext contexto) : IRep
 }
 
 /// <summary>
-/// Responde el puerto <see cref="IVisibilidadDeEntidades"/> para el usuario de la petición.
+/// Responde el puerto <see cref="IEntityVisibility"/> para el usuario de la petición.
 ///
 /// Lo implementa Identity porque es quien guarda los permisos, y lo consumen los demás módulos
 /// sin conocerlo, igual que con los favoritos: la dependencia va de todos a BuildingBlocks,
@@ -64,15 +64,15 @@ public sealed class RepositorioDeComparticion(IdentityDbContext contexto) : IRep
 /// </summary>
 public sealed class VisibilidadDeEntidades(
     IRepositorioDeComparticion repositorio,
-    IUserContext usuario) : IVisibilidadDeEntidades
+    IUserContext usuario) : IEntityVisibility
 {
-    public Task<IReadOnlyList<Guid>> CompartidosConmigoAsync(string tipoDeEntidad, CancellationToken ct = default)
+    public Task<IReadOnlyList<Guid>> GetSharedWithMeAsync(string entityType, CancellationToken ct = default)
         => repositorio.CompartidosConAsync(
             usuario.TenantId, usuario.UserId,
-            VocabularioDePermisos.ComoLoLlamaElPermiso(tipoDeEntidad), ct);
+            VocabularioDePermisos.ComoLoLlamaElPermiso(entityType), ct);
 
-    public Task<IReadOnlyList<Guid>> CompartidosConAlguienAsync(string tipoDeEntidad, CancellationToken ct = default)
-        => repositorio.CompartidosConAlguienAsync(
+    public Task<IReadOnlyList<Guid>> GetSharedWithOthersAsync(string entityType, CancellationToken ct = default)
+        => repositorio.GetSharedWithOthersAsync(
             usuario.TenantId,
-            VocabularioDePermisos.ComoLoLlamaElPermiso(tipoDeEntidad), ct);
+            VocabularioDePermisos.ComoLoLlamaElPermiso(entityType), ct);
 }

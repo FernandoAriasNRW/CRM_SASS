@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.AspNetCore.Mvc;
 using MediatR;
-using System.Security.Claims;
 
 namespace Tags.Presentation.Endpoints;
 

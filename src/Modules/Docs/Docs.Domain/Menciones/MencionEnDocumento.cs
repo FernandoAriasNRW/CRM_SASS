@@ -30,7 +30,7 @@ public sealed class MencionEnDocumento : Entity, ITenantEntity
     /// <summary>El documento al que pertenece la página, para poder enlazarlo sin otra consulta.</summary>
     public Guid DocumentId { get; private set; }
 
-    /// <summary>Qué se menciona. Uno de <see cref="TiposDeEntidad"/>, más «Persona».</summary>
+    /// <summary>Qué se menciona. Uno de <see cref="EntityTypes"/>, más «Persona».</summary>
     public string TipoMencionado { get; private set; } = string.Empty;
 
     public Guid EntidadMencionadaId { get; private set; }
@@ -42,14 +42,14 @@ public sealed class MencionEnDocumento : Entity, ITenantEntity
     /// pintar la lista de «mencionado en» sin ir a buscar cada nombre, y para que una mención a
     /// algo que luego se borró siga diciendo a qué se refería en vez de quedar como un hueco.
     /// </summary>
-    public string TextoVisible { get; private set; } = string.Empty;
+    public string VisibleText { get; private set; } = string.Empty;
 
     public DateTime DetectadaUtc { get; private set; }
 
     private MencionEnDocumento() { }
 
     public static MencionEnDocumento Crear(
-        Guid tenantId, Guid documentId, Guid pageId, string tipo, Guid entidadId, string textoVisible)
+        Guid tenantId, Guid documentId, Guid pageId, string tipo, Guid entityId, string textoVisible)
         => new()
         {
             Id = Guid.NewGuid(),
@@ -57,8 +57,8 @@ public sealed class MencionEnDocumento : Entity, ITenantEntity
             DocumentId = documentId,
             PageId = pageId,
             TipoMencionado = tipo,
-            EntidadMencionadaId = entidadId,
-            TextoVisible = Recortar(textoVisible),
+            EntidadMencionadaId = entityId,
+            VisibleText = Recortar(textoVisible),
             DetectadaUtc = DateTime.UtcNow
         };
 
@@ -73,7 +73,7 @@ public sealed class MencionEnDocumento : Entity, ITenantEntity
 /// <summary>
 /// Qué se puede mencionar dentro de un documento.
 ///
-/// «Persona» está aquí y no en <see cref="TiposDeEntidad"/> porque mencionar a alguien no es
+/// «Persona» está aquí y no en <see cref="EntityTypes"/> porque mencionar a alguien no es
 /// mencionar una cosa: no lleva a una pantalla de detalle igual, y quien pregunte «¿qué documentos
 /// me mencionan?» está haciendo otra pregunta que «¿qué documentos hablan de esta tarea?».
 /// </summary>
@@ -82,7 +82,7 @@ public static class TiposMencionables
     public const string Persona = "Persona";
 
     public static IReadOnlyList<string> Todos() =>
-        [Persona, TiposDeEntidad.Tarea, TiposDeEntidad.Ticket, TiposDeEntidad.Proyecto, TiposDeEntidad.Documento];
+        [Persona, EntityTypes.Task, EntityTypes.Ticket, EntityTypes.Project, EntityTypes.Document];
 
     public static bool Existe(string? tipo) => tipo is not null && Todos().Contains(tipo);
 }
@@ -126,7 +126,7 @@ public static partial class LectorDeMenciones
     private static partial Regex Etiquetas();
 
     /// <summary>Una mención encontrada en el texto, antes de convertirse en fila.</summary>
-    public sealed record Encontrada(string Tipo, Guid EntidadId, string TextoVisible);
+    public sealed record Encontrada(string Tipo, Guid EntidadId, string VisibleText);
 
     public static IReadOnlyList<Encontrada> Leer(string? contenido)
     {
@@ -143,10 +143,10 @@ public static partial class LectorDeMenciones
             if (!TiposMencionables.Existe(tipo)) continue;
 
             var id = AtributoId().Match(etiqueta.Value);
-            if (!id.Success || !Guid.TryParse(id.Groups[1].Value, out var entidadId)) continue;
-            if (entidadId == Guid.Empty) continue;
+            if (!id.Success || !Guid.TryParse(id.Groups[1].Value, out var entityId)) continue;
+            if (entityId == Guid.Empty) continue;
 
-            encontradas.Add(new Encontrada(tipo, entidadId, TextoDe(contenido, etiqueta)));
+            encontradas.Add(new Encontrada(tipo, entityId, TextoDe(contenido, etiqueta)));
         }
 
         // La misma tarea mencionada tres veces en la misma página es **una** mención: la pregunta

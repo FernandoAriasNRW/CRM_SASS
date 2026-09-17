@@ -56,14 +56,11 @@ namespace WorkItems.Infrastructure.Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("char(36)");
 
-                    b.Property<DateTime?>("ArchivadoEnUtc")
+                    b.Property<DateTime?>("ArchivedAtUtc")
                         .HasColumnType("datetime(6)");
 
                     b.Property<Guid>("AssigneeId")
                         .HasColumnType("char(36)");
-
-                    b.Property<DateTime?>("BorradoEnUtc")
-                        .HasColumnType("datetime(6)");
 
                     b.Property<DateTime?>("CompletedAtUtc")
                         .HasColumnType("datetime(6)");
@@ -75,6 +72,9 @@ namespace WorkItems.Infrastructure.Persistence.Migrations
 
                     b.Property<Guid>("CreatedById")
                         .HasColumnType("char(36)");
+
+                    b.Property<DateTime?>("DeletedAtUtc")
+                        .HasColumnType("datetime(6)");
 
                     b.Property<string>("Description")
                         .IsRequired()
@@ -154,7 +154,7 @@ namespace WorkItems.Infrastructure.Persistence.Migrations
                     b.HasIndex("TenantId", "ParentTaskId")
                         .HasDatabaseName("IX_Tasks_TenantId_ParentTaskId");
 
-                    b.HasIndex("TenantId", "ArchivadoEnUtc", "IsDeleted")
+                    b.HasIndex("TenantId", "ArchivedAtUtc", "IsDeleted")
                         .HasDatabaseName("IX_Tasks_TenantId_Archivado_Borrado");
 
                     b.ToTable("Tasks");

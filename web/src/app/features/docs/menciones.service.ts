@@ -5,13 +5,13 @@ import { ApiService } from '../../core/api.service';
 import type { CandidatoDeMencion } from './extensions/mencion';
 
 /** Un documento que menciona algo. Es lo que devuelve el servidor. */
-export interface DocumentoQueMenciona {
+export interface MentioningDocument {
   documentId: string;
   pageId: string;
-  tituloDelDocumento: string;
-  tituloDeLaPagina: string;
-  textoVisible: string;
-  mencionadaUtc: string;
+  documentTitle: string;
+  pageTitle: string;
+  visibleText: string;
+  mentionedAtUtc: string;
 }
 
 /**
@@ -129,6 +129,6 @@ export class MencionesService {
    * documento no contesta esta pregunta, porque habría que abrir todos.
    */
   quienMenciona(tipo: string, entidadId: string) {
-    return this.api.get<DocumentoQueMenciona[]>(`/docs/menciones/${tipo}/${entidadId}`);
+    return this.api.get<MentioningDocument[]>(`/docs/menciones/${tipo}/${entidadId}`);
   }
 }

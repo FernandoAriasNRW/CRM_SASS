@@ -7,17 +7,17 @@ namespace BuildingBlocks.Application;
 /// decisión y conviene verlas a la vez: archivar tiene su vuelta, borrar tiene la suya, y
 /// ninguna de las dos parejas anula a la otra.
 /// </summary>
-public enum AccionDeArchivo
+public enum ArchiveAction
 {
     /// <summary>Fuera de las listas, sigue existiendo, sin promesa de que desaparezca.</summary>
-    Archivar,
+    Archive,
 
     /// <summary>De vuelta a las listas.</summary>
-    Desarchivar,
+    Unarchive,
 
     /// <summary>A la papelera: borrado y recuperable.</summary>
-    EnviarAPapelera,
+    MoveToTrash,
 
     /// <summary>Fuera de la papelera, tal y como estaba —archivado incluido, si lo estaba—.</summary>
-    RestaurarDePapelera
+    RestoreFromTrash
 }

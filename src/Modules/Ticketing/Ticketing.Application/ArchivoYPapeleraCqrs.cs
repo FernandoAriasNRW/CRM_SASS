@@ -16,7 +16,7 @@ namespace Ticketing.Application;
 public sealed record CambiarArchivoDeTicketCommand(
     Guid TenantId,
     Guid Id,
-    AccionDeArchivo Accion) : ICommand<bool>, IAuthorizeEntity
+    ArchiveAction Accion) : ICommand<bool>, IAuthorizeEntity
 {
     public string EntityType => "Ticket";
     public Guid EntityId => Id;
@@ -36,10 +36,10 @@ public sealed class CambiarArchivoDeTicketHandler(
 
         switch (request.Accion)
         {
-            case AccionDeArchivo.Archivar: ticket.Archivar(); break;
-            case AccionDeArchivo.Desarchivar: ticket.Desarchivar(); break;
-            case AccionDeArchivo.EnviarAPapelera: ticket.EnviarAPapelera(); break;
-            case AccionDeArchivo.RestaurarDePapelera: ticket.RestaurarDePapelera(); break;
+            case ArchiveAction.Archive: ticket.Archivar(); break;
+            case ArchiveAction.Unarchive: ticket.Desarchivar(); break;
+            case ArchiveAction.MoveToTrash: ticket.MoveToTrash(); break;
+            case ArchiveAction.RestoreFromTrash: ticket.RestoreFromTrash(); break;
         }
 
         await repository.UpdateAsync(ticket, ct);

@@ -15,14 +15,14 @@ namespace BuildingBlocks.Domain;
 /// Va en BuildingBlocks.Domain y no en Application porque el agregado de favoritos la valida:
 /// un tipo desconocido se rechaza en el dominio, no en el borde.
 /// </summary>
-public static class TiposDeEntidad
+public static class EntityTypes
 {
-    public const string Tarea = "Tarea";
-    public const string Proyecto = "Proyecto";
+    public const string Task = "Tarea";
+    public const string Project = "Proyecto";
     public const string Ticket = "Ticket";
-    public const string Documento = "Documento";
+    public const string Document = "Documento";
 
-    public static IReadOnlyList<string> Todos() => [Tarea, Proyecto, Ticket, Documento];
+    public static IReadOnlyList<string> All() => [Task, Project, Ticket, Document];
 
-    public static bool Existe(string? tipo) => tipo is not null && Todos().Contains(tipo);
+    public static bool Exists(string? type) => type is not null && All().Contains(type);
 }

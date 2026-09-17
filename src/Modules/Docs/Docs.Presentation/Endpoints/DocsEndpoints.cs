@@ -1,3 +1,4 @@
+using BuildingBlocks.Application.Abstractions;
 using Docs.Application.Commands;
 using Docs.Application.Queries;
 using MediatR;
@@ -5,7 +6,6 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
 
@@ -22,17 +22,14 @@ public static class DocsEndpointsExtensions
     {
         var group = builder.MapGroup("/api/v1/docs").RequireAuthorization();
 
-        group.MapPost("/", async ([FromBody] CreateDocumentRequest req, HttpContext context, IMediator mediator) =>
+        group.MapPost("/", async ([FromBody] CreateDocumentRequest req, IUserContext currentUser, IMediator mediator) =>
         {
-            var tenantIdStr = context.User.FindFirst("tenantId")?.Value;
-            var userIdStr = context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            
-            if (string.IsNullOrEmpty(tenantIdStr) || string.IsNullOrEmpty(userIdStr))
+            if (currentUser.TenantId == Guid.Empty || currentUser.UserId == Guid.Empty)
                 return Results.Unauthorized();
 
             var command = new CreateDocumentCommand(
-                Guid.Parse(tenantIdStr),
-                Guid.Parse(userIdStr),
+                currentUser.TenantId,
+                currentUser.UserId,
                 req.Title,
                 req.Description,
                 req.Type,
@@ -44,43 +41,38 @@ public static class DocsEndpointsExtensions
             return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
         });
 
-        group.MapGet("/", async (HttpContext context, IMediator mediator) =>
+        group.MapGet("/", async (IUserContext currentUser, IMediator mediator) =>
         {
-            var tenantIdStr = context.User.FindFirst("tenantId")?.Value;
-            var userIdStr = context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            
-            if (string.IsNullOrEmpty(tenantIdStr) || string.IsNullOrEmpty(userIdStr))
+            if (currentUser.TenantId == Guid.Empty || currentUser.UserId == Guid.Empty)
                 return Results.Unauthorized();
 
-            var query = new GetDocumentsQuery(Guid.Parse(tenantIdStr), Guid.Parse(userIdStr));
+            var query = new GetDocumentsQuery(currentUser.TenantId, currentUser.UserId);
             var result = await mediator.Send(query);
             
             return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
         });
 
-        group.MapDelete("/{id:guid}", async (Guid id, HttpContext context, IMediator mediator) =>
+        group.MapDelete("/{id:guid}", async (Guid id, IMediator mediator) =>
         {
             var command = new DeleteDocumentCommand(id);
             var result = await mediator.Send(command);
             return result.IsSuccess ? Results.Ok() : Results.BadRequest(result.Error);
         });
 
-        group.MapDelete("/pages/{pageId:guid}", async (Guid pageId, HttpContext context, IMediator mediator) =>
+        group.MapDelete("/pages/{pageId:guid}", async (Guid pageId, IMediator mediator) =>
         {
             var command = new DeletePageCommand(pageId);
             var result = await mediator.Send(command);
             return result.IsSuccess ? Results.Ok() : Results.BadRequest(result.Error);
         });
 
-        group.MapPost("/{id:guid}/save-as-template", async (Guid id, [FromBody] SaveAsTemplateRequest req, HttpContext context, IMediator mediator) =>
+        group.MapPost("/{id:guid}/save-as-template", async (Guid id, [FromBody] SaveAsTemplateRequest req, IUserContext currentUser, IMediator mediator) =>
         {
-            var tenantIdStr = context.User.FindFirst("tenantId")?.Value;
-            var userIdStr = context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(tenantIdStr) || string.IsNullOrEmpty(userIdStr)) return Results.Unauthorized();
+            if (currentUser.TenantId == Guid.Empty || currentUser.UserId == Guid.Empty) return Results.Unauthorized();
 
             var command = new SaveAsTemplateCommand(
-                Guid.Parse(tenantIdStr),
-                Guid.Parse(userIdStr),
+                currentUser.TenantId,
+                currentUser.UserId,
                 id,
                 req.CustomTitle,
                 req.Description);
@@ -90,24 +82,21 @@ public static class DocsEndpointsExtensions
         });
 
         // Cuánto se usa cada plantilla, para que la galería enseñe cuatro que valgan la pena.
-        group.MapGet("/plantillas/usos", async (HttpContext context, IMediator mediator) =>
+        group.MapGet("/plantillas/usos", async (IUserContext currentUser, IMediator mediator) =>
         {
-            var tenantIdStr = context.User.FindFirst("tenantId")?.Value;
-            if (string.IsNullOrEmpty(tenantIdStr)) return Results.Unauthorized();
+            if (currentUser.TenantId == Guid.Empty) return Results.Unauthorized();
 
-            var result = await mediator.Send(new GetUsosDePlantillaQuery(Guid.Parse(tenantIdStr)));
+            var result = await mediator.Send(new GetUsosDePlantillaQuery(currentUser.TenantId));
             return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
         });
 
-        group.MapPost("/from-template", async ([FromBody] CreateFromTemplateRequest req, HttpContext context, IMediator mediator) =>
+        group.MapPost("/from-template", async ([FromBody] CreateFromTemplateRequest req, IUserContext currentUser, IMediator mediator) =>
         {
-            var tenantIdStr = context.User.FindFirst("tenantId")?.Value;
-            var userIdStr = context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(tenantIdStr) || string.IsNullOrEmpty(userIdStr)) return Results.Unauthorized();
+            if (currentUser.TenantId == Guid.Empty || currentUser.UserId == Guid.Empty) return Results.Unauthorized();
 
             var command = new CreateFromTemplateCommand(
-                Guid.Parse(tenantIdStr),
-                Guid.Parse(userIdStr),
+                currentUser.TenantId,
+                currentUser.UserId,
                 req.TemplateKey,
                 req.TemplateDocumentId,
                 req.CustomTitle,
@@ -117,15 +106,13 @@ public static class DocsEndpointsExtensions
             return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
         });
 
-        group.MapPost("/import", async ([FromBody] ImportDocumentRequest req, HttpContext context, IMediator mediator) =>
+        group.MapPost("/import", async ([FromBody] ImportDocumentRequest req, IUserContext currentUser, IMediator mediator) =>
         {
-            var tenantIdStr = context.User.FindFirst("tenantId")?.Value;
-            var userIdStr = context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(tenantIdStr) || string.IsNullOrEmpty(userIdStr)) return Results.Unauthorized();
+            if (currentUser.TenantId == Guid.Empty || currentUser.UserId == Guid.Empty) return Results.Unauthorized();
 
             var command = new ImportDocumentCommand(
-                Guid.Parse(tenantIdStr),
-                Guid.Parse(userIdStr),
+                currentUser.TenantId,
+                currentUser.UserId,
                 req.Title,
                 req.Content,
                 req.Type);
@@ -134,10 +121,9 @@ public static class DocsEndpointsExtensions
             return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
         });
 
-        group.MapPost("/upload", async (IFormFile file, HttpContext context, IMediator mediator) =>
+        group.MapPost("/upload", async (IFormFile file, IUserContext currentUser, IMediator mediator) =>
         {
-            var tenantIdStr = context.User.FindFirst("tenantId")?.Value;
-            if (string.IsNullOrEmpty(tenantIdStr)) return Results.Unauthorized();
+            if (currentUser.TenantId == Guid.Empty) return Results.Unauthorized();
 
             using var stream = file.OpenReadStream();
             var command = new Docs.Application.Handlers.Commands.UploadFileCommand(stream, file.FileName, file.ContentType);
@@ -146,7 +132,7 @@ public static class DocsEndpointsExtensions
             return result.IsSuccess ? Results.Ok(new { url = result.Value }) : Results.BadRequest(result.Error);
         }).DisableAntiforgery();
 
-        group.MapPost("/{id:guid}/pages", async (Guid id, [FromBody] CreatePageRequest req, HttpContext context, IMediator mediator) =>
+        group.MapPost("/{id:guid}/pages", async (Guid id, [FromBody] CreatePageRequest req, IMediator mediator) =>
         {
             var command = new Docs.Application.Handlers.Commands.CreatePageCommand(id, req.ParentPageId, req.Title);
             var result = await mediator.Send(command);
@@ -155,7 +141,7 @@ public static class DocsEndpointsExtensions
 
         // Renombrar un documento. No había forma de hacerlo: el campo de título de la pantalla
         // escribía en la página activa porque no existía este endpoint.
-        group.MapPut("/{id:guid}", async (Guid id, [FromBody] RenameDocumentRequest req, HttpContext context, IMediator mediator) =>
+        group.MapPut("/{id:guid}", async (Guid id, [FromBody] RenameDocumentRequest req, IMediator mediator) =>
         {
             var command = new Docs.Application.Handlers.Commands.RenombrarDocumentoCommand(
                 id, req.Title, req.Description);
@@ -165,7 +151,7 @@ public static class DocsEndpointsExtensions
         });
 
         // Mover una página dentro del árbol del documento: de padre, de orden, o las dos.
-        group.MapPut("/pages/{pageId:guid}/mover", async (Guid pageId, [FromBody] MovePageRequest req, HttpContext context, IMediator mediator) =>
+        group.MapPut("/pages/{pageId:guid}/mover", async (Guid pageId, [FromBody] MovePageRequest req, IMediator mediator) =>
         {
             var command = new Docs.Application.Handlers.Commands.MoverPaginaCommand(
                 pageId, req.ParentPageId, req.Order);
@@ -174,7 +160,7 @@ public static class DocsEndpointsExtensions
             return result.IsSuccess ? Results.NoContent() : Results.BadRequest(result.Error);
         });
 
-        group.MapPut("/pages/{pageId:guid}", async (Guid pageId, [FromBody] UpdatePageRequest req, HttpContext context, IMediator mediator) =>
+        group.MapPut("/pages/{pageId:guid}", async (Guid pageId, [FromBody] UpdatePageRequest req, IMediator mediator) =>
         {
             var command = new Docs.Application.Handlers.Commands.UpdatePageCommand(pageId, req.Title, req.Content);
             var result = await mediator.Send(command);
@@ -194,27 +180,24 @@ public static class DocsEndpointsExtensions
         });
 
         group.MapPost("/pages/{pageId:guid}/anotaciones", async (
-            Guid pageId, [FromBody] NuevaAnotacionRequest req, HttpContext context, IMediator mediator) =>
+            Guid pageId, [FromBody] NuevaAnotacionRequest req, IUserContext currentUser, IMediator mediator) =>
         {
-            var tenantIdStr = context.User.FindFirst("tenantId")?.Value;
-            var userIdStr = context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(tenantIdStr) || string.IsNullOrEmpty(userIdStr)) return Results.Unauthorized();
+            if (currentUser.TenantId == Guid.Empty || currentUser.UserId == Guid.Empty) return Results.Unauthorized();
 
             var command = new Docs.Application.Anotaciones.CrearAnotacionCommand(
-                Guid.Parse(tenantIdStr), Guid.Empty, pageId, Guid.Parse(userIdStr), req.TextoCitado);
+                currentUser.TenantId, Guid.Empty, pageId, currentUser.UserId, req.TextoCitado);
 
             var result = await mediator.Send(command);
             return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
         });
 
         group.MapPut("/anotaciones/{id:guid}/resolver", async (
-            Guid id, [FromBody] ResolverAnotacionRequest req, HttpContext context, IMediator mediator) =>
+            Guid id, [FromBody] ResolverAnotacionRequest req, IUserContext currentUser, IMediator mediator) =>
         {
-            var userIdStr = context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userIdStr)) return Results.Unauthorized();
+            if (currentUser.UserId == Guid.Empty) return Results.Unauthorized();
 
             var command = new Docs.Application.Anotaciones.ResolverAnotacionCommand(
-                id, Guid.Parse(userIdStr), req.Resuelta);
+                id, currentUser.UserId, req.Resuelta);
 
             var result = await mediator.Send(command);
             return result.IsSuccess ? Results.NoContent() : Results.BadRequest(result.Error);
@@ -231,9 +214,9 @@ public static class DocsEndpointsExtensions
         // «¿Qué documentos hablan de esta tarea?». Va bajo /docs y no bajo la tarea porque la
         // respuesta es una lista de documentos y la da Docs; la pantalla de la tarea la consume
         // sin que WorkItems tenga que conocer a Docs.
-        group.MapGet("/menciones/{tipo}/{entidadId:guid}", async (
-            string tipo, Guid entidadId,
-            BuildingBlocks.Application.Abstractions.IMencionesEnDocumentos menciones) =>
+        group.MapGet("/menciones/{tipo}/{entityId:guid}", async (
+            string tipo, Guid entityId,
+            BuildingBlocks.Application.Abstractions.IDocumentMentions menciones) =>
         {
             if (!Docs.Domain.Menciones.TiposMencionables.Existe(tipo))
             {
@@ -242,17 +225,17 @@ public static class DocsEndpointsExtensions
                     + string.Join(", ", Docs.Domain.Menciones.TiposMencionables.Todos()));
             }
 
-            return Results.Ok(await menciones.QuienMencionaAsync(tipo, entidadId));
+            return Results.Ok(await menciones.GetMentioningDocumentsAsync(tipo, entityId));
         });
 
-        group.MapGet("/{id:guid}/pages", async (Guid id, HttpContext context, IMediator mediator) =>
+        group.MapGet("/{id:guid}/pages", async (Guid id, IMediator mediator) =>
         {
             var query = new GetPagesQuery(id);
             var result = await mediator.Send(query);
             return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
         });
 
-        group.MapGet("/{id:guid}/export", async (Guid id, HttpContext context, IMediator mediator) =>
+        group.MapGet("/{id:guid}/export", async (Guid id, IMediator mediator) =>
         {
             var query = new Docs.Application.Queries.ExportDocumentQuery(id);
             var result = await mediator.Send(query);

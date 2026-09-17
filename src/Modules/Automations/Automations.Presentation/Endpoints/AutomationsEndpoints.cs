@@ -1,4 +1,4 @@
-using System.Security.Claims;
+using BuildingBlocks.Application.Abstractions;
 using Automations.Application;
 using Automations.Domain.ValueObjects;
 using Automations.Infrastructure;
@@ -24,9 +24,6 @@ public static class AutomationsEndpoints
   public static IEndpointRouteBuilder MapAutomationsEndpoints(this IEndpointRouteBuilder app)
   {
     var group = app.MapGroup("/api/v1/automations").WithTags("Automations").RequireAuthorization();
-
-    static Guid TenantDe(ClaimsPrincipal principal)
-        => Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var id) ? id : Guid.Empty;
 
     static IResult Responder(bool exito, string? error)
     {
@@ -63,39 +60,39 @@ public static class AutomationsEndpoints
       destinatarioResponsable = TipoDeAccion.DestinatarioResponsable,
     }));
 
-    group.MapGet("", async (ClaimsPrincipal principal, IMediator mediator) =>
+    group.MapGet("", async (IUserContext currentUser, IMediator mediator) =>
     {
-      var result = await mediator.Send(new GetAutomationRulesQuery(TenantDe(principal)));
+      var result = await mediator.Send(new GetAutomationRulesQuery(currentUser.TenantId));
       return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
     });
 
-    group.MapPost("", async (ClaimsPrincipal principal, DefineAutomationRuleCommand command, IMediator mediator) =>
+    group.MapPost("", async (IUserContext currentUser, DefineAutomationRuleCommand command, IMediator mediator) =>
     {
-      var result = await mediator.Send(command with { TenantId = TenantDe(principal) });
+      var result = await mediator.Send(command with { TenantId = currentUser.TenantId });
 
       return result.IsSuccess
           ? Results.Created($"/api/v1/automations/{result.Value!.Id}", result.Value)
           : Results.BadRequest(result.Error);
     });
 
-    group.MapPut("/{id:guid}", async (ClaimsPrincipal principal, Guid id, UpdateAutomationRuleCommand command, IMediator mediator) =>
+    group.MapPut("/{id:guid}", async (IUserContext currentUser, Guid id, UpdateAutomationRuleCommand command, IMediator mediator) =>
     {
-      var result = await mediator.Send(command with { TenantId = TenantDe(principal), Id = id });
+      var result = await mediator.Send(command with { TenantId = currentUser.TenantId, Id = id });
       return Responder(result.IsSuccess, result.Error);
     });
 
     // Activar y desactivar tiene endpoint propio porque es la operación que se hace con prisa,
     // cuando una automatización está haciendo daño: obligar a reenviar la regla entera para
     // apagarla sería pedir precisión en el peor momento.
-    group.MapPut("/{id:guid}/active", async (ClaimsPrincipal principal, Guid id, SetAutomationRuleActiveCommand command, IMediator mediator) =>
+    group.MapPut("/{id:guid}/active", async (IUserContext currentUser, Guid id, SetAutomationRuleActiveCommand command, IMediator mediator) =>
     {
-      var result = await mediator.Send(command with { TenantId = TenantDe(principal), Id = id });
+      var result = await mediator.Send(command with { TenantId = currentUser.TenantId, Id = id });
       return Responder(result.IsSuccess, result.Error);
     });
 
-    group.MapDelete("/{id:guid}", async (ClaimsPrincipal principal, Guid id, IMediator mediator) =>
+    group.MapDelete("/{id:guid}", async (IUserContext currentUser, Guid id, IMediator mediator) =>
     {
-      var result = await mediator.Send(new RemoveAutomationRuleCommand(TenantDe(principal), id));
+      var result = await mediator.Send(new RemoveAutomationRuleCommand(currentUser.TenantId, id));
       return result.IsSuccess ? Results.NoContent() : Responder(false, result.Error);
     });
 
@@ -105,9 +102,9 @@ public static class AutomationsEndpoints
     // pregunta que el contador de la regla no sabía contestar: si no salta, o si salta y las
     // condiciones no se cumplen.
     group.MapGet("/{id:guid}/ejecuciones", async (
-        ClaimsPrincipal principal, Guid id, IMediator mediator, int cuantas = 20) =>
+        IUserContext currentUser, Guid id, IMediator mediator, int cuantas = 20) =>
     {
-      var result = await mediator.Send(new GetEjecucionesQuery(TenantDe(principal), id, cuantas));
+      var result = await mediator.Send(new GetEjecucionesQuery(currentUser.TenantId, id, cuantas));
       return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
     });
 

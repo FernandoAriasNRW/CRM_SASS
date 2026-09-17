@@ -1,94 +1,13 @@
-using System.Text;
-using System.Threading.RateLimiting;
-using FluentValidation;
-using Microsoft.AspNetCore.RateLimiting;
-using Microsoft.EntityFrameworkCore;
-using BuildingBlocks.Infrastructure.Persistence;
-using Teams.Presentation.Endpoints;
-using BuildingBlocks.Application.Behaviors;
-using Calendar.Application.Handlers.Commands;
-using Calendar.Infrastructure;
-using Calendar.Presentation.Endpoints;
-using Communication.Infrastructure;
-using Communication.Presentation.Endpoints;
-using Docs.Application;
-using Docs.Infrastructure;
-using Docs.Presentation.Endpoints;
-using Identity.Application.Abstractions.Services;
-using Identity.Application.Handlers.Commands;
-using Identity.Infrastructure;
-using Identity.Infrastructure.Services;
-using Identity.Presentation.Endpoints;
-using MediatR;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
-using Notifications.Application.Handlers.Commands;
-using Notifications.Infrastructure;
-using Notifications.Presentation.Endpoints;
-using Projects.Application.Handlers.Commands;
-using Projects.Infrastructure;
-using Projects.Presentation.Endpoints;
-using Reporting.Application.Handlers.Commands;
-using Reporting.Presentation.Endpoints;
+using ApiHost.Startup;
 using Scalar.AspNetCore;
 using Serilog;
-using Ticketing.Application.Handlers.Commands;
-using Ticketing.Infrastructure;
-using Ticketing.Presentation.Endpoints;
-using Webhook.Application.Handlers;
-using Webhook.Infrastructure;
-using Webhook.Presentation.Endpoints;
-using WorkItems.Application.Handlers.Commands;
-using WorkItems.Infrastructure;
-using WorkItems.Presentation.Endpoints;
-using Tags.Infrastructure;
-using Tags.Presentation;
-using Tags.Presentation.Endpoints;
-using CustomFields.Presentation.Endpoints;
-using Automations.Presentation.Endpoints;
-using Comments.Presentation.Endpoints;
-using ApiHost.Calendar;
 
-// La sonda de salud del contenedor: `dotnet ApiHost.dll --health-check`.
-//
-// Existe para que la imagen no necesite `curl` ni `wget`. La imagen de ASP.NET no trae
-// ninguno de los dos, y el `healthcheck` del compose invocaba `curl` igualmente: llevaba
-// 1.590 fallos consecutivos y el contenedor figuraba como «unhealthy» de forma permanente.
-// Con `depends_on: condition: service_healthy` eso deja el arranque colgado, y en un
-// orquestador es un servicio al que nunca se le enruta tráfico.
-//
-// La alternativa era instalar `curl` con apt en la imagen. Se descartó: añade una descarga
-// de red a cada construcción —que ya falló una vez, dejando el build entero roto por algo
-// que no es del proyecto—, engorda la imagen y suma superficie de CVE para pedir una URL.
-// El proceso que ya sabe responder es el mismo que se está comprobando.
-//
-// Sale antes de construir el host a propósito: no levanta servidor, no toca la base y no
-// aplica migraciones. Sólo pregunta y devuelve 0 o 1.
-if (args.Contains("--health-check"))
-{
-    var puerto = Environment.GetEnvironmentVariable("ASPNETCORE_HTTP_PORTS")?.Split(';')[0] ?? "8080";
+// Cada paso del arranque vive en su propio fichero de Startup/. Aquí sólo queda el orden, que es
+// lo que importa leer de un vistazo: sobre todo el del pipeline, donde mover una línea cambia qué
+// peticiones llegan autenticadas, comprimidas o limitadas.
 
-    // `/health/live` y no `/health/ready`: «vivo» pregunta si el proceso responde, «listo»
-    // pregunta además por la base de datos. Reiniciar el contenedor porque la base está caída
-    // no arregla la base y sí tira las conexiones que aún funcionaban.
-    using var sonda = new HttpClient { Timeout = TimeSpan.FromSeconds(5) };
-
-    try
-    {
-        // `127.0.0.1` y no `localhost`: dentro de un contenedor `localhost` puede resolver
-        // primero a `::1`, y si el servidor sólo escucha en IPv4 la sonda falla mientras el
-        // servicio funciona. Le pasa a la imagen del frontend con nginx.
-        var respuesta = await sonda.GetAsync($"http://127.0.0.1:{puerto}/health/live");
-        return respuesta.IsSuccessStatusCode ? 0 : 1;
-    }
-    catch (Exception ex)
-    {
-        // A stderr: lo recoge `docker inspect` en el registro de la comprobación, y es lo
-        // único que verá quien intente entender por qué el contenedor no está sano.
-        await Console.Error.WriteLineAsync($"La sonda de salud falló: {ex.Message}");
-        return 1;
-    }
-}
+if (args.Contains(HealthCheckProbe.Argument))
+    return await HealthCheckProbe.RunAsync();
 
 // La licencia comunitaria de QuestPDF hay que declararla antes de generar el primer PDF, o
 // lanza al hacerlo. Se declara aquí, al arrancar, y no dentro del escritor: es una decisión de
@@ -96,41 +15,8 @@ if (args.Contains("--health-check"))
 QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
 
 var builder = WebApplication.CreateBuilder(args);
+var jwtKey = RequiredSettings.EnsureValid(builder.Configuration);
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// VALIDACIÓN DE CONFIGURACIÓN — fail fast
-//
-// Preferimos que la aplicación no arranque a que arranque con una configuración
-// insegura. Sin esto, una clave JWT vacía produce tokens que cualquiera puede
-// falsificar, y el fallo aparecería mucho más tarde y de forma confusa.
-// ═══════════════════════════════════════════════════════════════════════════════
-var jwtKey = builder.Configuration["Jwt:Key"];
-if (string.IsNullOrWhiteSpace(jwtKey))
-{
-    throw new InvalidOperationException(
-        "Falta la configuración 'Jwt:Key'. Defínala en appsettings.Development.json, " +
-        "en user-secrets (dotnet user-secrets set \"Jwt:Key\" \"<valor>\") " +
-        "o en la variable de entorno Jwt__Key.");
-}
-
-// HMAC-SHA256 requiere una clave de al menos 256 bits (32 bytes).
-if (System.Text.Encoding.UTF8.GetByteCount(jwtKey) < 32)
-{
-    throw new InvalidOperationException(
-        "'Jwt:Key' debe tener al menos 32 caracteres para firmar con HMAC-SHA256. " +
-        "Genere una con: openssl rand -base64 48");
-}
-
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-if (string.IsNullOrWhiteSpace(connectionString))
-{
-    throw new InvalidOperationException(
-        "Falta la cadena de conexión 'ConnectionStrings:DefaultConnection'. " +
-        "Defínala en appsettings.Development.json o en la variable de entorno " +
-        "ConnectionStrings__DefaultConnection.");
-}
-
-// Serilog
 builder.Host.UseSerilog((context, loggerConfig) =>
     loggerConfig.ReadFrom.Configuration(context.Configuration));
 
@@ -138,224 +24,11 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddOpenApi();
 builder.Services.AddSignalR();
-// ═══════════════════════════════════════════════════════════════════════════════ INFRAESTRUCTURA CORE (BuildingBlocks) ═══════════════════════════════════════════════════════════════════════════════
 
-// Servicios core: Email, DomainEventDispatcher
-builder.Services.AddCoreInfrastructure(builder.Configuration);
-
-// ═══════════════════════════════════════════════════════════════════════════════ PERSISTENCIA DE MÓDULOS - Cada módulo
-// con su DbContext independiente ═══════════════════════════════════════════════════════════════════════════════
-
-// ───────────────────────────────────────────────────────────────────────────── IDENTITY MODULE ─────────────────────────────────────────────────────────────────────────────
-builder.Services.AddIdentityInfrastructure(builder.Configuration);
-
-// ───────────────────────────────────────────────────────────────────────────── PROJECTS MODULE ─────────────────────────────────────────────────────────────────────────────
-builder.Services.AddProjectsInfrastructure(builder.Configuration);
-
-// ───────────────────────────────────────────────────────────────────────────── WORKITEMS MODULE ─────────────────────────────────────────────────────────────────────────────
-builder.Services.AddWorkItemsInfrastructure(builder.Configuration);
-
-// ───────────────────────────────────────────────────────────────────────────── TICKETING MODULE ─────────────────────────────────────────────────────────────────────────────
-builder.Services.AddTicketingInfrastructure(builder.Configuration);
-
-// ───────────────────────────────────────────────────────────────────────────── NOTIFICATIONS MODULE ─────────────────────────────────────────────────────────────────────────────
-builder.Services.AddNotificationsInfrastructure(builder.Configuration);
-
-// ───────────────────────────────────────────────────────────────────────────── CALENDAR MODULE ─────────────────────────────────────────────────────────────────────────────
-builder.Services.AddCalendarInfrastructure(builder.Configuration);
-
-// ───────────────────────────────────────────────────────────────────────────── COMMUNICATION MODULE ─────────────────────────────────────────────────────────────────────────────
-builder.Services.AddCommunicationInfrastructure(builder.Configuration);
-
-// ───────────────────────────────────────────────────────────────────────────── WEBHOOK MODULE ─────────────────────────────────────────────────────────────────────────────
-builder.Services.AddWebhookInfrastructure(builder.Configuration);
-
-// ───────────────────────────────────────────────────────────────────────────── TAGS MODULE ─────────────────────────────────────────────────────────────────────────────
-builder.Services.AddTagsInfrastructure(builder.Configuration);
-
-// ───────────────────────────────────────────────────────────────────────────── DOCS MODULE ─────────────────────────────────────────────────────────────────────────────
-builder.Services.AddDocsApplication();
-builder.Services.AddDocsInfrastructure(builder.Configuration);
-
-// ─────────────────────────────────────────────────────────────────────────────
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
-    {
-      options.TokenValidationParameters = new TokenValidationParameters
-      {
-        ValidateIssuer = true,
-        ValidateAudience = true,
-        ValidateLifetime = true,
-        ValidateIssuerSigningKey = true,
-        ValidIssuer = builder.Configuration["Jwt:Issuer"],
-        ValidAudience = builder.Configuration["Jwt:Audience"],
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
-      };
-
-      options.Events = new JwtBearerEvents
-      {
-          // Un refresh token está firmado con la misma clave y tiene el mismo
-          // issuer/audience que un access token, así que pasaría la validación
-          // estándar. Sólo el claim token_type los distingue: sin esta
-          // comprobación, un refresh token vale como credencial de acceso
-          // durante los 7 días de su vigencia.
-          OnTokenValidated = context =>
-          {
-              var tokenType = context.Principal?.FindFirst(
-                  Identity.Infrastructure.Services.JwtService.TokenTypeClaim)?.Value;
-
-              // Los tokens de invitado no llevan token_type y sólo sirven para
-              // el alta pública de tickets; se siguen aceptando.
-              var isGuest = context.Principal?.IsInRole("Guest") == true;
-
-              if (!isGuest && tokenType != Identity.Infrastructure.Services.JwtService.AccessTokenType)
-              {
-                  context.Fail("Se requiere un access token.");
-              }
-
-              return Task.CompletedTask;
-          }
-      };
-    });
-
-builder.Services.AddAuthorization();
-builder.Services.AddHttpContextAccessor();
-builder.Services.AddScoped<IJwtService, JwtService>();
-builder.Services.AddScoped<BuildingBlocks.Application.Abstractions.IUserContext, ApiHost.Services.UserContext>();
-
-builder.Services.AddCors(options =>
-{
-    var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? Array.Empty<string>();
-    // La entrada de tickets se llama desde la web de cada cliente, en un dominio que la
-    // aplicación no conoce. Sin credenciales —no hay cookies ni sesión que proteger— y sólo con
-    // lo que ese endpoint necesita. El resto de la API sigue con su lista de orígenes.
-    options.AddPolicy(Ticketing.Presentation.Endpoints.TicketingEndpoints.PoliticaCorsDeEntrada, policy =>
-    {
-        policy.AllowAnyOrigin()
-              .WithMethods("POST")
-              .WithHeaders("Content-Type", Ticketing.Presentation.Endpoints.TicketingEndpoints.CabeceraDeClave);
-    });
-
-    options.AddPolicy("AllowSpecificOrigins", policy =>
-    {
-        policy.WithOrigins(allowedOrigins)
-              .AllowAnyHeader()
-              .AllowAnyMethod()
-              .AllowCredentials();
-    });
-});
-
-// ═══════════════════════════════════════════════════════════════════════════════ PRESENTATION - Endpoints de API ═══════════════════════════════════════════════════════════════════════════════
-builder.Services.AddDatabase(builder.Configuration);
-
-builder.Services.AddIdentityPresentation(builder.Configuration);
-builder.Services.AddProjectsPresentation(builder.Configuration);
-builder.Services.AddWorkItemsPresentation(builder.Configuration);
-builder.Services.AddTicketingPresentation(builder.Configuration);
-builder.Services.AddNotificationsPresentation(builder.Configuration);
-builder.Services.AddCommunicationPresentation(builder.Configuration);
-builder.Services.AddCalendarPresentation(builder.Configuration);
-builder.Services.AddWebhookPresentation(builder.Configuration);
-builder.Services.AddReportingPresentation(builder.Configuration);
-
-// El panel de informes cruza Projects, WorkItems y Ticketing, así que su implementación vive
-// aquí y no dentro del módulo: ningún módulo referencia a otro. Reporting declara el contrato;
-// el host, que sí conoce a todos, lo satisface. Mismo criterio que PuenteDeAutomatizaciones.
-builder.Services.AddScoped<Reporting.Application.Abstractions.IDashboardRepository,
-                           ApiHost.Reporting.ConsultasDelPanel>();
-
-// Y la fuente de datos de las exportaciones, por lo mismo: un informe de tareas mira WorkItems y
-// uno de tickets mira Ticketing. Reutiliza ConsultasDelPanel para los agregados, de modo que el
-// PDF y la pantalla dan los mismos números.
-builder.Services.AddScoped<ApiHost.Reporting.ConsultasDelPanel>();
-builder.Services.AddScoped<ApiHost.Reporting.DatosDelInforme>();
-
-// La agenda de un día, que junta los eventos con lo que vence ese día en tareas, tickets y
-// proyectos. Vive en el host por lo mismo que las dos de arriba: cruza módulos.
-builder.Services.AddScoped<ApiHost.Calendar.AgendaDelDia>();
-
-// El motor de los informes a medida: traduce la definición neutra que construyó el usuario a
-// filas. Mismo sitio y mismo motivo que lo de arriba.
-builder.Services.AddScoped<ApiHost.Reporting.MotorDeInformes>();
-builder.Services.AddScoped<Reporting.Application.Definiciones.IResolutorDeInformes>(
-    sp => sp.GetRequiredService<ApiHost.Reporting.MotorDeInformes>());
-
-// El trabajador que genera los ficheros. Va en segundo plano porque quien exporta recupera el
-// control enseguida, y porque los informes programados ocurren sin nadie delante: un solo camino
-// para las dos cosas.
-builder.Services.AddHostedService<ApiHost.Reporting.GeneradorDeExportaciones>();
-
-// Y el que dispara los informes programados. No genera nada: deja la exportación pedida y el
-// generador de arriba la recoge, para que un informe programado y uno pedido a mano recorran el
-// mismo camino.
-builder.Services.AddScoped<ApiHost.Reporting.CorreosDeDestinatarios>();
-builder.Services.AddHostedService<ApiHost.Reporting.PlanificadorDeInformes>();
-builder.Services.AddTeamsPresentation(builder.Configuration);
-builder.Services.AddTagsPresentation(builder.Configuration);
-builder.Services.AddCustomFieldsPresentation(builder.Configuration);
-builder.Services.AddAutomationsPresentation(builder.Configuration);
-builder.Services.AddCommentsPresentation(builder.Configuration);
-
-// El puente entre las tareas y las automatizaciones vive aquí porque es el unico sitio que
-// conoce a los dos modulos. Ver PuenteDeAutomatizaciones.
-builder.Services.AddScoped<Automations.Application.Abstractions.IEjecutorDeAcciones, ApiHost.Services.EjecutorDeAccionesDeTareas>();
-
-// Avisar cruza tres módulos: Automations decide, WorkItems sabe quién tiene la tarea y
-// Notifications entrega. Por eso vive aquí y no dentro de ninguno de los tres.
-builder.Services.AddScoped<ApiHost.Services.AvisoDeAutomatizacion>();
-
-// El disparador por vencimiento no lo levanta un evento —nadie toca la tarea— sino este
-// trabajo, que revisa cada hora qué se acerca a su fecha. Es el que reacciona a que NO ha
-// pasado nada, que es justo lo que no se nota solo.
-builder.Services.AddHostedService<ApiHost.Services.VigilanteDeVencimientos>();
-builder.Services.AddDocsPresentation(builder.Configuration);
-
-// ═══════════════════════════════════════════════════════════════════════════════ MEDIATR - Commands y Queries ═══════════════════════════════════════════════════════════════════════════════
-builder.Services.AddMediatR(cfg =>
-{
-  cfg.RegisterServicesFromAssembly(typeof(Program).Assembly);
-  cfg.RegisterServicesFromAssembly(typeof(LoginCommandHandler).Assembly);           // Identity
-  cfg.RegisterServicesFromAssembly(typeof(CreateProjectCommandHandler).Assembly);   // Projects
-  cfg.RegisterServicesFromAssembly(typeof(CreateTaskCommandHandler).Assembly);      // WorkItems
-  cfg.RegisterServicesFromAssembly(typeof(CreateTicketHandler).Assembly);           // Ticketing
-  cfg.RegisterServicesFromAssembly(typeof(CreateNotificationHandler).Assembly);    // Notifications
-  cfg.RegisterServicesFromAssembly(typeof(CreateCalendarEventHandler).Assembly);   // Calendar
-  cfg.RegisterServicesFromAssembly(typeof(Reporting.Application.Handlers.Commands.CreateReportHandler).Assembly);           // Reporting
-  cfg.RegisterServicesFromAssembly(typeof(Communication.Application.Handlers.Commands.CreateConversationHandler).Assembly); // Communication
-  cfg.RegisterServicesFromAssembly(typeof(WebhookEventNotificationHandler).Assembly); // Webhook
-  cfg.RegisterServicesFromAssembly(typeof(Teams.Application.Commands.CreateTeamCommand).Assembly); // Teams
-  cfg.RegisterServicesFromAssembly(typeof(CustomFields.Application.Commands.DefineCustomFieldCommand).Assembly); // CustomFields
-  cfg.RegisterServicesFromAssembly(typeof(Automations.Application.DefineAutomationRuleCommand).Assembly); // Automations
-  cfg.RegisterServicesFromAssembly(typeof(Comments.Application.AddCommentCommand).Assembly); // Comments
-  cfg.RegisterServicesFromAssembly(typeof(ApiHost.Services.PuenteDeAutomatizaciones).Assembly); // el puente de automatizaciones vive en el host
-
-  // Pipeline behavior: valida el request con FluentValidation.
-  // Va PRIMERO: no tiene sentido autorizar ni despachar una petición malformada.
-  cfg.AddOpenBehavior(typeof(ValidationBehavior<,>));
-
-  // Pipeline behavior: despacha webhook tras commands IWebhookTriggered
-  cfg.AddOpenBehavior(typeof(WebhookDispatchBehavior<,>));
-
-  // Pipeline behavior: Authorization
-  cfg.AddOpenBehavior(typeof(AuthorizationBehavior<,>));
-});
-
-// Registra todos los IValidator<T> de los ensamblados de módulos, para que
-// ValidationBehavior los encuentre. Sin esto los validadores no se ejecutan nunca.
-builder.Services.AddValidatorsFromAssemblies(
-[
-    typeof(LoginCommandHandler).Assembly,           // Identity
-    typeof(CreateProjectCommandHandler).Assembly,   // Projects
-    typeof(CreateTaskCommandHandler).Assembly,      // WorkItems
-    typeof(CreateTicketHandler).Assembly,           // Ticketing
-    typeof(CreateNotificationHandler).Assembly,     // Notifications
-    typeof(CreateCalendarEventHandler).Assembly,    // Calendar
-    typeof(Reporting.Application.Handlers.Commands.CreateReportHandler).Assembly,
-    typeof(Communication.Application.Handlers.Commands.CreateConversationHandler).Assembly,
-    typeof(Teams.Application.Commands.CreateTeamCommand).Assembly
-], includeInternalTypes: true);
-
-// ═══════════════════════════════════════════════════════════════════════════════ RESILIENCIA Y OPERACIÓN ═══════════════════════════════════════════════════════════════════════════════
+builder.Services.AddModules(builder.Configuration);
+builder.Services.AddJwtAuthentication(builder.Configuration, jwtKey);
+builder.Services.AddCorsPolicies(builder.Configuration);
+builder.Services.AddApiRateLimiting(builder.Configuration);
 
 // Manejo global de errores en formato RFC 7807.
 builder.Services.AddExceptionHandler<ApiHost.Infrastructure.GlobalExceptionHandler>();
@@ -364,188 +37,24 @@ builder.Services.AddProblemDetails();
 // Health checks para orquestadores (K8s liveness/readiness, healthcheck de Docker).
 builder.Services.AddHealthChecks();
 
-// Rate limiting. La política global protege toda la API; las políticas nombradas
-// blindan los dos puntos abusables sin autenticación previa: el alta pública de
-// tickets y el login (fuerza bruta de credenciales).
-// El límite global sale de configuración para poder subirlo en las pruebas de integración.
-// Todas se autentican como el mismo administrador, así que comparten partición y la suite
-// entera cabe en una sola ventana: al crecer, empezaron a salir 429 según el orden de
-// ejecución, un fallo que no dice nada del código y que reaparecería cada pocas pruebas.
-var limiteGlobalPorMinuto = builder.Configuration.GetValue("RateLimiting:PermitLimit", 300);
-
-builder.Services.AddRateLimiter(options =>
-{
-    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
-
-    options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(context =>
-        RateLimitPartition.GetFixedWindowLimiter(
-            // Particionamos por usuario autenticado; si no hay, por IP.
-            partitionKey: context.User.Identity?.IsAuthenticated == true
-                ? context.User.FindFirst("sub")?.Value ?? context.User.Identity.Name!
-                : context.Connection.RemoteIpAddress?.ToString() ?? "anonymous",
-            factory: _ => new FixedWindowRateLimiterOptions
-            {
-                PermitLimit = limiteGlobalPorMinuto,
-                Window = TimeSpan.FromMinutes(1)
-            }));
-
-    // Tickets que llegan desde fuera con una clave de entrada. Se reparte por clave y, sin clave,
-    // por IP: una ventana única para todos —como la que había— dejaría que el formulario de un
-    // cliente con tráfico agotara el cupo de todas las organizaciones.
-    options.AddPolicy(Ticketing.Presentation.Endpoints.TicketingEndpoints.LimiteDeEntrada, context =>
-    {
-        var clave = context.Request.Headers[Ticketing.Presentation.Endpoints.TicketingEndpoints.CabeceraDeClave].ToString();
-        var particion = string.IsNullOrEmpty(clave)
-            ? "ip:" + (context.Connection.RemoteIpAddress?.ToString() ?? "anonymous")
-            : "clave:" + Ticketing.Domain.Entities.ClaveDeEntrada.HashDe(clave);
-
-        return RateLimitPartition.GetFixedWindowLimiter(particion, _ => new FixedWindowRateLimiterOptions
-        {
-            PermitLimit = builder.Configuration.GetValue("EntradaDeTickets:PeticionesPorMinuto", 30),
-            Window = TimeSpan.FromMinutes(1),
-            QueueLimit = 0
-        });
-    });
-
-    options.AddFixedWindowLimiter("auth", limiterOptions =>
-    {
-        limiterOptions.PermitLimit = 10;
-        limiterOptions.Window = TimeSpan.FromMinutes(5);
-        limiterOptions.QueueLimit = 0;
-    });
-});
-
 // Compresión de respuestas: los payloads JSON de listados son grandes y repetitivos.
-builder.Services.AddResponseCompression(options =>
-{
-    options.EnableForHttps = true;
-});
-
-builder.Services.AddScoped<ApiHost.Services.DataSeederService>();
+builder.Services.AddResponseCompression(options => options.EnableForHttps = true);
 
 var app = builder.Build();
 
-using (var scope = app.Services.CreateScope())
-{
-    var services = scope.ServiceProvider;
-    
-    // Aplicar migraciones para todos los contextos
-    var dbContexts = new Microsoft.EntityFrameworkCore.DbContext[] 
-    {
-        services.GetRequiredService<Identity.Infrastructure.Persistence.IdentityDbContext>(),
-        services.GetRequiredService<Teams.Infrastructure.Persistence.TeamsDbContext>(),
-        services.GetRequiredService<Projects.Infrastructure.Persistence.ProjectsDbContext>(),
-        services.GetRequiredService<WorkItems.Infrastructure.Persistence.WorkItemsDbContext>(),
-        services.GetRequiredService<Ticketing.Infrastructure.Persistence.TicketingDbContext>(),
-        services.GetRequiredService<Notifications.Infrastructure.Persistence.NotificationsDbContext>(),
-        services.GetRequiredService<Calendar.Infrastructure.Persistence.CalendarDbContext>(),
-        services.GetRequiredService<Communication.Infrastructure.Persistence.CommunicationsDbContext>(),
-        services.GetRequiredService<Webhook.Infrastructure.Persistence.WebhookDbContext>(),
-        services.GetRequiredService<Reporting.Infrastructure.Persistence.ReportingDbContext>(),
-        services.GetRequiredService<Tags.Infrastructure.Persistence.TagsDbContext>(),
-        services.GetRequiredService<Docs.Infrastructure.Persistence.DocsDbContext>(),
-        services.GetRequiredService<CustomFields.Infrastructure.Persistence.CustomFieldsDbContext>(),
-        services.GetRequiredService<Automations.Infrastructure.Persistence.AutomationsDbContext>(),
-        services.GetRequiredService<Comments.Infrastructure.CommentsDbContext>(),
-        services.GetRequiredService<CrmDbContext>()
-    };
+app.InitializeDatabase();
 
-    // Antes de tocar la base de datos: comprobar que ninguna entidad se ha quedado
-    // fuera del aislamiento por tenant. Una entidad nueva que olvide ITenantEntity, o
-    // un DbContext que olvide ApplyTenantFilters, devolverían filas de todos los
-    // clientes sin lanzar ningún error. Preferimos no arrancar a servir datos cruzados.
-    var isolationViolations = dbContexts
-        .SelectMany(BuildingBlocks.Infrastructure.Persistence.TenantIsolationVerifier.FindViolations)
-        .ToList();
-
-    if (isolationViolations.Count > 0)
-    {
-        throw new InvalidOperationException(
-            "Aislamiento multi-tenant incompleto. La aplicación no arranca para evitar fuga de datos entre clientes:"
-            + Environment.NewLine
-            + string.Join(Environment.NewLine, isolationViolations.Select(v => "  - " + v)));
-    }
-
-    // Las migraciones son la única vía por la que cambia el esquema. Hasta agosto de 2026
-    // aquí se llamaba a EnsureCreated() y a CreateTables() tragándose el error 1050: el
-    // esquema se creaba, pero __EFMigrationsHistory quedaba vacía, así que un campo nuevo
-    // no llegaba nunca a una base ya existente. Ver docs/CONTINUACION.md §1.
-    //
-    // Si esto falla, no se sirve nada: arrancar con el esquema a medias es peor que no
-    // arrancar. La causa habitual es una base creada por el mecanismo anterior, cuyo
-    // historial hay que sellar una vez.
-    foreach (var ctx in dbContexts)
-    {
-        try
-        {
-            ctx.Database.Migrate();
-        }
-        catch (Exception ex)
-        {
-            throw new InvalidOperationException(
-                $"No se pudieron aplicar las migraciones de {ctx.GetType().Name}. "
-                + "Si esta base se creó con el mecanismo anterior (EnsureCreated), su historial de "
-                + "migraciones está vacío y hay que sellarlo una sola vez: ejecutar "
-                + "scripts/db/sellar-historial-migraciones.sql. Detalle en docs/CONTINUACION.md §1.",
-                ex);
-        }
-    }
-
-    var identityCtx = services.GetRequiredService<Identity.Infrastructure.Persistence.IdentityDbContext>();
-
-    // Red de seguridad: si no hay ni un usuario, no se podría entrar a arreglar nada.
-    //
-    // **`IgnoreQueryFilters` no es opcional aquí, y su ausencia costó 695 usuarios.** Esto corre
-    // en el arranque, sin petición y por tanto sin usuario, así que el filtro de inquilino compara
-    // contra `Guid.Empty` y `User.Any()` devolvía **false teniendo once usuarios dentro**. Cada
-    // arranque creaba otro «admin@acme.com». Como el inicio de sesión busca por correo y se queda
-    // con una fila cualquiera, quien entraba no era el administrador que posee los proyectos:
-    // «Mis proyectos» enseñaba 0 teniendo cinco.
-    //
-    // Se descartan los borrados a mano en vez de dejar el filtro de papelera puesto: si el único
-    // administrador está en la papelera, esto tiene que crear uno nuevo —si no, nadie puede
-    // entrar a sacarlo—.
-    if (!identityCtx.User.IgnoreQueryFilters().Any(u => !u.IsDeleted))
-    {
-        var adminRole = Identity.Domain.ValueObjects.UserRole.Admin;
-        var email = Identity.Domain.ValueObjects.Email.Create("admin@acme.com").Value!;
-        var pass = Identity.Domain.ValueObjects.PasswordHash.Create("admin123");
-        var user = Identity.Domain.Entities.User.Create(Guid.NewGuid(), "Admin", email, pass, adminRole).Value!;
-        identityCtx.User.Add(user);
-        identityCtx.SaveChanges();
-    }
-
-    // Ejecutar DataSeederService automáticamente para garantizar datos fake completos
-    try
-    {
-        var seeder = services.GetRequiredService<ApiHost.Services.DataSeederService>();
-        seeder.SeedAllAsync().GetAwaiter().GetResult();
-    }
-    catch (Exception ex)
-    {
-        // Error, no aviso. Un aviso se pierde entre el ruido del arranque, y esto llevaba
-        // tiempo fallando sin que nadie lo notara: la aplicación levantaba sin proyectos ni
-        // tareas y el panel de informes contaba cero. Sigue sin tumbar el arranque —la API es
-        // útil aunque no haya datos de demostración— pero ahora se ve.
-        var logger = services.GetRequiredService<Microsoft.Extensions.Logging.ILogger<Program>>();
-        logger.LogError(ex, "La siembra de datos de demostración falló. La aplicación arranca sin ellos.");
-    }
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════ PIPELINE DE LA APLICACIÓN ═══════════════════════════════════════════════════════════════════════════════
 if (app.Environment.IsDevelopment())
 {
-  // Genera el endpoint del JSON de OpenAPI (/openapi/v1.json)
-  app.MapOpenApi();
-
-  // Configura la interfaz de Scalar
-  app.MapScalarApiReference(options =>
-  {
-    options
-          .WithTitle("CRM API Documentation")
-          .WithTheme(ScalarTheme.Moon)
-          .WithDefaultHttpClient(ScalarTarget.CSharp, ScalarClient.HttpClient);
-  });
+    // Genera el endpoint del JSON de OpenAPI (/openapi/v1.json) y la interfaz de Scalar.
+    app.MapOpenApi();
+    app.MapScalarApiReference(options =>
+    {
+        options
+            .WithTitle("CRM API Documentation")
+            .WithTheme(ScalarTheme.Moon)
+            .WithDefaultHttpClient(ScalarTarget.CSharp, ScalarClient.HttpClient);
+    });
 }
 
 // Debe ir lo primero del pipeline para capturar cualquier excepción posterior.
@@ -553,105 +62,23 @@ app.UseExceptionHandler();
 
 app.UseResponseCompression();
 app.UseHttpsRedirection();
-app.UseCors("AllowSpecificOrigins");
+app.UseCors(CorsSetup.DefaultPolicy);
 
-// Los ficheros que se suben a los documentos, cuando se guardan en disco.
-//
-// Va detrás de CORS y **delante de la autenticación**: son las imágenes y los adjuntos que el
-// navegador pide directamente desde el `<img>` o el enlace del documento, sin cabecera de sesión.
-// Exigirla aquí dejaría todas las imágenes rotas dentro del editor, que es el mismo fallo que
-// tenía «Exportar HTML» al abrirse en una pestaña nueva.
-{
-  var rutaFisica = BuildingBlocks.Infrastructure.Storage.AlmacenamientoEnDisco
-      .CarpetaDe(builder.Configuration["AlmacenEnDisco:Carpeta"]);
+// Detrás de CORS y delante de la autenticación: ver DiskStorageFiles.
+app.UseDiskStorageFiles();
 
-  var rutaPublica = builder.Configuration["AlmacenEnDisco:RutaPublica"] ?? "/almacen";
-
-  // **No puede tumbar el arranque.** La primera versión hacía `CreateDirectory` a secas sobre una
-  // ruta relativa a `/app`, que en el contenedor no es escribible porque la imagen corre con
-  // usuario sin privilegios: la API se caía entera al arrancar con «Access to the path
-  // '/app/almacen' is denied». Que no se puedan subir ficheros es un problema; que no arranque el
-  // servidor es otro mucho mayor.
-  try
-  {
-    Directory.CreateDirectory(rutaFisica);
-
-    app.UseStaticFiles(new StaticFileOptions
-    {
-      FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(rutaFisica),
-      RequestPath = rutaPublica.TrimEnd('/'),
-
-      // Sin esto, un `.md` o un `.csv` subidos se sirven como 404: el proveedor por defecto sólo
-      // conoce los tipos que trae en su tabla.
-      ServeUnknownFileTypes = true,
-      DefaultContentType = "application/octet-stream"
-    });
-  }
-  catch (Exception ex)
-  {
-    app.Logger.LogError(ex,
-        "No se pudo preparar la carpeta de ficheros {Ruta}: subir adjuntos no funcionará", rutaFisica);
-  }
-}
 app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
-// Health checks: /health/live responde si el proceso está vivo;
-// /health/ready sólo si además las dependencias (BD) responden.
-app.MapHealthChecks("/health/live", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
-{
-    Predicate = _ => false
-}).AllowAnonymous();
-
-app.MapHealthChecks("/health/ready").AllowAnonymous();
-
-app.MapIdentityEndpoints();
-app.MapProjectsEndpoints();
-app.MapWorkItemsEndpoints();
-app.MapTicketingEndpoints();
-app.MapNotificationsEndpoints();
-app.MapCommunicationEndpoints();
-app.MapCalendarEndpoints();
-app.MapAgendaEndpoints();
-app.MapReportingEndpoints();
-app.MapWebhookEndpoints();
-app.MapTeamsEndpoints();
-app.MapTagsEndpoints();
-app.MapCustomFieldsEndpoints();
-app.MapAutomationsEndpoints();
-app.MapCommentsEndpoints();
-app.MapDocsEndpoints();
-
-// Seed de datos de demostración.
-//
-// Sólo existe fuera de producción: reinicializar datos es destructivo y no debe
-// ser alcanzable en un entorno real ni siquiera por un administrador despistado.
-// Adicionalmente exige rol Admin autenticado.
-if (!app.Environment.IsProduction())
-{
-    app.MapPost("/api/v1/admin/seed-database", async (ApiHost.Services.DataSeederService seeder, CancellationToken ct) =>
-    {
-        await seeder.SeedAllAsync(ct);
-        return Results.Ok(new { Message = "Database seeded successfully" });
-    })
-    .RequireAuthorization(policy => policy.RequireRole("Admin"))
-    .WithName("SeedDatabase")
-    .WithOpenApi();
-}
-
-app.MapHub<DummyNotificationsHub>("/hubs/notifications");
-app.MapHub<WorkItems.Presentation.Hubs.BoardHub>("/hubs/board");
-app.MapHub<Ticketing.Presentation.Hubs.TicketsHub>("/hubs/tickets");
+app.MapApplicationEndpoints();
 
 await app.RunAsync();
 
 // El código de salida del proceso. Lo exige el compilador desde que la sonda de salud de
 // arriba devuelve 0 o 1: en cuanto una rama devuelve un valor, todas tienen que hacerlo.
 return 0;
-
-public class DummyNotificationsHub : Microsoft.AspNetCore.SignalR.Hub { }
 
 /// <summary>
 /// Program es implícito al usar instrucciones de nivel superior y queda como internal,

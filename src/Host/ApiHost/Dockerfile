@@ -36,7 +36,7 @@ COPY --from=build /app/publish .
 # puesto. Docker copia el dueño de la carpeta de la imagen al crear un volumen nuevo encima; sin
 # esto el volumen nace de root, el proceso no puede escribir, y subir un fichero devolvía un 403
 # sin más explicación.
-RUN mkdir -p /var/almacen && chown $APP_UID /var/almacen
+RUN mkdir -p /var/storage && chown $APP_UID /var/storage
 
 # Sin privilegios. `APP_UID` (1654) viene definido en la imagen base desde .NET 8; se usa esa
 # en vez de crear un usuario propio para no divergir de lo que espera la plataforma.

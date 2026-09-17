@@ -24,9 +24,9 @@ public abstract class TenantDbContext(DbContextOptions options, IUserContext? us
     /// defecto. Un proceso que legítimamente deba cruzar tenants ha de declararlo
     /// explícitamente con <c>IgnoreQueryFilters()</c>.
     /// </summary>
-    public Guid CurrentTenantId => _inquilinoForzado ?? userContext?.TenantId ?? Guid.Empty;
+    public Guid CurrentTenantId => _forcedTenantId ?? userContext?.TenantId ?? Guid.Empty;
 
-    private Guid? _inquilinoForzado;
+    private Guid? _forcedTenantId;
 
     /// <summary>
     /// Ejecuta las consultas de este contexto como si fueran de un inquilino concreto, y lo
@@ -45,25 +45,25 @@ public abstract class TenantDbContext(DbContextOptions options, IUserContext? us
     ///
     /// Sólo debe usarlo un proceso que sepa de qué inquilino es el trabajo que está haciendo.
     /// </summary>
-    public IDisposable ComoInquilino(Guid tenantId)
+    public IDisposable AsTenant(Guid tenantId)
     {
-        var previo = _inquilinoForzado;
-        _inquilinoForzado = tenantId;
+        var previous = _forcedTenantId;
+        _forcedTenantId = tenantId;
 
-        return new AmbitoDeAlcance(() => _inquilinoForzado = previo);
+        return new RestoreOnDispose(() => _forcedTenantId = previous);
     }
 
     /// <summary>
     /// Si las consultas de este contexto deben dejar pasar lo que está en la papelera.
     ///
-    /// No se toca a mano: se abre con <see cref="VerTambien"/>, que lo devuelve a su sitio al
+    /// No se toca a mano: se abre con <see cref="IncludeHidden"/>, que lo devuelve a su sitio al
     /// cerrar el ámbito. Dejarlo encendido por descuido enseñaría borrados en las listas
     /// normales, que es justo lo que este filtro existe para impedir.
     /// </summary>
-    public bool IncluirBorrados { get; private set; }
+    public bool IncludeDeleted { get; private set; }
 
     /// <summary>Si las consultas de este contexto deben dejar pasar lo archivado.</summary>
-    public bool IncluirArchivados { get; private set; }
+    public bool IncludeArchived { get; private set; }
 
     /// <summary>
     /// Abre un ámbito en el que las consultas ven además lo borrado o lo archivado, y lo cierra
@@ -78,32 +78,32 @@ public abstract class TenantDbContext(DbContextOptions options, IUserContext? us
     /// Los ámbitos no se anidan: al cerrar se restaura el valor que había, así que un ámbito
     /// dentro de otro deja el de fuera como estaba.
     /// </summary>
-    public IDisposable VerTambien(bool borrados = false, bool archivados = false)
+    public IDisposable IncludeHidden(bool deleted = false, bool archived = false)
     {
-        var previoBorrados = IncluirBorrados;
-        var previoArchivados = IncluirArchivados;
+        var previousDeleted = IncludeDeleted;
+        var previousArchived = IncludeArchived;
 
-        IncluirBorrados = borrados;
-        IncluirArchivados = archivados;
+        IncludeDeleted = deleted;
+        IncludeArchived = archived;
 
-        return new AmbitoDeAlcance(() =>
+        return new RestoreOnDispose(() =>
         {
-            IncluirBorrados = previoBorrados;
-            IncluirArchivados = previoArchivados;
+            IncludeDeleted = previousDeleted;
+            IncludeArchived = previousArchived;
         });
     }
 
-    private sealed class AmbitoDeAlcance(Action alCerrar) : IDisposable
+    private sealed class RestoreOnDispose(Action onDispose) : IDisposable
     {
-        private bool _cerrado;
+        private bool _disposed;
 
         public void Dispose()
         {
             // Un `using` mal anidado puede llamar a Dispose dos veces; la segunda no debe
             // volver a escribir el estado del contexto.
-            if (_cerrado) return;
-            _cerrado = true;
-            alCerrar();
+            if (_disposed) return;
+            _disposed = true;
+            onDispose();
         }
     }
 
@@ -120,6 +120,6 @@ public abstract class TenantDbContext(DbContextOptions options, IUserContext? us
         => TenantQueryFilter.ApplyGlobalFilters(
             modelBuilder,
             () => CurrentTenantId,
-            () => IncluirBorrados,
-            () => IncluirArchivados);
+            () => IncludeDeleted,
+            () => IncludeArchived);
 }

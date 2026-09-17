@@ -12,7 +12,7 @@ namespace BuildingBlocks.Application.Abstractions;
 /// el plan señalaba como el diferencial, y no se puede resolver leyendo el documento: habría que
 /// abrir todos los del inquilino y buscar dentro.
 /// </summary>
-public interface IMencionesEnDocumentos
+public interface IDocumentMentions
 {
     /// <summary>
     /// Los documentos que mencionan esta entidad, del más reciente al más antiguo.
@@ -21,21 +21,6 @@ public interface IMencionesEnDocumentos
     /// habla de esto»— y no esconder la sección: un apartado que aparece y desaparece según los
     /// datos hace pensar que la aplicación se comporta distinto cada día.
     /// </summary>
-    Task<IReadOnlyList<DocumentoQueMenciona>> QuienMencionaAsync(
-        string tipo, Guid entidadId, CancellationToken ct = default);
+    Task<IReadOnlyList<MentioningDocument>> GetMentioningDocumentsAsync(
+        string entityType, Guid entityId, CancellationToken ct = default);
 }
-
-/// <summary>
-/// Un documento que menciona algo, con lo justo para enlazarlo y pintarlo.
-/// </summary>
-/// <param name="TextoVisible">
-/// Cómo estaba escrita la mención. Se enseña para dar contexto: «Reunión de diseño» dice más que
-/// un identificador, y si el documento cambia de nombre esto sigue diciendo cómo se la llamó.
-/// </param>
-public sealed record DocumentoQueMenciona(
-    Guid DocumentId,
-    Guid PageId,
-    string TituloDelDocumento,
-    string TituloDeLaPagina,
-    string TextoVisible,
-    DateTime MencionadaUtc);

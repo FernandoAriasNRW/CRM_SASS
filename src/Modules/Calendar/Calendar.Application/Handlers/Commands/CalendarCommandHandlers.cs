@@ -145,7 +145,7 @@ public sealed class CancelEventHandler(
 
         // A la papelera. El comando se sigue llamando «Cancel» porque su nombre viaja en un
         // webhook publicado, pero lo que hace es esto: quitarlo de en medio, recuperable.
-        calendarEvent.EnviarAPapelera(request.DeletedBy);
+        calendarEvent.MoveToTrash(request.DeletedBy);
 
         await _repository.UpdateAsync(calendarEvent, ct);
         await _unitOfWork.SaveChangesAsync(ct);

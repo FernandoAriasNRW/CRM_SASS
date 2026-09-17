@@ -25,5 +25,5 @@ public interface IArchivable
     /// pregunta que se acaba haciendo —para ordenar el archivo, para saber si una decisión es de
     /// antes o de después— y un booleano no la contesta. Cuesta lo mismo guardarla.
     /// </summary>
-    DateTime? ArchivadoEnUtc { get; }
+    DateTime? ArchivedAtUtc { get; }
 }

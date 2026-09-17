@@ -16,7 +16,7 @@ public sealed record GetTicketsQuery(
     /// pregunta y las listas que sólo se pueden saber fuera del módulo.
     ///
     /// Iba como tres parámetros sueltos —filtro, usuario, favoritos— y cada concepto nuevo del
-    /// menú añadía otro. Ver <c>AlcanceDeVista</c>.
+    /// menú añadía otro. Ver <c>ViewScope</c>.
     /// </summary>
-    BuildingBlocks.Application.AlcanceDeVista? Alcance = null
+    BuildingBlocks.Application.ViewScope? Alcance = null
 ) : IQuery<PagedResult<TicketDto>>;

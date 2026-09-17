@@ -12,9 +12,9 @@ public sealed record GetTasksQuery(
     string? Priority,
     /// <summary>
     /// La entrada del panel de navegación ya resuelta: filtro, quién pregunta y las listas que
-    /// sólo se pueden saber fuera del módulo. Ver <c>AlcanceDeVista</c>.
+    /// sólo se pueden saber fuera del módulo. Ver <c>ViewScope</c>.
     /// </summary>
-    BuildingBlocks.Application.AlcanceDeVista? Alcance,
+    BuildingBlocks.Application.ViewScope? Alcance,
     PaginationRequest Pagination,
     Guid? ParentTaskId = null,
     bool IncluirSubtareas = false

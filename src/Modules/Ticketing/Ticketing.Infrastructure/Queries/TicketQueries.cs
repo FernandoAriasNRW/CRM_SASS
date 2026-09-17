@@ -22,18 +22,18 @@ public sealed class TicketQueries(TicketingDbContext context) : ITicketQueries
     public async Task<PagedResult<TicketDto>> GetByTenantWithPaginationAsync(
         Guid tenantId, Guid? customerId, Guid? agentId, string? priority, string? status,
         PaginationRequest pagination,
-        AlcanceDeVista? alcance = null,
+        ViewScope? alcance = null,
         CancellationToken ct = default)
     {
-        var vista = alcance ?? AlcanceDeVista.Ninguno;
+        var vista = alcance ?? ViewScope.None;
 
         // La papelera y el archivo están fuera de lo que el filtro global deja ver, así que no
         // basta con un `Where`: hay que abrir el alcance antes de construir la consulta. El
         // ámbito se cierra al terminar el método, de modo que ninguna consulta posterior de esta
         // petición hereda la apertura.
-        using var _ = context.VerTambien(
-            borrados: vista.Es(FiltrosDeVista.Papelera),
-            archivados: vista.Es(FiltrosDeVista.Archivados));
+        using var _ = context.IncludeHidden(
+            deleted: vista.Is(ViewFilters.Trash),
+            archived: vista.Is(ViewFilters.Archived));
 
         var query = context.Tickets.AsNoTracking().Where(t => t.TenantId == tenantId);
 
@@ -42,44 +42,44 @@ public sealed class TicketQueries(TicketingDbContext context) : ITicketQueries
         // Esto no existía, y el menú ya ofrecía «Mis Tickets» apuntando a `?filter=mine`: el
         // parámetro llegaba, nadie lo leía y la pantalla devolvía los 175 tickets de siempre.
         // Quien lo usaba creía estar viendo los suyos.
-        var yo = vista.UsuarioId;
+        var yo = vista.UserId;
 
-        if (vista.Es(FiltrosDeVista.Mios) && yo.HasValue)
+        if (vista.Is(ViewFilters.Mine) && yo.HasValue)
         {
             // «Míos» en un ticket es el agente que lo lleva, no quien lo abrió: el que abre
             // suele ser un cliente y no tiene esta pantalla.
             query = query.Where(t => t.AssignedAgentId == yo.Value);
         }
-        else if (vista.Es(FiltrosDeVista.CreadosPorMi) && yo.HasValue)
+        else if (vista.Is(ViewFilters.CreatedByMe) && yo.HasValue)
         {
             query = query.Where(t => t.CustomerId == yo.Value);
         }
-        else if (vista.Es(FiltrosDeVista.Favoritos))
+        else if (vista.Is(ViewFilters.Favorites))
         {
             // Sin marcados, la lista es vacía y no «todos». Devolver todo cuando no hay
             // favoritos sería el mismo engaño que se está arreglando, sólo que al revés.
-            var marcados = vista.Favoritos.ToArray();
+            var marcados = vista.Favorites.ToArray();
             query = query.Where(t => EF.Constant(marcados).Contains(t.Id));
         }
-        else if (vista.Es(FiltrosDeVista.CompartidosConmigo))
+        else if (vista.Is(ViewFilters.SharedWithMe))
         {
-            var conmigo = vista.CompartidosConmigo.ToArray();
+            var conmigo = vista.SharedWithMe.ToArray();
             query = query.Where(t => EF.Constant(conmigo).Contains(t.Id));
         }
-        else if (vista.Es(FiltrosDeVista.Privados) && yo.HasValue)
+        else if (vista.Is(ViewFilters.Private) && yo.HasValue)
         {
             // Privado es «lo llevo yo y no se lo he dado a nadie». Se resta lo compartido en
             // lugar de guardar un campo `EsPrivado`, que sería una segunda fuente de verdad y se
             // desincronizaría en cuanto alguien compartiera por otra vía.
-            var compartidos = vista.CompartidosConAlguien.ToArray();
+            var compartidos = vista.SharedWithOthers.ToArray();
             query = query.Where(t => t.AssignedAgentId == yo.Value && !EF.Constant(compartidos).Contains(t.Id));
         }
-        else if (vista.Es(FiltrosDeVista.Archivados))
+        else if (vista.Is(ViewFilters.Archived))
         {
             // El alcance abierto arriba deja pasar lo archivado; aquí se pide **sólo** eso.
-            query = query.Where(t => t.ArchivadoEnUtc != null);
+            query = query.Where(t => t.ArchivedAtUtc != null);
         }
-        else if (vista.Es(FiltrosDeVista.Papelera))
+        else if (vista.Is(ViewFilters.Trash))
         {
             query = query.Where(t => t.IsDeleted);
         }
@@ -107,7 +107,7 @@ public sealed class TicketQueries(TicketingDbContext context) : ITicketQueries
         // Se busca en el asunto y en la descripción: quien busca «impresora» a veces recuerda una
         // palabra del cuerpo y no del título, y limitarlo al título hace parecer que el dato no
         // está.
-        if (pagination.TextoBuscado is { } texto)
+        if (pagination.SearchText is { } texto)
             query = query.Where(t => t.Title.Contains(texto) || t.Description.Contains(texto));
 
         if (pagination.StartDate.HasValue) query = query.Where(t => t.CreatedAt >= pagination.StartDate.Value);

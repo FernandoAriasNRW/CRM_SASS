@@ -1,7 +1,5 @@
 using BuildingBlocks.Application.Abstractions;
 using Identity.Application.Favoritos;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
 using Identity.Application.Commands;
 using Identity.Application.Queries;
 using Identity.Infrastructure;
@@ -110,13 +108,12 @@ public static class IdentityEndpoints
     // pensó. Nunca llegó a funcionar —su política de límite de peticiones no existía y respondía
     // 409— y se quitó antes de que alguien la arreglara y abriera la API entera.
 
-    authGroup.MapGet("/users/me", async (IMediator mediator, ClaimsPrincipal principal) =>
+    authGroup.MapGet("/users/me", async (IMediator mediator, IUserContext currentUser) =>
     {
-      var sub = principal.FindFirstValue(JwtRegisteredClaimNames.Sub) ?? principal.FindFirstValue(ClaimTypes.NameIdentifier);
-      if (string.IsNullOrEmpty(sub) || !Guid.TryParse(sub, out var userId))
+      if (currentUser.UserId == Guid.Empty)
           return Results.Unauthorized();
 
-      var result = await mediator.Send(new GetUserByIdQuery(userId));
+      var result = await mediator.Send(new GetUserByIdQuery(currentUser.UserId));
       return result.IsSuccess ? Results.Ok(result.Value) : Results.NotFound();
     }).RequireAuthorization();
 
@@ -179,18 +176,18 @@ public static class IdentityEndpoints
       return result.IsSuccess ? Results.NoContent() : Results.BadRequest(result.Error);
     }).RequireAuthorization();
 
-    usersGroup.MapGet("/me/preferences", async (IMediator mediator, ClaimsPrincipal principal) =>
+    usersGroup.MapGet("/me/preferences", async (IMediator mediator, IUserContext currentUser) =>
     {
-      var userId = Guid.TryParse(principal.FindFirstValue(JwtRegisteredClaimNames.Sub) ?? principal.FindFirstValue(ClaimTypes.NameIdentifier), out var uid) ? uid : Guid.Empty;
+      var userId = currentUser.UserId;
       if (userId == Guid.Empty) return Results.Unauthorized();
       
       var result = await mediator.Send(new GetUserPreferencesQuery(userId));
       return result.IsSuccess ? Results.Ok(result.Value) : Results.NotFound(result.Error);
     }).RequireAuthorization();
 
-    usersGroup.MapPut("/me/preferences", async (UpdateSidebarPreferencesCommand command, IMediator mediator, ClaimsPrincipal principal) =>
+    usersGroup.MapPut("/me/preferences", async (UpdateSidebarPreferencesCommand command, IMediator mediator, IUserContext currentUser) =>
     {
-      var userId = Guid.TryParse(principal.FindFirstValue(JwtRegisteredClaimNames.Sub) ?? principal.FindFirstValue(ClaimTypes.NameIdentifier), out var uid) ? uid : Guid.Empty;
+      var userId = currentUser.UserId;
       if (userId == Guid.Empty) return Results.Unauthorized();
       
       var actualCommand = command with { UserId = userId };
@@ -198,18 +195,18 @@ public static class IdentityEndpoints
       return result.IsSuccess ? Results.NoContent() : Results.BadRequest(result.Error);
     }).RequireAuthorization();
 
-    usersGroup.MapGet("/tenant", async (IMediator mediator, ClaimsPrincipal principal) =>
+    usersGroup.MapGet("/tenant", async (IMediator mediator, IUserContext currentUser) =>
     {
-      var tenantId = Guid.TryParse(principal.FindFirstValue("tenantId"), out var tid) ? tid : Guid.Empty;
+      var tenantId = currentUser.TenantId;
       if (tenantId == Guid.Empty) return Results.BadRequest("Invalid tenant");
       
       var result = await mediator.Send(new GetTenantUsersQuery(tenantId));
       return Results.Ok(result.Value);
     }).RequireAuthorization();
 
-    usersGroup.MapPost("/me/avatar", async (Microsoft.AspNetCore.Http.IFormFile file, IMediator mediator, ClaimsPrincipal principal) =>
+    usersGroup.MapPost("/me/avatar", async (Microsoft.AspNetCore.Http.IFormFile file, IMediator mediator, IUserContext currentUser) =>
     {
-      var userId = Guid.TryParse(principal.FindFirstValue(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub) ?? principal.FindFirstValue(System.Security.Claims.ClaimTypes.NameIdentifier), out var uid) ? uid : Guid.Empty;
+      var userId = currentUser.UserId;
       if (userId == Guid.Empty) return Results.Unauthorized();
 
       if (file == null || file.Length == 0) return Results.BadRequest("File is empty");
@@ -221,9 +218,9 @@ public static class IdentityEndpoints
       return result.IsSuccess ? Results.Ok(new { AvatarUrl = result.Value }) : Results.BadRequest(result.Error);
     }).RequireAuthorization().DisableAntiforgery();
 
-    usersGroup.MapPut("/me/profile", async (UpdateProfileCommand command, IMediator mediator, ClaimsPrincipal principal) =>
+    usersGroup.MapPut("/me/profile", async (UpdateProfileCommand command, IMediator mediator, IUserContext currentUser) =>
     {
-      var userId = Guid.TryParse(principal.FindFirstValue(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub) ?? principal.FindFirstValue(System.Security.Claims.ClaimTypes.NameIdentifier), out var uid) ? uid : Guid.Empty;
+      var userId = currentUser.UserId;
       if (userId == Guid.Empty) return Results.Unauthorized();
       
       var actualCommand = command with { UserId = userId };
@@ -241,18 +238,18 @@ public static class IdentityEndpoints
     /// El identificador sale del token y no del cuerpo: si viniera de fuera, cualquiera podría
     /// mandar el de otra persona y cambiarle la contraseña conociendo sólo la suya.
     /// </summary>
-    usersGroup.MapPut("/me/password", async (CambiarContrasenaRequest req, IMediator mediator, ClaimsPrincipal principal) =>
+    usersGroup.MapPut("/me/password", async (CambiarContrasenaRequest req, IMediator mediator, IUserContext currentUser) =>
     {
-      var userId = Guid.TryParse(principal.FindFirstValue(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub) ?? principal.FindFirstValue(System.Security.Claims.ClaimTypes.NameIdentifier), out var uid) ? uid : Guid.Empty;
+      var userId = currentUser.UserId;
       if (userId == Guid.Empty) return Results.Unauthorized();
 
       var result = await mediator.Send(new ChangePasswordCommand(userId, req.CurrentPassword, req.NewPassword));
       return result.IsSuccess ? Results.NoContent() : Results.BadRequest(result.Error);
     }).RequireAuthorization();
 
-    usersGroup.MapGet("", async (string? search, int? pageSize, IMediator mediator, ClaimsPrincipal principal) =>
+    usersGroup.MapGet("", async (string? search, int? pageSize, IMediator mediator, IUserContext currentUser) =>
     {
-      var tenantId = Guid.TryParse(principal.FindFirstValue("tenantId"), out var tid) ? tid : Guid.Empty;
+      var tenantId = currentUser.TenantId;
 
       // `search` con el mismo nombre que en tareas, tickets y proyectos. Cuatro endpoints con
       // cuatro nombres para lo mismo es cómo el frontend acaba llamando `q` en un sitio y `search`
@@ -261,9 +258,9 @@ public static class IdentityEndpoints
       return Results.Ok(result.Value);
     }).RequireAuthorization();
 
-    usersGroup.MapPost("", async (CreateUserRequest req, IMediator mediator, ClaimsPrincipal principal) =>
+    usersGroup.MapPost("", async (CreateUserRequest req, IMediator mediator, IUserContext currentUser) =>
     {
-      var tenantId = Guid.TryParse(principal.FindFirstValue("tenantId"), out var tid) ? tid : Guid.Empty;
+      var tenantId = currentUser.TenantId;
       var command = new CreateUserCommand(tenantId, req.Name, req.Email, req.Password, req.Role);
       var result = await mediator.Send(command);
       return result.IsSuccess
@@ -271,18 +268,18 @@ public static class IdentityEndpoints
               : Results.BadRequest(result.Error);
     }).RequireAuthorization(SoloAdministradores);
 
-    usersGroup.MapPut("/{id:guid}", async (Guid id, UpdateUserRequest req, IMediator mediator, ClaimsPrincipal principal) =>
+    usersGroup.MapPut("/{id:guid}", async (Guid id, UpdateUserRequest req, IMediator mediator, IUserContext currentUser) =>
     {
-      var tenantId = Guid.TryParse(principal.FindFirstValue("tenantId"), out var tid) ? tid : Guid.Empty;
+      var tenantId = currentUser.TenantId;
       var command = new UpdateUserCommand(tenantId, id, req.Name, req.Email, req.Role);
       var result = await mediator.Send(command);
       return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
     }).RequireAuthorization(SoloAdministradores);
 
-    usersGroup.MapDelete("/{id:guid}", async (Guid id, IMediator mediator, ClaimsPrincipal principal) =>
+    usersGroup.MapDelete("/{id:guid}", async (Guid id, IMediator mediator, IUserContext currentUser) =>
     {
-      var tenantId = Guid.TryParse(principal.FindFirstValue("tenantId"), out var tid) ? tid : Guid.Empty;
-      var currentUserId = Guid.TryParse(principal.FindFirstValue(JwtRegisteredClaimNames.Sub) ?? principal.FindFirstValue(ClaimTypes.NameIdentifier), out var uid) ? uid : Guid.Empty;
+      var tenantId = currentUser.TenantId;
+      var currentUserId = currentUser.UserId;
       var command = new DeleteUserCommand(tenantId, id, currentUserId);
       var result = await mediator.Send(command);
       return result.IsSuccess ? Results.NoContent() : Results.BadRequest(result.Error);
@@ -291,19 +288,17 @@ public static class IdentityEndpoints
     // Permissions endpoints
     var permissionsGroup = app.MapGroup("/api/v1/permissions").WithTags("Permissions").RequireAuthorization(SoloAdministradores);
 
-    permissionsGroup.MapGet("", async (string? targetType, Guid? targetId, string? roleName, IMediator mediator, ClaimsPrincipal principal) =>
+    permissionsGroup.MapGet("", async (string? targetType, Guid? targetId, string? roleName, IMediator mediator, IUserContext currentUser) =>
     {
-      var tenantIdStr = principal.FindFirstValue("tenantId") ?? principal.FindFirstValue("TenantId");
-      var tenantId = Guid.TryParse(tenantIdStr, out var tid) ? tid : Guid.Empty;
+      var tenantId = currentUser.TenantId;
       var query = new GetGranularPermissionsQuery(tenantId, targetType, targetId, roleName);
       var result = await mediator.Send(query);
       return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
     });
 
-    permissionsGroup.MapPost("", async (SaveGranularPermissionsRequest req, IMediator mediator, ClaimsPrincipal principal) =>
+    permissionsGroup.MapPost("", async (SaveGranularPermissionsRequest req, IMediator mediator, IUserContext currentUser) =>
     {
-      var tenantIdStr = principal.FindFirstValue("tenantId") ?? principal.FindFirstValue("TenantId");
-      var tenantId = Guid.TryParse(tenantIdStr, out var tid) ? tid : Guid.Empty;
+      var tenantId = currentUser.TenantId;
       var command = new SaveGranularPermissionsCommand(tenantId, req.TargetType, req.UserId, req.TeamId, req.RoleName, req.Permissions);
       var result = await mediator.Send(command);
       return result.IsSuccess ? Results.Ok() : Results.BadRequest(result.Error);
@@ -311,18 +306,18 @@ public static class IdentityEndpoints
 
     var viewsGroup = app.MapGroup("/api/v1/views").WithTags("Views").RequireAuthorization();
 
-    viewsGroup.MapGet("/{moduleName}", async (string moduleName, IMediator mediator, ClaimsPrincipal principal) =>
+    viewsGroup.MapGet("/{moduleName}", async (string moduleName, IMediator mediator, IUserContext currentUser) =>
     {
-      var tenantId = Guid.TryParse(principal.FindFirstValue("tenantId"), out var tid) ? tid : Guid.Empty;
-      var userId = Guid.TryParse(principal.FindFirstValue(JwtRegisteredClaimNames.Sub) ?? principal.FindFirstValue(ClaimTypes.NameIdentifier), out var uid) ? uid : Guid.Empty;
+      var tenantId = currentUser.TenantId;
+      var userId = currentUser.UserId;
       var result = await mediator.Send(new GetSavedViewsQuery(tenantId, userId, moduleName));
       return Results.Ok(result.Value);
     });
 
-    viewsGroup.MapPost("", async (SaveViewCommand command, IMediator mediator, ClaimsPrincipal principal) =>
+    viewsGroup.MapPost("", async (SaveViewCommand command, IMediator mediator, IUserContext currentUser) =>
     {
-      var tenantId = Guid.TryParse(principal.FindFirstValue("tenantId"), out var tid) ? tid : Guid.Empty;
-      var userId = Guid.TryParse(principal.FindFirstValue(JwtRegisteredClaimNames.Sub) ?? principal.FindFirstValue(ClaimTypes.NameIdentifier), out var uid) ? uid : Guid.Empty;
+      var tenantId = currentUser.TenantId;
+      var userId = currentUser.UserId;
       var actualCommand = command with { TenantId = tenantId, UserId = userId };
       var result = await mediator.Send(actualCommand);
       return result.IsSuccess
@@ -330,10 +325,10 @@ public static class IdentityEndpoints
               : Results.BadRequest(result.Error);
     });
 
-    viewsGroup.MapDelete("/{id:guid}", async (Guid id, IMediator mediator, ClaimsPrincipal principal) =>
+    viewsGroup.MapDelete("/{id:guid}", async (Guid id, IMediator mediator, IUserContext currentUser) =>
     {
-      var tenantId = Guid.TryParse(principal.FindFirstValue("tenantId"), out var tid) ? tid : Guid.Empty;
-      var userId = Guid.TryParse(principal.FindFirstValue(JwtRegisteredClaimNames.Sub) ?? principal.FindFirstValue(ClaimTypes.NameIdentifier), out var uid) ? uid : Guid.Empty;
+      var tenantId = currentUser.TenantId;
+      var userId = currentUser.UserId;
       var result = await mediator.Send(new DeleteSavedViewCommand(tenantId, userId, id));
       return result.IsSuccess ? Results.NoContent() : Results.BadRequest(result.Error);
     });

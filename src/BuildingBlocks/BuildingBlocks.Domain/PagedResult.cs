@@ -24,7 +24,7 @@ public class PaginationRequest
     /// «automaticas» y «automáticas» encuentran lo mismo. Comprobado sobre los datos reales antes
     /// de escribir esto; normalizar en el cliente sería duplicar trabajo que la base ya hace.
     /// </summary>
-    public string? Buscar { get; init; }
+    public string? Search { get; init; }
 
     /// <summary>
     /// El texto listo para usar: recortado, o nulo si no hay nada que buscar.
@@ -33,8 +33,8 @@ public class PaginationRequest
     /// convertiría en un <c>LIKE '%   %'</c> que no encuentra casi nada — una lista vacía sin
     /// motivo aparente.
     /// </summary>
-    public string? TextoBuscado
-        => string.IsNullOrWhiteSpace(Buscar) ? null : Buscar.Trim();
+    public string? SearchText
+        => string.IsNullOrWhiteSpace(Search) ? null : Search.Trim();
 }
 
 public class PagedResult<T>

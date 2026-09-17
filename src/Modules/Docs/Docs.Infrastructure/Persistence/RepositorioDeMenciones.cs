@@ -25,21 +25,21 @@ public sealed class RepositorioDeMenciones(DocsDbContext contexto) : IRepositori
         await contexto.SaveChangesAsync(ct);
     }
 
-    public async Task<IReadOnlyList<DocumentoQueMenciona>> QuienMencionaAsync(
-        Guid tenantId, string tipo, Guid entidadId, CancellationToken ct = default)
+    public async Task<IReadOnlyList<MentioningDocument>> GetMentioningDocumentsAsync(
+        Guid tenantId, string tipo, Guid entityId, CancellationToken ct = default)
     {
         // Se une con la página y el documento para devolver los títulos: quien pregunta va a
         // pintar una lista de enlaces, y sin los títulos tendría que pedir cada uno por separado.
         return await contexto.MencionesEnDocumentos.AsNoTracking()
-            .Where(m => m.TenantId == tenantId && m.TipoMencionado == tipo && m.EntidadMencionadaId == entidadId)
+            .Where(m => m.TenantId == tenantId && m.TipoMencionado == tipo && m.EntidadMencionadaId == entityId)
             .Join(contexto.Pages.AsNoTracking(), m => m.PageId, p => p.Id, (m, p) => new { m, p })
             .Join(contexto.Documents.AsNoTracking(), x => x.m.DocumentId, d => d.Id, (x, d) => new { x.m, x.p, d })
             // **Se ordena antes de proyectar.** Ordenando después, el criterio es una propiedad
             // del objeto que se acaba de construir y EF no sabe traducir eso: la consulta falla al
             // ejecutarse con «could not be translated», no al compilar.
             .OrderByDescending(x => x.m.DetectadaUtc)
-            .Select(x => new DocumentoQueMenciona(
-                x.d.Id, x.p.Id, x.d.Title, x.p.Title, x.m.TextoVisible, x.m.DetectadaUtc))
+            .Select(x => new MentioningDocument(
+                x.d.Id, x.p.Id, x.d.Title, x.p.Title, x.m.VisibleText, x.m.DetectadaUtc))
             .ToListAsync(ct);
     }
 
@@ -47,12 +47,12 @@ public sealed class RepositorioDeMenciones(DocsDbContext contexto) : IRepositori
         Guid tenantId, Guid pageId, CancellationToken ct = default)
         => await contexto.MencionesEnDocumentos.AsNoTracking()
             .Where(m => m.TenantId == tenantId && m.PageId == pageId)
-            .OrderBy(m => m.TextoVisible)
+            .OrderBy(m => m.VisibleText)
             .ToListAsync(ct);
 }
 
 /// <summary>
-/// Responde el puerto <see cref="IMencionesEnDocumentos"/> para el inquilino de la petición.
+/// Responde el puerto <see cref="IDocumentMentions"/> para el inquilino de la petición.
 ///
 /// Lo implementa Docs porque es quien guarda las menciones, y lo consumen las pantallas de tareas
 /// y tickets sin conocerlo: la dependencia va de todos a BuildingBlocks, nunca entre módulos. Es
@@ -60,9 +60,9 @@ public sealed class RepositorioDeMenciones(DocsDbContext contexto) : IRepositori
 /// </summary>
 public sealed class MencionesEnDocumentos(
     IRepositorioDeMenciones repositorio,
-    IUserContext usuario) : IMencionesEnDocumentos
+    IUserContext usuario) : IDocumentMentions
 {
-    public Task<IReadOnlyList<DocumentoQueMenciona>> QuienMencionaAsync(
-        string tipo, Guid entidadId, CancellationToken ct = default)
-        => repositorio.QuienMencionaAsync(usuario.TenantId, tipo, entidadId, ct);
+    public Task<IReadOnlyList<MentioningDocument>> GetMentioningDocumentsAsync(
+        string tipo, Guid entityId, CancellationToken ct = default)
+        => repositorio.GetMentioningDocumentsAsync(usuario.TenantId, tipo, entityId, ct);
 }

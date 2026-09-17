@@ -46,7 +46,7 @@ public sealed class DataSeederService(IServiceProvider serviceProvider, ILogger<
         // terminaba diciendo «completed successfully» pasara lo que pasara. La siembra de
         // Projects llevaba fallando en silencio, así que la aplicación arrancaba sin ningún
         // proyecto ni tarea y el panel de informes contaba cero sin que nadie supiera por qué.
-        var fallos = new List<string>();
+        var failures = new List<string>();
         using var scope = serviceProvider.CreateScope();
 
         // ---------------------------------------------------------------------
@@ -67,7 +67,7 @@ public sealed class DataSeederService(IServiceProvider serviceProvider, ILogger<
             // salían las 22 advertencias de desreferencia.
             //
             // **Sin el filtro de inquilino, y esto es la causa de un fallo medido.** Identity es
-            // el único contexto que no puede abrir `ComoInquilino` aquí: el inquilino sale del
+            // el único contexto que no puede abrir `AsTenant` aquí: el inquilino sale del
             // administrador, así que todavía no se sabe cuál es. Con el filtro puesto,
             // `CurrentTenantId` valía `Guid.Empty`, la búsqueda no encontraba al administrador
             // **que sí estaba en la tabla**, y el sembrador lo creaba otra vez. En cada arranque.
@@ -102,7 +102,7 @@ public sealed class DataSeederService(IServiceProvider serviceProvider, ILogger<
                 existingAdmin = User.Create(Guid.NewGuid(), "Admin Administrator", email, pass, adminRole).Value
                     ?? throw new InvalidOperationException("No se pudo crear el usuario administrador del seed.");
                 identityDb.User.Add(existingAdmin);
-                await GuardarUsuariosAsync(identityDb, cancellationToken);
+                await SaveUsersAsync(identityDb, cancellationToken);
             }
 
             // Todo el resto del seed cuelga de este usuario: es el propietario de los
@@ -114,7 +114,7 @@ public sealed class DataSeederService(IServiceProvider serviceProvider, ILogger<
             // Ya se sabe de quién es esto, así que a partir de aquí Identity se comporta como los
             // otros nueve contextos. Sin esta línea, todas las consultas de abajo se filtran
             // contra `Guid.Empty`, vuelven vacías, y el sembrador cree que no hay nada sembrado.
-            using var _identityDbInquilino = identityDb.ComoInquilino(tenantId);
+            using var _identityTenantScope = identityDb.AsTenant(tenantId);
 
             // Align any orphaned Users or EntityPermissions to tenantId
             try
@@ -159,7 +159,7 @@ public sealed class DataSeederService(IServiceProvider serviceProvider, ILogger<
                         }
                     }
                 }
-                await GuardarUsuariosAsync(identityDb, cancellationToken);
+                await SaveUsersAsync(identityDb, cancellationToken);
                 existingUsers = await identityDb.User.Where(u => u.TenantId == tenantId).ToListAsync(cancellationToken);
             }
 
@@ -210,7 +210,7 @@ public sealed class DataSeederService(IServiceProvider serviceProvider, ILogger<
         catch (Exception ex)
         {
             logger.LogError(ex, "Error seeding Identity module data");
-            fallos.Add("Identity");
+            failures.Add("Identity");
         }
 
         if (tenantId == Guid.Empty) return;
@@ -227,7 +227,7 @@ public sealed class DataSeederService(IServiceProvider serviceProvider, ILogger<
             // de que haya proyectos— tampoco se creaban. Declarar el inquilino lo arregla sin
             // apagar el resto de filtros, que es lo que haría IgnoreQueryFilters.
             var teamsDb = scope.ServiceProvider.GetRequiredService<TeamsDbContext>();
-            using var _teamsDbInquilino = teamsDb.ComoInquilino(tenantId);
+            using var _teamsTenantScope = teamsDb.AsTenant(tenantId);
             try { await teamsDb.Database.ExecuteSqlAsync($"UPDATE `Teams` SET `TenantId` = {tenantId} WHERE `TenantId` != {tenantId}", cancellationToken); } catch { }
 
             var existingTeams = await teamsDb.Teams.Where(t => t.TenantId == tenantId).ToListAsync(cancellationToken);
@@ -259,7 +259,7 @@ public sealed class DataSeederService(IServiceProvider serviceProvider, ILogger<
         catch (Exception ex)
         {
             logger.LogError(ex, "Error seeding Teams module data");
-            fallos.Add("Teams");
+            failures.Add("Teams");
         }
 
         // ---------------------------------------------------------------------
@@ -269,7 +269,7 @@ public sealed class DataSeederService(IServiceProvider serviceProvider, ILogger<
         try
         {
             var projectsDb = scope.ServiceProvider.GetRequiredService<ProjectsDbContext>();
-            using var _projectsDbInquilino = projectsDb.ComoInquilino(tenantId);
+            using var _projectsTenantScope = projectsDb.AsTenant(tenantId);
             try
             {
                 await projectsDb.Database.ExecuteSqlAsync($"UPDATE `Spaces` SET `TenantId` = {tenantId} WHERE `TenantId` != {tenantId}", cancellationToken);
@@ -325,7 +325,7 @@ public sealed class DataSeederService(IServiceProvider serviceProvider, ILogger<
         catch (Exception ex)
         {
             logger.LogError(ex, "Error seeding Projects module data");
-            fallos.Add("Projects");
+            failures.Add("Projects");
         }
 
         // ---------------------------------------------------------------------
@@ -334,7 +334,7 @@ public sealed class DataSeederService(IServiceProvider serviceProvider, ILogger<
         try
         {
             var workItemsDb = scope.ServiceProvider.GetRequiredService<WorkItemsDbContext>();
-            using var _workItemsDbInquilino = workItemsDb.ComoInquilino(tenantId);
+            using var _workItemsTenantScope = workItemsDb.AsTenant(tenantId);
             try { await workItemsDb.Database.ExecuteSqlAsync($"UPDATE `Tasks` SET `TenantId` = {tenantId} WHERE `TenantId` != {tenantId}", cancellationToken); } catch { }
 
             var existingTasks = await workItemsDb.Tasks.Where(t => t.TenantId == tenantId).ToListAsync(cancellationToken);
@@ -394,7 +394,7 @@ public sealed class DataSeederService(IServiceProvider serviceProvider, ILogger<
         catch (Exception ex)
         {
             logger.LogError(ex, "Error seeding WorkItems module data");
-            fallos.Add("WorkItems");
+            failures.Add("WorkItems");
         }
 
         // ---------------------------------------------------------------------
@@ -403,7 +403,7 @@ public sealed class DataSeederService(IServiceProvider serviceProvider, ILogger<
         try
         {
             var docsDb = scope.ServiceProvider.GetRequiredService<DocsDbContext>();
-            using var _docsDbInquilino = docsDb.ComoInquilino(tenantId);
+            using var _docsTenantScope = docsDb.AsTenant(tenantId);
             try
             {
                 await docsDb.Database.ExecuteSqlAsync($"UPDATE `Documents` SET `TenantId` = {tenantId} WHERE `TenantId` != {tenantId}", cancellationToken);
@@ -436,7 +436,7 @@ public sealed class DataSeederService(IServiceProvider serviceProvider, ILogger<
         catch (Exception ex)
         {
             logger.LogError(ex, "Error seeding Docs module data");
-            fallos.Add("Docs");
+            failures.Add("Docs");
         }
 
         // ---------------------------------------------------------------------
@@ -445,7 +445,7 @@ public sealed class DataSeederService(IServiceProvider serviceProvider, ILogger<
         try
         {
             var ticketsDb = scope.ServiceProvider.GetRequiredService<TicketingDbContext>();
-            using var _ticketsDbInquilino = ticketsDb.ComoInquilino(tenantId);
+            using var _ticketsTenantScope = ticketsDb.AsTenant(tenantId);
             try { await ticketsDb.Database.ExecuteSqlAsync($"UPDATE `Tickets` SET `TenantId` = {tenantId} WHERE `TenantId` != {tenantId}", cancellationToken); } catch { }
 
             var existingTickets = await ticketsDb.Tickets.Where(t => t.TenantId == tenantId).ToListAsync(cancellationToken);
@@ -478,7 +478,7 @@ public sealed class DataSeederService(IServiceProvider serviceProvider, ILogger<
         catch (Exception ex)
         {
             logger.LogError(ex, "Error seeding Ticketing module data");
-            fallos.Add("Ticketing");
+            failures.Add("Ticketing");
         }
 
         // ---------------------------------------------------------------------
@@ -487,7 +487,7 @@ public sealed class DataSeederService(IServiceProvider serviceProvider, ILogger<
         try
         {
             var calendarDb = scope.ServiceProvider.GetRequiredService<CalendarDbContext>();
-            using var _calendarDbInquilino = calendarDb.ComoInquilino(tenantId);
+            using var _calendarTenantScope = calendarDb.AsTenant(tenantId);
             try { await calendarDb.Database.ExecuteSqlAsync($"UPDATE `calendar_events` SET `tenant_id` = {tenantId} WHERE `tenant_id` != {tenantId}", cancellationToken); } catch { }
 
             var existingEvents = await calendarDb.CalendarEvents.Where(e => e.TenantId == tenantId).ToListAsync(cancellationToken);
@@ -546,7 +546,7 @@ public sealed class DataSeederService(IServiceProvider serviceProvider, ILogger<
         catch (Exception ex)
         {
             logger.LogError(ex, "Error seeding Calendar module data");
-            fallos.Add("Calendar");
+            failures.Add("Calendar");
         }
 
         // ---------------------------------------------------------------------
@@ -555,7 +555,7 @@ public sealed class DataSeederService(IServiceProvider serviceProvider, ILogger<
         try
         {
             var commDb = scope.ServiceProvider.GetRequiredService<CommunicationsDbContext>();
-            using var _commDbInquilino = commDb.ComoInquilino(tenantId);
+            using var _commTenantScope = commDb.AsTenant(tenantId);
             try
             {
                 await commDb.Database.ExecuteSqlAsync($"UPDATE `Conversations` SET `TenantId` = {tenantId} WHERE `TenantId` != {tenantId}", cancellationToken);
@@ -601,7 +601,7 @@ public sealed class DataSeederService(IServiceProvider serviceProvider, ILogger<
         catch (Exception ex)
         {
             logger.LogError(ex, "Error seeding Communication module data");
-            fallos.Add("Communication");
+            failures.Add("Communication");
         }
 
         // ---------------------------------------------------------------------
@@ -610,7 +610,7 @@ public sealed class DataSeederService(IServiceProvider serviceProvider, ILogger<
         try
         {
             var notifDb = scope.ServiceProvider.GetRequiredService<NotificationsDbContext>();
-            using var _notifDbInquilino = notifDb.ComoInquilino(tenantId);
+            using var _notificationsTenantScope = notifDb.AsTenant(tenantId);
             try { await notifDb.Database.ExecuteSqlAsync($"UPDATE `Notifications` SET `TenantId` = {tenantId} WHERE `TenantId` != {tenantId}", cancellationToken); } catch { }
 
             var existingNotifs = await notifDb.Notifications.Where(n => n.TenantId == tenantId && n.RecipientUserId == adminUser.Id).ToListAsync(cancellationToken);
@@ -635,7 +635,7 @@ public sealed class DataSeederService(IServiceProvider serviceProvider, ILogger<
         catch (Exception ex)
         {
             logger.LogError(ex, "Error seeding Notifications module data");
-            fallos.Add("Notifications");
+            failures.Add("Notifications");
         }
 
         // ---------------------------------------------------------------------
@@ -644,7 +644,7 @@ public sealed class DataSeederService(IServiceProvider serviceProvider, ILogger<
         try
         {
             var webhookDb = scope.ServiceProvider.GetRequiredService<WebhookDbContext>();
-            using var _webhookDbInquilino = webhookDb.ComoInquilino(tenantId);
+            using var _webhookTenantScope = webhookDb.AsTenant(tenantId);
             try { await webhookDb.Database.ExecuteSqlAsync($"UPDATE `webhook_subscriptions` SET `TenantId` = {tenantId} WHERE `TenantId` != {tenantId}", cancellationToken); } catch { }
 
             var existingWebhooks = await webhookDb.Subscriptions.Where(w => w.TenantId == tenantId).ToListAsync(cancellationToken);
@@ -662,7 +662,7 @@ public sealed class DataSeederService(IServiceProvider serviceProvider, ILogger<
         catch (Exception ex)
         {
             logger.LogError(ex, "Error seeding Webhook module data");
-            fallos.Add("Webhook");
+            failures.Add("Webhook");
         }
 
         // ---------------------------------------------------------------------
@@ -671,7 +671,7 @@ public sealed class DataSeederService(IServiceProvider serviceProvider, ILogger<
         try
         {
             var tagsDb = scope.ServiceProvider.GetRequiredService<TagsDbContext>();
-            using var _tagsDbInquilino = tagsDb.ComoInquilino(tenantId);
+            using var _tagsTenantScope = tagsDb.AsTenant(tenantId);
             try { await tagsDb.Database.ExecuteSqlAsync($"UPDATE `Tags` SET `TenantId` = {tenantId} WHERE `TenantId` != {tenantId}", cancellationToken); } catch { }
 
             var existingTags = await tagsDb.Tags.Where(t => t.TenantId == tenantId).ToListAsync(cancellationToken);
@@ -692,16 +692,16 @@ public sealed class DataSeederService(IServiceProvider serviceProvider, ILogger<
         catch (Exception ex)
         {
             logger.LogError(ex, "Error seeding Tags module data");
-            fallos.Add("Tags");
+            failures.Add("Tags");
         }
 
-        if (fallos.Count > 0)
+        if (failures.Count > 0)
         {
             // Se lanza a propósito. Un entorno de demostración a medio sembrar es un entorno
             // roto, y callarlo sólo traslada el desconcierto a quien abra la pantalla y la vea
             // vacía. Quien llame decide qué hacer con esto.
             throw new InvalidOperationException(
-                "La siembra falló en estos módulos: " + string.Join(", ", fallos) +
+                "La siembra falló en estos módulos: " + string.Join(", ", failures) +
                 ". Los errores concretos están más arriba en el registro.");
         }
 
@@ -723,21 +723,21 @@ public sealed class DataSeederService(IServiceProvider serviceProvider, ILogger<
     /// tragarse cualquier error: un fallo que no sea de duplicidad se relanza, porque una siembra
     /// que calla un error de esquema deja la aplicación a medias sin decirlo.
     /// </summary>
-    private async Task<int> GuardarUsuariosAsync(
+    private async Task<int> SaveUsersAsync(
         IdentityDbContext identityDb, CancellationToken cancellationToken)
     {
         try
         {
             return await identityDb.SaveChangesAsync(cancellationToken);
         }
-        catch (DbUpdateException ex) when (EsCorreoRepetido(ex))
+        catch (DbUpdateException ex) when (IsDuplicateEmail(ex))
         {
             // Se sueltan los usuarios pendientes: reintentar con ellos dentro volvería a chocar.
-            foreach (var entrada in identityDb.ChangeTracker.Entries<User>()
+            foreach (var entry in identityDb.ChangeTracker.Entries<User>()
                          .Where(e => e.State == EntityState.Added)
                          .ToList())
             {
-                entrada.State = EntityState.Detached;
+                entry.State = EntityState.Detached;
             }
 
             logger.LogInformation(
@@ -755,6 +755,6 @@ public sealed class DataSeederService(IServiceProvider serviceProvider, ILogger<
     /// el mensaje: el mensaje cambia con el idioma del servidor y con la versión, y un filtro por
     /// texto acabaría dejando pasar errores que no son este.
     /// </summary>
-    private static bool EsCorreoRepetido(DbUpdateException ex)
+    private static bool IsDuplicateEmail(DbUpdateException ex)
         => ex.InnerException is MySqlConnector.MySqlException { ErrorCode: MySqlConnector.MySqlErrorCode.DuplicateKeyEntry };
 }

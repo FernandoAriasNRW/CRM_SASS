@@ -137,7 +137,7 @@ public sealed class GeneradorDeExportaciones(
             if (informe is null)
                 throw new InvalidOperationException("El informe ya no existe");
 
-            var tabla = await datos.ResolverAsync(informe, ct);
+            var tabla = await datos.ResolveAsync(informe, ct);
             var escritor = escritores.Para(exportacion.Formato.Name);
             var bytes = escritor.Escribir(tabla);
 

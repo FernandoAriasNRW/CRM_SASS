@@ -15,7 +15,7 @@ namespace BuildingBlocks.Application.Abstractions;
 /// La alternativa era que cada módulo tuviera su propia tabla de favoritos: cuatro sitios donde
 /// arreglar el mismo fallo y cuatro formas distintas de contar lo mismo.
 /// </summary>
-public interface IFavoritosDelUsuario
+public interface IUserFavorites
 {
     /// <summary>
     /// Los identificadores marcados de un tipo, de lo más reciente a lo más antiguo.
@@ -24,5 +24,5 @@ public interface IFavoritosDelUsuario
     /// por una lista vacía da cero resultados, no todos. Devolver todo cuando no hay favoritos
     /// sería el mismo engaño que un menú que promete y no filtra.
     /// </summary>
-    Task<IReadOnlyList<Guid>> IdsAsync(string tipo, CancellationToken ct = default);
+    Task<IReadOnlyList<Guid>> GetIdsAsync(string entityType, CancellationToken ct = default);
 }

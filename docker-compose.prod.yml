@@ -83,9 +83,9 @@ services:
       - Cloudinary__CloudName=${CLOUDINARY_CLOUD_NAME:-}
       - Cloudinary__ApiKey=${CLOUDINARY_API_KEY:-}
       - Cloudinary__ApiSecret=${CLOUDINARY_API_SECRET:-}
-      - AlmacenEnDisco__Carpeta=/var/almacen
+      - DiskStorage__Folder=/var/storage
     volumes:
-      - almacen_data:/var/almacen
+      - almacen_data:/var/storage
     ports:
       - "${API_PORT:-8080}:8080"
     depends_on:
@@ -118,6 +118,8 @@ services:
 
 volumes:
   db_data:
+  # Conserva el nombre de antes del paso a inglés: renombrar un volumen crea uno vacío y los
+  # ficheros ya subidos se perderían. Se monta en /var/storage.
   almacen_data:
 
 networks:
