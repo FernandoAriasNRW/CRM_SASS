@@ -13,7 +13,7 @@ public interface ITaskRepository
   /// encontrarlo primero. Es la excepción, no la norma: quien la use debe tener una razón para
   /// mirar donde nadie mira.
   /// </summary>
-  Task<WorkTask?> GetIncluyendoOcultosAsync(Guid tenantId, Guid id, CancellationToken ct = default);
+  Task<WorkTask?> GetIncludingHiddenAsync(Guid tenantId, Guid id, CancellationToken ct = default);
 
   Task AddAsync(WorkTask task, CancellationToken ct = default);
 

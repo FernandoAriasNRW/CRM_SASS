@@ -3,7 +3,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
-using WorkItems.Infrastructure.Recurrencia;
+using WorkItems.Infrastructure.Recurrence;
 using Xunit;
 
 namespace IntegrationTests;
@@ -63,9 +63,9 @@ public sealed class RecurrenciaFlowTests(CrmApiFactory factory)
     private async Task<int> GenerarComoElWorkerAsync(DateOnly hoy)
     {
         using var scope = factory.Services.CreateScope();
-        var generador = scope.ServiceProvider.GetRequiredService<GeneradorDeTareasRecurrentes>();
+        var generador = scope.ServiceProvider.GetRequiredService<RecurringTaskGenerator>();
 
-        return await generador.GenerarPendientesAsync(hoy);
+        return await generador.GeneratePendingAsync(hoy);
     }
 
     [Fact]
@@ -76,16 +76,16 @@ public sealed class RecurrenciaFlowTests(CrmApiFactory factory)
 
         var puesta = await cliente.PutAsJsonAsync($"/api/v1/tasks/{tarea}/recurrence", new
         {
-            frecuencia = "Semanal",
-            intervalo = 1,
-            proximaOcurrencia = "2026-09-01"
+            frequency = "Weekly",
+            interval = 1,
+            nextOccurrence = "2026-09-01"
         });
         puesta.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var leida = await cliente.GetFromJsonAsync<JsonElement>($"/api/v1/tasks/{tarea}");
         var recurrencia = leida.GetProperty("recurrence");
-        recurrencia.GetProperty("frecuencia").GetString().Should().Be("Semanal");
-        recurrencia.GetProperty("intervalo").GetInt32().Should().Be(1);
+        recurrencia.GetProperty("frequency").GetString().Should().Be("Weekly");
+        recurrencia.GetProperty("interval").GetInt32().Should().Be(1);
     }
 
     [Fact]
@@ -98,10 +98,10 @@ public sealed class RecurrenciaFlowTests(CrmApiFactory factory)
 
         await cliente.PutAsJsonAsync($"/api/v1/tasks/{tarea}/recurrence", new
         {
-            frecuencia = "Diaria",
-            intervalo = 1,
-            proximaOcurrencia = "2026-01-05",
-            fechaFin = "2026-01-07"
+            frequency = "Daily",
+            interval = 1,
+            nextOccurrence = "2026-01-05",
+            endDate = "2026-01-07"
         });
 
         // Tres días pendientes: 5, 6 y 7. El worker se ejecuta sin usuario en contexto.
@@ -133,10 +133,10 @@ public sealed class RecurrenciaFlowTests(CrmApiFactory factory)
 
         await cliente.PutAsJsonAsync($"/api/v1/tasks/{tarea}/recurrence", new
         {
-            frecuencia = "Diaria",
-            intervalo = 1,
-            proximaOcurrencia = "2026-02-02",
-            fechaFin = "2026-02-02"
+            frequency = "Daily",
+            interval = 1,
+            nextOccurrence = "2026-02-02",
+            endDate = "2026-02-02"
         });
 
         (await GenerarComoElWorkerAsync(new DateOnly(2026, 2, 5))).Should().Be(1);
@@ -158,10 +158,10 @@ public sealed class RecurrenciaFlowTests(CrmApiFactory factory)
 
         await cliente.PutAsJsonAsync($"/api/v1/tasks/{tarea}/recurrence", new
         {
-            frecuencia = "Diaria",
-            intervalo = 1,
-            proximaOcurrencia = "2026-03-03",
-            fechaFin = "2026-03-04"
+            frequency = "Daily",
+            interval = 1,
+            nextOccurrence = "2026-03-03",
+            endDate = "2026-03-04"
         });
 
         var primera = await GenerarComoElWorkerAsync(new DateOnly(2026, 3, 10));
@@ -180,7 +180,7 @@ public sealed class RecurrenciaFlowTests(CrmApiFactory factory)
 
         await cliente.PutAsJsonAsync($"/api/v1/tasks/{tarea}/recurrence", new
         {
-            frecuencia = "Diaria", intervalo = 1, proximaOcurrencia = "2026-04-04"
+            frequency = "Daily", interval = 1, nextOccurrence = "2026-04-04"
         });
 
         var quitada = await cliente.DeleteAsync($"/api/v1/tasks/{tarea}/recurrence");
@@ -199,10 +199,10 @@ public sealed class RecurrenciaFlowTests(CrmApiFactory factory)
 
         var respuesta = await cliente.PutAsJsonAsync($"/api/v1/tasks/{tarea}/recurrence", new
         {
-            frecuencia = "Trimestral", intervalo = 1, proximaOcurrencia = "2026-05-05"
+            frequency = "Trimestral", interval = 1, nextOccurrence = "2026-05-05"
         });
 
         respuesta.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-        (await respuesta.Content.ReadAsStringAsync()).Should().Contain("Diaria, Semanal o Mensual");
+        (await respuesta.Content.ReadAsStringAsync()).Should().Contain("Daily, Weekly o Monthly");
     }
 }

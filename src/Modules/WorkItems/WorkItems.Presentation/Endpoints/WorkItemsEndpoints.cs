@@ -15,18 +15,18 @@ namespace WorkItems.Presentation.Endpoints;
 public static class WorkItemsEndpoints
 {
   /// <summary>Las rutas de archivo y papelera, con la acción que ejecuta cada una.</summary>
-  private static readonly (string Ruta, BuildingBlocks.Application.ArchiveAction Accion)[] AccionesDeArchivo =
+  private static readonly (string Ruta, BuildingBlocks.Application.ArchiveAction Accion)[] ArchiveActions =
   [
-    ("archivar", BuildingBlocks.Application.ArchiveAction.Archive),
-    ("desarchivar", BuildingBlocks.Application.ArchiveAction.Unarchive),
-    ("restaurar", BuildingBlocks.Application.ArchiveAction.RestoreFromTrash)
+    ("archive", BuildingBlocks.Application.ArchiveAction.Archive),
+    ("unarchive", BuildingBlocks.Application.ArchiveAction.Unarchive),
+    ("restore", BuildingBlocks.Application.ArchiveAction.RestoreFromTrash)
   ];
 
   /// <summary>
   /// El mensaje con el que los handlers dicen que la tarea no existe. Es lo único que separa un
   /// 404 de un 400, así que se nombra en lugar de repetir la cadena.
   /// </summary>
-  private const string TareaNoEncontrada = "Tarea no encontrada";
+  private const string TaskNotFound = "Tarea no encontrada";
 
   public static IServiceCollection AddWorkItemsPresentation(this IServiceCollection services, IConfiguration configuration)
   {
@@ -38,16 +38,16 @@ public static class WorkItemsEndpoints
   {
     var group = app.MapGroup("/api/v1/tasks").WithTags("Tasks").RequireAuthorization();
 
-    group.MapGet("", async (IUserContext currentUser, [Microsoft.AspNetCore.Mvc.FromQuery] Guid? projectId, [Microsoft.AspNetCore.Mvc.FromQuery] Guid? assigneeId, [Microsoft.AspNetCore.Mvc.FromQuery] string? status, [Microsoft.AspNetCore.Mvc.FromQuery] string? priority, [Microsoft.AspNetCore.Mvc.FromQuery] string? filter, BuildingBlocks.Application.Abstractions.IViewScopeResolver alcances, IMediator mediator, [Microsoft.AspNetCore.Mvc.FromQuery] Guid? parentTaskId = null, [Microsoft.AspNetCore.Mvc.FromQuery] bool includeSubtasks = false, [Microsoft.AspNetCore.Mvc.FromQuery] int page = 1, [Microsoft.AspNetCore.Mvc.FromQuery] int pageSize = 25, [Microsoft.AspNetCore.Mvc.FromQuery] string? sortColumn = null, [Microsoft.AspNetCore.Mvc.FromQuery] string? sortDirection = null, [Microsoft.AspNetCore.Mvc.FromQuery] DateTime? startDate = null, [Microsoft.AspNetCore.Mvc.FromQuery] DateTime? endDate = null, [Microsoft.AspNetCore.Mvc.FromQuery] string? search = null) =>
+    group.MapGet("", async (IUserContext currentUser, [Microsoft.AspNetCore.Mvc.FromQuery] Guid? projectId, [Microsoft.AspNetCore.Mvc.FromQuery] Guid? assigneeId, [Microsoft.AspNetCore.Mvc.FromQuery] string? status, [Microsoft.AspNetCore.Mvc.FromQuery] string? priority, [Microsoft.AspNetCore.Mvc.FromQuery] string? filter, BuildingBlocks.Application.Abstractions.IViewScopeResolver viewScopes, IMediator mediator, [Microsoft.AspNetCore.Mvc.FromQuery] Guid? parentTaskId = null, [Microsoft.AspNetCore.Mvc.FromQuery] bool includeSubtasks = false, [Microsoft.AspNetCore.Mvc.FromQuery] int page = 1, [Microsoft.AspNetCore.Mvc.FromQuery] int pageSize = 25, [Microsoft.AspNetCore.Mvc.FromQuery] string? sortColumn = null, [Microsoft.AspNetCore.Mvc.FromQuery] string? sortDirection = null, [Microsoft.AspNetCore.Mvc.FromQuery] DateTime? startDate = null, [Microsoft.AspNetCore.Mvc.FromQuery] DateTime? endDate = null, [Microsoft.AspNetCore.Mvc.FromQuery] string? search = null) =>
     {
       var tenantId = currentUser.TenantId;
       var userId = currentUser.UserId;
       // El resolutor decide qué hace falta consultar para el filtro pedido —favoritos,
       // compartidos, nada— en un solo sitio, para que ningún endpoint reciba un filtro y no
       // haga nada con él, que es como «Mis Tickets» acabó devolviendo los 175 de siempre.
-      var alcance = await alcances.ResolveAsync(filter, userId, BuildingBlocks.Domain.EntityTypes.Task);
+      var viewScope = await viewScopes.ResolveAsync(filter, userId, BuildingBlocks.Domain.EntityTypes.Task);
 
-      var query = new GetTasksQuery(tenantId, projectId, assigneeId, status, priority, alcance, new() { Page = page, PageSize = pageSize, SortColumn = sortColumn, SortDirection = sortDirection, StartDate = startDate, EndDate = endDate, Search = search }, parentTaskId, includeSubtasks);
+      var query = new GetTasksQuery(tenantId, projectId, assigneeId, status, priority, viewScope, new() { Page = page, PageSize = pageSize, SortColumn = sortColumn, SortDirection = sortDirection, StartDate = startDate, EndDate = endDate, Search = search }, parentTaskId, includeSubtasks);
       var result = await mediator.Send(query);
       return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
     });
@@ -62,12 +62,12 @@ public static class WorkItemsEndpoints
     // El inquilino y el autor salen del token, no del cuerpo. Ver el comentario largo en
     // ProjectsEndpoints: era la misma grieta, y permitía crear tareas dentro de la
     // organización de otro sin más que poner un Guid en el JSON.
-    group.MapPost("", async (CreateTaskCommand command, IUserContext usuario, IMediator mediator) =>
+    group.MapPost("", async (CreateTaskCommand command, IUserContext user, IMediator mediator) =>
     {
       var result = await mediator.Send(command with
       {
-        TenantId = usuario.TenantId,
-        CreatedById = usuario.UserId,
+        TenantId = user.TenantId,
+        CreatedById = user.UserId,
       });
 
       return result.IsSuccess
@@ -96,16 +96,16 @@ public static class WorkItemsEndpoints
     // Se arregla por el lado del servidor además de por el del cliente: el cuerpo es lo que
     // usa el resto de la API, y admitir los dos verbos evita que una versión antigua de la
     // interfaz servida desde una caché se quede rota.
-    var mover = async (Guid id, MoverTareaRequest cuerpo, IUserContext usuario, IMediator mediator) =>
+    var move = async (Guid id, MoveTaskRequest body, IUserContext user, IMediator mediator) =>
     {
       var result = await mediator.Send(
-          new MoveTaskCommand(usuario.TenantId, id, usuario.UserId, usuario.Role, cuerpo.NewStatus));
+          new MoveTaskCommand(user.TenantId, id, user.UserId, user.Role, body.NewStatus));
 
       return result.IsSuccess ? Results.Ok() : Results.BadRequest(result.Error);
     };
 
-    group.MapPatch("/{id:guid}/move", mover);
-    group.MapPost("/{id:guid}/move", mover);
+    group.MapPatch("/{id:guid}/move", move);
+    group.MapPost("/{id:guid}/move", move);
 
     group.MapPatch("/{id:guid}", async (IUserContext currentUser, Guid id, PatchTaskCommand command, IMediator mediator) =>
     {
@@ -130,7 +130,7 @@ public static class WorkItemsEndpoints
 
       // Un valor que el dominio rechaza no es un 404: quien lo lea entendería que la tarea no
       // existe y buscaría el fallo donde no está.
-      return result.Error == TareaNoEncontrada
+      return result.Error == TaskNotFound
           ? Results.NotFound(result.Error)
           : Results.BadRequest(result.Error);
     });
@@ -166,8 +166,8 @@ public static class WorkItemsEndpoints
       var actorRole = currentUser.Role;
 
       var result = await mediator.Send(new SetTaskRecurrenceCommand(
-          tenantId, id, actorId, actorRole, command.Frecuencia, command.Intervalo,
-          command.ProximaOcurrencia, command.FechaFin));
+          tenantId, id, actorId, actorRole, command.Frequency, command.Interval,
+          command.NextOccurrence, command.EndDate));
 
       return result.IsSuccess ? Results.Ok() : Results.BadRequest(result.Error);
     });
@@ -197,7 +197,7 @@ public static class WorkItemsEndpoints
       var actorId = currentUser.UserId;
       var actorRole = currentUser.Role;
 
-      var result = await mediator.Send(new AddChecklistItemCommand(tenantId, id, actorId, actorRole, command.Texto));
+      var result = await mediator.Send(new AddChecklistItemCommand(tenantId, id, actorId, actorRole, command.Text));
       return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
     });
 
@@ -207,7 +207,7 @@ public static class WorkItemsEndpoints
       var actorId = currentUser.UserId;
       var actorRole = currentUser.Role;
 
-      var result = await mediator.Send(new UpdateChecklistItemCommand(tenantId, id, actorId, actorRole, itemId, command.Hecho, command.Texto));
+      var result = await mediator.Send(new UpdateChecklistItemCommand(tenantId, id, actorId, actorRole, itemId, command.IsDone, command.Text));
       return result.IsSuccess ? Results.Ok() : Results.BadRequest(result.Error);
     });
 
@@ -284,13 +284,13 @@ public static class WorkItemsEndpoints
     // Archivar, desarchivar y restaurar de la papelera. En una tabla y no en tres bloques
     // copiados: son idénticos salvo el verbo, y copiarlos es como acaban desincronizándose.
     // Borrar sigue siendo DELETE, que ahora sí manda a la papelera.
-    foreach (var (ruta, accion) in AccionesDeArchivo)
+    foreach (var (route, action) in ArchiveActions)
     {
-      group.MapPost("/{id:guid}/" + ruta, async (IUserContext currentUser, Guid id, IMediator mediator) =>
+      group.MapPost("/{id:guid}/" + route, async (IUserContext currentUser, Guid id, IMediator mediator) =>
       {
         var tenantId = currentUser.TenantId;
 
-        var result = await mediator.Send(new WorkItems.Application.CambiarArchivoDeTareaCommand(tenantId, id, accion));
+        var result = await mediator.Send(new WorkItems.Application.ChangeTaskArchiveStateCommand(tenantId, id, action));
         return result.IsSuccess ? Results.NoContent() : Results.NotFound(result.Error);
       });
     }
@@ -312,4 +312,4 @@ public static class WorkItemsEndpoints
 /// <summary>
 /// El cuerpo de «mover una tarea». El nombre del campo es el que ya mandaba el tablero.
 /// </summary>
-public sealed record MoverTareaRequest(string NewStatus);
+public sealed record MoveTaskRequest(string NewStatus);

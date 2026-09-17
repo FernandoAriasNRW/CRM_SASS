@@ -2,7 +2,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-namespace WorkItems.Infrastructure.Recurrencia;
+namespace WorkItems.Infrastructure.Recurrence;
 
 /// <summary>
 /// Despierta cada hora y crea las tareas recurrentes que tocan.
@@ -29,9 +29,9 @@ public sealed class RecurringTasksWorker(
       try
       {
         using var scope = serviceProvider.CreateScope();
-        var generador = scope.ServiceProvider.GetRequiredService<GeneradorDeTareasRecurrentes>();
+        var generator = scope.ServiceProvider.GetRequiredService<RecurringTaskGenerator>();
 
-        await generador.GenerarPendientesAsync(DateOnly.FromDateTime(DateTime.UtcNow), stoppingToken);
+        await generator.GeneratePendingAsync(DateOnly.FromDateTime(DateTime.UtcNow), stoppingToken);
       }
       catch (Exception ex)
       {

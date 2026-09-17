@@ -30,8 +30,8 @@ public sealed class WorkItemsDbContext(DbContextOptions<WorkItemsDbContext> opti
     // admite DEFAULT en TEXT (error 1101), así que la migración no se podría ni aplicar.
     modelBuilder.Entity<WorkTask>().ComplexProperty(t => t.Priority, p =>
     {
-      p.Property(x => x.Value).HasMaxLength(20).HasDefaultValue(TaskPriority.PorDefecto.Value);
-      p.Property(x => x.Name).HasMaxLength(20).HasDefaultValue(TaskPriority.PorDefecto.Name);
+      p.Property(x => x.Value).HasMaxLength(20).HasDefaultValue(TaskPriority.Default.Value);
+      p.Property(x => x.Name).HasMaxLength(20).HasDefaultValue(TaskPriority.Default.Name);
     });
 
     // Por aquí van todas las consultas de subtareas y las dos subconsultas del progreso del
@@ -67,7 +67,7 @@ public sealed class WorkItemsDbContext(DbContextOptions<WorkItemsDbContext> opti
     // resultado del filtro de inquilino en cada listado.
     modelBuilder.Entity<WorkTask>()
         .HasIndex(x => new { x.TenantId, x.ArchivedAtUtc, x.IsDeleted })
-        .HasDatabaseName("IX_Tasks_TenantId_Archivado_Borrado");
+        .HasDatabaseName("IX_Tasks_TenantId_ArchivedAtUtc_IsDeleted");
     // Los responsables son una colección propiedad de la tarea: se guardan en su tabla, pero se
     // alcanzan y se filtran siempre a través de ella, así que heredan su aislamiento por tenant.
     modelBuilder.Entity<WorkTask>().OwnsMany(t => t.Assignees, a =>
@@ -83,14 +83,14 @@ public sealed class WorkItemsDbContext(DbContextOptions<WorkItemsDbContext> opti
     // listado para no ganar nada.
     modelBuilder.Entity<WorkTask>().OwnsOne(t => t.Recurrence, r =>
     {
-      r.Property(x => x.Frecuencia).HasColumnName("Recurrence_Frecuencia").HasMaxLength(20);
-      r.Property(x => x.Intervalo).HasColumnName("Recurrence_Intervalo");
-      r.Property(x => x.ProximaOcurrencia).HasColumnName("Recurrence_ProximaOcurrencia");
-      r.Property(x => x.FechaFin).HasColumnName("Recurrence_FechaFin");
-      r.Property(x => x.DiaDeLaSerie).HasColumnName("Recurrence_DiaDeLaSerie");
+      r.Property(x => x.Frequency).HasColumnName("Recurrence_Frequency").HasMaxLength(20);
+      r.Property(x => x.Interval).HasColumnName("Recurrence_Interval");
+      r.Property(x => x.NextOccurrence).HasColumnName("Recurrence_NextOccurrence");
+      r.Property(x => x.EndDate).HasColumnName("Recurrence_EndDate");
+      r.Property(x => x.SeriesDay).HasColumnName("Recurrence_SeriesDay");
 
       // Por aquí busca el worker las series que tocan, y son pocas entre muchas tareas.
-      r.HasIndex(x => x.ProximaOcurrencia).HasDatabaseName("IX_Tasks_Recurrence_ProximaOcurrencia");
+      r.HasIndex(x => x.NextOccurrence).HasDatabaseName("IX_Tasks_Recurrence_NextOccurrence");
     });
 
     // La checklist, también propiedad de la tarea. La posición se guarda porque el orden es del
@@ -100,9 +100,9 @@ public sealed class WorkItemsDbContext(DbContextOptions<WorkItemsDbContext> opti
       c.ToTable("TaskChecklistItems");
       c.WithOwner().HasForeignKey("WorkTaskId");
       c.HasKey("WorkTaskId", nameof(ChecklistItem.Id));
-      c.Property(x => x.Texto).HasMaxLength(ChecklistItem.LargoMaximo).IsRequired();
-      c.Property(x => x.Hecho).IsRequired();
-      c.Property(x => x.Posicion).IsRequired();
+      c.Property(x => x.Text).HasMaxLength(ChecklistItem.MaxLength).IsRequired();
+      c.Property(x => x.IsDone).IsRequired();
+      c.Property(x => x.Position).IsRequired();
     });
 
     // La unicidad la garantiza la base y no sólo el handler: dos peticiones simultáneas

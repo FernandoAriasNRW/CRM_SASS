@@ -8,7 +8,7 @@ using WorkItems.Domain.Entities;
 using WorkItems.Domain.ValueObjects;
 using WorkItems.Infrastructure.Persistence;
 // Alias: `TaskStatus` choca con System.Threading.Tasks.TaskStatus.
-using EstadoDeTarea = WorkItems.Domain.ValueObjects.TaskStatus;
+using DomainTaskStatus = WorkItems.Domain.ValueObjects.TaskStatus;
 
 namespace WorkItems.Infrastructure.Queries;
 
@@ -22,33 +22,33 @@ public sealed class TaskQueries(WorkItemsDbContext context) : ITaskQueries
   /// <see cref="TaskPriority.All()"/>, así que el orden vive en el dominio y en un solo
   /// sitio: añadir o reordenar prioridades no obliga a tocar esta consulta.
   /// </summary>
-  private static readonly Expression<Func<WorkTask, int>> RangoDePrioridad = ConstruirRangoDePrioridad();
+  private static readonly Expression<Func<WorkTask, int>> PriorityRange = BuildPriorityRange();
 
   /// <summary>El estado que cuenta como subtarea terminada, tomado del dominio.</summary>
-  private static readonly EstadoDeTarea EstadoCompletado = EstadoDeTarea.Done;
+  private static readonly DomainTaskStatus CompletedStatus = DomainTaskStatus.Done;
 
-  private static Expression<Func<WorkTask, int>> ConstruirRangoDePrioridad()
+  private static Expression<Func<WorkTask, int>> BuildPriorityRange()
   {
-    var tarea = Expression.Parameter(typeof(WorkTask), "t");
-    var valor = Expression.Property(
-        Expression.Property(tarea, nameof(WorkTask.Priority)),
+    var task = Expression.Parameter(typeof(WorkTask), "t");
+    var value = Expression.Property(
+        Expression.Property(task, nameof(WorkTask.Priority)),
         nameof(TaskPriority.Value));
 
-    var todas = TaskPriority.All();
+    var all = TaskPriority.All();
 
     // Una prioridad que no esté en la lista —una fila vieja con la columna vacía— se va al
     // final en lugar de colarse en la cabecera como haría el 0.
-    Expression cuerpo = Expression.Constant(todas.Count);
+    Expression body = Expression.Constant(all.Count);
 
-    for (var i = todas.Count - 1; i >= 0; i--)
+    for (var i = all.Count - 1; i >= 0; i--)
     {
-      cuerpo = Expression.Condition(
-          Expression.Equal(valor, Expression.Constant(todas[i].Value)),
+      body = Expression.Condition(
+          Expression.Equal(value, Expression.Constant(all[i].Value)),
           Expression.Constant(i),
-          cuerpo);
+          body);
     }
 
-    return Expression.Lambda<Func<WorkTask, int>>(cuerpo, tarea);
+    return Expression.Lambda<Func<WorkTask, int>>(body, task);
   }
 
   public async Task<PagedResult<TaskDto>> GetByTenantAsync(
@@ -58,16 +58,16 @@ public sealed class TaskQueries(WorkItemsDbContext context) : ITaskQueries
       return await GetByTenantWithPaginationAsync(tenantId, projectId, assigneeId, status, null, null, null, false, new PaginationRequest { Page = page, PageSize = pageSize }, ct);
   }
 
-  public async Task<PagedResult<TaskDto>> GetByTenantWithPaginationAsync(Guid tenantId, Guid? projectId, Guid? assigneeId, string? status, string? priority, ViewScope? alcance, Guid? parentTaskId, bool incluirSubtareas, PaginationRequest pagination, CancellationToken ct = default)
+  public async Task<PagedResult<TaskDto>> GetByTenantWithPaginationAsync(Guid tenantId, Guid? projectId, Guid? assigneeId, string? status, string? priority, ViewScope? viewScope, Guid? parentTaskId, bool includeSubtasks, PaginationRequest pagination, CancellationToken ct = default)
   {
-    var vista = alcance ?? ViewScope.None;
+    var scope = viewScope ?? ViewScope.None;
 
     // La papelera y el archivo están fuera de lo que el filtro global deja ver, así que no basta
     // con un `Where`: hay que abrir el alcance antes de construir la consulta. El ámbito se
     // cierra al terminar el método.
     using var _ = context.IncludeHidden(
-        deleted: vista.Is(ViewFilters.Trash),
-        archived: vista.Is(ViewFilters.Archived));
+        deleted: scope.Is(ViewFilters.Trash),
+        archived: scope.Is(ViewFilters.Archived));
 
     var query = context.Tasks.AsNoTracking().Where(t => t.TenantId == tenantId);
 
@@ -76,7 +76,7 @@ public sealed class TaskQueries(WorkItemsDbContext context) : ITaskQueries
     // paginación dejaría de significar «tareas».
     if (parentTaskId.HasValue)
       query = query.Where(t => t.ParentTaskId == parentTaskId.Value);
-    else if (!incluirSubtareas)
+    else if (!includeSubtasks)
       query = query.Where(t => t.ParentTaskId == null);
 
     if (projectId.HasValue) query = query.Where(t => t.ProjectId == projectId.Value);
@@ -90,57 +90,57 @@ public sealed class TaskQueries(WorkItemsDbContext context) : ITaskQueries
     if (!string.IsNullOrEmpty(status)) query = query.Where(t => t.Status.Value == status || t.Status.Name == status);
     if (!string.IsNullOrEmpty(priority)) query = query.Where(t => t.Priority.Value == priority || t.Priority.Name == priority);
 
-    var yo = vista.UserId;
+    var me = scope.UserId;
 
-    if (vista.Is(ViewFilters.Mine) && yo.HasValue)
+    if (scope.Is(ViewFilters.Mine) && me.HasValue)
     {
         // «Mis tareas» son las que respondo, sea como principal o como uno más.
-        query = query.Where(t => t.AssigneeId == yo.Value
-                                 || t.Assignees.Any(a => a.UserId == yo.Value));
+        query = query.Where(t => t.AssigneeId == me.Value
+                                 || t.Assignees.Any(a => a.UserId == me.Value));
     }
-    else if (vista.Is(ViewFilters.MyTeam) && yo.HasValue)
+    else if (scope.Is(ViewFilters.MyTeam) && me.HasValue)
     {
-        query = query.Where(t => EF.Functions.JsonContains(t.TagIds, yo.Value.ToString()));
+        query = query.Where(t => EF.Functions.JsonContains(t.TagIds, me.Value.ToString()));
     }
-    else if (vista.Is(ViewFilters.CreatedByMe) && yo.HasValue)
+    else if (scope.Is(ViewFilters.CreatedByMe) && me.HasValue)
     {
         // «Creado por mí» es distinto de «mío»: una tarea que abrí y pasó a otra persona
         // sigue siendo mía en el sentido de que la escribí yo, y es como se busca.
-        query = query.Where(t => t.CreatedById == yo.Value);
+        query = query.Where(t => t.CreatedById == me.Value);
     }
-    else if (vista.Is(ViewFilters.Favorites))
+    else if (scope.Is(ViewFilters.Favorites))
     {
         // Sin marcados, cero resultados y no «todos». `EF.Constant` incrusta los identificadores
         // porque el proveedor de MySQL no traduce una colección parametrizada; es seguro porque
         // la lista está acotada a 200 por persona y tipo.
-        var marcados = vista.Favorites.ToArray();
-        query = query.Where(t => EF.Constant(marcados).Contains(t.Id));
+        var favorites = scope.Favorites.ToArray();
+        query = query.Where(t => EF.Constant(favorites).Contains(t.Id));
     }
-    else if (vista.Is(ViewFilters.SharedWithMe))
+    else if (scope.Is(ViewFilters.SharedWithMe))
     {
-        var conmigo = vista.SharedWithMe.ToArray();
-        query = query.Where(t => EF.Constant(conmigo).Contains(t.Id));
+        var sharedWithMe = scope.SharedWithMe.ToArray();
+        query = query.Where(t => EF.Constant(sharedWithMe).Contains(t.Id));
     }
-    else if (vista.Is(ViewFilters.Private) && yo.HasValue)
+    else if (scope.Is(ViewFilters.Private) && me.HasValue)
     {
         // Privado es «la llevo yo y no se la he dado a nadie». Se resta lo compartido en lugar
         // de guardar un campo `EsPrivado`, que sería una segunda fuente de verdad.
-        var compartidos = vista.SharedWithOthers.ToArray();
-        query = query.Where(t => t.AssigneeId == yo.Value && !EF.Constant(compartidos).Contains(t.Id));
+        var sharedWithOthers = scope.SharedWithOthers.ToArray();
+        query = query.Where(t => t.AssigneeId == me.Value && !EF.Constant(sharedWithOthers).Contains(t.Id));
     }
-    else if (vista.Is(ViewFilters.Archived))
+    else if (scope.Is(ViewFilters.Archived))
     {
         query = query.Where(t => t.ArchivedAtUtc != null);
     }
-    else if (vista.Is(ViewFilters.Trash))
+    else if (scope.Is(ViewFilters.Trash))
     {
         query = query.Where(t => t.IsDeleted);
     }
 
     // Búsqueda por texto, sobre **todas** las tareas del inquilino. Ver la nota equivalente en
     // TicketQueries: en el servidor y no filtrando en el cliente lo que quepa en una página.
-    if (pagination.SearchText is { } texto)
-        query = query.Where(t => t.Title.Value.Contains(texto) || t.Description.Contains(texto));
+    if (pagination.SearchText is { } text)
+        query = query.Where(t => t.Title.Value.Contains(text) || t.Description.Contains(text));
 
     if (pagination.StartDate.HasValue)
     {
@@ -164,13 +164,13 @@ public sealed class TaskQueries(WorkItemsDbContext context) : ITaskQueries
     {
         "title" => desc ? query.OrderByDescending(t => t.Title.Value) : query.OrderBy(t => t.Title.Value),
         "status" => desc ? query.OrderByDescending(t => t.Status.Value) : query.OrderBy(t => t.Status.Value),
-        "priority" => desc ? query.OrderByDescending(RangoDePrioridad) : query.OrderBy(RangoDePrioridad),
+        "priority" => desc ? query.OrderByDescending(PriorityRange) : query.OrderBy(PriorityRange),
         "duedate" => desc ? query.OrderByDescending(t => t.DueDate) : query.OrderBy(t => t.DueDate),
         "estimatedhours" => desc ? query.OrderByDescending(t => t.EstimatedHours) : query.OrderBy(t => t.EstimatedHours),
         _ => query.OrderByDescending(t => t.DueDate)
     };
 
-    var items = await Proyectar(query.Skip(pagination.Skip).Take(pagination.Take), tenantId)
+    var items = await Project(query.Skip(pagination.Skip).Take(pagination.Take), tenantId)
         .ToListAsync(ct);
 
     return PagedResult<TaskDto>.Create(items, totalCount, pagination.Page, pagination.PageSize);
@@ -178,7 +178,7 @@ public sealed class TaskQueries(WorkItemsDbContext context) : ITaskQueries
 
   public async Task<TaskDto?> GetByIdAsync(Guid tenantId, Guid id, CancellationToken ct = default)
   {
-    return await Proyectar(
+    return await Project(
             context.Tasks.AsNoTracking().Where(t => t.TenantId == tenantId && t.Id == id),
             tenantId)
         .FirstOrDefaultAsync(ct);
@@ -192,9 +192,9 @@ public sealed class TaskQueries(WorkItemsDbContext context) : ITaskQueries
   /// cuanto una subtarea se mueve o se borra por otra vía y entonces la interfaz miente sin
   /// que nada falle.
   /// </summary>
-  private IQueryable<TaskDto> Proyectar(IQueryable<WorkTask> query, Guid tenantId)
+  private IQueryable<TaskDto> Project(IQueryable<WorkTask> query, Guid tenantId)
   {
-    var completado = EstadoCompletado.Value;
+    var completed = CompletedStatus.Value;
 
     return query.Select(t => new TaskDto(
         t.Id, t.TenantId, t.ProjectId, t.Title.Value, t.Description,
@@ -203,16 +203,16 @@ public sealed class TaskQueries(WorkItemsDbContext context) : ITaskQueries
         t.ParentTaskId,
         context.Tasks.Count(s => s.TenantId == tenantId && s.ParentTaskId == t.Id),
         context.Tasks.Count(s => s.TenantId == tenantId && s.ParentTaskId == t.Id
-                                 && (s.Status.Value == completado || s.Status.Name == completado)),
+                                 && (s.Status.Value == completed || s.Status.Name == completed)),
         context.TaskDependencies.Count(d => d.TenantId == tenantId && d.TaskId == t.Id),
         context.TaskDependencies.Count(d => d.TenantId == tenantId && d.DependsOnTaskId == t.Id),
         t.Assignees.Select(a => a.UserId).ToList(),
         t.Checklist.Count,
-        t.Checklist.Count(i => i.Hecho),
+        t.Checklist.Count(i => i.IsDone),
         t.Recurrence == null
             ? null
-            : new RecurrenceDto(t.Recurrence.Frecuencia, t.Recurrence.Intervalo,
-                                t.Recurrence.ProximaOcurrencia, t.Recurrence.FechaFin),
+            : new RecurrenceDto(t.Recurrence.Frequency, t.Recurrence.Interval,
+                                t.Recurrence.NextOccurrence, t.Recurrence.EndDate),
         t.StartDate));
   }
 
@@ -220,15 +220,15 @@ public sealed class TaskQueries(WorkItemsDbContext context) : ITaskQueries
   {
     // Dos consultas y no una: son dos conjuntos distintos, y unirlos obligaría a etiquetar
     // cada fila con su dirección para volver a separarlas en memoria.
-    var bloqueadaPor = await ReferenciasAsync(
+    var blockedBy = await ReferencesAsync(
         context.TaskDependencies.Where(d => d.TenantId == tenantId && d.TaskId == taskId)
             .Select(d => d.DependsOnTaskId), tenantId, ct);
 
-    var bloqueaA = await ReferenciasAsync(
+    var blocks = await ReferencesAsync(
         context.TaskDependencies.Where(d => d.TenantId == tenantId && d.DependsOnTaskId == taskId)
             .Select(d => d.TaskId), tenantId, ct);
 
-    return new TaskDependenciesDto(bloqueadaPor, bloqueaA);
+    return new TaskDependenciesDto(blockedBy, blocks);
   }
 
   public async Task<IReadOnlyList<TaskDependencyEdgeDto>> GetDependencyGraphAsync(Guid tenantId, CancellationToken ct = default)
@@ -241,11 +241,11 @@ public sealed class TaskQueries(WorkItemsDbContext context) : ITaskQueries
       => await context.Tasks.AsNoTracking()
           .Where(t => t.TenantId == tenantId && t.Id == taskId)
           .SelectMany(t => t.Checklist)
-          .OrderBy(i => i.Posicion)
-          .Select(i => new ChecklistItemDto(i.Id, i.Texto, i.Hecho, i.Posicion))
+          .OrderBy(i => i.Position)
+          .Select(i => new ChecklistItemDto(i.Id, i.Text, i.IsDone, i.Position))
           .ToListAsync(ct);
 
-  private async Task<IReadOnlyList<TaskDependencyRefDto>> ReferenciasAsync(
+  private async Task<IReadOnlyList<TaskDependencyRefDto>> ReferencesAsync(
       IQueryable<Guid> ids, Guid tenantId, CancellationToken ct)
       => await context.Tasks.AsNoTracking()
           .Where(t => t.TenantId == tenantId && ids.Contains(t.Id))

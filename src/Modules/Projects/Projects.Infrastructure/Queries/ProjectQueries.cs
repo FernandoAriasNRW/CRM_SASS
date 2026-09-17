@@ -10,16 +10,16 @@ namespace Projects.Infrastructure.Queries;
 public sealed class ProjectQueries(ProjectsDbContext context) : IProjectQueries
 {
     public async Task<PagedResult<ProjectDto>> GetByTenantAsync(
-        Guid tenantId, string? status, Guid? ownerId, Guid? spaceId, Guid? folderId, ViewScope? alcance,
+        Guid tenantId, string? status, Guid? ownerId, Guid? spaceId, Guid? folderId, ViewScope? viewScope,
         PaginationRequest pagination, CancellationToken ct = default)
     {
-        var vista = alcance ?? ViewScope.None;
+        var scope = viewScope ?? ViewScope.None;
 
         // La papelera y el archivo quedan fuera de lo que el filtro global deja ver, así que hay
         // que abrir el alcance antes de construir la consulta. El ámbito se cierra al terminar.
         using var _ = context.IncludeHidden(
-            deleted: vista.Is(ViewFilters.Trash),
-            archived: vista.Is(ViewFilters.Archived));
+            deleted: scope.Is(ViewFilters.Trash),
+            archived: scope.Is(ViewFilters.Archived));
 
         var query = context.Projects.AsNoTracking().Where(p => p.TenantId == tenantId);
 
@@ -34,52 +34,52 @@ public sealed class ProjectQueries(ProjectsDbContext context) : IProjectQueries
             
         if (folderId.HasValue) query = query.Where(p => p.FolderId == folderId.Value);
 
-        var yo = vista.UserId;
+        var me = scope.UserId;
 
-        if (vista.Is(ViewFilters.Mine) && yo.HasValue)
+        if (scope.Is(ViewFilters.Mine) && me.HasValue)
         {
-            query = query.Where(p => p.OwnerId == yo.Value);
+            query = query.Where(p => p.OwnerId == me.Value);
         }
-        else if (vista.Is(ViewFilters.MyTeam) && yo.HasValue)
+        else if (scope.Is(ViewFilters.MyTeam) && me.HasValue)
         {
-            query = query.Where(p => EF.Functions.JsonContains(p.TagIds, yo.Value.ToString()));
+            query = query.Where(p => EF.Functions.JsonContains(p.TagIds, me.Value.ToString()));
         }
-        else if (vista.Is(ViewFilters.CreatedByMe) && yo.HasValue)
+        else if (scope.Is(ViewFilters.CreatedByMe) && me.HasValue)
         {
             // Un proyecto no guarda quién lo creó, sólo quién lo posee. Se usa el dueño, que
             // es lo más cercano y lo que la gente espera. Si algún día hace falta distinguir
             // «lo abrí yo» de «lo llevo yo», hará falta una columna nueva: fingir la
             // diferencia con el dueño daría dos entradas de menú con la misma lista.
-            query = query.Where(p => p.OwnerId == yo.Value);
+            query = query.Where(p => p.OwnerId == me.Value);
         }
-        else if (vista.Is(ViewFilters.Favorites))
+        else if (scope.Is(ViewFilters.Favorites))
         {
-            var marcados = vista.Favorites.ToArray();
-            query = query.Where(p => EF.Constant(marcados).Contains(p.Id));
+            var favorites = scope.Favorites.ToArray();
+            query = query.Where(p => EF.Constant(favorites).Contains(p.Id));
         }
-        else if (vista.Is(ViewFilters.SharedWithMe))
+        else if (scope.Is(ViewFilters.SharedWithMe))
         {
-            var conmigo = vista.SharedWithMe.ToArray();
-            query = query.Where(p => EF.Constant(conmigo).Contains(p.Id));
+            var sharedWithMe = scope.SharedWithMe.ToArray();
+            query = query.Where(p => EF.Constant(sharedWithMe).Contains(p.Id));
         }
-        else if (vista.Is(ViewFilters.Private) && yo.HasValue)
+        else if (scope.Is(ViewFilters.Private) && me.HasValue)
         {
-            var compartidos = vista.SharedWithOthers.ToArray();
-            query = query.Where(p => p.OwnerId == yo.Value && !EF.Constant(compartidos).Contains(p.Id));
+            var sharedWithOthers = scope.SharedWithOthers.ToArray();
+            query = query.Where(p => p.OwnerId == me.Value && !EF.Constant(sharedWithOthers).Contains(p.Id));
         }
-        else if (vista.Is(ViewFilters.Archived))
+        else if (scope.Is(ViewFilters.Archived))
         {
             query = query.Where(p => p.ArchivedAtUtc != null);
         }
-        else if (vista.Is(ViewFilters.Trash))
+        else if (scope.Is(ViewFilters.Trash))
         {
             query = query.Where(p => p.IsDeleted);
         }
 
         // Búsqueda por texto, sobre **todos** los proyectos del inquilino. Ver la nota equivalente
         // en TicketQueries.
-        if (pagination.SearchText is { } texto)
-            query = query.Where(p => p.Name.Value.Contains(texto) || p.Description.Contains(texto));
+        if (pagination.SearchText is { } text)
+            query = query.Where(p => p.Name.Value.Contains(text) || p.Description.Contains(text));
 
         var totalCount = await query.CountAsync(ct);
         var items = await query

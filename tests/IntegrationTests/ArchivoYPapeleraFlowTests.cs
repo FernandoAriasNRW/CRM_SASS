@@ -249,7 +249,7 @@ public sealed class ArchivoYPapeleraFlowTests(CrmApiFactory factory)
         }
         finally
         {
-            await cliente.PostAsync($"/api/v1/tasks/{tareaId}/restaurar", null);
+            await cliente.PostAsync($"/api/v1/tasks/{tareaId}/restore", null);
         }
     }
 

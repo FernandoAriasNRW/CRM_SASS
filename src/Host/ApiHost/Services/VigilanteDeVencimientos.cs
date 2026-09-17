@@ -116,7 +116,7 @@ public sealed class VigilanteDeVencimientos(
             // Terminada no vence. Se filtra aquí y no en la consulta porque el estado final se
             // reconoce por valor o por nombre —ver TaskStatus.EsFinal— y esa comparación no se
             // traduce a SQL.
-            if (TaskStatus.EsFinal(tarea.Estado)) continue;
+            if (TaskStatus.IsFinal(tarea.Estado)) continue;
 
             var datos = new Dictionary<string, string?>
             {

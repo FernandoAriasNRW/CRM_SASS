@@ -34,7 +34,8 @@ real está entre 226 y ~300.
 **Rutas en español** (hay que cambiarlas en el servidor y en el frontend a la vez):
 `/comparticion`, `/me/favoritos`, `/exportaciones`, `/programaciones`, `/docs/plantillas/usos`,
 `/docs/pages/{id}/anotaciones`, `/docs/anotaciones/{id}/resolver`, `/docs/pages/{id}/mover`,
-`/calendar/agenda/{dia}`, `/papelera`, `/{id}/restaurar`, `/archivar`, `/desarchivar`,
+`/calendar/agenda/{dia}`, `/papelera`, `/{id}/restaurar`, `/archivar`, `/desarchivar` (las de
+tickets, tareas y proyectos ya están en inglés; quedan las de Calendar y Docs),
 ~~`/tickets/claves-de-entrada`, `/entrada/tickets`, `/tickets/{id}/adjuntos`~~ (bloque 3).
 
 **Tablas en español**: `Favoritos`, `Exportaciones`, `ContenidosDeExportacion`, `Programaciones`,
@@ -148,6 +149,22 @@ Un concepto, un nombre. Ordenado por área.
 | proyecto, espacio, carpeta | `Project`, `Space`, `Folder` |
 | dependencia, arista | `Dependency`, `Edge` |
 | recurrencia, ocurrencia | `Recurrence`, `Occurrence` |
+| patrón de recurrencia | `RecurrencePattern` |
+| calendario de recurrencia | `RecurrenceCalendar` |
+| generador de tareas recurrentes | `RecurringTaskGenerator` |
+| frecuencia, intervalo | `Frequency`, `Interval` |
+| diaria, semanal, mensual | `Daily`, `Weekly`, `Monthly` (también el valor guardado) |
+| próxima ocurrencia, fecha de fin | `NextOccurrence`, `EndDate` |
+| día de la serie | `SeriesDay` |
+| toca generar, agotado | `IsDue`, `IsExhausted` |
+| punto de checklist: texto, hecho, posición | `ChecklistItem`: `Text`, `IsDone`, `Position` |
+| progreso de checklist | `ChecklistProgress` |
+| reglas (de un agregado) | `Rules` (`DetailRules`, `NestingRules`, `AssigneeRules`) |
+| es responsable | `IsAssignee` |
+| actualizar detalles | `UpdateDetails` |
+| cerraría un ciclo | `WouldCloseCycle` |
+| largo máximo | `MaxLength` |
+| por defecto | `Default` |
 | carga de trabajo | `Workload` |
 | retraso | `Delay` |
 | evento, anular, anulado | `Event`, `Cancel`, `Cancelled` |
@@ -285,7 +302,8 @@ suites completas en verde, catálogo i18n re-extraído al final.
 | 1 ✅ | **BuildingBlocks + Host** (`IAlcanceDeVista`, `TenantDbContext.ComoInquilino`, `AlmacenamientoEnDisco`, `IUserContext` en todos los endpoints, `TimeProvider`) | Lo usan todos los módulos; renombrarlo después obligaría a tocarlos dos veces |
 | 2 ✅ | **Identity** (favoritos, compartición, permisos) | Rutas `/comparticion` y `/me/favoritos`, tabla `Favoritos` |
 | 3 ✅ | **Ticketing** (entrada, claves, adjuntos) | Lo más reciente; rutas públicas `/entrada/tickets` |
-| 4 | **WorkItems + Projects + Teams** | Archivo/papelera compartidos |
+| 4a ✅ | **WorkItems + Projects** (backend) | Archivo/papelera compartidos. Teams ya estaba en inglés |
+| 4b | **Frontend de tareas y proyectos** | Gantt, carga de trabajo y la ficha: 329 identificadores, diff aparte para poder revisarlo |
 | 5 | **Docs** (plantillas, anotaciones, árbol) + **Comments** | Editor y extensiones del frontend |
 | 6 | **Calendar + Notifications + Communication** | Agenda |
 | 7 | **Reporting** (motor, exportaciones, programaciones, paneles) | El bloque más grande del Host |
@@ -379,6 +397,30 @@ tablas de favoritos y menciones. Cambiarlo exige migrar ese contenido, y va con 
   repositorio con dos formas de dar la hora a la vez, que es justo lo que el estándar quiere
   evitar, así que va en **un cambio propio para todos los módulos** —con `TimeProvider` inyectado
   y las entidades recibiendo `nowUtc`— después del bloque 8. Anotado también en el bloque 10.
+### Hecho en el bloque 4a (backend de tareas y proyectos)
+
+- Recurrencia entera en inglés: `PatronDeRecurrencia` → `RecurrencePattern`,
+  `CalendarioDeRecurrencia` → `RecurrenceCalendar`, `GeneradorDeTareasRecurrentes` →
+  `RecurringTaskGenerator`, y el detector de ciclos `DetectorDeCiclos` → `CycleDetector` con su
+  `Arista` → `Edge`.
+- Checklist: `Texto`/`Hecho`/`Posicion` → `Text`/`IsDone`/`Position`, columnas incluidas.
+- Rutas `archivar`/`desarchivar`/`restaurar` → `archive`/`unarchive`/`restore` en tareas y
+  proyectos, y `CambiarArchivoDeTareaCommand` → `ChangeTaskArchiveStateCommand`.
+- **La migración volvió a necesitar reescritura, y esta vez por un cruce.** EF emparejó
+  `Recurrence_Intervalo → Recurrence_SeriesDay` y `Recurrence_DiaDeLaSerie → Recurrence_Interval`:
+  las dos columnas son `int`, así que las cruzó. Aplicada tal cual, una tarea que se repite cada 2
+  meses el día 31 habría pasado a repetirse cada 31 meses el día 2. Se comprobó poniendo una serie
+  con intervalo 2 y día 31 en la base de desarrollo antes de migrar, y leyéndola después.
+  **Lección: en una migración de renombrado hay que leer cada pareja, no sólo comprobar que no hay
+  `DropColumn`.**
+- Los valores guardados de la frecuencia también cambiaron («Diaria» → «Daily»), con su `UPDATE`
+  en la migración: sin él el generador no reconocería las series existentes y dejaría de crear sus
+  tareas.
+- Del frontend, en este bloque va sólo el contrato: los campos de la recurrencia y de la
+  checklist y las claves de frecuencia. **Dos fallos que compilaban**: el PATCH de la checklist
+  seguía mandando `hecho` (el servidor lo habría ignorado sin error) y el estado local escribía un
+  campo que ya no existía, así que marcar un punto habría dejado de pintarse.
+
 - Lo que sigue en español dentro de estas pantallas es de otros bloques: la barra de vistas
   (`BarraDeVistasComponent`, `VistaIntegrada` y sus campos `clave`/`etiqueta`/`icono`),
   `mensajeDeError`, `urlDeFichero`, los comentarios y las menciones. Van con el bloque 9.

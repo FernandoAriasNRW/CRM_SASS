@@ -119,8 +119,8 @@ export class TaskDetailPanelComponent implements OnInit {
     this.cargarDependencias();
     this.cargarChecklist();
     this.recurrencia.set(t.recurrence ?? null);
-    this.frecuenciaElegida = t.recurrence?.frecuencia ?? '';
-    this.intervaloElegido = t.recurrence?.intervalo ?? 1;
+    this.frecuenciaElegida = t.recurrence?.frequency ?? '';
+    this.intervaloElegido = t.recurrence?.interval ?? 1;
     if (!this.usuarios.users().length) this.usuarios.loadTenantUsers().subscribe();
   }
 
@@ -136,8 +136,8 @@ export class TaskDetailPanelComponent implements OnInit {
     const intervalo = Math.max(1, Math.floor(this.intervaloElegido || 1));
 
     this.api.put(`/tasks/${this.task().id}/recurrence`, {
-      frecuencia: this.frecuenciaElegida,
-      intervalo,
+      frequency: this.frecuenciaElegida,
+      interval: intervalo,
     }).subscribe({
       next: () => {
         // Se relee para mostrar la próxima ocurrencia que calculó el servidor, en lugar de
@@ -176,7 +176,7 @@ export class TaskDetailPanelComponent implements OnInit {
     return intervalo > 1 ? `${etiqueta} × ${intervalo}` : etiqueta;
   }
 
-  readonly puntosHechos = computed(() => this.checklist().filter(p => p.hecho).length);
+  readonly puntosHechos = computed(() => this.checklist().filter(p => p.isDone).length);
 
   cargarChecklist(): void {
     this.cargandoChecklist.set(true);
@@ -196,7 +196,7 @@ export class TaskDetailPanelComponent implements OnInit {
     const texto = this.textoNuevoPunto.trim();
     if (!texto) return;
 
-    this.api.post<ChecklistItem>(`/tasks/${this.task().id}/checklist`, { texto }).subscribe({
+    this.api.post<ChecklistItem>(`/tasks/${this.task().id}/checklist`, { text: texto }).subscribe({
       next: punto => {
         this.checklist.update(actuales => [...actuales, punto]);
         this.textoNuevoPunto = '';
@@ -212,13 +212,13 @@ export class TaskDetailPanelComponent implements OnInit {
    * rechaza, igual que en subtareas, prioridad y tableros.
    */
   alternarPunto(punto: ChecklistItem): void {
-    const nuevo = !punto.hecho;
-    this.checklist.update(actuales => actuales.map(p => p.id === punto.id ? { ...p, hecho: nuevo } : p));
+    const nuevo = !punto.isDone;
+    this.checklist.update(actuales => actuales.map(p => p.id === punto.id ? { ...p, isDone: nuevo } : p));
     this.avisarDeLaChecklist();
 
-    this.api.patch(`/tasks/${this.task().id}/checklist/${punto.id}`, { hecho: nuevo }).subscribe({
+    this.api.patch(`/tasks/${this.task().id}/checklist/${punto.id}`, { isDone: nuevo }).subscribe({
       error: () => {
-        this.checklist.update(actuales => actuales.map(p => p.id === punto.id ? { ...p, hecho: !nuevo } : p));
+        this.checklist.update(actuales => actuales.map(p => p.id === punto.id ? { ...p, isDone: !nuevo } : p));
         this.avisarDeLaChecklist();
         this.toast.error($localize`Error`, $localize`No se pudo actualizar el punto`);
       },

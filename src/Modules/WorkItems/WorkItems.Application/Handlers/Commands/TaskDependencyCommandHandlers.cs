@@ -4,7 +4,7 @@ using WorkItems.Application.Abstractions;
 using WorkItems.Application.Abstractions.Repositories;
 using WorkItems.Application.Commands;
 using WorkItems.Domain.Entities;
-using WorkItems.Domain.Servicios;
+using WorkItems.Domain.Services;
 
 namespace WorkItems.Application.Handlers.Commands;
 
@@ -13,7 +13,7 @@ namespace WorkItems.Application.Handlers.Commands;
 ///
 /// Aquí viven las comprobaciones que hablan de otras filas: que las dos tareas existan y sean
 /// del mismo proyecto, que la dependencia no esté ya registrada, y —la importante— que no
-/// cierre un ciclo. La decisión del ciclo la toma <see cref="DetectorDeCiclos"/>, que es una
+/// cierre un ciclo. La decisión del ciclo la toma <see cref="CycleDetector"/>, que es una
 /// función pura; este handler sólo le trae las aristas.
 /// </summary>
 public sealed class AddTaskDependencyCommandHandler(
@@ -24,24 +24,24 @@ public sealed class AddTaskDependencyCommandHandler(
   public async Task<Result<bool>> Handle(AddTaskDependencyCommand request, CancellationToken cancellationToken)
   {
     if (request.Id == request.DependsOnTaskId)
-      return Result<bool>.Failure(TaskDependency.Reglas.NoPuedeBloquearseASiMisma);
+      return Result<bool>.Failure(TaskDependency.Rules.CannotBlockItself);
 
     var tarea = await tasks.GetByIdAsync(request.TenantId, request.Id, cancellationToken);
     var bloqueante = await tasks.GetByIdAsync(request.TenantId, request.DependsOnTaskId, cancellationToken);
 
     if (tarea is null || bloqueante is null)
-      return Result<bool>.Failure(TaskDependency.Reglas.TareaNoExiste);
+      return Result<bool>.Failure(TaskDependency.Rules.TaskNotFound);
 
     if (tarea.ProjectId != bloqueante.ProjectId)
-      return Result<bool>.Failure(TaskDependency.Reglas.DeOtroProyecto);
+      return Result<bool>.Failure(TaskDependency.Rules.FromAnotherProject);
 
     var yaExiste = await dependencias.GetAsync(request.TenantId, request.Id, request.DependsOnTaskId, cancellationToken);
     if (yaExiste is not null)
-      return Result<bool>.Failure(TaskDependency.Reglas.YaExiste);
+      return Result<bool>.Failure(TaskDependency.Rules.AlreadyExists);
 
-    var aristas = await dependencias.GetAristasDelProyectoAsync(request.TenantId, tarea.ProjectId, cancellationToken);
-    if (DetectorDeCiclos.CerrariaUnCiclo(aristas, request.Id, request.DependsOnTaskId))
-      return Result<bool>.Failure(TaskDependency.Reglas.CrearariaUnCiclo);
+    var aristas = await dependencias.GetProjectEdgesAsync(request.TenantId, tarea.ProjectId, cancellationToken);
+    if (CycleDetector.WouldCloseCycle(aristas, request.Id, request.DependsOnTaskId))
+      return Result<bool>.Failure(TaskDependency.Rules.WouldCreateCycle);
 
     TaskDependency dependencia;
     try { dependencia = TaskDependency.Create(request.TenantId, request.Id, request.DependsOnTaskId); }
@@ -64,7 +64,7 @@ public sealed class RemoveTaskDependencyCommandHandler(
     if (dependencia is null)
       return Result<bool>.Failure("La dependencia no existe");
 
-    dependencia.MarcarComoRetirada();
+    dependencia.MarkAsRemoved();
     dependencias.Remove(dependencia);
     await unitOfWork.SaveChangesAsync(cancellationToken);
 

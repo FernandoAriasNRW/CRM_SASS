@@ -45,7 +45,7 @@ public sealed class WorkTask : AggregateRoot, ITenantEntity, ISoftDeletable, IAr
 
     /// <summary>
     /// Puntos de la checklist. Para pintarlos hay que ordenarlos por
-    /// <see cref="ChecklistItem.Posicion"/>: la colección no vuelve ordenada de la base.
+    /// <see cref="ChecklistItem.Position"/>: la colección no vuelve ordenada de la base.
     /// </summary>
     public IReadOnlyList<ChecklistItem> Checklist => _checklist;
 
@@ -55,7 +55,7 @@ public sealed class WorkTask : AggregateRoot, ITenantEntity, ISoftDeletable, IAr
     /// La lleva la tarea que hace de plantilla; las que genera **no la heredan**, o cada
     /// ocurrencia empezaría a generar las suyas y la serie se multiplicaría sola.
     /// </summary>
-    public PatronDeRecurrencia? Recurrence { get; private set; }
+    public RecurrencePattern? Recurrence { get; private set; }
 
     public Guid CreatedById { get; private set; }
     public decimal EstimatedHours { get; private set; }
@@ -114,14 +114,14 @@ public sealed class WorkTask : AggregateRoot, ITenantEntity, ISoftDeletable, IAr
         Guid? parentTaskId = null,
         DateOnly? startDate = null)
     {
-        if (priority is not null && !TaskPriority.Existe(priority))
+        if (priority is not null && !TaskPriority.Exists(priority))
             throw new InvalidOperationException($"La prioridad '{priority}' no existe");
 
         if (parentTaskId == Guid.Empty)
             throw new InvalidOperationException("El identificador de la tarea padre no es válido");
 
         if (startDate.HasValue && startDate.Value > dueDate)
-            throw new InvalidOperationException(ReglasDeDetalle.InicioDespuesDelVencimiento);
+            throw new InvalidOperationException(DetailRules.StartAfterDueDate);
 
         var task = new WorkTask
         {
@@ -131,7 +131,7 @@ public sealed class WorkTask : AggregateRoot, ITenantEntity, ISoftDeletable, IAr
             Title = TaskTitle.Create(title).Value!,
             Description = description,
             Status = TaskStatus.ToDo,
-            Priority = priority is null ? TaskPriority.PorDefecto : TaskPriority.Desde(priority),
+            Priority = priority is null ? TaskPriority.Default : TaskPriority.From(priority),
             ParentTaskId = parentTaskId,
             AssigneeId = assigneeId,
             CreatedById = createdById,
@@ -161,7 +161,7 @@ public sealed class WorkTask : AggregateRoot, ITenantEntity, ISoftDeletable, IAr
     /// </summary>
     public void Move(string newStatus)
     {
-        if (!TaskStatus.Existe(newStatus))
+        if (!TaskStatus.Exists(newStatus))
             throw new InvalidOperationException($"El estado '{newStatus}' no existe");
 
         var oldStatus = Status;
@@ -170,7 +170,7 @@ public sealed class WorkTask : AggregateRoot, ITenantEntity, ISoftDeletable, IAr
         // La marca de cierre se pone al entrar en el estado final y se quita al salir de él.
         // Quitarla importa tanto como ponerla: una tarea reabierta que conservara la fecha del
         // primer cierre daría un tiempo de ciclo que mide un trabajo que luego se deshizo.
-        CompletedAtUtc = TaskStatus.EsFinal(newStatus) ? DateTime.UtcNow : null;
+        CompletedAtUtc = TaskStatus.IsFinal(newStatus) ? DateTime.UtcNow : null;
 
         RaiseDomainEvent(new TaskStatusChangedEvent(Id, TenantId, ProjectId, oldStatus.Value.ToString(), newStatus));
     }
@@ -187,14 +187,14 @@ public sealed class WorkTask : AggregateRoot, ITenantEntity, ISoftDeletable, IAr
     /// </summary>
     public void Reprioritize(string newPriority)
     {
-        if (!TaskPriority.Existe(newPriority))
+        if (!TaskPriority.Exists(newPriority))
             throw new InvalidOperationException($"La prioridad '{newPriority}' no existe");
 
         if (Priority.Value == newPriority)
             return;
 
         var oldPriority = Priority;
-        Priority = TaskPriority.Desde(newPriority);
+        Priority = TaskPriority.From(newPriority);
 
         RaiseDomainEvent(new TaskPriorityChangedEvent(Id, TenantId, ProjectId, oldPriority.Value, newPriority));
     }
@@ -211,73 +211,73 @@ public sealed class WorkTask : AggregateRoot, ITenantEntity, ISoftDeletable, IAr
     /// **Las horas negativas se rechazan.** No existe media jornada en contra, y aceptarlas
     /// envenenaría cualquier suma de carga de trabajo sin que nadie lo notase.
     /// </summary>
-    public void ActualizarDetalles(
-        string? titulo = null,
-        string? descripcion = null,
-        decimal? horasEstimadas = null,
-        DateOnly? fechaLimite = null,
-        DateOnly? fechaInicio = null,
-        bool quitarFechaInicio = false)
+    public void UpdateDetails(
+        string? title = null,
+        string? description = null,
+        decimal? estimatedHours = null,
+        DateOnly? dueDate = null,
+        DateOnly? startDate = null,
+        bool clearStartDate = false)
     {
-        if (titulo is not null)
+        if (title is not null)
         {
-            var nuevo = TaskTitle.Create(titulo);
-            if (!nuevo.IsSuccess)
-                throw new InvalidOperationException(nuevo.Error);
+            var updated = TaskTitle.Create(title);
+            if (!updated.IsSuccess)
+                throw new InvalidOperationException(updated.Error);
 
-            Title = nuevo.Value!;
+            Title = updated.Value!;
         }
 
-        if (descripcion is not null)
-            Description = descripcion;
+        if (description is not null)
+            Description = description;
 
-        if (horasEstimadas.HasValue)
+        if (estimatedHours.HasValue)
         {
-            if (horasEstimadas.Value < 0)
-                throw new InvalidOperationException(ReglasDeDetalle.HorasNegativas);
+            if (estimatedHours.Value < 0)
+                throw new InvalidOperationException(DetailRules.NegativeHours);
 
-            EstimatedHours = horasEstimadas.Value;
+            EstimatedHours = estimatedHours.Value;
         }
 
         // El orden importa: la fecha límite se aplica antes de comprobar el inicio, para que
         // mandar las dos a la vez se valide contra los valores nuevos y no contra los viejos.
-        if (fechaLimite.HasValue)
-            DueDate = fechaLimite.Value;
+        if (dueDate.HasValue)
+            DueDate = dueDate.Value;
 
         // Quitar la fecha de inicio y ponerla son dos intenciones distintas, y `null` sólo puede
         // decir una. Sin el interruptor no habría forma de vaciarla: `null` significa «no la
         // toques», que es lo que necesita una pantalla que manda sólo el campo que cambió.
-        if (quitarFechaInicio)
+        if (clearStartDate)
         {
             StartDate = null;
         }
-        else if (fechaInicio.HasValue)
+        else if (startDate.HasValue)
         {
-            if (fechaInicio.Value > DueDate)
-                throw new InvalidOperationException(ReglasDeDetalle.InicioDespuesDelVencimiento);
+            if (startDate.Value > DueDate)
+                throw new InvalidOperationException(DetailRules.StartAfterDueDate);
 
-            StartDate = fechaInicio.Value;
+            StartDate = startDate.Value;
         }
         else if (StartDate.HasValue && StartDate.Value > DueDate)
         {
             // Adelantar el vencimiento por detrás del inicio dejaría una barra de longitud
             // negativa en el Gantt. Se rechaza el cambio entero en lugar de recolocar fechas por
             // cuenta propia: mover la planificación de alguien sin decírselo es peor.
-            throw new InvalidOperationException(ReglasDeDetalle.VencimientoAntesDelInicio);
+            throw new InvalidOperationException(DetailRules.DueDateBeforeStart);
         }
     }
 
-    public static class ReglasDeDetalle
+    public static class DetailRules
     {
-        public const string HorasNegativas = "Las horas estimadas no pueden ser negativas";
-        public const string InicioDespuesDelVencimiento =
+        public const string NegativeHours = "Las horas estimadas no pueden ser negativas";
+        public const string StartAfterDueDate =
             "La fecha de inicio no puede ser posterior a la fecha límite";
-        public const string VencimientoAntesDelInicio =
+        public const string DueDateBeforeStart =
             "La fecha límite no puede ser anterior a la fecha de inicio";
     }
 
     /// <summary>Si esta tarea es subtarea de otra.</summary>
-    public bool EsSubtarea => ParentTaskId.HasValue;
+    public bool IsSubtask => ParentTaskId.HasValue;
 
     /// <summary>
     /// Cuelga esta tarea de otra, o la desliga si se pasa <c>null</c>.
@@ -289,7 +289,7 @@ public sealed class WorkTask : AggregateRoot, ITenantEntity, ISoftDeletable, IAr
     /// Aquí sólo se comprueba lo que el agregado puede ver: que una tarea no sea su propio
     /// padre. Las otras dos reglas —que el padre no sea ya subtarea, y que la tarea que se
     /// subordina no tenga subtareas propias— necesitan consultar otras filas, así que las
-    /// aplica el handler antes de llamar. Están enumeradas en <see cref="ReglasDeAnidamiento"/>
+    /// aplica el handler antes de llamar. Están enumeradas en <see cref="NestingRules"/>
     /// para que no se dupliquen a medias.
     /// </summary>
     public void Reparent(Guid? parentTaskId)
@@ -303,25 +303,25 @@ public sealed class WorkTask : AggregateRoot, ITenantEntity, ISoftDeletable, IAr
         if (ParentTaskId == parentTaskId)
             return;
 
-        var anterior = ParentTaskId;
+        var previous = ParentTaskId;
         ParentTaskId = parentTaskId;
 
-        RaiseDomainEvent(new TaskParentChangedEvent(Id, TenantId, ProjectId, anterior, parentTaskId));
+        RaiseDomainEvent(new TaskParentChangedEvent(Id, TenantId, ProjectId, previous, parentTaskId));
     }
 
     /// <summary>
     /// Las reglas de anidamiento, en un solo sitio y en el lenguaje del dominio, para que el
     /// handler que las aplica no las reinvente y los mensajes de error sean los mismos.
     /// </summary>
-    public static class ReglasDeAnidamiento
+    public static class NestingRules
     {
         /// <summary>Niveles admitidos: la tarea y sus subtareas.</summary>
-        public const int ProfundidadMaxima = 2;
+        public const int MaxDepth = 2;
 
-        public const string PadreNoExiste = "La tarea padre no existe";
-        public const string PadreEsSubtarea = "Una subtarea no puede tener subtareas: el anidamiento admite un solo nivel";
-        public const string TieneSubtareas = "Una tarea con subtareas no puede convertirse en subtarea de otra";
-        public const string PadreDeOtroProyecto = "La tarea padre pertenece a otro proyecto";
+        public const string ParentNotFound = "La tarea padre no existe";
+        public const string ParentIsSubtask = "Una subtarea no puede tener subtareas: el anidamiento admite un solo nivel";
+        public const string HasSubtasks = "Una tarea con subtareas no puede convertirse en subtarea de otra";
+        public const string ParentFromAnotherProject = "La tarea padre pertenece a otro proyecto";
     }
 
     /// <summary>
@@ -358,10 +358,10 @@ public sealed class WorkTask : AggregateRoot, ITenantEntity, ISoftDeletable, IAr
     public void AddAssignee(Guid userId)
     {
         if (userId == Guid.Empty)
-            throw new InvalidOperationException(ReglasDeResponsables.IdentificadorInvalido);
+            throw new InvalidOperationException(AssigneeRules.InvalidUserId);
 
         if (_assignees.Any(a => a.UserId == userId))
-            throw new InvalidOperationException(ReglasDeResponsables.YaEsResponsable);
+            throw new InvalidOperationException(AssigneeRules.AlreadyAssignee);
 
         _assignees.Add(new TaskAssignee(userId));
 
@@ -380,9 +380,9 @@ public sealed class WorkTask : AggregateRoot, ITenantEntity, ISoftDeletable, IAr
     /// </summary>
     public void RemoveAssignee(Guid userId)
     {
-        var quitados = _assignees.RemoveAll(a => a.UserId == userId);
-        if (quitados == 0)
-            throw new InvalidOperationException(ReglasDeResponsables.NoEsResponsable);
+        var removed = _assignees.RemoveAll(a => a.UserId == userId);
+        if (removed == 0)
+            throw new InvalidOperationException(AssigneeRules.NotAnAssignee);
 
         if (AssigneeId == userId)
             AssigneeId = _assignees.Count > 0 ? _assignees[0].UserId : Guid.Empty;
@@ -391,7 +391,7 @@ public sealed class WorkTask : AggregateRoot, ITenantEntity, ISoftDeletable, IAr
     }
 
     /// <summary>Si una persona figura entre los responsables.</summary>
-    public bool EsResponsable(Guid userId) => _assignees.Any(a => a.UserId == userId);
+    public bool IsAssignee(Guid userId) => _assignees.Any(a => a.UserId == userId);
 
     /// <summary>
     /// Añade un punto al final de la checklist.
@@ -400,50 +400,50 @@ public sealed class WorkTask : AggregateRoot, ITenantEntity, ISoftDeletable, IAr
     /// borró alguno del medio, contar cuántos hay daría una posición repetida y dos puntos
     /// empatarían en el orden.
     /// </summary>
-    public ChecklistItem AddChecklistItem(string texto)
+    public ChecklistItem AddChecklistItem(string text)
     {
-        var siguiente = _checklist.Count == 0 ? 0 : _checklist.Max(i => i.Posicion) + 1;
-        var punto = new ChecklistItem(texto, siguiente);
+        var next = _checklist.Count == 0 ? 0 : _checklist.Max(i => i.Position) + 1;
+        var item = new ChecklistItem(text, next);
 
-        _checklist.Add(punto);
-        RaiseDomainEvent(new TaskChecklistItemAddedEvent(Id, TenantId, punto.Id, punto.Texto));
+        _checklist.Add(item);
+        RaiseDomainEvent(new TaskChecklistItemAddedEvent(Id, TenantId, item.Id, item.Text));
 
-        return punto;
+        return item;
     }
 
     /// <summary>Marca o desmarca un punto, y opcionalmente le cambia el texto.</summary>
-    public void UpdateChecklistItem(Guid itemId, bool? hecho, string? texto)
+    public void UpdateChecklistItem(Guid itemId, bool? done, string? text)
     {
-        var punto = _checklist.FirstOrDefault(i => i.Id == itemId)
-            ?? throw new InvalidOperationException(ChecklistItem.Reglas.NoExiste);
+        var item = _checklist.FirstOrDefault(i => i.Id == itemId)
+            ?? throw new InvalidOperationException(ChecklistItem.Rules.NotFound);
 
-        if (texto is not null)
-            punto.Renombrar(texto);
+        if (text is not null)
+            item.Rename(text);
 
-        if (hecho.HasValue && hecho.Value != punto.Hecho)
+        if (done.HasValue && done.Value != item.IsDone)
         {
-            punto.Marcar(hecho.Value);
-            RaiseDomainEvent(new TaskChecklistItemToggledEvent(Id, TenantId, punto.Id, punto.Hecho));
+            item.MarkDone(done.Value);
+            RaiseDomainEvent(new TaskChecklistItemToggledEvent(Id, TenantId, item.Id, item.IsDone));
         }
     }
 
     public void RemoveChecklistItem(Guid itemId)
     {
-        var punto = _checklist.FirstOrDefault(i => i.Id == itemId)
-            ?? throw new InvalidOperationException(ChecklistItem.Reglas.NoExiste);
+        var item = _checklist.FirstOrDefault(i => i.Id == itemId)
+            ?? throw new InvalidOperationException(ChecklistItem.Rules.NotFound);
 
-        _checklist.Remove(punto);
+        _checklist.Remove(item);
         RaiseDomainEvent(new TaskChecklistItemRemovedEvent(Id, TenantId, itemId));
     }
 
     /// <summary>Hace que esta tarea se repita, o cambia cada cuánto lo hace.</summary>
-    public void Repetir(string frecuencia, int intervalo, DateOnly proximaOcurrencia, DateOnly? fechaFin)
+    public void SetRecurrence(string frequency, int interval, DateOnly nextOccurrence, DateOnly? endDate)
     {
-        Recurrence = new PatronDeRecurrencia(frecuencia, intervalo, proximaOcurrencia, fechaFin);
-        RaiseDomainEvent(new TaskRecurrenceSetEvent(Id, TenantId, frecuencia, intervalo, proximaOcurrencia));
+        Recurrence = new RecurrencePattern(frequency, interval, nextOccurrence, endDate);
+        RaiseDomainEvent(new TaskRecurrenceSetEvent(Id, TenantId, frequency, interval, nextOccurrence));
     }
 
-    public void DejarDeRepetir()
+    public void ClearRecurrence()
     {
         if (Recurrence is null)
             return;
@@ -453,7 +453,7 @@ public sealed class WorkTask : AggregateRoot, ITenantEntity, ISoftDeletable, IAr
     }
 
     /// <summary>
-    /// Crea las tareas que tocaban hasta <paramref name="hoy"/> incluido.
+    /// Crea las tareas que tocaban hasta <paramref name="today"/> incluido.
     ///
     /// Devuelve una lista porque una serie puede llevar días sin generarse —la aplicación
     /// estuvo parada, o el patrón se creó con fecha pasada— y saltarse las atrasadas dejaría
@@ -464,55 +464,55 @@ public sealed class WorkTask : AggregateRoot, ITenantEntity, ISoftDeletable, IAr
     /// No copia dependencias ni subtareas: son relaciones con otras tareas concretas, y
     /// duplicarlas crearía enlaces que nadie pidió.
     /// </summary>
-    public IReadOnlyList<WorkTask> GenerarOcurrenciasHasta(DateOnly hoy)
+    public IReadOnlyList<WorkTask> GenerateOccurrencesUntil(DateOnly today)
     {
         if (Recurrence is null)
             return [];
 
-        var generadas = new List<WorkTask>();
+        var generated = new List<WorkTask>();
 
-        while (Recurrence.TocaGenerar(hoy))
+        while (Recurrence.IsDue(today))
         {
             // La ocurrencia conserva la duración planificada, no la fecha de inicio literal: si
             // la plantilla dura tres días, cada repetición dura tres días contra su propio
             // vencimiento. Copiar el inicio tal cual dejaría ocurrencias que empiezan meses antes
             // de vencer, y en el Gantt saldrían como barras absurdas.
-            var inicioDeLaOcurrencia = StartDate.HasValue
-                ? Recurrence.ProximaOcurrencia.AddDays(-DueDate.DayNumber + StartDate.Value.DayNumber)
+            var occurrenceStart = StartDate.HasValue
+                ? Recurrence.NextOccurrence.AddDays(-DueDate.DayNumber + StartDate.Value.DayNumber)
                 : (DateOnly?)null;
 
-            var ocurrencia = Create(
+            var occurrence = Create(
                 TenantId, ProjectId, Title.Value, Description,
                 AssigneeId, CreatedById, EstimatedHours,
-                Recurrence.ProximaOcurrencia, Priority.Value,
-                parentTaskId: null, startDate: inicioDeLaOcurrencia);
+                Recurrence.NextOccurrence, Priority.Value,
+                parentTaskId: null, startDate: occurrenceStart);
 
-            foreach (var responsable in _assignees.Where(a => a.UserId != AssigneeId))
-                ocurrencia.AddAssignee(responsable.UserId);
+            foreach (var assignee in _assignees.Where(a => a.UserId != AssigneeId))
+                occurrence.AddAssignee(assignee.UserId);
 
-            foreach (var punto in _checklist.OrderBy(p => p.Posicion))
-                ocurrencia.AddChecklistItem(punto.Texto);
+            foreach (var item in _checklist.OrderBy(p => p.Position))
+                occurrence.AddChecklistItem(item.Text);
 
-            generadas.Add(ocurrencia);
+            generated.Add(occurrence);
 
-            Recurrence.AvanzarA(Servicios.CalendarioDeRecurrencia.Siguiente(Recurrence.ProximaOcurrencia, Recurrence));
+            Recurrence.AdvanceTo(Services.RecurrenceCalendar.Next(Recurrence.NextOccurrence, Recurrence));
         }
 
-        if (generadas.Count > 0)
-            RaiseDomainEvent(new TaskOccurrencesGeneratedEvent(Id, TenantId, generadas.Count, Recurrence.ProximaOcurrencia));
+        if (generated.Count > 0)
+            RaiseDomainEvent(new TaskOccurrencesGeneratedEvent(Id, TenantId, generated.Count, Recurrence.NextOccurrence));
 
-        return generadas;
+        return generated;
     }
 
     /// <summary>Cuántos puntos hay y cuántos están hechos. Es lo que se muestra en la tarjeta.</summary>
-    public (int Total, int Hechos) ProgresoDeChecklist()
-        => (_checklist.Count, _checklist.Count(i => i.Hecho));
+    public (int Total, int Done) ChecklistProgress()
+        => (_checklist.Count, _checklist.Count(i => i.IsDone));
 
-    public static class ReglasDeResponsables
+    public static class AssigneeRules
     {
-        public const string IdentificadorInvalido = "El identificador de la persona no es válido";
-        public const string YaEsResponsable = "Esa persona ya es responsable de la tarea";
-        public const string NoEsResponsable = "Esa persona no es responsable de la tarea";
+        public const string InvalidUserId = "El identificador de la persona no es válido";
+        public const string AlreadyAssignee = "Esa persona ya es responsable de la tarea";
+        public const string NotAnAssignee = "Esa persona no es responsable de la tarea";
     }
 
     public void AddTag(Guid tagId)
@@ -550,14 +550,14 @@ public sealed class WorkTask : AggregateRoot, ITenantEntity, ISoftDeletable, IAr
     /// pestañas abiertas pueden mandar la misma orden, y reescribir la fecha haría parecer
     /// reciente algo archivado hace meses.
     /// </summary>
-    public void Archivar()
+    public void Archive()
     {
         if (ArchivedAtUtc is not null) return;
         ArchivedAtUtc = DateTime.UtcNow;
     }
 
     /// <summary>Devuelve la tarea a las listas.</summary>
-    public void Desarchivar() => ArchivedAtUtc = null;
+    public void Unarchive() => ArchivedAtUtc = null;
 
     /// <summary>
     /// Manda la tarea a la papelera: deja de verse pero se puede recuperar.

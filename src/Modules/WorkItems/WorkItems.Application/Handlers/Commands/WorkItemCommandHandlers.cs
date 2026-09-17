@@ -20,13 +20,13 @@ public sealed class CreateTaskCommandHandler(
       var padre = await repository.GetByIdAsync(request.TenantId, request.ParentTaskId.Value, cancellationToken);
 
       if (padre is null)
-        return Result<WorkTask>.Failure(WorkTask.ReglasDeAnidamiento.PadreNoExiste);
+        return Result<WorkTask>.Failure(WorkTask.NestingRules.ParentNotFound);
 
-      if (padre.EsSubtarea)
-        return Result<WorkTask>.Failure(WorkTask.ReglasDeAnidamiento.PadreEsSubtarea);
+      if (padre.IsSubtask)
+        return Result<WorkTask>.Failure(WorkTask.NestingRules.ParentIsSubtask);
 
       if (padre.ProjectId != request.ProjectId)
-        return Result<WorkTask>.Failure(WorkTask.ReglasDeAnidamiento.PadreDeOtroProyecto);
+        return Result<WorkTask>.Failure(WorkTask.NestingRules.ParentFromAnotherProject);
     }
 
     WorkTask task;
@@ -102,7 +102,7 @@ public sealed class PatchTaskCommandHandler(
     // recargar volvía el valor viejo. Un cambio que no se guarda tiene que fallar, no callarse.
     try
     {
-      task.ActualizarDetalles(
+      task.UpdateDetails(
           request.Title, request.Description, request.EstimatedHours, request.DueDate,
           request.StartDate, request.QuitarFechaInicio);
     }
@@ -140,17 +140,17 @@ public sealed class ReparentTaskCommandHandler(
       var padre = await repository.GetByIdAsync(request.TenantId, request.ParentTaskId.Value, cancellationToken);
 
       if (padre is null)
-        return Result<bool>.Failure(WorkTask.ReglasDeAnidamiento.PadreNoExiste);
+        return Result<bool>.Failure(WorkTask.NestingRules.ParentNotFound);
 
-      if (padre.EsSubtarea)
-        return Result<bool>.Failure(WorkTask.ReglasDeAnidamiento.PadreEsSubtarea);
+      if (padre.IsSubtask)
+        return Result<bool>.Failure(WorkTask.NestingRules.ParentIsSubtask);
 
       if (padre.ProjectId != task.ProjectId)
-        return Result<bool>.Failure(WorkTask.ReglasDeAnidamiento.PadreDeOtroProyecto);
+        return Result<bool>.Failure(WorkTask.NestingRules.ParentFromAnotherProject);
 
       var subtareasPropias = await repository.CountSubtasksAsync(request.TenantId, task.Id, cancellationToken);
       if (subtareasPropias > 0)
-        return Result<bool>.Failure(WorkTask.ReglasDeAnidamiento.TieneSubtareas);
+        return Result<bool>.Failure(WorkTask.NestingRules.HasSubtasks);
     }
 
     try { task.Reparent(request.ParentTaskId); }
