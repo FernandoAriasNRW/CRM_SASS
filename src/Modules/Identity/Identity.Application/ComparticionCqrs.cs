@@ -14,7 +14,7 @@ namespace Identity.Application.Comparticion;
 /// discrepando, y entonces «¿quién ve esto?» tendría dos respuestas y ninguna fiable.
 ///
 /// <b>El nombre del tipo se traduce aquí.</b> Los módulos hablan en
-/// <see cref="TiposDeEntidad"/> («Tarea»); la tabla de permisos usa el vocabulario con el que
+/// <see cref="EntityTypes"/> («Tarea»); la tabla de permisos usa el vocabulario con el que
 /// se consulta al autorizar («Task»). La traducción vive en un solo sitio, que es
 /// <see cref="ComoLoLlamaElPermiso"/>: repartida por los módulos sería la misma cadena escrita a
 /// mano en ocho ficheros.
@@ -28,13 +28,13 @@ public static class VocabularioDePermisos
     /// pedir autorización (<c>IAuthorizeEntity.EntityType</c>). Es el vocabulario único de la
     /// tabla; ver <see cref="Identity.Domain.Permisos.TiposDePermiso"/>.
     /// </summary>
-    public static string ComoLoLlamaElPermiso(string tipoDeEntidad) => tipoDeEntidad switch
+    public static string ComoLoLlamaElPermiso(string entityType) => entityType switch
     {
-        TiposDeEntidad.Tarea => Identity.Domain.Permisos.TiposDePermiso.Tarea,
-        TiposDeEntidad.Proyecto => Identity.Domain.Permisos.TiposDePermiso.Proyecto,
-        TiposDeEntidad.Ticket => Identity.Domain.Permisos.TiposDePermiso.Ticket,
-        TiposDeEntidad.Documento => Identity.Domain.Permisos.TiposDePermiso.Documento,
-        _ => tipoDeEntidad
+        EntityTypes.Task => Identity.Domain.Permisos.TiposDePermiso.Tarea,
+        EntityTypes.Project => Identity.Domain.Permisos.TiposDePermiso.Proyecto,
+        EntityTypes.Ticket => Identity.Domain.Permisos.TiposDePermiso.Ticket,
+        EntityTypes.Document => Identity.Domain.Permisos.TiposDePermiso.Documento,
+        _ => entityType
     };
 }
 
@@ -68,7 +68,7 @@ public sealed class CompartirHandler(
 
     public async Task<Result<bool>> Handle(CompartirCommand request, CancellationToken ct)
     {
-        if (!TiposDeEntidad.Existe(request.Tipo))
+        if (!EntityTypes.Exists(request.Tipo))
             return Result<bool>.Failure("Ese tipo de elemento no se puede compartir");
 
         if (!NivelesValidos.Contains(request.Nivel))
@@ -147,7 +147,7 @@ public interface IRepositorioDeComparticion
 
     Task<IReadOnlyList<Guid>> CompartidosConAsync(Guid tenantId, Guid userId, string tipoEnPermisos, CancellationToken ct);
 
-    Task<IReadOnlyList<Guid>> CompartidosConAlguienAsync(Guid tenantId, string tipoEnPermisos, CancellationToken ct);
+    Task<IReadOnlyList<Guid>> GetSharedWithOthersAsync(Guid tenantId, string tipoEnPermisos, CancellationToken ct);
 
     Task AnadirAsync(EntityPermission permiso, CancellationToken ct);
 

@@ -209,13 +209,13 @@ public sealed class Ticket : AggregateRoot, ITenantEntity, ISoftDeletable, IArch
     #region Archivo y papelera
 
     /// <summary>Cuándo se archivó, o <c>null</c> si está a la vista. Ver <see cref="IArchivable"/>.</summary>
-    public DateTime? ArchivadoEnUtc { get; private set; }
+    public DateTime? ArchivedAtUtc { get; private set; }
 
     /// <summary>Si está en la papelera. El filtro global lo esconde salvo que se pida verlo.</summary>
     public bool IsDeleted { get; private set; }
 
     /// <summary>Cuándo se envió a la papelera, para poder vaciarla por antigüedad algún día.</summary>
-    public DateTime? BorradoEnUtc { get; private set; }
+    public DateTime? DeletedAtUtc { get; private set; }
 
     /// <summary>
     /// Aparta el ticket de las listas sin borrarlo.
@@ -226,12 +226,12 @@ public sealed class Ticket : AggregateRoot, ITenantEntity, ISoftDeletable, IArch
     /// </summary>
     public void Archivar()
     {
-        if (ArchivadoEnUtc is not null) return;
-        ArchivadoEnUtc = DateTime.UtcNow;
+        if (ArchivedAtUtc is not null) return;
+        ArchivedAtUtc = DateTime.UtcNow;
     }
 
     /// <summary>Devuelve el ticket a las listas.</summary>
-    public void Desarchivar() => ArchivadoEnUtc = null;
+    public void Desarchivar() => ArchivedAtUtc = null;
 
     /// <summary>
     /// Manda el ticket a la papelera: deja de verse pero se puede recuperar.
@@ -239,18 +239,18 @@ public sealed class Ticket : AggregateRoot, ITenantEntity, ISoftDeletable, IArch
     /// Archivar y borrar no se pisan. Un ticket archivado que se borra sigue archivado al
     /// restaurarlo, que es lo que espera quien lo archivó.
     /// </summary>
-    public void EnviarAPapelera()
+    public void MoveToTrash()
     {
         if (IsDeleted) return;
         IsDeleted = true;
-        BorradoEnUtc = DateTime.UtcNow;
+        DeletedAtUtc = DateTime.UtcNow;
     }
 
     /// <summary>Saca el ticket de la papelera y lo deja como estaba.</summary>
-    public void RestaurarDePapelera()
+    public void RestoreFromTrash()
     {
         IsDeleted = false;
-        BorradoEnUtc = null;
+        DeletedAtUtc = null;
     }
 
     #endregion

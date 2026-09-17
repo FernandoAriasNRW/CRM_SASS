@@ -30,7 +30,7 @@ public class LectorDeMencionesTests
         var mencion = menciones.Should().ContainSingle().Subject;
         mencion.Tipo.Should().Be("Tarea");
         mencion.EntidadId.Should().Be(Tarea);
-        mencion.TextoVisible.Should().Be("Migrar la API");
+        mencion.VisibleText.Should().Be("Migrar la API");
     }
 
     /// <summary>
@@ -150,7 +150,7 @@ public class LectorDeMencionesTests
     {
         var html = $"""<span data-mencion-tipo="Tarea" data-mencion-id="{Tarea}">Dise&#241;o &amp; UX</span>""";
 
-        LectorDeMenciones.Leer(html).Single().TextoVisible.Should().Be("Diseño & UX");
+        LectorDeMenciones.Leer(html).Single().VisibleText.Should().Be("Diseño & UX");
     }
 
     /// <summary>
@@ -176,6 +176,6 @@ public class LectorDeMencionesTests
         var mencion = MencionEnDocumento.Crear(
             Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), "Tarea", Tarea, larguisimo);
 
-        mencion.TextoVisible.Length.Should().Be(200);
+        mencion.VisibleText.Length.Should().Be(200);
     }
 }

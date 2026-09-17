@@ -62,11 +62,11 @@ public sealed class WorkItemsDbContext(DbContextOptions<WorkItemsDbContext> opti
         .HasDatabaseName("IX_Tasks_TenantId_CompletedAtUtc");
 
 
-    // Ahora **todas** las consultas llevan `ArchivadoEnUtc IS NULL` y `IsDeleted = 0`, porque el
+    // Ahora **todas** las consultas llevan `ArchivedAtUtc IS NULL` y `IsDeleted = 0`, porque el
     // filtro global los añade. Sin este índice, esa condición se evalúa fila a fila sobre el
     // resultado del filtro de inquilino en cada listado.
     modelBuilder.Entity<WorkTask>()
-        .HasIndex(x => new { x.TenantId, x.ArchivadoEnUtc, x.IsDeleted })
+        .HasIndex(x => new { x.TenantId, x.ArchivedAtUtc, x.IsDeleted })
         .HasDatabaseName("IX_Tasks_TenantId_Archivado_Borrado");
     // Los responsables son una colección propiedad de la tarea: se guardan en su tabla, pero se
     // alcanzan y se filtran siempre a través de ella, así que heredan su aislamiento por tenant.

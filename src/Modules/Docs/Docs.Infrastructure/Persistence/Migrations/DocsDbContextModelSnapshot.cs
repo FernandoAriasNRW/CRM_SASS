@@ -68,7 +68,7 @@ namespace Docs.Infrastructure.Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("char(36)");
 
-                    b.Property<DateTime?>("ArchivadoEnUtc")
+                    b.Property<DateTime?>("ArchivedAtUtc")
                         .HasColumnType("datetime(6)");
 
                     b.Property<DateTime>("CreatedAtUtc")
@@ -236,13 +236,13 @@ namespace Docs.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("TenantId")
                         .HasColumnType("char(36)");
 
-                    b.Property<string>("TextoVisible")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
                     b.Property<string>("TipoMencionado")
                         .IsRequired()
                         .HasColumnType("varchar(255)");
+
+                    b.Property<string>("VisibleText")
+                        .IsRequired()
+                        .HasColumnType("longtext");
 
                     b.HasKey("Id");
 

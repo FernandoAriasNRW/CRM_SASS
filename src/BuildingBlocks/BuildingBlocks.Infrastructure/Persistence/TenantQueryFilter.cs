@@ -23,16 +23,16 @@ public static class TenantQueryFilter
     /// <c>DbContext</c> para que EF lo traduzca a un parámetro y no a una constante
     /// horneada en el modelo compilado y cacheado.
     /// </param>
-    /// <param name="incluirBorradosAccessor">
+    /// <param name="includeDeletedAccessor">
     /// Deja pasar lo que está en la papelera. Mismo tratamiento que el tenant: se lee del
     /// contexto en cada consulta, así que el modelo cacheado sirve para las dos vistas.
     /// </param>
-    /// <param name="incluirArchivadosAccessor">Deja pasar lo archivado.</param>
+    /// <param name="includeArchivedAccessor">Deja pasar lo archivado.</param>
     public static void ApplyGlobalFilters(
         ModelBuilder modelBuilder,
         Expression<Func<Guid>> tenantIdAccessor,
-        Expression<Func<bool>> incluirBorradosAccessor,
-        Expression<Func<bool>> incluirArchivadosAccessor)
+        Expression<Func<bool>> includeDeletedAccessor,
+        Expression<Func<bool>> includeArchivedAccessor)
     {
         foreach (var entityType in modelBuilder.Model.GetEntityTypes())
         {
@@ -67,7 +67,7 @@ public static class TenantQueryFilter
                 // horneado en el modelo compilado.
                 var visible = Expression.OrElse(
                     Expression.Not(Expression.Property(parameter, nameof(ISoftDeletable.IsDeleted))),
-                    incluirBorradosAccessor.Body);
+                    includeDeletedAccessor.Body);
 
                 body = body is null ? visible : Expression.AndAlso(body, visible);
             }
@@ -76,9 +76,9 @@ public static class TenantQueryFilter
             {
                 var visible = Expression.OrElse(
                     Expression.Equal(
-                        Expression.Property(parameter, nameof(IArchivable.ArchivadoEnUtc)),
+                        Expression.Property(parameter, nameof(IArchivable.ArchivedAtUtc)),
                         Expression.Constant(null, typeof(DateTime?))),
-                    incluirArchivadosAccessor.Body);
+                    includeArchivedAccessor.Body);
 
                 body = body is null ? visible : Expression.AndAlso(body, visible);
             }

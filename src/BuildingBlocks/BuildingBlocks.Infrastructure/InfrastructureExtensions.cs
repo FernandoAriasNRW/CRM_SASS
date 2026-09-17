@@ -17,10 +17,14 @@ public static class InfrastructureExtensions
   {
     // 1. Servicios Transversales (Singleton/Scoped que no dependen del DBContext)
     services.AddScoped<IEmailService, SmtpEmailService>();
+
+    // La hora del sistema, inyectada: quien la necesite la pide en vez de leer DateTime.UtcNow,
+    // y las pruebas pueden fijarla.
+    services.AddSingleton(TimeProvider.System);
     services.AddScoped<IDomainEventDispatcher, DomainEventDispatcher>();
 
     // Quien resuelve las entradas del menú de navegación en todos los módulos.
-    services.AddScoped<IAlcanceDeVista, BuildingBlocks.Infrastructure.Vistas.ResolutorDeAlcance>();
+    services.AddScoped<IViewScopeResolver, BuildingBlocks.Infrastructure.Views.ViewScopeResolver>();
     services.AddScoped<IOutboxService, OutboxService>();
     services.AddScoped(typeof(IUnitOfWork<>), typeof(UnitOfWork<>));
     services.AddHostedService<OutboxDispatcherWorker>();
@@ -35,16 +39,16 @@ public static class InfrastructureExtensions
     // specified in Account!» con un 400. Un servicio registrado que no puede funcionar es peor
     // que no tenerlo: parece que el sistema sabe subir ficheros.
     services.Configure<CloudinaryOptions>(configuration.GetSection("Cloudinary"));
-    services.Configure<OpcionesDeDisco>(configuration.GetSection("AlmacenEnDisco"));
+    services.Configure<DiskStorageOptions>(configuration.GetSection(DiskStorageOptions.SectionName));
 
-    var cloudinaryConfigurado = !string.IsNullOrWhiteSpace(configuration["Cloudinary:CloudName"])
+    var cloudinaryConfigured = !string.IsNullOrWhiteSpace(configuration["Cloudinary:CloudName"])
         && !string.IsNullOrWhiteSpace(configuration["Cloudinary:ApiKey"])
         && !string.IsNullOrWhiteSpace(configuration["Cloudinary:ApiSecret"]);
 
-    if (cloudinaryConfigurado)
+    if (cloudinaryConfigured)
       services.AddScoped<IStorageService, CloudinaryStorageService>();
     else
-      services.AddScoped<IStorageService, AlmacenamientoEnDisco>();
+      services.AddScoped<IStorageService, DiskStorageService>();
 
     // MassTransit configuration
     services.AddMassTransit(x =>
@@ -101,9 +105,6 @@ public static class InfrastructureExtensions
         cfg.ConfigureEndpoints(context);
       });
     });
-
-    // 2. Registro de Webhooks (usa HttpClient interno)
-    //services.AddWebhookServices(configuration);
 
     return services;
   }

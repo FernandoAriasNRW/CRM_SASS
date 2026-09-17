@@ -2,7 +2,7 @@ import { Component, inject, input, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 
-import { MencionesService, type DocumentoQueMenciona } from '../../features/docs/menciones.service';
+import { MencionesService, type MentioningDocument } from '../../features/docs/menciones.service';
 
 /**
  * «Mencionado en»: los documentos que hablan de esta tarea, ticket o proyecto.
@@ -38,10 +38,10 @@ import { MencionesService, type DocumentoQueMenciona } from '../../features/docs
             <li>
               <a [routerLink]="['/docs']" [queryParams]="{ doc: d.documentId, page: d.pageId }"
                  class="block rounded-md px-2 py-1.5 hover:bg-secondary transition-colors">
-                <span class="text-sm font-medium">{{ d.tituloDeLaPagina }}</span>
+                <span class="text-sm font-medium">{{ d.pageTitle }}</span>
 
-                @if (d.tituloDelDocumento !== d.tituloDeLaPagina) {
-                  <span class="text-xs text-muted-foreground"> · {{ d.tituloDelDocumento }}</span>
+                @if (d.documentTitle !== d.pageTitle) {
+                  <span class="text-xs text-muted-foreground"> · {{ d.documentTitle }}</span>
                 }
 
                 <!--
@@ -49,7 +49,7 @@ import { MencionesService, type DocumentoQueMenciona } from '../../features/docs
                   más que el título del documento— y sigue diciéndolo aunque el documento se
                   renombre después.
                 -->
-                <span class="block text-xs text-muted-foreground truncate">«{{ d.textoVisible }}»</span>
+                <span class="block text-xs text-muted-foreground truncate">«{{ d.visibleText }}»</span>
               </a>
             </li>
           }
@@ -65,7 +65,7 @@ export class MencionadoEnComponent {
   readonly tipo = input.required<string>();
   readonly entidadId = input.required<string>();
 
-  readonly documentos = signal<DocumentoQueMenciona[]>([]);
+  readonly documentos = signal<MentioningDocument[]>([]);
   readonly cargando = signal(true);
 
   constructor() {

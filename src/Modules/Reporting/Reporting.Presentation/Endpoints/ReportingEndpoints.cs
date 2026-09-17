@@ -1,3 +1,4 @@
+using BuildingBlocks.Application.Abstractions;
 using System.Linq;
 using MediatR;
 using Microsoft.AspNetCore.Builder;
@@ -26,25 +27,25 @@ public static class ReportingEndpoints
   {
     var group = app.MapGroup("/api/v1/reports").WithTags("Reporting").RequireAuthorization();
 
-    group.MapGet("", async (System.Security.Claims.ClaimsPrincipal principal, string? type, IMediator mediator, int page = 1, int pageSize = 25) =>
+    group.MapGet("", async (IUserContext currentUser, string? type, IMediator mediator, int page = 1, int pageSize = 25) =>
     {
-      var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
+      var tenantId = currentUser.TenantId;
       var query = new GetReportsQuery(tenantId, type, new() { Page = page, PageSize = pageSize });
       var result = await mediator.Send(query);
       return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
     });
 
-    group.MapGet("/{id:guid}", async (System.Security.Claims.ClaimsPrincipal principal, Guid id, IMediator mediator) =>
+    group.MapGet("/{id:guid}", async (IUserContext currentUser, Guid id, IMediator mediator) =>
     {
-      var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
+      var tenantId = currentUser.TenantId;
       var result = await mediator.Send(new GetReportByIdQuery(tenantId, id));
       return result.Value is null ? Results.NotFound() : Results.Ok(result.Value);
     });
 
-    group.MapPost("", async (System.Security.Claims.ClaimsPrincipal principal, CreateReportCommand command, IMediator mediator) =>
+    group.MapPost("", async (IUserContext currentUser, CreateReportCommand command, IMediator mediator) =>
     {
-      var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
-      var userId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var _uid) ? _uid : Guid.Empty;
+      var tenantId = currentUser.TenantId;
+      var userId = currentUser.UserId;
       
       var cmdWithClaims = command with { TenantId = tenantId, CreatedById = userId };
       var result = await mediator.Send(cmdWithClaims);
@@ -61,10 +62,10 @@ public static class ReportingEndpoints
     // —`/reports/{id}/{nombre}.pdf`— que no apuntaba a ningún fichero y que ningún endpoint
     // servía. La pantalla decía «generado» y no había nada que descargar.
     group.MapPost("/{id:guid}/exportar", async (
-        System.Security.Claims.ClaimsPrincipal principal, Guid id, string format, IMediator mediator) =>
+        IUserContext currentUser, Guid id, string format, IMediator mediator) =>
     {
-      var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
-      var userId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var _uid) ? _uid : Guid.Empty;
+      var tenantId = currentUser.TenantId;
+      var userId = currentUser.UserId;
 
       var result = await mediator.Send(new SolicitarExportacionCommand(tenantId, id, userId, format));
 
@@ -78,10 +79,10 @@ public static class ReportingEndpoints
     // Hace **lo mismo** que la nueva —encolar una exportación de verdad— en vez de lo que hacía
     // antes. Se conserva el nombre, no el comportamiento: fingir que se generó algo era el fallo.
     group.MapPost("/{id:guid}/generate", async (
-        System.Security.Claims.ClaimsPrincipal principal, Guid id, string format, IMediator mediator) =>
+        IUserContext currentUser, Guid id, string format, IMediator mediator) =>
     {
-      var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
-      var userId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var _uid) ? _uid : Guid.Empty;
+      var tenantId = currentUser.TenantId;
+      var userId = currentUser.UserId;
 
       var result = await mediator.Send(new SolicitarExportacionCommand(tenantId, id, userId, format));
 
@@ -105,9 +106,9 @@ public static class ReportingEndpoints
     // La vista previa: enseña el resultado **antes** de guardar. Sin ella, construir un informe
     // es escribir a ciegas y descubrir el resultado al exportarlo.
     group.MapPost("/vista-previa", async (
-        System.Security.Claims.ClaimsPrincipal principal, VistaPreviaRequest cuerpo, IMediator mediator) =>
+        IUserContext currentUser, VistaPreviaRequest cuerpo, IMediator mediator) =>
     {
-      var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
+      var tenantId = currentUser.TenantId;
 
       var result = await mediator.Send(new VistaPreviaQuery(
           tenantId, cuerpo.Titulo ?? "Vista previa", cuerpo.Definicion));
@@ -116,9 +117,9 @@ public static class ReportingEndpoints
     });
 
     group.MapGet("/{id:guid}/definicion", async (
-        System.Security.Claims.ClaimsPrincipal principal, Guid id, IMediator mediator) =>
+        IUserContext currentUser, Guid id, IMediator mediator) =>
     {
-      var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
+      var tenantId = currentUser.TenantId;
       var result = await mediator.Send(new GetDefinicionQuery(tenantId, id));
       return result.IsSuccess ? Results.Ok(result.Value) : Results.NotFound(result.Error);
     });
@@ -126,10 +127,10 @@ public static class ReportingEndpoints
     // PUT y no POST: guardar la definición dos veces deja el mismo informe. Con POST, la segunda
     // llamada tendría que decidir si es un conflicto, y no lo es.
     group.MapPut("/{id:guid}/definicion", async (
-        System.Security.Claims.ClaimsPrincipal principal, Guid id,
+        IUserContext currentUser, Guid id,
         Reporting.Domain.Definicion.DefinicionDeInforme definicion, IMediator mediator) =>
     {
-      var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
+      var tenantId = currentUser.TenantId;
 
       var result = await mediator.Send(new GuardarDefinicionCommand(tenantId, id, definicion));
       return result.IsSuccess ? Results.NoContent() : Results.BadRequest(result.Error);
@@ -137,37 +138,37 @@ public static class ReportingEndpoints
 
     // Las exportaciones de un informe, con su estado y —si falló— su motivo.
     group.MapGet("/{id:guid}/exportaciones", async (
-        System.Security.Claims.ClaimsPrincipal principal, Guid id, IMediator mediator) =>
+        IUserContext currentUser, Guid id, IMediator mediator) =>
     {
-      var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
+      var tenantId = currentUser.TenantId;
       var result = await mediator.Send(new GetExportacionesQuery(tenantId, id));
       return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
     });
 
-    group.MapGet("/kpi", async (System.Security.Claims.ClaimsPrincipal principal, IMediator mediator) =>
+    group.MapGet("/kpi", async (IUserContext currentUser, IMediator mediator) =>
     {
-      var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
+      var tenantId = currentUser.TenantId;
       var result = await mediator.Send(new GetKpiDataQuery(tenantId));
       return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
     });
 
-    group.MapGet("/tasks/breakdown", async (System.Security.Claims.ClaimsPrincipal principal, IMediator mediator) =>
+    group.MapGet("/tasks/breakdown", async (IUserContext currentUser, IMediator mediator) =>
     {
-      var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
+      var tenantId = currentUser.TenantId;
       var result = await mediator.Send(new GetTaskBreakdownQuery(tenantId));
       return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
     });
 
-    group.MapGet("/projects/progress", async (System.Security.Claims.ClaimsPrincipal principal, IMediator mediator) =>
+    group.MapGet("/projects/progress", async (IUserContext currentUser, IMediator mediator) =>
     {
-      var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
+      var tenantId = currentUser.TenantId;
       var result = await mediator.Send(new GetProjectProgressQuery(tenantId));
       return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
     });
 
-    group.MapGet("/projects/{projectId:guid}/burndown", async (System.Security.Claims.ClaimsPrincipal principal, Guid projectId, IMediator mediator) =>
+    group.MapGet("/projects/{projectId:guid}/burndown", async (IUserContext currentUser, Guid projectId, IMediator mediator) =>
     {
-      var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
+      var tenantId = currentUser.TenantId;
       var result = await mediator.Send(new GetProjectBurndownQuery(tenantId, projectId));
       return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
     });
@@ -175,18 +176,18 @@ public static class ReportingEndpoints
     // ── Informes programados ────────────────────────────────────────────────────────────────
 
     group.MapGet("/{id:guid}/programaciones", async (
-        System.Security.Claims.ClaimsPrincipal principal, Guid id, IMediator mediator) =>
+        IUserContext currentUser, Guid id, IMediator mediator) =>
     {
-      var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
+      var tenantId = currentUser.TenantId;
       var result = await mediator.Send(new GetProgramacionesQuery(tenantId, id));
       return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
     });
 
     group.MapPost("/{id:guid}/programaciones", async (
-        System.Security.Claims.ClaimsPrincipal principal, Guid id, ProgramarRequest cuerpo, IMediator mediator) =>
+        IUserContext currentUser, Guid id, ProgramarRequest cuerpo, IMediator mediator) =>
     {
-      var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
-      var userId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var _uid) ? _uid : Guid.Empty;
+      var tenantId = currentUser.TenantId;
+      var userId = currentUser.UserId;
 
       // El destinatario es quien programa. Programar un informe para otra persona es una decisión
       // distinta —y con implicaciones de permisos— que todavía no se ofrece.
@@ -201,18 +202,18 @@ public static class ReportingEndpoints
     var programaciones = app.MapGroup("/api/v1/programaciones").WithTags("Programaciones").RequireAuthorization();
 
     programaciones.MapPatch("/{programacionId:guid}", async (
-        System.Security.Claims.ClaimsPrincipal principal, Guid programacionId,
+        IUserContext currentUser, Guid programacionId,
         CambiarProgramacionRequest cuerpo, IMediator mediator) =>
     {
-      var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
+      var tenantId = currentUser.TenantId;
       var result = await mediator.Send(new CambiarProgramacionCommand(tenantId, programacionId, cuerpo.Activa));
       return result.IsSuccess ? Results.NoContent() : Results.NotFound(result.Error);
     });
 
     programaciones.MapDelete("/{programacionId:guid}", async (
-        System.Security.Claims.ClaimsPrincipal principal, Guid programacionId, IMediator mediator) =>
+        IUserContext currentUser, Guid programacionId, IMediator mediator) =>
     {
-      var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
+      var tenantId = currentUser.TenantId;
       var result = await mediator.Send(new QuitarProgramacionCommand(tenantId, programacionId));
       return result.IsSuccess ? Results.NoContent() : Results.BadRequest(result.Error);
     });
@@ -221,9 +222,9 @@ public static class ReportingEndpoints
 
     // El estado de una exportación. Es lo que la pantalla consulta mientras espera.
     exportaciones.MapGet("/{exportacionId:guid}", async (
-        System.Security.Claims.ClaimsPrincipal principal, Guid exportacionId, IMediator mediator) =>
+        IUserContext currentUser, Guid exportacionId, IMediator mediator) =>
     {
-      var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
+      var tenantId = currentUser.TenantId;
       var result = await mediator.Send(new GetExportacionQuery(tenantId, exportacionId));
       return result.IsSuccess ? Results.Ok(result.Value) : Results.NotFound(result.Error);
     });
@@ -234,9 +235,9 @@ public static class ReportingEndpoints
     // El nombre del fichero va en la respuesta para que el navegador lo use al guardarlo; sin
     // eso, el fichero se descarga con el identificador de la exportación por nombre.
     exportaciones.MapGet("/{exportacionId:guid}/descargar", async (
-        System.Security.Claims.ClaimsPrincipal principal, Guid exportacionId, IMediator mediator) =>
+        IUserContext currentUser, Guid exportacionId, IMediator mediator) =>
     {
-      var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
+      var tenantId = currentUser.TenantId;
 
       var result = await mediator.Send(new DescargarExportacionQuery(tenantId, exportacionId));
 

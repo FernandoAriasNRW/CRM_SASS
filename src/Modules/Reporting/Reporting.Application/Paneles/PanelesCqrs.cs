@@ -273,7 +273,7 @@ public sealed class GetDatosDelPanelHandler(
 
         try
         {
-            var tabla = await resolutor.ResolverAsync(informe.Name, tenantId, definicion, ct);
+            var tabla = await resolutor.ResolveAsync(informe.Name, tenantId, definicion, ct);
 
             return new DatosDeWidgetDto(
                 widget.Id, widget.ReportId,

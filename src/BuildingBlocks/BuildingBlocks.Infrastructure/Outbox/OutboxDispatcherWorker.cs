@@ -8,6 +8,7 @@ namespace BuildingBlocks.Infrastructure.Outbox;
 
 public class OutboxDispatcherWorker(
     IServiceProvider serviceProvider,
+    TimeProvider timeProvider,
     ILogger<OutboxDispatcherWorker> logger) : BackgroundService
 {
   private readonly IServiceProvider _serviceProvider = serviceProvider;
@@ -75,7 +76,7 @@ public class OutboxDispatcherWorker(
             // Podemos envolverlo en un evento genérico si es necesario
         }
 
-        message.ProcessedAt = DateTime.UtcNow;
+        message.ProcessedAt = timeProvider.GetUtcNow().UtcDateTime;
         context.Update(message);
         await context.SaveChangesAsync(ct);
 
@@ -90,7 +91,7 @@ public class OutboxDispatcherWorker(
             "Failed to process outbox message: {Id}",
             message.Id);
 
-        message.ProcessedAt = DateTime.UtcNow;
+        message.ProcessedAt = timeProvider.GetUtcNow().UtcDateTime;
         context.Update(message);
         await context.SaveChangesAsync(ct);
       }

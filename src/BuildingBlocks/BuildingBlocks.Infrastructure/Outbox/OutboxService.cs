@@ -10,7 +10,7 @@ namespace BuildingBlocks.Infrastructure.Outbox;
 /// Usa CrmDbContext centralizado para mantener todos los mensajes de outbox.
 /// Esto asegura que todos los módulos compartan la misma tabla de outbox.
 /// </summary>
-public sealed class OutboxService(IServiceProvider serviceProvider, ILogger<OutboxService> logger) : IOutboxService
+public sealed class OutboxService(IServiceProvider serviceProvider, TimeProvider timeProvider, ILogger<OutboxService> logger) : IOutboxService
 {
     private readonly IServiceProvider _serviceProvider = serviceProvider;
     private readonly ILogger<OutboxService> _logger = logger;
@@ -28,7 +28,7 @@ public sealed class OutboxService(IServiceProvider serviceProvider, ILogger<Outb
                 Id = Guid.NewGuid(),
                 Type = eventType,
                 Payload = payload,
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = timeProvider.GetUtcNow().UtcDateTime
             };
 
             context.OutboxMessages.Add(outboxMessage);

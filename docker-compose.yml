@@ -65,9 +65,9 @@ services:
 
       # El disco es la reserva. Va a un volumen para que los ficheros sobrevivan a recrear el
       # contenedor, y a una ruta escribible: la imagen corre con usuario sin privilegios.
-      - AlmacenEnDisco__Carpeta=/var/almacen
+      - DiskStorage__Folder=/var/storage
     volumes:
-      - almacen_data:/var/almacen
+      - almacen_data:/var/storage
     ports:
       - "8080:8080"
     depends_on:
@@ -109,6 +109,8 @@ services:
 
 volumes:
   db_data:
+  # Conserva el nombre de antes del paso a inglés: renombrar un volumen crea uno vacío y los
+  # ficheros ya subidos se perderían. Se monta en /var/storage.
   almacen_data:
 
 networks:

@@ -151,10 +151,10 @@ public class TicketsTests
         //
         // Esta llamada llegó a tener diez argumentos, tres de ellos opcionales y del mismo tipo,
         // y NSubstitute la rechazaba con un error de argumentos ambiguos que no decía nada del
-        // problema real. Al agrupar filtro, usuario y listas en AlcanceDeVista, vuelve a caber.
+        // problema real. Al agrupar filtro, usuario y listas en ViewScope, vuelve a caber.
         _queriesMock.GetByTenantWithPaginationAsync(
                 _tenantId, null, null, null, null,
-                Arg.Any<PaginationRequest>(), Arg.Any<AlcanceDeVista?>(),
+                Arg.Any<PaginationRequest>(), Arg.Any<ViewScope?>(),
                 Arg.Any<CancellationToken>())
             .Returns(pagedResult);
 

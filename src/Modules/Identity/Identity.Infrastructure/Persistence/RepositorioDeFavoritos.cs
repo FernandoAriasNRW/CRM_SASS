@@ -39,7 +39,7 @@ public sealed class RepositorioDeFavoritos(IdentityDbContext contexto) : IReposi
 }
 
 /// <summary>
-/// Responde el puerto <see cref="BuildingBlocks.Application.Abstractions.IFavoritosDelUsuario"/>
+/// Responde el puerto <see cref="BuildingBlocks.Application.Abstractions.IUserFavorites"/>
 /// para el usuario de la petición en curso.
 ///
 /// Lo implementa Identity porque es quien guarda los favoritos, y lo consumen los demás módulos
@@ -48,8 +48,8 @@ public sealed class RepositorioDeFavoritos(IdentityDbContext contexto) : IReposi
 public sealed class FavoritosDelUsuario(
     IRepositorioDeFavoritos repositorio,
     BuildingBlocks.Application.Abstractions.IUserContext usuario)
-    : BuildingBlocks.Application.Abstractions.IFavoritosDelUsuario
+    : BuildingBlocks.Application.Abstractions.IUserFavorites
 {
-    public Task<IReadOnlyList<Guid>> IdsAsync(string tipo, CancellationToken ct = default)
+    public Task<IReadOnlyList<Guid>> GetIdsAsync(string tipo, CancellationToken ct = default)
         => repositorio.IdsDeAsync(usuario.TenantId, usuario.UserId, tipo, ct);
 }

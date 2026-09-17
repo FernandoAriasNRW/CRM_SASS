@@ -15,11 +15,11 @@ namespace WorkItems.Presentation.Endpoints;
 public static class WorkItemsEndpoints
 {
   /// <summary>Las rutas de archivo y papelera, con la acción que ejecuta cada una.</summary>
-  private static readonly (string Ruta, BuildingBlocks.Application.AccionDeArchivo Accion)[] AccionesDeArchivo =
+  private static readonly (string Ruta, BuildingBlocks.Application.ArchiveAction Accion)[] AccionesDeArchivo =
   [
-    ("archivar", BuildingBlocks.Application.AccionDeArchivo.Archivar),
-    ("desarchivar", BuildingBlocks.Application.AccionDeArchivo.Desarchivar),
-    ("restaurar", BuildingBlocks.Application.AccionDeArchivo.RestaurarDePapelera)
+    ("archivar", BuildingBlocks.Application.ArchiveAction.Archive),
+    ("desarchivar", BuildingBlocks.Application.ArchiveAction.Unarchive),
+    ("restaurar", BuildingBlocks.Application.ArchiveAction.RestoreFromTrash)
   ];
 
   /// <summary>
@@ -38,23 +38,23 @@ public static class WorkItemsEndpoints
   {
     var group = app.MapGroup("/api/v1/tasks").WithTags("Tasks").RequireAuthorization();
 
-    group.MapGet("", async (System.Security.Claims.ClaimsPrincipal principal, [Microsoft.AspNetCore.Mvc.FromQuery] Guid? projectId, [Microsoft.AspNetCore.Mvc.FromQuery] Guid? assigneeId, [Microsoft.AspNetCore.Mvc.FromQuery] string? status, [Microsoft.AspNetCore.Mvc.FromQuery] string? priority, [Microsoft.AspNetCore.Mvc.FromQuery] string? filter, BuildingBlocks.Application.Abstractions.IAlcanceDeVista alcances, IMediator mediator, [Microsoft.AspNetCore.Mvc.FromQuery] Guid? parentTaskId = null, [Microsoft.AspNetCore.Mvc.FromQuery] bool includeSubtasks = false, [Microsoft.AspNetCore.Mvc.FromQuery] int page = 1, [Microsoft.AspNetCore.Mvc.FromQuery] int pageSize = 25, [Microsoft.AspNetCore.Mvc.FromQuery] string? sortColumn = null, [Microsoft.AspNetCore.Mvc.FromQuery] string? sortDirection = null, [Microsoft.AspNetCore.Mvc.FromQuery] DateTime? startDate = null, [Microsoft.AspNetCore.Mvc.FromQuery] DateTime? endDate = null, [Microsoft.AspNetCore.Mvc.FromQuery] string? search = null) =>
+    group.MapGet("", async (IUserContext currentUser, [Microsoft.AspNetCore.Mvc.FromQuery] Guid? projectId, [Microsoft.AspNetCore.Mvc.FromQuery] Guid? assigneeId, [Microsoft.AspNetCore.Mvc.FromQuery] string? status, [Microsoft.AspNetCore.Mvc.FromQuery] string? priority, [Microsoft.AspNetCore.Mvc.FromQuery] string? filter, BuildingBlocks.Application.Abstractions.IViewScopeResolver alcances, IMediator mediator, [Microsoft.AspNetCore.Mvc.FromQuery] Guid? parentTaskId = null, [Microsoft.AspNetCore.Mvc.FromQuery] bool includeSubtasks = false, [Microsoft.AspNetCore.Mvc.FromQuery] int page = 1, [Microsoft.AspNetCore.Mvc.FromQuery] int pageSize = 25, [Microsoft.AspNetCore.Mvc.FromQuery] string? sortColumn = null, [Microsoft.AspNetCore.Mvc.FromQuery] string? sortDirection = null, [Microsoft.AspNetCore.Mvc.FromQuery] DateTime? startDate = null, [Microsoft.AspNetCore.Mvc.FromQuery] DateTime? endDate = null, [Microsoft.AspNetCore.Mvc.FromQuery] string? search = null) =>
     {
-      var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
-      var userId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var _uid) ? _uid : Guid.Empty;
+      var tenantId = currentUser.TenantId;
+      var userId = currentUser.UserId;
       // El resolutor decide qué hace falta consultar para el filtro pedido —favoritos,
       // compartidos, nada— en un solo sitio, para que ningún endpoint reciba un filtro y no
       // haga nada con él, que es como «Mis Tickets» acabó devolviendo los 175 de siempre.
-      var alcance = await alcances.ResolverAsync(filter, userId, BuildingBlocks.Domain.TiposDeEntidad.Tarea);
+      var alcance = await alcances.ResolveAsync(filter, userId, BuildingBlocks.Domain.EntityTypes.Task);
 
-      var query = new GetTasksQuery(tenantId, projectId, assigneeId, status, priority, alcance, new() { Page = page, PageSize = pageSize, SortColumn = sortColumn, SortDirection = sortDirection, StartDate = startDate, EndDate = endDate, Buscar = search }, parentTaskId, includeSubtasks);
+      var query = new GetTasksQuery(tenantId, projectId, assigneeId, status, priority, alcance, new() { Page = page, PageSize = pageSize, SortColumn = sortColumn, SortDirection = sortDirection, StartDate = startDate, EndDate = endDate, Search = search }, parentTaskId, includeSubtasks);
       var result = await mediator.Send(query);
       return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
     });
 
-    group.MapGet("/{id:guid}", async (System.Security.Claims.ClaimsPrincipal principal, Guid id, IMediator mediator) =>
+    group.MapGet("/{id:guid}", async (IUserContext currentUser, Guid id, IMediator mediator) =>
     {
-      var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
+      var tenantId = currentUser.TenantId;
       var result = await mediator.Send(new GetTaskByIdQuery(tenantId, id));
       return result.Value is null ? Results.NotFound() : Results.Ok(result.Value);
     });
@@ -107,11 +107,11 @@ public static class WorkItemsEndpoints
     group.MapPatch("/{id:guid}/move", mover);
     group.MapPost("/{id:guid}/move", mover);
 
-    group.MapPatch("/{id:guid}", async (System.Security.Claims.ClaimsPrincipal principal, Guid id, PatchTaskCommand command, IMediator mediator) =>
+    group.MapPatch("/{id:guid}", async (IUserContext currentUser, Guid id, PatchTaskCommand command, IMediator mediator) =>
     {
-      var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
-      var actorId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var _uid) ? _uid : Guid.Empty;
-      var actorRole = principal.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Role)?.Value ?? string.Empty;
+      var tenantId = currentUser.TenantId;
+      var actorId = currentUser.UserId;
+      var actorRole = currentUser.Role;
       
       // `with` en lugar de reconstruir el comando campo a campo: la lista posicional se quedó
       // corta al añadir las horas, y un campo olvidado aquí no da error de compilación —llega
@@ -137,21 +137,21 @@ public static class WorkItemsEndpoints
 
     // Las subtareas de una tarea. Es el mismo listado con el filtro puesto, para que la
     // paginación y el orden funcionen igual que en cualquier otra vista.
-    group.MapGet("/{id:guid}/subtasks", async (System.Security.Claims.ClaimsPrincipal principal, Guid id, IMediator mediator, [Microsoft.AspNetCore.Mvc.FromQuery] int page = 1, [Microsoft.AspNetCore.Mvc.FromQuery] int pageSize = 100, [Microsoft.AspNetCore.Mvc.FromQuery] string? sortColumn = null, [Microsoft.AspNetCore.Mvc.FromQuery] string? sortDirection = null) =>
+    group.MapGet("/{id:guid}/subtasks", async (IUserContext currentUser, Guid id, IMediator mediator, [Microsoft.AspNetCore.Mvc.FromQuery] int page = 1, [Microsoft.AspNetCore.Mvc.FromQuery] int pageSize = 100, [Microsoft.AspNetCore.Mvc.FromQuery] string? sortColumn = null, [Microsoft.AspNetCore.Mvc.FromQuery] string? sortDirection = null) =>
     {
-      var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
-      var userId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var _uid) ? _uid : Guid.Empty;
+      var tenantId = currentUser.TenantId;
+      var userId = currentUser.UserId;
       var query = new GetTasksQuery(tenantId, null, null, null, null, null, new() { Page = page, PageSize = pageSize, SortColumn = sortColumn, SortDirection = sortDirection }, id, false);
       var result = await mediator.Send(query);
       return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
     });
 
     // Colgar la tarea de otra, o desligarla enviando parentTaskId nulo.
-    group.MapPatch("/{id:guid}/parent", async (System.Security.Claims.ClaimsPrincipal principal, Guid id, ReparentTaskCommand command, IMediator mediator) =>
+    group.MapPatch("/{id:guid}/parent", async (IUserContext currentUser, Guid id, ReparentTaskCommand command, IMediator mediator) =>
     {
-      var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
-      var actorId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var _uid) ? _uid : Guid.Empty;
-      var actorRole = principal.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Role)?.Value ?? string.Empty;
+      var tenantId = currentUser.TenantId;
+      var actorId = currentUser.UserId;
+      var actorRole = currentUser.Role;
 
       var result = await mediator.Send(new ReparentTaskCommand(tenantId, id, actorId, actorRole, command.ParentTaskId));
       return result.IsSuccess ? Results.Ok() : Results.BadRequest(result.Error);
@@ -159,11 +159,11 @@ public static class WorkItemsEndpoints
 
     // Recurrencia. Es un patrón de la tarea, así que se pone y se quita entera; no hay «patch
     // parcial» porque cambiar sólo el intervalo sin decir desde cuándo no significa nada claro.
-    group.MapPut("/{id:guid}/recurrence", async (System.Security.Claims.ClaimsPrincipal principal, Guid id, SetTaskRecurrenceCommand command, IMediator mediator) =>
+    group.MapPut("/{id:guid}/recurrence", async (IUserContext currentUser, Guid id, SetTaskRecurrenceCommand command, IMediator mediator) =>
     {
-      var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
-      var actorId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var _uid) ? _uid : Guid.Empty;
-      var actorRole = principal.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Role)?.Value ?? string.Empty;
+      var tenantId = currentUser.TenantId;
+      var actorId = currentUser.UserId;
+      var actorRole = currentUser.Role;
 
       var result = await mediator.Send(new SetTaskRecurrenceCommand(
           tenantId, id, actorId, actorRole, command.Frecuencia, command.Intervalo,
@@ -172,11 +172,11 @@ public static class WorkItemsEndpoints
       return result.IsSuccess ? Results.Ok() : Results.BadRequest(result.Error);
     });
 
-    group.MapDelete("/{id:guid}/recurrence", async (System.Security.Claims.ClaimsPrincipal principal, Guid id, IMediator mediator) =>
+    group.MapDelete("/{id:guid}/recurrence", async (IUserContext currentUser, Guid id, IMediator mediator) =>
     {
-      var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
-      var actorId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var _uid) ? _uid : Guid.Empty;
-      var actorRole = principal.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Role)?.Value ?? string.Empty;
+      var tenantId = currentUser.TenantId;
+      var actorId = currentUser.UserId;
+      var actorRole = currentUser.Role;
 
       var result = await mediator.Send(new ClearTaskRecurrenceCommand(tenantId, id, actorId, actorRole));
       return result.IsSuccess ? Results.NoContent() : Results.BadRequest(result.Error);
@@ -184,38 +184,38 @@ public static class WorkItemsEndpoints
 
     // Checklist. Los puntos se piden aparte del listado: en la tarjeta basta con el progreso, y
     // traer todos los textos de todas las tareas para pintar «2/5» sería cargar de más.
-    group.MapGet("/{id:guid}/checklist", async (System.Security.Claims.ClaimsPrincipal principal, Guid id, IMediator mediator) =>
+    group.MapGet("/{id:guid}/checklist", async (IUserContext currentUser, Guid id, IMediator mediator) =>
     {
-      var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
+      var tenantId = currentUser.TenantId;
       var result = await mediator.Send(new GetChecklistQuery(tenantId, id));
       return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
     });
 
-    group.MapPost("/{id:guid}/checklist", async (System.Security.Claims.ClaimsPrincipal principal, Guid id, AddChecklistItemCommand command, IMediator mediator) =>
+    group.MapPost("/{id:guid}/checklist", async (IUserContext currentUser, Guid id, AddChecklistItemCommand command, IMediator mediator) =>
     {
-      var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
-      var actorId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var _uid) ? _uid : Guid.Empty;
-      var actorRole = principal.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Role)?.Value ?? string.Empty;
+      var tenantId = currentUser.TenantId;
+      var actorId = currentUser.UserId;
+      var actorRole = currentUser.Role;
 
       var result = await mediator.Send(new AddChecklistItemCommand(tenantId, id, actorId, actorRole, command.Texto));
       return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
     });
 
-    group.MapPatch("/{id:guid}/checklist/{itemId:guid}", async (System.Security.Claims.ClaimsPrincipal principal, Guid id, Guid itemId, UpdateChecklistItemCommand command, IMediator mediator) =>
+    group.MapPatch("/{id:guid}/checklist/{itemId:guid}", async (IUserContext currentUser, Guid id, Guid itemId, UpdateChecklistItemCommand command, IMediator mediator) =>
     {
-      var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
-      var actorId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var _uid) ? _uid : Guid.Empty;
-      var actorRole = principal.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Role)?.Value ?? string.Empty;
+      var tenantId = currentUser.TenantId;
+      var actorId = currentUser.UserId;
+      var actorRole = currentUser.Role;
 
       var result = await mediator.Send(new UpdateChecklistItemCommand(tenantId, id, actorId, actorRole, itemId, command.Hecho, command.Texto));
       return result.IsSuccess ? Results.Ok() : Results.BadRequest(result.Error);
     });
 
-    group.MapDelete("/{id:guid}/checklist/{itemId:guid}", async (System.Security.Claims.ClaimsPrincipal principal, Guid id, Guid itemId, IMediator mediator) =>
+    group.MapDelete("/{id:guid}/checklist/{itemId:guid}", async (IUserContext currentUser, Guid id, Guid itemId, IMediator mediator) =>
     {
-      var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
-      var actorId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var _uid) ? _uid : Guid.Empty;
-      var actorRole = principal.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Role)?.Value ?? string.Empty;
+      var tenantId = currentUser.TenantId;
+      var actorId = currentUser.UserId;
+      var actorRole = currentUser.Role;
 
       var result = await mediator.Send(new RemoveChecklistItemCommand(tenantId, id, actorId, actorRole, itemId));
       return result.IsSuccess ? Results.NoContent() : Results.BadRequest(result.Error);
@@ -223,21 +223,21 @@ public static class WorkItemsEndpoints
 
     // Responsables. Cambiar el principal sigue haciéndose con el patch de la tarea; esto añade y
     // quita gente del conjunto, que es otra intención.
-    group.MapPost("/{id:guid}/assignees", async (System.Security.Claims.ClaimsPrincipal principal, Guid id, AddTaskAssigneeCommand command, IMediator mediator) =>
+    group.MapPost("/{id:guid}/assignees", async (IUserContext currentUser, Guid id, AddTaskAssigneeCommand command, IMediator mediator) =>
     {
-      var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
-      var actorId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var _uid) ? _uid : Guid.Empty;
-      var actorRole = principal.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Role)?.Value ?? string.Empty;
+      var tenantId = currentUser.TenantId;
+      var actorId = currentUser.UserId;
+      var actorRole = currentUser.Role;
 
       var result = await mediator.Send(new AddTaskAssigneeCommand(tenantId, id, actorId, actorRole, command.UserId));
       return result.IsSuccess ? Results.Ok() : Results.BadRequest(result.Error);
     });
 
-    group.MapDelete("/{id:guid}/assignees/{userId:guid}", async (System.Security.Claims.ClaimsPrincipal principal, Guid id, Guid userId, IMediator mediator) =>
+    group.MapDelete("/{id:guid}/assignees/{userId:guid}", async (IUserContext currentUser, Guid id, Guid userId, IMediator mediator) =>
     {
-      var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
-      var actorId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var _uid) ? _uid : Guid.Empty;
-      var actorRole = principal.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Role)?.Value ?? string.Empty;
+      var tenantId = currentUser.TenantId;
+      var actorId = currentUser.UserId;
+      var actorRole = currentUser.Role;
 
       var result = await mediator.Send(new RemoveTaskAssigneeCommand(tenantId, id, actorId, actorRole, userId));
       return result.IsSuccess ? Results.NoContent() : Results.BadRequest(result.Error);
@@ -246,36 +246,36 @@ public static class WorkItemsEndpoints
     // El grafo entero, para el Gantt. Va antes que la ruta con identificador para que no la
     // capture: «dependencies» no es un Guid, pero dejar dos rutas que compiten por el mismo
     // tramo es la clase de cosa que se rompe sola al tocar cualquiera de las dos.
-    group.MapGet("/dependencies", async (System.Security.Claims.ClaimsPrincipal principal, IMediator mediator) =>
+    group.MapGet("/dependencies", async (IUserContext currentUser, IMediator mediator) =>
     {
-      var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
+      var tenantId = currentUser.TenantId;
       var result = await mediator.Send(new GetDependencyGraphQuery(tenantId));
       return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
     });
 
     // Dependencias: las dos direcciones en una sola respuesta, porque el panel las pinta juntas.
-    group.MapGet("/{id:guid}/dependencies", async (System.Security.Claims.ClaimsPrincipal principal, Guid id, IMediator mediator) =>
+    group.MapGet("/{id:guid}/dependencies", async (IUserContext currentUser, Guid id, IMediator mediator) =>
     {
-      var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
+      var tenantId = currentUser.TenantId;
       var result = await mediator.Send(new GetTaskDependenciesQuery(tenantId, id));
       return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
     });
 
-    group.MapPost("/{id:guid}/dependencies", async (System.Security.Claims.ClaimsPrincipal principal, Guid id, AddTaskDependencyCommand command, IMediator mediator) =>
+    group.MapPost("/{id:guid}/dependencies", async (IUserContext currentUser, Guid id, AddTaskDependencyCommand command, IMediator mediator) =>
     {
-      var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
-      var actorId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var _uid) ? _uid : Guid.Empty;
-      var actorRole = principal.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Role)?.Value ?? string.Empty;
+      var tenantId = currentUser.TenantId;
+      var actorId = currentUser.UserId;
+      var actorRole = currentUser.Role;
 
       var result = await mediator.Send(new AddTaskDependencyCommand(tenantId, id, actorId, actorRole, command.DependsOnTaskId));
       return result.IsSuccess ? Results.Ok() : Results.BadRequest(result.Error);
     });
 
-    group.MapDelete("/{id:guid}/dependencies/{dependsOnTaskId:guid}", async (System.Security.Claims.ClaimsPrincipal principal, Guid id, Guid dependsOnTaskId, IMediator mediator) =>
+    group.MapDelete("/{id:guid}/dependencies/{dependsOnTaskId:guid}", async (IUserContext currentUser, Guid id, Guid dependsOnTaskId, IMediator mediator) =>
     {
-      var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
-      var actorId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var _uid) ? _uid : Guid.Empty;
-      var actorRole = principal.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Role)?.Value ?? string.Empty;
+      var tenantId = currentUser.TenantId;
+      var actorId = currentUser.UserId;
+      var actorRole = currentUser.Role;
 
       var result = await mediator.Send(new RemoveTaskDependencyCommand(tenantId, id, actorId, actorRole, dependsOnTaskId));
       return result.IsSuccess ? Results.NoContent() : Results.BadRequest(result.Error);
@@ -286,20 +286,20 @@ public static class WorkItemsEndpoints
     // Borrar sigue siendo DELETE, que ahora sí manda a la papelera.
     foreach (var (ruta, accion) in AccionesDeArchivo)
     {
-      group.MapPost("/{id:guid}/" + ruta, async (System.Security.Claims.ClaimsPrincipal principal, Guid id, IMediator mediator) =>
+      group.MapPost("/{id:guid}/" + ruta, async (IUserContext currentUser, Guid id, IMediator mediator) =>
       {
-        var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
+        var tenantId = currentUser.TenantId;
 
         var result = await mediator.Send(new WorkItems.Application.CambiarArchivoDeTareaCommand(tenantId, id, accion));
         return result.IsSuccess ? Results.NoContent() : Results.NotFound(result.Error);
       });
     }
 
-    group.MapDelete("/{id:guid}", async (System.Security.Claims.ClaimsPrincipal principal, Guid id, IMediator mediator) =>
+    group.MapDelete("/{id:guid}", async (IUserContext currentUser, Guid id, IMediator mediator) =>
     {
-      var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
-      var actorId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var _uid) ? _uid : Guid.Empty;
-      var actorRole = principal.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Role)?.Value ?? string.Empty;
+      var tenantId = currentUser.TenantId;
+      var actorId = currentUser.UserId;
+      var actorRole = currentUser.Role;
       
       var result = await mediator.Send(new DeleteTaskCommand(tenantId, id, actorId, actorRole));
       return result.IsSuccess ? Results.NoContent() : Results.NotFound(result.Error);

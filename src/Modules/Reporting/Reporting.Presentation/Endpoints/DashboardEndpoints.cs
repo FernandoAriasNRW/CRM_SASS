@@ -1,3 +1,4 @@
+using BuildingBlocks.Application.Abstractions;
 using MediatR;
 using Reporting.Application.Paneles;
 using Microsoft.AspNetCore.Builder;
@@ -19,10 +20,10 @@ public static class DashboardEndpoints
         // Uno por persona, no uno por inquilino: «un dashboard es de quien lo mira; si se guarda
         // por inquilino, dos personas se pisan la configuración». Se crea con los informes de
         // partida la primera vez que alguien entra.
-        group.MapGet("/mio", async (System.Security.Claims.ClaimsPrincipal principal, IMediator mediator) =>
+        group.MapGet("/mio", async (IUserContext currentUser, IMediator mediator) =>
         {
-            var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
-            var userId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var _uid) ? _uid : Guid.Empty;
+            var tenantId = currentUser.TenantId;
+            var userId = currentUser.UserId;
 
             var result = await mediator.Send(new GetMiPanelQuery(tenantId, userId));
             return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
@@ -31,9 +32,9 @@ public static class DashboardEndpoints
         // Los datos de todos los recuadros, en una sola petición. Ver GetDatosDelPanelQuery para
         // por qué no es una llamada por widget.
         group.MapGet("/{id:guid}/datos", async (
-            System.Security.Claims.ClaimsPrincipal principal, Guid id, IMediator mediator) =>
+            IUserContext currentUser, Guid id, IMediator mediator) =>
         {
-            var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
+            var tenantId = currentUser.TenantId;
 
             var result = await mediator.Send(new GetDatosDelPanelQuery(tenantId, id));
             return result.IsSuccess ? Results.Ok(result.Value) : Results.NotFound(result.Error);
@@ -43,11 +44,11 @@ public static class DashboardEndpoints
         // los que lo rodean, así que enviar sólo el que se movió obligaría al servidor a recolocar
         // el resto adivinando.
         group.MapPut("/{id:guid}/disposicion", async (
-            System.Security.Claims.ClaimsPrincipal principal, Guid id,
+            IUserContext currentUser, Guid id,
             DisposicionRequest cuerpo, IMediator mediator) =>
         {
-            var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
-            var userId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var _uid) ? _uid : Guid.Empty;
+            var tenantId = currentUser.TenantId;
+            var userId = currentUser.UserId;
 
             // Con nombre y no por posición: el comando lleva tres Guid seguidos —inquilino,
             // persona y panel— y ponerlos en otro orden compila igual. Ya pasó aquí mismo: se
@@ -59,11 +60,11 @@ public static class DashboardEndpoints
         });
 
         group.MapPost("/{id:guid}/widgets", async (
-            System.Security.Claims.ClaimsPrincipal principal, Guid id,
+            IUserContext currentUser, Guid id,
             AnadirWidgetRequest cuerpo, IMediator mediator) =>
         {
-            var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
-            var userId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var _uid) ? _uid : Guid.Empty;
+            var tenantId = currentUser.TenantId;
+            var userId = currentUser.UserId;
 
             var result = await mediator.Send(new AnadirWidgetCommand(
                 TenantId: tenantId, UserId: userId, PanelId: id, ReportId: cuerpo.ReportId, Forma: cuerpo.Forma));
@@ -71,30 +72,30 @@ public static class DashboardEndpoints
         });
 
         group.MapDelete("/{id:guid}/widgets/{widgetId:guid}", async (
-            System.Security.Claims.ClaimsPrincipal principal, Guid id, Guid widgetId, IMediator mediator) =>
+            IUserContext currentUser, Guid id, Guid widgetId, IMediator mediator) =>
         {
-            var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
-            var userId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var _uid) ? _uid : Guid.Empty;
+            var tenantId = currentUser.TenantId;
+            var userId = currentUser.UserId;
 
             var result = await mediator.Send(new QuitarWidgetCommand(
                 TenantId: tenantId, UserId: userId, PanelId: id, WidgetId: widgetId));
             return result.IsSuccess ? Results.NoContent() : Results.BadRequest(result.Error);
         });
 
-        group.MapGet("", async (System.Security.Claims.ClaimsPrincipal principal, IMediator mediator) =>
+        group.MapGet("", async (IUserContext currentUser, IMediator mediator) =>
         {
-            var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
-            var userId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var _uid) ? _uid : Guid.Empty;
+            var tenantId = currentUser.TenantId;
+            var userId = currentUser.UserId;
             
             var query = new GetDashboardsQuery(tenantId, userId);
             var result = await mediator.Send(query);
             return Results.Ok(result);
         });
 
-        group.MapPost("", async (System.Security.Claims.ClaimsPrincipal principal, CreateDashboardRequest request, IMediator mediator) =>
+        group.MapPost("", async (IUserContext currentUser, CreateDashboardRequest request, IMediator mediator) =>
         {
-            var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
-            var userId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var _uid) ? _uid : Guid.Empty;
+            var tenantId = currentUser.TenantId;
+            var userId = currentUser.UserId;
 
             var command = new CreateDashboardCommand(
                 tenantId,
@@ -110,10 +111,10 @@ public static class DashboardEndpoints
             return Results.Created($"/api/v1/dashboards/{result}", result);
         });
 
-        group.MapPut("/{id:guid}", async (System.Security.Claims.ClaimsPrincipal principal, Guid id, CreateDashboardRequest request, IMediator mediator) =>
+        group.MapPut("/{id:guid}", async (IUserContext currentUser, Guid id, CreateDashboardRequest request, IMediator mediator) =>
         {
-            var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
-            var userId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var _uid) ? _uid : Guid.Empty;
+            var tenantId = currentUser.TenantId;
+            var userId = currentUser.UserId;
 
             var command = new UpdateDashboardCommand(
                 tenantId,
@@ -130,10 +131,10 @@ public static class DashboardEndpoints
             return result ? Results.Ok() : Results.Forbid();
         });
 
-        group.MapDelete("/{id:guid}", async (System.Security.Claims.ClaimsPrincipal principal, Guid id, IMediator mediator) =>
+        group.MapDelete("/{id:guid}", async (IUserContext currentUser, Guid id, IMediator mediator) =>
         {
-            var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
-            var userId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var _uid) ? _uid : Guid.Empty;
+            var tenantId = currentUser.TenantId;
+            var userId = currentUser.UserId;
 
             var command = new DeleteDashboardCommand(tenantId, id, userId);
             var result = await mediator.Send(command);

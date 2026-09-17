@@ -19,7 +19,7 @@ public sealed record CambiarArchivoDeProyectoCommand(
     Guid TenantId,
     Guid Id,
     Guid ActorId,
-    AccionDeArchivo Accion) : ICommand<bool>, IAuthorizeEntity
+    ArchiveAction Accion) : ICommand<bool>, IAuthorizeEntity
 {
     public string EntityType => "Project";
     public Guid EntityId => Id;
@@ -40,14 +40,14 @@ public sealed class CambiarArchivoDeProyectoHandler(
         {
             switch (request.Accion)
             {
-                case AccionDeArchivo.Archivar: proyecto.Archivar(); break;
-                case AccionDeArchivo.Desarchivar: proyecto.Desarchivar(); break;
+                case ArchiveAction.Archive: proyecto.Archivar(); break;
+                case ArchiveAction.Unarchive: proyecto.Desarchivar(); break;
 
                 // El agregado lanza si ya está borrado o si no lo está. Se traduce a un fallo
                 // con mensaje en vez de dejar salir la excepción: pulsar dos veces «restaurar»
                 // no es un error del programa, es una pantalla con datos de hace un segundo.
-                case AccionDeArchivo.EnviarAPapelera: proyecto.Delete(request.ActorId); break;
-                case AccionDeArchivo.RestaurarDePapelera: proyecto.Restore(); break;
+                case ArchiveAction.MoveToTrash: proyecto.Delete(request.ActorId); break;
+                case ArchiveAction.RestoreFromTrash: proyecto.Restore(); break;
             }
         }
         catch (InvalidOperationException ex) { return Result<bool>.Failure(ex.Message); }

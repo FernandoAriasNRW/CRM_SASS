@@ -78,7 +78,7 @@ public interface IResolutorDeInformes
     /// </summary>
     IReadOnlyList<string> ValoresDe(string origen, string campo);
 
-    Task<Exportaciones.TablaDeInforme> ResolverAsync(
+    Task<Exportaciones.TablaDeInforme> ResolveAsync(
         string titulo, Guid tenantId, DefinicionDeInforme definicion, CancellationToken ct = default);
 }
 
@@ -114,7 +114,7 @@ public sealed class VistaPreviaHandler(IResolutorDeInformes resolutor)
 
         try
         {
-            var tabla = await resolutor.ResolverAsync(request.Titulo, request.TenantId, request.Definicion, ct);
+            var tabla = await resolutor.ResolveAsync(request.Titulo, request.TenantId, request.Definicion, ct);
 
             return Result<VistaPreviaDto>.Success(new VistaPreviaDto(
                 tabla.Titulo, tabla.Subtitulo, tabla.Columnas,

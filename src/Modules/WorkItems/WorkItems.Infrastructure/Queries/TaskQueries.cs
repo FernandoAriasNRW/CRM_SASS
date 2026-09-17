@@ -58,16 +58,16 @@ public sealed class TaskQueries(WorkItemsDbContext context) : ITaskQueries
       return await GetByTenantWithPaginationAsync(tenantId, projectId, assigneeId, status, null, null, null, false, new PaginationRequest { Page = page, PageSize = pageSize }, ct);
   }
 
-  public async Task<PagedResult<TaskDto>> GetByTenantWithPaginationAsync(Guid tenantId, Guid? projectId, Guid? assigneeId, string? status, string? priority, AlcanceDeVista? alcance, Guid? parentTaskId, bool incluirSubtareas, PaginationRequest pagination, CancellationToken ct = default)
+  public async Task<PagedResult<TaskDto>> GetByTenantWithPaginationAsync(Guid tenantId, Guid? projectId, Guid? assigneeId, string? status, string? priority, ViewScope? alcance, Guid? parentTaskId, bool incluirSubtareas, PaginationRequest pagination, CancellationToken ct = default)
   {
-    var vista = alcance ?? AlcanceDeVista.Ninguno;
+    var vista = alcance ?? ViewScope.None;
 
     // La papelera y el archivo están fuera de lo que el filtro global deja ver, así que no basta
     // con un `Where`: hay que abrir el alcance antes de construir la consulta. El ámbito se
     // cierra al terminar el método.
-    using var _ = context.VerTambien(
-        borrados: vista.Es(FiltrosDeVista.Papelera),
-        archivados: vista.Es(FiltrosDeVista.Archivados));
+    using var _ = context.IncludeHidden(
+        deleted: vista.Is(ViewFilters.Trash),
+        archived: vista.Is(ViewFilters.Archived));
 
     var query = context.Tasks.AsNoTracking().Where(t => t.TenantId == tenantId);
 
@@ -90,56 +90,56 @@ public sealed class TaskQueries(WorkItemsDbContext context) : ITaskQueries
     if (!string.IsNullOrEmpty(status)) query = query.Where(t => t.Status.Value == status || t.Status.Name == status);
     if (!string.IsNullOrEmpty(priority)) query = query.Where(t => t.Priority.Value == priority || t.Priority.Name == priority);
 
-    var yo = vista.UsuarioId;
+    var yo = vista.UserId;
 
-    if (vista.Es(FiltrosDeVista.Mios) && yo.HasValue)
+    if (vista.Is(ViewFilters.Mine) && yo.HasValue)
     {
         // «Mis tareas» son las que respondo, sea como principal o como uno más.
         query = query.Where(t => t.AssigneeId == yo.Value
                                  || t.Assignees.Any(a => a.UserId == yo.Value));
     }
-    else if (vista.Es(FiltrosDeVista.DeMiEquipo) && yo.HasValue)
+    else if (vista.Is(ViewFilters.MyTeam) && yo.HasValue)
     {
         query = query.Where(t => EF.Functions.JsonContains(t.TagIds, yo.Value.ToString()));
     }
-    else if (vista.Es(FiltrosDeVista.CreadosPorMi) && yo.HasValue)
+    else if (vista.Is(ViewFilters.CreatedByMe) && yo.HasValue)
     {
         // «Creado por mí» es distinto de «mío»: una tarea que abrí y pasó a otra persona
         // sigue siendo mía en el sentido de que la escribí yo, y es como se busca.
         query = query.Where(t => t.CreatedById == yo.Value);
     }
-    else if (vista.Es(FiltrosDeVista.Favoritos))
+    else if (vista.Is(ViewFilters.Favorites))
     {
         // Sin marcados, cero resultados y no «todos». `EF.Constant` incrusta los identificadores
         // porque el proveedor de MySQL no traduce una colección parametrizada; es seguro porque
         // la lista está acotada a 200 por persona y tipo.
-        var marcados = vista.Favoritos.ToArray();
+        var marcados = vista.Favorites.ToArray();
         query = query.Where(t => EF.Constant(marcados).Contains(t.Id));
     }
-    else if (vista.Es(FiltrosDeVista.CompartidosConmigo))
+    else if (vista.Is(ViewFilters.SharedWithMe))
     {
-        var conmigo = vista.CompartidosConmigo.ToArray();
+        var conmigo = vista.SharedWithMe.ToArray();
         query = query.Where(t => EF.Constant(conmigo).Contains(t.Id));
     }
-    else if (vista.Es(FiltrosDeVista.Privados) && yo.HasValue)
+    else if (vista.Is(ViewFilters.Private) && yo.HasValue)
     {
         // Privado es «la llevo yo y no se la he dado a nadie». Se resta lo compartido en lugar
         // de guardar un campo `EsPrivado`, que sería una segunda fuente de verdad.
-        var compartidos = vista.CompartidosConAlguien.ToArray();
+        var compartidos = vista.SharedWithOthers.ToArray();
         query = query.Where(t => t.AssigneeId == yo.Value && !EF.Constant(compartidos).Contains(t.Id));
     }
-    else if (vista.Es(FiltrosDeVista.Archivados))
+    else if (vista.Is(ViewFilters.Archived))
     {
-        query = query.Where(t => t.ArchivadoEnUtc != null);
+        query = query.Where(t => t.ArchivedAtUtc != null);
     }
-    else if (vista.Es(FiltrosDeVista.Papelera))
+    else if (vista.Is(ViewFilters.Trash))
     {
         query = query.Where(t => t.IsDeleted);
     }
 
     // Búsqueda por texto, sobre **todas** las tareas del inquilino. Ver la nota equivalente en
     // TicketQueries: en el servidor y no filtrando en el cliente lo que quepa en una página.
-    if (pagination.TextoBuscado is { } texto)
+    if (pagination.SearchText is { } texto)
         query = query.Where(t => t.Title.Value.Contains(texto) || t.Description.Contains(texto));
 
     if (pagination.StartDate.HasValue)

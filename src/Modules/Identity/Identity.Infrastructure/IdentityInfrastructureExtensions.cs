@@ -37,14 +37,14 @@ public static class IdentityInfrastructureExtensions
                            Identity.Infrastructure.Persistence.RepositorioDeFavoritos>();
 
         // El puerto que consumen los demás módulos para filtrar por favoritos sin conocer a
-        // Identity. Ver IFavoritosDelUsuario.
-        services.AddScoped<BuildingBlocks.Application.Abstractions.IFavoritosDelUsuario,
+        // Identity. Ver IUserFavorites.
+        services.AddScoped<BuildingBlocks.Application.Abstractions.IUserFavorites,
                            Identity.Infrastructure.Persistence.FavoritosDelUsuario>();
 
         // Y el de visibilidad, para «compartido conmigo» y «privado». Misma razón.
         services.AddScoped<Identity.Application.Comparticion.IRepositorioDeComparticion,
                            Identity.Infrastructure.Persistence.RepositorioDeComparticion>();
-        services.AddScoped<BuildingBlocks.Application.Abstractions.IVisibilidadDeEntidades,
+        services.AddScoped<BuildingBlocks.Application.Abstractions.IEntityVisibility,
                            Identity.Infrastructure.Persistence.VisibilidadDeEntidades>();
         services.AddScoped<BuildingBlocks.Domain.IUnitOfWork, IdentityUnitOfWork>();
         services.AddScoped<IUserQueries, UserQueries>();

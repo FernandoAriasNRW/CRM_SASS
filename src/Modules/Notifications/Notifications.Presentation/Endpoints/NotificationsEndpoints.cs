@@ -27,25 +27,25 @@ public static class NotificationsEndpoints
   {
     var group = app.MapGroup("/api/v1/notifications").WithTags("Notifications").RequireAuthorization();
 
-    group.MapGet("", async (System.Security.Claims.ClaimsPrincipal principal, Guid? recipientId, string? type, string? status, IMediator mediator, int page = 1, int pageSize = 25) =>
+    group.MapGet("", async (IUserContext currentUser, Guid? recipientId, string? type, string? status, IMediator mediator, int page = 1, int pageSize = 25) =>
     {
-      var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
+      var tenantId = currentUser.TenantId;
       var query = new GetNotificationsQuery(tenantId, recipientId, type, status, new() { Page = page, PageSize = pageSize });
       var result = await mediator.Send(query);
       return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
     });
 
-    group.MapGet("/{id:guid}", async (System.Security.Claims.ClaimsPrincipal principal, Guid id, IMediator mediator) =>
+    group.MapGet("/{id:guid}", async (IUserContext currentUser, Guid id, IMediator mediator) =>
     {
-      var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
+      var tenantId = currentUser.TenantId;
       var query = new GetNotificationByIdQuery(tenantId, id);
       var result = await mediator.Send(query);
       return result.Value is null ? Results.NotFound() : Results.Ok(result.Value);
     });
 
-    group.MapGet("/unread-count", async (System.Security.Claims.ClaimsPrincipal principal, Guid recipientId, IMediator mediator) =>
+    group.MapGet("/unread-count", async (IUserContext currentUser, Guid recipientId, IMediator mediator) =>
     {
-      var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
+      var tenantId = currentUser.TenantId;
       var result = await mediator.Send(new GetUnreadCountQuery(tenantId, recipientId));
       return Results.Ok(new { Count = result });
     });
@@ -68,26 +68,26 @@ public static class NotificationsEndpoints
               : Results.BadRequest(result.Error);
     });
 
-    group.MapPost("/{id:guid}/read", async (System.Security.Claims.ClaimsPrincipal principal, Guid id, Guid? recipientId, IMediator mediator) =>
+    group.MapPost("/{id:guid}/read", async (IUserContext currentUser, Guid id, Guid? recipientId, IMediator mediator) =>
     {
-      var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
-      var userId = recipientId ?? (Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.NameIdentifier || c.Type == "sub")?.Value, out var _uid) ? _uid : Guid.Empty);
+      var tenantId = currentUser.TenantId;
+      var userId = recipientId ?? (currentUser.UserId);
       var result = await mediator.Send(new MarkNotificationAsReadCommand(tenantId, id, userId));
       return result.IsSuccess ? Results.Ok() : Results.BadRequest(result.Error);
     });
 
-    group.MapPatch("/{id:guid}/read", async (System.Security.Claims.ClaimsPrincipal principal, Guid id, Guid? recipientId, IMediator mediator) =>
+    group.MapPatch("/{id:guid}/read", async (IUserContext currentUser, Guid id, Guid? recipientId, IMediator mediator) =>
     {
-      var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
-      var userId = recipientId ?? (Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.NameIdentifier || c.Type == "sub")?.Value, out var _uid) ? _uid : Guid.Empty);
+      var tenantId = currentUser.TenantId;
+      var userId = recipientId ?? (currentUser.UserId);
       var result = await mediator.Send(new MarkNotificationAsReadCommand(tenantId, id, userId));
       return result.IsSuccess ? Results.Ok() : Results.BadRequest(result.Error);
     });
 
-    group.MapPost("/read-all", async (System.Security.Claims.ClaimsPrincipal principal, NotificationsDbContext dbContext) =>
+    group.MapPost("/read-all", async (IUserContext currentUser, NotificationsDbContext dbContext) =>
     {
-      var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
-      var userId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.NameIdentifier || c.Type == "sub")?.Value, out var _uid) ? _uid : Guid.Empty;
+      var tenantId = currentUser.TenantId;
+      var userId = currentUser.UserId;
       
       var notifs = await dbContext.Notifications
           .Where(n => n.TenantId == tenantId && (n.RecipientUserId == userId || userId == Guid.Empty) && n.StatusValue != "Read" && !n.IsDeleted)
@@ -102,10 +102,10 @@ public static class NotificationsEndpoints
       return Results.Ok();
     });
 
-    group.MapDelete("/{id:guid}", async (System.Security.Claims.ClaimsPrincipal principal, Guid id, IMediator mediator) =>
+    group.MapDelete("/{id:guid}", async (IUserContext currentUser, Guid id, IMediator mediator) =>
     {
-      var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
-      var userId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.NameIdentifier || c.Type == "sub")?.Value, out var _uid) ? _uid : Guid.Empty;
+      var tenantId = currentUser.TenantId;
+      var userId = currentUser.UserId;
       var command = new DeleteNotificationCommand(tenantId, id, userId);
       var result = await mediator.Send(command);
       return result.IsSuccess ? Results.Ok() : Results.BadRequest(result.Error);

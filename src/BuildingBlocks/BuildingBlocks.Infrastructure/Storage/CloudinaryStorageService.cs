@@ -32,28 +32,28 @@ public class CloudinaryStorageService : IStorageService
         // Las imágenes van por el endpoint de imágenes y todo lo demás por el de ficheros en
         // bruto. Antes todo subía como imagen, así que un PDF o un CSV los rechazaba Cloudinary:
         // como nunca hubo credenciales configuradas, eso no lo había sufrido nadie todavía.
-        var esImagen = contentType?.StartsWith("image/", StringComparison.OrdinalIgnoreCase) == true;
-        var esVideo = contentType?.StartsWith("video/", StringComparison.OrdinalIgnoreCase) == true;
+        var isImage = contentType?.StartsWith("image/", StringComparison.OrdinalIgnoreCase) == true;
+        var isVideo = contentType?.StartsWith("video/", StringComparison.OrdinalIgnoreCase) == true;
 
-        var fichero = new FileDescription(fileName, fileStream);
+        var file = new FileDescription(fileName, fileStream);
 
         // Dos `await` y no un ternario: el ternario obliga a los dos lados al mismo tipo y el
         // compilador elige el de la izquierda, así que un `RawUploadParams` acababa donde se
         // esperaba un `ImageUploadParams`.
         RawUploadResult uploadResult;
-        if (esImagen)
+        if (isImage)
             uploadResult = await _cloudinary.UploadAsync(
-                new ImageUploadParams { File = fichero, Folder = "crm-saas-suite" }, ct);
-        else if (esVideo)
+                new ImageUploadParams { File = file, Folder = "crm-saas-suite" }, ct);
+        else if (isVideo)
             // Los vídeos por su propio endpoint: como fichero en bruto el límite de tamaño es
             // mucho menor, y una grabación de pantalla de un minuto ya no cabría.
             uploadResult = await _cloudinary.UploadLargeAsync(
-                new VideoUploadParams { File = fichero, Folder = "crm-saas-suite" }, cancellationToken: ct);
+                new VideoUploadParams { File = file, Folder = "crm-saas-suite" }, cancellationToken: ct);
         else
             // «raw» es el tipo de recurso: es lo que hace que Cloudinary acepte un PDF o un CSV
             // sin intentar tratarlos como imagen.
             uploadResult = await _cloudinary.UploadAsync(
-                new RawUploadParams { File = fichero, Folder = "crm-saas-suite" }, "raw", ct);
+                new RawUploadParams { File = file, Folder = "crm-saas-suite" }, "raw", ct);
         
         if (uploadResult.Error != null)
         {

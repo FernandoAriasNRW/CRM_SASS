@@ -15,11 +15,11 @@ namespace Projects.Presentation.Endpoints;
 public static class ProjectsEndpoints
 {
   /// <summary>Las rutas de archivo y papelera, con la acción que ejecuta cada una.</summary>
-  private static readonly (string Ruta, BuildingBlocks.Application.AccionDeArchivo Accion)[] AccionesDeArchivo =
+  private static readonly (string Ruta, BuildingBlocks.Application.ArchiveAction Accion)[] AccionesDeArchivo =
   [
-    ("archivar", BuildingBlocks.Application.AccionDeArchivo.Archivar),
-    ("desarchivar", BuildingBlocks.Application.AccionDeArchivo.Desarchivar),
-    ("restaurar", BuildingBlocks.Application.AccionDeArchivo.RestaurarDePapelera)
+    ("archivar", BuildingBlocks.Application.ArchiveAction.Archive),
+    ("desarchivar", BuildingBlocks.Application.ArchiveAction.Unarchive),
+    ("restaurar", BuildingBlocks.Application.ArchiveAction.RestoreFromTrash)
   ];
 
   public static IServiceCollection AddProjectsPresentation(this IServiceCollection services, IConfiguration configuration)
@@ -32,20 +32,20 @@ public static class ProjectsEndpoints
   {
     var group = app.MapGroup("/api/v1/projects").WithTags("Projects").RequireAuthorization();
 
-    group.MapGet("", async (System.Security.Claims.ClaimsPrincipal principal, [Microsoft.AspNetCore.Mvc.FromQuery] string? status, [Microsoft.AspNetCore.Mvc.FromQuery] Guid? ownerId, [Microsoft.AspNetCore.Mvc.FromQuery] Guid? spaceId, [Microsoft.AspNetCore.Mvc.FromQuery] Guid? folderId, [Microsoft.AspNetCore.Mvc.FromQuery] string? filter, BuildingBlocks.Application.Abstractions.IAlcanceDeVista alcances, IMediator mediator, [Microsoft.AspNetCore.Mvc.FromQuery] int page = 1, [Microsoft.AspNetCore.Mvc.FromQuery] int pageSize = 25, [Microsoft.AspNetCore.Mvc.FromQuery] string? search = null) =>
+    group.MapGet("", async (IUserContext currentUser, [Microsoft.AspNetCore.Mvc.FromQuery] string? status, [Microsoft.AspNetCore.Mvc.FromQuery] Guid? ownerId, [Microsoft.AspNetCore.Mvc.FromQuery] Guid? spaceId, [Microsoft.AspNetCore.Mvc.FromQuery] Guid? folderId, [Microsoft.AspNetCore.Mvc.FromQuery] string? filter, BuildingBlocks.Application.Abstractions.IViewScopeResolver alcances, IMediator mediator, [Microsoft.AspNetCore.Mvc.FromQuery] int page = 1, [Microsoft.AspNetCore.Mvc.FromQuery] int pageSize = 25, [Microsoft.AspNetCore.Mvc.FromQuery] string? search = null) =>
     {
-      var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
-      var userId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var _uid) ? _uid : Guid.Empty;
+      var tenantId = currentUser.TenantId;
+      var userId = currentUser.UserId;
       // El resolutor decide en un solo sitio qué hace falta consultar para el filtro pedido.
-      var alcance = await alcances.ResolverAsync(filter, userId, BuildingBlocks.Domain.TiposDeEntidad.Proyecto);
+      var alcance = await alcances.ResolveAsync(filter, userId, BuildingBlocks.Domain.EntityTypes.Project);
 
-      var result = await mediator.Send(new GetProjectsQuery(tenantId, status, ownerId, spaceId, folderId, alcance, new() { Page = page, PageSize = pageSize, Buscar = search }));
+      var result = await mediator.Send(new GetProjectsQuery(tenantId, status, ownerId, spaceId, folderId, alcance, new() { Page = page, PageSize = pageSize, Search = search }));
       return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
     });
 
-    group.MapGet("/{id:guid}", async (System.Security.Claims.ClaimsPrincipal principal, Guid id, IMediator mediator) =>
+    group.MapGet("/{id:guid}", async (IUserContext currentUser, Guid id, IMediator mediator) =>
     {
-      var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
+      var tenantId = currentUser.TenantId;
       var result = await mediator.Send(new GetProjectByIdQuery(tenantId, id));
       return result.Value is null ? Results.NotFound() : Results.Ok(result.Value);
     });
@@ -76,18 +76,18 @@ public static class ProjectsEndpoints
               : Results.BadRequest(result.Error);
     });
 
-    group.MapPatch("/{id:guid}", async (System.Security.Claims.ClaimsPrincipal principal, Guid id, PatchProjectCommand command, IMediator mediator) =>
+    group.MapPatch("/{id:guid}", async (IUserContext currentUser, Guid id, PatchProjectCommand command, IMediator mediator) =>
     {
-      var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
+      var tenantId = currentUser.TenantId;
       var actualCommand = new PatchProjectCommand(tenantId, id, command.Name, command.Description, command.Status, command.EstimatedEndDate);
       var result = await mediator.Send(actualCommand);
       return result.IsSuccess ? Results.Ok() : Results.NotFound(result.Error);
     });
 
-    group.MapDelete("/{id:guid}", async (System.Security.Claims.ClaimsPrincipal principal, Guid id, IMediator mediator) =>
+    group.MapDelete("/{id:guid}", async (IUserContext currentUser, Guid id, IMediator mediator) =>
     {
-      var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
-      var actorId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var _uid) ? _uid : Guid.Empty;
+      var tenantId = currentUser.TenantId;
+      var actorId = currentUser.UserId;
 
       // Quien borra es la persona, no el inquilino. Aquí iba el TenantId en el hueco de
       // «DeletedBy», así que el registro de quién borró un proyecto decía el nombre de la
@@ -100,10 +100,10 @@ public static class ProjectsEndpoints
     // copiados: son idénticos salvo el verbo.
     foreach (var (ruta, accion) in AccionesDeArchivo)
     {
-      group.MapPost("/{id:guid}/" + ruta, async (System.Security.Claims.ClaimsPrincipal principal, Guid id, IMediator mediator) =>
+      group.MapPost("/{id:guid}/" + ruta, async (IUserContext currentUser, Guid id, IMediator mediator) =>
       {
-        var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
-        var actorId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var _uid) ? _uid : Guid.Empty;
+        var tenantId = currentUser.TenantId;
+        var actorId = currentUser.UserId;
 
         var result = await mediator.Send(
             new Projects.Application.CambiarArchivoDeProyectoCommand(tenantId, id, actorId, accion));
@@ -114,9 +114,9 @@ public static class ProjectsEndpoints
 
     var spacesGroup = app.MapGroup("/api/v1/spaces").WithTags("Spaces").RequireAuthorization();
 
-    spacesGroup.MapGet("", async (System.Security.Claims.ClaimsPrincipal principal, IMediator mediator) =>
+    spacesGroup.MapGet("", async (IUserContext currentUser, IMediator mediator) =>
     {
-      var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
+      var tenantId = currentUser.TenantId;
       var result = await mediator.Send(new GetSpacesQuery(tenantId));
       return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
     });
@@ -137,9 +137,9 @@ public static class ProjectsEndpoints
 
     var foldersGroup = app.MapGroup("/api/v1/folders").WithTags("Folders").RequireAuthorization();
 
-    foldersGroup.MapGet("", async (System.Security.Claims.ClaimsPrincipal principal, Guid spaceId, IMediator mediator) =>
+    foldersGroup.MapGet("", async (IUserContext currentUser, Guid spaceId, IMediator mediator) =>
     {
-      var tenantId = Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var _tid) ? _tid : Guid.Empty;
+      var tenantId = currentUser.TenantId;
       var result = await mediator.Send(new GetFoldersQuery(tenantId, spaceId));
       return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
     });

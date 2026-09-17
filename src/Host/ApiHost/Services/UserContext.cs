@@ -9,7 +9,7 @@ public sealed class UserContext(IHttpContextAccessor httpContextAccessor) : IUse
     /// <summary>
     /// Nombre del claim del tenant, tal como lo emite <c>JwtService</c>.
     /// </summary>
-    public const string ClaimDeTenant = "tenantId";
+    public const string TenantClaim = "tenantId";
 
     private ClaimsPrincipal? User => httpContextAccessor.HttpContext?.User;
 
@@ -35,7 +35,7 @@ public sealed class UserContext(IHttpContextAccessor httpContextAccessor) : IUse
         get
         {
             var claim = User?.Claims.FirstOrDefault(
-                c => string.Equals(c.Type, ClaimDeTenant, StringComparison.OrdinalIgnoreCase));
+                c => string.Equals(c.Type, TenantClaim, StringComparison.OrdinalIgnoreCase));
 
             return Guid.TryParse(claim?.Value, out var id) ? id : Guid.Empty;
         }

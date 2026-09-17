@@ -19,7 +19,7 @@ public interface ITicketQueries
     Task<PagedResult<TicketDto>> GetByTenantWithPaginationAsync(
         Guid tenantId, Guid? customerId, Guid? agentId, string? priority, string? status,
         PaginationRequest pagination,
-        BuildingBlocks.Application.AlcanceDeVista? alcance = null,
+        BuildingBlocks.Application.ViewScope? alcance = null,
         CancellationToken ct = default);
 
     Task<TicketDto?> GetByIdAsync(Guid tenantId, Guid id, CancellationToken ct = default);

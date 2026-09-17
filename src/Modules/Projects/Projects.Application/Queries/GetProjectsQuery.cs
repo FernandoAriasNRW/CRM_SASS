@@ -11,8 +11,8 @@ public sealed record GetProjectsQuery(
     Guid? SpaceId,
     Guid? FolderId,
     /// <summary>
-    /// La entrada del panel de navegación ya resuelta. Ver <c>AlcanceDeVista</c>.
+    /// La entrada del panel de navegación ya resuelta. Ver <c>ViewScope</c>.
     /// </summary>
-    BuildingBlocks.Application.AlcanceDeVista? Alcance,
+    BuildingBlocks.Application.ViewScope? Alcance,
     PaginationRequest Pagination
 ) : IQuery<PagedResult<ProjectDto>>;

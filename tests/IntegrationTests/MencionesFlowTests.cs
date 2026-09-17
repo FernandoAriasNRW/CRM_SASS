@@ -74,8 +74,8 @@ public sealed class MencionesFlowTests(CrmApiFactory factory)
             await respuesta.Content.ReadAsStringAsync());
     }
 
-    private static async Task<JsonElement> QuienMencionaAsync(HttpClient cliente, string tipo, Guid entidadId)
-        => await cliente.GetFromJsonAsync<JsonElement>($"/api/v1/docs/menciones/{tipo}/{entidadId}");
+    private static async Task<JsonElement> GetMentioningDocumentsAsync(HttpClient cliente, string tipo, Guid entityId)
+        => await cliente.GetFromJsonAsync<JsonElement>($"/api/v1/docs/menciones/{tipo}/{entityId}");
 
     private static async Task<Guid> UnaTareaAsync(HttpClient cliente)
     {
@@ -105,7 +105,7 @@ public sealed class MencionesFlowTests(CrmApiFactory factory)
         await GuardarAsync(cliente, paginaId, "Acta de reunión",
             $"""<p>Se acordó avanzar con <span data-mencion-tipo="Tarea" data-mencion-id="{tareaId}">esa tarea</span>.</p>""");
 
-        var quien = await QuienMencionaAsync(cliente, "Tarea", tareaId);
+        var quien = await GetMentioningDocumentsAsync(cliente, "Tarea", tareaId);
 
         // Se busca **esta** página, no se exige ser la única que menciona la tarea. Todas las
         // pruebas de esta clase trabajan sobre la misma tarea del sembrador, así que exigir
@@ -114,8 +114,8 @@ public sealed class MencionesFlowTests(CrmApiFactory factory)
         var mencion = quien.EnumerateArray()
             .Should().ContainSingle(m => m.GetProperty("pageId").GetGuid() == paginaId).Subject;
 
-        mencion.GetProperty("tituloDeLaPagina").GetString().Should().Be("Acta de reunión");
-        mencion.GetProperty("textoVisible").GetString().Should().Be("esa tarea");
+        mencion.GetProperty("pageTitle").GetString().Should().Be("Acta de reunión");
+        mencion.GetProperty("visibleText").GetString().Should().Be("esa tarea");
     }
 
     /// <summary>
@@ -135,12 +135,12 @@ public sealed class MencionesFlowTests(CrmApiFactory factory)
         await GuardarAsync(cliente, paginaId, "Con mención",
             $"""<p><span data-mencion-tipo="Tarea" data-mencion-id="{tareaId}">La tarea</span></p>""");
 
-        (await QuienMencionaAsync(cliente, "Tarea", tareaId)).EnumerateArray()
+        (await GetMentioningDocumentsAsync(cliente, "Tarea", tareaId)).EnumerateArray()
             .Should().ContainSingle(m => m.GetProperty("pageId").GetGuid() == paginaId);
 
         await GuardarAsync(cliente, paginaId, "Sin mención", "<p>Ya no se habla de nada.</p>");
 
-        (await QuienMencionaAsync(cliente, "Tarea", tareaId)).EnumerateArray()
+        (await GetMentioningDocumentsAsync(cliente, "Tarea", tareaId)).EnumerateArray()
             .Should().NotContain(m => m.GetProperty("pageId").GetGuid() == paginaId,
                 "la mención se borró del texto, así que la tarea no puede seguir enseñando el documento");
     }
@@ -164,7 +164,7 @@ public sealed class MencionesFlowTests(CrmApiFactory factory)
         await GuardarAsync(cliente, paginaId, "Dos", html);
         await GuardarAsync(cliente, paginaId, "Tres", html);
 
-        (await QuienMencionaAsync(cliente, "Tarea", tareaId)).EnumerateArray()
+        (await GetMentioningDocumentsAsync(cliente, "Tarea", tareaId)).EnumerateArray()
             .Count(m => m.GetProperty("pageId").GetGuid() == paginaId)
             .Should().Be(1);
     }
@@ -175,7 +175,7 @@ public sealed class MencionesFlowTests(CrmApiFactory factory)
     {
         var cliente = await AutenticarAsync();
 
-        var quien = await QuienMencionaAsync(cliente, "Tarea", Guid.NewGuid());
+        var quien = await GetMentioningDocumentsAsync(cliente, "Tarea", Guid.NewGuid());
 
         quien.EnumerateArray().Should().BeEmpty();
     }
@@ -199,8 +199,8 @@ public sealed class MencionesFlowTests(CrmApiFactory factory)
              y <span data-mencion-tipo="Persona" data-mencion-id="{personaId}">alguien</span></p>
              """);
 
-        (await QuienMencionaAsync(cliente, "Ticket", ticketId)).EnumerateArray().Should().ContainSingle();
-        (await QuienMencionaAsync(cliente, "Persona", personaId)).EnumerateArray().Should().ContainSingle();
+        (await GetMentioningDocumentsAsync(cliente, "Ticket", ticketId)).EnumerateArray().Should().ContainSingle();
+        (await GetMentioningDocumentsAsync(cliente, "Persona", personaId)).EnumerateArray().Should().ContainSingle();
     }
 
     /// <summary>

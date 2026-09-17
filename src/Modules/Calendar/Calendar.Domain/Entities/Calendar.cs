@@ -124,7 +124,7 @@ public sealed class CalendarEvent : AggregateRoot, ITenantEntity, ISoftDeletable
   /// Antes se llamaba <c>Cancel</c> y hacía esto mismo, de modo que cancelar una reunión la hacía
   /// desaparecer del calendario. Ver <see cref="CanceladoEnUtc"/> para por qué son cosas distintas.
   /// </summary>
-  public void EnviarAPapelera(Guid porQuien)
+  public void MoveToTrash(Guid porQuien)
   {
     if (IsDeleted)
       throw new InvalidOperationException("El evento ya está en la papelera");

@@ -1,4 +1,4 @@
-using System.Security.Claims;
+using BuildingBlocks.Application.Abstractions;
 using CustomFields.Application.Commands;
 using CustomFields.Application.Queries;
 using CustomFields.Infrastructure;
@@ -24,49 +24,46 @@ public static class CustomFieldsEndpoints
   {
     var group = app.MapGroup("/api/v1/custom-fields").WithTags("CustomFields").RequireAuthorization();
 
-    static Guid TenantDe(ClaimsPrincipal principal)
-        => Guid.TryParse(principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value, out var id) ? id : Guid.Empty;
-
     // Definiciones
-    group.MapGet("", async (ClaimsPrincipal principal, IMediator mediator, [FromQuery] string? entidad) =>
+    group.MapGet("", async (IUserContext currentUser, IMediator mediator, [FromQuery] string? entidad) =>
     {
-      var result = await mediator.Send(new GetCustomFieldsQuery(TenantDe(principal), entidad));
+      var result = await mediator.Send(new GetCustomFieldsQuery(currentUser.TenantId, entidad));
       return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
     });
 
-    group.MapPost("", async (ClaimsPrincipal principal, DefineCustomFieldCommand command, IMediator mediator) =>
+    group.MapPost("", async (IUserContext currentUser, DefineCustomFieldCommand command, IMediator mediator) =>
     {
-      var result = await mediator.Send(command with { TenantId = TenantDe(principal) });
+      var result = await mediator.Send(command with { TenantId = currentUser.TenantId });
       return result.IsSuccess
           ? Results.Created($"/api/v1/custom-fields/{result.Value!.Id}", result.Value)
           : Results.BadRequest(result.Error);
     });
 
-    group.MapPut("/{id:guid}", async (ClaimsPrincipal principal, Guid id, UpdateCustomFieldCommand command, IMediator mediator) =>
+    group.MapPut("/{id:guid}", async (IUserContext currentUser, Guid id, UpdateCustomFieldCommand command, IMediator mediator) =>
     {
-      var result = await mediator.Send(command with { TenantId = TenantDe(principal), Id = id });
+      var result = await mediator.Send(command with { TenantId = currentUser.TenantId, Id = id });
       return result.IsSuccess ? Results.Ok() : Results.BadRequest(result.Error);
     });
 
-    group.MapDelete("/{id:guid}", async (ClaimsPrincipal principal, Guid id, IMediator mediator) =>
+    group.MapDelete("/{id:guid}", async (IUserContext currentUser, Guid id, IMediator mediator) =>
     {
-      var result = await mediator.Send(new RemoveCustomFieldCommand(TenantDe(principal), id));
+      var result = await mediator.Send(new RemoveCustomFieldCommand(currentUser.TenantId, id));
       return result.IsSuccess ? Results.NoContent() : Results.BadRequest(result.Error);
     });
 
     // Valores de una entidad concreta. Devuelve todas las definiciones que aplican, con valor o
     // sin él: un campo recién creado tiene que aparecer en el formulario aunque nadie lo haya
     // rellenado todavía.
-    group.MapGet("/values/{entidad}/{entityId:guid}", async (ClaimsPrincipal principal, string entidad, Guid entityId, IMediator mediator) =>
+    group.MapGet("/values/{entidad}/{entityId:guid}", async (IUserContext currentUser, string entidad, Guid entityId, IMediator mediator) =>
     {
-      var result = await mediator.Send(new GetCustomFieldValuesQuery(TenantDe(principal), entidad, entityId));
+      var result = await mediator.Send(new GetCustomFieldValuesQuery(currentUser.TenantId, entidad, entityId));
       return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
     });
 
-    group.MapPut("/values/{definitionId:guid}/{entityId:guid}", async (ClaimsPrincipal principal, Guid definitionId, Guid entityId, SetCustomFieldValueCommand command, IMediator mediator) =>
+    group.MapPut("/values/{definitionId:guid}/{entityId:guid}", async (IUserContext currentUser, Guid definitionId, Guid entityId, SetCustomFieldValueCommand command, IMediator mediator) =>
     {
       var result = await mediator.Send(new SetCustomFieldValueCommand(
-          TenantDe(principal), definitionId, entityId, command.Valor));
+          currentUser.TenantId, definitionId, entityId, command.Valor));
 
       return result.IsSuccess ? Results.Ok() : Results.BadRequest(result.Error);
     });

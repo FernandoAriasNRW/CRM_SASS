@@ -76,7 +76,7 @@ public sealed class MotorDeInformes(
         _ => []
     };
 
-    public async Task<TablaDeInforme> ResolverAsync(
+    public async Task<TablaDeInforme> ResolveAsync(
         string titulo, Guid tenantId, DefinicionDeInforme definicion, CancellationToken ct)
     {
         var validacion = definicion.Validar();
@@ -86,9 +86,9 @@ public sealed class MotorDeInformes(
         // El inquilino se declara antes de consultar: el motor lo llama el trabajador de segundo
         // plano, que no tiene petición y por tanto no tiene usuario. Sin esto el filtro global
         // compara contra Guid.Empty y devuelve cero filas sin dar ningún error.
-        using var _ = tareasDb.ComoInquilino(tenantId);
-        using var __ = ticketsDb.ComoInquilino(tenantId);
-        using var ___ = proyectosDb.ComoInquilino(tenantId);
+        using var _ = tareasDb.AsTenant(tenantId);
+        using var __ = ticketsDb.AsTenant(tenantId);
+        using var ___ = proyectosDb.AsTenant(tenantId);
 
         var origen = CatalogoDeInformes.Origen(definicion.Origen)!;
 
