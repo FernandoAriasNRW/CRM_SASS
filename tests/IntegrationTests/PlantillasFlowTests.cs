@@ -35,13 +35,13 @@ public sealed class PlantillasFlowTests(CrmApiFactory factory)
 
     private static async Task<Dictionary<string, int>> UsosAsync(HttpClient cliente)
     {
-        var respuesta = await cliente.GetAsync("/api/v1/docs/plantillas/usos");
+        var respuesta = await cliente.GetAsync("/api/v1/docs/templates/usage");
         respuesta.StatusCode.Should().Be(HttpStatusCode.OK, await respuesta.Content.ReadAsStringAsync());
 
         var usos = await respuesta.Content.ReadFromJsonAsync<JsonElement>();
         return usos.EnumerateArray().ToDictionary(
-            u => u.GetProperty("clave").GetString()!,
-            u => u.GetProperty("veces").GetInt32());
+            u => u.GetProperty("key").GetString()!,
+            u => u.GetProperty("count").GetInt32());
     }
 
     private static async Task CrearDesdeAsync(HttpClient cliente, string clave)
@@ -86,10 +86,10 @@ public sealed class PlantillasFlowTests(CrmApiFactory factory)
         for (var i = 0; i <= maximo; i++)
             await CrearDesdeAsync(cliente, "client-onboarding");
 
-        var respuesta = await cliente.GetAsync("/api/v1/docs/plantillas/usos");
+        var respuesta = await cliente.GetAsync("/api/v1/docs/templates/usage");
         var usos = await respuesta.Content.ReadFromJsonAsync<JsonElement>();
 
-        usos.EnumerateArray().First().GetProperty("clave").GetString()
+        usos.EnumerateArray().First().GetProperty("key").GetString()
             .Should().Be("client-onboarding", "el listado llega ordenado de más usada a menos");
     }
 
@@ -97,7 +97,7 @@ public sealed class PlantillasFlowTests(CrmApiFactory factory)
         HttpClient cliente, string clave, string? idioma)
     {
         var respuesta = await cliente.PostAsJsonAsync("/api/v1/docs/from-template",
-            new { TemplateKey = clave, Idioma = idioma });
+            new { TemplateKey = clave, Language = idioma });
         respuesta.StatusCode.Should().Be(HttpStatusCode.OK, await respuesta.Content.ReadAsStringAsync());
 
         var id = Guid.Parse((await respuesta.Content.ReadAsStringAsync()).Trim('"'));

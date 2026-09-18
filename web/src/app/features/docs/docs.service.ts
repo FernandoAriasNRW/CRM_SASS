@@ -49,10 +49,10 @@ export interface AnotacionDto {
   id: string;
   documentId: string;
   pageId: string;
-  textoCitado: string;
-  creadaPor: string;
-  creadaUtc: string;
-  resueltaUtc: string | null;
+  quotedText: string;
+  createdBy: string;
+  createdAtUtc: string;
+  resolvedAtUtc: string | null;
 }
 
 export interface RenameDocumentRequest {
@@ -79,14 +79,14 @@ export interface CreateFromTemplateRequest {
    * el servidor no puede saber en qué idioma está la aplicación —el del navegador no es el que
    * se eligió—, y cada paquete compilado sí lo sabe con certeza.
    */
-  idioma?: string;
+  language?: string;
 }
 
 /** Cuánto se ha usado una plantilla en este inquilino. Ver `plantillas.ts`. */
 export interface UsoDePlantillaDto {
-  clave: string;
-  veces: number;
-  ultimoUsoUtc: string;
+  key: string;
+  count: number;
+  lastUsedAtUtc: string;
 }
 
 export interface ImportDocumentRequest {
@@ -128,7 +128,7 @@ export class DocsService {
   }
 
   movePage(pageId: string, req: MovePageRequest): Observable<void> {
-    return this.api.put<void>(`${this.endpoint}/pages/${pageId}/mover`, req);
+    return this.api.put<void>(`${this.endpoint}/pages/${pageId}/move`, req);
   }
 
   /**
@@ -156,7 +156,7 @@ export class DocsService {
 
   createFromTemplate(req: CreateFromTemplateRequest): Observable<string> {
     return this.api.post<string>(
-      `${this.endpoint}/from-template`, { ...req, idioma: this.idioma.actual }).pipe(map(idLimpio));
+      `${this.endpoint}/from-template`, { ...req, language: this.idioma.actual }).pipe(map(idLimpio));
   }
 
   /**
@@ -176,24 +176,24 @@ export class DocsService {
   }
 
   getAnotaciones(pageId: string): Observable<AnotacionDto[]> {
-    return this.api.get<AnotacionDto[]>(`${this.endpoint}/pages/${pageId}/anotaciones`);
+    return this.api.get<AnotacionDto[]>(`${this.endpoint}/pages/${pageId}/annotations`);
   }
 
   crearAnotacion(pageId: string, textoCitado: string): Observable<string> {
-    return this.api.post<string>(`${this.endpoint}/pages/${pageId}/anotaciones`, { textoCitado })
+    return this.api.post<string>(`${this.endpoint}/pages/${pageId}/annotations`, { quotedText: textoCitado })
       .pipe(map(idLimpio));
   }
 
   resolverAnotacion(anotacionId: string, resuelta: boolean): Observable<void> {
-    return this.api.put<void>(`${this.endpoint}/anotaciones/${anotacionId}/resolver`, { resuelta });
+    return this.api.put<void>(`${this.endpoint}/annotations/${anotacionId}/resolve`, { isResolved: resuelta });
   }
 
   borrarAnotacion(anotacionId: string): Observable<void> {
-    return this.api.delete<void>(`${this.endpoint}/anotaciones/${anotacionId}`);
+    return this.api.delete<void>(`${this.endpoint}/annotations/${anotacionId}`);
   }
 
   getUsosDePlantilla(): Observable<UsoDePlantillaDto[]> {
-    return this.api.get<UsoDePlantillaDto[]>(`${this.endpoint}/plantillas/usos`);
+    return this.api.get<UsoDePlantillaDto[]>(`${this.endpoint}/templates/usage`);
   }
 
   importDocument(req: ImportDocumentRequest): Observable<string> {

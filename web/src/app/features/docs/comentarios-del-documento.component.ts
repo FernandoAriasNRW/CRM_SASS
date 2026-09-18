@@ -49,7 +49,7 @@ import type { AnotacionDto } from './docs.service';
 
       @for (anotacion of visibles(); track anotacion.id) {
         <article class="rounded-lg border border-border bg-card p-3 flex flex-col gap-2"
-                 [class.opacity-60]="!!anotacion.resueltaUtc"
+                 [class.opacity-60]="!!anotacion.resolvedAtUtc"
                  [class.border-primary]="anotacion.id === anotacionActivaId()">
 
           <div class="flex items-start justify-between gap-2">
@@ -60,17 +60,17 @@ import type { AnotacionDto } from './docs.service';
             <button type="button" (click)="irA.emit(anotacion)"
                     class="flex-1 min-w-0 text-left focus:outline-none focus:ring-2 focus:ring-ring rounded">
               <p class="text-xs text-muted-foreground border-l-2 border-warning pl-2 line-clamp-3 italic">
-                {{ anotacion.textoCitado }}
+                {{ anotacion.quotedText }}
               </p>
             </button>
 
             <div class="flex items-center gap-0.5 shrink-0">
               <button type="button" (click)="resolver.emit(anotacion)"
-                      [title]="anotacion.resueltaUtc ? reabrir : darPorResuelta"
-                      [attr.aria-label]="anotacion.resueltaUtc ? reabrir : darPorResuelta"
+                      [title]="anotacion.resolvedAtUtc ? reabrir : darPorResuelta"
+                      [attr.aria-label]="anotacion.resolvedAtUtc ? reabrir : darPorResuelta"
                       class="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-accent
                              focus:outline-none focus:ring-2 focus:ring-ring">
-                <ng-icon [name]="anotacion.resueltaUtc ? 'lucideRotateCcw' : 'lucideCheck'"
+                <ng-icon [name]="anotacion.resolvedAtUtc ? 'lucideRotateCcw' : 'lucideCheck'"
                          class="w-3.5 h-3.5" aria-hidden="true" />
               </button>
 
@@ -84,7 +84,7 @@ import type { AnotacionDto } from './docs.service';
             </div>
           </div>
 
-          @if (anotacion.resueltaUtc; as cuando) {
+          @if (anotacion.resolvedAtUtc; as cuando) {
             <p class="text-[11px] text-muted-foreground flex items-center gap-1">
               <ng-icon name="lucideCheck" class="w-3 h-3" aria-hidden="true" />
               <span i18n>Resuelto el {{ cuando | date:'d MMM, HH:mm' }}</span>
@@ -113,8 +113,8 @@ export class ComentariosDelDocumentoComponent {
   protected readonly darPorResuelta = $localize`Dar por resuelta`;
   protected readonly ocultarResueltas = $localize`Ocultar las resueltas`;
 
-  protected readonly abiertas = computed(() => this.anotaciones().filter(a => !a.resueltaUtc));
-  protected readonly resueltas = computed(() => this.anotaciones().filter(a => !!a.resueltaUtc));
+  protected readonly abiertas = computed(() => this.anotaciones().filter(a => !a.resolvedAtUtc));
+  protected readonly resueltas = computed(() => this.anotaciones().filter(a => !!a.resolvedAtUtc));
 
   protected readonly visibles = computed(() =>
     this.verResueltas() ? [...this.abiertas(), ...this.resueltas()] : this.abiertas());

@@ -82,14 +82,14 @@ public sealed class Document : Entity, ITenantEntity, ISoftDeletable, IArchivabl
     /// Archivar no es borrar: la papelera de este agregado sigue siendo <c>IsDeleted</c>, y las
     /// dos cosas conviven. Un documento archivado que se borra sigue archivado al restaurarlo.
     /// </summary>
-    public void Archivar()
+    public void Archive()
     {
         if (ArchivedAtUtc is not null) return;
         ArchivedAtUtc = DateTime.UtcNow;
     }
 
     /// <summary>Devuelve el documento a las listas.</summary>
-    public void Desarchivar() => ArchivedAtUtc = null;
+    public void Unarchive() => ArchivedAtUtc = null;
 
     #endregion
 }

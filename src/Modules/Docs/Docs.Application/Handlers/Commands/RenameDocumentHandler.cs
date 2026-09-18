@@ -14,7 +14,7 @@ namespace Docs.Application.Handlers.Commands;
 /// llamándose igual. <c>Document.Update</c> llevaba escrito en el dominio desde el principio sin
 /// que lo llamara nadie.
 /// </summary>
-public record RenombrarDocumentoCommand(Guid DocumentId, string Title, string? Description)
+public record RenameDocumentCommand(Guid DocumentId, string Title, string? Description)
     : IRequest<Result>, IAuthorizeEntity
 {
     public string EntityType => "Document";
@@ -22,26 +22,26 @@ public record RenombrarDocumentoCommand(Guid DocumentId, string Title, string? D
     public string RequiredPermission => "Write";
 }
 
-public class RenombrarDocumentoHandler(IDocumentRepository repository)
-    : IRequestHandler<RenombrarDocumentoCommand, Result>
+public class RenameDocumentHandler(IDocumentRepository repository)
+    : IRequestHandler<RenameDocumentCommand, Result>
 {
-    public async Task<Result> Handle(RenombrarDocumentoCommand request, CancellationToken cancellationToken)
+    public async Task<Result> Handle(RenameDocumentCommand request, CancellationToken cancellationToken)
     {
-        var titulo = (request.Title ?? string.Empty).Trim();
-        if (titulo.Length == 0)
+        var title = (request.Title ?? string.Empty).Trim();
+        if (title.Length == 0)
             return Result.Failure("El documento necesita un título.");
 
-        if (titulo.Length > 255)
+        if (title.Length > 255)
             return Result.Failure("El título no puede pasar de 255 caracteres.");
 
-        var documento = await repository.GetByIdAsync(request.DocumentId, cancellationToken);
-        if (documento is null)
+        var document = await repository.GetByIdAsync(request.DocumentId, cancellationToken);
+        if (document is null)
             return Result.Failure("El documento no existe.");
 
         // La descripción es opcional y se conserva cuando no viene. La pantalla renombra desde un
         // campo que sólo edita el título; mandar `null` y que eso borrara la descripción sería
         // perder un dato que nadie pidió tocar.
-        documento.Update(titulo, request.Description ?? documento.Description);
+        document.Update(title, request.Description ?? document.Description);
 
         await repository.SaveChangesAsync(cancellationToken);
         return Result.Success();

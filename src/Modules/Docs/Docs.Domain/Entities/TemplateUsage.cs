@@ -10,7 +10,7 @@ namespace Docs.Domain.Entities;
 /// obliga a inventar un criterio: las que el equipo abre a diario suben solas.
 ///
 /// <b>Se cuenta aquí y no en el documento</b> porque las plantillas predefinidas no son filas:
-/// viven en el código, identificadas por clave. Una tabla con una <see cref="Clave"/> de texto
+/// viven en el código, identificadas por clave. Una tabla con una <see cref="Key"/> de texto
 /// admite las dos —la clave del sistema, o el identificador de la plantilla propia— y evita
 /// tener dos contadores que se cuentan distinto.
 ///
@@ -18,7 +18,7 @@ namespace Docs.Domain.Entities;
 /// «lo que tú usas»: alguien que entra nuevo se encuentra la galería del equipo ya ordenada en
 /// vez de cuatro plantillas al azar.
 /// </summary>
-public sealed class UsoDePlantilla : Entity, ITenantEntity
+public sealed class TemplateUsage : Entity, ITenantEntity
 {
     public Guid TenantId { get; private set; }
 
@@ -26,27 +26,27 @@ public sealed class UsoDePlantilla : Entity, ITenantEntity
     /// Qué plantilla. O la clave de una predefinida —<c>meeting-notes</c>— o el identificador
     /// de un documento de tipo plantilla, en texto.
     /// </summary>
-    public string Clave { get; private set; } = string.Empty;
+    public string Key { get; private set; } = string.Empty;
 
-    public int Veces { get; private set; }
+    public int Count { get; private set; }
 
-    public DateTime UltimoUsoUtc { get; private set; }
+    public DateTime LastUsedAtUtc { get; private set; }
 
-    private UsoDePlantilla() { }
+    private TemplateUsage() { }
 
-    public static UsoDePlantilla Primera(Guid tenantId, string clave)
+    public static TemplateUsage First(Guid tenantId, string key)
         => new()
         {
             Id = Guid.NewGuid(),
             TenantId = tenantId,
-            Clave = clave,
-            Veces = 1,
-            UltimoUsoUtc = DateTime.UtcNow
+            Key = key,
+            Count = 1,
+            LastUsedAtUtc = DateTime.UtcNow
         };
 
-    public void Sumar()
+    public void Increment()
     {
-        Veces++;
-        UltimoUsoUtc = DateTime.UtcNow;
+        Count++;
+        LastUsedAtUtc = DateTime.UtcNow;
     }
 }

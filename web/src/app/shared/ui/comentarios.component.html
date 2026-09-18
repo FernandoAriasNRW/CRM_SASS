@@ -58,13 +58,13 @@
 
 <ng-template #linea let-comentario let-esRespuesta="esRespuesta">
   <div class="flex items-start gap-2">
-    <app-user-avatar [userId]="comentario.autorId" class="h-7 w-7 shrink-0" />
+    <app-user-avatar [userId]="comentario.authorId" class="h-7 w-7 shrink-0" />
 
     <div class="flex-1 min-w-0">
       <div class="flex items-baseline gap-2">
-        <span class="text-sm font-medium">{{ nombreDe(comentario.autorId) }}</span>
-        <span class="text-[11px] text-muted-foreground">{{ comentario.creadoUtc | date:'short' }}</span>
-        @if (comentario.editadoUtc) {
+        <span class="text-sm font-medium">{{ nombreDe(comentario.authorId) }}</span>
+        <span class="text-[11px] text-muted-foreground">{{ comentario.createdAtUtc | date:'short' }}</span>
+        @if (comentario.editedAtUtc) {
           <!-- Se dice que cambió: un hilo que se edita en silencio no se puede leer con confianza. -->
           <span class="text-[11px] text-muted-foreground" i18n>(editado)</span>
         }
@@ -80,7 +80,7 @@
           <button (click)="cancelarEdicion()" class="text-xs text-muted-foreground" i18n>Cancelar</button>
         </div>
       } @else {
-        <p class="text-sm whitespace-pre-wrap break-words">{{ comentario.texto }}</p>
+        <p class="text-sm whitespace-pre-wrap break-words">{{ comentario.text }}</p>
 
         <div class="flex items-center gap-3 mt-0.5">
           @if (!esRespuesta) {

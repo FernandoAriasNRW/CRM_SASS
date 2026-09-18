@@ -4,32 +4,6 @@ using Comments.Domain.Events;
 namespace Comments.Domain.Entities;
 
 /// <summary>
-/// Sobre qué se puede comentar.
-///
-/// La lista es cerrada: un comentario colgado de un tipo que nadie pinta es un dato que no
-/// vuelve a ver nadie. Se amplía cuando haya una pantalla que lo muestre.
-/// </summary>
-public static class TipoDeEntidadComentable
-{
-    public const string Tarea = "Tarea";
-    public const string Ticket = "Ticket";
-    public const string Proyecto = "Proyecto";
-
-    /// <summary>
-    /// Un comentario en línea dentro de un documento.
-    ///
-    /// La entidad comentada es la <b>anotación</b> —el trozo de texto señalado—, no el documento:
-    /// un documento tiene muchas conversaciones a la vez, cada una pegada a un sitio distinto.
-    /// Dónde está pegada lo guarda Docs; el hilo, este módulo.
-    /// </summary>
-    public const string Anotacion = "Anotacion";
-
-    public static IReadOnlyList<string> Todos() => [Tarea, Ticket, Proyecto, Anotacion];
-
-    public static bool Existe(string tipo) => Todos().Contains(tipo);
-}
-
-/// <summary>
 /// Un comentario sobre una tarea, un ticket o un proyecto.
 ///
 /// **Un solo módulo para los tres** y no uno por entidad: comentar es la misma operación en
@@ -41,23 +15,23 @@ public static class TipoDeEntidadComentable
 /// </summary>
 public sealed class Comment : AggregateRoot, ITenantEntity
 {
-    public const int LargoMaximo = 5000;
+    public const int MaxLength = 5000;
 
     public Guid TenantId { get; private set; }
 
-    /// <summary>Uno de <see cref="TipoDeEntidadComentable"/>.</summary>
-    public string EntidadDestino { get; private set; } = string.Empty;
+    /// <summary>Uno de <see cref="CommentableEntityTypes"/>.</summary>
+    public string EntityType { get; private set; } = string.Empty;
 
     public Guid EntityId { get; private set; }
 
-    public Guid AutorId { get; private set; }
+    public Guid AuthorId { get; private set; }
 
-    public string Texto { get; private set; } = string.Empty;
+    public string Text { get; private set; } = string.Empty;
 
-    public DateTime CreadoUtc { get; private set; }
+    public DateTime CreatedAtUtc { get; private set; }
 
     /// <summary>Cuándo se editó por última vez, o <c>null</c> si nunca se tocó.</summary>
-    public DateTime? EditadoUtc { get; private set; }
+    public DateTime? EditedAtUtc { get; private set; }
 
     /// <summary>
     /// Comentario al que responde, si es una respuesta.
@@ -66,41 +40,41 @@ public sealed class Comment : AggregateRoot, ITenantEntity
     /// de respuestas. Es lo que permite pintar el hilo con una cuenta y no con un recorrido de
     /// árbol, y evita de raíz los hilos que se van a la derecha hasta no caber.
     /// </summary>
-    public Guid? RespondeAId { get; private set; }
+    public Guid? ReplyToId { get; private set; }
 
     private Comment() { }
 
     public static Comment Create(
-        Guid tenantId, string entidadDestino, Guid entityId, Guid autorId, string texto,
-        Guid? respondeAId = null)
+        Guid tenantId, string entityType, Guid entityId, Guid authorId, string text,
+        Guid? replyToId = null)
     {
-        if (!TipoDeEntidadComentable.Existe(entidadDestino))
-            throw new InvalidOperationException(Reglas.EntidadDesconocida);
+        if (!CommentableEntityTypes.Exists(entityType))
+            throw new InvalidOperationException(Rules.UnknownEntity);
 
         if (entityId == Guid.Empty)
-            throw new InvalidOperationException(Reglas.SinEntidad);
+            throw new InvalidOperationException(Rules.MissingEntity);
 
-        if (autorId == Guid.Empty)
-            throw new InvalidOperationException(Reglas.SinAutor);
+        if (authorId == Guid.Empty)
+            throw new InvalidOperationException(Rules.MissingAuthor);
 
-        var limpio = Validar(texto);
+        var trimmed = Validate(text);
 
-        var comentario = new Comment
+        var comment = new Comment
         {
             Id = Guid.NewGuid(),
             TenantId = tenantId,
-            EntidadDestino = entidadDestino,
+            EntityType = entityType,
             EntityId = entityId,
-            AutorId = autorId,
-            Texto = limpio,
-            CreadoUtc = DateTime.UtcNow,
-            RespondeAId = respondeAId,
+            AuthorId = authorId,
+            Text = trimmed,
+            CreatedAtUtc = DateTime.UtcNow,
+            ReplyToId = replyToId,
         };
 
-        comentario.RaiseDomainEvent(
-            new CommentAddedEvent(comentario.Id, tenantId, entidadDestino, entityId, autorId));
+        comment.RaiseDomainEvent(
+            new CommentAddedEvent(comment.Id, tenantId, entityType, entityId, authorId));
 
-        return comentario;
+        return comment;
     }
 
     /// <summary>
@@ -110,15 +84,15 @@ public sealed class Comment : AggregateRoot, ITenantEntity
     /// puede reescribir, la firma deja de significar nada. Ni siquiera un administrador; para eso
     /// está borrarlo, que sí deja constancia de que desapareció.
     /// </summary>
-    public void Editar(Guid quien, string texto)
+    public void Edit(Guid userId, string text)
     {
-        if (quien != AutorId)
-            throw new InvalidOperationException(Reglas.SoloElAutorEdita);
+        if (userId != AuthorId)
+            throw new InvalidOperationException(Rules.OnlyAuthorEdits);
 
-        Texto = Validar(texto);
-        EditadoUtc = DateTime.UtcNow;
+        Text = Validate(text);
+        EditedAtUtc = DateTime.UtcNow;
 
-        RaiseDomainEvent(new CommentEditedEvent(Id, TenantId, AutorId));
+        RaiseDomainEvent(new CommentEditedEvent(Id, TenantId, AuthorId));
     }
 
     /// <summary>
@@ -127,38 +101,38 @@ public sealed class Comment : AggregateRoot, ITenantEntity
     /// Aquí sí entra el administrador, porque moderar es parte de su trabajo y borrar no pone
     /// palabras en boca de nadie.
     /// </summary>
-    public bool LoPuedeBorrar(Guid quien, string rol)
-        => quien == AutorId || rol == "Admin";
+    public bool CanDelete(Guid userId, string role)
+        => userId == AuthorId || role == "Admin";
 
-    private static string Validar(string texto)
+    private static string Validate(string text)
     {
-        var limpio = (texto ?? string.Empty).Trim();
+        var trimmed = (text ?? string.Empty).Trim();
 
-        if (limpio.Length == 0)
-            throw new InvalidOperationException(Reglas.TextoObligatorio);
+        if (trimmed.Length == 0)
+            throw new InvalidOperationException(Rules.TextRequired);
 
-        if (limpio.Length > LargoMaximo)
-            throw new InvalidOperationException(Reglas.TextoDemasiadoLargo);
+        if (trimmed.Length > MaxLength)
+            throw new InvalidOperationException(Rules.TextTooLong);
 
-        return limpio;
+        return trimmed;
     }
 
-    public static class Reglas
+    public static class Rules
     {
-        public const string TextoObligatorio = "El comentario no puede estar vacío";
-        public static readonly string TextoDemasiadoLargo =
-            $"Un comentario no puede pasar de {LargoMaximo} caracteres";
-        public const string EntidadDesconocida =
+        public const string TextRequired = "El comentario no puede estar vacío";
+        public static readonly string TextTooLong =
+            $"Un comentario no puede pasar de {MaxLength} caracteres";
+        public const string UnknownEntity =
             "Sólo se puede comentar sobre una tarea, un ticket, un proyecto o una anotación";
-        public const string SinEntidad = "Falta sobre qué se comenta";
-        public const string SinAutor = "Un comentario necesita autor";
-        public const string SoloElAutorEdita = "Sólo quien escribió un comentario puede editarlo";
-        public const string SoloElAutorOAdminBorra =
+        public const string MissingEntity = "Falta sobre qué se comenta";
+        public const string MissingAuthor = "Un comentario necesita autor";
+        public const string OnlyAuthorEdits = "Sólo quien escribió un comentario puede editarlo";
+        public const string OnlyAuthorOrAdminDeletes =
             "Sólo quien escribió un comentario, o quien administra, puede borrarlo";
-        public const string NoEncontrado = "Comentario no encontrado";
-        public const string RespuestaDeRespuesta =
+        public const string NotFound = "Comentario no encontrado";
+        public const string ReplyToReply =
             "No se puede responder a una respuesta: los hilos tienen un solo nivel";
-        public const string RespondeAOtraEntidad =
+        public const string ReplyToOtherEntity =
             "Una respuesta tiene que estar en el mismo hilo que el comentario al que responde";
     }
 }

@@ -17,8 +17,8 @@ public record UpdatePageCommand(Guid PageId, string Title, string Content) : IRe
 
 public class UpdatePageHandler(
     IDocumentRepository documentRepository,
-    Menciones.ActualizadorDeMenciones menciones,
-    IUserContext usuario) : IRequestHandler<UpdatePageCommand, Result>
+    Mentions.MentionUpdater mentionUpdater,
+    IUserContext userContext) : IRequestHandler<UpdatePageCommand, Result>
 {
     public async Task<Result> Handle(UpdatePageCommand request, CancellationToken cancellationToken)
     {
@@ -38,8 +38,8 @@ public class UpdatePageHandler(
         // Va después de guardar y no en la misma transacción a propósito: si esto fallara, se
         // perdería la actualización del índice de menciones, no el contenido de la persona. El
         // índice se rehace al siguiente guardado; el texto no se recupera.
-        await menciones.ActualizarAsync(
-            usuario.TenantId, page.DocumentId, page.Id, request.Content, cancellationToken);
+        await mentionUpdater.UpdateAsync(
+            userContext.TenantId, page.DocumentId, page.Id, request.Content, cancellationToken);
 
         return Result.Success();
     }

@@ -19,10 +19,10 @@ namespace Docs.Domain.Entities;
 /// un comentario sobre un párrafo que alguien reescribe se quedaría señalando otra cosa sin decirlo.
 /// Guardada la cita, el panel puede enseñar «se comentó sobre esto» aunque el texto ya no exista.
 /// </summary>
-public sealed class AnotacionEnDocumento : Entity, ITenantEntity
+public sealed class DocumentAnnotation : Entity, ITenantEntity
 {
     /// <summary>Lo que se cita se recorta: es una referencia, no una copia del documento.</summary>
-    public const int LargoDeLaCita = 300;
+    public const int MaxQuoteLength = 300;
 
     public Guid TenantId { get; private set; }
 
@@ -32,32 +32,32 @@ public sealed class AnotacionEnDocumento : Entity, ITenantEntity
     public Guid PageId { get; private set; }
 
     /// <summary>El texto que estaba seleccionado al comentar, tal cual estaba entonces.</summary>
-    public string TextoCitado { get; private set; } = string.Empty;
+    public string QuotedText { get; private set; } = string.Empty;
 
-    public Guid CreadaPor { get; private set; }
+    public Guid CreatedBy { get; private set; }
 
-    public DateTime CreadaUtc { get; private set; }
+    public DateTime CreatedAtUtc { get; private set; }
 
     /// <summary>Cuándo se dio por resuelta, o <c>null</c> si sigue abierta.</summary>
-    public DateTime? ResueltaUtc { get; private set; }
+    public DateTime? ResolvedAtUtc { get; private set; }
 
-    public Guid? ResueltaPor { get; private set; }
+    public Guid? ResolvedBy { get; private set; }
 
-    public bool EstaResuelta => ResueltaUtc is not null;
+    public bool IsResolved => ResolvedAtUtc is not null;
 
-    private AnotacionEnDocumento() { }
+    private DocumentAnnotation() { }
 
-    public static AnotacionEnDocumento Crear(
-        Guid tenantId, Guid documentId, Guid pageId, Guid creadaPor, string textoCitado)
+    public static DocumentAnnotation Create(
+        Guid tenantId, Guid documentId, Guid pageId, Guid createdBy, string quotedText)
         => new()
         {
             Id = Guid.NewGuid(),
             TenantId = tenantId,
             DocumentId = documentId,
             PageId = pageId,
-            CreadaPor = creadaPor,
-            TextoCitado = Recortar(textoCitado),
-            CreadaUtc = DateTime.UtcNow
+            CreatedBy = createdBy,
+            QuotedText = Truncate(quotedText),
+            CreatedAtUtc = DateTime.UtcNow
         };
 
     /// <summary>
@@ -66,23 +66,23 @@ public sealed class AnotacionEnDocumento : Entity, ITenantEntity
     /// Resolver no es borrar: el hilo se queda y se puede volver a abrir. Un comentario que
     /// desaparece al marcarlo como atendido se lleva por delante el motivo del cambio.
     /// </summary>
-    public void Resolver(Guid quien)
+    public void Resolve(Guid userId)
     {
-        if (EstaResuelta) return;
+        if (IsResolved) return;
 
-        ResueltaUtc = DateTime.UtcNow;
-        ResueltaPor = quien;
+        ResolvedAtUtc = DateTime.UtcNow;
+        ResolvedBy = userId;
     }
 
-    public void Reabrir()
+    public void Reopen()
     {
-        ResueltaUtc = null;
-        ResueltaPor = null;
+        ResolvedAtUtc = null;
+        ResolvedBy = null;
     }
 
-    private static string Recortar(string texto)
+    private static string Truncate(string text)
     {
-        var limpio = (texto ?? string.Empty).Trim();
-        return limpio.Length > LargoDeLaCita ? limpio[..LargoDeLaCita] : limpio;
+        var trimmed = (text ?? string.Empty).Trim();
+        return trimmed.Length > MaxQuoteLength ? trimmed[..MaxQuoteLength] : trimmed;
     }
 }

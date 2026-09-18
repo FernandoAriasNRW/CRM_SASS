@@ -146,7 +146,7 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
   /** Si el panel lateral enseña el índice o los comentarios. */
   readonly panelLateral = signal<'esquema' | 'comentarios'>('esquema');
 
-  readonly comentariosAbiertos = computed(() => this.anotaciones().filter(a => !a.resueltaUtc).length);
+  readonly comentariosAbiertos = computed(() => this.anotaciones().filter(a => !a.resolvedAtUtc).length);
 
   /** Qué está pidiendo el modal de dirección, o `null` si no hay ninguno abierto. */
   readonly urlPedida = signal<ClaseDeUrl | null>(null);
@@ -313,7 +313,7 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
     const pagina = this.activePage();
     if (!pagina) return;
 
-    this.docsService.resolverAnotacion(anotacion.id, !anotacion.resueltaUtc).subscribe({
+    this.docsService.resolverAnotacion(anotacion.id, !anotacion.resolvedAtUtc).subscribe({
       next: () => this.cargarAnotaciones(pagina.id),
       error: (err) => {
         this.toast.error($localize`No se pudo cambiar el estado del comentario`);
@@ -450,7 +450,7 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
       // —un proxy que devuelve un objeto de error con 200, por ejemplo— reventaría aquí dentro y
       // se llevaría por delante la pantalla entera de Documentos por un contador de adorno.
       next: (usos) => this.usosDePlantilla.set(Array.isArray(usos)
-        ? new Map(usos.map(u => [u.clave, u.veces]))
+        ? new Map(usos.map(u => [u.key, u.count]))
         : new Map()),
       // Sin contadores la galería sigue siendo utilizable: se ve el orden de declaración. No
       // merece parar la pantalla ni enseñar un error por esto.

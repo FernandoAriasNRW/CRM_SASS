@@ -44,14 +44,14 @@ public sealed class Page : Entity, ISoftDeletable
     }
 
     /// <summary>Cambia el título sin tocar el contenido, para renombrar desde el árbol.</summary>
-    public void Renombrar(string title)
+    public void Rename(string title)
     {
         Title = title;
         UpdatedAtUtc = DateTime.UtcNow;
     }
 
     /// <summary>Cuelga la página de otra, o del documento cuando el padre es <c>null</c>.</summary>
-    public void Mover(Guid? parentPageId)
+    public void Move(Guid? parentPageId)
     {
         ParentPageId = parentPageId;
         UpdatedAtUtc = DateTime.UtcNow;
@@ -63,7 +63,7 @@ public sealed class Page : Entity, ISoftDeletable
     /// No toca <c>UpdatedAtUtc</c>: reordenar la barra lateral no es editar el documento, y si lo
     /// marcara, mover una página movería también su sitio en «recientes».
     /// </summary>
-    public void Reordenar(int order) => Order = order;
+    public void Reorder(int order) => Order = order;
 
     public void Delete()
     {

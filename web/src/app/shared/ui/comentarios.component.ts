@@ -54,7 +54,7 @@ export class ComentariosComponent implements OnInit {
   readonly respondiendoA = signal<string | null>(null);
 
   /** Los de primer nivel, en orden. Las respuestas se pintan colgando del suyo. */
-  readonly hilo = computed(() => this.comentarios().filter(c => !c.respondeAId));
+  readonly hilo = computed(() => this.comentarios().filter(c => !c.replyToId));
 
   ngOnInit(): void {
     this.cargar();
@@ -62,7 +62,7 @@ export class ComentariosComponent implements OnInit {
   }
 
   respuestasDe(id: string): Comentario[] {
-    return this.comentarios().filter(c => c.respondeAId === id);
+    return this.comentarios().filter(c => c.replyToId === id);
   }
 
   nombreDe(autorId: string): string {
@@ -71,7 +71,7 @@ export class ComentariosComponent implements OnInit {
 
   /** Quién puede editar: sólo su autor. Lo mismo que exige el dominio. */
   esMio(comentario: Comentario): boolean {
-    return comentario.autorId === this.sesion.userInfo()?.id;
+    return comentario.authorId === this.sesion.userInfo()?.id;
   }
 
   /** Quién puede borrar: su autor o quien administra. También igual que el dominio. */
@@ -124,7 +124,7 @@ export class ComentariosComponent implements OnInit {
 
   empezarEdicion(comentario: Comentario): void {
     this.editando.set(comentario.id);
-    this.textoEditado = comentario.texto;
+    this.textoEditado = comentario.text;
     this.error.set('');
   }
 
@@ -139,7 +139,7 @@ export class ComentariosComponent implements OnInit {
     this.servicio.editar(comentario.id, limpio).subscribe({
       next: () => {
         this.comentarios.update(actuales => actuales.map(c =>
-          c.id === comentario.id ? { ...c, texto: limpio, editadoUtc: new Date().toISOString() } : c));
+          c.id === comentario.id ? { ...c, text: limpio, editedAtUtc: new Date().toISOString() } : c));
         this.editando.set(null);
       },
       error: respuesta => this.error.set(
@@ -152,7 +152,7 @@ export class ComentariosComponent implements OnInit {
       next: () => {
         // Se van también sus respuestas: sin el comentario del que colgaban no se entienden.
         this.comentarios.update(actuales =>
-          actuales.filter(c => c.id !== comentario.id && c.respondeAId !== comentario.id));
+          actuales.filter(c => c.id !== comentario.id && c.replyToId !== comentario.id));
         this.borrando.set(null);
       },
       error: respuesta => {

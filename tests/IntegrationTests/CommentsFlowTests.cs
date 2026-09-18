@@ -35,7 +35,7 @@ public sealed class CommentsFlowTests(CrmApiFactory factory)
     private static async Task<Guid> ComentarAsync(HttpClient cliente, string entidad, Guid entityId, string texto, Guid? respondeA = null)
     {
         var respuesta = await cliente.PostAsJsonAsync(
-            $"/api/v1/comments/{entidad}/{entityId}", new { texto, respondeAId = respondeA });
+            $"/api/v1/comments/{entidad}/{entityId}", new { text = texto, replyToId = respondeA });
 
         respuesta.StatusCode.Should().Be(HttpStatusCode.Created);
         return (await respuesta.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetGuid();
@@ -57,7 +57,7 @@ public sealed class CommentsFlowTests(CrmApiFactory factory)
 
         var hilo = await HiloAsync(cliente, entidad, entityId);
         hilo.EnumerateArray().Should().ContainSingle()
-            .Which.GetProperty("texto").GetString().Should().Be("Primer comentario");
+            .Which.GetProperty("text").GetString().Should().Be("Primer comentario");
     }
 
     /// <summary>El hilo se lee en orden: del más antiguo al más nuevo.</summary>
@@ -71,7 +71,7 @@ public sealed class CommentsFlowTests(CrmApiFactory factory)
         await ComentarAsync(cliente, "Tarea", entityId, "Segundo");
 
         var textos = (await HiloAsync(cliente, "Tarea", entityId))
-            .EnumerateArray().Select(c => c.GetProperty("texto").GetString()).ToList();
+            .EnumerateArray().Select(c => c.GetProperty("text").GetString()).ToList();
 
         textos.Should().Equal("Primero", "Segundo");
     }
@@ -95,12 +95,12 @@ public sealed class CommentsFlowTests(CrmApiFactory factory)
         var entityId = Guid.NewGuid();
         var id = await ComentarAsync(cliente, "Tarea", entityId, "Con errata");
 
-        var edicion = await cliente.PutAsJsonAsync($"/api/v1/comments/{id}", new { texto = "Sin errata" });
+        var edicion = await cliente.PutAsJsonAsync($"/api/v1/comments/{id}", new { text = "Sin errata" });
         edicion.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var comentario = (await HiloAsync(cliente, "Tarea", entityId)).EnumerateArray().Single();
-        comentario.GetProperty("texto").GetString().Should().Be("Sin errata");
-        comentario.GetProperty("editadoUtc").ValueKind.Should().NotBe(JsonValueKind.Null);
+        comentario.GetProperty("text").GetString().Should().Be("Sin errata");
+        comentario.GetProperty("editedAtUtc").ValueKind.Should().NotBe(JsonValueKind.Null);
     }
 
     [Fact]
@@ -109,7 +109,7 @@ public sealed class CommentsFlowTests(CrmApiFactory factory)
         var cliente = await AutenticarAsync();
 
         var respuesta = await cliente.PostAsJsonAsync(
-            $"/api/v1/comments/Tarea/{Guid.NewGuid()}", new { texto = "   " });
+            $"/api/v1/comments/Tarea/{Guid.NewGuid()}", new { text = "   " });
 
         respuesta.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
@@ -120,7 +120,7 @@ public sealed class CommentsFlowTests(CrmApiFactory factory)
         var cliente = await AutenticarAsync();
 
         var respuesta = await cliente.PostAsJsonAsync(
-            $"/api/v1/comments/Factura/{Guid.NewGuid()}", new { texto = "Hola" });
+            $"/api/v1/comments/Factura/{Guid.NewGuid()}", new { text = "Hola" });
 
         respuesta.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
@@ -137,10 +137,10 @@ public sealed class CommentsFlowTests(CrmApiFactory factory)
         var hilo = await HiloAsync(cliente, "Tarea", entityId);
         hilo.GetArrayLength().Should().Be(2);
 
-        // El comentario original tiene `respondeAId` nulo, así que hay que mirarlo antes de
+        // El comentario original tiene `replyToId` nulo, así que hay que mirarlo antes de
         // leerlo como Guid: el hilo trae los dos.
         var respuestas = hilo.EnumerateArray()
-            .Select(c => c.GetProperty("respondeAId"))
+            .Select(c => c.GetProperty("replyToId"))
             .Where(r => r.ValueKind != JsonValueKind.Null)
             .Select(r => r.GetGuid())
             .ToList();
@@ -161,7 +161,7 @@ public sealed class CommentsFlowTests(CrmApiFactory factory)
         var respuesta = await ComentarAsync(cliente, "Tarea", entityId, "Respuesta", padre);
 
         var tercera = await cliente.PostAsJsonAsync(
-            $"/api/v1/comments/Tarea/{entityId}", new { texto = "Otra", respondeAId = respuesta });
+            $"/api/v1/comments/Tarea/{entityId}", new { text = "Otra", replyToId = respuesta });
 
         tercera.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
@@ -177,7 +177,7 @@ public sealed class CommentsFlowTests(CrmApiFactory factory)
         var padre = await ComentarAsync(cliente, "Tarea", Guid.NewGuid(), "En una tarea");
 
         var intruso = await cliente.PostAsJsonAsync(
-            $"/api/v1/comments/Tarea/{Guid.NewGuid()}", new { texto = "En otra", respondeAId = padre });
+            $"/api/v1/comments/Tarea/{Guid.NewGuid()}", new { text = "En otra", replyToId = padre });
 
         intruso.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
@@ -200,7 +200,7 @@ public sealed class CommentsFlowTests(CrmApiFactory factory)
     {
         var cliente = await AutenticarAsync();
 
-        var respuesta = await cliente.PutAsJsonAsync($"/api/v1/comments/{Guid.NewGuid()}", new { texto = "Hola" });
+        var respuesta = await cliente.PutAsJsonAsync($"/api/v1/comments/{Guid.NewGuid()}", new { text = "Hola" });
 
         respuesta.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
@@ -217,6 +217,6 @@ public sealed class CommentsFlowTests(CrmApiFactory factory)
         await ComentarAsync(cliente, "Tarea", otraTarea, "De la segunda");
 
         (await HiloAsync(cliente, "Tarea", unaTarea)).EnumerateArray().Single()
-            .GetProperty("texto").GetString().Should().Be("De la primera");
+            .GetProperty("text").GetString().Should().Be("De la primera");
     }
 }

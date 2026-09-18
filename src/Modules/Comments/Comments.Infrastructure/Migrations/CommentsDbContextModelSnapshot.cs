@@ -28,38 +28,38 @@ namespace Comments.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("char(36)");
 
-                    b.Property<Guid>("AutorId")
+                    b.Property<Guid>("AuthorId")
                         .HasColumnType("char(36)");
 
-                    b.Property<DateTime>("CreadoUtc")
+                    b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<DateTime?>("EditadoUtc")
+                    b.Property<DateTime?>("EditedAtUtc")
                         .HasColumnType("datetime(6)");
-
-                    b.Property<string>("EntidadDestino")
-                        .IsRequired()
-                        .HasMaxLength(30)
-                        .HasColumnType("varchar(30)");
 
                     b.Property<Guid>("EntityId")
                         .HasColumnType("char(36)");
 
-                    b.Property<Guid?>("RespondeAId")
+                    b.Property<string>("EntityType")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("varchar(30)");
+
+                    b.Property<Guid?>("ReplyToId")
                         .HasColumnType("char(36)");
 
                     b.Property<Guid>("TenantId")
                         .HasColumnType("char(36)");
 
-                    b.Property<string>("Texto")
+                    b.Property<string>("Text")
                         .IsRequired()
                         .HasMaxLength(5000)
                         .HasColumnType("varchar(5000)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("TenantId", "EntidadDestino", "EntityId", "CreadoUtc")
-                        .HasDatabaseName("IX_Comments_Tenant_Entidad_Creado");
+                    b.HasIndex("TenantId", "EntityType", "EntityId", "CreatedAtUtc")
+                        .HasDatabaseName("IX_Comments_TenantId_EntityType_EntityId_CreatedAtUtc");
 
                     b.ToTable("Comments", (string)null);
                 });
