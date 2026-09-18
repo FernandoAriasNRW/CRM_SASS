@@ -12,15 +12,15 @@ public sealed class DocsDbContext(DbContextOptions<DocsDbContext> options, IUser
     public DbSet<Page> Pages => Set<Page>();
     public DbSet<DocumentPermission> DocumentPermissions => Set<DocumentPermission>();
 
-    /// <summary>Dónde está pegado cada comentario en línea. Ver <see cref="AnotacionEnDocumento"/>.</summary>
-    public DbSet<AnotacionEnDocumento> AnotacionesEnDocumentos => Set<AnotacionEnDocumento>();
+    /// <summary>Dónde está pegado cada comentario en línea. Ver <see cref="DocumentAnnotation"/>.</summary>
+    public DbSet<DocumentAnnotation> DocumentAnnotations => Set<DocumentAnnotation>();
 
-    /// <summary>Cuánto se usa cada plantilla. Ver <see cref="UsoDePlantilla"/>.</summary>
-    public DbSet<UsoDePlantilla> UsosDePlantilla => Set<UsoDePlantilla>();
+    /// <summary>Cuánto se usa cada plantilla. Ver <see cref="TemplateUsage"/>.</summary>
+    public DbSet<TemplateUsage> TemplateUsages => Set<TemplateUsage>();
 
-    /// <summary>Lo que cada página menciona. Ver <see cref="Domain.Menciones.MencionEnDocumento"/>.</summary>
-    public DbSet<Domain.Menciones.MencionEnDocumento> MencionesEnDocumentos
-        => Set<Domain.Menciones.MencionEnDocumento>();
+    /// <summary>Lo que cada página menciona. Ver <see cref="Domain.Mentions.DocumentMention"/>.</summary>
+    public DbSet<Domain.Mentions.DocumentMention> DocumentMentions
+        => Set<Domain.Mentions.DocumentMention>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -33,37 +33,37 @@ public sealed class DocsDbContext(DbContextOptions<DocsDbContext> options, IUser
       // Las dos preguntas que se hacen sobre esta tabla, cada una con su índice: «qué menciona
       // esta página» —al reescribir tras guardar— y «quién menciona esta tarea» —al abrir su
       // pantalla—. Sin el segundo, cada apertura de una tarea recorre la tabla entera.
-      modelBuilder.Entity<Domain.Menciones.MencionEnDocumento>()
+      modelBuilder.Entity<Domain.Mentions.DocumentMention>()
           .HasIndex(m => new { m.TenantId, m.PageId })
-          .HasDatabaseName("IX_Menciones_TenantId_PageId");
+          .HasDatabaseName("IX_DocumentMentions_TenantId_PageId");
 
-      modelBuilder.Entity<Domain.Menciones.MencionEnDocumento>()
-          .HasIndex(m => new { m.TenantId, m.TipoMencionado, m.EntidadMencionadaId })
-          .HasDatabaseName("IX_Menciones_TenantId_Tipo_Entidad");
+      modelBuilder.Entity<Domain.Mentions.DocumentMention>()
+          .HasIndex(m => new { m.TenantId, m.MentionedType, m.MentionedEntityId })
+          .HasDatabaseName("IX_DocumentMentions_TenantId_MentionedType_MentionedEntityId");
 
       // Una fila por plantilla y por inquilino. La unicidad va en la base y no sólo en el
       // código porque dos personas creando a la vez desde la misma plantilla harían dos filas,
       // y a partir de ahí el contador se reparte entre ambas y nunca sube.
-      modelBuilder.Entity<UsoDePlantilla>()
-          .HasIndex(u => new { u.TenantId, u.Clave })
+      modelBuilder.Entity<TemplateUsage>()
+          .HasIndex(u => new { u.TenantId, u.Key })
           .IsUnique()
-          .HasDatabaseName("IX_UsosDePlantilla_TenantId_Clave");
+          .HasDatabaseName("IX_TemplateUsages_TenantId_Key");
 
-      modelBuilder.Entity<UsoDePlantilla>()
-          .Property(u => u.Clave)
+      modelBuilder.Entity<TemplateUsage>()
+          .Property(u => u.Key)
           .HasMaxLength(100)
           .IsRequired();
 
       // La pregunta que se hace sobre esta tabla es siempre la misma —«qué se ha comentado en
       // esta página»— y se hace al abrir cada página, así que sin este índice cada apertura
       // recorre las anotaciones del inquilino entero.
-      modelBuilder.Entity<AnotacionEnDocumento>()
+      modelBuilder.Entity<DocumentAnnotation>()
           .HasIndex(a => new { a.TenantId, a.PageId })
-          .HasDatabaseName("IX_Anotaciones_TenantId_PageId");
+          .HasDatabaseName("IX_DocumentAnnotations_TenantId_PageId");
 
-      modelBuilder.Entity<AnotacionEnDocumento>()
-          .Property(a => a.TextoCitado)
-          .HasMaxLength(AnotacionEnDocumento.LargoDeLaCita)
+      modelBuilder.Entity<DocumentAnnotation>()
+          .Property(a => a.QuotedText)
+          .HasMaxLength(DocumentAnnotation.MaxQuoteLength)
           .IsRequired();
 
       ApplyTenantFilters(modelBuilder);

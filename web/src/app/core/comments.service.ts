@@ -20,14 +20,14 @@ export type EntidadComentable = (typeof ENTIDADES_COMENTABLES)[number];
 
 export interface Comentario {
   id: string;
-  autorId: string;
-  texto: string;
-  creadoUtc: string;
+  authorId: string;
+  text: string;
+  createdAtUtc: string;
   /** Cuándo se editó, o nulo si nunca se tocó. Se enseña: un hilo que cambia sin decirlo no se
    * puede leer con confianza. */
-  editadoUtc: string | null;
+  editedAtUtc: string | null;
   /** El comentario al que responde, si es una respuesta. Un solo nivel. */
-  respondeAId: string | null;
+  replyToId: string | null;
 }
 
 /**
@@ -48,11 +48,11 @@ export class CommentsService {
     entidad: EntidadComentable, entityId: string, texto: string, respondeAId?: string,
   ): Observable<Comentario> {
     return this.api.post<Comentario>(
-      `/comments/${entidad}/${entityId}`, { texto, respondeAId: respondeAId ?? null }, SIN_AVISO);
+      `/comments/${entidad}/${entityId}`, { text: texto, replyToId: respondeAId ?? null }, SIN_AVISO);
   }
 
   editar(id: string, texto: string): Observable<void> {
-    return this.api.put<void>(`/comments/${id}`, { texto }, SIN_AVISO);
+    return this.api.put<void>(`/comments/${id}`, { text: texto }, SIN_AVISO);
   }
 
   borrar(id: string): Observable<void> {

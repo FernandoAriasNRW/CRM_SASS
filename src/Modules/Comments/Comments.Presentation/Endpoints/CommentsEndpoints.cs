@@ -14,9 +14,9 @@ namespace Comments.Presentation.Endpoints;
 public static class CommentsEndpoints
 {
   /// <summary>El cuerpo que manda la interfaz: sólo el texto y, si acaso, a qué responde.</summary>
-  public sealed record NuevoComentario(string Texto, Guid? RespondeAId);
+  public sealed record NewCommentRequest(string Text, Guid? ReplyToId);
 
-  public sealed record TextoDelComentario(string Texto);
+  public sealed record EditCommentRequest(string Text);
 
   public static IServiceCollection AddCommentsPresentation(this IServiceCollection services, IConfiguration configuration)
   {
@@ -32,43 +32,43 @@ public static class CommentsEndpoints
     // mismo fallo.
     var group = app.MapGroup("/api/v1/comments").WithTags("Comments").RequireAuthorization();
 
-    static IResult Responder(bool exito, string? error)
+    static IResult ToResult(bool success, string? error)
     {
-      if (exito) return Results.Ok();
+      if (success) return Results.Ok();
 
       // Un permiso denegado no es un dato inválido, y ninguno de los dos es «no existe». Que la
       // pantalla pueda distinguirlos es lo que le permite decir por qué no se pudo.
-      if (error == Comment.Reglas.NoEncontrado) return Results.NotFound(error);
-      if (error == Comment.Reglas.SoloElAutorEdita || error == Comment.Reglas.SoloElAutorOAdminBorra)
+      if (error == Comment.Rules.NotFound) return Results.NotFound(error);
+      if (error == Comment.Rules.OnlyAuthorEdits || error == Comment.Rules.OnlyAuthorOrAdminDeletes)
         return Results.Forbid();
 
       return Results.BadRequest(error);
     }
 
-    group.MapGet("/{entidad}/{entityId:guid}", async (IUserContext currentUser, string entidad, Guid entityId, IMediator mediator) =>
+    group.MapGet("/{entityType}/{entityId:guid}", async (IUserContext currentUser, string entityType, Guid entityId, IMediator mediator) =>
     {
-      var result = await mediator.Send(new GetCommentsQuery(currentUser.TenantId, entidad, entityId));
+      var result = await mediator.Send(new GetCommentsQuery(currentUser.TenantId, entityType, entityId));
       return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
     });
 
-    group.MapPost("/{entidad}/{entityId:guid}", async (IUserContext currentUser, string entidad, Guid entityId, NuevoComentario cuerpo, IMediator mediator) =>
+    group.MapPost("/{entityType}/{entityId:guid}", async (IUserContext currentUser, string entityType, Guid entityId, NewCommentRequest body, IMediator mediator) =>
     {
       // El autor sale del token y no del cuerpo. Si viniera de fuera, cualquiera podría firmar
       // un comentario con el nombre de otro.
       var result = await mediator.Send(new AddCommentCommand(
-          currentUser.TenantId, entidad, entityId, currentUser.UserId, cuerpo.Texto, cuerpo.RespondeAId));
+          currentUser.TenantId, entityType, entityId, currentUser.UserId, body.Text, body.ReplyToId));
 
       return result.IsSuccess
-          ? Results.Created($"/api/v1/comments/{entidad}/{entityId}", result.Value)
+          ? Results.Created($"/api/v1/comments/{entityType}/{entityId}", result.Value)
           : Results.BadRequest(result.Error);
     });
 
-    group.MapPut("/{id:guid}", async (IUserContext currentUser, Guid id, TextoDelComentario cuerpo, IMediator mediator) =>
+    group.MapPut("/{id:guid}", async (IUserContext currentUser, Guid id, EditCommentRequest body, IMediator mediator) =>
     {
       var result = await mediator.Send(new EditCommentCommand(
-          currentUser.TenantId, id, currentUser.UserId, cuerpo.Texto));
+          currentUser.TenantId, id, currentUser.UserId, body.Text));
 
-      return Responder(result.IsSuccess, result.Error);
+      return ToResult(result.IsSuccess, result.Error);
     });
 
     group.MapDelete("/{id:guid}", async (IUserContext currentUser, Guid id, IMediator mediator) =>
@@ -76,7 +76,7 @@ public static class CommentsEndpoints
       var result = await mediator.Send(new RemoveCommentCommand(
           currentUser.TenantId, id, currentUser.UserId, currentUser.Role));
 
-      return result.IsSuccess ? Results.NoContent() : Responder(false, result.Error);
+      return result.IsSuccess ? Results.NoContent() : ToResult(false, result.Error);
     });
 
     return app;

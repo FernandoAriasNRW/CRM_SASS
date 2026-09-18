@@ -14,7 +14,7 @@ public class CreateFromTemplateHandler(IDocumentRepository repository)
     {
         // La misma clave que usa la galería para pedir la plantilla es la que se cuenta: la del
         // sistema tal cual, o el identificador del documento plantilla en texto.
-        var claveDeLaPlantilla = request.TemplateDocumentId.HasValue && request.TemplateDocumentId.Value != Guid.Empty
+        var templateKey = request.TemplateDocumentId.HasValue && request.TemplateDocumentId.Value != Guid.Empty
             ? request.TemplateDocumentId.Value.ToString()
             : (request.TemplateKey ?? "").ToLowerInvariant();
 
@@ -41,19 +41,19 @@ public class CreateFromTemplateHandler(IDocumentRepository repository)
         }
         else
         {
-            var contenido = Plantillas.PlantillasPredefinidas.Para(
-                request.TemplateKey ?? string.Empty, request.Idioma, DateTime.UtcNow);
+            var content = Templates.BuiltInTemplates.For(
+                request.TemplateKey ?? string.Empty, request.Language, DateTime.UtcNow);
 
             // Una clave que no existe es un error, no un documento en blanco. Antes caía en un
             // `default` que creaba «Untitled Document» y le contaba un uso a una plantilla
             // inexistente: la petición respondía bien haciendo otra cosa.
-            if (contenido is null)
+            if (content is null)
                 return Result<Guid>.Failure($"No existe la plantilla «{request.TemplateKey}».");
 
-            docTitle = !string.IsNullOrWhiteSpace(request.CustomTitle) ? request.CustomTitle : contenido.Titulo;
-            docDescription = contenido.Descripcion;
-            docType = contenido.Tipo;
-            templatePages.AddRange(contenido.Paginas);
+            docTitle = !string.IsNullOrWhiteSpace(request.CustomTitle) ? request.CustomTitle : content.Title;
+            docDescription = content.Description;
+            docType = content.Type;
+            templatePages.AddRange(content.Pages);
         }
 
         var document = Document.Create(
@@ -80,7 +80,7 @@ public class CreateFromTemplateHandler(IDocumentRepository repository)
         // Se apunta el uso en la misma transacción que la creación. Contarlo desde el cliente
         // dejaría el contador a merced de una pestaña que se cierra a media petición: la galería
         // ordenaría por «veces que alguien pulsó», no por «documentos que salieron de aquí».
-        await repository.RegistrarUsoDePlantillaAsync(request.TenantId, claveDeLaPlantilla, cancellationToken);
+        await repository.RecordTemplateUsageAsync(request.TenantId, templateKey, cancellationToken);
 
         await repository.SaveChangesAsync(cancellationToken);
 

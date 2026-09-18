@@ -75,7 +75,7 @@ public sealed class MencionesFlowTests(CrmApiFactory factory)
     }
 
     private static async Task<JsonElement> GetMentioningDocumentsAsync(HttpClient cliente, string tipo, Guid entityId)
-        => await cliente.GetFromJsonAsync<JsonElement>($"/api/v1/docs/menciones/{tipo}/{entityId}");
+        => await cliente.GetFromJsonAsync<JsonElement>($"/api/v1/docs/mentions/{tipo}/{entityId}");
 
     private static async Task<Guid> UnaTareaAsync(HttpClient cliente)
     {
@@ -214,7 +214,7 @@ public sealed class MencionesFlowTests(CrmApiFactory factory)
     {
         var cliente = await AutenticarAsync();
 
-        var respuesta = await cliente.GetAsync($"/api/v1/docs/menciones/Factura/{Guid.NewGuid()}");
+        var respuesta = await cliente.GetAsync($"/api/v1/docs/mentions/Factura/{Guid.NewGuid()}");
 
         respuesta.StatusCode.Should().Be(HttpStatusCode.BadRequest);
 
@@ -247,7 +247,7 @@ public sealed class MencionesFlowTests(CrmApiFactory factory)
     {
         var anonimo = factory.CreateClient();
 
-        (await anonimo.GetAsync($"/api/v1/docs/menciones/Tarea/{Guid.NewGuid()}")).StatusCode
+        (await anonimo.GetAsync($"/api/v1/docs/mentions/Tarea/{Guid.NewGuid()}")).StatusCode
             .Should().Be(HttpStatusCode.Unauthorized);
     }
 }

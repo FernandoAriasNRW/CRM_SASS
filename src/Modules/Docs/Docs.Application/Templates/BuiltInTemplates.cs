@@ -1,13 +1,6 @@
 using Docs.Domain.ValueObjects;
 
-namespace Docs.Application.Plantillas;
-
-/// <summary>Lo que sale al crear un documento desde una plantilla del sistema.</summary>
-public sealed record ContenidoDePlantilla(
-    string Titulo,
-    string Descripcion,
-    DocumentType Tipo,
-    IReadOnlyList<(string Titulo, string Html)> Paginas);
+namespace Docs.Application.Templates;
 
 /// <summary>
 /// Las cuatro plantillas que trae el producto, en los dos idiomas de la aplicación.
@@ -25,9 +18,9 @@ public sealed record ContenidoDePlantilla(
 /// Las casillas son listas de tareas de verdad (<c>data-type="taskItem"</c>), no «[ ]» escrito como
 /// texto: antes se veían corchetes que no se podían marcar.
 /// </summary>
-public static class PlantillasPredefinidas
+public static class BuiltInTemplates
 {
-    public static readonly IReadOnlyList<string> Claves =
+    public static readonly IReadOnlyList<string> Keys =
         ["project-overview", "meeting-notes", "wiki", "client-onboarding"];
 
     /// <summary>
@@ -37,16 +30,16 @@ public static class PlantillasPredefinidas
     /// <c>default</c> que creaba «Untitled Document» y además le contaba un uso a una plantilla
     /// inexistente, así que la petición respondía bien haciendo otra cosa.
     /// </summary>
-    public static ContenidoDePlantilla? Para(string clave, string? idioma, DateTime ahoraUtc)
+    public static TemplateContent? For(string key, string? language, DateTime nowUtc)
     {
-        var enIngles = string.Equals(idioma, "en", StringComparison.OrdinalIgnoreCase);
+        var inEnglish = string.Equals(language, "en", StringComparison.OrdinalIgnoreCase);
 
-        return clave.ToLowerInvariant() switch
+        return key.ToLowerInvariant() switch
         {
-            "project-overview" => enIngles ? ResumenDeProyectoEn() : ResumenDeProyectoEs(),
-            "meeting-notes" => enIngles ? ActaEn(ahoraUtc) : ActaEs(ahoraUtc),
-            "wiki" => enIngles ? WikiEn() : WikiEs(),
-            "client-onboarding" => enIngles ? AltaDeClienteEn() : AltaDeClienteEs(),
+            "project-overview" => inEnglish ? ProjectOverviewEn() : ProjectOverviewEs(),
+            "meeting-notes" => inEnglish ? MeetingNotesEn(nowUtc) : MeetingNotesEs(nowUtc),
+            "wiki" => inEnglish ? WikiEn() : WikiEs(),
+            "client-onboarding" => inEnglish ? ClientOnboardingEn() : ClientOnboardingEs(),
             _ => null
         };
     }
@@ -54,18 +47,18 @@ public static class PlantillasPredefinidas
     // ── Piezas comunes ──────────────────────────────────────────────────────────────────────
 
     /// <summary>Una lista de casillas que se pueden marcar, sin marcar.</summary>
-    private static string Casillas(params string[] elementos)
+    private static string Checklist(params string[] items)
         => "<ul data-type=\"taskList\">"
-           + string.Concat(elementos.Select(e =>
+           + string.Concat(items.Select(e =>
                $"<li data-type=\"taskItem\" data-checked=\"false\"><p>{e}</p></li>"))
            + "</ul>";
 
-    private static string Aviso(string tono, string texto)
-        => $"<div data-tipo=\"aviso\" data-tono=\"{tono}\"><p>{texto}</p></div>";
+    private static string Callout(string tone, string text)
+        => $"<div data-tipo=\"aviso\" data-tono=\"{tone}\"><p>{text}</p></div>";
 
     // ── Resumen de proyecto ─────────────────────────────────────────────────────────────────
 
-    private static ContenidoDePlantilla ResumenDeProyectoEs() => new(
+    private static TemplateContent ProjectOverviewEs() => new(
         "Resumen de proyecto",
         "Objetivos, alcance e hitos",
         DocumentType.List,
@@ -78,11 +71,11 @@ public static class PlantillasPredefinidas
             + "<h2>Fuera del alcance</h2>"
             + "<p>Lo que se ha decidido no hacer. Escribirlo evita discutirlo otra vez a mitad de camino.</p>"
             + "<h2>Hitos</h2>"
-            + Casillas("Arranque y revisión de la arquitectura", "Primera entrega usable", "Pruebas con usuarios", "Puesta en producción")
+            + Checklist("Arranque y revisión de la arquitectura", "Primera entrega usable", "Pruebas con usuarios", "Puesta en producción")
             + "<h2>Riesgos y dependencias</h2>"
-            + Aviso("ojo", "Anota los riesgos con nombre y fecha: un riesgo sin responsable no lo vigila nadie."))]);
+            + Callout("ojo", "Anota los riesgos con nombre y fecha: un riesgo sin responsable no lo vigila nadie."))]);
 
-    private static ContenidoDePlantilla ResumenDeProyectoEn() => new(
+    private static TemplateContent ProjectOverviewEn() => new(
         "Project overview",
         "Goals, scope and milestones",
         DocumentType.List,
@@ -95,18 +88,18 @@ public static class PlantillasPredefinidas
             + "<h2>Out of scope</h2>"
             + "<p>What was decided not to do. Writing it down saves arguing about it again halfway through.</p>"
             + "<h2>Milestones</h2>"
-            + Casillas("Kickoff and architecture review", "First usable release", "User testing", "Production release")
+            + Checklist("Kickoff and architecture review", "First usable release", "User testing", "Production release")
             + "<h2>Risks and dependencies</h2>"
-            + Aviso("ojo", "Give every risk an owner and a date: a risk nobody owns is a risk nobody watches."))]);
+            + Callout("ojo", "Give every risk an owner and a date: a risk nobody owns is a risk nobody watches."))]);
 
     // ── Acta de reunión ─────────────────────────────────────────────────────────────────────
 
-    private static ContenidoDePlantilla ActaEs(DateTime ahoraUtc) => new(
+    private static TemplateContent MeetingNotesEs(DateTime nowUtc) => new(
         "Acta de reunión",
         "Orden del día, notas y acuerdos",
         DocumentType.MeetingNote,
         [("Acta",
-            $"<h1>Acta de reunión · {ahoraUtc:yyyy-MM-dd}</h1>"
+            $"<h1>Acta de reunión · {nowUtc:yyyy-MM-dd}</h1>"
             + "<p><strong>Asistentes:</strong> </p>"
             + "<p><strong>Modera:</strong> </p>"
             + "<h2>Orden del día</h2>"
@@ -114,16 +107,16 @@ public static class PlantillasPredefinidas
             + "<h2>Notas</h2>"
             + "<p></p>"
             + "<h2>Acuerdos</h2>"
-            + Aviso("bien", "Un acuerdo por línea, con quién lo lleva. Lo que no tiene responsable no se hace.")
+            + Callout("bien", "Un acuerdo por línea, con quién lo lleva. Lo que no tiene responsable no se hace.")
             + "<h2>Tareas</h2>"
-            + Casillas("Tarea — responsable — fecha"))]);
+            + Checklist("Tarea — responsable — fecha"))]);
 
-    private static ContenidoDePlantilla ActaEn(DateTime ahoraUtc) => new(
+    private static TemplateContent MeetingNotesEn(DateTime nowUtc) => new(
         "Meeting notes",
         "Agenda, notes and decisions",
         DocumentType.MeetingNote,
         [("Notes",
-            $"<h1>Meeting notes · {ahoraUtc:yyyy-MM-dd}</h1>"
+            $"<h1>Meeting notes · {nowUtc:yyyy-MM-dd}</h1>"
             + "<p><strong>Attendees:</strong> </p>"
             + "<p><strong>Facilitator:</strong> </p>"
             + "<h2>Agenda</h2>"
@@ -131,33 +124,33 @@ public static class PlantillasPredefinidas
             + "<h2>Notes</h2>"
             + "<p></p>"
             + "<h2>Decisions</h2>"
-            + Aviso("bien", "One decision per line, with who owns it. What has no owner does not get done.")
+            + Callout("bien", "One decision per line, with who owns it. What has no owner does not get done.")
             + "<h2>Action items</h2>"
-            + Casillas("Task — owner — date"))]);
+            + Checklist("Task — owner — date"))]);
 
     // ── Wiki ────────────────────────────────────────────────────────────────────────────────
 
-    private static ContenidoDePlantilla WikiEs() => new(
+    private static TemplateContent WikiEs() => new(
         "Wiki del equipo",
         "Toda la información en un sitio",
         DocumentType.Wiki,
         [("Primeros pasos",
             "<h1>Wiki del equipo</h1>"
             + "<p>El sitio donde vive lo que el equipo necesita saber: cómo se trabaja, dónde está cada cosa y a quién preguntar.</p>"
-            + Aviso("nota", "Usa una página por tema y cuélgalas unas de otras desde el árbol de la izquierda.")
+            + Callout("nota", "Usa una página por tema y cuélgalas unas de otras desde el árbol de la izquierda.")
             + "<h2>Enlaces rápidos</h2>"
             + "<ul><li><p>Guía de incorporación</p></li><li><p>Documentación de la API</p></li><li><p>Sistema de diseño</p></li></ul>"
             + "<h2>Normas de trabajo</h2>"
             + "<p>Cómo se revisa el código, cómo se nombran las ramas, qué hace falta para dar algo por terminado.</p>")]);
 
-    private static ContenidoDePlantilla WikiEn() => new(
+    private static TemplateContent WikiEn() => new(
         "Team wiki",
         "Everything in one place",
         DocumentType.Wiki,
         [("Getting started",
             "<h1>Team wiki</h1>"
             + "<p>Where everything the team needs to know lives: how we work, where things are and who to ask.</p>"
-            + Aviso("nota", "Use one page per topic and nest them from the tree on the left.")
+            + Callout("nota", "Use one page per topic and nest them from the tree on the left.")
             + "<h2>Quick links</h2>"
             + "<ul><li><p>Onboarding guide</p></li><li><p>API documentation</p></li><li><p>Design system</p></li></ul>"
             + "<h2>Ways of working</h2>"
@@ -165,7 +158,7 @@ public static class PlantillasPredefinidas
 
     // ── Alta de cliente ─────────────────────────────────────────────────────────────────────
 
-    private static ContenidoDePlantilla AltaDeClienteEs() => new(
+    private static TemplateContent ClientOnboardingEs() => new(
         "Alta de cliente",
         "Ficha, requisitos y traspaso",
         DocumentType.List,
@@ -178,10 +171,10 @@ public static class PlantillasPredefinidas
             + "<h2>Requisitos</h2>"
             + "<p>Qué necesita el cliente con sus palabras, antes de traducirlo a tareas.</p>"
             + "<h2>Lista de alta</h2>"
-            + Casillas("Cuenta creada y permisos dados", "Reunión de arranque hecha", "Requisitos revisados y aceptados", "Integración funcionando")
-            + Aviso("peligro", "No se da el alta por terminada sin la aceptación por escrito de los requisitos."))]);
+            + Checklist("Cuenta creada y permisos dados", "Reunión de arranque hecha", "Requisitos revisados y aceptados", "Integración funcionando")
+            + Callout("peligro", "No se da el alta por terminada sin la aceptación por escrito de los requisitos."))]);
 
-    private static ContenidoDePlantilla AltaDeClienteEn() => new(
+    private static TemplateContent ClientOnboardingEn() => new(
         "Client onboarding",
         "Profile, requirements and handover",
         DocumentType.List,
@@ -194,6 +187,6 @@ public static class PlantillasPredefinidas
             + "<h2>Requirements</h2>"
             + "<p>What the client needs, in their own words, before turning it into tasks.</p>"
             + "<h2>Onboarding checklist</h2>"
-            + Casillas("Account created and permissions granted", "Kickoff meeting held", "Requirements reviewed and signed off", "Integration working")
-            + Aviso("peligro", "Onboarding is not done until the requirements are signed off in writing."))]);
+            + Checklist("Account created and permissions granted", "Kickoff meeting held", "Requirements reviewed and signed off", "Integration working")
+            + Callout("peligro", "Onboarding is not done until the requirements are signed off in writing."))]);
 }

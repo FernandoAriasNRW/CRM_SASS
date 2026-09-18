@@ -33,11 +33,11 @@ public static class DocsInfrastructureExtensions
         services.AddScoped<Docs.Application.Abstractions.Repositories.IDocumentRepository, Repositories.DocumentRepository>();
 
         // Las menciones y el puerto que las consulta desde fuera. Ver IDocumentMentions.
-        services.AddScoped<Docs.Application.Menciones.IRepositorioDeMenciones,
-                           Persistence.RepositorioDeMenciones>();
-        services.AddScoped<Docs.Application.Menciones.ActualizadorDeMenciones>();
+        services.AddScoped<Docs.Application.Mentions.IMentionRepository,
+                           Persistence.MentionRepository>();
+        services.AddScoped<Docs.Application.Mentions.MentionUpdater>();
         services.AddScoped<BuildingBlocks.Application.Abstractions.IDocumentMentions,
-                           Persistence.MencionesEnDocumentos>();
+                           Persistence.DocumentMentionsAdapter>();
         
         return services;
     }

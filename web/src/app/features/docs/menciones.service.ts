@@ -129,6 +129,6 @@ export class MencionesService {
    * documento no contesta esta pregunta, porque habría que abrir todos.
    */
   quienMenciona(tipo: string, entidadId: string) {
-    return this.api.get<MentioningDocument[]>(`/docs/menciones/${tipo}/${entidadId}`);
+    return this.api.get<MentioningDocument[]>(`/docs/mentions/${tipo}/${entidadId}`);
   }
 }

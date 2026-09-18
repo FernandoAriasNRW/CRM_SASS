@@ -54,7 +54,7 @@ public sealed class ComentariosEnLineaFlowTests(CrmApiFactory factory)
     private static async Task<Guid> AnotarAsync(HttpClient cliente, Guid pagina, string citado)
     {
         var respuesta = await cliente.PostAsJsonAsync(
-            $"/api/v1/docs/pages/{pagina}/anotaciones", new { TextoCitado = citado });
+            $"/api/v1/docs/pages/{pagina}/annotations", new { QuotedText = citado });
 
         respuesta.StatusCode.Should().Be(HttpStatusCode.OK, await respuesta.Content.ReadAsStringAsync());
         return Guid.Parse((await respuesta.Content.ReadAsStringAsync()).Trim('"'));
@@ -62,7 +62,7 @@ public sealed class ComentariosEnLineaFlowTests(CrmApiFactory factory)
 
     private static async Task<List<JsonElement>> AnotacionesAsync(HttpClient cliente, Guid pagina)
     {
-        var respuesta = await cliente.GetAsync($"/api/v1/docs/pages/{pagina}/anotaciones");
+        var respuesta = await cliente.GetAsync($"/api/v1/docs/pages/{pagina}/annotations");
         respuesta.EnsureSuccessStatusCode();
 
         return (await respuesta.Content.ReadFromJsonAsync<JsonElement>()).EnumerateArray().ToList();
@@ -82,21 +82,21 @@ public sealed class ComentariosEnLineaFlowTests(CrmApiFactory factory)
         var anotaciones = await AnotacionesAsync(cliente, pagina);
         var laNuestra = anotaciones.Single(a => a.GetProperty("id").GetGuid() == anotacion);
 
-        laNuestra.GetProperty("textoCitado").GetString().Should().Be("esta frase hay que revisarla");
+        laNuestra.GetProperty("quotedText").GetString().Should().Be("esta frase hay que revisarla");
         laNuestra.GetProperty("documentId").GetGuid().Should().Be(documento,
             "el documento se saca de la página, no de lo que mande el cliente");
-        laNuestra.GetProperty("resueltaUtc").ValueKind.Should().Be(JsonValueKind.Null);
+        laNuestra.GetProperty("resolvedAtUtc").ValueKind.Should().Be(JsonValueKind.Null);
 
         // El hilo va por Comments, con la anotación como entidad comentada. Si esto no funcionara,
         // la anotación sería una marca de color sin conversación detrás.
         var comentario = await cliente.PostAsJsonAsync(
-            $"/api/v1/comments/Anotacion/{anotacion}", new { Texto = "Yo lo diría de otra forma" });
+            $"/api/v1/comments/Anotacion/{anotacion}", new { Text = "Yo lo diría de otra forma" });
 
         comentario.IsSuccessStatusCode.Should().BeTrue(await comentario.Content.ReadAsStringAsync());
 
         var hilo = await cliente.GetFromJsonAsync<JsonElement>($"/api/v1/comments/Anotacion/{anotacion}");
         hilo.EnumerateArray().Should().ContainSingle()
-            .Which.GetProperty("texto").GetString().Should().Be("Yo lo diría de otra forma");
+            .Which.GetProperty("text").GetString().Should().Be("Yo lo diría de otra forma");
     }
 
     /// <summary>
@@ -113,21 +113,21 @@ public sealed class ComentariosEnLineaFlowTests(CrmApiFactory factory)
         var anotacion = await AnotarAsync(cliente, pagina, "un párrafo cualquiera");
 
         var resuelta = await cliente.PutAsJsonAsync(
-            $"/api/v1/docs/anotaciones/{anotacion}/resolver", new { Resuelta = true });
+            $"/api/v1/docs/annotations/{anotacion}/resolve", new { IsResolved = true });
         resuelta.StatusCode.Should().Be(HttpStatusCode.NoContent, await resuelta.Content.ReadAsStringAsync());
 
         var trasResolver = (await AnotacionesAsync(cliente, pagina))
             .Single(a => a.GetProperty("id").GetGuid() == anotacion);
 
-        trasResolver.GetProperty("resueltaUtc").ValueKind.Should().NotBe(JsonValueKind.Null,
+        trasResolver.GetProperty("resolvedAtUtc").ValueKind.Should().NotBe(JsonValueKind.Null,
             "sigue ahí, marcada: resolver no es borrar");
 
-        await cliente.PutAsJsonAsync($"/api/v1/docs/anotaciones/{anotacion}/resolver", new { Resuelta = false });
+        await cliente.PutAsJsonAsync($"/api/v1/docs/annotations/{anotacion}/resolve", new { IsResolved = false });
 
         var trasReabrir = (await AnotacionesAsync(cliente, pagina))
             .Single(a => a.GetProperty("id").GetGuid() == anotacion);
 
-        trasReabrir.GetProperty("resueltaUtc").ValueKind.Should().Be(JsonValueKind.Null);
+        trasReabrir.GetProperty("resolvedAtUtc").ValueKind.Should().Be(JsonValueKind.Null);
     }
 
     /// <summary>Borrar la anotación la quita del listado de la página.</summary>
@@ -140,7 +140,7 @@ public sealed class ComentariosEnLineaFlowTests(CrmApiFactory factory)
         var sobrevive = await AnotarAsync(cliente, pagina, "esta se queda");
         var seVa = await AnotarAsync(cliente, pagina, "esta se va");
 
-        var borrada = await cliente.DeleteAsync($"/api/v1/docs/anotaciones/{seVa}");
+        var borrada = await cliente.DeleteAsync($"/api/v1/docs/annotations/{seVa}");
         borrada.StatusCode.Should().Be(HttpStatusCode.NoContent);
 
         var quedan = await AnotacionesAsync(cliente, pagina);
@@ -168,6 +168,6 @@ public sealed class ComentariosEnLineaFlowTests(CrmApiFactory factory)
 
         var deLaPrimera = await AnotacionesAsync(cliente, primera);
         deLaPrimera.Should().ContainSingle()
-            .Which.GetProperty("textoCitado").GetString().Should().Be("comentario de la primera");
+            .Which.GetProperty("quotedText").GetString().Should().Be("comentario de la primera");
     }
 }

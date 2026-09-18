@@ -45,57 +45,57 @@ public class DocumentRepository(DocsDbContext dbContext) : IDocumentRepository
             .ToListAsync(cancellationToken);
     }
 
-    public async Task RegistrarUsoDePlantillaAsync(Guid tenantId, string clave, CancellationToken cancellationToken = default)
+    public async Task RecordTemplateUsageAsync(Guid tenantId, string key, CancellationToken cancellationToken = default)
     {
         // Se busca sin el filtro de inquilino puesto porque este contador también se toca desde
         // sitios sin petición HTTP; el `tenantId` va explícito en la comparación, así que el
         // aislamiento no depende del filtro.
-        var uso = await dbContext.UsosDePlantilla
+        var usage = await dbContext.TemplateUsages
             .IgnoreQueryFilters()
-            .FirstOrDefaultAsync(u => u.TenantId == tenantId && u.Clave == clave, cancellationToken);
+            .FirstOrDefaultAsync(u => u.TenantId == tenantId && u.Key == key, cancellationToken);
 
-        if (uso is null)
-            await dbContext.UsosDePlantilla.AddAsync(UsoDePlantilla.Primera(tenantId, clave), cancellationToken);
+        if (usage is null)
+            await dbContext.TemplateUsages.AddAsync(TemplateUsage.First(tenantId, key), cancellationToken);
         else
-            uso.Sumar();
+            usage.Increment();
     }
 
-    public async Task<List<UsoDePlantilla>> GetUsosDePlantillaAsync(Guid tenantId, CancellationToken cancellationToken = default)
+    public async Task<List<TemplateUsage>> GetTemplateUsagesAsync(Guid tenantId, CancellationToken cancellationToken = default)
     {
-        return await dbContext.UsosDePlantilla
+        return await dbContext.TemplateUsages
             .IgnoreQueryFilters()
             .Where(u => u.TenantId == tenantId)
-            .OrderByDescending(u => u.Veces)
-            .ThenByDescending(u => u.UltimoUsoUtc)
+            .OrderByDescending(u => u.Count)
+            .ThenByDescending(u => u.LastUsedAtUtc)
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<List<AnotacionEnDocumento>> GetAnotacionesDePaginaAsync(
+    public async Task<List<DocumentAnnotation>> GetPageAnnotationsAsync(
         Guid pageId, CancellationToken cancellationToken = default)
     {
-        return await dbContext.AnotacionesEnDocumentos
+        return await dbContext.DocumentAnnotations
             .Where(a => a.PageId == pageId)
-            .OrderBy(a => a.CreadaUtc)
+            .OrderBy(a => a.CreatedAtUtc)
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<AnotacionEnDocumento?> GetAnotacionAsync(
+    public async Task<DocumentAnnotation?> GetAnnotationAsync(
         Guid id, CancellationToken cancellationToken = default)
     {
-        return await dbContext.AnotacionesEnDocumentos
+        return await dbContext.DocumentAnnotations
             .FirstOrDefaultAsync(a => a.Id == id, cancellationToken);
     }
 
-    public async Task AddAnotacionAsync(
-        AnotacionEnDocumento anotacion, CancellationToken cancellationToken = default)
+    public async Task AddAnnotationAsync(
+        DocumentAnnotation annotation, CancellationToken cancellationToken = default)
     {
-        await dbContext.AnotacionesEnDocumentos.AddAsync(anotacion, cancellationToken);
+        await dbContext.DocumentAnnotations.AddAsync(annotation, cancellationToken);
     }
 
-    public Task RemoveAnotacionAsync(
-        AnotacionEnDocumento anotacion, CancellationToken cancellationToken = default)
+    public Task RemoveAnnotationAsync(
+        DocumentAnnotation annotation, CancellationToken cancellationToken = default)
     {
-        dbContext.AnotacionesEnDocumentos.Remove(anotacion);
+        dbContext.DocumentAnnotations.Remove(annotation);
         return Task.CompletedTask;
     }
 

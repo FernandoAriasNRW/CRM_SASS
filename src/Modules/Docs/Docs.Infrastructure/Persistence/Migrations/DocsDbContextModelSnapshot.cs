@@ -22,46 +22,6 @@ namespace Docs.Infrastructure.Persistence.Migrations
 
             MySqlModelBuilderExtensions.AutoIncrementColumns(modelBuilder);
 
-            modelBuilder.Entity("Docs.Domain.Entities.AnotacionEnDocumento", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("char(36)");
-
-                    b.Property<Guid>("CreadaPor")
-                        .HasColumnType("char(36)");
-
-                    b.Property<DateTime>("CreadaUtc")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<Guid>("DocumentId")
-                        .HasColumnType("char(36)");
-
-                    b.Property<Guid>("PageId")
-                        .HasColumnType("char(36)");
-
-                    b.Property<Guid?>("ResueltaPor")
-                        .HasColumnType("char(36)");
-
-                    b.Property<DateTime?>("ResueltaUtc")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<Guid>("TenantId")
-                        .HasColumnType("char(36)");
-
-                    b.Property<string>("TextoCitado")
-                        .IsRequired()
-                        .HasMaxLength(300)
-                        .HasColumnType("varchar(300)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("TenantId", "PageId")
-                        .HasDatabaseName("IX_Anotaciones_TenantId_PageId");
-
-                    b.ToTable("AnotacionesEnDocumentos");
-                });
-
             modelBuilder.Entity("Docs.Domain.Entities.Document", b =>
                 {
                     b.Property<Guid>("Id")
@@ -111,6 +71,46 @@ namespace Docs.Infrastructure.Persistence.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Documents");
+                });
+
+            modelBuilder.Entity("Docs.Domain.Entities.DocumentAnnotation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid>("DocumentId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid>("PageId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<string>("QuotedText")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("varchar(300)");
+
+                    b.Property<DateTime?>("ResolvedAtUtc")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<Guid?>("ResolvedBy")
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("char(36)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId", "PageId")
+                        .HasDatabaseName("IX_DocumentAnnotations_TenantId_PageId");
+
+                    b.ToTable("DocumentAnnotations");
                 });
 
             modelBuilder.Entity("Docs.Domain.Entities.DocumentPermission", b =>
@@ -186,59 +186,59 @@ namespace Docs.Infrastructure.Persistence.Migrations
                     b.ToTable("Pages");
                 });
 
-            modelBuilder.Entity("Docs.Domain.Entities.UsoDePlantilla", b =>
+            modelBuilder.Entity("Docs.Domain.Entities.TemplateUsage", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("char(36)");
 
-                    b.Property<string>("Clave")
+                    b.Property<int>("Count")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Key")
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("varchar(100)");
 
+                    b.Property<DateTime>("LastUsedAtUtc")
+                        .HasColumnType("datetime(6)");
+
                     b.Property<Guid>("TenantId")
                         .HasColumnType("char(36)");
 
-                    b.Property<DateTime>("UltimoUsoUtc")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<int>("Veces")
-                        .HasColumnType("int");
-
                     b.HasKey("Id");
 
-                    b.HasIndex("TenantId", "Clave")
+                    b.HasIndex("TenantId", "Key")
                         .IsUnique()
-                        .HasDatabaseName("IX_UsosDePlantilla_TenantId_Clave");
+                        .HasDatabaseName("IX_TemplateUsages_TenantId_Key");
 
-                    b.ToTable("UsosDePlantilla");
+                    b.ToTable("TemplateUsages");
                 });
 
-            modelBuilder.Entity("Docs.Domain.Menciones.MencionEnDocumento", b =>
+            modelBuilder.Entity("Docs.Domain.Mentions.DocumentMention", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("char(36)");
 
-                    b.Property<DateTime>("DetectadaUtc")
+                    b.Property<DateTime>("DetectedAtUtc")
                         .HasColumnType("datetime(6)");
 
                     b.Property<Guid>("DocumentId")
                         .HasColumnType("char(36)");
 
-                    b.Property<Guid>("EntidadMencionadaId")
+                    b.Property<Guid>("MentionedEntityId")
                         .HasColumnType("char(36)");
+
+                    b.Property<string>("MentionedType")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)");
 
                     b.Property<Guid>("PageId")
                         .HasColumnType("char(36)");
 
                     b.Property<Guid>("TenantId")
                         .HasColumnType("char(36)");
-
-                    b.Property<string>("TipoMencionado")
-                        .IsRequired()
-                        .HasColumnType("varchar(255)");
 
                     b.Property<string>("VisibleText")
                         .IsRequired()
@@ -247,12 +247,12 @@ namespace Docs.Infrastructure.Persistence.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("TenantId", "PageId")
-                        .HasDatabaseName("IX_Menciones_TenantId_PageId");
+                        .HasDatabaseName("IX_DocumentMentions_TenantId_PageId");
 
-                    b.HasIndex("TenantId", "TipoMencionado", "EntidadMencionadaId")
-                        .HasDatabaseName("IX_Menciones_TenantId_Tipo_Entidad");
+                    b.HasIndex("TenantId", "MentionedType", "MentionedEntityId")
+                        .HasDatabaseName("IX_DocumentMentions_TenantId_MentionedType_MentionedEntityId");
 
-                    b.ToTable("MencionesEnDocumentos");
+                    b.ToTable("DocumentMentions");
                 });
 
             modelBuilder.Entity("Docs.Domain.Entities.DocumentPermission", b =>

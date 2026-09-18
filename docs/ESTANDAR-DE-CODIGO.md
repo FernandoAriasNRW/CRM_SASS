@@ -227,6 +227,15 @@ Un concepto, un nombre. Ordenado por área.
 | pedir URL | `PromptUrl` |
 | subir fichero | `UploadFile` |
 | exportar | `Export` |
+| anotación en un documento (entidad), sus fechas | `DocumentAnnotation`, `CreatedAtUtc`, `ResolvedAtUtc` |
+| mención en un documento, tipo mencionado, entidad mencionada | `DocumentMention`, `MentionedType`, `MentionedEntityId` |
+| tipos mencionables, persona | `MentionableTypes`, `Person` |
+| lector de menciones, actualizador de menciones | `MentionReader`, `MentionUpdater` |
+| veces (que se usó), último uso | `Count`, `LastUsedAtUtc` |
+| casillas (lista marcable) | `Checklist` |
+| autor, responde a, editado en | `AuthorId`, `ReplyToId`, `EditedAtUtc` |
+| tipos comentables | `CommentableEntityTypes` |
+| entidad comentada (en un comentario) | `EntityType` + `EntityId` |
 
 ### Informes y panel
 
@@ -313,7 +322,9 @@ suites completas en verde, catálogo i18n re-extraído al final.
 | 3 ✅ | **Ticketing** (entrada, claves, adjuntos) | Lo más reciente; rutas públicas `/entrada/tickets` |
 | 4a ✅ | **WorkItems + Projects** (backend) | Archivo/papelera compartidos. Teams ya estaba en inglés |
 | 4b ✅ | **Frontend de tareas y proyectos** | Gantt, carga de trabajo y la ficha: 329 identificadores, diff aparte para poder revisarlo |
-| 5 | **Docs** (plantillas, anotaciones, árbol) + **Comments** | Editor y extensiones del frontend |
+| 5a ✅ | **Docs + Comments** (backend) | Plantillas, anotaciones, árbol y menciones; tablas y rutas |
+| 5b | **Frontend de documentos y comentarios** | Editor y extensiones: más de 200 identificadores, diff aparte |
+| 5c | **Valores guardados de los tipos de entidad** («Tarea» → «Task»…) | Viven en tablas de cinco módulos y dentro del HTML de las páginas: cambio propio con su migración de datos |
 | 6 | **Calendar + Notifications + Communication** | Agenda |
 | 7 | **Reporting** (motor, exportaciones, programaciones, paneles) | El bloque más grande del Host |
 | 8 | **CustomFields + Automations + Webhook + Tags** | Fórmulas y reglas |
@@ -460,7 +471,45 @@ tablas de favoritos y menciones. Cambiarlo exige migrar ese contenido, y va con 
   `stateJson` de las vistas guardadas (`viewType`), así que cambiarlo exige migrar esas filas; va
   con el bloque 9, junto con la barra de vistas.
 
+### Hecho en el bloque 5a (backend de Docs y Comments)
+
+- Docs: `AnotacionEnDocumento` → `DocumentAnnotation`, `MencionEnDocumento` → `DocumentMention`,
+  `UsoDePlantilla` → `TemplateUsage`, `PlantillasPredefinidas` → `BuiltInTemplates`,
+  `LectorDeMenciones` → `MentionReader`, y los comandos (`MoverPagina` → `MovePage`,
+  `RenombrarDocumento` → `RenameDocument`, `CrearAnotacion` → `CreateAnnotation`…). Carpetas y
+  espacios de nombres `Menciones`/`Anotaciones`/`Plantillas` → `Mentions`/`Annotations`/`Templates`.
+- Comments: `Texto`/`AutorId`/`CreadoUtc`/`EditadoUtc`/`RespondeAId`/`EntidadDestino` →
+  `Text`/`AuthorId`/`CreatedAtUtc`/`EditedAtUtc`/`ReplyToId`/`EntityType`, y `Reglas` → `Rules`.
+- Un tipo por fichero en `CommentsCqrs.cs`, `CommentsInfrastructure.cs`, `AnotacionesCqrs.cs`,
+  `MencionesCqrs.cs` y los ficheros de menciones y plantillas.
+- Rutas: `/docs/plantillas/usos` → `/docs/templates/usage`, `/pages/{id}/mover` → `/move`,
+  `/anotaciones` → `/annotations` (con `/resolver` → `/resolve`), `/docs/menciones` →
+  `/docs/mentions`, y en Comments `{entidad}` → `{entityType}`.
+- Tablas `AnotacionesEnDocumentos`, `MencionesEnDocumentos` y `UsosDePlantilla` →
+  `DocumentAnnotations`, `DocumentMentions` y `TemplateUsages`, con columnas e índices, y las
+  seis columnas de `Comments`. **La migración de Docs se reescribió a mano**: EF volvía a proponer
+  `DropTable` + `CreateTable` para las tres tablas, que habría borrado menciones, anclajes de
+  comentarios y contadores. Se comprobó contra la base de desarrollo con una anotación resuelta y
+  una respuesta editada sembradas antes de migrar: cada valor quedó en su columna.
+- **Un fallo que compilaba:** Roslyn renombró el parámetro de las lambdas de los endpoints
+  (`entidad` → `entityType`, `tipo` → `type`) pero no la plantilla de la ruta (`{entidad}`,
+  `{tipo}`), que es una cadena. La API arrancaba y los comentarios y las menciones habrían dado
+  400. **Lección: tras renombrar un parámetro de un endpoint, revisar su plantilla de ruta.**
+- **Un vocabulario duplicado:** `CommentableEntityTypes` repetía «Tarea», «Ticket» y «Proyecto»
+  a mano; ahora sale de `EntityTypes`.
+- **Un defecto de producto:** mover una página a otro padre no renumeraba el grupo de origen,
+  aunque un comentario del manejador decía que sí. Quedaban huecos en el orden y el siguiente
+  «ponla en la posición 1» caía donde no se veía. Arreglado, con su prueba de integración.
+- Del frontend va sólo el contrato: los campos de comentarios, anotaciones y usos de plantilla,
+  el `language` de crear desde plantilla, y las rutas. Los identificadores, en el 5b.
+- **Se quedan a propósito para el 5c** los valores guardados: «Tarea», «Proyecto», «Documento»,
+  «Persona» y «Anotacion» en `DocumentMentions.MentionedType`, `Comments.EntityType`, favoritos,
+  compartición y campos personalizados, y los atributos del HTML de las páginas
+  (`data-mencion-tipo`, `data-tipo="aviso"`, `data-tono`), que obligan a reescribir contenido.
+
 ---
+
+## 7. La skill y las herramientas---
 
 ## 7. La skill y las herramientas
 

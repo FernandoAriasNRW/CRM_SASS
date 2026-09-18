@@ -82,11 +82,11 @@ public static class DocsEndpointsExtensions
         });
 
         // Cuánto se usa cada plantilla, para que la galería enseñe cuatro que valgan la pena.
-        group.MapGet("/plantillas/usos", async (IUserContext currentUser, IMediator mediator) =>
+        group.MapGet("/templates/usage", async (IUserContext currentUser, IMediator mediator) =>
         {
             if (currentUser.TenantId == Guid.Empty) return Results.Unauthorized();
 
-            var result = await mediator.Send(new GetUsosDePlantillaQuery(currentUser.TenantId));
+            var result = await mediator.Send(new GetTemplateUsagesQuery(currentUser.TenantId));
             return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
         });
 
@@ -100,7 +100,7 @@ public static class DocsEndpointsExtensions
                 req.TemplateKey,
                 req.TemplateDocumentId,
                 req.CustomTitle,
-                req.Idioma);
+                req.Language);
 
             var result = await mediator.Send(command);
             return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
@@ -143,7 +143,7 @@ public static class DocsEndpointsExtensions
         // escribía en la página activa porque no existía este endpoint.
         group.MapPut("/{id:guid}", async (Guid id, [FromBody] RenameDocumentRequest req, IMediator mediator) =>
         {
-            var command = new Docs.Application.Handlers.Commands.RenombrarDocumentoCommand(
+            var command = new Docs.Application.Handlers.Commands.RenameDocumentCommand(
                 id, req.Title, req.Description);
 
             var result = await mediator.Send(command);
@@ -151,9 +151,9 @@ public static class DocsEndpointsExtensions
         });
 
         // Mover una página dentro del árbol del documento: de padre, de orden, o las dos.
-        group.MapPut("/pages/{pageId:guid}/mover", async (Guid pageId, [FromBody] MovePageRequest req, IMediator mediator) =>
+        group.MapPut("/pages/{pageId:guid}/move", async (Guid pageId, [FromBody] MovePageRequest req, IMediator mediator) =>
         {
-            var command = new Docs.Application.Handlers.Commands.MoverPaginaCommand(
+            var command = new Docs.Application.Handlers.Commands.MovePageCommand(
                 pageId, req.ParentPageId, req.Order);
 
             var result = await mediator.Send(command);
@@ -173,39 +173,39 @@ public static class DocsEndpointsExtensions
         // con el identificador de la anotación como entidad comentada. Son dos cosas distintas y
         // se piden por separado: juntarlas aquí obligaría a Docs a conocer a Comments.
 
-        group.MapGet("/pages/{pageId:guid}/anotaciones", async (Guid pageId, IMediator mediator) =>
+        group.MapGet("/pages/{pageId:guid}/annotations", async (Guid pageId, IMediator mediator) =>
         {
-            var result = await mediator.Send(new Docs.Application.Anotaciones.GetAnotacionesQuery(pageId));
+            var result = await mediator.Send(new Docs.Application.Annotations.GetPageAnnotationsQuery(pageId));
             return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
         });
 
-        group.MapPost("/pages/{pageId:guid}/anotaciones", async (
-            Guid pageId, [FromBody] NuevaAnotacionRequest req, IUserContext currentUser, IMediator mediator) =>
+        group.MapPost("/pages/{pageId:guid}/annotations", async (
+            Guid pageId, [FromBody] CreateAnnotationRequest req, IUserContext currentUser, IMediator mediator) =>
         {
             if (currentUser.TenantId == Guid.Empty || currentUser.UserId == Guid.Empty) return Results.Unauthorized();
 
-            var command = new Docs.Application.Anotaciones.CrearAnotacionCommand(
-                currentUser.TenantId, Guid.Empty, pageId, currentUser.UserId, req.TextoCitado);
+            var command = new Docs.Application.Annotations.CreateAnnotationCommand(
+                currentUser.TenantId, Guid.Empty, pageId, currentUser.UserId, req.QuotedText);
 
             var result = await mediator.Send(command);
             return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
         });
 
-        group.MapPut("/anotaciones/{id:guid}/resolver", async (
-            Guid id, [FromBody] ResolverAnotacionRequest req, IUserContext currentUser, IMediator mediator) =>
+        group.MapPut("/annotations/{id:guid}/resolve", async (
+            Guid id, [FromBody] ResolveAnnotationRequest req, IUserContext currentUser, IMediator mediator) =>
         {
             if (currentUser.UserId == Guid.Empty) return Results.Unauthorized();
 
-            var command = new Docs.Application.Anotaciones.ResolverAnotacionCommand(
-                id, currentUser.UserId, req.Resuelta);
+            var command = new Docs.Application.Annotations.ResolveAnnotationCommand(
+                id, currentUser.UserId, req.IsResolved);
 
             var result = await mediator.Send(command);
             return result.IsSuccess ? Results.NoContent() : Results.BadRequest(result.Error);
         });
 
-        group.MapDelete("/anotaciones/{id:guid}", async (Guid id, IMediator mediator) =>
+        group.MapDelete("/annotations/{id:guid}", async (Guid id, IMediator mediator) =>
         {
-            var result = await mediator.Send(new Docs.Application.Anotaciones.BorrarAnotacionCommand(id));
+            var result = await mediator.Send(new Docs.Application.Annotations.DeleteAnnotationCommand(id));
             return result.IsSuccess ? Results.NoContent() : Results.BadRequest(result.Error);
         });
 
@@ -214,18 +214,18 @@ public static class DocsEndpointsExtensions
         // «¿Qué documentos hablan de esta tarea?». Va bajo /docs y no bajo la tarea porque la
         // respuesta es una lista de documentos y la da Docs; la pantalla de la tarea la consume
         // sin que WorkItems tenga que conocer a Docs.
-        group.MapGet("/menciones/{tipo}/{entityId:guid}", async (
-            string tipo, Guid entityId,
-            BuildingBlocks.Application.Abstractions.IDocumentMentions menciones) =>
+        group.MapGet("/mentions/{type}/{entityId:guid}", async (
+            string type, Guid entityId,
+            BuildingBlocks.Application.Abstractions.IDocumentMentions mentions) =>
         {
-            if (!Docs.Domain.Menciones.TiposMencionables.Existe(tipo))
+            if (!Docs.Domain.Mentions.MentionableTypes.Exists(type))
             {
                 return Results.BadRequest(
-                    $"«{tipo}» no se puede mencionar. Los que sí: "
-                    + string.Join(", ", Docs.Domain.Menciones.TiposMencionables.Todos()));
+                    $"«{type}» no se puede mencionar. Los que sí: "
+                    + string.Join(", ", Docs.Domain.Mentions.MentionableTypes.All()));
             }
 
-            return Results.Ok(await menciones.GetMentioningDocumentsAsync(tipo, entityId));
+            return Results.Ok(await mentions.GetMentioningDocumentsAsync(type, entityId));
         });
 
         group.MapGet("/{id:guid}/pages", async (Guid id, IMediator mediator) =>
@@ -259,9 +259,9 @@ public record RenameDocumentRequest(string Title, string? Description);
 public record MovePageRequest(Guid? ParentPageId, int Order);
 
 /// <summary>El documento no viaja: se saca de la página, para que no pueda venir mal desde fuera.</summary>
-public record NuevaAnotacionRequest(string TextoCitado);
+public record CreateAnnotationRequest(string QuotedText);
 
-public record ResolverAnotacionRequest(bool Resuelta);
+public record ResolveAnnotationRequest(bool IsResolved);
 public record SaveAsTemplateRequest(string? CustomTitle, string? Description);
-public record CreateFromTemplateRequest(string? TemplateKey, Guid? TemplateDocumentId, string? CustomTitle, string? Idioma = null);
+public record CreateFromTemplateRequest(string? TemplateKey, Guid? TemplateDocumentId, string? CustomTitle, string? Language = null);
 public record ImportDocumentRequest(string Title, string Content, int Type = 1);

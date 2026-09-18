@@ -64,7 +64,7 @@ public sealed class ArbolDePaginasFlowTests(CrmApiFactory factory)
     }
 
     private static Task<HttpResponseMessage> MoverAsync(HttpClient cliente, Guid pageId, Guid? padre, int orden)
-        => cliente.PutAsJsonAsync($"/api/v1/docs/pages/{pageId}/mover",
+        => cliente.PutAsJsonAsync($"/api/v1/docs/pages/{pageId}/move",
             new { ParentPageId = padre, Order = orden });
 
     /// <summary>Una subpágina queda colgada de su madre, no del documento.</summary>
@@ -120,6 +120,36 @@ public sealed class ArbolDePaginasFlowTests(CrmApiFactory factory)
         // acabarían con el mismo orden y el listado dependería de lo que decidiera la base.
         paginas.Select(p => p.GetProperty("order").GetInt32()).OrderBy(o => o)
             .Should().Equal(new[] { 0, 1, 2, 3 });
+    }
+
+    /// <summary>
+    /// Sacar una página de un grupo deja al grupo sin huecos.
+    ///
+    /// El manejador decía en un comentario que renumeraba el origen y no lo hacía: al sacar una de
+    /// tres hermanas las otras se quedaban con órdenes salteados, y el siguiente «ponla en la
+    /// posición 1» caía en un sitio distinto del que se veía en la barra lateral.
+    /// </summary>
+    [Fact]
+    public async Task Sacar_una_pagina_de_su_grupo_renumera_a_las_que_quedan()
+    {
+        var cliente = await AutenticarAsync();
+        var docId = await CrearDocumentoAsync(cliente, "Documento para sacar páginas");
+
+        var deFabrica = (await PaginasAsync(cliente, docId)).Single().GetProperty("id").GetGuid();
+        var primera = await CrearPaginaAsync(cliente, docId, "Primera");
+        var segunda = await CrearPaginaAsync(cliente, docId, "Segunda");
+        var tercera = await CrearPaginaAsync(cliente, docId, "Tercera");
+
+        var movida = await MoverAsync(cliente, primera, segunda, 0);
+        movida.StatusCode.Should().Be(HttpStatusCode.NoContent, await movida.Content.ReadAsStringAsync());
+
+        var raiz = (await PaginasAsync(cliente, docId))
+            .Where(p => p.GetProperty("parentPageId").ValueKind == JsonValueKind.Null)
+            .OrderBy(p => p.GetProperty("order").GetInt32())
+            .ToList();
+
+        raiz.Select(p => p.GetProperty("id").GetGuid()).Should().Equal(deFabrica, segunda, tercera);
+        raiz.Select(p => p.GetProperty("order").GetInt32()).Should().Equal(new[] { 0, 1, 2 });
     }
 
     /// <summary>
