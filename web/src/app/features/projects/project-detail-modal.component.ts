@@ -9,7 +9,7 @@ import { lucideLoader2, lucideTrash2, lucideEdit3, lucideX } from '@ng-icons/luc
 
 import { DrawerComponent } from '../../shared/ui/drawer.component';
 import { ComentariosComponent } from '../../shared/ui/comentarios.component';
-import { ESTADOS_DE_PROYECTO } from './vocabulario-de-proyectos';
+import { PROJECT_STATUSES } from './project-vocabulary';
 
 @Component({
   selector: 'app-project-detail-modal',
@@ -32,7 +32,7 @@ export class ProjectDetailModalComponent implements OnInit {
   deleting = signal(false);
   error = signal('');
 
-  readonly statuses = ESTADOS_DE_PROYECTO;
+  readonly statuses = PROJECT_STATUSES;
 
   private readonly api = inject(ApiService);
   private readonly store = inject(Store);

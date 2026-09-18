@@ -1,4 +1,4 @@
-import { barrasDe, diaDesde, esFinDeSemana, fechaDelDia, flechasDe, hoyComoDia, marcasDelEje, rangoDe } from './gantt';
+import { barsOf, dayFrom, isWeekend, dateOfDay, arrowsOf, todayAsDay, axisTicks, rangeOf } from './gantt';
 import type { TaskItem } from './task-create-modal.component';
 
 /**
@@ -8,20 +8,20 @@ import type { TaskItem } from './task-create-modal.component';
  * barra un poco desplazada y nadie lo nota hasta que alguien planifica según ella.
  */
 describe('gantt', () => {
-  const tarea = (parcial: Partial<TaskItem>): TaskItem => ({
+  const task = (overrides: Partial<TaskItem>): TaskItem => ({
     id: 't', title: 'Tarea', description: '', status: 'To Do', priority: 'Normal',
     estimatedHours: 0, dueDate: '', projectId: 'p', assigneeId: '',
-    ...parcial,
+    ...overrides,
   } as TaskItem);
 
   describe('diaDesde', () => {
     it('lee una fecha suelta', () => {
-      expect(diaDesde('1970-01-01')).toBe(0);
-      expect(diaDesde('1970-01-02')).toBe(1);
+      expect(dayFrom('1970-01-01')).toBe(0);
+      expect(dayFrom('1970-01-02')).toBe(1);
     });
 
     it('lee una fecha con hora, que es como la manda parte de la API', () => {
-      expect(diaDesde('2026-08-15T00:00:00')).toBe(diaDesde('2026-08-15')!);
+      expect(dayFrom('2026-08-15T00:00:00')).toBe(dayFrom('2026-08-15')!);
     });
 
     /**
@@ -30,105 +30,105 @@ describe('gantt', () => {
      * y toda América.
      */
     it('no se corre un día por el huso horario', () => {
-      const dia = diaDesde('2026-08-15')!;
+      const day = dayFrom('2026-08-15')!;
 
-      expect(fechaDelDia(dia).getUTCDate()).toBe(15);
-      expect(fechaDelDia(dia).getUTCMonth()).toBe(7);
+      expect(dateOfDay(day).getUTCDate()).toBe(15);
+      expect(dateOfDay(day).getUTCMonth()).toBe(7);
     });
 
     it('cuenta bien un cambio de mes', () => {
-      expect(diaDesde('2026-09-01')! - diaDesde('2026-08-31')!).toBe(1);
+      expect(dayFrom('2026-09-01')! - dayFrom('2026-08-31')!).toBe(1);
     });
 
     it('cuenta bien un año bisiesto', () => {
-      expect(diaDesde('2028-03-01')! - diaDesde('2028-02-28')!).toBe(2);
+      expect(dayFrom('2028-03-01')! - dayFrom('2028-02-28')!).toBe(2);
     });
 
     it('un valor ausente o con mala pinta no revienta', () => {
-      expect(diaDesde(null)).toBeNull();
-      expect(diaDesde(undefined)).toBeNull();
-      expect(diaDesde('')).toBeNull();
-      expect(diaDesde('mañana')).toBeNull();
+      expect(dayFrom(null)).toBeNull();
+      expect(dayFrom(undefined)).toBeNull();
+      expect(dayFrom('')).toBeNull();
+      expect(dayFrom('mañana')).toBeNull();
     });
   });
 
   describe('rangoDe', () => {
-    const hoy = diaDesde('2026-08-13')!;
+    const today = dayFrom('2026-08-13')!;
 
     it('sin tareas con fechas no hay nada que pintar', () => {
-      expect(rangoDe([], hoy)).toBeNull();
-      expect(rangoDe([tarea({ dueDate: '' })], hoy)).toBeNull();
+      expect(rangeOf([], today)).toBeNull();
+      expect(rangeOf([task({ dueDate: '' })], today)).toBeNull();
     });
 
     it('abarca de la fecha más temprana a la más tardía', () => {
-      const rango = rangoDe([
-        tarea({ dueDate: '2026-08-20', startDate: '2026-08-18' }),
-        tarea({ dueDate: '2026-08-25' }),
-      ], hoy)!;
+      const range = rangeOf([
+        task({ dueDate: '2026-08-20', startDate: '2026-08-18' }),
+        task({ dueDate: '2026-08-25' }),
+      ], today)!;
 
-      expect(rango.primerDia).toBe(diaDesde('2026-08-13')!);
-      expect(rango.ultimoDia).toBe(diaDesde('2026-08-25')!);
+      expect(range.firstDay).toBe(dayFrom('2026-08-13')!);
+      expect(range.lastDay).toBe(dayFrom('2026-08-25')!);
     });
 
     /** Un diagrama que empieza el mes que viene no deja ver dónde está uno. */
     it('siempre incluye el día de hoy, aunque todo esté en el futuro', () => {
-      const rango = rangoDe([tarea({ dueDate: '2026-12-01' })], hoy)!;
+      const range = rangeOf([task({ dueDate: '2026-12-01' })], today)!;
 
-      expect(rango.primerDia).toBe(hoy);
+      expect(range.firstDay).toBe(today);
     });
 
     it('y también si todo está en el pasado', () => {
-      const rango = rangoDe([tarea({ dueDate: '2026-01-05' })], hoy)!;
+      const range = rangeOf([task({ dueDate: '2026-01-05' })], today)!;
 
-      expect(rango.ultimoDia).toBe(hoy);
+      expect(range.lastDay).toBe(today);
     });
 
     it('cuenta los dos extremos', () => {
-      const rango = rangoDe([tarea({ dueDate: '2026-08-13' })], hoy)!;
+      const range = rangeOf([task({ dueDate: '2026-08-13' })], today)!;
 
-      expect(rango.dias).toBe(1);
+      expect(range.days).toBe(1);
     });
   });
 
   describe('barrasDe', () => {
-    const hoy = diaDesde('2026-08-13')!;
+    const today = dayFrom('2026-08-13')!;
 
     it('una tarea con inicio y vencimiento ocupa los días entre ambos, incluidos', () => {
-      const t = tarea({ dueDate: '2026-08-20', startDate: '2026-08-18' });
-      const rango = rangoDe([t], hoy)!;
+      const t = task({ dueDate: '2026-08-20', startDate: '2026-08-18' });
+      const range = rangeOf([t], today)!;
 
-      const [barra] = barrasDe([t], rango);
+      const [bar] = barsOf([t], range);
 
-      expect(barra.duracion).toBe(3);
-      expect(barra.esHito).toBeFalse();
-      expect(barra.desplazamiento).toBe(diaDesde('2026-08-18')! - rango.primerDia);
+      expect(bar.duration).toBe(3);
+      expect(bar.isMilestone).toBeFalse();
+      expect(bar.offset).toBe(dayFrom('2026-08-18')! - range.firstDay);
     });
 
     it('empezar y vencer el mismo día dura un día, no cero', () => {
-      const t = tarea({ dueDate: '2026-08-20', startDate: '2026-08-20' });
-      const rango = rangoDe([t], hoy)!;
+      const t = task({ dueDate: '2026-08-20', startDate: '2026-08-20' });
+      const range = rangeOf([t], today)!;
 
-      expect(barrasDe([t], rango)[0].duracion).toBe(1);
+      expect(barsOf([t], range)[0].duration).toBe(1);
     });
 
     /** Inventarle un principio es exactamente lo que se decidió no hacer. */
     it('sin fecha de inicio sale un hito en el vencimiento', () => {
-      const t = tarea({ dueDate: '2026-08-20' });
-      const rango = rangoDe([t], hoy)!;
+      const t = task({ dueDate: '2026-08-20' });
+      const range = rangeOf([t], today)!;
 
-      const [barra] = barrasDe([t], rango);
+      const [bar] = barsOf([t], range);
 
-      expect(barra.esHito).toBeTrue();
-      expect(barra.duracion).toBe(1);
-      expect(barra.desplazamiento).toBe(diaDesde('2026-08-20')! - rango.primerDia);
+      expect(bar.isMilestone).toBeTrue();
+      expect(bar.duration).toBe(1);
+      expect(bar.offset).toBe(dayFrom('2026-08-20')! - range.firstDay);
     });
 
     it('sin vencimiento no se pinta: no hay dónde ponerla', () => {
-      const conFecha = tarea({ id: 'a', dueDate: '2026-08-20' });
-      const sinFecha = tarea({ id: 'b', dueDate: '' });
-      const rango = rangoDe([conFecha, sinFecha], hoy)!;
+      const withDueDate = task({ id: 'a', dueDate: '2026-08-20' });
+      const withoutDueDate = task({ id: 'b', dueDate: '' });
+      const range = rangeOf([withDueDate, withoutDueDate], today)!;
 
-      expect(barrasDe([conFecha, sinFecha], rango).map(b => b.tarea.id)).toEqual(['a']);
+      expect(barsOf([withDueDate, withoutDueDate], range).map(b => b.task.id)).toEqual(['a']);
     });
 
     /**
@@ -136,65 +136,65 @@ describe('gantt', () => {
      * la pantalla con una barra de longitud negativa.
      */
     it('un inicio posterior al vencimiento se trata como si no lo hubiera', () => {
-      const t = tarea({ dueDate: '2026-08-20', startDate: '2026-09-30' });
-      const rango = rangoDe([t], hoy)!;
+      const t = task({ dueDate: '2026-08-20', startDate: '2026-09-30' });
+      const range = rangeOf([t], today)!;
 
-      const [barra] = barrasDe([t], rango);
+      const [bar] = barsOf([t], range);
 
-      expect(barra.esHito).toBeTrue();
-      expect(barra.duracion).toBe(1);
+      expect(bar.isMilestone).toBeTrue();
+      expect(bar.duration).toBe(1);
     });
 
     it('marca las bloqueadas con lo que ya cuenta el servidor', () => {
-      const bloqueada = tarea({ id: 'a', dueDate: '2026-08-20', blockedByCount: 2 });
-      const libre = tarea({ id: 'b', dueDate: '2026-08-21', blockedByCount: 0 });
-      const rango = rangoDe([bloqueada, libre], hoy)!;
+      const blocked = task({ id: 'a', dueDate: '2026-08-20', blockedByCount: 2 });
+      const unblocked = task({ id: 'b', dueDate: '2026-08-21', blockedByCount: 0 });
+      const range = rangeOf([blocked, unblocked], today)!;
 
-      const barras = barrasDe([bloqueada, libre], rango);
+      const bars = barsOf([blocked, unblocked], range);
 
-      expect(barras[0].bloqueada).toBeTrue();
-      expect(barras[1].bloqueada).toBeFalse();
+      expect(bars[0].isBlocked).toBeTrue();
+      expect(bars[1].isBlocked).toBeFalse();
     });
   });
 
   describe('marcasDelEje', () => {
     it('marca el principio y cada primero de mes', () => {
-      const rango = rangoDe([
-        tarea({ dueDate: '2026-10-05', startDate: '2026-08-28' }),
-      ], diaDesde('2026-08-28')!)!;
+      const range = rangeOf([
+        task({ dueDate: '2026-10-05', startDate: '2026-08-28' }),
+      ], dayFrom('2026-08-28')!)!;
 
-      const dias = marcasDelEje(rango).map(m => fechaDelDia(m.dia).getUTCDate());
+      const days = axisTicks(range).map(m => dateOfDay(m.day).getUTCDate());
 
-      expect(dias).toEqual([28, 1, 1]);
+      expect(days).toEqual([28, 1, 1]);
     });
   });
 
   describe('esFinDeSemana', () => {
     it('reconoce sábado y domingo', () => {
       // 2026-08-15 es sábado y el 16, domingo.
-      expect(esFinDeSemana(diaDesde('2026-08-15')!)).toBeTrue();
-      expect(esFinDeSemana(diaDesde('2026-08-16')!)).toBeTrue();
-      expect(esFinDeSemana(diaDesde('2026-08-17')!)).toBeFalse();
+      expect(isWeekend(dayFrom('2026-08-15')!)).toBeTrue();
+      expect(isWeekend(dayFrom('2026-08-16')!)).toBeTrue();
+      expect(isWeekend(dayFrom('2026-08-17')!)).toBeFalse();
     });
   });
 
   describe('flechasDe', () => {
-    const hoy = diaDesde('2026-08-10')!;
+    const today = dayFrom('2026-08-10')!;
 
     /** `a` empieza el 18 y vence el 20; `b` empieza el 22 y vence el 24. */
-    const primera = tarea({ id: 'a', dueDate: '2026-08-20', startDate: '2026-08-18' });
-    const segunda = tarea({ id: 'b', dueDate: '2026-08-24', startDate: '2026-08-22' });
+    const first = task({ id: 'a', dueDate: '2026-08-20', startDate: '2026-08-18' });
+    const second = task({ id: 'b', dueDate: '2026-08-24', startDate: '2026-08-22' });
 
-    function barras(tareas = [primera, segunda]) {
-      return barrasDe(tareas, rangoDe(tareas, hoy)!);
+    function bars(tasks = [first, second]) {
+      return barsOf(tasks, rangeOf(tasks, today)!);
     }
 
     it('une la barra que bloquea con la bloqueada', () => {
-      const [flecha] = flechasDe([{ taskId: 'b', dependsOnTaskId: 'a' }], barras());
+      const [arrow] = arrowsOf([{ taskId: 'b', dependsOnTaskId: 'a' }], bars());
 
-      expect(flecha.desdeFila).toBe(0);
-      expect(flecha.hastaFila).toBe(1);
-      expect(flecha.incumplida).toBeFalse();
+      expect(arrow.fromRow).toBe(0);
+      expect(arrow.toRow).toBe(1);
+      expect(arrow.isViolated).toBeFalse();
     });
 
     /**
@@ -202,53 +202,53 @@ describe('gantt', () => {
      * bloquea todavía no ha terminado cuando lo bloqueado ya tendría que haber empezado.
      */
     it('marca como incumplida la que va hacia atrás en el tiempo', () => {
-      const [flecha] = flechasDe([{ taskId: 'a', dependsOnTaskId: 'b' }], barras());
+      const [arrow] = arrowsOf([{ taskId: 'a', dependsOnTaskId: 'b' }], bars());
 
-      expect(flecha.incumplida).toBeTrue();
+      expect(arrow.isViolated).toBeTrue();
     });
 
     it('encadenar justo el día siguiente no se considera incumplido', () => {
-      const antes = tarea({ id: 'a', dueDate: '2026-08-20', startDate: '2026-08-18' });
-      const despues = tarea({ id: 'b', dueDate: '2026-08-25', startDate: '2026-08-21' });
+      const before = task({ id: 'a', dueDate: '2026-08-20', startDate: '2026-08-18' });
+      const after = task({ id: 'b', dueDate: '2026-08-25', startDate: '2026-08-21' });
 
-      const [flecha] = flechasDe(
-        [{ taskId: 'b', dependsOnTaskId: 'a' }], barras([antes, despues]));
+      const [arrow] = arrowsOf(
+        [{ taskId: 'b', dependsOnTaskId: 'a' }], bars([before, after]));
 
-      expect(flecha.incumplida).toBeFalse();
+      expect(arrow.isViolated).toBeFalse();
     });
 
     /** Una flecha que sale del diagrama y no llega a nada confunde más que no dibujarla. */
     it('descarta las que apuntan a una tarea que no se está pintando', () => {
-      const flechas = flechasDe([
+      const arrows = arrowsOf([
         { taskId: 'b', dependsOnTaskId: 'fantasma' },
         { taskId: 'fantasma', dependsOnTaskId: 'a' },
-      ], barras());
+      ], bars());
 
-      expect(flechas).toEqual([]);
+      expect(arrows).toEqual([]);
     });
 
     it('sin dependencias no hay flechas', () => {
-      expect(flechasDe([], barras())).toEqual([]);
+      expect(arrowsOf([], bars())).toEqual([]);
     });
 
     it('una tarea puede tener varias flechas', () => {
-      const tercera = tarea({ id: 'c', dueDate: '2026-08-28', startDate: '2026-08-26' });
+      const third = task({ id: 'c', dueDate: '2026-08-28', startDate: '2026-08-26' });
 
-      const flechas = flechasDe([
+      const arrows = arrowsOf([
         { taskId: 'c', dependsOnTaskId: 'a' },
         { taskId: 'c', dependsOnTaskId: 'b' },
-      ], barras([primera, segunda, tercera]));
+      ], bars([first, second, third]));
 
-      expect(flechas.length).toBe(2);
-      expect(flechas.map(f => f.hastaFila)).toEqual([2, 2]);
+      expect(arrows.length).toBe(2);
+      expect(arrows.map(f => f.toRow)).toEqual([2, 2]);
     });
   });
 
   describe('hoyComoDia', () => {
     it('usa el día local y no el UTC, que es el que ve quien mira la pantalla', () => {
-      const nochevieja = new Date(2026, 11, 31, 23, 30);
+      const newYearsEve = new Date(2026, 11, 31, 23, 30);
 
-      expect(hoyComoDia(nochevieja)).toBe(diaDesde('2026-12-31')!);
+      expect(todayAsDay(newYearsEve)).toBe(dayFrom('2026-12-31')!);
     });
   });
 });

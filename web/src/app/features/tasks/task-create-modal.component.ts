@@ -51,7 +51,7 @@ export interface Recurrence {
 }
 
 /** Las claves son las que acepta el servidor (`RecurrencePattern.Frequencies`). */
-export const FRECUENCIAS = [
+export const FREQUENCIES = [
   { key: 'Daily', label: $localize`Cada día` },
   { key: 'Weekly', label: $localize`Cada semana` },
   { key: 'Monthly', label: $localize`Cada mes` },
@@ -74,8 +74,8 @@ export interface TaskDependencyRef {
 }
 
 export interface TaskDependencies {
-  bloqueadaPor: TaskDependencyRef[];
-  bloqueaA: TaskDependencyRef[];
+  blockedBy: TaskDependencyRef[];
+  blocks: TaskDependencyRef[];
 }
 
 /**
@@ -84,7 +84,7 @@ export interface TaskDependencies {
  * Las claves son exactamente los valores que acepta la API: mandar 'urgent' en minúscula
  * la rechazaría, así que no se transforman en ningún punto.
  */
-export const PRIORIDADES = [
+export const PRIORITIES = [
   { key: 'Urgent', label: $localize`Urgente`, icon: 'lucideAlertCircle', color: 'text-destructive' },
   // `text-warning` es el ámbar sólido (#f59f0a): sobre blanco da 2,13:1, menos de la mitad del
   // 4,5:1 que exige la WCAG, y aquí se pinta a 10 px. El tono «subtle-fg» es el que el sistema de
@@ -95,7 +95,7 @@ export const PRIORIDADES = [
   { key: 'Low',    label: $localize`Baja`,    icon: 'lucideArrowDown',   color: 'text-muted-foreground' },
 ] as const;
 
-export const PRIORIDAD_POR_DEFECTO = 'Normal';
+export const DEFAULT_PRIORITY = 'Normal';
 
 @Component({
   selector: 'app-task-create-modal',
@@ -111,13 +111,13 @@ export class TaskCreateModalComponent {
   description = '';
   projectId = '';
   assigneeId = '';
-  priority: string = PRIORIDAD_POR_DEFECTO;
+  priority: string = DEFAULT_PRIORITY;
   estimatedHours = 1;
   dueDate = '';
   loading = signal(false);
   error = signal('');
 
-  readonly prioridades = PRIORIDADES;
+  readonly priorities = PRIORITIES;
 
   private readonly api = inject(ApiService);
   readonly projects$ = inject(Store).select(selectProjects);

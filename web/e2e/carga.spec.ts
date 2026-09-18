@@ -76,14 +76,14 @@ async function entrar(page: Page, tareas: unknown[]) {
 test('reparte por persona y pone delante a quien más acumula', async ({ page }) => {
   await entrar(page, [DE_ADMIN, DE_LUISA]);
 
-  const nombres = page.locator('app-carga tbody tr td:first-child');
+  const nombres = page.locator('app-workload tbody tr td:first-child');
   await expect(nombres).toHaveText(['Luisa Pérez', 'Admin Administrator']);
 });
 
 test('los totales son las horas de cada uno', async ({ page }) => {
   await entrar(page, [DE_ADMIN, DE_LUISA]);
 
-  const totales = page.locator('app-carga tbody tr td:last-child');
+  const totales = page.locator('app-workload tbody tr td:last-child');
   await expect(totales).toHaveText(['12', '4']);
 });
 
@@ -91,7 +91,7 @@ test('una tarea completada no cuenta como carga futura', async ({ page }) => {
   await entrar(page, [DE_ADMIN, COMPLETADA]);
 
   // Sin descartarla, el total del administrador serían 44 en lugar de 4.
-  await expect(page.locator('app-carga tbody tr td:last-child')).toHaveText(['4']);
+  await expect(page.locator('app-workload tbody tr td:last-child')).toHaveText(['4']);
 });
 
 test('las tareas sin fecha límite no se esconden: se cuentan y se dicen', async ({ page }) => {

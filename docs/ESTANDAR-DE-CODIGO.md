@@ -171,6 +171,15 @@ Un concepto, un nombre. Ordenado por área.
 | motivo de cancelación | `CancellationReason` |
 | agenda del día | `DailyAgenda` |
 | semana, mes | `Week`, `Month` |
+| fecha límite, sin fecha límite, fecha de inicio | `DueDate`, `WithoutDueDate`, `StartDate` |
+| Gantt: barra, hito, rango, eje, marca del eje | `Bar`, `Milestone`, `Range`, `Axis`, `AxisTick` |
+| flecha de dependencia, incumplida | `Arrow`, `IsViolated` |
+| bloqueante, bloqueada, bloqueada por, bloquea a | `Blocker`, `IsBlocked`, `BlockedBy`, `Blocks` |
+| candidata (a bloquear, a responsable) | `Candidate` (`BlockerCandidates`, `AssigneeCandidates`) |
+| fila, celda (de la carga) | `WorkloadRow`, `WorkloadCell` |
+| laborable, fin de semana, el lunes de | `IsWorkday`, `IsWeekend`, `MondayOf` |
+| tanda (de tarjetas en una columna) | `Batch` (`BATCH_SIZE`) |
+| vistas de fábrica | `BUILT_IN_VIEWS` |
 
 ### Tickets
 
@@ -303,7 +312,7 @@ suites completas en verde, catálogo i18n re-extraído al final.
 | 2 ✅ | **Identity** (favoritos, compartición, permisos) | Rutas `/comparticion` y `/me/favoritos`, tabla `Favoritos` |
 | 3 ✅ | **Ticketing** (entrada, claves, adjuntos) | Lo más reciente; rutas públicas `/entrada/tickets` |
 | 4a ✅ | **WorkItems + Projects** (backend) | Archivo/papelera compartidos. Teams ya estaba en inglés |
-| 4b | **Frontend de tareas y proyectos** | Gantt, carga de trabajo y la ficha: 329 identificadores, diff aparte para poder revisarlo |
+| 4b ✅ | **Frontend de tareas y proyectos** | Gantt, carga de trabajo y la ficha: 329 identificadores, diff aparte para poder revisarlo |
 | 5 | **Docs** (plantillas, anotaciones, árbol) + **Comments** | Editor y extensiones del frontend |
 | 6 | **Calendar + Notifications + Communication** | Agenda |
 | 7 | **Reporting** (motor, exportaciones, programaciones, paneles) | El bloque más grande del Host |
@@ -425,6 +434,32 @@ tablas de favoritos y menciones. Cambiarlo exige migrar ese contenido, y va con 
   (`BarraDeVistasComponent`, `VistaIntegrada` y sus campos `clave`/`etiqueta`/`icono`),
   `mensajeDeError`, `urlDeFichero`, los comentarios y las menciones. Van con el bloque 9.
 
+### Hecho en el bloque 4b (frontend de tareas y proyectos)
+
+- Gantt (`gantt.ts` y su componente), carga de trabajo (`carga*` → `workload*`, selector
+  `app-carga` → `app-workload`), la ficha, el listado y el tablero, y los vocabularios
+  (`vocabulario-de-tareas.ts` → `task-vocabulary.ts`, `vocabulario-de-proyectos.ts` →
+  `project-vocabulary.ts`). Las pruebas unitarias de Gantt y carga van con sus nombres de
+  variables; los textos de `it(...)` se quedan para el bloque 10.
+- Se hizo con `tools/scripts/rename-frontend.py`, que no existía. **Tuvo tres fallos, y dos no los
+  veía el compilador:**
+  - Trataba los atributos planos (`subtitle="..."`, `placeholder`, `aria-label`, el `message` de un
+    estado vacío) como expresiones y **tradujo 18 textos de la interfaz**: «Crea una nueva task en
+    tu project», «Sin tasks». Tampoco respetaba las cadenas dentro de un enlace
+    (`[subtitle]="'Detalles del proyecto'"`). Compilaba y las pruebas pasaban.
+  - Saltaba las cabeceras `@if (x > 0)` y los enlaces `[style.width.%]`: la carga leía
+    `celda.horas` en dos sitios y `celda.hours` en el tercero.
+  - Por trabajar por tokens, renombró campos de tipos compartidos que son del bloque 9
+    (`VistaIntegrada.clave`, `CellEdit.valor`, `OpcionesDeLlamada.sinAviso`). Éste sí lo vio el build.
+  Los tres están corregidos en el script, y sus límites, en `tools/README.md`. **Lección: en el
+  frontend hay que comparar con `main` los atributos y las cadenas de las plantillas**, porque
+  un texto de la interfaz cambiado no lo detecta ni el build ni las pruebas.
+- Los inputs y outputs de Gantt y carga (`[tareas]`, `[dependencias]`, `(abrir)`) cambiaron a
+  mano en `tasks.component.html`: el script sólo toca valores, no nombres de atributo.
+- **Se queda en español a propósito: el valor `'carga'`** del modo de vista. Se guarda en el
+  `stateJson` de las vistas guardadas (`viewType`), así que cambiarlo exige migrar esas filas; va
+  con el bloque 9, junto con la barra de vistas.
+
 ---
 
 ## 7. La skill y las herramientas
@@ -441,6 +476,7 @@ Las herramientas viven en `tools/` y están documentadas en `tools/README.md`:
 | `tools/contract-snapshot` | Ver qué campos del JSON cambian entre `main` y la rama |
 | `tools/scripts/split-types.py` | Un tipo público por fichero, conservando sus comentarios |
 | `tools/scripts/spanish-identifiers.py` | Qué identificadores siguen en español |
+| `tools/scripts/rename-frontend.py` | Renombrar en TypeScript y plantillas sin tocar comentarios ni textos |
 
 **Nada de esto entra en el CI ni en la aplicación**: `tools/` no forma parte de `CrmSaaS.sln`.
 
