@@ -15,10 +15,10 @@ const SIN_AVISO = { sinAviso: true };
  * señalado, no el documento entero, porque un documento tiene muchas conversaciones a la vez
  * pegadas a sitios distintos.
  */
-export const ENTIDADES_COMENTABLES = ['Tarea', 'Ticket', 'Proyecto', 'Anotacion'] as const;
-export type EntidadComentable = (typeof ENTIDADES_COMENTABLES)[number];
+export const COMMENTABLE_ENTITIES = ['Tarea', 'Ticket', 'Proyecto', 'Anotacion'] as const;
+export type CommentableEntity = (typeof COMMENTABLE_ENTITIES)[number];
 
-export interface Comentario {
+export interface Comment {
   id: string;
   authorId: string;
   text: string;
@@ -40,22 +40,22 @@ export interface Comentario {
 export class CommentsService {
   private readonly api = inject(ApiService);
 
-  hilo(entidad: EntidadComentable, entityId: string): Observable<Comentario[]> {
-    return this.api.get<Comentario[]>(`/comments/${entidad}/${entityId}`);
+  thread(entityType: CommentableEntity, entityId: string): Observable<Comment[]> {
+    return this.api.get<Comment[]>(`/comments/${entityType}/${entityId}`);
   }
 
-  comentar(
-    entidad: EntidadComentable, entityId: string, texto: string, respondeAId?: string,
-  ): Observable<Comentario> {
-    return this.api.post<Comentario>(
-      `/comments/${entidad}/${entityId}`, { text: texto, replyToId: respondeAId ?? null }, SIN_AVISO);
+  comment(
+    entityType: CommentableEntity, entityId: string, text: string, replyToId?: string,
+  ): Observable<Comment> {
+    return this.api.post<Comment>(
+      `/comments/${entityType}/${entityId}`, { text: text, replyToId: replyToId ?? null }, SIN_AVISO);
   }
 
-  editar(id: string, texto: string): Observable<void> {
-    return this.api.put<void>(`/comments/${id}`, { text: texto }, SIN_AVISO);
+  edit(id: string, text: string): Observable<void> {
+    return this.api.put<void>(`/comments/${id}`, { text: text }, SIN_AVISO);
   }
 
-  borrar(id: string): Observable<void> {
+  delete(id: string): Observable<void> {
     return this.api.delete<void>(`/comments/${id}`, SIN_AVISO);
   }
 }

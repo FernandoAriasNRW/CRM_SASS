@@ -12,14 +12,14 @@ import { DocsService, type DocumentDto } from '../docs.service';
  * seguiría cargando con la lógica y sólo habría cambiado de sitio el desorden.
  */
 @Component({
-  selector: 'app-guardar-plantilla-modal',
+  selector: 'app-save-template-modal',
   standalone: true,
   imports: [FormsModule, NgIcon],
   viewProviders: [provideIcons({ lucideLayoutTemplate, lucideX })],
   template: `
     <div class="fixed inset-0 z-50 bg-foreground/50 backdrop-blur-sm flex items-center justify-center p-4">
       <div role="dialog" aria-modal="true" aria-labelledby="titulo-guardar-plantilla"
-           (keydown.escape)="cerrar.emit()"
+           (keydown.escape)="closed.emit()"
            class="bg-card border border-border rounded-2xl shadow-2xl max-w-md w-full p-6">
 
         <div class="flex items-center justify-between mb-4">
@@ -29,7 +29,7 @@ import { DocsService, type DocumentDto } from '../docs.service';
             </div>
             <h3 id="titulo-guardar-plantilla" class="text-base font-bold text-foreground" i18n>Save as Template</h3>
           </div>
-          <button type="button" (click)="cerrar.emit()"
+          <button type="button" (click)="closed.emit()"
                   i18n-aria-label aria-label="Cerrar"
                   class="text-muted-foreground hover:text-foreground">
             <ng-icon name="lucideX" class="w-4 h-4" aria-hidden="true" />
@@ -43,14 +43,14 @@ import { DocsService, type DocumentDto } from '../docs.service';
         <div class="space-y-3">
           <div>
             <label for="plantilla-titulo" class="block text-xs font-medium text-muted-foreground mb-1" i18n>Template Title</label>
-            <input id="plantilla-titulo" type="text" [(ngModel)]="titulo"
+            <input id="plantilla-titulo" type="text" [(ngModel)]="title"
                    class="w-full px-3 py-2 text-sm bg-muted border border-border rounded-lg
                           focus:outline-none focus:ring-2 focus:ring-ring" />
           </div>
 
           <div>
             <label for="plantilla-descripcion" class="block text-xs font-medium text-muted-foreground mb-1" i18n>Descripción</label>
-            <textarea id="plantilla-descripcion" rows="2" [(ngModel)]="descripcion"
+            <textarea id="plantilla-descripcion" rows="2" [(ngModel)]="description"
                       i18n-placeholder placeholder="Briefly describe what this template is used for..."
                       class="w-full px-3 py-2 text-sm bg-muted border border-border rounded-lg
                              focus:outline-none focus:ring-2 focus:ring-ring"></textarea>
@@ -62,15 +62,15 @@ import { DocsService, type DocumentDto } from '../docs.service';
         }
 
         <div class="flex items-center justify-end gap-2 mt-6">
-          <button type="button" (click)="cerrar.emit()"
+          <button type="button" (click)="closed.emit()"
                   class="px-4 py-2 text-xs font-medium text-muted-foreground hover:bg-muted rounded-lg
                          focus:outline-none focus:ring-2 focus:ring-ring" i18n>
             Cancelar
           </button>
-          <button type="button" (click)="guardar()" [disabled]="guardando()"
+          <button type="button" (click)="save()" [disabled]="saving()"
                   class="px-4 py-2 text-xs font-medium text-primary-foreground bg-primary rounded-lg shadow-sm
                          hover:bg-primary/90 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-ring">
-            @if (guardando()) { <ng-container i18n>Guardando…</ng-container> }
+            @if (saving()) { <ng-container i18n>Guardando…</ng-container> }
             @else { <ng-container i18n>Save Template</ng-container> }
           </button>
         </div>
@@ -78,53 +78,53 @@ import { DocsService, type DocumentDto } from '../docs.service';
     </div>
   `,
 })
-export class GuardarPlantillaModalComponent {
+export class SaveTemplateModalComponent {
   private readonly docsService = inject(DocsService);
 
   /** Documento de origen. El modal sólo se muestra cuando hay uno. */
-  readonly documento = input.required<DocumentDto>();
+  readonly document = input.required<DocumentDto>();
 
-  readonly cerrar = output<void>();
+  readonly closed = output<void>();
   /** Se emite tras guardar, para que el padre recargue el listado. */
-  readonly guardado = output<void>();
+  readonly saved = output<void>();
 
-  protected titulo = '';
-  protected descripcion = '';
-  protected readonly guardando = signal(false);
+  protected title = '';
+  protected description = '';
+  protected readonly saving = signal(false);
   protected readonly error = signal('');
 
   constructor() {
     // Los campos se rellenan a partir del documento en cuanto llega, no en el padre:
     // así el modal es utilizable desde cualquier sitio sin preparar nada antes.
     effect(() => {
-      const doc = this.documento();
-      this.titulo = `${doc.title} Template`;
-      this.descripcion = doc.description ?? '';
+      const doc = this.document();
+      this.title = `${doc.title} Template`;
+      this.description = doc.description ?? '';
       this.error.set('');
     });
   }
 
-  protected guardar(): void {
-    if (!this.titulo.trim()) {
+  protected save(): void {
+    if (!this.title.trim()) {
       this.error.set($localize`El título es obligatorio`);
       return;
     }
 
-    this.guardando.set(true);
+    this.saving.set(true);
     this.docsService
-      .saveAsTemplate(this.documento().id, {
-        customTitle: this.titulo,
-        description: this.descripcion,
+      .saveAsTemplate(this.document().id, {
+        customTitle: this.title,
+        description: this.description,
       })
       .subscribe({
         next: () => {
-          this.guardando.set(false);
-          this.guardado.emit();
+          this.saving.set(false);
+          this.saved.emit();
         },
         // El error se muestra dentro del modal en lugar de un `alert`, que bloquea la
         // página y no dice en qué campo está el problema.
         error: () => {
-          this.guardando.set(false);
+          this.saving.set(false);
           this.error.set($localize`No se pudo guardar la plantilla. Inténtalo de nuevo.`);
         },
       });

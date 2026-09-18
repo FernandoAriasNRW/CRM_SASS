@@ -2,8 +2,8 @@ import { Component, computed, input, output, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideCheck, lucideMessageSquare, lucideRotateCcw, lucideTrash2 } from '@ng-icons/lucide';
-import { ComentariosComponent } from '../../shared/ui/comentarios.component';
-import type { AnotacionDto } from './docs.service';
+import { CommentsComponent } from '../../shared/ui/comments.component';
+import type { AnnotationDto } from './docs.service';
 
 /**
  * El panel de comentarios en línea de una página.
@@ -21,9 +21,9 @@ import type { AnotacionDto } from './docs.service';
  * revisión el motivo es justo lo que se busca semanas después.
  */
 @Component({
-  selector: 'app-comentarios-del-documento',
+  selector: 'app-document-comments',
   standalone: true,
-  imports: [DatePipe, NgIcon, ComentariosComponent],
+  imports: [DatePipe, NgIcon, CommentsComponent],
   viewProviders: [provideIcons({ lucideCheck, lucideMessageSquare, lucideRotateCcw, lucideTrash2 })],
   template: `
     <div class="flex flex-col gap-3 min-w-0">
@@ -32,49 +32,49 @@ import type { AnotacionDto } from './docs.service';
           Comentarios
         </span>
 
-        @if (resueltas().length > 0) {
-          <button type="button" (click)="verResueltas.set(!verResueltas())"
+        @if (resolved().length > 0) {
+          <button type="button" (click)="showResolved.set(!showResolved())"
                   class="text-xs text-primary hover:underline focus:outline-none focus:ring-2
                          focus:ring-ring rounded px-1">
-            {{ verResueltas() ? ocultarResueltas : textoDeResueltas() }}
+            {{ showResolved() ? hideResolved : resolvedLabel() }}
           </button>
         }
       </div>
 
-      @if (abiertas().length === 0 && !verResueltas()) {
+      @if (open().length === 0 && !showResolved()) {
         <p class="text-xs text-muted-foreground px-1" i18n>
           Selecciona texto y pulsa el bocadillo para comentar sobre él.
         </p>
       }
 
-      @for (anotacion of visibles(); track anotacion.id) {
+      @for (annotation of visible(); track annotation.id) {
         <article class="rounded-lg border border-border bg-card p-3 flex flex-col gap-2"
-                 [class.opacity-60]="!!anotacion.resolvedAtUtc"
-                 [class.border-primary]="anotacion.id === anotacionActivaId()">
+                 [class.opacity-60]="!!annotation.resolvedAtUtc"
+                 [class.border-primary]="annotation.id === activeAnnotationId()">
 
           <div class="flex items-start justify-between gap-2">
             <!--
               El texto citado sale de la anotación, no del documento. Si alguien reescribe el
               párrafo, el panel sigue pudiendo decir sobre qué se comentó.
             -->
-            <button type="button" (click)="irA.emit(anotacion)"
+            <button type="button" (click)="goTo.emit(annotation)"
                     class="flex-1 min-w-0 text-left focus:outline-none focus:ring-2 focus:ring-ring rounded">
               <p class="text-xs text-muted-foreground border-l-2 border-warning pl-2 line-clamp-3 italic">
-                {{ anotacion.quotedText }}
+                {{ annotation.quotedText }}
               </p>
             </button>
 
             <div class="flex items-center gap-0.5 shrink-0">
-              <button type="button" (click)="resolver.emit(anotacion)"
-                      [title]="anotacion.resolvedAtUtc ? reabrir : darPorResuelta"
-                      [attr.aria-label]="anotacion.resolvedAtUtc ? reabrir : darPorResuelta"
+              <button type="button" (click)="resolve.emit(annotation)"
+                      [title]="annotation.resolvedAtUtc ? reopen : markResolved"
+                      [attr.aria-label]="annotation.resolvedAtUtc ? reopen : markResolved"
                       class="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-accent
                              focus:outline-none focus:ring-2 focus:ring-ring">
-                <ng-icon [name]="anotacion.resolvedAtUtc ? 'lucideRotateCcw' : 'lucideCheck'"
+                <ng-icon [name]="annotation.resolvedAtUtc ? 'lucideRotateCcw' : 'lucideCheck'"
                          class="w-3.5 h-3.5" aria-hidden="true" />
               </button>
 
-              <button type="button" (click)="borrar.emit(anotacion)"
+              <button type="button" (click)="delete.emit(annotation)"
                       i18n-title title="Quitar el comentario"
                       i18n-aria-label aria-label="Quitar el comentario"
                       class="p-1 rounded text-muted-foreground hover:text-destructive hover:bg-accent
@@ -84,45 +84,45 @@ import type { AnotacionDto } from './docs.service';
             </div>
           </div>
 
-          @if (anotacion.resolvedAtUtc; as cuando) {
+          @if (annotation.resolvedAtUtc; as cuando) {
             <p class="text-[11px] text-muted-foreground flex items-center gap-1">
               <ng-icon name="lucideCheck" class="w-3 h-3" aria-hidden="true" />
               <span i18n>Resuelto el {{ cuando | date:'d MMM, HH:mm' }}</span>
             </p>
           }
 
-          <app-comentarios entidad="Anotacion" [entityId]="anotacion.id" />
+          <app-comments entityType="Anotacion" [entityId]="annotation.id" />
         </article>
       }
     </div>
   `
 })
-export class ComentariosDelDocumentoComponent {
-  readonly anotaciones = input.required<readonly AnotacionDto[]>();
+export class DocumentCommentsComponent {
+  readonly annotations = input.required<readonly AnnotationDto[]>();
 
   /** Cuál está señalada ahora mismo en el texto, para destacarla en el panel. */
-  readonly anotacionActivaId = input<string | null>(null);
+  readonly activeAnnotationId = input<string | null>(null);
 
-  readonly irA = output<AnotacionDto>();
-  readonly resolver = output<AnotacionDto>();
-  readonly borrar = output<AnotacionDto>();
+  readonly goTo = output<AnnotationDto>();
+  readonly resolve = output<AnnotationDto>();
+  readonly delete = output<AnnotationDto>();
 
-  protected readonly verResueltas = signal(false);
+  protected readonly showResolved = signal(false);
 
-  protected readonly reabrir = $localize`Volver a abrir`;
-  protected readonly darPorResuelta = $localize`Dar por resuelta`;
-  protected readonly ocultarResueltas = $localize`Ocultar las resueltas`;
+  protected readonly reopen = $localize`Volver a abrir`;
+  protected readonly markResolved = $localize`Dar por resuelta`;
+  protected readonly hideResolved = $localize`Ocultar las resueltas`;
 
-  protected readonly abiertas = computed(() => this.anotaciones().filter(a => !a.resolvedAtUtc));
-  protected readonly resueltas = computed(() => this.anotaciones().filter(a => !!a.resolvedAtUtc));
+  protected readonly open = computed(() => this.annotations().filter(a => !a.resolvedAtUtc));
+  protected readonly resolved = computed(() => this.annotations().filter(a => !!a.resolvedAtUtc));
 
-  protected readonly visibles = computed(() =>
-    this.verResueltas() ? [...this.abiertas(), ...this.resueltas()] : this.abiertas());
+  protected readonly visible = computed(() =>
+    this.showResolved() ? [...this.open(), ...this.resolved()] : this.open());
 
-  protected textoDeResueltas(): string {
-    const cuantas = this.resueltas().length;
-    return cuantas === 1
+  protected resolvedLabel(): string {
+    const count = this.resolved().length;
+    return count === 1
       ? $localize`Ver 1 resuelta`
-      : $localize`Ver ${cuantas} resueltas`;
+      : $localize`Ver ${count} resueltas`;
   }
 }

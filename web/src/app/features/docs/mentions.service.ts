@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
 import { ApiService } from '../../core/api.service';
-import type { CandidatoDeMencion } from './extensions/mencion';
+import type { MentionCandidate } from './extensions/mention';
 
 /** Un documento que menciona algo. Es lo que devuelve el servidor. */
 export interface MentioningDocument {
@@ -22,7 +22,7 @@ export interface MentioningDocument {
  * quiere «lo que sea que se llame así» y no elegir antes el tipo.
  */
 @Injectable({ providedIn: 'root' })
-export class MencionesService {
+export class MentionsService {
   private readonly api = inject(ApiService);
 
   /**
@@ -33,41 +33,41 @@ export class MencionesService {
    */
   private static readonly PORTIPO = 5;
 
-  async buscar(disparador: string, consulta: string): Promise<CandidatoDeMencion[]> {
-    const texto = consulta.trim();
+  async search(trigger: string, query: string): Promise<MentionCandidate[]> {
+    const text = query.trim();
 
     // Sin nada escrito no se busca: `@` recién tecleado dispararía cuatro consultas por cada
     // pulsación mientras la persona todavía está pensando a quién menciona.
-    if (texto.length === 0) return [];
+    if (text.length === 0) return [];
 
-    return disparador === '@' ? this.personas(texto) : this.cosas(texto);
+    return trigger === '@' ? this.people(text) : this.things(text);
   }
 
-  private async personas(texto: string): Promise<CandidatoDeMencion[]> {
+  private async people(text: string): Promise<MentionCandidate[]> {
     // `/users`, no `/auth/users`. La lista de personas del inquilino cuelga de `/users`;
     // `/auth/users` sólo tiene `/me`. Estuvo mal escrito y **el `catch` de más abajo se lo
     // tragaba**: las menciones con `@` no encontraban a nadie nunca, sin dar ningún error. Hay
     // una prueba que fija estas rutas justo por eso.
-    const usuarios = await this.pedir(
-      `/users?pageSize=${MencionesService.PORTIPO}&search=${encodeURIComponent(texto)}`,
+    const users = await this.request(
+      `/users?pageSize=${MentionsService.PORTIPO}&search=${encodeURIComponent(text)}`,
       [] as { id: string; name: string; email: string }[]);
 
-    return usuarios.map(u => ({ id: u.id, etiqueta: u.name, tipo: 'Persona' as const, detalle: u.email }));
+    return users.map(u => ({ id: u.id, etiqueta: u.name, tipo: 'Persona' as const, detail: u.email }));
   }
 
-  private async cosas(texto: string): Promise<CandidatoDeMencion[]> {
+  private async things(text: string): Promise<MentionCandidate[]> {
     // En paralelo: son tres módulos distintos y esperarlos en fila triplicaría lo que tarda el
     // desplegable en aparecer, que es justo lo que hace que se deje de usar.
-    const [tareas, tickets, proyectos] = await Promise.all([
-      this.pedirLista('/tasks', texto),
-      this.pedirLista('/tickets', texto),
-      this.pedirLista('/projects', texto)
+    const [tasks, tickets, projects] = await Promise.all([
+      this.fetchList('/tasks', text),
+      this.fetchList('/tickets', text),
+      this.fetchList('/projects', text)
     ]);
 
     return [
-      ...tareas.map(t => ({ id: t.id, etiqueta: t.titulo, tipo: 'Tarea' as const, detalle: t.detalle })),
-      ...tickets.map(t => ({ id: t.id, etiqueta: t.titulo, tipo: 'Ticket' as const, detalle: t.detalle })),
-      ...proyectos.map(p => ({ id: p.id, etiqueta: p.titulo, tipo: 'Proyecto' as const, detalle: p.detalle }))
+      ...tasks.map(t => ({ id: t.id, etiqueta: t.title, tipo: 'Tarea' as const, detail: t.detail })),
+      ...tickets.map(t => ({ id: t.id, etiqueta: t.title, tipo: 'Ticket' as const, detail: t.detail })),
+      ...projects.map(p => ({ id: p.id, etiqueta: p.title, tipo: 'Proyecto' as const, detail: p.detail }))
     ];
   }
 
@@ -84,18 +84,18 @@ export class MencionesService {
    * insensible a las dos cosas, así que «diseno» encuentra «Diseño» sin que el cliente toque nada.
    * Comprobado contra los datos reales antes de quitar el código que lo hacía a mano.
    */
-  private async pedirLista(ruta: string, texto: string) {
-    const respuesta = await this.pedir(
-      `${ruta}?pageSize=${MencionesService.PORTIPO}&search=${encodeURIComponent(texto)}`,
+  private async fetchList(route: string, text: string) {
+    const response = await this.request(
+      `${route}?pageSize=${MentionsService.PORTIPO}&search=${encodeURIComponent(text)}`,
       {} as { items?: unknown[] });
 
-    const items = (respuesta.items ?? []) as Record<string, unknown>[];
+    const items = (response.items ?? []) as Record<string, unknown>[];
 
     return items
       .map(i => ({
         id: String(i['id'] ?? ''),
-        titulo: String(i['title'] ?? i['name'] ?? ''),
-        detalle: String(i['status'] ?? i['priority'] ?? '')
+        title: String(i['title'] ?? i['name'] ?? ''),
+        detail: String(i['status'] ?? i['priority'] ?? '')
       }))
       .filter(i => i.id);
   }
@@ -114,11 +114,11 @@ export class MencionesService {
    * fallo de red rompiera el desplegable igual —`{}.slice` no existe—, sólo que unas líneas más
    * abajo y con otro error encima.
    */
-  private pedir<T>(ruta: string, vacio: T): Promise<T> {
-    return firstValueFrom(this.api.get<T>(ruta, undefined, { sinAviso: true }))
+  private request<T>(route: string, empty: T): Promise<T> {
+    return firstValueFrom(this.api.get<T>(route, undefined, { sinAviso: true }))
       .catch((error) => {
-        console.warn(`No se pudo buscar en ${ruta}`, error);
-        return vacio;
+        console.warn(`No se pudo buscar en ${route}`, error);
+        return empty;
       });
   }
 
@@ -128,7 +128,7 @@ export class MencionesService {
    * Es la vuelta del diferencial, y la razón de que las menciones se guarden en una tabla: leer el
    * documento no contesta esta pregunta, porque habría que abrir todos.
    */
-  quienMenciona(tipo: string, entidadId: string) {
+  mentioningDocuments(tipo: string, entidadId: string) {
     return this.api.get<MentioningDocument[]>(`/docs/mentions/${tipo}/${entidadId}`);
   }
 }

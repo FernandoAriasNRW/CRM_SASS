@@ -1,6 +1,6 @@
 import type { Editor, Range } from '@tiptap/core';
 import tippy, { type Instance } from 'tippy.js';
-import { type ComandoDelEditor, type PedirUrl, comandosQueCasan } from './comandos-del-editor';
+import { type EditorCommand, type PromptUrl, matchingCommands } from './editor-commands';
 
 /**
  * Los comandos que casan con lo escrito detrás de la barra.
@@ -9,11 +9,11 @@ import { type ComandoDelEditor, type PedirUrl, comandosQueCasan } from './comand
  * `comandos-del-editor.ts`, que es donde se puede probar sin montar un editor.
  */
 export const getSuggestionItems = ({ query, editor }: { query: string; editor: Editor }) =>
-  comandosQueCasan(query, { dentroDeColumnas: editor.isActive('columnas') });
+  matchingCommands(query, { insideColumns: editor.isActive('columnas') });
 
-interface PropsDeSugerencia {
-  items: ComandoDelEditor[];
-  command: (comando: ComandoDelEditor) => void;
+interface SuggestionProps {
+  items: EditorCommand[];
+  command: (command: EditorCommand) => void;
   clientRect?: (() => DOMRect | null) | null;
   editor?: Editor;
   range?: Range;
@@ -34,119 +34,119 @@ interface PropsDeSugerencia {
  * Se construye con DOM a mano porque TipTap espera un renderizador síncrono y en Angular no hay un
  * equivalente cómodo a `ReactRenderer`. Es la misma técnica que usa `mencion.ts`.
  */
-export function renderItems(pedirUrl: PedirUrl) {
+export function renderItems(promptUrl: PromptUrl) {
   return () => {
-    let caja: HTMLElement;
+    let box: HTMLElement;
     let popup: Instance[] | undefined;
-    let comandos: ComandoDelEditor[] = [];
-    let seleccionado = 0;
-    let alElegir: ((comando: ComandoDelEditor) => void) | null = null;
+    let commands: EditorCommand[] = [];
+    let selected = 0;
+    let onSelect: ((command: EditorCommand) => void) | null = null;
 
-    const elegir = (comando: ComandoDelEditor) => alElegir?.(comando);
+    const choose = (command: EditorCommand) => onSelect?.(command);
 
-    const pintar = () => {
-      caja.innerHTML = '';
+    const render = () => {
+      box.innerHTML = '';
 
-      if (comandos.length === 0) {
-        const vacio = document.createElement('div');
-        vacio.className = 'px-2 py-3 text-sm text-muted-foreground text-center';
-        vacio.textContent = $localize`Ningún comando coincide`;
-        caja.appendChild(vacio);
+      if (commands.length === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'px-2 py-3 text-sm text-muted-foreground text-center';
+        empty.textContent = $localize`Ningún comando coincide`;
+        box.appendChild(empty);
         return;
       }
 
-      let grupoPintado: string | null = null;
+      let renderedGroup: string | null = null;
 
-      comandos.forEach((comando, i) => {
+      commands.forEach((command, i) => {
         // El grupo se pinta al cambiar, no una vez por comando: al filtrar, los grupos que se
         // quedan sin nada desaparecen solos.
-        if (comando.grupo !== grupoPintado) {
-          grupoPintado = comando.grupo;
+        if (command.group !== renderedGroup) {
+          renderedGroup = command.group;
 
-          const titulo = document.createElement('div');
-          titulo.className =
+          const title = document.createElement('div');
+          title.className =
             'px-2 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground';
-          titulo.textContent = comando.grupo;
-          caja.appendChild(titulo);
+          title.textContent = command.group;
+          box.appendChild(title);
         }
 
-        const boton = document.createElement('button');
-        boton.type = 'button';
-        boton.setAttribute('role', 'option');
-        boton.setAttribute('aria-selected', String(i === seleccionado));
-        boton.className =
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.setAttribute('role', 'option');
+        button.setAttribute('aria-selected', String(i === selected));
+        button.className =
           'w-full text-left px-2 py-1.5 rounded flex items-center gap-2.5 transition-colors ' +
-          (i === seleccionado ? 'bg-secondary' : 'bg-transparent');
+          (i === selected ? 'bg-secondary' : 'bg-transparent');
 
-        const icono = document.createElement('span');
-        icono.className =
+        const icon = document.createElement('span');
+        icon.className =
           'w-7 h-7 shrink-0 rounded border border-border bg-card flex items-center justify-center '
           + 'text-muted-foreground [&>svg]:w-4 [&>svg]:h-4';
         // La variable la define `ng-icon` en sus propios elementos; aquí el SVG va suelto, así que
         // sin esto el trazo sale con el grosor que herede y los iconos se ven descuadrados.
-        icono.style.setProperty('--ng-icon__stroke-width', '2');
-        icono.innerHTML = comando.icono;
-        boton.appendChild(icono);
+        icon.style.setProperty('--ng-icon__stroke-width', '2');
+        icon.innerHTML = command.icon;
+        button.appendChild(icon);
 
-        const textos = document.createElement('span');
-        textos.className = 'flex flex-col min-w-0';
+        const texts = document.createElement('span');
+        texts.className = 'flex flex-col min-w-0';
 
-        const titulo = document.createElement('span');
-        titulo.className = 'text-sm text-foreground truncate';
-        titulo.textContent = comando.titulo;
-        textos.appendChild(titulo);
+        const title = document.createElement('span');
+        title.className = 'text-sm text-foreground truncate';
+        title.textContent = command.title;
+        texts.appendChild(title);
 
-        const descripcion = document.createElement('span');
-        descripcion.className = 'text-xs text-muted-foreground truncate';
-        descripcion.textContent = comando.descripcion;
-        textos.appendChild(descripcion);
+        const description = document.createElement('span');
+        description.className = 'text-xs text-muted-foreground truncate';
+        description.textContent = command.description;
+        texts.appendChild(description);
 
-        boton.appendChild(textos);
+        button.appendChild(texts);
 
-        boton.addEventListener('mousedown', (e) => {
+        button.addEventListener('mousedown', (e) => {
           // `mousedown` y no `click`: al pulsar, el editor pierde el foco antes de que llegue el
           // `click`, y el comando se aplicaba en el sitio equivocado o no se aplicaba.
           e.preventDefault();
-          elegir(comando);
+          choose(command);
         });
 
-        boton.addEventListener('mouseenter', () => {
-          seleccionado = i;
-          pintar();
+        button.addEventListener('mouseenter', () => {
+          selected = i;
+          render();
         });
 
-        caja.appendChild(boton);
+        box.appendChild(button);
       });
 
       // Mantener a la vista el resaltado al recorrer con las flechas. Sin esto, la selección se
       // va por debajo del borde y parece que el menú ha dejado de responder.
-      caja.querySelector('[aria-selected="true"]')?.scrollIntoView({ block: 'nearest' });
+      box.querySelector('[aria-selected="true"]')?.scrollIntoView({ block: 'nearest' });
     };
 
-    const mover = (paso: number) => {
-      if (comandos.length === 0) return;
-      seleccionado = (seleccionado + paso + comandos.length) % comandos.length;
-      pintar();
+    const move = (step: number) => {
+      if (commands.length === 0) return;
+      selected = (selected + step + commands.length) % commands.length;
+      render();
     };
 
     return {
-      onStart: (props: PropsDeSugerencia) => {
-        comandos = props.items;
-        seleccionado = 0;
-        alElegir = props.command;
+      onStart: (props: SuggestionProps) => {
+        commands = props.items;
+        selected = 0;
+        onSelect = props.command;
 
-        caja = document.createElement('div');
-        caja.setAttribute('role', 'listbox');
-        caja.setAttribute('aria-label', $localize`Comandos del editor`);
-        caja.className =
+        box = document.createElement('div');
+        box.setAttribute('role', 'listbox');
+        box.setAttribute('aria-label', $localize`Comandos del editor`);
+        box.className =
           'bg-card border border-border rounded-lg shadow-lg p-1 w-72 max-h-80 overflow-y-auto';
 
-        pintar();
+        render();
 
         popup = tippy('body', {
           getReferenceClientRect: props.clientRect as () => DOMRect,
           appendTo: () => document.body,
-          content: caja,
+          content: box,
           showOnCreate: true,
           interactive: true,
           trigger: 'manual',
@@ -154,30 +154,30 @@ export function renderItems(pedirUrl: PedirUrl) {
         });
       },
 
-      onUpdate: (props: PropsDeSugerencia) => {
-        comandos = props.items;
-        seleccionado = 0;
-        alElegir = props.command;
-        pintar();
+      onUpdate: (props: SuggestionProps) => {
+        commands = props.items;
+        selected = 0;
+        onSelect = props.command;
+        render();
 
         popup?.[0]?.setProps({ getReferenceClientRect: props.clientRect as () => DOMRect });
       },
 
       onKeyDown: (props: { event: KeyboardEvent }) => {
-        if (props.event.key === 'ArrowDown') { mover(1); return true; }
-        if (props.event.key === 'ArrowUp') { mover(-1); return true; }
+        if (props.event.key === 'ArrowDown') { move(1); return true; }
+        if (props.event.key === 'ArrowUp') { move(-1); return true; }
 
         // Tabulador también, porque en un desplegable de autocompletado es lo que mucha gente
         // pulsa por costumbre.
         if (props.event.key === 'Tab') {
-          mover(props.event.shiftKey ? -1 : 1);
+          move(props.event.shiftKey ? -1 : 1);
           return true;
         }
 
         if (props.event.key === 'Enter') {
-          const elegido = comandos[seleccionado];
-          if (!elegido) return false;
-          elegir(elegido);
+          const chosen = commands[selected];
+          if (!chosen) return false;
+          choose(chosen);
           return true;
         }
 
@@ -197,4 +197,4 @@ export function renderItems(pedirUrl: PedirUrl) {
   };
 }
 
-export type { PedirUrl };
+export type { PromptUrl };

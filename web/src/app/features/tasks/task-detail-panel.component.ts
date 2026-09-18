@@ -24,8 +24,8 @@ import { TASK_TAGS, type Tag } from '../../shared/utils/tags';
 import { UsersService, type TenantUser } from '../../core/users.service';
 import { ClickableDirective } from '../../shared/directives/clickable.directive';
 import { CustomFieldsFormComponent } from '../../shared/ui/custom-fields-form.component';
-import { ComentariosComponent } from '../../shared/ui/comentarios.component';
-import { MencionadoEnComponent } from '../../shared/ui/mencionado-en.component';
+import { CommentsComponent } from '../../shared/ui/comments.component';
+import { MentionedInComponent } from '../../shared/ui/mentioned-in.component';
 import { TASK_STATUSES, taskStatusBadge, taskStatusLabel } from './task-vocabulary';
 
 /** Los dos estados entre los que alterna el check de una subtarea. Los define el backend. */
@@ -35,7 +35,7 @@ const INITIAL_STATUS = 'To Do';
 @Component({
   selector: 'app-task-detail-panel',
   standalone: true,
-  imports: [MencionadoEnComponent, ClickableDirective, FormsModule, DatePipe, BadgeComponent, AvatarComponent, NgIconComponent, SkeletonComponent, DrawerComponent, CustomFieldsFormComponent, ComentariosComponent],
+  imports: [MentionedInComponent, ClickableDirective, FormsModule, DatePipe, BadgeComponent, AvatarComponent, NgIconComponent, SkeletonComponent, DrawerComponent, CustomFieldsFormComponent, CommentsComponent],
   viewProviders: [provideIcons({
     lucideX, lucideCheck, lucideCalendar, lucideClock, lucideUser,
     lucideTag, lucideFlag, lucideMessageSquare, lucidePaperclip,

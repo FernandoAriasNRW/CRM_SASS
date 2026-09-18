@@ -45,7 +45,7 @@ export interface UpdatePageRequest {
 }
 
 /** Una anotación: dónde está pegado un comentario en línea. El hilo se pide a `/comments`. */
-export interface AnotacionDto {
+export interface AnnotationDto {
   id: string;
   documentId: string;
   pageId: string;
@@ -83,7 +83,7 @@ export interface CreateFromTemplateRequest {
 }
 
 /** Cuánto se ha usado una plantilla en este inquilino. Ver `plantillas.ts`. */
-export interface UsoDePlantillaDto {
+export interface TemplateUsageDto {
   key: string;
   count: number;
   lastUsedAtUtc: string;
@@ -100,7 +100,7 @@ export interface ImportDocumentRequest {
 })
 export class DocsService {
   private api = inject(ApiService);
-  private idioma = inject(IdiomaService);
+  private language = inject(IdiomaService);
   private endpoint = '/docs';
 
   getDocuments(): Observable<DocumentDto[]> {
@@ -108,7 +108,7 @@ export class DocsService {
   }
 
   createDocument(req: CreateDocumentRequest): Observable<string> {
-    return this.api.post<string>(this.endpoint, req).pipe(map(idLimpio));
+    return this.api.post<string>(this.endpoint, req).pipe(map(cleanId));
   }
 
   getPages(documentId: string): Observable<PageDto[]> {
@@ -138,7 +138,7 @@ export class DocsService {
    * sesión: el endpoint la exige, así que el botón devolvía 401 siempre. `descargarFichero` ya
    * hacía esto bien para los informes; aquí sólo se reutiliza.
    */
-  exportarHtml(documentId: string): Observable<HttpResponse<Blob>> {
+  exportHtml(documentId: string): Observable<HttpResponse<Blob>> {
     return this.api.descargarFichero(`${this.endpoint}/${documentId}/export`);
   }
 
@@ -156,7 +156,7 @@ export class DocsService {
 
   createFromTemplate(req: CreateFromTemplateRequest): Observable<string> {
     return this.api.post<string>(
-      `${this.endpoint}/from-template`, { ...req, language: this.idioma.actual }).pipe(map(idLimpio));
+      `${this.endpoint}/from-template`, { ...req, language: this.language.actual }).pipe(map(cleanId));
   }
 
   /**
@@ -165,39 +165,39 @@ export class DocsService {
    * `POST /docs/upload` existía desde el principio con su handler y su servicio de almacenamiento,
    * y **no lo llamaba nadie**: este método no existía.
    */
-  subirFichero(fichero: File): Observable<{ url: string }> {
-    const cuerpo = new FormData();
-    cuerpo.append('file', fichero, fichero.name);
+  uploadFile(file: File): Observable<{ url: string }> {
+    const body = new FormData();
+    body.append('file', file, file.name);
 
-    return this.api.post<{ url: string }>(`${this.endpoint}/upload`, cuerpo).pipe(
+    return this.api.post<{ url: string }>(`${this.endpoint}/upload`, body).pipe(
       // La dirección se completa aquí, donde entra el dato, y no en cada sitio que la use: lo que
       // se guarda dentro del documento tiene que poder abrirse desde cualquier parte.
-      map(respuesta => ({ url: this.api.urlDeFichero(respuesta.url) })));
+      map(response => ({ url: this.api.urlDeFichero(response.url) })));
   }
 
-  getAnotaciones(pageId: string): Observable<AnotacionDto[]> {
-    return this.api.get<AnotacionDto[]>(`${this.endpoint}/pages/${pageId}/annotations`);
+  getPageAnnotations(pageId: string): Observable<AnnotationDto[]> {
+    return this.api.get<AnnotationDto[]>(`${this.endpoint}/pages/${pageId}/annotations`);
   }
 
-  crearAnotacion(pageId: string, textoCitado: string): Observable<string> {
-    return this.api.post<string>(`${this.endpoint}/pages/${pageId}/annotations`, { quotedText: textoCitado })
-      .pipe(map(idLimpio));
+  createAnnotation(pageId: string, quotedText: string): Observable<string> {
+    return this.api.post<string>(`${this.endpoint}/pages/${pageId}/annotations`, { quotedText: quotedText })
+      .pipe(map(cleanId));
   }
 
-  resolverAnotacion(anotacionId: string, resuelta: boolean): Observable<void> {
-    return this.api.put<void>(`${this.endpoint}/annotations/${anotacionId}/resolve`, { isResolved: resuelta });
+  resolveAnnotation(anotacionId: string, isResolved: boolean): Observable<void> {
+    return this.api.put<void>(`${this.endpoint}/annotations/${anotacionId}/resolve`, { isResolved: isResolved });
   }
 
-  borrarAnotacion(anotacionId: string): Observable<void> {
+  deleteAnnotation(anotacionId: string): Observable<void> {
     return this.api.delete<void>(`${this.endpoint}/annotations/${anotacionId}`);
   }
 
-  getUsosDePlantilla(): Observable<UsoDePlantillaDto[]> {
-    return this.api.get<UsoDePlantillaDto[]>(`${this.endpoint}/templates/usage`);
+  getTemplateUsages(): Observable<TemplateUsageDto[]> {
+    return this.api.get<TemplateUsageDto[]>(`${this.endpoint}/templates/usage`);
   }
 
   importDocument(req: ImportDocumentRequest): Observable<string> {
-    return this.api.post<string>(`${this.endpoint}/import`, req).pipe(map(idLimpio));
+    return this.api.post<string>(`${this.endpoint}/import`, req).pipe(map(cleanId));
   }
 }
 
@@ -211,10 +211,10 @@ export class DocsService {
  * Lo correcto sería que la API devolviera JSON bien formado. Mientras no lo haga, este es
  * el único sitio que hay que cambiar.
  */
-function idLimpio(valor: unknown): string {
-  if (typeof valor === 'string') {
-    return valor.replace(/["']/g, '');
+function cleanId(value: unknown): string {
+  if (typeof value === 'string') {
+    return value.replace(/["']/g, '');
   }
-  const obj = valor as { value?: string; id?: string } | null;
-  return obj?.value ?? obj?.id ?? String(valor);
+  const obj = value as { value?: string; id?: string } | null;
+  return obj?.value ?? obj?.id ?? String(value);
 }

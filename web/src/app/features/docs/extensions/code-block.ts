@@ -8,19 +8,19 @@ import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight';
  * producto de este tipo; el resto se sigue coloreando si el bloque ya venía con su lenguaje
  * puesto, sólo que no se puede elegir desde aquí.
  */
-export const LENGUAJES = [
-  { valor: 'typescript', nombre: 'TypeScript' },
-  { valor: 'javascript', nombre: 'JavaScript' },
-  { valor: 'csharp', nombre: 'C#' },
-  { valor: 'sql', nombre: 'SQL' },
-  { valor: 'json', nombre: 'JSON' },
-  { valor: 'xml', nombre: 'HTML / XML' },
-  { valor: 'css', nombre: 'CSS' },
-  { valor: 'bash', nombre: 'Shell' },
-  { valor: 'yaml', nombre: 'YAML' },
-  { valor: 'python', nombre: 'Python' },
-  { valor: 'java', nombre: 'Java' },
-  { valor: 'markdown', nombre: 'Markdown' }
+export const LANGUAGES = [
+  { value: 'typescript', name: 'TypeScript' },
+  { value: 'javascript', name: 'JavaScript' },
+  { value: 'csharp', name: 'C#' },
+  { value: 'sql', name: 'SQL' },
+  { value: 'json', name: 'JSON' },
+  { value: 'xml', name: 'HTML / XML' },
+  { value: 'css', name: 'CSS' },
+  { value: 'bash', name: 'Shell' },
+  { value: 'yaml', name: 'YAML' },
+  { value: 'python', name: 'Python' },
+  { value: 'java', name: 'Java' },
+  { value: 'markdown', name: 'Markdown' }
 ] as const;
 
 /**
@@ -34,27 +34,27 @@ export const LENGUAJES = [
  * `<code>`: es lo que le dice a ProseMirror dónde va el texto editable, y sin eso el desplegable
  * formaría parte del contenido y se podría borrar escribiendo.
  */
-export const BloqueDeCodigo = CodeBlockLowlight.extend({
+export const CodeBlock = CodeBlockLowlight.extend({
   addNodeView() {
     return ({ node, editor, getPos }) => {
-      const contenedor = document.createElement('div');
-      contenedor.className = 'bloque-de-codigo';
+      const container = document.createElement('div');
+      container.className = 'bloque-de-codigo';
 
       const selector = document.createElement('select');
       selector.className = 'bloque-de-codigo__lenguaje';
       selector.setAttribute('aria-label', $localize`Lenguaje del bloque de código`);
       selector.contentEditable = 'false';
 
-      const automatico = document.createElement('option');
-      automatico.value = '';
-      automatico.textContent = $localize`Automático`;
-      selector.appendChild(automatico);
+      const auto = document.createElement('option');
+      auto.value = '';
+      auto.textContent = $localize`Automático`;
+      selector.appendChild(auto);
 
-      for (const lenguaje of LENGUAJES) {
-        const opcion = document.createElement('option');
-        opcion.value = lenguaje.valor;
-        opcion.textContent = lenguaje.nombre;
-        selector.appendChild(opcion);
+      for (const language of LANGUAGES) {
+        const option = document.createElement('option');
+        option.value = language.value;
+        option.textContent = language.name;
+        selector.appendChild(option);
       }
 
       selector.value = node.attrs['language'] ?? '';
@@ -62,8 +62,8 @@ export const BloqueDeCodigo = CodeBlockLowlight.extend({
       selector.addEventListener('change', () => {
         if (!editor.isEditable) return;
 
-        const posicion = typeof getPos === 'function' ? getPos() : null;
-        if (posicion === null || posicion === undefined) return;
+        const position = typeof getPos === 'function' ? getPos() : null;
+        if (position === null || position === undefined) return;
 
         // El cursor entra en el bloque **antes** de cambiar el atributo, y no es por comodidad.
         //
@@ -73,9 +73,9 @@ export const BloqueDeCodigo = CodeBlockLowlight.extend({
         // código se queda coloreado como estaba hasta que alguien escribe una letra.
         editor.chain()
           .focus()
-          .setTextSelection(posicion + 1)
+          .setTextSelection(position + 1)
           .command(({ tr }) => {
-            tr.setNodeAttribute(posicion, 'language', selector.value || null);
+            tr.setNodeAttribute(position, 'language', selector.value || null);
             return true;
           })
           .run();
@@ -89,16 +89,16 @@ export const BloqueDeCodigo = CodeBlockLowlight.extend({
       const code = document.createElement('code');
       pre.appendChild(code);
 
-      contenedor.appendChild(selector);
-      contenedor.appendChild(pre);
+      container.appendChild(selector);
+      container.appendChild(pre);
 
       return {
-        dom: contenedor,
+        dom: container,
         contentDOM: code,
 
-        update: (nuevo) => {
-          if (nuevo.type.name !== node.type.name) return false;
-          selector.value = nuevo.attrs['language'] ?? '';
+        update: (updated) => {
+          if (updated.type.name !== node.type.name) return false;
+          selector.value = updated.attrs['language'] ?? '';
           return true;
         },
 

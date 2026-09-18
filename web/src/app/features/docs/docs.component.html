@@ -30,7 +30,7 @@
         <input 
           type="text" 
           [ngModel]="activePage()?.title" 
-          (ngModelChange)="renombrarPagina($event)"
+          (ngModelChange)="renamePage($event)"
           i18n-aria-label aria-label="Título de la página"
           class="bg-transparent border-none outline-none text-foreground font-semibold focus:ring-1 focus:ring-primary/50 rounded px-1 -ml-1 w-48"
           i18n-placeholder placeholder="Título de la página">
@@ -38,41 +38,41 @@
 
       <!-- Right Actions -->
       <div class="flex items-center gap-3">
-        @if (subiendo()) {
+        @if (uploading()) {
           <span class="text-xs text-muted-foreground flex items-center gap-1.5">
             <ng-icon name="lucideUpload" class="w-3.5 h-3.5"></ng-icon>
             <span i18n>Subiendo…</span>
           </span>
         }
 
-        <span class="text-xs text-muted-foreground tabular-nums" i18n>{palabras(), plural, =0 {Sin palabras} =1 {1 palabra} other {{{ palabras() }} palabras}}</span>
+        <span class="text-xs text-muted-foreground tabular-nums" i18n>{words(), plural, =0 {Sin palabras} =1 {1 palabra} other {{{ words() }} palabras}}</span>
 
         <!--
           El estado real del guardado. Antes aquí ponía «Saved just now», una cadena escrita a
           mano que se pintaba siempre, dijera lo que dijera el servidor, encima de un guardado que
           se suscribía sin manejador de error.
         -->
-        @switch (estadoDeGuardado()) {
-          @case ('guardando') {
+        @switch (saveState()) {
+          @case ('saving') {
             <span class="text-xs text-muted-foreground flex items-center gap-1.5">
               <ng-icon name="lucideClock" class="w-3.5 h-3.5"></ng-icon>
               <span i18n>Guardando…</span>
             </span>
           }
-          @case ('pendiente') {
+          @case ('pending') {
             <span class="text-xs text-muted-foreground flex items-center gap-1.5">
               <ng-icon name="lucideClock" class="w-3.5 h-3.5"></ng-icon>
               <span i18n>Cambios sin guardar</span>
             </span>
           }
-          @case ('guardado') {
+          @case ('saved') {
             <span class="text-xs text-muted-foreground flex items-center gap-1.5">
               <ng-icon name="lucideCheck" class="w-3.5 h-3.5"></ng-icon>
-              <span i18n>Guardado a las {{ guardadoA() | date:'HH:mm' }}</span>
+              <span i18n>Guardado a las {{ savedAt() | date:'HH:mm' }}</span>
             </span>
           }
           @case ('error') {
-            <button type="button" (click)="reintentarGuardado()"
+            <button type="button" (click)="retrySave()"
                     class="text-xs font-medium text-destructive flex items-center gap-1.5 px-2 py-1
                            rounded hover:bg-destructive/10 focus:outline-none focus:ring-2 focus:ring-ring">
               <ng-icon name="lucideTriangleAlert" class="w-3.5 h-3.5"></ng-icon>
@@ -88,12 +88,12 @@
           <span i18n>Guardar como plantilla</span>
         </button>
         <app-emoji-picker (emojiSelected)="insertEmoji($event)"></app-emoji-picker>
-        <button [disabled]="exportando()"
+        <button [disabled]="exporting()"
                 class="text-xs font-medium text-muted-foreground bg-muted hover:bg-secondary px-3 py-1.5 rounded-md transition-colors disabled:opacity-50 disabled:pointer-events-none"
                 (click)="exportHtml()" i18n>
           Exportar HTML
         </button>
-        <button [disabled]="exportando()"
+        <button [disabled]="exporting()"
                 class="text-xs font-medium text-white bg-primary hover:bg-primary px-3 py-1.5 rounded-md transition-colors disabled:opacity-50 disabled:pointer-events-none"
                 (click)="exportPdf()" i18n>
           Exportar PDF
@@ -114,13 +114,13 @@
     <div class="flex-1 flex min-h-0 overflow-hidden">
 
       <aside class="hidden lg:block w-60 shrink-0 border-r border-border overflow-y-auto p-3">
-        <app-arbol-de-paginas
-          [paginas]="paginasDelDocumento()"
-          [paginaActivaId]="activePage()?.id ?? null"
-          (abrir)="selectPage($event)"
-          (crear)="crearPaginaDesdeElArbol($event)"
-          (mover)="moverPagina($event)"
-          (borrar)="borrarPagina($event)" />
+        <app-page-tree
+          [pages]="documentPages()"
+          [activePageId]="activePage()?.id ?? null"
+          (open)="selectPage($event)"
+          (create)="createPageFromTree($event)"
+          (move)="movePage($event)"
+          (delete)="trashPage($event)" />
       </aside>
 
       <div class="flex-1 min-w-0 overflow-y-auto">
@@ -128,7 +128,7 @@
           <input 
             type="text" 
             [ngModel]="activeDocument()?.title" 
-            (ngModelChange)="renombrarDocumento($event)" 
+            (ngModelChange)="renameDocument($event)" 
             i18n-aria-label aria-label="Título del documento"
             class="w-full text-4xl font-bold bg-transparent outline-none text-foreground placeholder-zinc-300 dark:placeholder-zinc-700 tracking-tight" 
             i18n-placeholder placeholder="Título del documento">
@@ -150,46 +150,46 @@
             <div class="sticky top-4 flex flex-col gap-3">
               <div role="tablist" class="flex items-center gap-1 border-b border-border">
                 <button type="button" role="tab"
-                        [attr.aria-selected]="panelLateral() === 'esquema'"
-                        (click)="panelLateral.set('esquema')"
+                        [attr.aria-selected]="sidePanel() === 'outline'"
+                        (click)="sidePanel.set('outline')"
                         class="px-2 py-1.5 text-xs font-medium border-b-2 -mb-px transition-colors
                                focus:outline-none focus:ring-2 focus:ring-ring rounded-t"
-                        [class.border-primary]="panelLateral() === 'esquema'"
-                        [class.text-foreground]="panelLateral() === 'esquema'"
-                        [class.border-transparent]="panelLateral() !== 'esquema'"
-                        [class.text-muted-foreground]="panelLateral() !== 'esquema'"
+                        [class.border-primary]="sidePanel() === 'outline'"
+                        [class.text-foreground]="sidePanel() === 'outline'"
+                        [class.border-transparent]="sidePanel() !== 'outline'"
+                        [class.text-muted-foreground]="sidePanel() !== 'outline'"
                         i18n>
                   Índice
                 </button>
 
                 <button type="button" role="tab"
-                        [attr.aria-selected]="panelLateral() === 'comentarios'"
-                        (click)="panelLateral.set('comentarios')"
+                        [attr.aria-selected]="sidePanel() === 'comments'"
+                        (click)="sidePanel.set('comments')"
                         class="px-2 py-1.5 text-xs font-medium border-b-2 -mb-px transition-colors
                                flex items-center gap-1.5
                                focus:outline-none focus:ring-2 focus:ring-ring rounded-t"
-                        [class.border-primary]="panelLateral() === 'comentarios'"
-                        [class.text-foreground]="panelLateral() === 'comentarios'"
-                        [class.border-transparent]="panelLateral() !== 'comentarios'"
-                        [class.text-muted-foreground]="panelLateral() !== 'comentarios'">
+                        [class.border-primary]="sidePanel() === 'comments'"
+                        [class.text-foreground]="sidePanel() === 'comments'"
+                        [class.border-transparent]="sidePanel() !== 'comments'"
+                        [class.text-muted-foreground]="sidePanel() !== 'comments'">
                   <span i18n>Comentarios</span>
-                  @if (comentariosAbiertos() > 0) {
+                  @if (openComments() > 0) {
                     <span class="px-1.5 rounded-full bg-primary text-primary-foreground text-[10px] tabular-nums">
-                      {{ comentariosAbiertos() }}
+                      {{ openComments() }}
                     </span>
                   }
                 </button>
               </div>
 
-              @if (panelLateral() === 'esquema') {
-                <app-esquema-del-documento [editor]="editor" [version]="versionDelEsquema()" />
+              @if (sidePanel() === 'outline') {
+                <app-document-outline [editor]="editor" [version]="outlineVersion()" />
               } @else {
-                <app-comentarios-del-documento
-                  [anotaciones]="anotaciones()"
-                  [anotacionActivaId]="anotacionActivaId()"
-                  (irA)="irAAnotacion($event)"
-                  (resolver)="resolverAnotacion($event)"
-                  (borrar)="borrarAnotacion($event)" />
+                <app-document-comments
+                  [annotations]="annotations()"
+                  [activeAnnotationId]="activeAnnotationId()"
+                  (goTo)="goToAnnotation($event)"
+                  (resolve)="resolveAnnotation($event)"
+                  (delete)="deleteAnnotation($event)" />
               }
             </div>
           </aside>
@@ -276,12 +276,12 @@
                       Plantillas
                     </span>
 
-                    @for (plantilla of plantillasDestacadas(); track plantilla.clave) {
-                      <button (click)="usarPlantilla(plantilla, $event)" class="w-full flex items-center gap-3 px-4 py-2 text-muted-foreground dark:text-foreground hover:bg-muted transition-colors text-left">
-                        <div class="w-6 h-6 rounded {{ plantilla.iconoFondo }} flex items-center justify-center text-xs">
-                          <ng-icon [name]="plantilla.icono" class="w-3.5 h-3.5"></ng-icon>
+                    @for (template of featuredTemplates(); track template.key) {
+                      <button (click)="useTemplate(template, $event)" class="w-full flex items-center gap-3 px-4 py-2 text-muted-foreground dark:text-foreground hover:bg-muted transition-colors text-left">
+                        <div class="w-6 h-6 rounded {{ template.iconBackground }} flex items-center justify-center text-xs">
+                          <ng-icon [name]="template.icon" class="w-3.5 h-3.5"></ng-icon>
                         </div>
-                        <span class="truncate">{{ plantilla.titulo }}</span>
+                        <span class="truncate">{{ template.title }}</span>
                       </button>
                     }
 
@@ -307,7 +307,7 @@
           <div class="flex items-center justify-between mb-3">
             <h2 class="text-sm font-semibold text-muted-foreground" i18n>Plantillas</h2>
 
-            @if (hayMasPlantillas()) {
+            @if (hasMoreTemplates()) {
               <button type="button" (click)="isTemplatePickerOpen.set(true)"
                       class="inline-flex items-center gap-1.5 text-xs font-medium text-primary
                              hover:underline focus:outline-none focus:ring-2 focus:ring-ring rounded">
@@ -318,20 +318,20 @@
           </div>
 
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            @for (plantilla of plantillasDestacadas(); track plantilla.clave) {
+            @for (template of featuredTemplates(); track template.key) {
               <div appClickable
-                (click)="usarPlantilla(plantilla)"
-                class="group relative border {{ plantilla.borde }} rounded-2xl p-4 bg-gradient-to-br {{ plantilla.degradado }} bg-white dark:bg-muted shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer">
+                (click)="useTemplate(template)"
+                class="group relative border {{ template.border }} rounded-2xl p-4 bg-gradient-to-br {{ template.gradient }} bg-white dark:bg-muted shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer">
 
                 <div class="flex items-center gap-3 mb-2">
-                  <div class="w-10 h-10 rounded-xl {{ plantilla.iconoFondo }} flex items-center justify-center flex-shrink-0 shadow-sm">
-                    <ng-icon [name]="plantilla.icono" class="w-5 h-5"></ng-icon>
+                  <div class="w-10 h-10 rounded-xl {{ template.iconBackground }} flex items-center justify-center flex-shrink-0 shadow-sm">
+                    <ng-icon [name]="template.icon" class="w-5 h-5"></ng-icon>
                   </div>
                   <div class="truncate">
-                    <h3 class="font-semibold text-foreground text-sm truncate">{{ plantilla.titulo }}</h3>
+                    <h3 class="font-semibold text-foreground text-sm truncate">{{ template.title }}</h3>
                   </div>
                 </div>
-                <p class="text-xs text-muted-foreground line-clamp-2">{{ plantilla.descripcion }}</p>
+                <p class="text-xs text-muted-foreground line-clamp-2">{{ template.description }}</p>
               </div>
             }
           </div>
@@ -501,30 +501,30 @@
 
 <!-- Save as Template Modal -->
 @if (isSaveAsTemplateModalOpen() && selectedDocForTemplate(); as doc) {
-  <app-guardar-plantilla-modal
-    [documento]="doc"
-    (cerrar)="isSaveAsTemplateModalOpen.set(false)"
-    (guardado)="alGuardarPlantilla()" />
+  <app-save-template-modal
+    [document]="doc"
+    (closed)="isSaveAsTemplateModalOpen.set(false)"
+    (saved)="onTemplateSaved()" />
 }
 
 @if (isImportModalOpen()) {
-  <app-importar-documento-modal
-    (cerrar)="isImportModalOpen.set(false)"
-    (importado)="alImportar($event)" />
+  <app-import-document-modal
+    (closed)="isImportModalOpen.set(false)"
+    (imported)="onImported($event)" />
 }
 
-@if (urlPedida(); as clase) {
-  <app-pedir-url-modal
-    [clase]="clase"
-    (cancelar)="responderUrl(null)"
-    (aceptado)="responderUrl($event)" />
+@if (requestedUrl(); as kind) {
+  <app-prompt-url-modal
+    [kind]="kind"
+    (cancelled)="answerUrl(null)"
+    (accepted)="answerUrl($event)" />
 }
 
-<app-plantillas-drawer
-  [abierto]="isTemplatePickerOpen()"
-  [plantillas]="plantillas()"
-  (cerrar)="isTemplatePickerOpen.set(false)"
-  (elegir)="usarPlantilla($event)" />
+<app-templates-drawer
+  [isOpen]="isTemplatePickerOpen()"
+  [templates]="templates()"
+  (closed)="isTemplatePickerOpen.set(false)"
+  (choose)="useTemplate($event)" />
 
 <!--
   La barra que sale al seleccionar texto.
@@ -606,7 +606,7 @@
       Enlazar y quitar el enlace son dos botones y no uno que alterna: con uno solo hay que
       adivinar qué va a hacer, y quitar un enlace sin querer obliga a volver a escribirlo.
     -->
-    <button type="button" (click)="enlazarSeleccion()"
+    <button type="button" (click)="linkSelection()"
             [class.bg-secondary]="editor.isActive('link')"
             i18n-title title="Enlazar"
             i18n-aria-label aria-label="Enlazar"
@@ -625,7 +625,7 @@
       </button>
     }
 
-    <button type="button" (click)="comentarSeleccion()"
+    <button type="button" (click)="commentSelection()"
             i18n-title title="Comentar"
             i18n-aria-label aria-label="Comentar"
             class="p-1.5 rounded hover:bg-accent text-muted-foreground transition-colors

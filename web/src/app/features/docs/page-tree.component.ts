@@ -7,19 +7,19 @@ import {
 import type { PageDto } from './docs.service';
 
 /** Un movimiento pedido desde el árbol. El componente no mueve nada: lo pide. */
-export interface MovimientoDePagina {
-  pagina: PageDto;
+export interface PageMove {
+  page: PageDto;
   /** Dónde acaba colgada. `null` es «del documento», directamente. */
-  padreId: string | null;
+  parentId: string | null;
   /** Posición entre sus nuevas hermanas. */
-  orden: number;
+  order: number;
 }
 
 /** Una página con sus hijas ya colgadas, para pintar el árbol. */
-interface Rama {
-  pagina: PageDto;
-  nivel: number;
-  hijas: Rama[];
+interface TreeBranch {
+  page: PageDto;
+  level: number;
+  children: TreeBranch[];
 }
 
 /**
@@ -38,7 +38,7 @@ interface Rama {
  * funciona con el tabulador. Arrastrar se puede añadir encima; no al revés.
  */
 @Component({
-  selector: 'app-arbol-de-paginas',
+  selector: 'app-page-tree',
   standalone: true,
   imports: [NgIcon],
   viewProviders: [provideIcons({
@@ -51,7 +51,7 @@ interface Rama {
         <span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground" i18n>
           Páginas
         </span>
-        <button type="button" (click)="crear.emit(null)"
+        <button type="button" (click)="create.emit(null)"
                 i18n-title title="Nueva página"
                 i18n-aria-label aria-label="Nueva página"
                 class="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-accent
@@ -61,18 +61,18 @@ interface Rama {
       </div>
 
       <ul class="flex flex-col gap-0.5 list-none p-0 m-0">
-        @for (rama of ramas(); track rama.pagina.id) {
+        @for (branch of branches(); track branch.page.id) {
           <li>
             <div class="group relative flex items-center rounded transition-colors hover:bg-accent/60"
-                 [class.bg-accent]="rama.pagina.id === paginaActivaId()"
-                 [style.padding-left.rem]="0.25 + rama.nivel * 0.75">
+                 [class.bg-accent]="branch.page.id === activePageId()"
+                 [style.padding-left.rem]="0.25 + branch.level * 0.75">
 
-              <button type="button" (click)="abrir.emit(rama.pagina)"
+              <button type="button" (click)="open.emit(branch.page)"
                       class="flex-1 min-w-0 flex items-center gap-1.5 py-1.5 pr-2 text-left text-sm
                              rounded focus:outline-none focus:ring-2 focus:ring-ring"
-                      [class.font-medium]="rama.pagina.id === paginaActivaId()">
+                      [class.font-medium]="branch.page.id === activePageId()">
                 <ng-icon name="lucideFileText" class="w-3.5 h-3.5 shrink-0 text-muted-foreground" aria-hidden="true" />
-                <span class="truncate">{{ rama.pagina.title || sinTitulo }}</span>
+                <span class="truncate">{{ branch.page.title || untitled }}</span>
               </button>
 
               <!--
@@ -92,7 +92,7 @@ interface Rama {
                           rounded bg-card shadow-sm px-0.5
                           opacity-0 group-hover:opacity-100 focus-within:opacity-100
                           transition-opacity">
-                <button type="button" (click)="subir(rama.pagina)" [disabled]="!puedeSubir(rama.pagina)"
+                <button type="button" (click)="moveUp(branch.page)" [disabled]="!canMoveUp(branch.page)"
                         i18n-title title="Subir"
                         i18n-aria-label aria-label="Subir"
                         class="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-accent
@@ -100,7 +100,7 @@ interface Rama {
                                focus:outline-none focus:ring-2 focus:ring-ring">
                   <ng-icon name="lucideChevronsUp" class="w-3 h-3" aria-hidden="true" />
                 </button>
-                <button type="button" (click)="bajar(rama.pagina)" [disabled]="!puedeBajar(rama.pagina)"
+                <button type="button" (click)="moveDown(branch.page)" [disabled]="!canMoveDown(branch.page)"
                         i18n-title title="Bajar"
                         i18n-aria-label aria-label="Bajar"
                         class="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-accent
@@ -108,7 +108,7 @@ interface Rama {
                                focus:outline-none focus:ring-2 focus:ring-ring">
                   <ng-icon name="lucideChevronsDown" class="w-3 h-3" aria-hidden="true" />
                 </button>
-                <button type="button" (click)="meterDentro(rama.pagina)" [disabled]="!puedeSubir(rama.pagina)"
+                <button type="button" (click)="indent(branch.page)" [disabled]="!canMoveUp(branch.page)"
                         i18n-title title="Convertir en subpágina de la anterior"
                         i18n-aria-label aria-label="Convertir en subpágina de la anterior"
                         class="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-accent
@@ -116,7 +116,7 @@ interface Rama {
                                focus:outline-none focus:ring-2 focus:ring-ring">
                   <ng-icon name="lucideIndentIncrease" class="w-3 h-3" aria-hidden="true" />
                 </button>
-                <button type="button" (click)="sacarFuera(rama.pagina)" [disabled]="!rama.pagina.parentPageId"
+                <button type="button" (click)="outdent(branch.page)" [disabled]="!branch.page.parentPageId"
                         i18n-title title="Sacar un nivel"
                         i18n-aria-label aria-label="Sacar un nivel"
                         class="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-accent
@@ -124,16 +124,16 @@ interface Rama {
                                focus:outline-none focus:ring-2 focus:ring-ring">
                   <ng-icon name="lucideIndentDecrease" class="w-3 h-3" aria-hidden="true" />
                 </button>
-                <button type="button" (click)="crear.emit(rama.pagina.id)"
+                <button type="button" (click)="create.emit(branch.page.id)"
                         i18n-title title="Nueva subpágina"
                         i18n-aria-label aria-label="Nueva subpágina"
                         class="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-accent
                                focus:outline-none focus:ring-2 focus:ring-ring">
                   <ng-icon name="lucidePlus" class="w-3 h-3" aria-hidden="true" />
                 </button>
-                <button type="button" (click)="borrar.emit(rama.pagina)" [disabled]="esLaUnica()"
-                        [title]="esLaUnica() ? noSePuedeBorrar : enviarAPapelera"
-                        [attr.aria-label]="esLaUnica() ? noSePuedeBorrar : enviarAPapelera"
+                <button type="button" (click)="delete.emit(branch.page)" [disabled]="isOnlyPage()"
+                        [title]="isOnlyPage() ? cannotDelete : moveToTrash"
+                        [attr.aria-label]="isOnlyPage() ? cannotDelete : moveToTrash"
                         class="p-1 rounded text-muted-foreground hover:text-destructive hover:bg-accent
                                disabled:opacity-30 disabled:pointer-events-none
                                focus:outline-none focus:ring-2 focus:ring-ring">
@@ -147,19 +147,19 @@ interface Rama {
     </div>
   `
 })
-export class ArbolDePaginasComponent {
-  readonly paginas = input.required<readonly PageDto[]>();
-  readonly paginaActivaId = input<string | null>(null);
+export class PageTreeComponent {
+  readonly pages = input.required<readonly PageDto[]>();
+  readonly activePageId = input<string | null>(null);
 
-  readonly abrir = output<PageDto>();
+  readonly open = output<PageDto>();
   /** El identificador del padre, o `null` para una página de primer nivel. */
-  readonly crear = output<string | null>();
-  readonly borrar = output<PageDto>();
-  readonly mover = output<MovimientoDePagina>();
+  readonly create = output<string | null>();
+  readonly delete = output<PageDto>();
+  readonly move = output<PageMove>();
 
-  protected readonly sinTitulo = $localize`Sin título`;
-  protected readonly enviarAPapelera = $localize`Enviar a la papelera`;
-  protected readonly noSePuedeBorrar = $localize`Un documento no puede quedarse sin páginas`;
+  protected readonly untitled = $localize`Sin título`;
+  protected readonly moveToTrash = $localize`Enviar a la papelera`;
+  protected readonly cannotDelete = $localize`Un documento no puede quedarse sin páginas`;
 
   /**
    * El árbol, aplanado para pintarlo.
@@ -168,82 +168,82 @@ export class ArbolDePaginasComponent {
    * `@for`: con una lista plana el orden visual coincide con el orden del DOM, así que el
    * tabulador recorre las páginas en el mismo orden en el que se leen.
    */
-  protected readonly ramas = computed<Rama[]>(() => {
-    const todas = [...this.paginas()].sort((a, b) => a.order - b.order);
-    const porPadre = new Map<string, PageDto[]>();
+  protected readonly branches = computed<TreeBranch[]>(() => {
+    const all = [...this.pages()].sort((a, b) => a.order - b.order);
+    const byParent = new Map<string, PageDto[]>();
 
-    for (const pagina of todas) {
-      const clave = pagina.parentPageId ?? '';
-      porPadre.set(clave, [...(porPadre.get(clave) ?? []), pagina]);
+    for (const page of all) {
+      const key = page.parentPageId ?? '';
+      byParent.set(key, [...(byParent.get(key) ?? []), page]);
     }
 
-    const aplanar = (padre: string, nivel: number): Rama[] =>
-      (porPadre.get(padre) ?? []).flatMap(pagina => [
-        { pagina, nivel, hijas: [] },
-        ...aplanar(pagina.id, nivel + 1)
+    const aplanar = (parent: string, level: number): TreeBranch[] =>
+      (byParent.get(parent) ?? []).flatMap(page => [
+        { page, level, children: [] },
+        ...aplanar(page.id, level + 1)
       ]);
 
     return aplanar('', 0);
   });
 
-  protected esLaUnica(): boolean {
-    return this.paginas().length <= 1;
+  protected isOnlyPage(): boolean {
+    return this.pages().length <= 1;
   }
 
-  protected puedeSubir(pagina: PageDto): boolean {
-    return this.indiceEntreHermanas(pagina) > 0;
+  protected canMoveUp(page: PageDto): boolean {
+    return this.indexAmongSiblings(page) > 0;
   }
 
-  protected puedeBajar(pagina: PageDto): boolean {
-    const hermanas = this.hermanasDe(pagina);
-    return this.indiceEntreHermanas(pagina) < hermanas.length - 1;
+  protected canMoveDown(page: PageDto): boolean {
+    const siblings = this.siblingsOf(page);
+    return this.indexAmongSiblings(page) < siblings.length - 1;
   }
 
-  protected subir(pagina: PageDto): void {
-    this.mover.emit({
-      pagina,
-      padreId: pagina.parentPageId ?? null,
-      orden: this.indiceEntreHermanas(pagina) - 1
+  protected moveUp(page: PageDto): void {
+    this.move.emit({
+      page,
+      parentId: page.parentPageId ?? null,
+      order: this.indexAmongSiblings(page) - 1
     });
   }
 
-  protected bajar(pagina: PageDto): void {
-    this.mover.emit({
-      pagina,
-      padreId: pagina.parentPageId ?? null,
-      orden: this.indiceEntreHermanas(pagina) + 1
+  protected moveDown(page: PageDto): void {
+    this.move.emit({
+      page,
+      parentId: page.parentPageId ?? null,
+      order: this.indexAmongSiblings(page) + 1
     });
   }
 
   /** Se mete dentro de la hermana de encima, que es lo que hace el tabulador en cualquier lista. */
-  protected meterDentro(pagina: PageDto): void {
-    const hermanas = this.hermanasDe(pagina);
-    const anterior = hermanas[this.indiceEntreHermanas(pagina) - 1];
-    if (!anterior) return;
+  protected indent(page: PageDto): void {
+    const siblings = this.siblingsOf(page);
+    const previous = siblings[this.indexAmongSiblings(page) - 1];
+    if (!previous) return;
 
-    const hijasDeLaAnterior = this.paginas().filter(p => p.parentPageId === anterior.id);
-    this.mover.emit({ pagina, padreId: anterior.id, orden: hijasDeLaAnterior.length });
+    const previousChildren = this.pages().filter(p => p.parentPageId === previous.id);
+    this.move.emit({ page, parentId: previous.id, order: previousChildren.length });
   }
 
   /** Sale al nivel del padre y se coloca justo detrás de él, no al final. */
-  protected sacarFuera(pagina: PageDto): void {
-    const padre = this.paginas().find(p => p.id === pagina.parentPageId);
-    if (!padre) return;
+  protected outdent(page: PageDto): void {
+    const parent = this.pages().find(p => p.id === page.parentPageId);
+    if (!parent) return;
 
-    this.mover.emit({
-      pagina,
-      padreId: padre.parentPageId ?? null,
-      orden: this.indiceEntreHermanas(padre) + 1
+    this.move.emit({
+      page,
+      parentId: parent.parentPageId ?? null,
+      order: this.indexAmongSiblings(parent) + 1
     });
   }
 
-  private hermanasDe(pagina: PageDto): PageDto[] {
-    return this.paginas()
-      .filter(p => (p.parentPageId ?? null) === (pagina.parentPageId ?? null))
+  private siblingsOf(page: PageDto): PageDto[] {
+    return this.pages()
+      .filter(p => (p.parentPageId ?? null) === (page.parentPageId ?? null))
       .sort((a, b) => a.order - b.order);
   }
 
-  private indiceEntreHermanas(pagina: PageDto): number {
-    return this.hermanasDe(pagina).findIndex(p => p.id === pagina.id);
+  private indexAmongSiblings(page: PageDto): number {
+    return this.siblingsOf(page).findIndex(p => p.id === page.id);
   }
 }

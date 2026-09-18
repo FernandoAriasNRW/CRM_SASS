@@ -207,7 +207,7 @@
         lo que falta para entenderlo.
       -->
       <div class="pb-4 border-b border-border">
-        <app-mencionado-en tipo="Ticket" [entidadId]="ticket().id" />
+        <app-mentioned-in type="Ticket" [entityId]="ticket().id" />
       </div>
 
       <div class="flex border-b border-border shrink-0">
@@ -226,7 +226,7 @@
       @if (activeTab() === 'comments') {
         <!-- El mismo hilo que tareas y proyectos: comentar es la misma operación en los tres. -->
         <div class="flex-1 overflow-y-auto py-4">
-          <app-comentarios entidad="Ticket" [entityId]="ticket().id" />
+          <app-comments entityType="Ticket" [entityId]="ticket().id" />
         </div>
       }
     </div>

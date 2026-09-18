@@ -5,7 +5,7 @@ import { lucideUpload, lucideX } from '@ng-icons/lucide';
 import { DocsService } from '../docs.service';
 
 /** Tipo de documento que espera la API: 1 List, 2 Wiki, 3 MeetingNote, 4 Template. */
-const TIPO_DOCUMENTO = 1;
+const DOCUMENT_TYPE = 1;
 
 /**
  * Importa un documento desde un fichero de texto.
@@ -15,14 +15,14 @@ const TIPO_DOCUMENTO = 1;
  * con documentos a medias cuando el fichero no era lo que se creía.
  */
 @Component({
-  selector: 'app-importar-documento-modal',
+  selector: 'app-import-document-modal',
   standalone: true,
   imports: [FormsModule, NgIcon],
   viewProviders: [provideIcons({ lucideUpload, lucideX })],
   template: `
     <div class="fixed inset-0 z-50 bg-foreground/50 backdrop-blur-sm flex items-center justify-center p-4">
       <div role="dialog" aria-modal="true" aria-labelledby="titulo-importar"
-           (keydown.escape)="cerrar.emit()"
+           (keydown.escape)="closed.emit()"
            class="bg-card border border-border rounded-2xl shadow-2xl max-w-lg w-full p-6">
 
         <div class="flex items-center justify-between mb-4">
@@ -32,7 +32,7 @@ const TIPO_DOCUMENTO = 1;
             </div>
             <h3 id="titulo-importar" class="text-base font-bold text-foreground" i18n>Importar documento</h3>
           </div>
-          <button type="button" (click)="cerrar.emit()"
+          <button type="button" (click)="closed.emit()"
                   i18n-aria-label aria-label="Cerrar"
                   class="text-muted-foreground hover:text-foreground">
             <ng-icon name="lucideX" class="w-4 h-4" aria-hidden="true" />
@@ -45,7 +45,7 @@ const TIPO_DOCUMENTO = 1;
               Select File (.md, .txt, .html)
             </label>
             <input id="importar-fichero" type="file" accept=".md,.txt,.html"
-                   (change)="alElegirFichero($event)"
+                   (change)="onFileChosen($event)"
                    class="w-full text-xs text-muted-foreground cursor-pointer
                           file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0
                           file:text-xs file:font-semibold file:bg-primary-subtle
@@ -54,7 +54,7 @@ const TIPO_DOCUMENTO = 1;
 
           <div>
             <label for="importar-titulo" class="block text-xs font-medium text-muted-foreground mb-1" i18n>Título del documento</label>
-            <input id="importar-titulo" type="text" [(ngModel)]="titulo"
+            <input id="importar-titulo" type="text" [(ngModel)]="title"
                    i18n-placeholder placeholder="Título del documento…"
                    class="w-full px-3 py-2 text-sm bg-muted border border-border rounded-lg
                           focus:outline-none focus:ring-2 focus:ring-ring" />
@@ -64,7 +64,7 @@ const TIPO_DOCUMENTO = 1;
             <label for="importar-contenido" class="block text-xs font-medium text-muted-foreground mb-1" i18n>
               Content Preview / Paste Text
             </label>
-            <textarea id="importar-contenido" rows="5" [(ngModel)]="contenido"
+            <textarea id="importar-contenido" rows="5" [(ngModel)]="content"
                       i18n-placeholder placeholder="Pega aquí Markdown, HTML o texto sin formato…"
                       class="w-full px-3 py-2 text-xs font-mono bg-muted border border-border rounded-lg
                              focus:outline-none focus:ring-2 focus:ring-ring"></textarea>
@@ -76,15 +76,15 @@ const TIPO_DOCUMENTO = 1;
         }
 
         <div class="flex items-center justify-end gap-2 mt-6">
-          <button type="button" (click)="cerrar.emit()"
+          <button type="button" (click)="closed.emit()"
                   class="px-4 py-2 text-xs font-medium text-muted-foreground hover:bg-muted rounded-lg
                          focus:outline-none focus:ring-2 focus:ring-ring" i18n>
             Cancelar
           </button>
-          <button type="button" (click)="importar()" [disabled]="importando()"
+          <button type="button" (click)="importDocument()" [disabled]="importing()"
                   class="px-4 py-2 text-xs font-medium text-primary-foreground bg-primary rounded-lg shadow-sm
                          hover:bg-primary/90 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-ring">
-            @if (importando()) { <ng-container i18n>Guardando…</ng-container> }
+            @if (importing()) { <ng-container i18n>Guardando…</ng-container> }
             @else { <ng-container i18n>Importar</ng-container> }
           </button>
         </div>
@@ -92,48 +92,48 @@ const TIPO_DOCUMENTO = 1;
     </div>
   `,
 })
-export class ImportarDocumentoModalComponent {
+export class ImportDocumentModalComponent {
   private readonly docsService = inject(DocsService);
 
-  readonly cerrar = output<void>();
+  readonly closed = output<void>();
   /** Id del documento creado, para que el padre lo abra. */
-  readonly importado = output<string>();
+  readonly imported = output<string>();
 
-  protected titulo = '';
-  protected contenido = '';
-  protected readonly importando = signal(false);
+  protected title = '';
+  protected content = '';
+  protected readonly importing = signal(false);
   protected readonly error = signal('');
 
-  protected alElegirFichero(evento: Event): void {
-    const fichero = (evento.target as HTMLInputElement).files?.[0];
-    if (!fichero) return;
+  protected onFileChosen(event: Event): void {
+    const file = (event.target as HTMLInputElement).files?.[0];
+    if (!file) return;
 
     // El nombre del fichero, sin extensión, es un título de partida razonable: casi
     // siempre es el que quiere quien importa, y sigue siendo editable.
-    this.titulo = fichero.name.replace(/\.[^/.]+$/, '');
+    this.title = file.name.replace(/\.[^/.]+$/, '');
 
-    const lector = new FileReader();
-    lector.onload = e => this.contenido = (e.target?.result as string) ?? '';
-    lector.onerror = () => this.error.set($localize`No se pudo leer el fichero.`);
-    lector.readAsText(fichero);
+    const reader = new FileReader();
+    reader.onload = e => this.content = (e.target?.result as string) ?? '';
+    reader.onerror = () => this.error.set($localize`No se pudo leer el fichero.`);
+    reader.readAsText(file);
   }
 
-  protected importar(): void {
-    if (!this.titulo.trim() || !this.contenido.trim()) {
+  protected importDocument(): void {
+    if (!this.title.trim() || !this.content.trim()) {
       this.error.set($localize`Hacen falta un título y contenido para importar.`);
       return;
     }
 
-    this.importando.set(true);
+    this.importing.set(true);
     this.docsService
-      .importDocument({ title: this.titulo, content: this.contenido, type: TIPO_DOCUMENTO })
+      .importDocument({ title: this.title, content: this.content, type: DOCUMENT_TYPE })
       .subscribe({
         next: id => {
-          this.importando.set(false);
-          this.importado.emit(id);
+          this.importing.set(false);
+          this.imported.emit(id);
         },
         error: () => {
-          this.importando.set(false);
+          this.importing.set(false);
           this.error.set($localize`No se pudo importar el documento. Inténtalo de nuevo.`);
         },
       });
