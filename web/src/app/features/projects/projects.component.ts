@@ -16,7 +16,7 @@ import { ButtonComponent } from '../../shared/ui/button.component';
 import { HierarchySignalStore } from '../../core/hierarchy-signal.store';
 import { ViewsService, SavedView } from '../../shared/services/views.service';
 import { TableColumnService } from '../../shared/services/table-column.service';
-import { ESTADOS_DE_PROYECTO, nombreDelEstadoDeProyecto } from './vocabulario-de-proyectos';
+import { PROJECT_STATUSES, projectStatusLabel } from './project-vocabulary';
 
 const STATUS_VARIANT: Record<string, string> = {
   'Planned':     'bg-muted text-foreground',
@@ -73,12 +73,12 @@ export class ProjectsComponent implements OnInit {
   filterFields = computed<FilterField[]>(() => [
     // Las claves son las del servidor —no se traducen— y el nombre sí. Antes se enseñaba la
     // clave cruda: «Planned», «On Hold».
-    { key: 'status', label: $localize`Estado`, type: 'select', options: ESTADOS_DE_PROYECTO.map(e => ({ label: e.etiqueta, value: e.clave })) },
+    { key: 'status', label: $localize`Estado`, type: 'select', options: PROJECT_STATUSES.map(e => ({ label: e.label, value: e.key })) },
     { key: 'startDate', label: $localize`Desde`, type: 'date' },
     { key: 'endDate', label: $localize`Hasta`, type: 'date' }
   ]);
 
-  readonly nombreDelEstado = nombreDelEstadoDeProyecto;
+  readonly statusLabel = projectStatusLabel;
 
   savedViews = signal<SavedView[]>([]);
   activeViewId = signal<string | null>(null);

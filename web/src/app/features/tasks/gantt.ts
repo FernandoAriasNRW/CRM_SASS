@@ -9,9 +9,9 @@ import type { TaskItem } from './task-create-modal.component';
  */
 
 /** Un día expresado como número de días desde el 1 de enero de 1970. */
-export type Dia = number;
+export type Day = number;
 
-const MILISEGUNDOS_POR_DIA = 86_400_000;
+const MILLISECONDS_PER_DAY = 86_400_000;
 
 /**
  * Convierte una fecha del servidor en número de día.
@@ -21,37 +21,37 @@ const MILISEGUNDOS_POR_DIA = 86_400_000;
  * UTC: en cualquier huso al oeste de Greenwich, pedirle el día local devuelve el 14. Ese error
  * de un día no se ve al programarlo y sale en producción sólo para media Europa y toda América.
  */
-export function diaDesde(fecha: string | null | undefined): Dia | null {
-  if (!fecha) return null;
+export function dayFrom(date: string | null | undefined): Day | null {
+  if (!date) return null;
 
-  const partes = fecha.slice(0, 10).split('-');
-  if (partes.length !== 3) return null;
+  const parts = date.slice(0, 10).split('-');
+  if (parts.length !== 3) return null;
 
-  const [anio, mes, dia] = partes.map(Number);
-  if (!Number.isFinite(anio) || !Number.isFinite(mes) || !Number.isFinite(dia)) return null;
+  const [year, month, day] = parts.map(Number);
+  if (!Number.isFinite(year) || !Number.isFinite(month) || !Number.isFinite(day)) return null;
 
-  const marca = Date.UTC(anio, mes - 1, dia);
-  if (Number.isNaN(marca)) return null;
+  const timestamp = Date.UTC(year, month - 1, day);
+  if (Number.isNaN(timestamp)) return null;
 
-  return Math.floor(marca / MILISEGUNDOS_POR_DIA);
+  return Math.floor(timestamp / MILLISECONDS_PER_DAY);
 }
 
 /** El día de hoy en la misma escala, tomado del reloj local y no del UTC. */
-export function hoyComoDia(ahora = new Date()): Dia {
+export function todayAsDay(now = new Date()): Day {
   return Math.floor(
-    Date.UTC(ahora.getFullYear(), ahora.getMonth(), ahora.getDate()) / MILISEGUNDOS_POR_DIA);
+    Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()) / MILLISECONDS_PER_DAY);
 }
 
 /** Vuelve a una fecha para poder pintar la escala. */
-export function fechaDelDia(dia: Dia): Date {
-  return new Date(dia * MILISEGUNDOS_POR_DIA);
+export function dateOfDay(day: Day): Date {
+  return new Date(day * MILLISECONDS_PER_DAY);
 }
 
-export interface Rango {
-  primerDia: Dia;
-  ultimoDia: Dia;
+export interface Range {
+  firstDay: Day;
+  lastDay: Day;
   /** Cuántos días ocupa el rango, contando los dos extremos. */
-  dias: number;
+  days: number;
 }
 
 /**
@@ -61,40 +61,40 @@ export interface Rango {
  * está uno. Devuelve `null` si no hay ninguna tarea con fechas, y entonces no hay nada que
  * pintar —mejor eso que un eje vacío que parece un fallo—.
  */
-export function rangoDe(tareas: readonly TaskItem[], hoy: Dia = hoyComoDia()): Rango | null {
-  const dias: Dia[] = [];
+export function rangeOf(tasks: readonly TaskItem[], today: Day = todayAsDay()): Range | null {
+  const days: Day[] = [];
 
-  for (const tarea of tareas) {
-    const vence = diaDesde(tarea.dueDate);
-    const empieza = diaDesde(tarea.startDate);
+  for (const task of tasks) {
+    const due = dayFrom(task.dueDate);
+    const start = dayFrom(task.startDate);
 
-    if (vence !== null) dias.push(vence);
-    if (empieza !== null) dias.push(empieza);
+    if (due !== null) days.push(due);
+    if (start !== null) days.push(start);
   }
 
-  if (!dias.length) return null;
+  if (!days.length) return null;
 
-  dias.push(hoy);
+  days.push(today);
 
-  const primerDia = Math.min(...dias);
-  const ultimoDia = Math.max(...dias);
+  const firstDay = Math.min(...days);
+  const lastDay = Math.max(...days);
 
-  return { primerDia, ultimoDia, dias: ultimoDia - primerDia + 1 };
+  return { firstDay, lastDay, days: lastDay - firstDay + 1 };
 }
 
-export interface Barra {
-  tarea: TaskItem;
+export interface Bar {
+  task: TaskItem;
   /** Cuántos días desde el principio del rango empieza la barra. */
-  desplazamiento: number;
+  offset: number;
   /** Cuántos días ocupa. Nunca menos de uno: una barra de cero días no se vería. */
-  duracion: number;
+  duration: number;
   /**
    * Una tarea sin fecha de inicio. Se dibuja como un hito en su vencimiento en lugar de
    * inventarle un principio, que es lo que haría cualquier duración por defecto.
    */
-  esHito: boolean;
+  isMilestone: boolean;
   /** Si algo la bloquea. Lo cuenta el servidor en la propia consulta de tareas. */
-  bloqueada: boolean;
+  isBlocked: boolean;
 }
 
 /**
@@ -103,53 +103,53 @@ export interface Barra {
  * Las tareas sin vencimiento se quedan fuera: no hay dónde ponerlas, y colocarlas al principio
  * o al final sería afirmar algo que nadie ha dicho.
  */
-export function barrasDe(tareas: readonly TaskItem[], rango: Rango): Barra[] {
-  const barras: Barra[] = [];
+export function barsOf(tasks: readonly TaskItem[], range: Range): Bar[] {
+  const bars: Bar[] = [];
 
-  for (const tarea of tareas) {
-    const vence = diaDesde(tarea.dueDate);
-    if (vence === null) continue;
+  for (const task of tasks) {
+    const due = dayFrom(task.dueDate);
+    if (due === null) continue;
 
-    const empieza = diaDesde(tarea.startDate);
+    const start = dayFrom(task.startDate);
 
     // Un inicio posterior al vencimiento lo rechaza el dominio, pero un dato viejo o una
     // respuesta a medias no pueden dejar la pantalla con una barra de longitud negativa.
-    const inicioValido = empieza !== null && empieza <= vence ? empieza : null;
+    const validStart = start !== null && start <= due ? start : null;
 
-    barras.push({
-      tarea,
-      desplazamiento: (inicioValido ?? vence) - rango.primerDia,
-      duracion: inicioValido === null ? 1 : vence - inicioValido + 1,
-      esHito: inicioValido === null,
-      bloqueada: (tarea.blockedByCount ?? 0) > 0,
+    bars.push({
+      task,
+      offset: (validStart ?? due) - range.firstDay,
+      duration: validStart === null ? 1 : due - validStart + 1,
+      isMilestone: validStart === null,
+      isBlocked: (task.blockedByCount ?? 0) > 0,
     });
   }
 
-  return barras;
+  return bars;
 }
 
 /** Las marcas del eje: el primer día de cada mes que toca el rango, y el primero del todo. */
-export function marcasDelEje(rango: Rango): { dia: Dia; etiqueta: string }[] {
-  const marcas: { dia: Dia; etiqueta: string }[] = [];
+export function axisTicks(range: Range): { day: Day; label: string }[] {
+  const ticks: { day: Day; label: string }[] = [];
 
-  for (let dia = rango.primerDia; dia <= rango.ultimoDia; dia++) {
-    const fecha = fechaDelDia(dia);
+  for (let day = range.firstDay; day <= range.lastDay; day++) {
+    const date = dateOfDay(day);
 
-    if (dia === rango.primerDia || fecha.getUTCDate() === 1) {
-      marcas.push({
-        dia,
-        etiqueta: fecha.toLocaleDateString(undefined, {
+    if (day === range.firstDay || date.getUTCDate() === 1) {
+      ticks.push({
+        day,
+        label: date.toLocaleDateString(undefined, {
           month: 'short', year: 'numeric', timeZone: 'UTC',
         }),
       });
     }
   }
 
-  return marcas;
+  return ticks;
 }
 
 /** Una dependencia: `taskId` está bloqueada por `dependsOnTaskId`. */
-export interface AristaDeDependencia {
+export interface DependencyEdge {
   taskId: string;
   dependsOnTaskId: string;
 }
@@ -160,16 +160,16 @@ export interface AristaDeDependencia {
  * Las coordenadas van en unidades del diagrama y no en píxeles: la plantilla multiplica por el
  * ancho de día y el alto de fila, así que cambiar el zoom no obliga a tocar estos cálculos.
  */
-export interface Flecha {
-  desdeDia: number;
-  desdeFila: number;
-  hastaDia: number;
-  hastaFila: number;
+export interface Arrow {
+  fromDay: number;
+  fromRow: number;
+  toDay: number;
+  toRow: number;
   /**
    * La dependencia se incumple: la tarea que bloquea termina después de que empiece la
    * bloqueada. Es lo que un Gantt tiene que gritar, porque el plan es imposible tal cual está.
    */
-  incumplida: boolean;
+  isViolated: boolean;
 }
 
 /**
@@ -179,38 +179,38 @@ export interface Flecha {
  * a ninguna parte confunde más que la falta de flecha. Y sólo hacia adelante en el tiempo —lo
  * demás lo marca `incumplida`—, porque el sentido es «esto antes que esto otro».
  */
-export function flechasDe(
-  aristas: readonly AristaDeDependencia[],
-  barras: readonly Barra[],
-): Flecha[] {
-  const porTarea = new Map<string, { barra: Barra; fila: number }>();
-  barras.forEach((barra, fila) => porTarea.set(barra.tarea.id, { barra, fila }));
+export function arrowsOf(
+  edges: readonly DependencyEdge[],
+  bars: readonly Bar[],
+): Arrow[] {
+  const byTask = new Map<string, { bar: Bar; row: number }>();
+  bars.forEach((bar, row) => byTask.set(bar.task.id, { bar, row }));
 
-  const flechas: Flecha[] = [];
+  const arrows: Arrow[] = [];
 
-  for (const arista of aristas) {
-    const bloqueada = porTarea.get(arista.taskId);
-    const bloqueante = porTarea.get(arista.dependsOnTaskId);
+  for (const edge of edges) {
+    const isBlocked = byTask.get(edge.taskId);
+    const blocker = byTask.get(edge.dependsOnTaskId);
 
-    if (!bloqueada || !bloqueante) continue;
+    if (!isBlocked || !blocker) continue;
 
-    const finDelBloqueante = bloqueante.barra.desplazamiento + bloqueante.barra.duracion;
-    const inicioDeLaBloqueada = bloqueada.barra.desplazamiento;
+    const blockerEnd = blocker.bar.offset + blocker.bar.duration;
+    const blockedStart = isBlocked.bar.offset;
 
-    flechas.push({
-      desdeDia: finDelBloqueante,
-      desdeFila: bloqueante.fila,
-      hastaDia: inicioDeLaBloqueada,
-      hastaFila: bloqueada.fila,
-      incumplida: finDelBloqueante > inicioDeLaBloqueada,
+    arrows.push({
+      fromDay: blockerEnd,
+      fromRow: blocker.row,
+      toDay: blockedStart,
+      toRow: isBlocked.row,
+      isViolated: blockerEnd > blockedStart,
     });
   }
 
-  return flechas;
+  return arrows;
 }
 
 /** Si un día cae en sábado o domingo, para sombrearlo. */
-export function esFinDeSemana(dia: Dia): boolean {
-  const diaDeLaSemana = fechaDelDia(dia).getUTCDay();
-  return diaDeLaSemana === 0 || diaDeLaSemana === 6;
+export function isWeekend(day: Day): boolean {
+  const weekday = dateOfDay(day).getUTCDay();
+  return weekday === 0 || weekday === 6;
 }

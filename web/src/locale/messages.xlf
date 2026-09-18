@@ -4872,6 +4872,46 @@ Pendiente</source>
           <context context-type="linenumber">102</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="745228954667272084" datatype="html">
+        <source>Planificado</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/projects/project-vocabulary.ts</context>
+          <context context-type="linenumber">16</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2740386368302753507" datatype="html">
+        <source>En progreso</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/projects/project-vocabulary.ts</context>
+          <context context-type="linenumber">17</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/task-vocabulary.ts</context>
+          <context context-type="linenumber">22</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tickets/ticket-vocabulary.ts</context>
+          <context context-type="linenumber">31</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4981267489405883309" datatype="html">
+        <source>En pausa</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/projects/project-vocabulary.ts</context>
+          <context context-type="linenumber">18</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8619073148765294456" datatype="html">
+        <source>Completado</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/projects/project-vocabulary.ts</context>
+          <context context-type="linenumber">19</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/task-vocabulary.ts</context>
+          <context context-type="linenumber">24</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="8687776702387367781" datatype="html">
         <source>Vistas guardadas:</source>
         <context-group purpose="location">
@@ -4928,46 +4968,6 @@ Pendiente</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tickets/tickets.component.ts</context>
           <context context-type="linenumber">119</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="745228954667272084" datatype="html">
-        <source>Planificado</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/projects/vocabulario-de-proyectos.ts</context>
-          <context context-type="linenumber">16</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="2740386368302753507" datatype="html">
-        <source>En progreso</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/projects/vocabulario-de-proyectos.ts</context>
-          <context context-type="linenumber">17</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/tasks/vocabulario-de-tareas.ts</context>
-          <context context-type="linenumber">22</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/tickets/ticket-vocabulary.ts</context>
-          <context context-type="linenumber">31</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="4981267489405883309" datatype="html">
-        <source>En pausa</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/projects/vocabulario-de-proyectos.ts</context>
-          <context context-type="linenumber">18</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="8619073148765294456" datatype="html">
-        <source>Completado</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/projects/vocabulario-de-proyectos.ts</context>
-          <context context-type="linenumber">19</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/tasks/vocabulario-de-tareas.ts</context>
-          <context context-type="linenumber">24</context>
         </context-group>
       </trans-unit>
       <trans-unit id="7335656071404909669" datatype="html">
@@ -5311,63 +5311,6 @@ Pendiente</source>
           <context context-type="linenumber">85,86</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="405058489481409876" datatype="html">
-        <source>Nada que repartir todavía</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/tasks/carga.component.html</context>
-          <context context-type="linenumber">3,4</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="179519344569649488" datatype="html">
-        <source>La carga se calcula con las tareas pendientes que tienen fecha límite.</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/tasks/carga.component.html</context>
-          <context context-type="linenumber">4,5</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="3926607342166670745" datatype="html">
-        <source>Persona</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/tasks/carga.component.html</context>
-          <context context-type="linenumber">11,12</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="3448462145758383019" datatype="html">
-        <source>Total</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/tasks/carga.component.html</context>
-          <context context-type="linenumber">17,18</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="6803264364971716854" datatype="html">
-        <source> Las horas estimadas se reparten entre los días laborables de cada tarea. Es una estimación, no un registro de dedicación. Una tarea con varios responsables cuenta entera para cada uno. </source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/tasks/carga.component.html</context>
-          <context context-type="linenumber">48,50</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="9066396735664877269" datatype="html">
-        <source> Quedan <x id="INTERPOLATION" equiv-text="{{ carga().sinFecha }}"/> tareas pendientes sin fecha límite, que no se reparten en ninguna semana. La carga real es mayor que la de esta tabla. </source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/tasks/carga.component.html</context>
-          <context context-type="linenumber">54,57</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="4015703280171947456" datatype="html">
-        <source>Sin asignar</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/tasks/carga.component.ts</context>
-          <context context-type="linenumber">32</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/tasks/task-detail-panel.component.html</context>
-          <context context-type="linenumber">195,196</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/shared/ui/custom-fields-form.component.html</context>
-          <context context-type="linenumber">68,69</context>
-        </context-group>
-      </trans-unit>
       <trans-unit id="4687555512793994131" datatype="html">
         <source>Nada que planificar todavía</source>
         <context-group purpose="location">
@@ -5404,14 +5347,14 @@ Pendiente</source>
         </context-group>
       </trans-unit>
       <trans-unit id="2061641499271155136" datatype="html">
-        <source><x id="PH" equiv-text="barra.tarea.title"/>, vence el <x id="PH_1" equiv-text="vence"/></source>
+        <source><x id="PH" equiv-text="bar.task.title"/>, vence el <x id="PH_1" equiv-text="due"/></source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tasks/gantt.component.ts</context>
           <context context-type="linenumber">111</context>
         </context-group>
       </trans-unit>
       <trans-unit id="7114553271619331265" datatype="html">
-        <source><x id="PH" equiv-text="barra.tarea.title"/>, del <x id="PH_1" equiv-text="empieza"/> al <x id="PH_2" equiv-text="vence"/></source>
+        <source><x id="PH" equiv-text="bar.task.title"/>, del <x id="PH_1" equiv-text="start"/> al <x id="PH_2" equiv-text="due"/></source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tasks/gantt.component.ts</context>
           <context context-type="linenumber">116</context>
@@ -5693,6 +5636,21 @@ Pendiente</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tasks/task-detail-panel.component.html</context>
           <context context-type="linenumber">189,190</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4015703280171947456" datatype="html">
+        <source>Sin asignar</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/task-detail-panel.component.html</context>
+          <context context-type="linenumber">195,196</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/workload.component.ts</context>
+          <context context-type="linenumber">32</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/custom-fields-form.component.html</context>
+          <context context-type="linenumber">68,69</context>
         </context-group>
       </trans-unit>
       <trans-unit id="1098548568553341397" datatype="html">
@@ -6034,6 +5992,20 @@ Pendiente</source>
           <context context-type="linenumber">554</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="1723658886772029414" datatype="html">
+        <source>Por hacer</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/task-vocabulary.ts</context>
+          <context context-type="linenumber">21</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4579807014926424032" datatype="html">
+        <source>En revisión</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/task-vocabulary.ts</context>
+          <context context-type="linenumber">23</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="2295568220238618223" datatype="html">
         <source>Tablero</source>
         <context-group purpose="location">
@@ -6127,7 +6099,7 @@ Pendiente</source>
         </context-group>
       </trans-unit>
       <trans-unit id="7646590756920030055" datatype="html">
-        <source>«<x id="PH" equiv-text="valor"/>» no es un número de horas.</source>
+        <source>«<x id="PH" equiv-text="value"/>» no es un número de horas.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tasks/tasks.component.ts</context>
           <context context-type="linenumber">564</context>
@@ -6147,18 +6119,46 @@ Pendiente</source>
           <context context-type="linenumber">578</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="1723658886772029414" datatype="html">
-        <source>Por hacer</source>
+      <trans-unit id="405058489481409876" datatype="html">
+        <source>Nada que repartir todavía</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/tasks/vocabulario-de-tareas.ts</context>
-          <context context-type="linenumber">21</context>
+          <context context-type="sourcefile">src/app/features/tasks/workload.component.html</context>
+          <context context-type="linenumber">3,4</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="4579807014926424032" datatype="html">
-        <source>En revisión</source>
+      <trans-unit id="179519344569649488" datatype="html">
+        <source>La carga se calcula con las tareas pendientes que tienen fecha límite.</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/tasks/vocabulario-de-tareas.ts</context>
-          <context context-type="linenumber">23</context>
+          <context context-type="sourcefile">src/app/features/tasks/workload.component.html</context>
+          <context context-type="linenumber">4,5</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3926607342166670745" datatype="html">
+        <source>Persona</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/workload.component.html</context>
+          <context context-type="linenumber">11,12</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3448462145758383019" datatype="html">
+        <source>Total</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/workload.component.html</context>
+          <context context-type="linenumber">17,18</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6803264364971716854" datatype="html">
+        <source> Las horas estimadas se reparten entre los días laborables de cada tarea. Es una estimación, no un registro de dedicación. Una tarea con varios responsables cuenta entera para cada uno. </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/workload.component.html</context>
+          <context context-type="linenumber">48,50</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="9066396735664877269" datatype="html">
+        <source> Quedan <x id="INTERPOLATION" equiv-text="{{ workload().withoutDueDate }}"/> tareas pendientes sin fecha límite, que no se reparten en ninguna semana. La carga real es mayor que la de esta tabla. </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/workload.component.html</context>
+          <context context-type="linenumber">54,57</context>
         </context-group>
       </trans-unit>
       <trans-unit id="8124257544094173951" datatype="html">

@@ -90,8 +90,8 @@
               id="edit-status"
               [(ngModel)]="editStatus"
               class="w-full px-3 py-2 border border-input rounded-md bg-background text-sm focus:ring-2 focus:ring-ring outline-none transition-all cursor-pointer">
-              @for (s of statuses; track s.clave) {
-                <option [value]="s.clave">{{ s.etiqueta }}</option>
+              @for (s of statuses; track s.key) {
+                <option [value]="s.key">{{ s.label }}</option>
               }
             </select>
           </div>

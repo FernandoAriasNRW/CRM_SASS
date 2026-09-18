@@ -118,6 +118,12 @@ dotnet run --project tools/rename-symbols -- CrmSaaS.sln /tmp/mapa.tsv
 Después: los pasos 2 y 3 de la sección 5 **sin excepción**, los comentarios que citaban el nombre
 viejo (`<see cref>` los actualiza Roslyn; el texto suelto no), y el nombre del fichero y la carpeta.
 
+**En el frontend** no hay Roslyn: `python tools/scripts/rename-frontend.py <mapa> <rutas>` (mapa de
+dos columnas, viejo y nuevo). Trabaja por tokens, así que después, además del build, **compara con
+`main` los atributos y las cadenas de las plantillas**: en el bloque 4b tradujo 18 textos de la
+interfaz y ni el build ni las pruebas lo notaron. Los nombres de inputs, outputs y selectores van a
+mano. Límites en `tools/README.md`.
+
 Para ver qué queda en español: `python tools/scripts/spanish-identifiers.py <rutas>`
 (necesita `pip install wordfreq`).
 

@@ -11,24 +11,24 @@ import type { BadgeVariant } from '../../shared/ui/badge.component';
  * La clave no se traduce nunca —es un dato— y el nombre sí. Tenerlos juntos es lo que evita que
  * alguien traduzca la clave por descuido y rompa el guardado.
  */
-export interface EstadoDeTarea {
-  readonly clave: string;
-  readonly etiqueta: string;
+export interface TaskStatusOption {
+  readonly key: string;
+  readonly label: string;
   readonly badge: BadgeVariant;
 }
 
-export const ESTADOS_DE_TAREA: readonly EstadoDeTarea[] = [
-  { clave: 'To Do', etiqueta: $localize`Por hacer`, badge: 'secondary' },
-  { clave: 'In Progress', etiqueta: $localize`En progreso`, badge: 'default' },
-  { clave: 'In Review', etiqueta: $localize`En revisión`, badge: 'warning' },
-  { clave: 'Done', etiqueta: $localize`Completado`, badge: 'success' }
+export const TASK_STATUSES: readonly TaskStatusOption[] = [
+  { key: 'To Do', label: $localize`Por hacer`, badge: 'secondary' },
+  { key: 'In Progress', label: $localize`En progreso`, badge: 'default' },
+  { key: 'In Review', label: $localize`En revisión`, badge: 'warning' },
+  { key: 'Done', label: $localize`Completado`, badge: 'success' }
 ];
 
 /** El nombre legible, o la clave si llega una que no se conoce: un hueco no diría nada. */
-export function nombreDelEstadoDeTarea(estado: string): string {
-  return ESTADOS_DE_TAREA.find(e => e.clave === estado)?.etiqueta ?? estado;
+export function taskStatusLabel(status: string): string {
+  return TASK_STATUSES.find(e => e.key === status)?.label ?? status;
 }
 
-export function insigniaDelEstadoDeTarea(estado: string): BadgeVariant {
-  return ESTADOS_DE_TAREA.find(e => e.clave === estado)?.badge ?? 'outline';
+export function taskStatusBadge(status: string): BadgeVariant {
+  return TASK_STATUSES.find(e => e.key === status)?.badge ?? 'outline';
 }

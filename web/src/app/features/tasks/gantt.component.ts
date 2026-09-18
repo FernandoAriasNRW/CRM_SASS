@@ -1,17 +1,17 @@
 import { Component, computed, input, output } from '@angular/core';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import { lucideBan, lucideDiamond } from '@ng-icons/lucide';
-import { PRIORIDADES, type TaskItem } from './task-create-modal.component';
+import { PRIORITIES, type TaskItem } from './task-create-modal.component';
 import {
-  barrasDe, esFinDeSemana, fechaDelDia, flechasDe, hoyComoDia, marcasDelEje, rangoDe,
-  type AristaDeDependencia, type Barra, type Dia,
+  barsOf, isWeekend, dateOfDay, arrowsOf, todayAsDay, axisTicks, rangeOf,
+  type DependencyEdge, type Bar, type Day,
 } from './gantt';
 
 /** Ancho de un día, en píxeles. Con menos, un hito de un día deja de poder pulsarse. */
-const ANCHO_DE_DIA = 28;
+const DAY_WIDTH = 28;
 
 /** Alto de una fila, en píxeles. Tiene que cuadrar con la clase `h-9` de la plantilla. */
-const ALTO_DE_FILA = 36;
+const ROW_HEIGHT = 36;
 
 /**
  * Diagrama de Gantt de las tareas cargadas.
@@ -32,46 +32,46 @@ const ALTO_DE_FILA = 36;
   templateUrl: './gantt.component.html',
 })
 export class GanttComponent {
-  readonly tareas = input.required<TaskItem[]>();
+  readonly tasks = input.required<TaskItem[]>();
   /** El grafo entero de dependencias. Vacío mientras se carga: se pinta sin flechas y ya. */
-  readonly dependencias = input<AristaDeDependencia[]>([]);
-  readonly abrir = output<TaskItem>();
+  readonly dependencies = input<DependencyEdge[]>([]);
+  readonly open = output<TaskItem>();
 
-  readonly anchoDeDia = ANCHO_DE_DIA;
-  readonly altoDeFila = ALTO_DE_FILA;
+  readonly dayWidth = DAY_WIDTH;
+  readonly rowHeight = ROW_HEIGHT;
 
-  readonly rango = computed(() => rangoDe(this.tareas()));
+  readonly range = computed(() => rangeOf(this.tasks()));
 
-  readonly barras = computed<Barra[]>(() => {
-    const rango = this.rango();
-    return rango ? barrasDe(this.tareas(), rango) : [];
+  readonly bars = computed<Bar[]>(() => {
+    const range = this.range();
+    return range ? barsOf(this.tasks(), range) : [];
   });
 
-  readonly marcas = computed(() => {
-    const rango = this.rango();
-    return rango ? marcasDelEje(rango) : [];
+  readonly ticks = computed(() => {
+    const range = this.range();
+    return range ? axisTicks(range) : [];
   });
 
   /** Los días del rango, para el fondo: fines de semana sombreados y la línea de hoy. */
-  readonly dias = computed(() => {
-    const rango = this.rango();
-    if (!rango) return [];
+  readonly days = computed(() => {
+    const range = this.range();
+    if (!range) return [];
 
-    const hoy = hoyComoDia();
+    const today = todayAsDay();
 
-    return Array.from({ length: rango.dias }, (_, i) => {
-      const dia = rango.primerDia + i;
-      return { dia, finDeSemana: esFinDeSemana(dia), esHoy: dia === hoy };
+    return Array.from({ length: range.days }, (_, i) => {
+      const day = range.firstDay + i;
+      return { day, weekend: isWeekend(day), isToday: day === today };
     });
   });
 
-  readonly anchoTotal = computed(() => (this.rango()?.dias ?? 0) * ANCHO_DE_DIA);
+  readonly totalWidth = computed(() => (this.range()?.days ?? 0) * DAY_WIDTH);
 
-  readonly flechas = computed(() => flechasDe(this.dependencias(), this.barras()));
+  readonly arrows = computed(() => arrowsOf(this.dependencies(), this.bars()));
 
-  readonly altoTotal = computed(() => this.barras().length * ALTO_DE_FILA);
+  readonly totalHeight = computed(() => this.bars().length * ROW_HEIGHT);
 
-  readonly hayIncumplidas = computed(() => this.flechas().some(f => f.incumplida));
+  readonly hasViolations = computed(() => this.arrows().some(f => f.isViolated));
 
   /**
    * El trazado de una flecha: sale del final de la barra que bloquea, gira por el pasillo entre
@@ -80,39 +80,39 @@ export class GanttComponent {
    * En ortogonal y no en recta a propósito: con varias flechas cruzadas, las diagonales se
    * confunden entre sí y con las barras.
    */
-  trazadoDe(flecha: { desdeDia: number; desdeFila: number; hastaDia: number; hastaFila: number }): string {
-    const x1 = flecha.desdeDia * ANCHO_DE_DIA;
-    const y1 = flecha.desdeFila * ALTO_DE_FILA + ALTO_DE_FILA / 2;
-    const x2 = flecha.hastaDia * ANCHO_DE_DIA;
-    const y2 = flecha.hastaFila * ALTO_DE_FILA + ALTO_DE_FILA / 2;
+  pathOf(arrow: { fromDay: number; fromRow: number; toDay: number; toRow: number }): string {
+    const x1 = arrow.fromDay * DAY_WIDTH;
+    const y1 = arrow.fromRow * ROW_HEIGHT + ROW_HEIGHT / 2;
+    const x2 = arrow.toDay * DAY_WIDTH;
+    const y2 = arrow.toRow * ROW_HEIGHT + ROW_HEIGHT / 2;
 
     // Un tramo horizontal mínimo antes de girar: sin él, una flecha entre dos barras pegadas
     // sale como una línea vertical suelta que no se entiende.
-    const codo = Math.max(x1 + ANCHO_DE_DIA / 2, x2 - ANCHO_DE_DIA / 2);
+    const elbow = Math.max(x1 + DAY_WIDTH / 2, x2 - DAY_WIDTH / 2);
 
-    return `M ${x1} ${y1} H ${codo} V ${y2} H ${x2}`;
+    return `M ${x1} ${y1} H ${elbow} V ${y2} H ${x2}`;
   }
 
-  posicionDe(marca: { dia: Dia }): number {
-    const rango = this.rango();
-    return rango ? (marca.dia - rango.primerDia) * ANCHO_DE_DIA : 0;
+  positionOf(timestamp: { day: Day }): number {
+    const range = this.range();
+    return range ? (timestamp.day - range.firstDay) * DAY_WIDTH : 0;
   }
 
-  colorDe(tarea: TaskItem): string {
-    return PRIORIDADES.find(p => p.key === tarea.priority)?.color ?? 'text-muted-foreground';
+  colorOf(task: TaskItem): string {
+    return PRIORITIES.find(p => p.key === task.priority)?.color ?? 'text-muted-foreground';
   }
 
   /** El texto que lee un lector de pantalla, que no puede ver la barra. */
-  descripcionDe(barra: Barra): string {
-    const vence = fechaDelDia(
-      (this.rango()?.primerDia ?? 0) + barra.desplazamiento + barra.duracion - 1)
+  descriptionOf(bar: Bar): string {
+    const due = dateOfDay(
+      (this.range()?.firstDay ?? 0) + bar.offset + bar.duration - 1)
       .toLocaleDateString(undefined, { timeZone: 'UTC' });
 
-    if (barra.esHito) return $localize`${barra.tarea.title}, vence el ${vence}`;
+    if (bar.isMilestone) return $localize`${bar.task.title}, vence el ${due}`;
 
-    const empieza = fechaDelDia((this.rango()?.primerDia ?? 0) + barra.desplazamiento)
+    const start = dateOfDay((this.range()?.firstDay ?? 0) + bar.offset)
       .toLocaleDateString(undefined, { timeZone: 'UTC' });
 
-    return $localize`${barra.tarea.title}, del ${empieza} al ${vence}`;
+    return $localize`${bar.task.title}, del ${start} al ${due}`;
   }
 }

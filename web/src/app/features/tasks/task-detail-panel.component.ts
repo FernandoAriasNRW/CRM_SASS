@@ -16,8 +16,8 @@ import {
 } from '@ng-icons/lucide';
 import { DrawerComponent } from '../../shared/ui/drawer.component';
 import {
-  PRIORIDADES, PRIORIDAD_POR_DEFECTO,
-  FRECUENCIAS,
+  PRIORITIES, DEFAULT_PRIORITY,
+  FREQUENCIES,
   type TaskItem, type TaskDependencies, type TaskDependencyRef, type ChecklistItem, type Recurrence,
 } from './task-create-modal.component';
 import { TASK_TAGS, type Tag } from '../../shared/utils/tags';
@@ -26,11 +26,11 @@ import { ClickableDirective } from '../../shared/directives/clickable.directive'
 import { CustomFieldsFormComponent } from '../../shared/ui/custom-fields-form.component';
 import { ComentariosComponent } from '../../shared/ui/comentarios.component';
 import { MencionadoEnComponent } from '../../shared/ui/mencionado-en.component';
-import { ESTADOS_DE_TAREA, insigniaDelEstadoDeTarea, nombreDelEstadoDeTarea } from './vocabulario-de-tareas';
+import { TASK_STATUSES, taskStatusBadge, taskStatusLabel } from './task-vocabulary';
 
 /** Los dos estados entre los que alterna el check de una subtarea. Los define el backend. */
-const ESTADO_COMPLETADO = 'Done';
-const ESTADO_INICIAL = 'To Do';
+const COMPLETED_STATUS = 'Done';
+const INITIAL_STATUS = 'To Do';
 
 @Component({
   selector: 'app-task-detail-panel',
@@ -52,76 +52,76 @@ export class TaskDetailPanelComponent implements OnInit {
 
   private readonly api = inject(ApiService);
   private readonly toast = inject(ToastService);
-  private readonly usuarios = inject(UsersService);
+  private readonly users = inject(UsersService);
 
   /**
    * Responsables de la tarea. El orden que llega de la API no significa nada, así que quién es
    * el principal se sabe comparando con `principal`, no por la posición.
    */
-  responsables = signal<string[]>([]);
+  assignees = signal<string[]>([]);
   principal = signal('');
-  usuarioElegido = '';
+  chosenUser = '';
 
   // Estado editable local
   title = '';
   description = '';
   status = '';
-  priority: string = PRIORIDAD_POR_DEFECTO;
+  priority: string = DEFAULT_PRIORITY;
   dueDate = '';
   estimatedHours = 0;
   selectedTags = signal<string[]>([]);
   showTagPicker = signal(false);
   saving = signal(false);
-  subtareas = signal<TaskItem[]>([]);
-  cargandoSubtareas = signal(false);
-  creandoSubtarea = signal(false);
-  tituloNuevaSubtarea = '';
-  readonly frecuencias = FRECUENCIAS;
-  recurrencia = signal<Recurrence | null>(null);
-  frecuenciaElegida = '';
-  intervaloElegido = 1;
+  subtasks = signal<TaskItem[]>([]);
+  loadingSubtasks = signal(false);
+  creatingSubtask = signal(false);
+  newSubtaskTitle = '';
+  readonly frequencies = FREQUENCIES;
+  recurrence = signal<Recurrence | null>(null);
+  chosenFrequency = '';
+  chosenInterval = 1;
   checklist = signal<ChecklistItem[]>([]);
-  cargandoChecklist = signal(false);
-  textoNuevoPunto = '';
-  dependencias = signal<TaskDependencies>({ bloqueadaPor: [], bloqueaA: [] });
-  cargandoDependencias = signal(false);
-  candidatasABloquear = signal<TaskItem[]>([]);
-  bloqueanteElegido = '';
+  loadingChecklist = signal(false);
+  newChecklistItemText = '';
+  dependencies = signal<TaskDependencies>({ blockedBy: [], blocks: [] });
+  loadingDependencies = signal(false);
+  blockerCandidates = signal<TaskItem[]>([]);
+  chosenBlocker = '';
   activeTab = signal<'comments' | 'activity'>('comments');
 
-  readonly priorities = PRIORIDADES;
-  readonly statuses = ESTADOS_DE_TAREA;
+  readonly priorities = PRIORITIES;
+  readonly statuses = TASK_STATUSES;
   readonly availableTags = TASK_TAGS;
 
   readonly currentPriority = computed(() =>
-    PRIORIDADES.find(p => p.key === this.priority) ?? PRIORIDADES[2]
+    PRIORITIES.find(p => p.key === this.priority) ?? PRIORITIES[2]
   );
 
-  statusBadge(s: string): BadgeVariant { return insigniaDelEstadoDeTarea(s); }
+  statusBadge(s: string): BadgeVariant { return taskStatusBadge(s); }
 
-  readonly nombreDelEstado = nombreDelEstadoDeTarea;
+  readonly statusLabel = taskStatusLabel;
 
   ngOnInit(): void {
     const t = this.task();
     this.title = t.title;
     this.description = t.description ?? '';
     this.status = t.status;
-    this.priority = t.priority ?? PRIORIDAD_POR_DEFECTO;
+    this.priority = t.priority ?? DEFAULT_PRIORITY;
     this.dueDate = t.dueDate ?? '';
     this.estimatedHours = t.estimatedHours ?? 0;
     // Parsear etiquetas guardadas como string separado por comas
     if ((t as any).tags) {
       this.selectedTags.set(String((t as any).tags).split(',').map((s: string) => s.trim()).filter(Boolean));
     }
-    this.responsables.set(t.assignees ?? (t.assigneeId ? [t.assigneeId] : []));
+    this.assignees.set(t.assignees ?? (t.assigneeId ? [t.assigneeId] : []));
     this.principal.set(t.assigneeId ?? '');
-    if (!this.esSubtarea()) this.cargarSubtareas();
-    this.cargarDependencias();
-    this.cargarChecklist();
-    this.recurrencia.set(t.recurrence ?? null);
-    this.frecuenciaElegida = t.recurrence?.frequency ?? '';
-    this.intervaloElegido = t.recurrence?.interval ?? 1;
-    if (!this.usuarios.users().length) this.usuarios.loadTenantUsers().subscribe();
+    if (!this.isSubtask()) this.loadSubtasks();
+    this.loadDependencies();
+    this.loadChecklist();
+    this.recurrence.set(t.recurrence ?? null);
+    this.chosenFrequency = t.recurrence?.frequency ?? '';
+    this.chosenInterval = t.recurrence?.interval ?? 1;
+    if (!this.users.users().length) this.users.loadTenantUsers().subscribe();
   }
 
   /**
@@ -130,80 +130,80 @@ export class TaskDetailPanelComponent implements OnInit {
    * No se manda fecha de arranque: el servidor toma la fecha límite de la tarea, que es la que
    * el usuario ya eligió. Preguntarla otra vez sería preguntar dos veces lo mismo.
    */
-  guardarRecurrencia(): void {
-    if (!this.frecuenciaElegida) return;
+  saveRecurrence(): void {
+    if (!this.chosenFrequency) return;
 
-    const intervalo = Math.max(1, Math.floor(this.intervaloElegido || 1));
+    const interval = Math.max(1, Math.floor(this.chosenInterval || 1));
 
     this.api.put(`/tasks/${this.task().id}/recurrence`, {
-      frequency: this.frecuenciaElegida,
-      interval: intervalo,
+      frequency: this.chosenFrequency,
+      interval: interval,
     }).subscribe({
       next: () => {
         // Se relee para mostrar la próxima ocurrencia que calculó el servidor, en lugar de
         // adivinarla aquí y arriesgarse a pintar una fecha distinta de la guardada.
-        this.releerRecurrencia();
-        this.toast.success($localize`Repetición guardada`, this.textoDeRecurrencia(this.frecuenciaElegida, intervalo));
+        this.reloadRecurrence();
+        this.toast.success($localize`Repetición guardada`, this.recurrenceText(this.chosenFrequency, interval));
       },
-      error: respuesta => this.toast.error(
-        $localize`No se pudo guardar la repetición`, this.mensajeDelServidor(respuesta)),
+      error: response => this.toast.error(
+        $localize`No se pudo guardar la repetición`, this.serverMessage(response)),
     });
   }
 
-  quitarRecurrencia(): void {
+  clearRecurrence(): void {
     this.api.delete(`/tasks/${this.task().id}/recurrence`).subscribe({
       next: () => {
-        this.recurrencia.set(null);
-        this.frecuenciaElegida = '';
-        this.intervaloElegido = 1;
+        this.recurrence.set(null);
+        this.chosenFrequency = '';
+        this.chosenInterval = 1;
         this.updated.emit({ ...this.task(), recurrence: null });
       },
       error: () => this.toast.error($localize`Error`, $localize`No se pudo quitar la repetición`),
     });
   }
 
-  private releerRecurrencia(): void {
+  private reloadRecurrence(): void {
     this.api.get<TaskItem>(`/tasks/${this.task().id}`).subscribe({
-      next: tarea => {
-        this.recurrencia.set(tarea.recurrence ?? null);
-        this.updated.emit({ ...this.task(), recurrence: tarea.recurrence ?? null });
+      next: task => {
+        this.recurrence.set(task.recurrence ?? null);
+        this.updated.emit({ ...this.task(), recurrence: task.recurrence ?? null });
       },
     });
   }
 
-  textoDeRecurrencia(frecuencia: string, intervalo: number): string {
-    const etiqueta = FRECUENCIAS.find(f => f.key === frecuencia)?.label ?? frecuencia;
-    return intervalo > 1 ? `${etiqueta} × ${intervalo}` : etiqueta;
+  recurrenceText(frequency: string, interval: number): string {
+    const label = FREQUENCIES.find(f => f.key === frequency)?.label ?? frequency;
+    return interval > 1 ? `${label} × ${interval}` : label;
   }
 
-  readonly puntosHechos = computed(() => this.checklist().filter(p => p.isDone).length);
+  readonly doneItems = computed(() => this.checklist().filter(p => p.isDone).length);
 
-  cargarChecklist(): void {
-    this.cargandoChecklist.set(true);
+  loadChecklist(): void {
+    this.loadingChecklist.set(true);
     this.api.get<ChecklistItem[]>(`/tasks/${this.task().id}/checklist`).subscribe({
-      next: puntos => {
-        this.checklist.set(puntos ?? []);
-        this.cargandoChecklist.set(false);
+      next: items => {
+        this.checklist.set(items ?? []);
+        this.loadingChecklist.set(false);
       },
       error: () => {
-        this.cargandoChecklist.set(false);
+        this.loadingChecklist.set(false);
         this.toast.error($localize`Error`, $localize`No se pudo cargar la checklist`);
       },
     });
   }
 
-  agregarPunto(): void {
-    const texto = this.textoNuevoPunto.trim();
-    if (!texto) return;
+  addChecklistItem(): void {
+    const text = this.newChecklistItemText.trim();
+    if (!text) return;
 
-    this.api.post<ChecklistItem>(`/tasks/${this.task().id}/checklist`, { text: texto }).subscribe({
-      next: punto => {
-        this.checklist.update(actuales => [...actuales, punto]);
-        this.textoNuevoPunto = '';
-        this.avisarDeLaChecklist();
+    this.api.post<ChecklistItem>(`/tasks/${this.task().id}/checklist`, { text }).subscribe({
+      next: item => {
+        this.checklist.update(current => [...current, item]);
+        this.newChecklistItemText = '';
+        this.toastChecklist();
       },
-      error: respuesta => this.toast.error(
-        $localize`No se pudo añadir el punto`, this.mensajeDelServidor(respuesta)),
+      error: response => this.toast.error(
+        $localize`No se pudo añadir el punto`, this.serverMessage(response)),
     });
   }
 
@@ -211,67 +211,67 @@ export class TaskDetailPanelComponent implements OnInit {
    * Marca o desmarca un punto. Se pinta antes de que responda el servidor y se revierte si lo
    * rechaza, igual que en subtareas, prioridad y tableros.
    */
-  alternarPunto(punto: ChecklistItem): void {
-    const nuevo = !punto.isDone;
-    this.checklist.update(actuales => actuales.map(p => p.id === punto.id ? { ...p, isDone: nuevo } : p));
-    this.avisarDeLaChecklist();
+  toggleChecklistItem(item: ChecklistItem): void {
+    const updated = !item.isDone;
+    this.checklist.update(current => current.map(p => p.id === item.id ? { ...p, isDone: updated } : p));
+    this.toastChecklist();
 
-    this.api.patch(`/tasks/${this.task().id}/checklist/${punto.id}`, { isDone: nuevo }).subscribe({
+    this.api.patch(`/tasks/${this.task().id}/checklist/${item.id}`, { isDone: updated }).subscribe({
       error: () => {
-        this.checklist.update(actuales => actuales.map(p => p.id === punto.id ? { ...p, isDone: !nuevo } : p));
-        this.avisarDeLaChecklist();
+        this.checklist.update(current => current.map(p => p.id === item.id ? { ...p, isDone: !updated } : p));
+        this.toastChecklist();
         this.toast.error($localize`Error`, $localize`No se pudo actualizar el punto`);
       },
     });
   }
 
-  quitarPunto(punto: ChecklistItem): void {
-    this.api.delete(`/tasks/${this.task().id}/checklist/${punto.id}`).subscribe({
+  removeChecklistItem(item: ChecklistItem): void {
+    this.api.delete(`/tasks/${this.task().id}/checklist/${item.id}`).subscribe({
       next: () => {
-        this.checklist.update(actuales => actuales.filter(p => p.id !== punto.id));
-        this.avisarDeLaChecklist();
+        this.checklist.update(current => current.filter(p => p.id !== item.id));
+        this.toastChecklist();
       },
       error: () => this.toast.error($localize`Error`, $localize`No se pudo quitar el punto`),
     });
   }
 
-  private avisarDeLaChecklist(): void {
+  private toastChecklist(): void {
     this.updated.emit({
       ...this.task(),
       checklistTotal: this.checklist().length,
-      checklistDone: this.puntosHechos(),
+      checklistDone: this.doneItems(),
     });
   }
 
   /** Nombre de una persona, o su identificador recortado si aún no está cargada. */
-  nombreDe(userId: string): string {
-    return this.usuarios.getUser(userId)?.name ?? `${userId.slice(0, 8)}…`;
+  nameOf(userId: string): string {
+    return this.users.getUser(userId)?.name ?? `${userId.slice(0, 8)}…`;
   }
 
-  avatarDe(userId: string): string {
-    return this.usuarios.getUser(userId)?.avatarUrl ?? '';
+  avatarOf(userId: string): string {
+    return this.users.getUser(userId)?.avatarUrl ?? '';
   }
 
   esPrincipal(userId: string): boolean { return userId === this.principal(); }
 
   /** Quien todavía no es responsable. Sólo esas personas se pueden añadir. */
-  readonly candidatosAResponsable = computed<TenantUser[]>(() => {
-    const yaEstan = new Set(this.responsables());
-    return this.usuarios.users().filter(u => !yaEstan.has(u.id));
+  readonly assigneeCandidates = computed<TenantUser[]>(() => {
+    const alreadyThere = new Set(this.assignees());
+    return this.users.users().filter(u => !alreadyThere.has(u.id));
   });
 
-  agregarResponsable(): void {
-    const quien = this.usuarioElegido;
-    if (!quien) return;
+  addAssignee(): void {
+    const who = this.chosenUser;
+    if (!who) return;
 
-    this.api.post(`/tasks/${this.task().id}/assignees`, { userId: quien }).subscribe({
+    this.api.post(`/tasks/${this.task().id}/assignees`, { userId: who }).subscribe({
       next: () => {
-        this.responsables.update(actuales => [...actuales, quien]);
-        this.usuarioElegido = '';
-        this.avisarDeLosResponsables();
+        this.assignees.update(current => [...current, who]);
+        this.chosenUser = '';
+        this.toastAssignees();
       },
-      error: respuesta => this.toast.error(
-        $localize`No se pudo añadir el responsable`, this.mensajeDelServidor(respuesta)),
+      error: response => this.toast.error(
+        $localize`No se pudo añadir el responsable`, this.serverMessage(response)),
     });
   }
 
@@ -282,53 +282,53 @@ export class TaskDetailPanelComponent implements OnInit {
    * adivinar a quién promovió: inventarlo aquí sería arriesgarse a pintar un principal que no
    * es el que quedó guardado.
    */
-  quitarResponsable(userId: string): void {
+  removeAssignee(userId: string): void {
     this.api.delete(`/tasks/${this.task().id}/assignees/${userId}`).subscribe({
       next: () => {
-        this.responsables.update(actuales => actuales.filter(u => u !== userId));
+        this.assignees.update(current => current.filter(u => u !== userId));
 
         // Si se quitó al principal, el servidor promovió a otro. Se relee en lugar de adivinar
         // a quién: inventarlo aquí sería pintar un principal que no es el que quedó guardado.
-        if (userId === this.principal()) this.releerResponsables();
+        if (userId === this.principal()) this.reloadAssignees();
 
-        this.avisarDeLosResponsables();
+        this.toastAssignees();
       },
-      error: respuesta => this.toast.error(
-        $localize`No se pudo quitar el responsable`, this.mensajeDelServidor(respuesta)),
+      error: response => this.toast.error(
+        $localize`No se pudo quitar el responsable`, this.serverMessage(response)),
     });
   }
 
   /** Vuelve a leer la tarea para saber a quién promovió el servidor. */
-  private releerResponsables(): void {
+  private reloadAssignees(): void {
     this.api.get<TaskItem>(`/tasks/${this.task().id}`).subscribe({
-      next: tarea => {
-        this.responsables.set(tarea.assignees ?? []);
-        this.principal.set(tarea.assigneeId ?? '');
-        this.avisarDeLosResponsables();
+      next: task => {
+        this.assignees.set(task.assignees ?? []);
+        this.principal.set(task.assigneeId ?? '');
+        this.toastAssignees();
       },
     });
   }
 
-  private avisarDeLosResponsables(): void {
+  private toastAssignees(): void {
     this.updated.emit({
       ...this.task(),
-      assignees: this.responsables(),
+      assignees: this.assignees(),
       assigneeId: this.principal(),
     });
   }
 
-  cargarDependencias(): void {
-    this.cargandoDependencias.set(true);
+  loadDependencies(): void {
+    this.loadingDependencies.set(true);
     this.api.get<TaskDependencies>(`/tasks/${this.task().id}/dependencies`).subscribe({
-      next: datos => {
-        this.dependencias.set({
-          bloqueadaPor: datos.bloqueadaPor ?? [],
-          bloqueaA: datos.bloqueaA ?? [],
+      next: data => {
+        this.dependencies.set({
+          blockedBy: data.blockedBy ?? [],
+          blocks: data.blocks ?? [],
         });
-        this.cargandoDependencias.set(false);
+        this.loadingDependencies.set(false);
       },
       error: () => {
-        this.cargandoDependencias.set(false);
+        this.loadingDependencies.set(false);
         this.toast.error($localize`Error`, $localize`No se pudieron cargar las dependencias`);
       },
     });
@@ -339,60 +339,60 @@ export class TaskDetailPanelComponent implements OnInit {
    * combinación que el servidor acepta. Se piden al abrir el selector y no antes, porque en la
    * mayoría de las visitas al panel nadie toca las dependencias.
    */
-  cargarCandidatas(): void {
-    if (this.candidatasABloquear().length) return;
+  loadCandidates(): void {
+    if (this.blockerCandidates().length) return;
 
     this.api.get<{ items: TaskItem[] }>('/tasks', { projectId: this.task().projectId, pageSize: 200, includeSubtasks: true })
       .subscribe({
-        next: pagina => {
-          const yaBloquean = new Set(this.dependencias().bloqueadaPor.map(t => t.id));
-          this.candidatasABloquear.set(
-            (pagina.items ?? []).filter(t => t.id !== this.task().id && !yaBloquean.has(t.id))
+        next: page => {
+          const alreadyBlocking = new Set(this.dependencies().blockedBy.map(t => t.id));
+          this.blockerCandidates.set(
+            (page.items ?? []).filter(t => t.id !== this.task().id && !alreadyBlocking.has(t.id))
           );
         },
         error: () => this.toast.error($localize`Error`, $localize`No se pudieron cargar las tareas del proyecto`),
       });
   }
 
-  agregarBloqueo(): void {
-    const elegida = this.bloqueanteElegido;
-    if (!elegida) return;
+  addBlocker(): void {
+    const chosen = this.chosenBlocker;
+    if (!chosen) return;
 
-    this.api.post(`/tasks/${this.task().id}/dependencies`, { dependsOnTaskId: elegida }).subscribe({
+    this.api.post(`/tasks/${this.task().id}/dependencies`, { dependsOnTaskId: chosen }).subscribe({
       next: () => {
-        this.bloqueanteElegido = '';
-        this.candidatasABloquear.set([]);
-        this.cargarDependencias();
-        this.avisarDeLosBloqueos(1);
+        this.chosenBlocker = '';
+        this.blockerCandidates.set([]);
+        this.loadDependencies();
+        this.toastBlockers(1);
       },
-      error: respuesta => {
+      error: response => {
         // El servidor explica por qué: ciclo, ya existe, otro proyecto. Se muestra su mensaje
         // en lugar de uno genérico, porque cada caso se corrige de forma distinta.
-        this.toast.error($localize`No se pudo añadir la dependencia`, this.mensajeDelServidor(respuesta));
+        this.toast.error($localize`No se pudo añadir la dependencia`, this.serverMessage(response));
       },
     });
   }
 
-  quitarBloqueo(bloqueante: TaskDependencyRef): void {
-    this.api.delete(`/tasks/${this.task().id}/dependencies/${bloqueante.id}`).subscribe({
+  removeBlocker(blocker: TaskDependencyRef): void {
+    this.api.delete(`/tasks/${this.task().id}/dependencies/${blocker.id}`).subscribe({
       next: () => {
-        this.dependencias.update(d => ({ ...d, bloqueadaPor: d.bloqueadaPor.filter(t => t.id !== bloqueante.id) }));
-        this.candidatasABloquear.set([]);
-        this.avisarDeLosBloqueos(-1);
+        this.dependencies.update(d => ({ ...d, blockedBy: d.blockedBy.filter(t => t.id !== blocker.id) }));
+        this.blockerCandidates.set([]);
+        this.toastBlockers(-1);
       },
       error: () => this.toast.error($localize`Error`, $localize`No se pudo quitar la dependencia`),
     });
   }
 
-  private mensajeDelServidor(respuesta: unknown): string {
-    const cuerpo = (respuesta as { error?: unknown })?.error;
-    return typeof cuerpo === 'string' && cuerpo.trim()
-      ? cuerpo
+  private serverMessage(response: unknown): string {
+    const body = (response as { error?: unknown })?.error;
+    return typeof body === 'string' && body.trim()
+      ? body
       : $localize`Inténtalo de nuevo`;
   }
 
   /** Mantiene al día el distintivo de bloqueada de la tarjeta sin recargar la lista. */
-  private avisarDeLosBloqueos(delta: number): void {
+  private toastBlockers(delta: number): void {
     this.updated.emit({
       ...this.task(),
       blockedByCount: Math.max(0, (this.task().blockedByCount ?? 0) + delta),
@@ -400,54 +400,54 @@ export class TaskDetailPanelComponent implements OnInit {
   }
 
   /** Si esta tarea cuelga de otra. El anidamiento admite un solo nivel. */
-  esSubtarea(): boolean { return !!this.task().parentTaskId; }
+  isSubtask(): boolean { return !!this.task().parentTaskId; }
 
-  readonly subtareasCompletadas = computed(
-    () => this.subtareas().filter(s => this.estaCompletada(s)).length
+  readonly completedSubtasks = computed(
+    () => this.subtasks().filter(s => this.isCompleted(s)).length
   );
 
-  estaCompletada(sub: TaskItem): boolean { return sub.status === ESTADO_COMPLETADO; }
+  isCompleted(sub: TaskItem): boolean { return sub.status === COMPLETED_STATUS; }
 
-  cargarSubtareas(): void {
-    this.cargandoSubtareas.set(true);
+  loadSubtasks(): void {
+    this.loadingSubtasks.set(true);
     this.api.get<{ items: TaskItem[] }>(`/tasks/${this.task().id}/subtasks`).subscribe({
-      next: pagina => {
-        this.subtareas.set(pagina.items ?? []);
-        this.cargandoSubtareas.set(false);
+      next: page => {
+        this.subtasks.set(page.items ?? []);
+        this.loadingSubtasks.set(false);
       },
       error: () => {
-        this.cargandoSubtareas.set(false);
+        this.loadingSubtasks.set(false);
         this.toast.error($localize`Error`, $localize`No se pudieron cargar las subtareas`);
       },
     });
   }
 
-  crearSubtarea(): void {
-    const titulo = this.tituloNuevaSubtarea.trim();
-    if (!titulo || this.creandoSubtarea()) return;
+  createSubtask(): void {
+    const title = this.newSubtaskTitle.trim();
+    if (!title || this.creatingSubtask()) return;
 
-    const padre = this.task();
-    this.creandoSubtarea.set(true);
+    const parent = this.task();
+    this.creatingSubtask.set(true);
 
     // Hereda proyecto y responsable del padre: el servidor exige que la subtarea sea del mismo
     // proyecto, y pedirlo otra vez en un alta rápida sobra.
     this.api.post<TaskItem>('/tasks', {
-      title: titulo,
+      title: title,
       description: '',
-      projectId: padre.projectId,
-      assigneeId: padre.assigneeId,
+      projectId: parent.projectId,
+      assigneeId: parent.assigneeId,
       estimatedHours: 1,
-      dueDate: padre.dueDate,
-      parentTaskId: padre.id,
+      dueDate: parent.dueDate,
+      parentTaskId: parent.id,
     }).subscribe({
-      next: creada => {
-        this.subtareas.update(actuales => [...actuales, creada]);
-        this.tituloNuevaSubtarea = '';
-        this.creandoSubtarea.set(false);
-        this.avisarDelProgreso();
+      next: created => {
+        this.subtasks.update(current => [...current, created]);
+        this.newSubtaskTitle = '';
+        this.creatingSubtask.set(false);
+        this.toastProgress();
       },
       error: () => {
-        this.creandoSubtarea.set(false);
+        this.creatingSubtask.set(false);
         this.toast.error($localize`Error`, $localize`No se pudo crear la subtarea`);
       },
     });
@@ -459,27 +459,27 @@ export class TaskDetailPanelComponent implements OnInit {
    * Se pinta el cambio antes de que responda el servidor, y se revierte si lo rechaza: es la
    * misma decisión que en los tableros y en la prioridad.
    */
-  alternarSubtarea(sub: TaskItem): void {
-    const anterior = sub.status;
-    const nuevo = this.estaCompletada(sub) ? ESTADO_INICIAL : ESTADO_COMPLETADO;
+  toggleSubtask(sub: TaskItem): void {
+    const previous = sub.status;
+    const updated = this.isCompleted(sub) ? INITIAL_STATUS : COMPLETED_STATUS;
 
-    this.subtareas.update(actuales => actuales.map(s => s.id === sub.id ? { ...s, status: nuevo } : s));
+    this.subtasks.update(current => current.map(s => s.id === sub.id ? { ...s, status: updated } : s));
 
-    this.api.patch(`/tasks/${sub.id}`, { status: nuevo }).subscribe({
-      next: () => this.avisarDelProgreso(),
+    this.api.patch(`/tasks/${sub.id}`, { status: updated }).subscribe({
+      next: () => this.toastProgress(),
       error: () => {
-        this.subtareas.update(actuales => actuales.map(s => s.id === sub.id ? { ...s, status: anterior } : s));
+        this.subtasks.update(current => current.map(s => s.id === sub.id ? { ...s, status: previous } : s));
         this.toast.error($localize`Error`, $localize`No se pudo actualizar la subtarea`);
       },
     });
   }
 
   /** Refresca el progreso que muestra la tarjeta del tablero sin recargar la lista entera. */
-  private avisarDelProgreso(): void {
+  private toastProgress(): void {
     this.updated.emit({
       ...this.task(),
-      subtaskCount: this.subtareas().length,
-      completedSubtaskCount: this.subtareasCompletadas(),
+      subtaskCount: this.subtasks().length,
+      completedSubtaskCount: this.completedSubtasks(),
     });
   }
 
@@ -525,21 +525,21 @@ export class TaskDetailPanelComponent implements OnInit {
    * tableros: dejar en pantalla un valor que no se guardó es peor que no aceptar el cambio,
    * porque el usuario se va creyendo que la tarea quedó priorizada.
    */
-  changePriority(nuevaPrioridad: string): void {
-    const anterior = this.priority;
-    if (nuevaPrioridad === anterior) return;
+  changePriority(newPriority: string): void {
+    const previous = this.priority;
+    if (newPriority === previous) return;
 
-    this.priority = nuevaPrioridad;
+    this.priority = newPriority;
     this.saving.set(true);
 
-    this.api.patch(`/tasks/${this.task().id}`, { priority: nuevaPrioridad }).subscribe({
+    this.api.patch(`/tasks/${this.task().id}`, { priority: newPriority }).subscribe({
       next: () => {
         this.saving.set(false);
-        this.updated.emit({ ...this.task(), priority: nuevaPrioridad });
+        this.updated.emit({ ...this.task(), priority: newPriority });
         this.toast.success($localize`Prioridad actualizada`, this.currentPriority().label);
       },
       error: () => {
-        this.priority = anterior;
+        this.priority = previous;
         this.saving.set(false);
         this.toast.error($localize`Error`, $localize`No se pudo cambiar la prioridad`);
       },

@@ -1,7 +1,7 @@
 import { Component, computed, inject, input } from '@angular/core';
 import { UsersService } from '../../core/users.service';
-import { fechaDelDia, type Dia } from './gantt';
-import { cargaDe } from './carga';
+import { dateOfDay, type Day } from './gantt';
+import { workloadOf } from './workload';
 import type { TaskItem } from './task-create-modal.component';
 
 /**
@@ -17,31 +17,31 @@ import type { TaskItem } from './task-create-modal.component';
  * compara sin afirmar nada.
  */
 @Component({
-  selector: 'app-carga',
+  selector: 'app-workload',
   standalone: true,
-  templateUrl: './carga.component.html',
+  templateUrl: './workload.component.html',
 })
-export class CargaComponent {
-  readonly tareas = input.required<TaskItem[]>();
+export class WorkloadComponent {
+  readonly tasks = input.required<TaskItem[]>();
 
-  private readonly usuarios = inject(UsersService);
+  private readonly users = inject(UsersService);
 
-  readonly carga = computed(() => cargaDe(this.tareas()));
+  readonly workload = computed(() => workloadOf(this.tasks()));
 
-  nombreDe(personaId: string | null): string {
-    if (!personaId) return $localize`Sin asignar`;
-    return this.usuarios.getUser(personaId)?.name ?? `${personaId.slice(0, 8)}…`;
+  nameOf(userId: string | null): string {
+    if (!userId) return $localize`Sin asignar`;
+    return this.users.getUser(userId)?.name ?? `${userId.slice(0, 8)}…`;
   }
 
-  etiquetaDeSemana(semana: Dia): string {
-    return fechaDelDia(semana).toLocaleDateString(undefined, {
+  weekLabel(week: Day): string {
+    return dateOfDay(week).toLocaleDateString(undefined, {
       day: '2-digit', month: 'short', timeZone: 'UTC',
     });
   }
 
   /** El ancho de la barra dentro de la celda, en porcentaje de la celda más alta de la tabla. */
-  proporcion(horas: number): number {
-    const maximo = this.carga().maximo;
-    return maximo > 0 ? Math.round((horas / maximo) * 100) : 0;
+  barWidth(hours: number): number {
+    const max = this.workload().max;
+    return max > 0 ? Math.round((hours / max) * 100) : 0;
   }
 }

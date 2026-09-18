@@ -1,5 +1,5 @@
 import type { TaskItem } from './task-create-modal.component';
-import { diaDesde, fechaDelDia, type Dia } from './gantt';
+import { dayFrom, dateOfDay, type Day } from './gantt';
 
 /**
  * El reparto de horas por persona y semana.
@@ -9,47 +9,47 @@ import { diaDesde, fechaDelDia, type Dia } from './gantt';
  */
 
 /** Estado en el que una tarea deja de contar como carga. Lo fija el backend. */
-const ESTADO_COMPLETADO = 'Done';
+const COMPLETED_STATUS = 'Done';
 
 /** Los días que se consideran laborables al repartir. Sábado y domingo no cuentan. */
-function esLaborable(dia: Dia): boolean {
-  const diaDeLaSemana = fechaDelDia(dia).getUTCDay();
-  return diaDeLaSemana !== 0 && diaDeLaSemana !== 6;
+function isWorkday(day: Day): boolean {
+  const weekday = dateOfDay(day).getUTCDay();
+  return weekday !== 0 && weekday !== 6;
 }
 
 /** El lunes de la semana a la que pertenece un día. Es la clave con la que se agrupa. */
-export function lunesDe(dia: Dia): Dia {
-  const diaDeLaSemana = fechaDelDia(dia).getUTCDay();
+export function mondayOf(day: Day): Day {
+  const weekday = dateOfDay(day).getUTCDay();
   // getUTCDay: 0 es domingo. El lunes de la semana del domingo es seis días antes, no uno.
-  const desdeElLunes = diaDeLaSemana === 0 ? 6 : diaDeLaSemana - 1;
-  return dia - desdeElLunes;
+  const sinceMonday = weekday === 0 ? 6 : weekday - 1;
+  return day - sinceMonday;
 }
 
-export interface CeldaDeCarga {
+export interface WorkloadCell {
   /** El lunes de la semana. */
-  semana: Dia;
-  horas: number;
+  week: Day;
+  hours: number;
 }
 
-export interface FilaDeCarga {
+export interface WorkloadRow {
   /** El identificador del responsable, o `null` para las tareas sin asignar. */
-  personaId: string | null;
-  semanas: CeldaDeCarga[];
+  userId: string | null;
+  weeks: WorkloadCell[];
   total: number;
 }
 
-export interface Carga {
-  filas: FilaDeCarga[];
+export interface Workload {
+  rows: WorkloadRow[];
   /** Los lunes de todas las semanas que aparecen, en orden. */
-  semanas: Dia[];
+  weeks: Day[];
   /** La celda más alta de toda la tabla, para escalar las barras. */
-  maximo: number;
+  max: number;
   /**
    * Cuántas tareas se han quedado fuera por no tener fecha límite. No se reparten en ninguna
    * semana —no hay dónde— pero se cuentan aparte: una carga que esconde trabajo pendiente es
    * exactamente el error que hace decir «vamos bien» antes de un retraso.
    */
-  sinFecha: number;
+  withoutDueDate: number;
 }
 
 /**
@@ -63,78 +63,78 @@ export interface Carga {
  * Una tarea sin fecha de inicio carga todo en su vencimiento: es lo único que se sabe de ella.
  * Las completadas no cuentan; ya no son carga futura.
  */
-export function cargaDe(tareas: readonly TaskItem[]): Carga {
-  const porPersona = new Map<string | null, Map<Dia, number>>();
-  const semanas = new Set<Dia>();
-  let sinFecha = 0;
+export function workloadOf(tasks: readonly TaskItem[]): Workload {
+  const byUser = new Map<string | null, Map<Day, number>>();
+  const weeks = new Set<Day>();
+  let withoutDueDate = 0;
 
-  for (const tarea of tareas) {
-    if (tarea.status === ESTADO_COMPLETADO) continue;
+  for (const task of tasks) {
+    if (task.status === COMPLETED_STATUS) continue;
 
-    const vence = diaDesde(tarea.dueDate);
-    if (vence === null) {
-      sinFecha++;
+    const due = dayFrom(task.dueDate);
+    if (due === null) {
+      withoutDueDate++;
       continue;
     }
 
-    const empieza = diaDesde(tarea.startDate);
-    const inicio = empieza !== null && empieza <= vence ? empieza : vence;
+    const start = dayFrom(task.startDate);
+    const firstDay = start !== null && start <= due ? start : due;
 
-    const dias: Dia[] = [];
-    for (let dia = inicio; dia <= vence; dia++) {
-      if (esLaborable(dia)) dias.push(dia);
+    const days: Day[] = [];
+    for (let day = firstDay; day <= due; day++) {
+      if (isWorkday(day)) days.push(day);
     }
 
     // Un tramo entero en fin de semana no puede descartarse: son horas comprometidas. Se
     // cargan en el vencimiento, que es donde se notará que hay que hacerlas.
-    if (!dias.length) dias.push(vence);
+    if (!days.length) days.push(due);
 
-    const porDia = (tarea.estimatedHours ?? 0) / dias.length;
+    const perDay = (task.estimatedHours ?? 0) / days.length;
 
     // Una tarea puede tener varios responsables. Las horas se cuentan **enteras para cada uno**
     // y no divididas: dos personas en una tarea de ocho horas es que las dos tienen ocho horas
     // de trabajo por delante, no cuatro. Dividirlas haría que una tabla de carga dijera que hay
     // hueco donde no lo hay.
-    const responsables: (string | null)[] = tarea.assignees?.length
-      ? [...tarea.assignees]
-      : [tarea.assigneeId || null];
+    const assignees: (string | null)[] = task.assignees?.length
+      ? [...task.assignees]
+      : [task.assigneeId || null];
 
-    for (const persona of responsables) {
-      const suyas = porPersona.get(persona) ?? new Map<Dia, number>();
-      porPersona.set(persona, suyas);
+    for (const user of assignees) {
+      const mine = byUser.get(user) ?? new Map<Day, number>();
+      byUser.set(user, mine);
 
-      for (const dia of dias) {
-        const semana = lunesDe(dia);
-        semanas.add(semana);
-        suyas.set(semana, (suyas.get(semana) ?? 0) + porDia);
+      for (const day of days) {
+        const week = mondayOf(day);
+        weeks.add(week);
+        mine.set(week, (mine.get(week) ?? 0) + perDay);
       }
     }
   }
 
-  const semanasOrdenadas = [...semanas].sort((a, b) => a - b);
-  let maximo = 0;
+  const sortedWeeks = [...weeks].sort((a, b) => a - b);
+  let max = 0;
 
-  const filas: FilaDeCarga[] = [...porPersona.entries()]
-    .map(([personaId, porSemana]) => {
-      const celdas = semanasOrdenadas.map(semana => {
-        const horas = redondear(porSemana.get(semana) ?? 0);
-        if (horas > maximo) maximo = horas;
-        return { semana, horas };
+  const rows: WorkloadRow[] = [...byUser.entries()]
+    .map(([userId, byWeek]) => {
+      const cells = sortedWeeks.map(week => {
+        const hours = round(byWeek.get(week) ?? 0);
+        if (hours > max) max = hours;
+        return { week, hours };
       });
 
       return {
-        personaId,
-        semanas: celdas,
-        total: redondear(celdas.reduce((suma, c) => suma + c.horas, 0)),
+        userId,
+        weeks: cells,
+        total: round(cells.reduce((sum, c) => sum + c.hours, 0)),
       };
     })
     // Quien más carga acumula, primero: es la fila que se busca al abrir la vista.
     .sort((a, b) => b.total - a.total);
 
-  return { filas, semanas: semanasOrdenadas, maximo, sinFecha };
+  return { rows, weeks: sortedWeeks, max, withoutDueDate };
 }
 
 /** Media hora es la unidad más fina que tiene sentido enseñar en una tabla de carga. */
-function redondear(horas: number): number {
-  return Math.round(horas * 2) / 2;
+function round(hours: number): number {
+  return Math.round(hours * 2) / 2;
 }

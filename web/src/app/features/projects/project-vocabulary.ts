@@ -7,19 +7,19 @@
  *
  * La clave no se traduce nunca: es lo que viaja en `?status=` y en el `PATCH`. El nombre sí.
  */
-export interface EstadoDeProyecto {
-  readonly clave: string;
-  readonly etiqueta: string;
+export interface ProjectStatusOption {
+  readonly key: string;
+  readonly label: string;
 }
 
-export const ESTADOS_DE_PROYECTO: readonly EstadoDeProyecto[] = [
-  { clave: 'Planned', etiqueta: $localize`Planificado` },
-  { clave: 'In Progress', etiqueta: $localize`En progreso` },
-  { clave: 'On Hold', etiqueta: $localize`En pausa` },
-  { clave: 'Done', etiqueta: $localize`Completado` }
+export const PROJECT_STATUSES: readonly ProjectStatusOption[] = [
+  { key: 'Planned', label: $localize`Planificado` },
+  { key: 'In Progress', label: $localize`En progreso` },
+  { key: 'On Hold', label: $localize`En pausa` },
+  { key: 'Done', label: $localize`Completado` }
 ];
 
 /** El nombre legible, o la clave si llega una desconocida: un hueco no diría nada. */
-export function nombreDelEstadoDeProyecto(estado: string): string {
-  return ESTADOS_DE_PROYECTO.find(e => e.clave === estado)?.etiqueta ?? estado;
+export function projectStatusLabel(status: string): string {
+  return PROJECT_STATUSES.find(e => e.key === status)?.label ?? status;
 }

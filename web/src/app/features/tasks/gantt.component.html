@@ -1,4 +1,4 @@
-@if (!rango()) {
+@if (!range()) {
   <div class="flex flex-col items-center justify-center gap-2 py-16 text-muted-foreground">
     <p class="text-sm font-medium text-foreground" i18n>Nada que planificar todavía</p>
     <p class="text-xs" i18n>El diagrama necesita tareas con fecha límite.</p>
@@ -12,83 +12,83 @@
       <div class="h-10 border-b border-border px-3 flex items-center">
         <span class="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider" i18n>Tarea</span>
       </div>
-      @for (barra of barras(); track barra.tarea.id) {
-        <button type="button" (click)="abrir.emit(barra.tarea)"
+      @for (bar of bars(); track bar.task.id) {
+        <button type="button" (click)="open.emit(bar.task)"
                 class="w-full h-9 px-3 flex items-center gap-1.5 text-left border-b border-border/50 hover:bg-muted/60 transition-colors">
-          @if (barra.bloqueada) {
+          @if (bar.isBlocked) {
             <ng-icon name="lucideBan" size="11" class="text-destructive shrink-0"
                      i18n-title title="La bloquea otra tarea" />
           }
-          <span class="text-[13px] truncate">{{ barra.tarea.title }}</span>
+          <span class="text-[13px] truncate">{{ bar.task.title }}</span>
         </button>
       }
     </div>
 
     <div class="flex-1 overflow-x-auto">
-      <div class="relative" [style.width.px]="anchoTotal()">
+      <div class="relative" [style.width.px]="totalWidth()">
 
         <!-- Eje -->
         <div class="h-10 border-b border-border relative">
-          @for (marca of marcas(); track marca.dia) {
+          @for (timestamp of ticks(); track timestamp.day) {
             <span class="absolute top-0 h-10 flex items-center pl-1 text-[11px] font-medium text-muted-foreground border-l border-border"
-                  [style.left.px]="posicionDe(marca)">
-              {{ marca.etiqueta }}
+                  [style.left.px]="positionOf(timestamp)">
+              {{ timestamp.label }}
             </span>
           }
         </div>
 
         <!-- Fondo: fines de semana y el día de hoy -->
         <div class="absolute inset-0 top-10 flex pointer-events-none">
-          @for (dia of dias(); track dia.dia) {
-            <div class="h-full shrink-0" [style.width.px]="anchoDeDia"
-                 [class.bg-muted]="dia.finDeSemana"
-                 [class.bg-primary]="dia.esHoy"
-                 [class.opacity-40]="dia.finDeSemana"
-                 [class.opacity-10]="dia.esHoy"></div>
+          @for (day of days(); track day.day) {
+            <div class="h-full shrink-0" [style.width.px]="dayWidth"
+                 [class.bg-muted]="day.weekend"
+                 [class.bg-primary]="day.isToday"
+                 [class.opacity-40]="day.weekend"
+                 [class.opacity-10]="day.isToday"></div>
           }
         </div>
 
         <!-- Las flechas van por encima del fondo y por debajo de las barras, y no interceptan el
              ratón: si lo hicieran, taparían las barras que cruzan y no se podrían pulsar. -->
-        @if (flechas().length) {
+        @if (arrows().length) {
           <svg class="absolute left-0 top-10 pointer-events-none overflow-visible"
-               [attr.width]="anchoTotal()" [attr.height]="altoTotal()" aria-hidden="true">
+               [attr.width]="totalWidth()" [attr.height]="totalHeight()" aria-hidden="true">
             <defs>
-              <marker id="gantt-punta" viewBox="0 0 6 6" refX="5" refY="3"
+              <marker id="gantt-tip" viewBox="0 0 6 6" refX="5" refY="3"
                       markerWidth="5" markerHeight="5" orient="auto">
                 <path d="M 0 0 L 6 3 L 0 6 z" fill="currentColor" />
               </marker>
             </defs>
-            @for (flecha of flechas(); track $index) {
-              <path [attr.d]="trazadoDe(flecha)" fill="none" stroke="currentColor" stroke-width="1.5"
-                    marker-end="url(#gantt-punta)"
-                    [class.text-destructive]="flecha.incumplida"
-                    [class.text-muted-foreground]="!flecha.incumplida"
-                    [attr.stroke-dasharray]="flecha.incumplida ? '4 2' : null" />
+            @for (arrow of arrows(); track $index) {
+              <path [attr.d]="pathOf(arrow)" fill="none" stroke="currentColor" stroke-width="1.5"
+                    marker-end="url(#gantt-tip)"
+                    [class.text-destructive]="arrow.isViolated"
+                    [class.text-muted-foreground]="!arrow.isViolated"
+                    [attr.stroke-dasharray]="arrow.isViolated ? '4 2' : null" />
             }
           </svg>
         }
 
-        @for (barra of barras(); track barra.tarea.id) {
+        @for (bar of bars(); track bar.task.id) {
           <div class="h-9 border-b border-border/50 relative">
-            @if (barra.esHito) {
+            @if (bar.isMilestone) {
               <!-- Sin fecha de inicio no hay barra que dibujar: se marca el vencimiento y ya. -->
-              <button type="button" (click)="abrir.emit(barra.tarea)"
-                      [attr.aria-label]="descripcionDe(barra)"
-                      [title]="descripcionDe(barra)"
+              <button type="button" (click)="open.emit(bar.task)"
+                      [attr.aria-label]="descriptionOf(bar)"
+                      [title]="descriptionOf(bar)"
                       class="absolute top-1/2 -translate-y-1/2 flex items-center justify-center"
-                      [style.left.px]="barra.desplazamiento * anchoDeDia"
-                      [style.width.px]="anchoDeDia">
-                <ng-icon name="lucideDiamond" size="12" [class]="colorDe(barra.tarea)" />
+                      [style.left.px]="bar.offset * dayWidth"
+                      [style.width.px]="dayWidth">
+                <ng-icon name="lucideDiamond" size="12" [class]="colorOf(bar.task)" />
               </button>
             } @else {
-              <button type="button" (click)="abrir.emit(barra.tarea)"
-                      [attr.aria-label]="descripcionDe(barra)"
-                      [title]="descripcionDe(barra)"
+              <button type="button" (click)="open.emit(bar.task)"
+                      [attr.aria-label]="descriptionOf(bar)"
+                      [title]="descriptionOf(bar)"
                       class="absolute top-1/2 -translate-y-1/2 h-5 rounded-md bg-primary-subtle border border-primary hover:brightness-95 transition-all"
-                      [class.border-destructive]="barra.bloqueada"
-                      [style.left.px]="barra.desplazamiento * anchoDeDia + 2"
-                      [style.width.px]="barra.duracion * anchoDeDia - 4"></button>
+                      [class.border-destructive]="bar.isBlocked"
+                      [style.left.px]="bar.offset * dayWidth + 2"
+                      [style.width.px]="bar.duration * dayWidth - 4"></button>
             }
           </div>
         }
@@ -100,7 +100,7 @@
     Las tareas sin fecha de inicio se marcan con un rombo en su fecha límite. Las que no tienen
     fecha límite no aparecen.
   </p>
-  @if (hayIncumplidas()) {
+  @if (hasViolations()) {
     <p class="mt-1 text-[11px] text-destructive" i18n>
       Las flechas de puntos señalan dependencias que el calendario no respeta: la tarea que
       bloquea termina después de que empiece la bloqueada.

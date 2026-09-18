@@ -8,15 +8,15 @@
                        status === 'In Progress' ? 'bg-primary-subtle text-primary-subtle-fg border-primary' :
                        status === 'In Review' ? 'bg-warning-subtle text-warning-subtle-fg border-warning' :
                        'bg-muted text-muted-foreground border-border'">
-        {{ nombreDelEstado(status) }}
+        {{ statusLabel(status) }}
         <ng-icon name="lucideChevronDown" size="11" />
       </button>
       <!-- Status dropdown -->
       <div class="absolute top-full left-0 mt-1 w-36 rounded-lg border border-border bg-card shadow-lg z-10 hidden group-focus-within:block">
-        @for (s of statuses; track s.clave) {
-          <button (click)="changeStatus(s.clave)"
+        @for (s of statuses; track s.key) {
+          <button (click)="changeStatus(s.key)"
                   class="flex items-center gap-2 w-full px-3 py-2 text-xs hover:bg-accent transition-colors first:rounded-t-lg last:rounded-b-lg">
-            <ui-badge [variant]="s.badge" class="text-[10px]">{{ s.etiqueta }}</ui-badge>
+            <ui-badge [variant]="s.badge" class="text-[10px]">{{ s.label }}</ui-badge>
           </button>
         }
       </div>
@@ -60,8 +60,8 @@
             </span>
             <select [(ngModel)]="status" (change)="changeStatus(status)"
                     class="bg-transparent border-none outline-none text-sm cursor-pointer hover:text-primary transition-colors">
-              @for (s of statuses; track s.clave) {
-                <option [value]="s.clave">{{ s.etiqueta }}</option>
+              @for (s of statuses; track s.key) {
+                <option [value]="s.key">{{ s.label }}</option>
               }
             </select>
           </div>
@@ -87,27 +87,27 @@
               <ng-icon name="lucideRepeat" size="13" /> <span i18n>Repetir</span>
             </span>
             <div class="flex items-center gap-2 flex-wrap">
-              <select [(ngModel)]="frecuenciaElegida" (change)="guardarRecurrencia()"
+              <select [(ngModel)]="chosenFrequency" (change)="saveRecurrence()"
                       i18n-aria-label aria-label="Cada cuánto se repite"
                       class="bg-transparent border border-border rounded-md px-2 py-1 text-sm outline-none focus:ring-1 focus:ring-ring">
                 <option value="" i18n>No se repite</option>
-                @for (f of frecuencias; track f.key) {
+                @for (f of frequencies; track f.key) {
                   <option [value]="f.key">{{ f.label }}</option>
                 }
               </select>
 
-              @if (frecuenciaElegida) {
-                <input type="number" min="1" max="365" [(ngModel)]="intervaloElegido"
-                       (change)="guardarRecurrencia()"
+              @if (chosenFrequency) {
+                <input type="number" min="1" max="365" [(ngModel)]="chosenInterval"
+                       (change)="saveRecurrence()"
                        i18n-aria-label aria-label="Cada cuántas veces"
                        class="w-16 bg-transparent border border-border rounded-md px-2 py-1 text-sm outline-none focus:ring-1 focus:ring-ring" />
               }
 
-              @if (recurrencia(); as r) {
+              @if (recurrence(); as r) {
                 <span class="text-xs text-muted-foreground" i18n>
                   Próxima: {{ r.nextOccurrence }}
                 </span>
-                <button (click)="quitarRecurrencia()"
+                <button (click)="clearRecurrence()"
                         class="text-xs text-muted-foreground hover:text-destructive transition-colors" i18n>
                   Dejar de repetir
                 </button>
@@ -177,15 +177,15 @@
               <ng-icon name="lucideUser" size="13" /> <span i18n>Responsables</span>
             </span>
             <div class="flex flex-wrap items-center gap-1.5 flex-1">
-              @for (responsable of responsables(); track responsable) {
+              @for (responsable of assignees(); track responsable) {
                 <span class="flex items-center gap-1.5 rounded-full border border-border pl-1 pr-2 py-0.5 text-xs"
                       [class.border-primary]="esPrincipal(responsable)">
-                  <ui-avatar [src]="avatarDe(responsable)" [name]="nombreDe(responsable)" class="h-5 w-5" />
-                  {{ nombreDe(responsable) }}
+                  <ui-avatar [src]="avatarOf(responsable)" [name]="nameOf(responsable)" class="h-5 w-5" />
+                  {{ nameOf(responsable) }}
                   @if (esPrincipal(responsable)) {
                     <span class="text-[10px] text-primary" i18n>principal</span>
                   }
-                  <button (click)="quitarResponsable(responsable)"
+                  <button (click)="removeAssignee(responsable)"
                           i18n-aria-label aria-label="Quitar responsable"
                           class="text-muted-foreground hover:text-destructive transition-colors">
                     <ng-icon name="lucideX" size="11" />
@@ -195,12 +195,12 @@
                 <span class="text-sm text-muted-foreground" i18n>Sin asignar</span>
               }
 
-              @if (candidatosAResponsable().length) {
-                <select [(ngModel)]="usuarioElegido" (change)="agregarResponsable()"
+              @if (assigneeCandidates().length) {
+                <select [(ngModel)]="chosenUser" (change)="addAssignee()"
                         i18n-aria-label aria-label="Añadir responsable"
                         class="bg-transparent border border-dashed border-border rounded-full px-2 py-0.5 text-xs outline-none hover:border-primary transition-colors">
                   <option value="" i18n>+ Responsable</option>
-                  @for (candidato of candidatosAResponsable(); track candidato.id) {
+                  @for (candidato of assigneeCandidates(); track candidato.id) {
                     <option [value]="candidato.id">{{ candidato.name }}</option>
                   }
                 </select>
@@ -232,38 +232,38 @@
         <div class="space-y-1.5">
           <div class="flex items-center justify-between">
             <p class="text-xs font-medium text-muted-foreground uppercase tracking-wide" i18n>Subtareas</p>
-            @if (subtareas().length) {
-              <span class="text-xs text-muted-foreground">{{ subtareasCompletadas() }}/{{ subtareas().length }}</span>
+            @if (subtasks().length) {
+              <span class="text-xs text-muted-foreground">{{ completedSubtasks() }}/{{ subtasks().length }}</span>
             }
           </div>
 
-          @if (esSubtarea()) {
+          @if (isSubtask()) {
             <!-- El anidamiento admite un solo nivel, así que aquí no se ofrece añadir: sería
                  pedir algo que el servidor rechaza. -->
             <p class="text-sm text-muted-foreground" i18n>Esta tarea es una subtarea, y el anidamiento admite un solo nivel.</p>
           } @else {
-            @if (cargandoSubtareas()) {
+            @if (loadingSubtasks()) {
               <app-skeleton class="h-8 w-full" />
             } @else {
               <div class="space-y-1">
-                @for (sub of subtareas(); track sub.id) {
+                @for (sub of subtasks(); track sub.id) {
                   <div class="flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-accent/40 transition-colors">
-                    <input type="checkbox" [checked]="estaCompletada(sub)"
-                           (change)="alternarSubtarea(sub)"
+                    <input type="checkbox" [checked]="isCompleted(sub)"
+                           (change)="toggleSubtask(sub)"
                            [attr.aria-label]="sub.title"
                            class="h-3.5 w-3.5 rounded border-border accent-primary cursor-pointer" />
-                    <span class="text-sm flex-1 truncate" [class.line-through]="estaCompletada(sub)"
-                          [class.text-muted-foreground]="estaCompletada(sub)">{{ sub.title }}</span>
+                    <span class="text-sm flex-1 truncate" [class.line-through]="isCompleted(sub)"
+                          [class.text-muted-foreground]="isCompleted(sub)">{{ sub.title }}</span>
                     <ui-badge [variant]="statusBadge(sub.status)" class="text-[10px]">{{ sub.status }}</ui-badge>
                   </div>
                 }
               </div>
 
               <div class="flex items-center gap-2">
-                <input [(ngModel)]="tituloNuevaSubtarea" (keydown.enter)="crearSubtarea()"
+                <input [(ngModel)]="newSubtaskTitle" (keydown.enter)="createSubtask()"
                        i18n-placeholder placeholder="Añadir subtarea y pulsar Enter"
                        class="flex-1 bg-transparent border border-transparent hover:border-border focus:border-border rounded-md px-2 py-1.5 text-sm outline-none placeholder:text-muted-foreground/50 transition-colors focus:ring-1 focus:ring-ring" />
-                <button (click)="crearSubtarea()" [disabled]="creandoSubtarea() || !tituloNuevaSubtarea.trim()"
+                <button (click)="createSubtask()" [disabled]="creatingSubtask() || !newSubtaskTitle.trim()"
                         class="text-xs text-muted-foreground hover:text-primary disabled:opacity-40 disabled:hover:text-muted-foreground transition-colors px-2 py-1" i18n>
                   Añadir
                 </button>
@@ -279,22 +279,22 @@
           <div class="flex items-center justify-between">
             <p class="text-xs font-medium text-muted-foreground uppercase tracking-wide" i18n>Checklist</p>
             @if (checklist().length) {
-              <span class="text-xs text-muted-foreground">{{ puntosHechos() }}/{{ checklist().length }}</span>
+              <span class="text-xs text-muted-foreground">{{ doneItems() }}/{{ checklist().length }}</span>
             }
           </div>
 
-          @if (cargandoChecklist()) {
+          @if (loadingChecklist()) {
             <app-skeleton class="h-8 w-full" />
           } @else {
             <div class="space-y-1">
-              @for (punto of checklist(); track punto.id) {
+              @for (item of checklist(); track item.id) {
                 <div class="flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-accent/40 transition-colors">
-                  <input type="checkbox" [checked]="punto.isDone" (change)="alternarPunto(punto)"
-                         [attr.aria-label]="punto.text"
+                  <input type="checkbox" [checked]="item.isDone" (change)="toggleChecklistItem(item)"
+                         [attr.aria-label]="item.text"
                          class="h-3.5 w-3.5 rounded border-border accent-primary cursor-pointer" />
-                  <span class="text-sm flex-1" [class.line-through]="punto.isDone"
-                        [class.text-muted-foreground]="punto.isDone">{{ punto.text }}</span>
-                  <button (click)="quitarPunto(punto)"
+                  <span class="text-sm flex-1" [class.line-through]="item.isDone"
+                        [class.text-muted-foreground]="item.isDone">{{ item.text }}</span>
+                  <button (click)="removeChecklistItem(item)"
                           i18n-aria-label aria-label="Quitar el punto"
                           class="text-muted-foreground hover:text-destructive transition-colors">
                     <ng-icon name="lucideX" size="11" />
@@ -304,10 +304,10 @@
             </div>
 
             <div class="flex items-center gap-2">
-              <input [(ngModel)]="textoNuevoPunto" (keydown.enter)="agregarPunto()"
+              <input [(ngModel)]="newChecklistItemText" (keydown.enter)="addChecklistItem()"
                      i18n-placeholder placeholder="Añadir un punto y pulsar Enter"
                      class="flex-1 bg-transparent border border-transparent hover:border-border focus:border-border rounded-md px-2 py-1.5 text-sm outline-none placeholder:text-muted-foreground/50 transition-colors focus:ring-1 focus:ring-ring" />
-              <button (click)="agregarPunto()" [disabled]="!textoNuevoPunto.trim()"
+              <button (click)="addChecklistItem()" [disabled]="!newChecklistItemText.trim()"
                       class="text-xs text-muted-foreground hover:text-primary disabled:opacity-40 transition-colors px-2 py-1" i18n>
                 Añadir
               </button>
@@ -321,17 +321,17 @@
         <div class="space-y-3">
           <p class="text-xs font-medium text-muted-foreground uppercase tracking-wide" i18n>Dependencias</p>
 
-          @if (cargandoDependencias()) {
+          @if (loadingDependencies()) {
             <app-skeleton class="h-8 w-full" />
           } @else {
             <div class="space-y-1">
               <p class="text-xs text-muted-foreground" i18n>Bloqueada por</p>
-              @for (bloqueante of dependencias().bloqueadaPor; track bloqueante.id) {
+              @for (blocker of dependencies().blockedBy; track blocker.id) {
                 <div class="flex items-center gap-2 rounded-md border border-border px-2 py-1.5">
                   <ng-icon name="lucideBan" size="12" class="text-destructive shrink-0" />
-                  <span class="text-sm flex-1 truncate">{{ bloqueante.title }}</span>
-                  <ui-badge [variant]="statusBadge(bloqueante.status)" class="text-[10px]">{{ bloqueante.status }}</ui-badge>
-                  <button (click)="quitarBloqueo(bloqueante)"
+                  <span class="text-sm flex-1 truncate">{{ blocker.title }}</span>
+                  <ui-badge [variant]="statusBadge(blocker.status)" class="text-[10px]">{{ blocker.status }}</ui-badge>
+                  <button (click)="removeBlocker(blocker)"
                           i18n-aria-label aria-label="Quitar la dependencia"
                           class="text-muted-foreground hover:text-destructive transition-colors">
                     <ng-icon name="lucideX" size="12" />
@@ -342,31 +342,31 @@
               }
 
               <div class="flex items-center gap-2 pt-1">
-                <select [(ngModel)]="bloqueanteElegido" (focus)="cargarCandidatas()"
+                <select [(ngModel)]="chosenBlocker" (focus)="loadCandidates()"
                         i18n-aria-label aria-label="Tarea que bloquea"
                         class="flex-1 bg-transparent border border-border rounded-md px-2 py-1.5 text-sm outline-none focus:ring-1 focus:ring-ring">
                   <option value="" i18n>Añadir una tarea que la bloquee…</option>
-                  @for (candidata of candidatasABloquear(); track candidata.id) {
+                  @for (candidata of blockerCandidates(); track candidata.id) {
                     <option [value]="candidata.id">{{ candidata.title }}</option>
                   }
                 </select>
-                <button (click)="agregarBloqueo()" [disabled]="!bloqueanteElegido"
+                <button (click)="addBlocker()" [disabled]="!chosenBlocker"
                         class="text-xs text-muted-foreground hover:text-primary disabled:opacity-40 transition-colors px-2 py-1" i18n>
                   Añadir
                 </button>
               </div>
             </div>
 
-            @if (dependencias().bloqueaA.length) {
+            @if (dependencies().blocks.length) {
               <div class="space-y-1">
                 <p class="text-xs text-muted-foreground" i18n>Bloquea a</p>
-                @for (bloqueada of dependencias().bloqueaA; track bloqueada.id) {
+                @for (isBlocked of dependencies().blocks; track isBlocked.id) {
                   <!-- Sólo lectura: la dependencia se quita desde la tarea que la sufre, que es
                        donde se entiende lo que se está desbloqueando. -->
                   <div class="flex items-center gap-2 rounded-md px-2 py-1.5 text-muted-foreground">
                     <ng-icon name="lucideArrowRight" size="12" class="shrink-0" />
-                    <span class="text-sm flex-1 truncate">{{ bloqueada.title }}</span>
-                    <ui-badge [variant]="statusBadge(bloqueada.status)" class="text-[10px]">{{ bloqueada.status }}</ui-badge>
+                    <span class="text-sm flex-1 truncate">{{ isBlocked.title }}</span>
+                    <ui-badge [variant]="statusBadge(isBlocked.status)" class="text-[10px]">{{ isBlocked.status }}</ui-badge>
                   </div>
                 }
               </div>

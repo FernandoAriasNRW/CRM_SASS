@@ -27,14 +27,14 @@
          @if (savedViews().length === 0) y desaparecían en cuanto había una vista guardada, así
          que guardar una se llevaba por delante el Gantt y la carga de trabajo. -->
     <app-barra-de-vistas
-      [integradas]="VISTAS_INTEGRADAS"
+      [integradas]="BUILT_IN_VIEWS"
       [modo]="viewMode()"
       [guardadas]="savedViews()"
       [vistaActivaId]="activeViewId()"
-      (cambiarModo)="verComo($event)"
+      (cambiarModo)="viewAs($event)"
       (aplicar)="applySavedView($event)"
-      (crear)="crearVista($event)"
-      (borrar)="borrarVista($event)" />
+      (crear)="createView($event)"
+      (borrar)="deleteView($event)" />
   </div>
   <!-- VISTA BOARD -->
   @if (viewMode() === 'board') {
@@ -57,7 +57,7 @@
         <div class="flex flex-col gap-3">
           <div class="flex items-center justify-between px-1">
             <span class="text-sm font-medium">{{ col.label }}</span>
-            <ui-badge [variant]="col.badge">{{ totalColumna(col) }}</ui-badge>
+            <ui-badge [variant]="col.badge">{{ columnTotal(col) }}</ui-badge>
           </div>
           <div cdkDropList
             [id]="col.key"
@@ -86,7 +86,7 @@
                     </span>
                     @if (task.blockedByCount) {
                       <span class="flex items-center gap-1 text-destructive"
-                            [title]="tituloDelBloqueo(task)">
+                            [title]="blockedTitle(task)">
                         <ng-icon name="lucideBan" size="11" />
                         {{ task.blockedByCount }}
                       </span>
@@ -94,7 +94,7 @@
                     @if (task.checklistTotal) {
                       <span class="flex items-center gap-0.5"
                             [class.text-success]="task.checklistDone === task.checklistTotal"
-                            [title]="tituloDeChecklist(task)">
+                            [title]="checklistTitle(task)">
                         <ng-icon name="lucideSquareCheck" size="11" />
                         {{ task.checklistDone ?? 0 }}/{{ task.checklistTotal }}
                       </span>
@@ -102,7 +102,7 @@
                     @if (task.subtaskCount) {
                       <span class="flex items-center gap-1"
                             [class.text-success]="task.completedSubtaskCount === task.subtaskCount"
-                            [title]="tituloDelProgreso(task)">
+                            [title]="progressTitle(task)">
                         <ng-icon name="lucideListChecks" size="11" />
                         {{ task.completedSubtaskCount ?? 0 }}/{{ task.subtaskCount }}
                       </span>
@@ -111,23 +111,23 @@
                   <div class="flex items-center gap-1.5">
                     <!-- La prioridad normal no se marca: si todo lleva distintivo, ninguno
                          destaca y el tablero deja de decir dónde mirar. -->
-                    @if (esPrioridadDestacable(task.priority)) {
+                    @if (isHighlightedPriority(task.priority)) {
                       <span class="flex items-center gap-0.5 text-[10px] font-medium"
-                            [class]="prioridadDe(task.priority).color"
-                            [title]="prioridadDe(task.priority).label">
-                        <ng-icon [name]="prioridadDe(task.priority).icon" size="11" />
-                        {{ prioridadDe(task.priority).label }}
+                            [class]="priorityOf(task.priority).color"
+                            [title]="priorityOf(task.priority).label">
+                        <ng-icon [name]="priorityOf(task.priority).icon" size="11" />
+                        {{ priorityOf(task.priority).label }}
                       </span>
                     }
                     @if ((task.assignees?.length ?? 0) > 1) {
                       <!-- Sólo cuando hay más de uno: con uno solo, el número no dice nada que
                            no se vea ya en el detalle. -->
-                      <span class="flex items-center gap-0.5" [title]="tituloDeResponsables(task)">
+                      <span class="flex items-center gap-0.5" [title]="assigneesTitle(task)">
                         <ng-icon name="lucideUsers" size="11" />
                         {{ task.assignees?.length }}
                       </span>
                     }
-                    <ui-badge [variant]="statusBadge(task.status)" class="text-[10px]">{{ nombreDelEstado(task.status) }}</ui-badge>
+                    <ui-badge [variant]="statusBadge(task.status)" class="text-[10px]">{{ statusLabel(task.status) }}</ui-badge>
                   </div>
                 </div>
               </div>
@@ -135,13 +135,13 @@
               <app-empty-inline message="Sin tareas" />
             }
           </div>
-          @if (col.pendientes.length) {
-            <button type="button" (click)="mostrarMas(col)"
+          @if (col.pending.length) {
+            <button type="button" (click)="showMore(col)"
               class="w-full rounded-lg border border-dashed border-border py-2 text-xs
                      text-muted-foreground hover:bg-accent hover:text-accent-foreground
                      focus:outline-none focus:ring-2 focus:ring-ring transition-colors">
-              Mostrar {{ col.pendientes.length < 25 ? col.pendientes.length : 25 }} más
-              <span class="text-muted-foreground">({{ col.pendientes.length }} sin mostrar)</span>
+              Mostrar {{ col.pending.length < 25 ? col.pending.length : 25 }} más
+              <span class="text-muted-foreground">({{ col.pending.length }} sin mostrar)</span>
             </button>
           }
         </div>
@@ -175,22 +175,22 @@
 
   <!-- VISTA GANTT -->
   @if (viewMode() === 'gantt') {
-    <app-gantt [tareas]="allTasks()" [dependencias]="dependencias()" (abrir)="openDetail($event)" />
+    <app-gantt [tasks]="allTasks()" [dependencies]="dependencies()" (open)="openDetail($event)" />
   }
 
   <!-- VISTA CARGA DE TRABAJO -->
   @if (viewMode() === 'carga') {
-    <app-carga [tareas]="allTasks()" />
+    <app-workload [tasks]="allTasks()" />
   }
 
   <ng-template #statusTemplate let-item>
-    <ui-badge [variant]="statusBadge(item.status)">{{ nombreDelEstado(item.status) }}</ui-badge>
+    <ui-badge [variant]="statusBadge(item.status)">{{ statusLabel(item.status) }}</ui-badge>
   </ng-template>
 
   <ng-template #priorityTemplate let-item>
-    <span class="flex items-center gap-1 text-xs font-medium" [class]="prioridadDe(item.priority).color">
-      <ng-icon [name]="prioridadDe(item.priority).icon" size="12" />
-      {{ prioridadDe(item.priority).label }}
+    <span class="flex items-center gap-1 text-xs font-medium" [class]="priorityOf(item.priority).color">
+      <ng-icon [name]="priorityOf(item.priority).icon" size="12" />
+      {{ priorityOf(item.priority).label }}
     </span>
   </ng-template>
 
