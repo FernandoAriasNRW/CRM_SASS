@@ -114,7 +114,7 @@ def rename_typescript(text, pairs):
                     continue
                 if text[end:end + 2] == '${':
                     cierre = find_closing_brace(text, end + 1)
-                    partes.append('${' + replace_identifiers(text[end + 2:cierre], pairs) + '}')
+                    partes.append('${' + rename_typescript(text[end + 2:cierre], pairs) + '}')
                     end = cierre + 1
                     continue
                 partes.append(text[end])

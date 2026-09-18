@@ -1,7 +1,7 @@
 import { Component, effect, inject, signal, computed, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewInit, Injector } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import { 
@@ -52,7 +52,7 @@ import { CommentMark } from './extensions/comment-mark';
 import { Column, Columns } from './extensions/columns';
 import { DocumentCommentsComponent } from './document-comments.component';
 import { EmojiPickerComponent } from './extensions/emoji-picker.component';
-import { Subject, debounceTime, firstValueFrom } from 'rxjs';
+import { firstValueFrom } from 'rxjs';
 import { ClickableDirective } from '../../shared/directives/clickable.directive';
 import { SaveTemplateModalComponent } from './modals/save-template-modal.component';
 import { ImportDocumentModalComponent } from './modals/import-document-modal.component';
@@ -60,6 +60,8 @@ import { TemplatesDrawerComponent } from './templates-drawer.component';
 import { PageTreeComponent, PageMove } from './page-tree.component';
 import { UrlKind, PromptUrlModalComponent } from './modals/prompt-url-modal.component';
 import { ToastService } from '../../shared/services/toast.service';
+import { DocumentSaveService } from './document-save.service';
+import { DocumentExportService } from './document-export.service';
 import { VISIBLE_TEMPLATES, AvailableTemplate, availableTemplates } from './templates';
 
 @Component({
@@ -70,6 +72,8 @@ import { VISIBLE_TEMPLATES, AvailableTemplate, availableTemplates } from './temp
     PageTreeComponent, PromptUrlModalComponent, DocumentCommentsComponent,
     ClickableDirective, CommonModule, FormsModule, NgIconComponent, TiptapEditorDirective, EmojiPickerComponent],
   providers: [
+    DocumentSaveService,
+    DocumentExportService,
     provideIcons({
       lucideFileText, lucidePlus, lucideFolder, lucideMoreVertical,
       lucideChevronRight, lucideChevronDown, lucideSearch,
@@ -106,30 +110,22 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
   activeDocument = signal<DocumentDto | null>(null);
   activePage = signal<PageDto | null>(null);
   isLoading = signal(false);
-  expandedPages = signal<Set<string>>(new Set<string>());
   
-  private contentUpdate$ = new Subject<{ pageId: string, title: string, content: string }>();
-
-  /** El título del documento se guarda aparte, y con su propio respiro entre teclas. */
-  private documentTitle$ = new Subject<{ documentId: string, title: string }>();
 
   private readonly toast = inject(ToastService);
 
   /**
-   * En qué punto está el guardado automático.
+   * El guardado automático y la exportación, cada uno en su servicio. Ver
+   * `DocumentSaveService` y `DocumentExportService`: el componente sólo orquesta.
    *
-   * <b>Antes la cabecera decía «Saved just now» y era una cadena escrita a mano</b>, pintada
-   * siempre, sin relación con lo que contestara el servidor. Y el guardado se suscribía sin
-   * manejador de error: si la petición fallaba —red, sesión caducada, error del servidor— no
-   * ocurría nada. Se podía escribir media hora leyendo «guardado» y perderlo entero al recargar.
+   * Se reexponen sus señales con el mismo nombre para que la plantilla no tenga que saber de
+   * dónde salen.
    */
-  readonly saveState = signal<'idle' | 'pending' | 'saving' | 'saved' | 'error'>('idle');
-
-  /** Cuándo se guardó por última vez de verdad, para poder decir la hora en vez de «ahora». */
-  readonly savedAt = signal<Date | null>(null);
-
-  /** Para desactivar los botones de exportar mientras se genera el fichero. */
-  readonly exporting = signal(false);
+  private readonly saving = inject(DocumentSaveService);
+  private readonly exports = inject(DocumentExportService);
+  readonly saveState = this.saving.state;
+  readonly savedAt = this.saving.savedAt;
+  readonly exporting = this.exports.exporting;
 
   /** Cuántas palabras lleva la página abierta. */
   readonly words = signal(0);
@@ -360,9 +356,6 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
     resolve?.(url);
   }
 
-  /** Lo último que no se pudo guardar, para poder reintentarlo sin perderlo. */
-  private pendingRetry: { pageId: string; title: string; content: string } | null = null;
-
   /** Mientras se vuelca una página en el editor, los cambios que emite no son de nadie. */
   private loadingPage = false;
 
@@ -376,7 +369,6 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
 
   // UI state
   searchQuery = signal('');
-  isSearchActive = signal(false);
   /**
    * La pestaña del panel de Documentos, <b>leída de la URL</b>.
    *
@@ -385,8 +377,6 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
    * como el resto de los módulos, y de paso una pestaña se puede compartir por enlace y el botón
    * de atrás funciona.
    */
-  private readonly router = inject(Router);
-  private readonly route = inject(ActivatedRoute);
   private readonly seccionesDelPanel = inject(SeccionesDelPanelService);
 
   /** `effect` fuera del constructor necesita inyector explícito. */
@@ -400,9 +390,6 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
   private readonly queryParams = toSignal(
     inject(ActivatedRoute).queryParams,
     { initialValue: {} as Record<string, string> });
-  isPrivateCollapsed = signal(false);
-  isPinned = signal(true);
-  isHovered = signal(false);
   
   // Dropdowns & Modals
   isNewDocDropdownOpen = signal(false);
@@ -627,12 +614,7 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
       const page = this.activePage();
       const doc = this.activeDocument();
       if (page && doc) {
-        // «Pendiente» se pone aquí, no en el guardado: entre la última tecla y la petición pasa
-        // un segundo entero, y durante ese segundo la cabecera decía «guardado» aunque hubiera
-        // cambios sin mandar.
-        this.saveState.set('pending');
-
-        this.contentUpdate$.next({
+        this.saving.queuePage({
           pageId: page.id,
           title: page.title,
           content: editor.getHTML()
@@ -676,27 +658,6 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
       ]);
     }, { injector: this.injector });
 
-    this.contentUpdate$.pipe(
-      debounceTime(1000)
-    ).subscribe(update => this.save(update));
-
-    this.documentTitle$.pipe(
-      debounceTime(700)
-    ).subscribe(({ documentId, title }) => {
-      const trimmed = title.trim();
-      // Un título vacío lo rechaza el servidor. Se deja de mandar en vez de enseñar un error por
-      // cada tecla mientras alguien borra el título para escribir otro.
-      if (!trimmed) return;
-
-      this.docsService.renameDocument(documentId, { title: trimmed }).subscribe({
-        next: () => this.savedAt.set(new Date()),
-        error: (err) => {
-          this.saveState.set('error');
-          this.toast.error($localize`No se pudo renombrar el documento`);
-          console.error('No se pudo renombrar el documento', err);
-        }
-      });
-    });
   }
 
   ngAfterViewInit() {
@@ -978,16 +939,6 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
     return typeof body === 'string' && body.length < 200 ? body : undefined;
   }
 
-  togglePageExpansion(event: Event, pageId: string) {
-    event.stopPropagation();
-    this.expandedPages.update(set => {
-      const newSet = new Set(set);
-      if (newSet.has(pageId)) newSet.delete(pageId);
-      else newSet.add(pageId);
-      return newSet;
-    });
-  }
-
   selectPage(page: PageDto) {
     // Abrir una página no es editarla. Sin esta bandera, cargar el contenido en el editor
     // dispara `onUpdate`, y la cabecera pasaba a «Guardado a las HH:MM» **por haber abierto el
@@ -1019,76 +970,16 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
     this.editor.chain().focus().insertContent(emoji).run();
   }
 
-  /**
-   * Guarda el documento en PDF.
-   *
-   * `html2pdf.js` estaba en las dependencias y **no se importaba en ningún sitio**, así que
-   * `window.html2pdf` era siempre `undefined` y el botón caía al `window.print()` de reserva, que
-   * imprime la aplicación entera con su barra lateral en vez del documento.
-   *
-   * Se carga en el momento y no arriba del fichero: son unos 700 kB que sólo hacen falta si
-   * alguien pulsa el botón, y cargarlos siempre los mete en el paquete de Documentos.
-   */
-  async exportPdf() {
+  /** Guarda en PDF lo que se ve en el editor. Ver `DocumentExportService.exportPdf`. */
+  exportPdf() {
     const content = document.querySelector('.ProseMirror');
-    if (!content) return;
-
-    this.exporting.set(true);
-    try {
-      const { default: html2pdf } = await import('html2pdf.js');
-
-      await html2pdf()
-        .set({ margin: 10, filename: `${this.activePage()?.title || 'document'}.pdf` })
-        .from(content as HTMLElement)
-        .save();
-    } catch (err) {
-      this.toast.error($localize`No se pudo generar el PDF`);
-      console.error('No se pudo generar el PDF', err);
-    } finally {
-      this.exporting.set(false);
-    }
+    if (content) void this.exports.exportPdf(content as HTMLElement, this.activePage()?.title);
   }
 
-  /**
-   * Descarga el documento en HTML.
-   *
-   * Antes hacía `window.open` de la URL de exportación. Una pestaña nueva no lleva la cabecera de
-   * sesión y el endpoint la exige: **el botón devolvía 401 siempre**, y como se abría en otra
-   * pestaña, ni siquiera se veía el error.
-   */
+  /** Descarga el documento abierto en HTML. Ver `DocumentExportService.exportHtml`. */
   exportHtml() {
     const doc = this.activeDocument();
-    if (!doc) return;
-
-    this.exporting.set(true);
-    this.docsService.exportHtml(doc.id).subscribe({
-      next: (response) => {
-        this.exporting.set(false);
-
-        const body = response.body;
-        if (!body) {
-          this.toast.error($localize`La descarga llegó vacía.`);
-          return;
-        }
-
-        const url = URL.createObjectURL(body);
-        try {
-          const link = document.createElement('a');
-          link.href = url;
-          link.download = `${doc.title || 'document'}.html`;
-          link.click();
-        } finally {
-          // Sin esto, cada descarga deja el fichero entero retenido en memoria mientras la
-          // pestaña siga abierta.
-          URL.revokeObjectURL(url);
-        }
-      },
-      error: (err) => {
-        this.exporting.set(false);
-        this.toast.error($localize`No se pudo exportar el documento`);
-        console.error('No se pudo exportar el documento', err);
-      }
-    });
+    if (doc) this.exports.exportHtml(doc);
   }
 
   /**
@@ -1110,8 +1001,7 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
       return { ...dict, [docId]: pages.map(p => p.id === current.id ? { ...p, title: newTitle } : p) };
     });
 
-    this.saveState.set('pending');
-    this.contentUpdate$.next({
+    this.saving.queuePage({
       pageId: current.id,
       title: newTitle,
       content: this.editor.getHTML()
@@ -1131,81 +1021,12 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
     this.activeDocument.set({ ...doc, title: newTitle });
     this.documents.update(docs => docs.map(d => d.id === doc.id ? { ...d, title: newTitle } : d));
 
-    this.documentTitle$.next({ documentId: doc.id, title: newTitle });
-  }
-
-  /**
-   * Manda el contenido al servidor y cuenta lo que pasa.
-   *
-   * El error no se traga: se enseña en la cabecera, se avisa una vez, y lo que no se pudo guardar
-   * queda apartado para reintentarlo. Perder el texto de alguien porque caducó una sesión es el
-   * peor fallo que puede tener un editor, y era el que tenía.
-   */
-  private save(update: { pageId: string; title: string; content: string }) {
-    this.saveState.set('saving');
-
-    this.docsService.updatePage(update.pageId, {
-      title: update.title,
-      content: update.content
-    }).subscribe({
-      next: () => {
-        this.pendingRetry = null;
-        this.savedAt.set(new Date());
-        this.saveState.set('saved');
-      },
-      error: (err) => {
-        // Se guarda lo que falló, no lo que hay ahora en el editor: si alguien cambia de página
-        // tras el fallo, el reintento tiene que mandar el texto que no llegó, no el de la página
-        // nueva.
-        this.pendingRetry = update;
-        this.saveState.set('error');
-
-        this.toast.error(
-          $localize`No se pudo guardar`,
-          $localize`Los cambios siguen en pantalla. Vuelve a intentarlo desde la cabecera.`);
-
-        console.error('No se pudo guardar la página', err);
-      }
-    });
+    this.saving.queueDocumentTitle(doc.id, newTitle);
   }
 
   /** Reintenta lo último que no se pudo guardar. */
   retrySave() {
-    if (this.pendingRetry) this.save(this.pendingRetry);
-  }
-
-  toggleSearch() {
-    this.isSearchActive.update(v => !v);
-    if (!this.isSearchActive()) {
-      this.searchQuery.set('');
-    }
-  }
-
-  /**
-   * Cambia de pestaña navegando, no tocando una señal.
-   *
-   * Lo sigue usando el botón «volver a todos los documentos» de la cabecera del editor. La
-   * navegación es la que mueve la pestaña; cerrar el documento abierto es lo único que queda
-   * aquí, porque de eso la URL no dice nada.
-   */
-  setSidebarTab(tab: 'all' | 'my' | 'shared' | 'private' | 'meeting-notes' | 'archived') {
-    this.activeDocument.set(null);
-    this.activePage.set(null);
-
-    void this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams: { tab: tab === 'all' ? null : tab },
-      queryParamsHandling: 'merge'
-    });
-  }
-
-  togglePrivate() {
-    this.isPrivateCollapsed.update(v => !v);
-  }
-
-  togglePin(event: Event) {
-    event.stopPropagation();
-    this.isPinned.update(v => !v);
+    this.saving.retry();
   }
 
   deleteDocument(event: Event, id: string) {
@@ -1224,24 +1045,6 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
           console.error('Error deleting doc:', err);
           alert('Error deleting document');
         }
-      });
-    }
-  }
-
-  deletePage(event: Event, docId: string, pageId: string) {
-    event.stopPropagation();
-    if (confirm('Are you sure you want to delete this page?')) {
-      this.docsService.deletePage(docId, pageId).subscribe({
-        next: () => {
-          this.docsService.getPages(docId).subscribe(pages => {
-            this.pagesByDoc.update(dict => ({ ...dict, [docId]: pages }));
-            if (this.activePage()?.id === pageId) {
-              this.activePage.set(null);
-              this.editor.commands.clearContent();
-            }
-          });
-        },
-        error: (err: any) => console.error('Error deleting page:', err)
       });
     }
   }
