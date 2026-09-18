@@ -2,7 +2,7 @@ import { Component, computed, input, output, signal } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import * as lucide from '@ng-icons/lucide';
 import { DrawerComponent } from '../../shared/ui/drawer.component';
-import type { PlantillaDisponible } from './plantillas';
+import type { AvailableTemplate } from './templates';
 
 /**
  * Todas las plantillas disponibles, en un cajón.
@@ -15,18 +15,18 @@ import type { PlantillaDisponible } from './plantillas';
  * recargar el listado y abrir el documento nuevo, y eso es del padre.
  */
 @Component({
-  selector: 'app-plantillas-drawer',
+  selector: 'app-templates-drawer',
   standalone: true,
   imports: [NgIcon, DrawerComponent],
   providers: [provideIcons(lucide as unknown as Record<string, string>)],
   template: `
     <app-drawer
-      [isOpen]="abierto()"
-      [title]="titulo"
-      [subtitle]="subtitulo()"
+      [isOpen]="isOpen()"
+      [title]="title"
+      [subtitle]="subtitle()"
       size="xl"
       [showFooter]="false"
-      (closed)="cerrar.emit()">
+      (closed)="closed.emit()">
 
       <div drawer-icon class="w-9 h-9 rounded-lg bg-primary-subtle text-primary-subtle-fg flex items-center justify-center">
         <ng-icon name="lucideWand2" class="w-4 h-4" aria-hidden="true" />
@@ -38,34 +38,34 @@ import type { PlantillaDisponible } from './plantillas';
           <ng-icon name="lucideSearch"
                    class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground"
                    aria-hidden="true" />
-          <input type="search" [value]="busqueda()" (input)="alBuscar($event)"
+          <input type="search" [value]="searchText()" (input)="onSearch($event)"
                  i18n-placeholder placeholder="Buscar plantilla"
                  class="w-full h-10 pl-9 pr-3 rounded-lg border border-input bg-background text-sm
                         focus:outline-none focus:ring-2 focus:ring-ring" />
         </label>
 
-        @for (grupo of grupos(); track grupo.titulo) {
+        @for (group of groups(); track group.title) {
           <section>
             <h3 class="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-              {{ grupo.titulo }}
+              {{ group.title }}
             </h3>
 
             <!-- Botones nativos y no divs con (click): son acciones, así que reciben foco y
                  responden a Enter sin añadir nada. -->
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              @for (plantilla of grupo.plantillas; track plantilla.clave) {
-                <button type="button" (click)="elegir.emit(plantilla)"
-                        class="text-left border {{ plantilla.borde }} rounded-xl p-3.5 bg-card transition-all
+              @for (template of group.templates; track template.key) {
+                <button type="button" (click)="choose.emit(template)"
+                        class="text-left border {{ template.border }} rounded-xl p-3.5 bg-card transition-all
                                hover:shadow-md focus:outline-none focus:ring-2 focus:ring-ring">
                   <div class="flex items-center gap-2.5 mb-1.5">
-                    <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 {{ plantilla.iconoFondo }}">
-                      <ng-icon [name]="plantilla.icono" class="w-4 h-4" aria-hidden="true" />
+                    <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 {{ template.iconBackground }}">
+                      <ng-icon [name]="template.icon" class="w-4 h-4" aria-hidden="true" />
                     </div>
-                    <h4 class="text-sm font-semibold text-foreground truncate">{{ plantilla.titulo }}</h4>
+                    <h4 class="text-sm font-semibold text-foreground truncate">{{ template.title }}</h4>
                   </div>
-                  <p class="text-xs text-muted-foreground line-clamp-2">{{ plantilla.descripcion }}</p>
-                  @if (plantilla.veces > 0) {
-                    <p class="text-[11px] text-muted-foreground mt-2">{{ vecesUsada(plantilla.veces) }}</p>
+                  <p class="text-xs text-muted-foreground line-clamp-2">{{ template.description }}</p>
+                  @if (template.count > 0) {
+                    <p class="text-[11px] text-muted-foreground mt-2">{{ usageLabel(template.count) }}</p>
                   }
                 </button>
               }
@@ -80,22 +80,22 @@ import type { PlantillaDisponible } from './plantillas';
     </app-drawer>
   `,
 })
-export class PlantillasDrawerComponent {
-  readonly abierto = input.required<boolean>();
-  readonly plantillas = input.required<readonly PlantillaDisponible[]>();
+export class TemplatesDrawerComponent {
+  readonly isOpen = input.required<boolean>();
+  readonly templates = input.required<readonly AvailableTemplate[]>();
 
-  readonly cerrar = output<void>();
-  readonly elegir = output<PlantillaDisponible>();
+  readonly closed = output<void>();
+  readonly choose = output<AvailableTemplate>();
 
-  protected readonly titulo = $localize`Plantillas`;
-  protected readonly busqueda = signal('');
+  protected readonly title = $localize`Plantillas`;
+  protected readonly searchText = signal('');
 
-  protected readonly coincidentes = computed(() => {
-    const texto = this.busqueda().trim().toLowerCase();
-    if (!texto) return this.plantillas();
+  protected readonly matching = computed(() => {
+    const text = this.searchText().trim().toLowerCase();
+    if (!text) return this.templates();
 
-    return this.plantillas().filter(p =>
-      p.titulo.toLowerCase().includes(texto) || p.descripcion.toLowerCase().includes(texto));
+    return this.templates().filter(p =>
+      p.title.toLowerCase().includes(text) || p.description.toLowerCase().includes(text));
   });
 
   /**
@@ -104,27 +104,27 @@ export class PlantillasDrawerComponent {
    * Fuera importa cuál se usa más; aquí, con la lista entera delante, importa de dónde sale cada
    * una: una plantilla del equipo se puede editar y borrar, y una del sistema no.
    */
-  protected readonly grupos = computed(() => {
-    const todas = this.coincidentes();
-    const propias = todas.filter(p => p.esPropia);
-    const sistema = todas.filter(p => !p.esPropia);
+  protected readonly groups = computed(() => {
+    const all = this.matching();
+    const custom = all.filter(p => p.isCustom);
+    const builtIn = all.filter(p => !p.isCustom);
 
     return [
-      { titulo: $localize`Del sistema`, plantillas: sistema },
-      { titulo: $localize`Mis plantillas`, plantillas: propias }
-    ].filter(g => g.plantillas.length > 0);
+      { title: $localize`Del sistema`, templates: builtIn },
+      { title: $localize`Mis plantillas`, templates: custom }
+    ].filter(g => g.templates.length > 0);
   });
 
-  protected subtitulo(): string {
-    const total = this.plantillas().length;
+  protected subtitle(): string {
+    const total = this.templates().length;
     return $localize`${total} plantillas disponibles`;
   }
 
-  protected vecesUsada(veces: number): string {
-    return veces === 1 ? $localize`Usada 1 vez` : $localize`Usada ${veces} veces`;
+  protected usageLabel(count: number): string {
+    return count === 1 ? $localize`Usada 1 vez` : $localize`Usada ${count} veces`;
   }
 
-  protected alBuscar(evento: Event): void {
-    this.busqueda.set((evento.target as HTMLInputElement).value);
+  protected onSearch(event: Event): void {
+    this.searchText.set((event.target as HTMLInputElement).value);
   }
 }

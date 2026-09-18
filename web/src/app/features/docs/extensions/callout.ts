@@ -1,10 +1,10 @@
 import { Node, mergeAttributes } from '@tiptap/core';
 
 /** Los tonos de aviso. La clave se guarda en el documento; el color lo pone la hoja de estilos. */
-export const TONOS_DE_AVISO = ['nota', 'ojo', 'peligro', 'bien'] as const;
-export type TonoDeAviso = typeof TONOS_DE_AVISO[number];
+export const CALLOUT_TONES = ['nota', 'ojo', 'peligro', 'bien'] as const;
+export type CalloutTone = typeof CALLOUT_TONES[number];
 
-const EMOJI: Record<TonoDeAviso, string> = {
+const EMOJI: Record<CalloutTone, string> = {
   nota: '💡',
   ojo: '⚠️',
   peligro: '🚫',
@@ -13,11 +13,11 @@ const EMOJI: Record<TonoDeAviso, string> = {
 
 declare module '@tiptap/core' {
   interface Commands<ReturnType> {
-    aviso: {
+    callout: {
       /** Convierte el bloque actual en un aviso, o lo devuelve a párrafo si ya lo era. */
-      toggleAviso: (tono?: TonoDeAviso) => ReturnType;
+      toggleCallout: (tono?: CalloutTone) => ReturnType;
       /** Cambia el tono de un aviso ya existente. */
-      cambiarTonoDeAviso: (tono: TonoDeAviso) => ReturnType;
+      setCalloutTone: (tono: CalloutTone) => ReturnType;
     };
   }
 }
@@ -37,7 +37,7 @@ declare module '@tiptap/core' {
  * de verdad, se podría borrar dejando el aviso sin icono, y viajaría a las exportaciones como un
  * carácter suelto delante del párrafo.
  */
-export const Aviso = Node.create({
+export const Callout = Node.create({
   name: 'aviso',
   group: 'block',
   content: 'block+',
@@ -46,10 +46,10 @@ export const Aviso = Node.create({
   addAttributes() {
     return {
       tono: {
-        default: 'nota' as TonoDeAviso,
+        default: 'nota' as CalloutTone,
         parseHTML: (element) => {
           const tono = element.getAttribute('data-tono');
-          return TONOS_DE_AVISO.includes(tono as TonoDeAviso) ? tono : 'nota';
+          return CALLOUT_TONES.includes(tono as CalloutTone) ? tono : 'nota';
         },
         renderHTML: (attributes) => ({ 'data-tono': attributes['tono'] })
       }
@@ -66,10 +66,10 @@ export const Aviso = Node.create({
 
   addCommands() {
     return {
-      toggleAviso: (tono: TonoDeAviso = 'nota') => ({ commands }) =>
+      toggleCallout: (tono: CalloutTone = 'nota') => ({ commands }) =>
         commands.toggleWrap(this.name, { tono }),
 
-      cambiarTonoDeAviso: (tono: TonoDeAviso) => ({ commands }) =>
+      setCalloutTone: (tono: CalloutTone) => ({ commands }) =>
         commands.updateAttributes(this.name, { tono })
     };
   },
@@ -84,6 +84,6 @@ export const Aviso = Node.create({
 });
 
 /** El emoji de cada tono, para quien tenga que pintarlo fuera del editor. */
-export function emojiDelTono(tono: TonoDeAviso): string {
+export function toneEmoji(tono: CalloutTone): string {
   return EMOJI[tono];
 }

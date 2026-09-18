@@ -2,7 +2,7 @@ import { Component, inject, input, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 
-import { MencionesService, type MentioningDocument } from '../../features/docs/menciones.service';
+import { MentionsService, type MentioningDocument } from '../../features/docs/mentions.service';
 
 /**
  * «Mencionado en»: los documentos que hablan de esta tarea, ticket o proyecto.
@@ -17,7 +17,7 @@ import { MencionesService, type MentioningDocument } from '../../features/docs/m
  * ha escrito sobre esto» es una respuesta, no un hueco.
  */
 @Component({
-  selector: 'app-mencionado-en',
+  selector: 'app-mentioned-in',
   standalone: true,
   imports: [RouterLink],
   template: `
@@ -26,15 +26,15 @@ import { MencionesService, type MentioningDocument } from '../../features/docs/m
         Mencionado en
       </h4>
 
-      @if (cargando()) {
+      @if (loading()) {
         <p class="text-sm text-muted-foreground" i18n>Buscando…</p>
-      } @else if (documentos().length === 0) {
+      } @else if (documents().length === 0) {
         <p class="text-sm text-muted-foreground" i18n>
           Ningún documento habla de esto todavía.
         </p>
       } @else {
         <ul class="space-y-1.5">
-          @for (d of documentos(); track d.pageId) {
+          @for (d of documents(); track d.pageId) {
             <li>
               <a [routerLink]="['/docs']" [queryParams]="{ doc: d.documentId, page: d.pageId }"
                  class="block rounded-md px-2 py-1.5 hover:bg-secondary transition-colors">
@@ -58,33 +58,33 @@ import { MencionesService, type MentioningDocument } from '../../features/docs/m
     </div>
   `
 })
-export class MencionadoEnComponent {
-  private readonly menciones = inject(MencionesService);
+export class MentionedInComponent {
+  private readonly mentions = inject(MentionsService);
 
   /** Uno de los tipos mencionables: «Tarea», «Ticket», «Proyecto». */
-  readonly tipo = input.required<string>();
-  readonly entidadId = input.required<string>();
+  readonly type = input.required<string>();
+  readonly entityId = input.required<string>();
 
-  readonly documentos = signal<MentioningDocument[]>([]);
-  readonly cargando = signal(true);
+  readonly documents = signal<MentioningDocument[]>([]);
+  readonly loading = signal(true);
 
   constructor() {
     // Se carga una vez al abrir. No se refresca solo: quien está mirando una tarea no espera que
     // esta lista cambie sola, y un sondeo aquí sería una consulta más cada pocos segundos por
     // cada panel abierto.
-    queueMicrotask(() => void this.cargar());
+    queueMicrotask(() => void this.load());
   }
 
-  private async cargar(): Promise<void> {
+  private async load(): Promise<void> {
     try {
-      this.documentos.set(await firstValueFrom(
-        this.menciones.quienMenciona(this.tipo(), this.entidadId())));
+      this.documents.set(await firstValueFrom(
+        this.mentions.mentioningDocuments(this.type(), this.entityId())));
     } catch {
       // Que esto falle no puede estropear el panel de la tarea: es información añadida, no el
       // contenido. Se queda vacío y lo demás sigue funcionando.
-      this.documentos.set([]);
+      this.documents.set([]);
     } finally {
-      this.cargando.set(false);
+      this.loading.set(false);
     }
   }
 }

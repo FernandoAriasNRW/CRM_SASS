@@ -1,7 +1,7 @@
 import { Component, effect, inject, signal, computed, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewInit, Injector } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import { 
@@ -15,19 +15,19 @@ import {
   lucideTriangleAlert, lucideCode, lucideQuote, lucideUnlink, lucideRemoveFormatting,
   lucideMessageSquare
 } from '@ng-icons/lucide';
-import { AnotacionDto, DocsService, DocumentDto, PageDto } from './docs.service';
+import { AnnotationDto, DocsService, DocumentDto, PageDto } from './docs.service';
 import { SeccionesDelPanelService } from '../../shared/ui/panel-de-navegacion/secciones-del-panel.service';
 
 /** Las pestañas que el panel de Documentos sabe abrir. Cualquier otra cosa en `?tab=` cae en «all». */
-const TABS_DE_DOCS = ['all', 'my', 'shared', 'private', 'meeting-notes', 'templates', 'archived'] as const;
+const DOCS_TABS = ['all', 'my', 'shared', 'private', 'meeting-notes', 'templates', 'archived'] as const;
 import { Editor } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
 import Image from '@tiptap/extension-image';
 import Youtube from '@tiptap/extension-youtube';
 import SlashCommand from './extensions/slash-command';
-import { Mencion } from './extensions/mencion';
-import { MencionesService } from './menciones.service';
-import { EsquemaDelDocumentoComponent } from './esquema-del-documento.component';
+import { Mention } from './extensions/mention';
+import { MentionsService } from './mentions.service';
+import { DocumentOutlineComponent } from './document-outline.component';
 import { FileAttachment } from './extensions/file-attachment';
 import { TiptapEditorDirective } from 'ngx-tiptap';
 import { Table } from '@tiptap/extension-table';
@@ -45,31 +45,35 @@ import Highlight from '@tiptap/extension-highlight';
 import Typography from '@tiptap/extension-typography';
 import CharacterCount from '@tiptap/extension-character-count';
 import { createLowlight, common } from 'lowlight';
-import { Aviso } from './extensions/aviso';
-import { BloqueDeCodigo } from './extensions/bloque-de-codigo';
+import { Callout } from './extensions/callout';
+import { CodeBlock } from './extensions/code-block';
 import FileHandler from '@tiptap/extension-file-handler';
-import { Comentario } from './extensions/comentario';
-import { Columna, Columnas } from './extensions/columnas';
-import { ComentariosDelDocumentoComponent } from './comentarios-del-documento.component';
+import { CommentMark } from './extensions/comment-mark';
+import { Column, Columns } from './extensions/columns';
+import { DocumentCommentsComponent } from './document-comments.component';
 import { EmojiPickerComponent } from './extensions/emoji-picker.component';
-import { Subject, debounceTime, firstValueFrom } from 'rxjs';
+import { firstValueFrom } from 'rxjs';
 import { ClickableDirective } from '../../shared/directives/clickable.directive';
-import { GuardarPlantillaModalComponent } from './modals/guardar-plantilla-modal.component';
-import { ImportarDocumentoModalComponent } from './modals/importar-documento-modal.component';
-import { PlantillasDrawerComponent } from './plantillas-drawer.component';
-import { ArbolDePaginasComponent, MovimientoDePagina } from './arbol-de-paginas.component';
-import { ClaseDeUrl, PedirUrlModalComponent } from './modals/pedir-url-modal.component';
+import { SaveTemplateModalComponent } from './modals/save-template-modal.component';
+import { ImportDocumentModalComponent } from './modals/import-document-modal.component';
+import { TemplatesDrawerComponent } from './templates-drawer.component';
+import { PageTreeComponent, PageMove } from './page-tree.component';
+import { UrlKind, PromptUrlModalComponent } from './modals/prompt-url-modal.component';
 import { ToastService } from '../../shared/services/toast.service';
-import { PLANTILLAS_A_LA_VISTA, PlantillaDisponible, plantillasDisponibles } from './plantillas';
+import { DocumentSaveService } from './document-save.service';
+import { DocumentExportService } from './document-export.service';
+import { VISIBLE_TEMPLATES, AvailableTemplate, availableTemplates } from './templates';
 
 @Component({
   selector: 'app-docs',
   standalone: true,
-  imports: [EsquemaDelDocumentoComponent, 
-    GuardarPlantillaModalComponent, ImportarDocumentoModalComponent, PlantillasDrawerComponent,
-    ArbolDePaginasComponent, PedirUrlModalComponent, ComentariosDelDocumentoComponent,
+  imports: [DocumentOutlineComponent, 
+    SaveTemplateModalComponent, ImportDocumentModalComponent, TemplatesDrawerComponent,
+    PageTreeComponent, PromptUrlModalComponent, DocumentCommentsComponent,
     ClickableDirective, CommonModule, FormsModule, NgIconComponent, TiptapEditorDirective, EmojiPickerComponent],
   providers: [
+    DocumentSaveService,
+    DocumentExportService,
     provideIcons({
       lucideFileText, lucidePlus, lucideFolder, lucideMoreVertical,
       lucideChevronRight, lucideChevronDown, lucideSearch,
@@ -98,7 +102,7 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
    * lo usa al construirse. Declarado después, `this.menciones` sería `undefined` dentro de la
    * extensión y el desplegable de menciones no encontraría nunca nada —sin dar ningún error—.
    */
-  private menciones = inject(MencionesService);
+  private mentions = inject(MentionsService);
 
   documents = signal<DocumentDto[]>([]);
   pagesByDoc = signal<Record<string, PageDto[]>>({});
@@ -106,53 +110,45 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
   activeDocument = signal<DocumentDto | null>(null);
   activePage = signal<PageDto | null>(null);
   isLoading = signal(false);
-  expandedPages = signal<Set<string>>(new Set<string>());
   
-  private contentUpdate$ = new Subject<{ pageId: string, title: string, content: string }>();
-
-  /** El título del documento se guarda aparte, y con su propio respiro entre teclas. */
-  private tituloDelDocumento$ = new Subject<{ documentId: string, title: string }>();
 
   private readonly toast = inject(ToastService);
 
   /**
-   * En qué punto está el guardado automático.
+   * El guardado automático y la exportación, cada uno en su servicio. Ver
+   * `DocumentSaveService` y `DocumentExportService`: el componente sólo orquesta.
    *
-   * <b>Antes la cabecera decía «Saved just now» y era una cadena escrita a mano</b>, pintada
-   * siempre, sin relación con lo que contestara el servidor. Y el guardado se suscribía sin
-   * manejador de error: si la petición fallaba —red, sesión caducada, error del servidor— no
-   * ocurría nada. Se podía escribir media hora leyendo «guardado» y perderlo entero al recargar.
+   * Se reexponen sus señales con el mismo nombre para que la plantilla no tenga que saber de
+   * dónde salen.
    */
-  readonly estadoDeGuardado = signal<'quieto' | 'pendiente' | 'guardando' | 'guardado' | 'error'>('quieto');
-
-  /** Cuándo se guardó por última vez de verdad, para poder decir la hora en vez de «ahora». */
-  readonly guardadoA = signal<Date | null>(null);
-
-  /** Para desactivar los botones de exportar mientras se genera el fichero. */
-  readonly exportando = signal(false);
+  private readonly saving = inject(DocumentSaveService);
+  private readonly exports = inject(DocumentExportService);
+  readonly saveState = this.saving.state;
+  readonly savedAt = this.saving.savedAt;
+  readonly exporting = this.exports.exporting;
 
   /** Cuántas palabras lleva la página abierta. */
-  readonly palabras = signal(0);
+  readonly words = signal(0);
 
   /** Si hay una subida en marcha, para poder avisarlo en la cabecera. */
-  readonly subiendo = signal(false);
+  readonly uploading = signal(false);
 
   /** Los comentarios en línea de la página abierta. */
-  readonly anotaciones = signal<AnotacionDto[]>([]);
+  readonly annotations = signal<AnnotationDto[]>([]);
 
   /** Sobre cuál está el cursor ahora mismo, para destacarla en el panel. */
-  readonly anotacionActivaId = signal<string | null>(null);
+  readonly activeAnnotationId = signal<string | null>(null);
 
   /** Si el panel lateral enseña el índice o los comentarios. */
-  readonly panelLateral = signal<'esquema' | 'comentarios'>('esquema');
+  readonly sidePanel = signal<'outline' | 'comments'>('outline');
 
-  readonly comentariosAbiertos = computed(() => this.anotaciones().filter(a => !a.resolvedAtUtc).length);
+  readonly openComments = computed(() => this.annotations().filter(a => !a.resolvedAtUtc).length);
 
   /** Qué está pidiendo el modal de dirección, o `null` si no hay ninguno abierto. */
-  readonly urlPedida = signal<ClaseDeUrl | null>(null);
+  readonly requestedUrl = signal<UrlKind | null>(null);
 
   /** Cómo se le contesta al comando que está esperando la dirección. */
-  private resolverUrl: ((url: string | null) => void) | null = null;
+  private resolveUrl: ((url: string | null) => void) | null = null;
 
   /**
    * Abre el modal y espera a que se conteste.
@@ -160,13 +156,13 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
    * Devuelve una promesa porque el comando del editor la espera dentro de su `ejecutar`, que es lo
    * que permite que el rango donde se escribió la barra siga siendo válido al insertar.
    */
-  private pedirUrl(clase: ClaseDeUrl): Promise<string | null> {
+  private promptUrl(kind: UrlKind): Promise<string | null> {
     // Si ya había uno abierto se cierra contestando que no: dejar la promesa anterior colgada
     // mantendría vivo un comando que ya nadie va a completar.
-    this.resolverUrl?.(null);
+    this.resolveUrl?.(null);
 
-    this.urlPedida.set(clase);
-    return new Promise<string | null>(resolver => { this.resolverUrl = resolver; });
+    this.requestedUrl.set(kind);
+    return new Promise<string | null>(resolve => { this.resolveUrl = resolve; });
   }
 
   /**
@@ -178,11 +174,11 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
    * Guarda la selección antes de abrir el modal. Al enfocarse el campo, el editor la pierde, y sin
    * esto el enlace se aplicaría al cursor en vez de al texto elegido.
    */
-  async enlazarSeleccion() {
+  async linkSelection() {
     const { from, to } = this.editor.state.selection;
     if (from === to) return;
 
-    const url = await this.pedirUrl('enlace');
+    const url = await this.promptUrl('link');
     if (!url) return;
 
     this.editor.chain().focus().setTextSelection({ from, to }).setLink({ href: url }).run();
@@ -194,57 +190,57 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
    * El `input` se crea y se tira: uno permanente en la plantilla conserva el fichero anterior, así
    * que elegir dos veces el mismo fichero seguido no dispara el `change` la segunda vez.
    */
-  private elegirYSubir(): Promise<{ url: string; nombre: string; esImagen: boolean } | null> {
-    return new Promise(resolver => {
-      const campo = document.createElement('input');
-      campo.type = 'file';
+  private pickAndUpload(): Promise<{ url: string; name: string; isImage: boolean } | null> {
+    return new Promise(resolve => {
+      const field = document.createElement('input');
+      field.type = 'file';
 
-      campo.addEventListener('change', async () => {
-        const fichero = campo.files?.[0];
-        if (!fichero) { resolver(null); return; }
+      field.addEventListener('change', async () => {
+        const file = field.files?.[0];
+        if (!file) { resolve(null); return; }
 
-        resolver(await this.subir(fichero));
+        resolve(await this.upload(file));
       });
 
       // Si se cierra el diálogo sin elegir nada no llega ningún evento en algunos navegadores, así
       // que se resuelve al volver el foco a la ventana. Sin esto la promesa queda colgada y el
       // comando del menú nunca termina.
-      window.addEventListener('focus', () => setTimeout(() => resolver(null), 500), { once: true });
+      window.addEventListener('focus', () => setTimeout(() => resolve(null), 500), { once: true });
 
-      campo.click();
+      field.click();
     });
   }
 
   /** Sube el fichero e inserta lo que corresponda donde diga la posición. */
-  private async subirEInsertar(fichero: File, posicion?: number) {
-    const subido = await this.subir(fichero);
-    if (!subido) return;
+  private async uploadAndInsert(file: File, position?: number) {
+    const uploaded = await this.upload(file);
+    if (!uploaded) return;
 
-    const contenido = subido.esImagen
-      ? { type: 'image', attrs: { src: subido.url, alt: subido.nombre } }
-      : { type: 'fileAttachment', attrs: { href: subido.url, title: subido.nombre } };
+    const content = uploaded.isImage
+      ? { type: 'image', attrs: { src: uploaded.url, alt: uploaded.name } }
+      : { type: 'fileAttachment', attrs: { href: uploaded.url, title: uploaded.name } };
 
-    const cadena = this.editor.chain().focus();
-    if (posicion !== undefined) cadena.insertContentAt(posicion, contenido);
-    else cadena.insertContent(contenido);
-    cadena.run();
+    const chain = this.editor.chain().focus();
+    if (position !== undefined) chain.insertContentAt(position, content);
+    else chain.insertContent(content);
+    chain.run();
   }
 
   /** La subida en sí, con su aviso si falla. */
-  private async subir(fichero: File): Promise<{ url: string; nombre: string; esImagen: boolean } | null> {
-    this.subiendo.set(true);
+  private async upload(file: File): Promise<{ url: string; name: string; isImage: boolean } | null> {
+    this.uploading.set(true);
 
     try {
-      const { url } = await firstValueFrom(this.docsService.subirFichero(fichero));
-      return { url, nombre: fichero.name, esImagen: fichero.type.startsWith('image/') };
+      const { url } = await firstValueFrom(this.docsService.uploadFile(file));
+      return { url, name: file.name, isImage: file.type.startsWith('image/') };
     } catch (err) {
       this.toast.error(
         $localize`No se pudo subir el fichero`,
-        $localize`«${fichero.name}» no llegó al servidor.`);
+        $localize`«${file.name}» no llegó al servidor.`);
       console.error('No se pudo subir el fichero', err);
       return null;
     } finally {
-      this.subiendo.set(false);
+      this.uploading.set(false);
     }
   }
 
@@ -255,27 +251,27 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
    * identificador con el que se marca es el suyo. Marcando primero con uno inventado, un fallo al
    * crear dejaría el documento con una marca que no apunta a ninguna conversación.
    */
-  async comentarSeleccion() {
-    const pagina = this.activePage();
-    if (!pagina) return;
+  async commentSelection() {
+    const page = this.activePage();
+    if (!page) return;
 
     const { from, to } = this.editor.state.selection;
     if (from === to) return;
 
-    const citado = this.editor.state.doc.textBetween(from, to, ' ').trim();
-    if (!citado) return;
+    const quoted = this.editor.state.doc.textBetween(from, to, ' ').trim();
+    if (!quoted) return;
 
     try {
-      const anotacionId = await firstValueFrom(this.docsService.crearAnotacion(pagina.id, citado));
+      const anotacionId = await firstValueFrom(this.docsService.createAnnotation(page.id, quoted));
 
       this.editor.chain().focus()
         .setTextSelection({ from, to })
-        .marcarComentario(anotacionId)
+        .setComment(anotacionId)
         .run();
 
-      this.panelLateral.set('comentarios');
-      this.anotacionActivaId.set(anotacionId);
-      this.cargarAnotaciones(pagina.id);
+      this.sidePanel.set('comments');
+      this.activeAnnotationId.set(anotacionId);
+      this.loadAnnotations(page.id);
     } catch (err) {
       this.toast.error($localize`No se pudo crear el comentario`);
       console.error('No se pudo crear la anotación', err);
@@ -283,38 +279,38 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   /** Lleva el cursor hasta el texto señalado por una anotación. */
-  irAAnotacion(anotacion: AnotacionDto) {
-    this.anotacionActivaId.set(anotacion.id);
+  goToAnnotation(annotation: AnnotationDto) {
+    this.activeAnnotationId.set(annotation.id);
 
-    let encontrada: { from: number; to: number } | null = null;
+    let found: { from: number; to: number } | null = null;
 
-    this.editor.state.doc.descendants((nodo, pos) => {
-      if (encontrada || !nodo.isText) return;
+    this.editor.state.doc.descendants((node, pos) => {
+      if (found || !node.isText) return;
 
-      const tiene = nodo.marks.some(
-        m => m.type.name === 'comentario' && m.attrs['anotacionId'] === anotacion.id);
+      const hasMark = node.marks.some(
+        m => m.type.name === 'comentario' && m.attrs['anotacionId'] === annotation.id);
 
-      if (tiene) encontrada = { from: pos, to: pos + nodo.nodeSize };
+      if (hasMark) found = { from: pos, to: pos + node.nodeSize };
     });
 
     // Puede no estar: si alguien borró el texto comentado, la marca se fue con él. La anotación
     // sigue en el panel con su cita, que es justamente para esto.
-    if (!encontrada) {
+    if (!found) {
       this.toast.info($localize`El texto comentado ya no está en la página`);
       return;
     }
 
-    const rango = encontrada as { from: number; to: number };
-    this.editor.chain().focus().setTextSelection(rango).scrollIntoView().run();
+    const range = found as { from: number; to: number };
+    this.editor.chain().focus().setTextSelection(range).scrollIntoView().run();
   }
 
   /** Marca una anotación como resuelta, o la vuelve a abrir. */
-  resolverAnotacion(anotacion: AnotacionDto) {
-    const pagina = this.activePage();
-    if (!pagina) return;
+  resolveAnnotation(annotation: AnnotationDto) {
+    const page = this.activePage();
+    if (!page) return;
 
-    this.docsService.resolverAnotacion(anotacion.id, !anotacion.resolvedAtUtc).subscribe({
-      next: () => this.cargarAnotaciones(pagina.id),
+    this.docsService.resolveAnnotation(annotation.id, !annotation.resolvedAtUtc).subscribe({
+      next: () => this.loadAnnotations(page.id),
       error: (err) => {
         this.toast.error($localize`No se pudo cambiar el estado del comentario`);
         console.error('No se pudo resolver la anotación', err);
@@ -328,14 +324,14 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
    * Las dos cosas, y en este orden. Quitar sólo la anotación dejaría el texto subrayado
    * apuntando a una conversación que ya no existe.
    */
-  borrarAnotacion(anotacion: AnotacionDto) {
-    const pagina = this.activePage();
-    if (!pagina) return;
+  deleteAnnotation(annotation: AnnotationDto) {
+    const page = this.activePage();
+    if (!page) return;
 
-    this.docsService.borrarAnotacion(anotacion.id).subscribe({
+    this.docsService.deleteAnnotation(annotation.id).subscribe({
       next: () => {
-        this.editor.chain().focus().quitarComentario(anotacion.id).run();
-        this.cargarAnotaciones(pagina.id);
+        this.editor.chain().focus().unsetComment(annotation.id).run();
+        this.loadAnnotations(page.id);
       },
       error: (err) => {
         this.toast.error($localize`No se pudo quitar el comentario`);
@@ -344,27 +340,24 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
     });
   }
 
-  private cargarAnotaciones(pageId: string) {
-    this.docsService.getAnotaciones(pageId).subscribe({
-      next: (anotaciones) => this.anotaciones.set(Array.isArray(anotaciones) ? anotaciones : []),
+  private loadAnnotations(pageId: string) {
+    this.docsService.getPageAnnotations(pageId).subscribe({
+      next: (annotations) => this.annotations.set(Array.isArray(annotations) ? annotations : []),
       // Sin anotaciones el editor sigue siendo utilizable; no merece parar la pantalla.
       error: (err) => console.warn('No se pudieron leer los comentarios del documento', err)
     });
   }
 
   /** Contesta al comando que esperaba y cierra el modal. */
-  responderUrl(url: string | null) {
-    this.urlPedida.set(null);
-    const resolver = this.resolverUrl;
-    this.resolverUrl = null;
-    resolver?.(url);
+  answerUrl(url: string | null) {
+    this.requestedUrl.set(null);
+    const resolve = this.resolveUrl;
+    this.resolveUrl = null;
+    resolve?.(url);
   }
 
-  /** Lo último que no se pudo guardar, para poder reintentarlo sin perderlo. */
-  private pendienteDeReintento: { pageId: string; title: string; content: string } | null = null;
-
   /** Mientras se vuelca una página en el editor, los cambios que emite no son de nadie. */
-  private cargandoPagina = false;
+  private loadingPage = false;
 
   /**
    * Cambia cuando el contenido se guarda, para que el índice se vuelva a leer.
@@ -372,11 +365,10 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
    * Se ata al guardado y no a cada pulsación: recalcular el esquema en cada tecla redibuja la
    * barra lateral mientras se escribe un título, que parpadea justo cuando hace falta concentrarse.
    */
-  readonly versionDelEsquema = signal(0);
+  readonly outlineVersion = signal(0);
 
   // UI state
   searchQuery = signal('');
-  isSearchActive = signal(false);
   /**
    * La pestaña del panel de Documentos, <b>leída de la URL</b>.
    *
@@ -385,24 +377,19 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
    * como el resto de los módulos, y de paso una pestaña se puede compartir por enlace y el botón
    * de atrás funciona.
    */
-  private readonly router = inject(Router);
-  private readonly ruta = inject(ActivatedRoute);
   private readonly seccionesDelPanel = inject(SeccionesDelPanelService);
 
   /** `effect` fuera del constructor necesita inyector explícito. */
-  private readonly inyector = inject(Injector);
+  private readonly injector = inject(Injector);
 
   readonly activeSidebarTab = computed<'all' | 'my' | 'shared' | 'private' | 'meeting-notes' | 'templates' | 'archived'>(() => {
-    const tab = this.parametrosDeLaUrl()['tab'];
-    return TABS_DE_DOCS.includes(tab as never) ? tab as never : 'all';
+    const tab = this.queryParams()['tab'];
+    return DOCS_TABS.includes(tab as never) ? tab as never : 'all';
   });
 
-  private readonly parametrosDeLaUrl = toSignal(
+  private readonly queryParams = toSignal(
     inject(ActivatedRoute).queryParams,
     { initialValue: {} as Record<string, string> });
-  isPrivateCollapsed = signal(false);
-  isPinned = signal(true);
-  isHovered = signal(false);
   
   // Dropdowns & Modals
   isNewDocDropdownOpen = signal(false);
@@ -433,24 +420,24 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
    * Se pide una vez al entrar y se vuelve a pedir cada vez que se crea desde una plantilla, que
    * es lo único que lo cambia.
    */
-  private readonly usosDePlantilla = signal<ReadonlyMap<string, number>>(new Map());
+  private readonly templateUsages = signal<ReadonlyMap<string, number>>(new Map());
 
   /** Las del sistema y las del equipo, mezcladas y ordenadas por uso. */
-  readonly plantillas = computed<PlantillaDisponible[]>(
-    () => plantillasDisponibles(this.customTemplates(), this.usosDePlantilla()));
+  readonly templates = computed<AvailableTemplate[]>(
+    () => availableTemplates(this.customTemplates(), this.templateUsages()));
 
   /** Las cuatro de la galería. El resto vive detrás de «Ver más». */
-  readonly plantillasDestacadas = computed(() => this.plantillas().slice(0, PLANTILLAS_A_LA_VISTA));
+  readonly featuredTemplates = computed(() => this.templates().slice(0, VISIBLE_TEMPLATES));
 
-  readonly hayMasPlantillas = computed(() => this.plantillas().length > PLANTILLAS_A_LA_VISTA);
+  readonly hasMoreTemplates = computed(() => this.templates().length > VISIBLE_TEMPLATES);
 
-  private cargarUsosDePlantilla(): void {
-    this.docsService.getUsosDePlantilla().subscribe({
+  private loadTemplateUsages(): void {
+    this.docsService.getTemplateUsages().subscribe({
       // Se comprueba la forma antes de recorrerla. Una respuesta que no sea la lista esperada
       // —un proxy que devuelve un objeto de error con 200, por ejemplo— reventaría aquí dentro y
       // se llevaría por delante la pantalla entera de Documentos por un contador de adorno.
-      next: (usos) => this.usosDePlantilla.set(Array.isArray(usos)
-        ? new Map(usos.map(u => [u.key, u.count]))
+      next: (usages) => this.templateUsages.set(Array.isArray(usages)
+        ? new Map(usages.map(u => [u.key, u.count]))
         : new Map()),
       // Sin contadores la galería sigue siendo utilizable: se ve el orden de declaración. No
       // merece parar la pantalla ni enseñar un error por esto.
@@ -516,8 +503,8 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
       // El menú `/` no sabe pedir una dirección: se le inyecta cómo, igual que a las menciones se
       // les inyecta el buscador. Antes lo hacía con `window.prompt`, que bloquea la pestaña.
       SlashCommand.configure({
-        pedirUrl: (clase) => this.pedirUrl(clase),
-        subirFichero: () => this.elegirYSubir()
+        promptUrl: (kind) => this.promptUrl(kind),
+        uploadFile: () => this.pickAndUpload()
       }),
 
       /**
@@ -527,18 +514,18 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
        * pedir una dirección de una imagen que ya estuviera publicada en algún sitio.
        */
       FileHandler.configure({
-        onDrop: (editorActual, ficheros, posicion) => {
-          for (const fichero of ficheros) void this.subirEInsertar(fichero, posicion);
+        onDrop: (currentEditor, files, position) => {
+          for (const file of files) void this.uploadAndInsert(file, position);
         },
-        onPaste: (editorActual, ficheros) => {
-          for (const fichero of ficheros) void this.subirEInsertar(fichero);
+        onPaste: (currentEditor, files) => {
+          for (const file of files) void this.uploadAndInsert(file);
         }
       }),
 
       // Menciones `@persona` y `#tarea`. El buscador se inyecta aquí y no dentro de la extensión
       // porque la extensión no puede —ni debe— saber llamar a la API: sabe escribir el nodo con
       // el formato que el servidor lee, y nada más.
-      Mencion.configure({ buscador: (disparador, consulta) => this.menciones.buscar(disparador, consulta) }),
+      Mention.configure({ search: (trigger, query) => this.mentions.search(trigger, query) }),
       // ── Los bloques que faltaban ──────────────────────────────────────────────────────────
       //
       // Sin ellos el editor sólo daba formato al texto; con ellos se puede estructurar un
@@ -550,11 +537,11 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
       DetailsContent,
 
       /** El recuadro de «ojo con esto». Escrito aquí: no hay extensión oficial. */
-      Aviso,
+      Callout,
 
       /** Dos o tres columnas lado a lado. Tampoco hay extensión oficial. */
-      Columnas,
-      Columna,
+      Columns,
+      Column,
 
       /**
        * La marca de los comentarios en línea.
@@ -562,7 +549,7 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
        * Sólo dice «aquí hay una conversación y se llama así». El hilo lo guarda el módulo
        * Comments y el anclaje —qué se citó, si está resuelto— lo guarda Docs.
        */
-      Comentario,
+      CommentMark,
 
       /**
        * Código coloreado, con el lenguaje elegible.
@@ -570,7 +557,7 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
        * `common` trae los lenguajes habituales en vez de los ~190 de `all`, que pesan más que el
        * resto del editor junto.
        */
-      BloqueDeCodigo.configure({ lowlight: createLowlight(common) }),
+      CodeBlock.configure({ lowlight: createLowlight(common) }),
 
       Highlight.configure({ multicolor: false }),
 
@@ -587,11 +574,11 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
        */
       DragHandle.configure({
         render: () => {
-          const asa = document.createElement('div');
-          asa.className = 'asa-de-bloque';
-          asa.setAttribute('aria-hidden', 'true');
-          asa.textContent = '⠿';
-          return asa;
+          const handle = document.createElement('div');
+          handle.className = 'asa-de-bloque';
+          handle.setAttribute('aria-hidden', 'true');
+          handle.textContent = '⠿';
+          return handle;
         }
       }),
 
@@ -617,35 +604,30 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
       },
     },
     onUpdate: ({ editor }) => {
-      if (this.cargandoPagina) return;
+      if (this.loadingPage) return;
 
       // El contador se lee del editor en cada cambio: la extensión lo calcula igual, y sin esto
       // `CharacterCount` sería otra extensión cargada que no hace nada, que es justo lo que hemos
       // estado quitando.
-      this.palabras.set(editor.storage['characterCount'].words());
+      this.words.set(editor.storage['characterCount'].words());
 
       const page = this.activePage();
       const doc = this.activeDocument();
       if (page && doc) {
-        // «Pendiente» se pone aquí, no en el guardado: entre la última tecla y la petición pasa
-        // un segundo entero, y durante ese segundo la cabecera decía «guardado» aunque hubiera
-        // cambios sin mandar.
-        this.estadoDeGuardado.set('pendiente');
-
-        this.contentUpdate$.next({
+        this.saving.queuePage({
           pageId: page.id,
           title: page.title,
           content: editor.getHTML()
         });
 
-        this.versionDelEsquema.update(v => v + 1);
+        this.outlineVersion.update(v => v + 1);
       }
     }
   });
 
   ngOnInit() {
     this.loadDocuments();
-    this.cargarUsosDePlantilla();
+    this.loadTemplateUsages();
 
     // Los favoritos y las páginas recientes se le entregan al panel compartido. Son datos de
     // Documentos, así que los pone Documentos; el panel sólo sabe pintar secciones.
@@ -674,29 +656,8 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
           }))
         }
       ]);
-    }, { injector: this.inyector });
+    }, { injector: this.injector });
 
-    this.contentUpdate$.pipe(
-      debounceTime(1000)
-    ).subscribe(update => this.guardar(update));
-
-    this.tituloDelDocumento$.pipe(
-      debounceTime(700)
-    ).subscribe(({ documentId, title }) => {
-      const limpio = title.trim();
-      // Un título vacío lo rechaza el servidor. Se deja de mandar en vez de enseñar un error por
-      // cada tecla mientras alguien borra el título para escribir otro.
-      if (!limpio) return;
-
-      this.docsService.renameDocument(documentId, { title: limpio }).subscribe({
-        next: () => this.guardadoA.set(new Date()),
-        error: (err) => {
-          this.estadoDeGuardado.set('error');
-          this.toast.error($localize`No se pudo renombrar el documento`);
-          console.error('No se pudo renombrar el documento', err);
-        }
-      });
-    });
   }
 
   ngAfterViewInit() {
@@ -783,12 +744,12 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
    * el título de una plantilla del equipo puede ser cualquier cosa, y la clave del sistema
    * también podría serlo el día que alguien añada una.
    */
-  usarPlantilla(plantilla: PlantillaDisponible, event?: Event) {
+  useTemplate(template: AvailableTemplate, event?: Event) {
     if (event) event.stopPropagation();
 
-    this.crearDesdePlantilla(plantilla.esPropia
-      ? { templateDocumentId: plantilla.clave }
-      : { templateKey: plantilla.clave });
+    this.createFromTemplate(template.isCustom
+      ? { templateDocumentId: template.key }
+      : { templateKey: template.key });
   }
 
   /**
@@ -797,7 +758,7 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
    * Los dos casos eran copias del mismo flujo y sólo se diferencian en el parámetro que
    * se envía. Tenerlo una vez evita que uno se arregle y el otro no.
    */
-  private crearDesdePlantilla(req: { templateKey?: string; templateDocumentId?: string }) {
+  private createFromTemplate(req: { templateKey?: string; templateDocumentId?: string }) {
     this.isNewDocDropdownOpen.set(false);
     this.isTemplatePickerOpen.set(false);
     this.isLoading.set(true);
@@ -806,8 +767,8 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
       next: (id) => {
         // El contador que acaba de subir es el que ordena la galería; sin releerlo, la plantilla
         // recién usada no se movería de sitio hasta la siguiente visita.
-        this.cargarUsosDePlantilla();
-        this.abrirDocumentoCreado(id);
+        this.loadTemplateUsages();
+        this.openCreatedDocument(id);
       },
       error: (err) => {
         console.error('Error creating from template:', err);
@@ -822,13 +783,13 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
    * Lo repetían por igual la importación y las dos vías de plantilla. El identificador
    * llega ya limpio: la normalización vive en DocsService, donde entra el dato.
    */
-  private abrirDocumentoCreado(id: string) {
+  private openCreatedDocument(id: string) {
     this.docsService.getDocuments().subscribe({
       next: (docs) => {
         this.documents.set(docs);
         this.isLoading.set(false);
-        const creado = docs.find(d => d.id === id);
-        if (creado) this.selectDocument(creado);
+        const created = docs.find(d => d.id === id);
+        if (created) this.selectDocument(created);
       },
       error: () => this.isLoading.set(false)
     });
@@ -842,15 +803,15 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   /** El modal ya guardó; aquí sólo queda reflejarlo en el listado. */
-  alGuardarPlantilla() {
+  onTemplateSaved() {
     this.isSaveAsTemplateModalOpen.set(false);
     this.loadDocuments();
   }
 
   /** El modal ya importó; se abre el documento recién creado. */
-  alImportar(id: string) {
+  onImported(id: string) {
     this.isImportModalOpen.set(false);
-    this.abrirDocumentoCreado(id);
+    this.openCreatedDocument(id);
   }
 
   openImportModal(event?: Event) {
@@ -883,7 +844,7 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   /** Las páginas del documento abierto, que es lo que pinta el árbol. */
-  readonly paginasDelDocumento = computed<PageDto[]>(() => {
+  readonly documentPages = computed<PageDto[]>(() => {
     const doc = this.activeDocument();
     return doc ? this.pagesByDoc()[doc.id] ?? [] : [];
   });
@@ -892,7 +853,7 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
     this.docsService.createPage(documentId, { title, parentPageId }).subscribe({
       next: (id) => {
         const cleanId = typeof id === 'string' ? id.replace(/['"]/g, '') : (id as any)?.value || id;
-        this.recargarPaginas(documentId, cleanId);
+        this.reloadPages(documentId, cleanId);
       },
       error: (err) => {
         this.toast.error($localize`No se pudo crear la página`);
@@ -902,7 +863,7 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   /** Desde el árbol: `null` crea una página de primer nivel, un id crea una subpágina. */
-  crearPaginaDesdeElArbol(parentPageId: string | null) {
+  createPageFromTree(parentPageId: string | null) {
     const doc = this.activeDocument();
     if (doc) this.createNewPage(doc.id, $localize`Sin título`, parentPageId ?? undefined);
   }
@@ -915,17 +876,17 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
    * esa renumeración y las dos versiones acabarían discrepando. Mover una página es una acción
    * puntual, no un arrastre continuo, y la espera no se percibe.
    */
-  moverPagina(movimiento: MovimientoDePagina) {
+  movePage(move: PageMove) {
     const doc = this.activeDocument();
     if (!doc) return;
 
-    this.docsService.movePage(movimiento.pagina.id, {
-      parentPageId: movimiento.padreId,
-      order: movimiento.orden
+    this.docsService.movePage(move.page.id, {
+      parentPageId: move.parentId,
+      order: move.order
     }).subscribe({
-      next: () => this.recargarPaginas(doc.id),
+      next: () => this.reloadPages(doc.id),
       error: (err) => {
-        this.toast.error($localize`No se pudo mover la página`, this.motivoDelError(err));
+        this.toast.error($localize`No se pudo mover la página`, this.errorReason(err));
         console.error('No se pudo mover la página', err);
       }
     });
@@ -938,14 +899,14 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
    * exige documento **y** página— así que quedaría inalcanzable desde el listado sin haberse
    * borrado.
    */
-  borrarPagina(pagina: PageDto) {
+  trashPage(page: PageDto) {
     const doc = this.activeDocument();
-    if (!doc || this.paginasDelDocumento().length <= 1) return;
+    if (!doc || this.documentPages().length <= 1) return;
 
-    this.docsService.deletePage(doc.id, pagina.id).subscribe({
+    this.docsService.deletePage(doc.id, page.id).subscribe({
       next: () => {
-        if (this.activePage()?.id === pagina.id) this.activePage.set(null);
-        this.recargarPaginas(doc.id);
+        if (this.activePage()?.id === page.id) this.activePage.set(null);
+        this.reloadPages(doc.id);
       },
       error: (err) => {
         this.toast.error($localize`No se pudo borrar la página`);
@@ -955,16 +916,16 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   /** Vuelve a leer el árbol y deja abierta la página que se diga, o la que ya lo estaba. */
-  private recargarPaginas(documentId: string, abrirId?: string) {
+  private reloadPages(documentId: string, openId?: string) {
     this.docsService.getPages(documentId).subscribe({
       next: (pages) => {
         this.pagesByDoc.update(dict => ({ ...dict, [documentId]: pages }));
 
-        const buscada = abrirId ? pages.find(p => p.id === abrirId) : null;
-        if (buscada) { this.selectPage(buscada); return; }
+        const requested = openId ? pages.find(p => p.id === openId) : null;
+        if (requested) { this.selectPage(requested); return; }
 
-        const abierta = this.activePage();
-        if (!abierta || !pages.some(p => p.id === abierta.id)) {
+        const open = this.activePage();
+        if (!open || !pages.some(p => p.id === open.id)) {
           if (pages.length > 0) this.selectPage(pages[0]);
         }
       },
@@ -973,26 +934,16 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   /** El texto que manda el servidor cuando rechaza un movimiento, si viene en algo legible. */
-  private motivoDelError(err: unknown): string | undefined {
-    const cuerpo = (err as { error?: unknown })?.error;
-    return typeof cuerpo === 'string' && cuerpo.length < 200 ? cuerpo : undefined;
-  }
-
-  togglePageExpansion(event: Event, pageId: string) {
-    event.stopPropagation();
-    this.expandedPages.update(set => {
-      const newSet = new Set(set);
-      if (newSet.has(pageId)) newSet.delete(pageId);
-      else newSet.add(pageId);
-      return newSet;
-    });
+  private errorReason(err: unknown): string | undefined {
+    const body = (err as { error?: unknown })?.error;
+    return typeof body === 'string' && body.length < 200 ? body : undefined;
   }
 
   selectPage(page: PageDto) {
     // Abrir una página no es editarla. Sin esta bandera, cargar el contenido en el editor
     // dispara `onUpdate`, y la cabecera pasaba a «Guardado a las HH:MM» **por haber abierto el
     // documento**, además de reescribir en el servidor lo mismo que acababa de leer.
-    this.cargandoPagina = true;
+    this.loadingPage = true;
     this.activePage.set(page);
     // Vacío, no un texto de ejemplo. Antes se metía «Start typing or use / for commands…» **como
     // contenido**, así que se guardaba en la página y había que borrarlo a mano. El aviso lo pone
@@ -1000,14 +951,14 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
     this.editor.commands.setContent(page.content || '');
     setTimeout(() => {
       this.editor.commands.focus();
-      this.cargandoPagina = false;
+      this.loadingPage = false;
 
       // Al abrir tampoco lo cuenta nadie, porque `onUpdate` no llega a ejecutarse.
-      this.palabras.set(this.editor.storage['characterCount'].words());
+      this.words.set(this.editor.storage['characterCount'].words());
     }, 50);
 
-    this.anotacionActivaId.set(null);
-    this.cargarAnotaciones(page.id);
+    this.activeAnnotationId.set(null);
+    this.loadAnnotations(page.id);
   }
 
   closeEditorView() {
@@ -1019,76 +970,16 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
     this.editor.chain().focus().insertContent(emoji).run();
   }
 
-  /**
-   * Guarda el documento en PDF.
-   *
-   * `html2pdf.js` estaba en las dependencias y **no se importaba en ningún sitio**, así que
-   * `window.html2pdf` era siempre `undefined` y el botón caía al `window.print()` de reserva, que
-   * imprime la aplicación entera con su barra lateral en vez del documento.
-   *
-   * Se carga en el momento y no arriba del fichero: son unos 700 kB que sólo hacen falta si
-   * alguien pulsa el botón, y cargarlos siempre los mete en el paquete de Documentos.
-   */
-  async exportPdf() {
-    const contenido = document.querySelector('.ProseMirror');
-    if (!contenido) return;
-
-    this.exportando.set(true);
-    try {
-      const { default: html2pdf } = await import('html2pdf.js');
-
-      await html2pdf()
-        .set({ margin: 10, filename: `${this.activePage()?.title || 'documento'}.pdf` })
-        .from(contenido as HTMLElement)
-        .save();
-    } catch (err) {
-      this.toast.error($localize`No se pudo generar el PDF`);
-      console.error('No se pudo generar el PDF', err);
-    } finally {
-      this.exportando.set(false);
-    }
+  /** Guarda en PDF lo que se ve en el editor. Ver `DocumentExportService.exportPdf`. */
+  exportPdf() {
+    const content = document.querySelector('.ProseMirror');
+    if (content) void this.exports.exportPdf(content as HTMLElement, this.activePage()?.title);
   }
 
-  /**
-   * Descarga el documento en HTML.
-   *
-   * Antes hacía `window.open` de la URL de exportación. Una pestaña nueva no lleva la cabecera de
-   * sesión y el endpoint la exige: **el botón devolvía 401 siempre**, y como se abría en otra
-   * pestaña, ni siquiera se veía el error.
-   */
+  /** Descarga el documento abierto en HTML. Ver `DocumentExportService.exportHtml`. */
   exportHtml() {
     const doc = this.activeDocument();
-    if (!doc) return;
-
-    this.exportando.set(true);
-    this.docsService.exportarHtml(doc.id).subscribe({
-      next: (respuesta) => {
-        this.exportando.set(false);
-
-        const cuerpo = respuesta.body;
-        if (!cuerpo) {
-          this.toast.error($localize`La descarga llegó vacía.`);
-          return;
-        }
-
-        const url = URL.createObjectURL(cuerpo);
-        try {
-          const enlace = document.createElement('a');
-          enlace.href = url;
-          enlace.download = `${doc.title || 'documento'}.html`;
-          enlace.click();
-        } finally {
-          // Sin esto, cada descarga deja el fichero entero retenido en memoria mientras la
-          // pestaña siga abierta.
-          URL.revokeObjectURL(url);
-        }
-      },
-      error: (err) => {
-        this.exportando.set(false);
-        this.toast.error($localize`No se pudo exportar el documento`);
-        console.error('No se pudo exportar el documento', err);
-      }
-    });
+    if (doc) this.exports.exportHtml(doc);
   }
 
   /**
@@ -1098,20 +989,19 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
    * pan—, así que escribir el título del documento renombraba la página por debajo mientras la
    * pantalla seguía enseñando el título viejo del documento.
    */
-  renombrarPagina(newTitle: string) {
+  renamePage(newTitle: string) {
     const current = this.activePage();
     if (!current) return;
 
     this.activePage.set({ ...current, title: newTitle });
     this.pagesByDoc.update(dict => {
       const docId = current.documentId;
-      const paginas = dict[docId];
-      if (!paginas) return dict;
-      return { ...dict, [docId]: paginas.map(p => p.id === current.id ? { ...p, title: newTitle } : p) };
+      const pages = dict[docId];
+      if (!pages) return dict;
+      return { ...dict, [docId]: pages.map(p => p.id === current.id ? { ...p, title: newTitle } : p) };
     });
 
-    this.estadoDeGuardado.set('pendiente');
-    this.contentUpdate$.next({
+    this.saving.queuePage({
       pageId: current.id,
       title: newTitle,
       content: this.editor.getHTML()
@@ -1124,88 +1014,19 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
    * Necesitó endpoint nuevo: el módulo sólo publicaba borrar documento, borrar página y actualizar
    * página, así que este campo no podía funcionar de ninguna manera.
    */
-  renombrarDocumento(newTitle: string) {
+  renameDocument(newTitle: string) {
     const doc = this.activeDocument();
     if (!doc) return;
 
     this.activeDocument.set({ ...doc, title: newTitle });
     this.documents.update(docs => docs.map(d => d.id === doc.id ? { ...d, title: newTitle } : d));
 
-    this.tituloDelDocumento$.next({ documentId: doc.id, title: newTitle });
-  }
-
-  /**
-   * Manda el contenido al servidor y cuenta lo que pasa.
-   *
-   * El error no se traga: se enseña en la cabecera, se avisa una vez, y lo que no se pudo guardar
-   * queda apartado para reintentarlo. Perder el texto de alguien porque caducó una sesión es el
-   * peor fallo que puede tener un editor, y era el que tenía.
-   */
-  private guardar(update: { pageId: string; title: string; content: string }) {
-    this.estadoDeGuardado.set('guardando');
-
-    this.docsService.updatePage(update.pageId, {
-      title: update.title,
-      content: update.content
-    }).subscribe({
-      next: () => {
-        this.pendienteDeReintento = null;
-        this.guardadoA.set(new Date());
-        this.estadoDeGuardado.set('guardado');
-      },
-      error: (err) => {
-        // Se guarda lo que falló, no lo que hay ahora en el editor: si alguien cambia de página
-        // tras el fallo, el reintento tiene que mandar el texto que no llegó, no el de la página
-        // nueva.
-        this.pendienteDeReintento = update;
-        this.estadoDeGuardado.set('error');
-
-        this.toast.error(
-          $localize`No se pudo guardar`,
-          $localize`Los cambios siguen en pantalla. Vuelve a intentarlo desde la cabecera.`);
-
-        console.error('No se pudo guardar la página', err);
-      }
-    });
+    this.saving.queueDocumentTitle(doc.id, newTitle);
   }
 
   /** Reintenta lo último que no se pudo guardar. */
-  reintentarGuardado() {
-    if (this.pendienteDeReintento) this.guardar(this.pendienteDeReintento);
-  }
-
-  toggleSearch() {
-    this.isSearchActive.update(v => !v);
-    if (!this.isSearchActive()) {
-      this.searchQuery.set('');
-    }
-  }
-
-  /**
-   * Cambia de pestaña navegando, no tocando una señal.
-   *
-   * Lo sigue usando el botón «volver a todos los documentos» de la cabecera del editor. La
-   * navegación es la que mueve la pestaña; cerrar el documento abierto es lo único que queda
-   * aquí, porque de eso la URL no dice nada.
-   */
-  setSidebarTab(tab: 'all' | 'my' | 'shared' | 'private' | 'meeting-notes' | 'archived') {
-    this.activeDocument.set(null);
-    this.activePage.set(null);
-
-    void this.router.navigate([], {
-      relativeTo: this.ruta,
-      queryParams: { tab: tab === 'all' ? null : tab },
-      queryParamsHandling: 'merge'
-    });
-  }
-
-  togglePrivate() {
-    this.isPrivateCollapsed.update(v => !v);
-  }
-
-  togglePin(event: Event) {
-    event.stopPropagation();
-    this.isPinned.update(v => !v);
+  retrySave() {
+    this.saving.retry();
   }
 
   deleteDocument(event: Event, id: string) {
@@ -1224,24 +1045,6 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
           console.error('Error deleting doc:', err);
           alert('Error deleting document');
         }
-      });
-    }
-  }
-
-  deletePage(event: Event, docId: string, pageId: string) {
-    event.stopPropagation();
-    if (confirm('Are you sure you want to delete this page?')) {
-      this.docsService.deletePage(docId, pageId).subscribe({
-        next: () => {
-          this.docsService.getPages(docId).subscribe(pages => {
-            this.pagesByDoc.update(dict => ({ ...dict, [docId]: pages }));
-            if (this.activePage()?.id === pageId) {
-              this.activePage.set(null);
-              this.editor.commands.clearContent();
-            }
-          });
-        },
-        error: (err: any) => console.error('Error deleting page:', err)
       });
     }
   }

@@ -20,13 +20,13 @@ import {
 
 import { DrawerComponent } from '../../shared/ui/drawer.component';
 import { ClickableDirective } from '../../shared/directives/clickable.directive';
-import { ComentariosComponent } from '../../shared/ui/comentarios.component';
-import { MencionadoEnComponent } from '../../shared/ui/mencionado-en.component';
+import { CommentsComponent } from '../../shared/ui/comments.component';
+import { MentionedInComponent } from '../../shared/ui/mentioned-in.component';
 
 @Component({
   selector: 'app-ticket-detail-panel',
   standalone: true,
-  imports: [MencionadoEnComponent, ComentariosComponent, ClickableDirective, FormsModule, BadgeComponent, NgIconComponent, DrawerComponent],
+  imports: [MentionedInComponent, CommentsComponent, ClickableDirective, FormsModule, BadgeComponent, NgIconComponent, DrawerComponent],
   viewProviders: [provideIcons({
     lucideX, lucideCheck, lucideUser, lucideTag,
     lucideFlag, lucideMessageSquare, lucidePaperclip,

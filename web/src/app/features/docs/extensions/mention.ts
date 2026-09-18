@@ -7,21 +7,21 @@ import tippy, { type Instance } from 'tippy.js';
  * Qué se puede mencionar. Los nombres son los que el servidor lee de
  * `TiposMencionables`; escribir otro deja la mención fuera del índice **sin dar ningún error**.
  */
-export type TipoDeMencion = 'Persona' | 'Tarea' | 'Ticket' | 'Proyecto' | 'Documento';
+export type MentionType = 'Persona' | 'Tarea' | 'Ticket' | 'Proyecto' | 'Documento';
 
 /** Un candidato del desplegable de menciones. */
-export interface CandidatoDeMencion {
+export interface MentionCandidate {
   id: string;
   etiqueta: string;
-  tipo: TipoDeMencion;
+  tipo: MentionType;
   /** Contexto para distinguir dos con el mismo nombre: el proyecto, el estado… */
-  detalle?: string;
+  detail?: string;
 }
 
 /** Quién busca los candidatos. Lo aporta el componente, que es quien sabe llamar a la API. */
-export type BuscadorDeMenciones = (
-  disparador: string, consulta: string
-) => Promise<CandidatoDeMencion[]>;
+export type MentionSearch = (
+  trigger: string, query: string
+) => Promise<MentionCandidate[]>;
 
 /**
  * <b>El contrato con el servidor, en un solo sitio.</b>
@@ -34,8 +34,8 @@ export type BuscadorDeMenciones = (
  * una prueba de integración que escribe una mención con este formato y comprueba que la tarea la
  * ve desde el otro lado.
  */
-export const ATRIBUTO_TIPO = 'data-mencion-tipo';
-export const ATRIBUTO_ID = 'data-mencion-id';
+export const TYPE_ATTRIBUTE = 'data-mencion-tipo';
+export const ID_ATTRIBUTE = 'data-mencion-id';
 
 /**
  * Menciones dentro del editor: `@` para personas y `#` para tareas, tickets y proyectos.
@@ -47,7 +47,7 @@ export const ATRIBUTO_ID = 'data-mencion-id';
  * Es la mitad visible del diferencial. La otra —que la tarea sepa qué documentos hablan de ella—
  * la resuelve el servidor a partir de lo que este nodo escribe.
  */
-export const Mencion = Node.create<{ buscador: BuscadorDeMenciones | null }>({
+export const Mention = Node.create<{ search: MentionSearch | null }>({
   name: 'mencion',
 
   group: 'inline',
@@ -59,24 +59,24 @@ export const Mencion = Node.create<{ buscador: BuscadorDeMenciones | null }>({
   selectable: true,
 
   addOptions() {
-    return { buscador: null };
+    return { search: null };
   },
 
   addAttributes() {
     return {
       tipo: {
         default: null,
-        parseHTML: (elemento) => elemento.getAttribute(ATRIBUTO_TIPO),
-        renderHTML: (atributos) => (atributos['tipo'] ? { [ATRIBUTO_TIPO]: atributos['tipo'] } : {})
+        parseHTML: (element) => element.getAttribute(TYPE_ATTRIBUTE),
+        renderHTML: (attributes) => (attributes['tipo'] ? { [TYPE_ATTRIBUTE]: attributes['tipo'] } : {})
       },
       entidadId: {
         default: null,
-        parseHTML: (elemento) => elemento.getAttribute(ATRIBUTO_ID),
-        renderHTML: (atributos) => (atributos['entidadId'] ? { [ATRIBUTO_ID]: atributos['entidadId'] } : {})
+        parseHTML: (element) => element.getAttribute(ID_ATTRIBUTE),
+        renderHTML: (attributes) => (attributes['entidadId'] ? { [ID_ATTRIBUTE]: attributes['entidadId'] } : {})
       },
       etiqueta: {
         default: '',
-        parseHTML: (elemento) => elemento.textContent ?? '',
+        parseHTML: (element) => element.textContent ?? '',
         // La etiqueta no se escribe como atributo: **es el texto del nodo**. Guardarla también en
         // un atributo daría dos copias del mismo dato que pueden discrepar al editar.
         renderHTML: () => ({})
@@ -85,11 +85,11 @@ export const Mencion = Node.create<{ buscador: BuscadorDeMenciones | null }>({
   },
 
   parseHTML() {
-    return [{ tag: `span[${ATRIBUTO_TIPO}]` }];
+    return [{ tag: `span[${TYPE_ATTRIBUTE}]` }];
   },
 
   renderHTML({ node, HTMLAttributes }) {
-    const tipo = node.attrs['tipo'] as TipoDeMencion | null;
+    const tipo = node.attrs['tipo'] as MentionType | null;
 
     return [
       'span',
@@ -101,35 +101,35 @@ export const Mencion = Node.create<{ buscador: BuscadorDeMenciones | null }>({
   },
 
   renderText({ node }) {
-    const tipo = node.attrs['tipo'] as TipoDeMencion | null;
+    const tipo = node.attrs['tipo'] as MentionType | null;
     return `${tipo === 'Persona' ? '@' : '#'}${node.attrs['etiqueta']}`;
   },
 
   addProseMirrorPlugins() {
-    const buscador = this.options.buscador;
+    const search = this.options.search;
 
     // Un plugin por disparador, con su propia clave: ProseMirror exige claves distintas, y con la
     // misma el segundo pisa al primero en silencio — sólo funcionaría uno de los dos.
-    return ['@', '#'].map((disparador) =>
+    return ['@', '#'].map((trigger) =>
       Suggestion({
         editor: this.editor,
-        char: disparador,
-        pluginKey: new PluginKey(`mencion-${disparador}`),
+        char: trigger,
+        pluginKey: new PluginKey(`mencion-${trigger}`),
         allowSpaces: false,
 
-        items: async ({ query }) => (buscador ? buscador(disparador, query) : []),
+        items: async ({ query }) => (search ? search(trigger, query) : []),
 
         command: ({ editor, range, props }) => {
-          const candidato = props as unknown as CandidatoDeMencion;
+          const candidate = props as unknown as MentionCandidate;
 
           editor.chain().focus()
             .insertContentAt(range, [
               {
                 type: 'mencion',
                 attrs: {
-                  tipo: candidato.tipo,
-                  entidadId: candidato.id,
-                  etiqueta: candidato.etiqueta
+                  tipo: candidate.tipo,
+                  entidadId: candidate.id,
+                  etiqueta: candidate.etiqueta
                 }
               },
               // Un espacio detrás: sin él, lo siguiente que se escribe se pega a la mención y
@@ -139,7 +139,7 @@ export const Mencion = Node.create<{ buscador: BuscadorDeMenciones | null }>({
             .run();
         },
 
-        render: renderizarDesplegable
+        render: renderDropdown
       })
     );
   }
@@ -152,69 +152,69 @@ export const Mencion = Node.create<{ buscador: BuscadorDeMenciones | null }>({
  * equivalente cómodo a `ReactRenderer`. Es la misma técnica que ya usa el menú `/` de este editor;
  * se sigue igual para que haya una sola forma de hacerlo aquí dentro.
  */
-function renderizarDesplegable() {
-  let caja: HTMLElement;
+function renderDropdown() {
+  let box: HTMLElement;
   let popup: Instance[];
-  let seleccionado = 0;
-  let candidatos: CandidatoDeMencion[] = [];
-  let alElegir: ((c: CandidatoDeMencion) => void) | null = null;
+  let selected = 0;
+  let candidates: MentionCandidate[] = [];
+  let onSelect: ((c: MentionCandidate) => void) | null = null;
 
-  const pintar = () => {
-    caja.innerHTML = '';
+  const render = () => {
+    box.innerHTML = '';
 
-    if (candidatos.length === 0) {
-      const vacio = document.createElement('div');
-      vacio.className = 'px-2 py-1.5 text-sm text-muted-foreground';
-      vacio.textContent = 'Nada que mencionar';
-      caja.appendChild(vacio);
+    if (candidates.length === 0) {
+      const empty = document.createElement('div');
+      empty.className = 'px-2 py-1.5 text-sm text-muted-foreground';
+      empty.textContent = 'Nada que mencionar';
+      box.appendChild(empty);
       return;
     }
 
-    candidatos.forEach((candidato, i) => {
-      const boton = document.createElement('button');
-      boton.type = 'button';
-      boton.className =
+    candidates.forEach((candidate, i) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className =
         'w-full text-left px-2 py-1.5 text-sm rounded flex items-center gap-2 ' +
-        (i === seleccionado ? 'bg-secondary' : 'bg-transparent');
+        (i === selected ? 'bg-secondary' : 'bg-transparent');
 
       const etiqueta = document.createElement('span');
-      etiqueta.textContent = candidato.etiqueta;
-      boton.appendChild(etiqueta);
+      etiqueta.textContent = candidate.etiqueta;
+      button.appendChild(etiqueta);
 
-      if (candidato.detalle) {
-        const detalle = document.createElement('span');
-        detalle.className = 'text-xs text-muted-foreground truncate';
-        detalle.textContent = candidato.detalle;
-        boton.appendChild(detalle);
+      if (candidate.detail) {
+        const detail = document.createElement('span');
+        detail.className = 'text-xs text-muted-foreground truncate';
+        detail.textContent = candidate.detail;
+        button.appendChild(detail);
       }
 
-      boton.addEventListener('mousedown', (e) => {
+      button.addEventListener('mousedown', (e) => {
         // `mousedown` y no `click`: al hacer clic el editor pierde el foco antes de que llegue el
         // `click`, y la mención se insertaba en el sitio equivocado o no se insertaba.
         e.preventDefault();
-        alElegir?.(candidato);
+        onSelect?.(candidate);
       });
 
-      caja.appendChild(boton);
+      box.appendChild(button);
     });
   };
 
   return {
-    onStart: (props: { items: CandidatoDeMencion[]; command: (c: CandidatoDeMencion) => void; clientRect?: (() => DOMRect | null) | null }) => {
-      candidatos = props.items;
-      seleccionado = 0;
-      alElegir = props.command;
+    onStart: (props: { items: MentionCandidate[]; command: (c: MentionCandidate) => void; clientRect?: (() => DOMRect | null) | null }) => {
+      candidates = props.items;
+      selected = 0;
+      onSelect = props.command;
 
-      caja = document.createElement('div');
-      caja.className =
+      box = document.createElement('div');
+      box.className =
         'bg-card border border-border rounded-md shadow-lg p-1 min-w-[220px] max-h-64 overflow-y-auto';
 
-      pintar();
+      render();
 
       popup = tippy('body', {
         getReferenceClientRect: props.clientRect as () => DOMRect,
         appendTo: () => document.body,
-        content: caja,
+        content: box,
         showOnCreate: true,
         interactive: true,
         trigger: 'manual',
@@ -222,11 +222,11 @@ function renderizarDesplegable() {
       });
     },
 
-    onUpdate: (props: { items: CandidatoDeMencion[]; command: (c: CandidatoDeMencion) => void; clientRect?: (() => DOMRect | null) | null }) => {
-      candidatos = props.items;
-      seleccionado = 0;
-      alElegir = props.command;
-      pintar();
+    onUpdate: (props: { items: MentionCandidate[]; command: (c: MentionCandidate) => void; clientRect?: (() => DOMRect | null) | null }) => {
+      candidates = props.items;
+      selected = 0;
+      onSelect = props.command;
+      render();
 
       popup?.[0]?.setProps({ getReferenceClientRect: props.clientRect as () => DOMRect });
     },
@@ -235,21 +235,21 @@ function renderizarDesplegable() {
       // Las flechas y Enter se manejan aquí para que se pueda elegir sin soltar el teclado, que es
       // como se usa un editor de verdad.
       if (props.event.key === 'ArrowDown') {
-        seleccionado = (seleccionado + 1) % Math.max(candidatos.length, 1);
-        pintar();
+        selected = (selected + 1) % Math.max(candidates.length, 1);
+        render();
         return true;
       }
 
       if (props.event.key === 'ArrowUp') {
-        seleccionado = (seleccionado - 1 + candidatos.length) % Math.max(candidatos.length, 1);
-        pintar();
+        selected = (selected - 1 + candidates.length) % Math.max(candidates.length, 1);
+        render();
         return true;
       }
 
       if (props.event.key === 'Enter') {
-        const elegido = candidatos[seleccionado];
-        if (elegido) {
-          alElegir?.(elegido);
+        const chosen = candidates[selected];
+        if (chosen) {
+          onSelect?.(chosen);
           return true;
         }
         return false;

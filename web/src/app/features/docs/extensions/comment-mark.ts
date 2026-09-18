@@ -2,11 +2,11 @@ import { Mark, mergeAttributes } from '@tiptap/core';
 
 declare module '@tiptap/core' {
   interface Commands<ReturnType> {
-    comentario: {
+    comment: {
       /** Marca lo seleccionado como comentado, con el identificador de su anotación. */
-      marcarComentario: (anotacionId: string) => ReturnType;
+      setComment: (anotacionId: string) => ReturnType;
       /** Quita la marca del comentario indicado, esté donde esté el cursor. */
-      quitarComentario: (anotacionId: string) => ReturnType;
+      unsetComment: (anotacionId: string) => ReturnType;
     };
   }
 }
@@ -27,7 +27,7 @@ declare module '@tiptap/core' {
  * sitio: por eso la anotación guarda una copia del texto citado y el panel la puede seguir
  * enseñando como huérfana en vez de desaparecer sin explicación.
  */
-export const Comentario = Mark.create({
+export const CommentMark = Mark.create({
   name: 'comentario',
   inclusive: false,
 
@@ -56,14 +56,14 @@ export const Comentario = Mark.create({
 
   addCommands() {
     return {
-      marcarComentario: (anotacionId: string) => ({ commands }) =>
+      setComment: (anotacionId: string) => ({ commands }) =>
         commands.setMark(this.name, { anotacionId }),
 
-      quitarComentario: (anotacionId: string) => ({ tr, state, dispatch }) => {
-        const tipo = state.schema.marks[this.name];
-        if (!tipo) return false;
+      unsetComment: (anotacionId: string) => ({ tr, state, dispatch }) => {
+        const markType = state.schema.marks[this.name];
+        if (!markType) return false;
 
-        let encontrada = false;
+        let found = false;
 
         // Se recorre el documento en vez de usar `unsetMark`, que actúa sobre la selección: el
         // botón de quitar está en el panel lateral, donde el cursor no tiene por qué estar dentro
@@ -71,17 +71,17 @@ export const Comentario = Mark.create({
         state.doc.descendants((node, pos) => {
           if (!node.isText) return;
 
-          const marca = node.marks.find(
-            m => m.type === tipo && m.attrs['anotacionId'] === anotacionId);
+          const mark = node.marks.find(
+            m => m.type === markType && m.attrs['anotacionId'] === anotacionId);
 
-          if (!marca) return;
+          if (!mark) return;
 
-          tr.removeMark(pos, pos + node.nodeSize, marca);
-          encontrada = true;
+          tr.removeMark(pos, pos + node.nodeSize, mark);
+          found = true;
         });
 
-        if (encontrada && dispatch) dispatch(tr);
-        return encontrada;
+        if (found && dispatch) dispatch(tr);
+        return found;
       }
     };
   }

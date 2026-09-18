@@ -126,7 +126,8 @@ arranca y la petición da 400. Busca `{nombreViejo}` en los `Map*` después de c
 dos columnas, viejo y nuevo). Trabaja por tokens, así que después, además del build, **compara con
 `main` los atributos y las cadenas de las plantillas**: en el bloque 4b tradujo 18 textos de la
 interfaz y ni el build ni las pruebas lo notaron. Los nombres de inputs, outputs y selectores van a
-mano. Límites en `tools/README.md`.
+mano. **Una salida renombrada sólo en el hijo no da ningún error** (Angular la trata como evento
+del DOM): cambia cada `(salida)` y `[entrada]` en los padres. Límites en `tools/README.md`.
 
 Para ver qué queda en español: `python tools/scripts/spanish-identifiers.py <rutas>`
 (necesita `pip install wordfreq`).

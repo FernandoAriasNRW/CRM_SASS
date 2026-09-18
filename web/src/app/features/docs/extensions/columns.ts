@@ -1,17 +1,17 @@
 import { Node, mergeAttributes } from '@tiptap/core';
-import type { Node as NodoPM } from '@tiptap/pm/model';
+import type { Node as PmNode } from '@tiptap/pm/model';
 import { TextSelection } from '@tiptap/pm/state';
 
 declare module '@tiptap/core' {
   interface Commands<ReturnType> {
-    columnas: {
+    columns: {
       /** Inserta un bloque de dos o tres columnas, cada una con un párrafo vacío. */
-      insertarColumnas: (cantidad: 2 | 3) => ReturnType;
+      insertColumns: (cantidad: 2 | 3) => ReturnType;
       /**
        * Deshace las columnas en las que está el cursor: su contenido queda seguido, una columna
        * detrás de otra, en vez de borrarse.
        */
-      deshacerColumnas: () => ReturnType;
+      unsetColumns: () => ReturnType;
     };
   }
 }
@@ -22,7 +22,7 @@ declare module '@tiptap/core' {
  * `isolating` impide que borrar al principio de una columna la fusione con la anterior: sin eso,
  * pulsar retroceso en una columna vacía se llevaba el texto de la de al lado.
  */
-export const Columna = Node.create({
+export const Column = Node.create({
   name: 'columna',
   content: 'block+',
   isolating: true,
@@ -51,7 +51,7 @@ export const Columna = Node.create({
  *
  * En pantallas estrechas se apilan: tres columnas en un móvil son tres tiras ilegibles.
  */
-export const Columnas = Node.create({
+export const Columns = Node.create({
   name: 'columnas',
   group: 'block',
   content: 'columna{2,3}',
@@ -78,8 +78,8 @@ export const Columnas = Node.create({
 
   addCommands() {
     return {
-      insertarColumnas: (cantidad: 2 | 3) => ({ chain, state }) => {
-        const desde = state.selection.from;
+      insertColumns: (cantidad: 2 | 3) => ({ chain, state }) => {
+        const from = state.selection.from;
 
         return chain()
           .insertContent({
@@ -98,39 +98,39 @@ export const Columnas = Node.create({
           // escribe «/columnas» a mitad de un párrafo, el párrafo se parte en dos y el cursor acaba
           // en la segunda mitad, no justo detrás de las columnas.
           .command(({ tr }) => {
-            let dentro: number | null = null;
+            let inside: number | null = null;
 
-            tr.doc.nodesBetween(Math.max(0, desde - 2), tr.doc.content.size, (nodo, pos) => {
-              if (dentro !== null) return false;
-              if (nodo.type.name !== this.name) return true;
+            tr.doc.nodesBetween(Math.max(0, from - 2), tr.doc.content.size, (node, pos) => {
+              if (inside !== null) return false;
+              if (node.type.name !== this.name) return true;
 
               // La apertura de columnas, la de la primera columna y la de su párrafo.
-              dentro = pos + 3;
+              inside = pos + 3;
               return false;
             });
 
-            if (dentro !== null) tr.setSelection(TextSelection.create(tr.doc, dentro));
+            if (inside !== null) tr.setSelection(TextSelection.create(tr.doc, inside));
             return true;
           })
           .run();
       },
 
-      deshacerColumnas: () => ({ state, tr, dispatch }) => {
+      unsetColumns: () => ({ state, tr, dispatch }) => {
         const { $from } = state.selection;
 
         // Se busca hacia arriba el bloque de columnas que contiene el cursor.
-        for (let profundidad = $from.depth; profundidad > 0; profundidad--) {
-          const nodo = $from.node(profundidad);
-          if (nodo.type.name !== this.name) continue;
+        for (let depth = $from.depth; depth > 0; depth--) {
+          const node = $from.node(depth);
+          if (node.type.name !== this.name) continue;
 
-          const inicio = $from.before(profundidad);
-          const fin = $from.after(profundidad);
+          const start = $from.before(depth);
+          const end = $from.after(depth);
 
-          const bloques: NodoPM[] = [];
-          nodo.forEach(columna => columna.forEach(bloque => { bloques.push(bloque); }));
+          const blocks: PmNode[] = [];
+          node.forEach(column => column.forEach(block => { blocks.push(block); }));
 
           if (dispatch) {
-            tr.replaceWith(inicio, fin, bloques);
+            tr.replaceWith(start, end, blocks);
             dispatch(tr);
           }
 

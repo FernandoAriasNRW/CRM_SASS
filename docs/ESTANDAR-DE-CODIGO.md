@@ -236,6 +236,14 @@ Un concepto, un nombre. Ordenado por área.
 | autor, responde a, editado en | `AuthorId`, `ReplyToId`, `EditedAtUtc` |
 | tipos comentables | `CommentableEntityTypes` |
 | entidad comentada (en un comentario) | `EntityType` + `EntityId` |
+| esquema (índice) del documento, entrada | `DocumentOutline`, `OutlineEntry` |
+| marca de comentario (en el editor) | `CommentMark` (`setComment`, `unsetComment`) |
+| mención (nodo del editor), candidato, buscador | `Mention`, `MentionCandidate`, `MentionSearch` |
+| mencionado en | `MentionedIn` |
+| clase de URL (imagen, vídeo, adjunto, enlace) | `UrlKind` |
+| estado de guardado: quieto, pendiente, guardando | `SaveState`: `idle`, `pending`, `saving` |
+| plantilla disponible, destacadas, del equipo | `AvailableTemplate`, `featuredTemplates`, `isCustom` |
+| meter dentro / sacar fuera (en el árbol) | `indent` / `outdent` |
 
 ### Informes y panel
 
@@ -323,7 +331,7 @@ suites completas en verde, catálogo i18n re-extraído al final.
 | 4a ✅ | **WorkItems + Projects** (backend) | Archivo/papelera compartidos. Teams ya estaba en inglés |
 | 4b ✅ | **Frontend de tareas y proyectos** | Gantt, carga de trabajo y la ficha: 329 identificadores, diff aparte para poder revisarlo |
 | 5a ✅ | **Docs + Comments** (backend) | Plantillas, anotaciones, árbol y menciones; tablas y rutas |
-| 5b | **Frontend de documentos y comentarios** | Editor y extensiones: más de 200 identificadores, diff aparte |
+| 5b ✅ | **Frontend de documentos y comentarios** | Editor y extensiones: más de 200 identificadores, diff aparte |
 | 5c | **Valores guardados de los tipos de entidad** («Tarea» → «Task»…) | Viven en tablas de cinco módulos y dentro del HTML de las páginas: cambio propio con su migración de datos |
 | 6 | **Calendar + Notifications + Communication** | Agenda |
 | 7 | **Reporting** (motor, exportaciones, programaciones, paneles) | El bloque más grande del Host |
@@ -507,9 +515,35 @@ tablas de favoritos y menciones. Cambiarlo exige migrar ese contenido, y va con 
   compartición y campos personalizados, y los atributos del HTML de las páginas
   (`data-mencion-tipo`, `data-tipo="aviso"`, `data-tono`), que obligan a reescribir contenido.
 
----
+### Hecho en el bloque 5b (frontend de documentos y comentarios)
 
-## 7. La skill y las herramientas---
+- Documentos, árbol de páginas, anotaciones, plantillas, extensiones del editor, comentarios y
+  «mencionado en»: 372 identificadores, 20 ficheros y 9 selectores (`app-arbol-de-paginas` →
+  `app-page-tree`, `app-comentarios` → `app-comments`, `app-mencionado-en` → `app-mentioned-in`…).
+  También los valores internos que no se guardan: el estado de guardado, el panel lateral, la
+  clase de URL y las claves de los comandos del menú `/`. Los alias de búsqueda de esos comandos
+  siguen en español: es lo que teclea el usuario.
+- **Dividido `docs.component.ts`** (punto S de la sección 4): el guardado automático pasa a
+  `DocumentSaveService` y la exportación a `DocumentExportService`, los dos registrados en el
+  componente. Fuera también ~90 líneas muertas de la barra lateral que Documentos tenía antes del
+  panel compartido (`deletePage(event, …)`, `togglePin`, `togglePrivate`, `setSidebarTab`…). El
+  guardado tiene ahora pruebas propias: el «pendiente» inmediato, el reintento de lo que falló y
+  el título vacío que no se manda.
+- **Se quedan para el 5c**, con el contenido guardado: las claves de atributo de los nodos
+  (`tipo`, `entidadId`, `etiqueta`, `tono`, `anotacionId`, `cantidad`), que se declaran como
+  identificador pero se leen como cadena (`attributes['tono']`) —renombrar sólo lo primero habría
+  guardado las páginas sin tono y sin identificador, sin ningún error—, y sus valores y los `name`
+  de los nodos.
+- **El script de renombrado tuvo cinco huecos más**, corregidos: no entraba en las plantillas en
+  línea de los componentes, ni en `@else if`, ni en las expresiones ICU (`{palabras(), plural…}`),
+  ni en las variables `let-`; y dentro de `${…}` cambiaba también las cadenas, lo que convirtió el
+  nombre del fichero exportado, «documento.pdf», en «document.pdf».
+- **Dos cosas que no ve el compilador**: una salida (`output`) renombrada en el hijo y no en el
+  padre no da error —Angular la toma por un evento del DOM y simplemente nunca llega—, así que los
+  nombres de entradas y salidas se cambiaron a mano en cada padre; y una salida traducida a
+  `close` o `cancel` choca con eventos nativos, así que siguen la convención `closed`/`cancelled`.
+
+---
 
 ## 7. La skill y las herramientas
 

@@ -3,7 +3,7 @@ import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideImage, lucideLink, lucidePaperclip, lucideX, lucideYoutube } from '@ng-icons/lucide';
 
 /** Qué se está insertando. Cambia el título, el icono y lo que se acepta. */
-export type ClaseDeUrl = 'imagen' | 'video' | 'adjunto' | 'enlace';
+export type UrlKind = 'image' | 'video' | 'attachment' | 'link';
 
 /**
  * Pide una dirección web para insertar algo en el documento.
@@ -18,37 +18,37 @@ export type ClaseDeUrl = 'imagen' | 'video' | 'adjunto' | 'enlace';
  * parece una dirección.
  */
 @Component({
-  selector: 'app-pedir-url-modal',
+  selector: 'app-prompt-url-modal',
   standalone: true,
   imports: [NgIcon],
   viewProviders: [provideIcons({ lucideImage, lucideLink, lucidePaperclip, lucideX, lucideYoutube })],
   template: `
     <div class="fixed inset-0 z-50 bg-foreground/50 backdrop-blur-sm flex items-center justify-center p-4">
       <div role="dialog" aria-modal="true" aria-labelledby="titulo-pedir-url"
-           (keydown.escape)="cancelar.emit()"
+           (keydown.escape)="cancelled.emit()"
            class="bg-card border border-border rounded-2xl shadow-2xl max-w-lg w-full p-6">
 
         <div class="flex items-center justify-between mb-4">
           <div class="flex items-center gap-2">
             <div class="w-8 h-8 rounded-lg bg-primary-subtle text-primary-subtle-fg flex items-center justify-center">
-              <ng-icon [name]="icono()" class="w-4 h-4" aria-hidden="true" />
+              <ng-icon [name]="icon()" class="w-4 h-4" aria-hidden="true" />
             </div>
-            <h3 id="titulo-pedir-url" class="text-base font-bold text-foreground">{{ titulo() }}</h3>
+            <h3 id="titulo-pedir-url" class="text-base font-bold text-foreground">{{ title() }}</h3>
           </div>
-          <button type="button" (click)="cancelar.emit()"
+          <button type="button" (click)="cancelled.emit()"
                   i18n-aria-label aria-label="Cerrar"
                   class="text-muted-foreground hover:text-foreground">
             <ng-icon name="lucideX" class="w-4 h-4" aria-hidden="true" />
           </button>
         </div>
 
-        <form (submit)="aceptar($event)" class="space-y-4">
+        <form (submit)="accept($event)" class="space-y-4">
           <div>
             <label for="pedir-url-campo" class="block text-xs font-medium text-muted-foreground mb-1" i18n>
               Dirección web
             </label>
-            <input #campo id="pedir-url-campo" type="url" [value]="valor()"
-                   (input)="alEscribir($event)"
+            <input #field id="pedir-url-campo" type="url" [value]="value()"
+                   (input)="onInput($event)"
                    placeholder="https://"
                    [attr.aria-invalid]="error() ? 'true' : null"
                    [attr.aria-describedby]="error() ? 'pedir-url-error' : null"
@@ -59,11 +59,11 @@ export type ClaseDeUrl = 'imagen' | 'video' | 'adjunto' | 'enlace';
               <p id="pedir-url-error" role="alert" class="mt-1.5 text-xs text-destructive">{{ mensaje }}</p>
             }
 
-            <p class="mt-1.5 text-xs text-muted-foreground">{{ ayuda() }}</p>
+            <p class="mt-1.5 text-xs text-muted-foreground">{{ help() }}</p>
           </div>
 
           <div class="flex items-center justify-end gap-2">
-            <button type="button" (click)="cancelar.emit()"
+            <button type="button" (click)="cancelled.emit()"
                     class="px-3 py-2 text-sm rounded-lg text-muted-foreground hover:bg-accent
                            focus:outline-none focus:ring-2 focus:ring-ring" i18n>
               Cancelar
@@ -79,71 +79,71 @@ export type ClaseDeUrl = 'imagen' | 'video' | 'adjunto' | 'enlace';
     </div>
   `
 })
-export class PedirUrlModalComponent {
-  readonly clase = input.required<ClaseDeUrl>();
+export class PromptUrlModalComponent {
+  readonly kind = input.required<UrlKind>();
 
-  readonly cancelar = output<void>();
-  readonly aceptado = output<string>();
+  readonly cancelled = output<void>();
+  readonly accepted = output<string>();
 
-  protected readonly valor = signal('');
+  protected readonly value = signal('');
   protected readonly error = signal<string | null>(null);
 
-  private readonly campo = viewChild<ElementRef<HTMLInputElement>>('campo');
+  private readonly field = viewChild<ElementRef<HTMLInputElement>>('campo');
 
   constructor() {
     // El foco entra solo: quien acaba de escribir «/imagen» está escribiendo, y obligarle a pulsar
     // en el campo rompe el ritmo. `autofocus` no vale porque el elemento se crea después de la
     // carga y el navegador ya no lo mira.
-    effect(() => this.campo()?.nativeElement.focus());
+    effect(() => this.field()?.nativeElement.focus());
   }
 
-  protected readonly titulo = computed(() => {
-    switch (this.clase()) {
-      case 'imagen': return $localize`Insertar imagen`;
+  protected readonly title = computed(() => {
+    switch (this.kind()) {
+      case 'image': return $localize`Insertar imagen`;
       case 'video': return $localize`Insertar vídeo de YouTube`;
-      case 'enlace': return $localize`Enlazar`;
+      case 'link': return $localize`Enlazar`;
       default: return $localize`Insertar adjunto`;
     }
   });
 
-  protected readonly ayuda = computed(() => {
-    switch (this.clase()) {
-      case 'imagen': return $localize`Pega la dirección de una imagen ya publicada.`;
+  protected readonly help = computed(() => {
+    switch (this.kind()) {
+      case 'image': return $localize`Pega la dirección de una imagen ya publicada.`;
       case 'video': return $localize`Pega el enlace del vídeo tal como aparece en YouTube.`;
-      case 'enlace': return $localize`El texto seleccionado llevará a esta dirección.`;
+      case 'link': return $localize`El texto seleccionado llevará a esta dirección.`;
       default: return $localize`Pega la dirección del fichero. Se enseñará como una tarjeta.`;
     }
   });
 
-  protected readonly icono = computed(() => {
-    switch (this.clase()) {
-      case 'imagen': return 'lucideImage';
+  protected readonly icon = computed(() => {
+    switch (this.kind()) {
+      case 'image': return 'lucideImage';
       case 'video': return 'lucideYoutube';
-      case 'enlace': return 'lucideLink';
+      case 'link': return 'lucideLink';
       default: return 'lucidePaperclip';
     }
   });
 
-  protected alEscribir(evento: Event): void {
-    this.valor.set((evento.target as HTMLInputElement).value);
+  protected onInput(event: Event): void {
+    this.value.set((event.target as HTMLInputElement).value);
     if (this.error()) this.error.set(null);
   }
 
-  protected aceptar(evento: Event): void {
-    evento.preventDefault();
+  protected accept(event: Event): void {
+    event.preventDefault();
 
-    const texto = this.valor().trim();
-    if (!texto) {
+    const text = this.value().trim();
+    if (!text) {
       this.error.set($localize`Hace falta una dirección.`);
       return;
     }
 
-    if (!esDireccionSegura(texto)) {
+    if (!isSafeUrl(text)) {
       this.error.set($localize`Sólo se admiten direcciones http:// o https://`);
       return;
     }
 
-    this.aceptado.emit(texto);
+    this.accepted.emit(text);
   }
 }
 
@@ -153,9 +153,9 @@ export class PedirUrlModalComponent {
  * Sólo `http` y `https`. `javascript:` y `data:` acabarían dentro del contenido guardado y se
  * ejecutarían al pulsarlos, y el contenido de un documento lo puede ver todo el equipo.
  */
-function esDireccionSegura(texto: string): boolean {
+function isSafeUrl(text: string): boolean {
   try {
-    const url = new URL(texto);
+    const url = new URL(text);
     return url.protocol === 'http:' || url.protocol === 'https:';
   } catch {
     return false;

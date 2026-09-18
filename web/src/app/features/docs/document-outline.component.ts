@@ -2,11 +2,11 @@ import { Component, computed, input, signal } from '@angular/core';
 import type { Editor } from '@tiptap/core';
 
 /** Un encabezado del documento, con su nivel y dónde está. */
-export interface EntradaDelEsquema {
-  nivel: number;
-  texto: string;
+export interface OutlineEntry {
+  level: number;
+  text: string;
   /** Posición en el documento, que es como se navega hasta él. */
-  posicion: number;
+  position: number;
 }
 
 /**
@@ -22,7 +22,7 @@ export interface EntradaDelEsquema {
  * concentración.
  */
 @Component({
-  selector: 'app-esquema-del-documento',
+  selector: 'app-document-outline',
   standalone: true,
   template: `
     <div class="space-y-1">
@@ -30,28 +30,28 @@ export interface EntradaDelEsquema {
         En esta página
       </h4>
 
-      @if (entradas().length === 0) {
+      @if (entries().length === 0) {
         <p class="text-xs text-muted-foreground px-2 py-1" i18n>
           Sin encabezados. Usa / para añadir uno.
         </p>
       } @else {
-        @for (e of entradas(); track e.posicion) {
+        @for (e of entries(); track e.position) {
           <button
             type="button"
-            (click)="irA(e)"
-            [style.padding-left.rem]="0.5 + (e.nivel - 1) * 0.75"
+            (click)="goTo(e)"
+            [style.padding-left.rem]="0.5 + (e.level - 1) * 0.75"
             class="w-full text-left py-1 pr-2 text-xs rounded hover:bg-secondary transition-colors truncate"
-            [class.font-medium]="e.nivel === 1"
-            [class.text-muted-foreground]="e.nivel > 1"
-            [title]="e.texto">
-            {{ e.texto }}
+            [class.font-medium]="e.level === 1"
+            [class.text-muted-foreground]="e.level > 1"
+            [title]="e.text">
+            {{ e.text }}
           </button>
         }
       }
     </div>
   `
 })
-export class EsquemaDelDocumentoComponent {
+export class DocumentOutlineComponent {
   readonly editor = input.required<Editor>();
 
   /**
@@ -65,7 +65,7 @@ export class EsquemaDelDocumentoComponent {
 
   private readonly recalculo = signal(0);
 
-  readonly entradas = computed<EntradaDelEsquema[]>(() => {
+  readonly entries = computed<OutlineEntry[]>(() => {
     // Se leen las dos señales para que el cálculo dependa de ellas: `version` desde fuera y
     // `recalculo` desde el propio componente al forzar un refresco.
     this.version();
@@ -74,21 +74,21 @@ export class EsquemaDelDocumentoComponent {
     const editor = this.editor();
     if (!editor) return [];
 
-    const entradas: EntradaDelEsquema[] = [];
+    const entries: OutlineEntry[] = [];
 
-    editor.state.doc.descendants((nodo, posicion) => {
-      if (nodo.type.name !== 'heading') return;
+    editor.state.doc.descendants((node, position) => {
+      if (node.type.name !== 'heading') return;
 
-      const texto = nodo.textContent.trim();
+      const text = node.textContent.trim();
 
       // Un encabezado vacío —recién creado, todavía sin escribir— no entra: aparecería en el
       // índice como una línea en blanco que no lleva a ninguna parte.
-      if (texto.length === 0) return;
+      if (text.length === 0) return;
 
-      entradas.push({ nivel: nodo.attrs['level'] ?? 1, texto, posicion });
+      entries.push({ level: node.attrs['level'] ?? 1, text, position });
     });
 
-    return entradas;
+    return entries;
   });
 
   /**
@@ -97,17 +97,17 @@ export class EsquemaDelDocumentoComponent {
    * Se mueve la selección además de desplazar la pantalla: quien pulsa un título del índice
    * normalmente va a escribir ahí, y dejar el cursor donde estaba obligaría a hacer clic otra vez.
    */
-  irA(entrada: EntradaDelEsquema): void {
+  goTo(entry: OutlineEntry): void {
     this.editor()
       .chain()
       .focus()
-      .setTextSelection(entrada.posicion + 1)
+      .setTextSelection(entry.position + 1)
       .scrollIntoView()
       .run();
   }
 
   /** Fuerza un repaso, por si el padre necesita refrescarlo sin cambiar la versión. */
-  refrescar(): void {
+  refresh(): void {
     this.recalculo.update(v => v + 1);
   }
 }

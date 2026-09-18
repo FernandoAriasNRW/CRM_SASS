@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 
 import { ApiService } from '../../core/api.service';
-import { MencionesService } from './menciones.service';
+import { MentionsService } from './mentions.service';
 
 /**
  * Estas pruebas fijan <b>las rutas exactas</b> que pide el servicio, que es justo lo que se rompió
@@ -14,24 +14,24 @@ import { MencionesService } from './menciones.service';
  * cualquier ruta habría dejado pasar el fallo tal cual.
  */
 describe('MencionesService', () => {
-  let servicio: MencionesService;
+  let service: MentionsService;
   let api: jasmine.SpyObj<ApiService>;
 
   /** Las rutas que se han pedido, en orden, para poder afirmar sobre ellas. */
-  let pedidas: string[];
+  let requested: string[];
 
   beforeEach(() => {
-    pedidas = [];
+    requested = [];
     api = jasmine.createSpyObj<ApiService>('ApiService', ['get']);
 
-    api.get.and.callFake((ruta: string) => {
-      pedidas.push(ruta);
+    api.get.and.callFake((route: string) => {
+      requested.push(route);
 
-      if (ruta.startsWith('/users')) {
+      if (route.startsWith('/users')) {
         return of([{ id: 'u1', name: 'Ana Ruiz', email: 'ana@ejemplo.com' }]) as any;
       }
 
-      if (ruta.startsWith('/tasks')) {
+      if (route.startsWith('/tasks')) {
         return of({ items: [{ id: 't1', title: 'Migrar la base', status: 'Abierta' }] }) as any;
       }
 
@@ -39,18 +39,18 @@ describe('MencionesService', () => {
     });
 
     TestBed.configureTestingModule({
-      providers: [MencionesService, { provide: ApiService, useValue: api }]
+      providers: [MentionsService, { provide: ApiService, useValue: api }]
     });
 
-    servicio = TestBed.inject(MencionesService);
+    service = TestBed.inject(MentionsService);
   });
 
   it('busca las personas en /users, pidiendo sólo las que va a enseñar', async () => {
-    const candidatos = await servicio.buscar('@', 'ana');
+    const candidates = await service.search('@', 'ana');
 
-    expect(pedidas).toEqual(['/users?pageSize=5&search=ana']);
-    expect(candidatos).toEqual([
-      { id: 'u1', etiqueta: 'Ana Ruiz', tipo: 'Persona', detalle: 'ana@ejemplo.com' }
+    expect(requested).toEqual(['/users?pageSize=5&search=ana']);
+    expect(candidates).toEqual([
+      { id: 'u1', etiqueta: 'Ana Ruiz', tipo: 'Persona', detail: 'ana@ejemplo.com' }
     ]);
   });
 
@@ -60,9 +60,9 @@ describe('MencionesService', () => {
    * que es cuando ya no se relaciona con esto.
    */
   it('manda el texto al servidor en las tres listas de #', async () => {
-    await servicio.buscar('#', 'migrar');
+    await service.search('#', 'migrar');
 
-    expect(pedidas).toEqual([
+    expect(requested).toEqual([
       '/tasks?pageSize=5&search=migrar',
       '/tickets?pageSize=5&search=migrar',
       '/projects?pageSize=5&search=migrar'
@@ -70,14 +70,14 @@ describe('MencionesService', () => {
   });
 
   it('escapa lo que se escribe, para que un & no parta la consulta', async () => {
-    await servicio.buscar('@', 'diseño & obra');
+    await service.search('@', 'diseño & obra');
 
-    expect(pedidas).toEqual(['/users?pageSize=5&search=dise%C3%B1o%20%26%20obra']);
+    expect(requested).toEqual(['/users?pageSize=5&search=dise%C3%B1o%20%26%20obra']);
   });
 
   /** Sin nada escrito no se molesta al servidor: `@` recién tecleado no es una búsqueda. */
   it('no pide nada con la consulta vacía', async () => {
-    expect(await servicio.buscar('@', '   ')).toEqual([]);
+    expect(await service.search('@', '   ')).toEqual([]);
     expect(api.get).not.toHaveBeenCalled();
   });
 
@@ -87,17 +87,17 @@ describe('MencionesService', () => {
    */
   it('devuelve vacío si la petición falla, pero lo deja en la consola', async () => {
     api.get.and.returnValue(throwError(() => new Error('404')));
-    const aviso = spyOn(console, 'warn');
+    const callout = spyOn(console, 'warn');
 
-    expect(await servicio.buscar('@', 'ana')).toEqual([]);
-    expect(aviso).toHaveBeenCalled();
+    expect(await service.search('@', 'ana')).toEqual([]);
+    expect(callout).toHaveBeenCalled();
   });
 
   it('mezcla tareas, tickets y proyectos en una sola lista', async () => {
-    const candidatos = await servicio.buscar('#', 'migrar');
+    const candidates = await service.search('#', 'migrar');
 
-    expect(candidatos).toEqual([
-      { id: 't1', etiqueta: 'Migrar la base', tipo: 'Tarea', detalle: 'Abierta' }
+    expect(candidates).toEqual([
+      { id: 't1', etiqueta: 'Migrar la base', tipo: 'Tarea', detail: 'Abierta' }
     ]);
   });
 });

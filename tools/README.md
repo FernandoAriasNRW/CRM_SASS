@@ -54,6 +54,14 @@ sea del tipo que sea. Si un campo de un tipo compartido (`VistaIntegrada.clave`,
 cambia también y el build falla. Por eso, después: `npx ng build`, restaurar a mano lo que sea de
 otro bloque, y comparar los atributos y las cadenas de las plantillas con `main`.
 
-Tampoco renombra los **nombres** de los atributos (`[tareas]="..."`, `app-carga`): sólo los
-valores. Los inputs, outputs y selectores de un componente renombrado se cambian a mano en quien
+Tampoco renombra los **nombres** de los atributos (`[tareas]="..."`, `(abrir)="..."`,
+`app-carga`): sólo los valores. Y una salida renombrada en el hijo pero no en el padre **no da
+error**: Angular toma `(abrir)` por un evento del DOM que nunca llega. Los inputs, outputs y selectores de un componente renombrado se cambian a mano en quien
 lo usa, y en las pruebas e2e que lo busquen.
+
+Sí entra en: las plantillas en línea de los componentes (`template:` con acento grave), las
+cabeceras `@if`/`@else if`/`@for`/`@switch`/`@case`, las expresiones ICU (`{n, plural, ...}`),
+las variables `let-` y las interpolaciones `${...}`, respetando siempre las cadenas y los
+comentarios que haya dentro. Para comprobar que no ha tocado textos, compara con `main` los
+atributos planos y las cadenas de las plantillas; en el 5b se hizo con un script que sigue los
+ficheros renombrados.

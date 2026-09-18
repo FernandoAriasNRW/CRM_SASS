@@ -92,6 +92,18 @@ def rename_typescript(text, pairs):
 
         if char == '`':
             flush_code(i)
+
+            # La plantilla en línea de un componente (`template:` seguido de acento grave) es HTML
+            # de Angular, no texto: sus enlaces e interpolaciones nombran miembros de la clase.
+            # Tratada como texto, la clase se renombraba y su plantilla no, y dejaba de compilar.
+            if re.search(r'\btemplate\s*:\s*$', text[max(0, i - 40):i]):
+                end = i + 1
+                while end < n and text[end] != '`':
+                    end += 2 if text[end] == '\\' else 1
+                out.append('`' + rename_template(text[i + 1:end], pairs) + '`')
+                i = code_start = min(end + 1, n)
+                continue
+
             # En una plantilla sólo es código lo que va dentro de ${...}: el resto es texto.
             end = i + 1
             partes = ['`']
@@ -102,7 +114,7 @@ def rename_typescript(text, pairs):
                     continue
                 if text[end:end + 2] == '${':
                     cierre = find_closing_brace(text, end + 1)
-                    partes.append('${' + replace_identifiers(text[end + 2:cierre], pairs) + '}')
+                    partes.append('${' + rename_typescript(text[end + 2:cierre], pairs) + '}')
                     end = cierre + 1
                     continue
                 partes.append(text[end])
@@ -178,8 +190,19 @@ BINDING = re.compile(
 # espacios, que son comparaciones: sin eso, `@if (celda.horas > 0)` se quedaba sin renombrar
 # mientras el resto del fichero sí cambiaba, y la plantilla leía un campo que ya no existe.
 INTERPOLATION = re.compile(r'(\{\{)([^{}]*?)(\}\})')
-CONTROL_FLOW = re.compile(r'(@(?:if|for|switch|case)\s*\()((?:[^{}<>]|\s[<>]=?\s)*?)(\)\s*\{)')
+CONTROL_FLOW = re.compile(r'(@(?:else\s+if|if|for|switch|case)\s*\()((?:[^{}<>]|\s[<>]=?\s)*?)(\)\s*\{)')
 REFERENCE = re.compile(r'(\s#)([\w$]+)')
+
+# `@else if (...)` también es una cabecera: sin contarla, la primera rama de un bloque cambiaba y
+# la segunda no.
+#
+# La expresión de un ICU —`{palabras(), plural, =0 {...}}`— es código aunque vaya dentro de un
+# texto con i18n: sin esto el contador seguía llamando al nombre viejo.
+ICU = re.compile(r'(\{\s*)([\w$.()!?]+)(\s*,\s*(?:plural|select)\s*,)')
+
+# `let-comentario` declara una variable de plantilla: se renombran su nombre y su valor, que es la
+# clave del contexto que le pasa `ngTemplateOutlet`.
+LET = re.compile(r'(\slet-)([\w$]+)(?:(=")([\w$]*)("))?')
 HTML_COMMENT = re.compile(r'<!--.*?-->', re.S)
 
 
@@ -200,6 +223,9 @@ def rename_template(text, pairs):
         trozo = CONTROL_FLOW.sub(
             lambda m: m.group(1) + expresion(m.group(2)) + m.group(3), trozo)
         trozo = BINDING.sub(en_enlace, trozo)
+        trozo = ICU.sub(lambda m: m.group(1) + expresion(m.group(2)) + m.group(3), trozo)
+        trozo = LET.sub(lambda m: m.group(1) + pairs.get(m.group(2), m.group(2)) + (
+            m.group(3) + pairs.get(m.group(4), m.group(4)) + m.group(5) if m.group(3) else ''), trozo)
         return REFERENCE.sub(lambda m: m.group(1) + pairs.get(m.group(2), m.group(2)), trozo)
 
     # Los comentarios se apartan antes de tocar nada: son español y explican el por qué. Ya

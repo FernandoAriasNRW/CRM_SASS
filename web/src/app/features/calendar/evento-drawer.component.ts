@@ -5,8 +5,8 @@ import { lucideCalendarDays, lucideLink, lucideLoaderCircle } from '@ng-icons/lu
 
 import { DrawerComponent } from '../../shared/ui/drawer.component';
 import { ToastService } from '../../shared/services/toast.service';
-import { MencionesService } from '../docs/menciones.service';
-import type { CandidatoDeMencion } from '../docs/extensions/mencion';
+import { MentionsService } from '../docs/mentions.service';
+import type { MentionCandidate } from '../docs/extensions/mention';
 import {
   CalendarioService, aFechaHoraLocal,
   type DatosDelEvento, type EventoDelCalendario
@@ -175,7 +175,7 @@ const TIPOS: { clave: string; etiqueta: string }[] = [
 })
 export class EventoDrawerComponent {
   private readonly calendario = inject(CalendarioService);
-  private readonly menciones = inject(MencionesService);
+  private readonly menciones = inject(MentionsService);
   private readonly avisos = inject(ToastService);
 
   readonly TIPOS = TIPOS;
@@ -199,8 +199,8 @@ export class EventoDrawerComponent {
   fin = '';
   busqueda = '';
 
-  readonly enlazados = signal<CandidatoDeMencion[]>([]);
-  readonly candidatos = signal<CandidatoDeMencion[]>([]);
+  readonly enlazados = signal<MentionCandidate[]>([]);
+  readonly candidatos = signal<MentionCandidate[]>([]);
   readonly guardando = signal(false);
 
   constructor() {
@@ -276,13 +276,13 @@ export class EventoDrawerComponent {
 
     // Sólo cosas, no personas: enlazar un evento con alguien sería invitarlo, que es otra
     // función y no existe todavía. Ofrecerlo aquí prometería algo que no pasa.
-    const encontrados = await this.menciones.buscar('#', consulta);
+    const encontrados = await this.menciones.search('#', consulta);
     const yaPuestos = new Set(this.enlazados().map(e => e.tipo + e.id));
 
     this.candidatos.set(encontrados.filter(c => !yaPuestos.has(c.tipo + c.id)));
   }
 
-  anadirEnlace(candidato: CandidatoDeMencion): void {
+  anadirEnlace(candidato: MentionCandidate): void {
     // Uno de cada tipo: los enlaces son tres campos en el evento, no una lista. Añadir un
     // segundo ticket sustituye al primero en vez de perderse en silencio al guardar.
     this.enlazados.update(actuales => [...actuales.filter(e => e.tipo !== candidato.tipo), candidato]);
@@ -290,7 +290,7 @@ export class EventoDrawerComponent {
     this.candidatos.set([]);
   }
 
-  quitarEnlace(candidato: CandidatoDeMencion): void {
+  quitarEnlace(candidato: MentionCandidate): void {
     this.enlazados.update(actuales => actuales.filter(e => e.id !== candidato.id));
   }
 
@@ -363,8 +363,8 @@ export class EventoDrawerComponent {
 }
 
 /** Los enlaces que ya tiene un evento, en la forma que entiende el buscador. */
-function enlacesDe(evento: EventoDelCalendario): CandidatoDeMencion[] {
-  const puestos: CandidatoDeMencion[] = [];
+function enlacesDe(evento: EventoDelCalendario): MentionCandidate[] {
+  const puestos: MentionCandidate[] = [];
 
   // Sin el título de lo enlazado: el evento sólo trae los identificadores. Se enseña el tipo y se
   // deja el identificador acortado, que al menos permite reconocerlo y quitarlo. Ponerles nombre
