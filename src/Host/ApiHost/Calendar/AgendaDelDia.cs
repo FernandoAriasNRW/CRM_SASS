@@ -1,4 +1,5 @@
 using BuildingBlocks.Application.Abstractions;
+using BuildingBlocks.Domain;
 using Calendar.Application.DTOs;
 using Calendar.Application.Queries;
 using MediatR;
@@ -10,7 +11,7 @@ using WorkItems.Infrastructure.Persistence;
 namespace ApiHost.Calendar;
 
 /// <summary>Una cosa que cae en un día, venga del módulo que venga.</summary>
-/// <param name="Tipo">«Evento», «Tarea», «Ticket» o «Proyecto». Es lo que decide el icono y a
+/// <param name="Tipo">«Event», o uno de <see cref="EntityTypes"/> («Task», «Ticket», «Project»). Es lo que decide el icono y a
 /// dónde lleva al pulsar.</param>
 /// <param name="Hora">La hora, si la tiene. Las tareas y los proyectos vencen el día entero, así
 /// que va en nulo y se enseñan arriba en vez de repartidas por horas inventadas.</param>
@@ -63,7 +64,7 @@ public sealed class AgendaDelDia(
             .AsNoTracking()
             .Where(t => t.TenantId == usuario.TenantId && t.DueDate == dia)
             .OrderBy(t => t.Title.Value)
-            .Select(t => new CosaDelDia("Tarea", t.Id, t.Title.Value, t.Status.Name, null, null, false))
+            .Select(t => new CosaDelDia(EntityTypes.Task, t.Id, t.Title.Value, t.Status.Name, null, null, false))
             .ToListAsync(ct);
 
         // «Tickets del día» son los que se abrieron ese día. Un ticket no tiene fecha de
@@ -73,14 +74,14 @@ public sealed class AgendaDelDia(
             .AsNoTracking()
             .Where(t => t.TenantId == usuario.TenantId && t.CreatedAt >= desde && t.CreatedAt <= hasta)
             .OrderBy(t => t.CreatedAt)
-            .Select(t => new CosaDelDia("Ticket", t.Id, t.Title, t.Description, t.CreatedAt, null, false))
+            .Select(t => new CosaDelDia(EntityTypes.Ticket, t.Id, t.Title, t.Description, t.CreatedAt, null, false))
             .ToListAsync(ct);
 
         var proyectos = await proyectosDb.Projects
             .AsNoTracking()
             .Where(p => p.TenantId == usuario.TenantId && p.EstimatedEndDate == dia)
             .OrderBy(p => p.Name.Value)
-            .Select(p => new CosaDelDia("Proyecto", p.Id, p.Name.Value, p.Status.Name, null, null, false))
+            .Select(p => new CosaDelDia(EntityTypes.Project, p.Id, p.Name.Value, p.Status.Name, null, null, false))
             .ToListAsync(ct);
 
         return new AgendaDeUnDia(dia, eventos, tareas, tickets, proyectos);
@@ -104,7 +105,7 @@ public sealed class AgendaDelDia(
         return [.. resultado.Value.Items
             .OrderBy(e => e.StartTime)
             .Select(e => new CosaDelDia(
-                "Evento", e.Id, e.Title, e.Location ?? e.Description,
+                "Event", e.Id, e.Title, e.Location ?? e.Description,
                 e.StartTime, e.EndTime, e.CanceladoEnUtc is not null))];
     }
 }

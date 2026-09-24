@@ -7,13 +7,13 @@ namespace Docs.Domain.Mentions;
 /// <summary>
 /// Qué se puede mencionar dentro de un documento.
 ///
-/// «Persona» está aquí y no en <see cref="EntityTypes"/> porque mencionar a alguien no es
+/// «Person» está aquí y no en <see cref="EntityTypes"/> porque mencionar a alguien no es
 /// mencionar una cosa: no lleva a una pantalla de detalle igual, y quien pregunte «¿qué documentos
 /// me mencionan?» está haciendo otra pregunta que «¿qué documentos hablan de esta tarea?».
 /// </summary>
 public static class MentionableTypes
 {
-    public const string Person = "Persona";
+    public const string Person = "Person";
 
     public static IReadOnlyList<string> All() =>
         [Person, EntityTypes.Task, EntityTypes.Ticket, EntityTypes.Project, EntityTypes.Document];

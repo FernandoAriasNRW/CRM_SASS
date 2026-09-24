@@ -166,9 +166,9 @@ export class DiaDesplegadoComponent {
 
   iconoDe(tipo: string): string {
     switch (tipo) {
-      case 'Tarea': return 'lucideSquareCheck';
+      case 'Task': return 'lucideSquareCheck';
       case 'Ticket': return 'lucideTicket';
-      case 'Proyecto': return 'lucideFolderCheck';
+      case 'Project': return 'lucideFolderCheck';
       default: return 'lucideCalendarDays';
     }
   }

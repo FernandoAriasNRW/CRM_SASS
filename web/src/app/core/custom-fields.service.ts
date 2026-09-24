@@ -26,8 +26,8 @@ export function seCalcula(tipo: string): boolean {
 }
 
 export const ENTIDADES = [
-  { key: 'Tarea', label: $localize`Tareas` },
-  { key: 'Proyecto', label: $localize`Proyectos` },
+  { key: 'Task', label: $localize`Tareas` },
+  { key: 'Project', label: $localize`Proyectos` },
 ] as const;
 
 /** Separador de la selección múltiple. Lo fija el backend: un salto de línea. */

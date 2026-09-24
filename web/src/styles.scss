@@ -360,7 +360,7 @@
   }
 
   /* Los bloques de aviso. El tono viaja como palabra; el color lo pone esta hoja. */
-  .aviso {
+  .callout {
     display: flex;
     gap: 0.75rem;
     padding: 0.875rem 1rem;
@@ -383,25 +383,25 @@
     > :first-child { margin-top: 0; }
     > :last-child { margin-bottom: 0; }
 
-    &[data-tono='nota'] {
+    &[data-tone='note'] {
       background-color: hsl(var(--primary) / 0.08);
       border-left-color: hsl(var(--primary));
       &::before { content: '💡'; }
     }
 
-    &[data-tono='ojo'] {
+    &[data-tone='warning'] {
       background-color: hsl(var(--warning) / 0.12);
       border-left-color: hsl(var(--warning));
       &::before { content: '⚠️'; }
     }
 
-    &[data-tono='peligro'] {
+    &[data-tone='danger'] {
       background-color: hsl(var(--destructive) / 0.1);
       border-left-color: hsl(var(--destructive));
       &::before { content: '🚫'; }
     }
 
-    &[data-tono='bien'] {
+    &[data-tone='success'] {
       background-color: hsl(var(--success) / 0.12);
       border-left-color: hsl(var(--success));
       &::before { content: '✅'; }
@@ -412,25 +412,25 @@
     Las columnas. De ancho igual y apiladas en pantallas estrechas: tres columnas en un móvil
     son tres tiras que no se pueden leer.
   */
-  .columnas {
+  .columns {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 1.25rem;
     margin: 1rem 0;
 
-    &[data-cantidad='3'] {
+    &[data-count='3'] {
       grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 
     @media (max-width: 768px) {
       &,
-      &[data-cantidad='3'] {
+      &[data-count='3'] {
         grid-template-columns: minmax(0, 1fr);
       }
     }
   }
 
-  .columna {
+  .column {
     min-width: 0;
     padding: 0.25rem 0.5rem;
     border-radius: 0.375rem;
@@ -444,7 +444,7 @@
   }
 
   /* Los desplegables. */
-  .desplegable {
+  .toggle {
     display: flex;
     gap: 0.5rem;
     padding: 0.5rem 0;
@@ -577,7 +577,7 @@
     Subrayado y no resaltado: un fondo de color compite con el bloque de aviso y con la marca de
     resaltado, y sobre un párrafo largo cansa. El subrayado dice «aquí hay algo» sin taparlo.
   */
-  .comentado {
+  .commented {
     background-color: hsl(var(--warning) / 0.14);
     border-bottom: 2px solid hsl(var(--warning));
     cursor: pointer;

@@ -4,9 +4,9 @@ declare module '@tiptap/core' {
   interface Commands<ReturnType> {
     comment: {
       /** Marca lo seleccionado como comentado, con el identificador de su anotación. */
-      setComment: (anotacionId: string) => ReturnType;
+      setComment: (annotationId: string) => ReturnType;
       /** Quita la marca del comentario indicado, esté donde esté el cursor. */
-      unsetComment: (anotacionId: string) => ReturnType;
+      unsetComment: (annotationId: string) => ReturnType;
     };
   }
 }
@@ -28,7 +28,7 @@ declare module '@tiptap/core' {
  * enseñando como huérfana en vez de desaparecer sin explicación.
  */
 export const CommentMark = Mark.create({
-  name: 'comentario',
+  name: 'comment',
   inclusive: false,
 
   // Dos comentarios sobre trozos que se cruzan son normales en una revisión, así que la marca
@@ -37,29 +37,29 @@ export const CommentMark = Mark.create({
 
   addAttributes() {
     return {
-      anotacionId: {
+      annotationId: {
         default: null,
-        parseHTML: (element) => element.getAttribute('data-anotacion'),
+        parseHTML: (element) => element.getAttribute('data-annotation'),
         renderHTML: (attributes) =>
-          attributes['anotacionId'] ? { 'data-anotacion': attributes['anotacionId'] } : {}
+          attributes['annotationId'] ? { 'data-annotation': attributes['annotationId'] } : {}
       }
     };
   },
 
   parseHTML() {
-    return [{ tag: 'span[data-anotacion]' }];
+    return [{ tag: 'span[data-annotation]' }];
   },
 
   renderHTML({ HTMLAttributes }) {
-    return ['span', mergeAttributes(HTMLAttributes, { class: 'comentado' }), 0];
+    return ['span', mergeAttributes(HTMLAttributes, { class: 'commented' }), 0];
   },
 
   addCommands() {
     return {
-      setComment: (anotacionId: string) => ({ commands }) =>
-        commands.setMark(this.name, { anotacionId }),
+      setComment: (annotationId: string) => ({ commands }) =>
+        commands.setMark(this.name, { annotationId }),
 
-      unsetComment: (anotacionId: string) => ({ tr, state, dispatch }) => {
+      unsetComment: (annotationId: string) => ({ tr, state, dispatch }) => {
         const markType = state.schema.marks[this.name];
         if (!markType) return false;
 
@@ -72,7 +72,7 @@ export const CommentMark = Mark.create({
           if (!node.isText) return;
 
           const mark = node.marks.find(
-            m => m.type === markType && m.attrs['anotacionId'] === anotacionId);
+            m => m.type === markType && m.attrs['annotationId'] === annotationId);
 
           if (!mark) return;
 

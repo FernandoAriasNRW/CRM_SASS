@@ -212,7 +212,7 @@
 
         <!-- Campos personalizados. No pinta nada —ni encabezado ni separador— si el inquilino no
              ha definido ninguno, así que va sin envoltorio propio. -->
-        <app-custom-fields-form entidad="Tarea" [entityId]="task().id" />
+        <app-custom-fields-form entidad="Task" [entityId]="task().id" />
 
         <!-- Descripción -->
         <div class="space-y-1.5">
@@ -393,7 +393,7 @@
       -->
       <div class="w-80 shrink-0 min-h-0 border-l border-border/60 flex flex-col pl-6">
         <div class="p-4 border-b border-border">
-          <app-mentioned-in type="Tarea" [entityId]="task().id" />
+          <app-mentioned-in type="Task" [entityId]="task().id" />
         </div>
 
         <!-- Tabs -->
@@ -426,7 +426,7 @@
                /tasks/{id}/comments, que devolvía 404 en cada apertura porque los comentarios no
                existían en el backend. -->
           <div class="flex-1 overflow-y-auto px-4 py-4">
-            <app-comments entityType="Tarea" [entityId]="task().id" />
+            <app-comments entityType="Task" [entityId]="task().id" />
           </div>
         }
 

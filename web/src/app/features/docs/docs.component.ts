@@ -288,7 +288,7 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
       if (found || !node.isText) return;
 
       const hasMark = node.marks.some(
-        m => m.type.name === 'comentario' && m.attrs['anotacionId'] === annotation.id);
+        m => m.type.name === 'comment' && m.attrs['annotationId'] === annotation.id);
 
       if (hasMark) found = { from: pos, to: pos + node.nodeSize };
     });
@@ -532,7 +532,7 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
       // documento largo, que es lo que se pedía de Notion y de ClickUp.
 
       /** Desplegables: la forma de tener un documento largo que no abruma. */
-      Details.configure({ persist: true, HTMLAttributes: { class: 'desplegable' } }),
+      Details.configure({ persist: true, HTMLAttributes: { class: 'toggle' } }),
       DetailsSummary,
       DetailsContent,
 

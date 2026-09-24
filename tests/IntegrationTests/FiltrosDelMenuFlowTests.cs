@@ -102,12 +102,12 @@ public sealed class FiltrosDelMenuFlowTests(CrmApiFactory factory)
         var (cliente, _) = await AutenticarAsync();
         var algo = Guid.NewGuid();
 
-        var primera = await cliente.PostAsync($"/api/v1/users/me/favorites/Tarea/{algo}", null);
+        var primera = await cliente.PostAsync($"/api/v1/users/me/favorites/Task/{algo}", null);
         primera.StatusCode.Should().Be(HttpStatusCode.OK);
         (await primera.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("isFavorite").GetBoolean()
             .Should().BeTrue();
 
-        var segunda = await cliente.PostAsync($"/api/v1/users/me/favorites/Tarea/{algo}", null);
+        var segunda = await cliente.PostAsync($"/api/v1/users/me/favorites/Task/{algo}", null);
         (await segunda.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("isFavorite").GetBoolean()
             .Should().BeFalse("la segunda pulsación desmarca");
     }
@@ -118,9 +118,9 @@ public sealed class FiltrosDelMenuFlowTests(CrmApiFactory factory)
         var (cliente, _) = await AutenticarAsync();
         var algo = Guid.NewGuid();
 
-        await cliente.PostAsync($"/api/v1/users/me/favorites/Proyecto/{algo}", null);
+        await cliente.PostAsync($"/api/v1/users/me/favorites/Project/{algo}", null);
 
-        var marcados = await cliente.GetFromJsonAsync<JsonElement>("/api/v1/users/me/favorites/Proyecto");
+        var marcados = await cliente.GetFromJsonAsync<JsonElement>("/api/v1/users/me/favorites/Project");
 
         marcados.EnumerateArray().Select(e => e.GetGuid()).Should().Contain(algo);
     }
@@ -135,9 +135,9 @@ public sealed class FiltrosDelMenuFlowTests(CrmApiFactory factory)
         var (cliente, _) = await AutenticarAsync();
         var algo = Guid.NewGuid();
 
-        await cliente.PostAsync($"/api/v1/users/me/favorites/Tarea/{algo}", null);
+        await cliente.PostAsync($"/api/v1/users/me/favorites/Task/{algo}", null);
 
-        var proyectos = await cliente.GetFromJsonAsync<JsonElement>("/api/v1/users/me/favorites/Proyecto");
+        var proyectos = await cliente.GetFromJsonAsync<JsonElement>("/api/v1/users/me/favorites/Project");
 
         proyectos.EnumerateArray().Select(e => e.GetGuid()).Should().NotContain(algo);
     }
@@ -206,10 +206,10 @@ public sealed class FiltrosDelMenuFlowTests(CrmApiFactory factory)
     {
         var anonimo = factory.CreateClient();
 
-        (await anonimo.GetAsync("/api/v1/users/me/favorites/Tarea")).StatusCode
+        (await anonimo.GetAsync("/api/v1/users/me/favorites/Task")).StatusCode
             .Should().Be(HttpStatusCode.Unauthorized);
 
-        (await anonimo.PostAsync($"/api/v1/users/me/favorites/Tarea/{Guid.NewGuid()}", null)).StatusCode
+        (await anonimo.PostAsync($"/api/v1/users/me/favorites/Task/{Guid.NewGuid()}", null)).StatusCode
             .Should().Be(HttpStatusCode.Unauthorized);
     }
 

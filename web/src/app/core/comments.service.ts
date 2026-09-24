@@ -15,7 +15,7 @@ const SIN_AVISO = { sinAviso: true };
  * señalado, no el documento entero, porque un documento tiene muchas conversaciones a la vez
  * pegadas a sitios distintos.
  */
-export const COMMENTABLE_ENTITIES = ['Tarea', 'Ticket', 'Proyecto', 'Anotacion'] as const;
+export const COMMENTABLE_ENTITIES = ['Task', 'Ticket', 'Project', 'Annotation'] as const;
 export type CommentableEntity = (typeof COMMENTABLE_ENTITIES)[number];
 
 export interface Comment {

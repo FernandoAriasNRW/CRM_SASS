@@ -44,7 +44,7 @@ public sealed class CustomFieldsFlowTests(CrmApiFactory factory)
         {
             nombre,
             tipo,
-            entidadDestino = "Tarea",
+            entidadDestino = "Task",
             obligatorio,
             opciones,
             posicion = 0
@@ -58,7 +58,7 @@ public sealed class CustomFieldsFlowTests(CrmApiFactory factory)
         => cliente.PutAsJsonAsync($"/api/v1/custom-fields/values/{campo}/{entidad}", new { valor });
 
     private static async Task<JsonElement> ValoresDeAsync(HttpClient cliente, Guid entidad)
-        => await cliente.GetFromJsonAsync<JsonElement>($"/api/v1/custom-fields/values/Tarea/{entidad}");
+        => await cliente.GetFromJsonAsync<JsonElement>($"/api/v1/custom-fields/values/Task/{entidad}");
 
     [Fact]
     public async Task Un_campo_se_define_y_aparece_en_el_listado()
@@ -68,7 +68,7 @@ public sealed class CustomFieldsFlowTests(CrmApiFactory factory)
 
         var id = await DefinirAsync(cliente, nombre, "Texto");
 
-        var lista = await cliente.GetFromJsonAsync<JsonElement>("/api/v1/custom-fields?entidad=Tarea");
+        var lista = await cliente.GetFromJsonAsync<JsonElement>("/api/v1/custom-fields?entidad=Task");
         lista.EnumerateArray().Select(c => c.GetProperty("id").GetGuid()).Should().Contain(id);
     }
 
@@ -81,7 +81,7 @@ public sealed class CustomFieldsFlowTests(CrmApiFactory factory)
 
         var segunda = await cliente.PostAsJsonAsync("/api/v1/custom-fields", new
         {
-            nombre, tipo = "Texto", entidadDestino = "Tarea", obligatorio = false, opciones = (string[]?)null, posicion = 0
+            nombre, tipo = "Texto", entidadDestino = "Task", obligatorio = false, opciones = (string[]?)null, posicion = 0
         });
 
         segunda.StatusCode.Should().Be(HttpStatusCode.BadRequest);

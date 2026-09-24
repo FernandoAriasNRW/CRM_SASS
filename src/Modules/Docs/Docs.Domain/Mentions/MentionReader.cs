@@ -8,7 +8,7 @@ namespace Docs.Domain.Mentions;
 /// Saca las menciones del contenido de una página.
 ///
 /// <b>Lee el HTML que el editor guarda, y eso impone un contrato:</b> la extensión de menciones
-/// del editor tiene que escribir <c>data-mencion-tipo</c> y <c>data-mencion-id</c> en cada
+/// del editor tiene que escribir <c>data-mention-type</c> y <c>data-mention-id</c> en cada
 /// mención. Si el editor dejara de hacerlo, esta función devolvería cero y las menciones
 /// desaparecerían <b>sin dar ningún error</b> — por eso hay una prueba de integración que escribe
 /// una mención por la API y comprueba que la tarea la ve.
@@ -30,12 +30,12 @@ public static partial class MentionReader
     public const int MaxPerPage = 200;
 
     [GeneratedRegex(
-        """<[^>]*?data-mencion-tipo\s*=\s*["']([^"']+)["'][^>]*?>""",
+        """<[^>]*?data-mention-type\s*=\s*["']([^"']+)["'][^>]*?>""",
         RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
     private static partial Regex TagWithType();
 
     [GeneratedRegex(
-        """data-mencion-id\s*=\s*["']([^"']+)["']""",
+        """data-mention-id\s*=\s*["']([^"']+)["']""",
         RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
     private static partial Regex IdAttribute();
 

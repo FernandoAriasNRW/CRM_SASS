@@ -14,13 +14,17 @@ namespace BuildingBlocks.Domain;
 ///
 /// Va en BuildingBlocks.Domain y no en Application porque el agregado de favoritos la valida:
 /// un tipo desconocido se rechaza en el dominio, no en el borde.
+///
+/// <b>Los valores se guardan</b> en favoritos, comentarios, menciones y campos personalizados, y
+/// viajan dentro del HTML de las páginas. Cambiar uno exige migrar esas tablas en el mismo cambio,
+/// como se hizo al pasarlos de «Tarea» a «Task» (migraciones <c>StoredValuesToEnglish</c>).
 /// </summary>
 public static class EntityTypes
 {
-    public const string Task = "Tarea";
-    public const string Project = "Proyecto";
+    public const string Task = "Task";
+    public const string Project = "Project";
     public const string Ticket = "Ticket";
-    public const string Document = "Documento";
+    public const string Document = "Document";
 
     public static IReadOnlyList<string> All() => [Task, Project, Ticket, Document];
 

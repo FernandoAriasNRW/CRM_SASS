@@ -8,7 +8,7 @@ namespace UnitTests;
 /// El lector de menciones.
 ///
 /// <b>Aquí vive el contrato con el editor.</b> La extensión de menciones tiene que escribir
-/// <c>data-mencion-tipo</c> y <c>data-mencion-id</c> en cada mención; si dejara de hacerlo, esto
+/// <c>data-mention-type</c> y <c>data-mention-id</c> en cada mención; si dejara de hacerlo, esto
 /// devolvería cero y las menciones desaparecerían <b>sin dar ningún error</b>. Estas pruebas fijan
 /// el formato por el lado del servidor, y una de integración comprueba la unión entera.
 ///
@@ -23,12 +23,12 @@ public class LectorDeMencionesTests
     [Fact]
     public void Encuentra_una_mencion_normal()
     {
-        var html = $"""<p>Hablamos de <span data-mencion-tipo="Tarea" data-mencion-id="{Tarea}">Migrar la API</span> ayer.</p>""";
+        var html = $"""<p>Hablamos de <span data-mention-type="Task" data-mention-id="{Tarea}">Migrar la API</span> ayer.</p>""";
 
         var menciones = MentionReader.Read(html);
 
         var mencion = menciones.Should().ContainSingle().Subject;
-        mencion.Type.Should().Be("Tarea");
+        mencion.Type.Should().Be("Task");
         mencion.EntityId.Should().Be(Tarea);
         mencion.VisibleText.Should().Be("Migrar la API");
     }
@@ -42,7 +42,7 @@ public class LectorDeMencionesTests
     [Fact]
     public void El_orden_de_los_atributos_da_igual()
     {
-        var html = $"""<span data-mencion-id="{Tarea}" class="mencion" data-mencion-tipo="Tarea">Algo</span>""";
+        var html = $"""<span data-mention-id="{Tarea}" class="mention" data-mention-type="Task">Algo</span>""";
 
         MentionReader.Read(html).Should().ContainSingle(m => m.EntityId == Tarea);
     }
@@ -51,7 +51,7 @@ public class LectorDeMencionesTests
     [Fact]
     public void Las_comillas_simples_valen()
     {
-        var html = $"<span data-mencion-tipo='Ticket' data-mencion-id='{Ticket}'>Un ticket</span>";
+        var html = $"<span data-mention-type='Ticket' data-mention-id='{Ticket}'>Un ticket</span>";
 
         MentionReader.Read(html).Should().ContainSingle(m => m.Type == "Ticket");
     }
@@ -60,8 +60,8 @@ public class LectorDeMencionesTests
     public void Varias_menciones_distintas_se_encuentran_todas()
     {
         var html = $"""
-            <p><span data-mencion-tipo="Tarea" data-mencion-id="{Tarea}">Una</span> y
-            <span data-mencion-tipo="Ticket" data-mencion-id="{Ticket}">Otro</span></p>
+            <p><span data-mention-type="Task" data-mention-id="{Tarea}">Una</span> y
+            <span data-mention-type="Ticket" data-mention-id="{Ticket}">Otro</span></p>
             """;
 
         MentionReader.Read(html).Should().HaveCount(2);
@@ -77,8 +77,8 @@ public class LectorDeMencionesTests
     public void La_misma_entidad_mencionada_varias_veces_cuenta_una()
     {
         var html = $"""
-            <p><span data-mencion-tipo="Tarea" data-mencion-id="{Tarea}">Una</span></p>
-            <p><span data-mencion-tipo="Tarea" data-mencion-id="{Tarea}">Una otra vez</span></p>
+            <p><span data-mention-type="Task" data-mention-id="{Tarea}">Una</span></p>
+            <p><span data-mention-type="Task" data-mention-id="{Tarea}">Una otra vez</span></p>
             """;
 
         MentionReader.Read(html).Should().ContainSingle();
@@ -95,13 +95,13 @@ public class LectorDeMencionesTests
     [Fact]
     public void Una_mencion_sin_identificador_se_descarta()
     {
-        MentionReader.Read("""<span data-mencion-tipo="Tarea">Sin id</span>""").Should().BeEmpty();
+        MentionReader.Read("""<span data-mention-type="Task">Sin id</span>""").Should().BeEmpty();
     }
 
     [Fact]
     public void Un_identificador_que_no_es_un_guid_se_descarta()
     {
-        MentionReader.Read("""<span data-mencion-tipo="Tarea" data-mencion-id="pepito">X</span>""")
+        MentionReader.Read("""<span data-mention-type="Task" data-mention-id="pepito">X</span>""")
             .Should().BeEmpty();
     }
 
@@ -109,14 +109,14 @@ public class LectorDeMencionesTests
     [Fact]
     public void Un_tipo_desconocido_se_descarta()
     {
-        MentionReader.Read($"""<span data-mencion-tipo="Factura" data-mencion-id="{Tarea}">X</span>""")
+        MentionReader.Read($"""<span data-mention-type="Factura" data-mention-id="{Tarea}">X</span>""")
             .Should().BeEmpty();
     }
 
     [Fact]
     public void El_guid_vacio_se_descarta()
     {
-        MentionReader.Read($"""<span data-mencion-tipo="Tarea" data-mencion-id="{Guid.Empty}">X</span>""")
+        MentionReader.Read($"""<span data-mention-type="Task" data-mention-id="{Guid.Empty}">X</span>""")
             .Should().BeEmpty();
     }
 
@@ -131,13 +131,13 @@ public class LectorDeMencionesTests
     /// <summary>
     /// Un atributo con nombre parecido no cuela.
     ///
-    /// Es lo que hace fallar a las expresiones regulares sobre HTML: `data-mencion-tipografia`
-    /// contiene `data-mencion-tipo` como prefijo. Se comprueba que el patrón exige el signo igual.
+    /// Es lo que hace fallar a las expresiones regulares sobre HTML: `data-mention-typeface`
+    /// contiene `data-mention-type` como prefijo. Se comprueba que el patrón exige el signo igual.
     /// </summary>
     [Fact]
     public void Un_atributo_con_nombre_parecido_no_se_confunde()
     {
-        var html = $"""<span data-mencion-tipografia="Tarea" data-mencion-id="{Tarea}">X</span>""";
+        var html = $"""<span data-mention-typeface="Task" data-mention-id="{Tarea}">X</span>""";
 
         MentionReader.Read(html).Should().BeEmpty();
     }
@@ -148,7 +148,7 @@ public class LectorDeMencionesTests
     [Fact]
     public void El_texto_visible_llega_limpio()
     {
-        var html = $"""<span data-mencion-tipo="Tarea" data-mencion-id="{Tarea}">Dise&#241;o &amp; UX</span>""";
+        var html = $"""<span data-mention-type="Task" data-mention-id="{Tarea}">Dise&#241;o &amp; UX</span>""";
 
         MentionReader.Read(html).Single().VisibleText.Should().Be("Diseño & UX");
     }
@@ -163,7 +163,7 @@ public class LectorDeMencionesTests
     public void Hay_un_tope_de_menciones_por_pagina()
     {
         var muchas = string.Join("", Enumerable.Range(0, MentionReader.MaxPerPage + 50)
-            .Select(_ => $"""<span data-mencion-tipo="Tarea" data-mencion-id="{Guid.NewGuid()}">X</span>"""));
+            .Select(_ => $"""<span data-mention-type="Task" data-mention-id="{Guid.NewGuid()}">X</span>"""));
 
         MentionReader.Read(muchas).Should().HaveCount(MentionReader.MaxPerPage);
     }
@@ -174,7 +174,7 @@ public class LectorDeMencionesTests
         var larguisimo = new string('a', 500);
 
         var mencion = DocumentMention.Create(
-            Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), "Tarea", Tarea, larguisimo);
+            Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), "Task", Tarea, larguisimo);
 
         mencion.VisibleText.Length.Should().Be(200);
     }

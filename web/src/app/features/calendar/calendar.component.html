@@ -134,7 +134,7 @@
                 -->
                 @for (evento of dia.eventos.slice(0, 2); track evento.id) {
                   <button type="button"
-                    (click)="$event.stopPropagation(); abrirCosa({ tipo: 'Evento', id: evento.id, titulo: evento.title, detalle: null, hora: evento.startTime, horaFin: evento.endTime, anulado: !!evento.canceladoEnUtc })"
+                    (click)="$event.stopPropagation(); abrirCosa({ tipo: 'Event', id: evento.id, titulo: evento.title, detalle: null, hora: evento.startTime, horaFin: evento.endTime, anulado: !!evento.canceladoEnUtc })"
                     (contextmenu)="menuEnEvento($event, evento, dia.fecha)"
                     class="block w-full truncate rounded px-1.5 py-0.5 text-left text-[11px] transition-colors
                            focus:outline-none focus:ring-2 focus:ring-ring"

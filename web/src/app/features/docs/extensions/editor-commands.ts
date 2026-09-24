@@ -197,7 +197,7 @@ export const EDITOR_COMMANDS: readonly EditorCommand[] = [
     icon: lucideLightbulb,
     group: BLOCKS_GROUP,
     alias: ['aviso', 'nota', 'callout', 'recuadro', 'destacado'],
-    run: ({ editor, range }) => editor.chain().focus().deleteRange(range).toggleCallout('nota').run()
+    run: ({ editor, range }) => editor.chain().focus().deleteRange(range).toggleCallout('note').run()
   },
   {
     key: 'callout-warning',
@@ -206,7 +206,7 @@ export const EDITOR_COMMANDS: readonly EditorCommand[] = [
     icon: lucideTriangleAlert,
     group: BLOCKS_GROUP,
     alias: ['aviso', 'atencion', 'atención', 'ojo', 'cuidado', 'warning'],
-    run: ({ editor, range }) => editor.chain().focus().deleteRange(range).toggleCallout('ojo').run()
+    run: ({ editor, range }) => editor.chain().focus().deleteRange(range).toggleCallout('warning').run()
   },
   {
     key: 'callout-danger',
@@ -215,7 +215,7 @@ export const EDITOR_COMMANDS: readonly EditorCommand[] = [
     icon: lucideBan,
     group: BLOCKS_GROUP,
     alias: ['aviso', 'peligro', 'danger', 'error', 'no'],
-    run: ({ editor, range }) => editor.chain().focus().deleteRange(range).toggleCallout('peligro').run()
+    run: ({ editor, range }) => editor.chain().focus().deleteRange(range).toggleCallout('danger').run()
   },
   {
     key: 'callout-success',
@@ -224,7 +224,7 @@ export const EDITOR_COMMANDS: readonly EditorCommand[] = [
     icon: lucideCircleCheck,
     group: BLOCKS_GROUP,
     alias: ['aviso', 'bien', 'acierto', 'ok', 'success', 'correcto'],
-    run: ({ editor, range }) => editor.chain().focus().deleteRange(range).toggleCallout('bien').run()
+    run: ({ editor, range }) => editor.chain().focus().deleteRange(range).toggleCallout('success').run()
   },
   {
     key: 'columns-2',

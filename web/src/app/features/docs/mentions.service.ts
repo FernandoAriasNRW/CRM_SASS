@@ -52,7 +52,7 @@ export class MentionsService {
       `/users?pageSize=${MentionsService.PORTIPO}&search=${encodeURIComponent(text)}`,
       [] as { id: string; name: string; email: string }[]);
 
-    return users.map(u => ({ id: u.id, etiqueta: u.name, tipo: 'Persona' as const, detail: u.email }));
+    return users.map(u => ({ id: u.id, label: u.name, type: 'Person' as const, detail: u.email }));
   }
 
   private async things(text: string): Promise<MentionCandidate[]> {
@@ -65,9 +65,9 @@ export class MentionsService {
     ]);
 
     return [
-      ...tasks.map(t => ({ id: t.id, etiqueta: t.title, tipo: 'Tarea' as const, detail: t.detail })),
-      ...tickets.map(t => ({ id: t.id, etiqueta: t.title, tipo: 'Ticket' as const, detail: t.detail })),
-      ...projects.map(p => ({ id: p.id, etiqueta: p.title, tipo: 'Proyecto' as const, detail: p.detail }))
+      ...tasks.map(t => ({ id: t.id, label: t.title, type: 'Task' as const, detail: t.detail })),
+      ...tickets.map(t => ({ id: t.id, label: t.title, type: 'Ticket' as const, detail: t.detail })),
+      ...projects.map(p => ({ id: p.id, label: p.title, type: 'Project' as const, detail: p.detail }))
     ];
   }
 
@@ -128,7 +128,7 @@ export class MentionsService {
    * Es la vuelta del diferencial, y la razón de que las menciones se guarden en una tabla: leer el
    * documento no contesta esta pregunta, porque habría que abrir todos.
    */
-  mentioningDocuments(tipo: string, entidadId: string) {
-    return this.api.get<MentioningDocument[]>(`/docs/mentions/${tipo}/${entidadId}`);
+  mentioningDocuments(type: string, entityId: string) {
+    return this.api.get<MentioningDocument[]>(`/docs/mentions/${type}/${entityId}`);
   }
 }

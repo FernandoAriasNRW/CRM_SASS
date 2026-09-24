@@ -31,23 +31,6 @@ public static class PermissionTypes
     /// integración o una pestaña abierta desde antes del cambio pueden seguir mandando el plural,
     /// y con eso volvería a nacer una fila que no consulta nadie.
     /// </summary>
-    /// <summary>
-    /// El tipo de permiso de una entidad de <see cref="BuildingBlocks.Domain.EntityTypes"/>.
-    ///
-    /// Vivía en Application como <c>VocabularioDePermisos</c>, separado de <see cref="Normalize"/>:
-    /// dos traductores para el mismo vocabulario, en dos capas. Mientras los valores de
-    /// <c>EntityTypes</c> sigan en español («Tarea») esto traduce; cuando pasen a inglés, será la
-    /// identidad.
-    /// </summary>
-    public static string FromEntityType(string entityType) => entityType switch
-    {
-        BuildingBlocks.Domain.EntityTypes.Task => Task,
-        BuildingBlocks.Domain.EntityTypes.Project => Project,
-        BuildingBlocks.Domain.EntityTypes.Ticket => Ticket,
-        BuildingBlocks.Domain.EntityTypes.Document => Document,
-        _ => entityType
-    };
-
     public static string Normalize(string type) => type switch
     {
         "Tasks" => Task,
@@ -59,4 +42,14 @@ public static class PermissionTypes
         "Reports" => Report,
         _ => type
     };
+
+    /// <summary>
+    /// El tipo de permiso de una entidad de <see cref="BuildingBlocks.Domain.EntityTypes"/>.
+    ///
+    /// Desde que los valores de <c>EntityTypes</c> pasaron a inglés («Tarea» → «Task») los dos
+    /// vocabularios coinciden y esto es la identidad. Se mantiene como el único punto de paso: si
+    /// algún día un tipo de entidad y su permiso se llamaran distinto, se traduce aquí y no en
+    /// cada llamador.
+    /// </summary>
+    public static string FromEntityType(string entityType) => entityType;
 }

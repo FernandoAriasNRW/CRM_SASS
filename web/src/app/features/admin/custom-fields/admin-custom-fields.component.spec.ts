@@ -11,12 +11,12 @@ import { CustomFieldsService, type CustomFieldDefinition } from '../../../core/c
  */
 describe('AdminCustomFieldsComponent', () => {
   const CLIENTE: CustomFieldDefinition = {
-    id: 'def-1', nombre: 'Cliente facturable', tipo: 'Texto', entidadDestino: 'Tarea',
+    id: 'def-1', nombre: 'Cliente facturable', tipo: 'Texto', entidadDestino: 'Task',
     obligatorio: false, opciones: [], posicion: 2, formula: null
   };
 
   const CANAL: CustomFieldDefinition = {
-    id: 'def-2', nombre: 'Canal', tipo: 'Seleccion', entidadDestino: 'Tarea',
+    id: 'def-2', nombre: 'Canal', tipo: 'Seleccion', entidadDestino: 'Task',
     obligatorio: true, opciones: ['Web', 'Teléfono'], posicion: 0, formula: null
   };
 
@@ -51,7 +51,7 @@ describe('AdminCustomFieldsComponent', () => {
   it('arranca pidiendo los campos de tareas', async () => {
     await montar();
 
-    expect(servicio.cargarDefiniciones).toHaveBeenCalledWith('Tarea');
+    expect(servicio.cargarDefiniciones).toHaveBeenCalledWith('Task');
   });
 
   it('los enseña por posición, no por el orden en que lleguen', async () => {
@@ -64,9 +64,9 @@ describe('AdminCustomFieldsComponent', () => {
     await montar([CLIENTE]);
     componente.nuevo();
 
-    componente.cambiarEntidad('Proyecto');
+    componente.cambiarEntidad('Project');
 
-    expect(servicio.cargarDefiniciones).toHaveBeenCalledWith('Proyecto');
+    expect(servicio.cargarDefiniciones).toHaveBeenCalledWith('Project');
     expect(componente.editando()).toBeNull();
   });
 
@@ -140,7 +140,7 @@ describe('AdminCustomFieldsComponent', () => {
       // y guardarla en los demás confundiría a quien leyera la definición después.
       formula: null,
       tipo: 'Seleccion',
-      entidadDestino: 'Tarea',
+      entidadDestino: 'Task',
     });
   });
 
@@ -183,7 +183,7 @@ describe('AdminCustomFieldsComponent', () => {
     componente.guardar();
 
     expect(servicio.definir).not.toHaveBeenCalled();
-    expect(servicio.actualizar).toHaveBeenCalledWith('def-2', 'Tarea', {
+    expect(servicio.actualizar).toHaveBeenCalledWith('def-2', 'Task', {
       nombre: 'Canal de entrada',
       obligatorio: true,
       opciones: ['Web', 'Teléfono'],
@@ -222,7 +222,7 @@ describe('AdminCustomFieldsComponent', () => {
     expect(servicio.borrar).not.toHaveBeenCalled();
 
     componente.borrar(CANAL);
-    expect(servicio.borrar).toHaveBeenCalledWith('def-2', 'Tarea');
+    expect(servicio.borrar).toHaveBeenCalledWith('def-2', 'Task');
     expect(componente.borrando()).toBeNull();
   });
 
