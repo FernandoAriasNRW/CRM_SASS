@@ -20,8 +20,6 @@ internal sealed class TagRepository : ITagRepository
         await _dbContext.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task<List<Tag>> GetAllAsync(CancellationToken cancellationToken = default)
-    {
-        return await _dbContext.Tags.ToListAsync(cancellationToken);
-    }
+    public Task<bool> ExistsByNameAsync(Guid tenantId, string name, CancellationToken cancellationToken = default)
+        => _dbContext.Tags.AnyAsync(t => t.TenantId == tenantId && t.Name == name, cancellationToken);
 }
