@@ -124,7 +124,7 @@ public static class ModuleRegistration
 
         // La agenda de un día, que junta los eventos con lo que vence ese día en tareas, tickets y
         // proyectos. Vive en el host por lo mismo que las dos de arriba: cruza módulos.
-        services.AddScoped<Calendar.AgendaDelDia>();
+        services.AddScoped<Calendar.DailyAgenda>();
 
         // El motor de los informes a medida: traduce la definición neutra que construyó el usuario a
         // filas. Mismo sitio y mismo motivo que lo de arriba.

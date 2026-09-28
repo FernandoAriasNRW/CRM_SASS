@@ -254,7 +254,7 @@ export class EventoDrawerComponent {
 
   subtitulo(): string {
     const evento = this.evento();
-    return evento?.canceladoEnUtc ? 'Este evento está anulado' : '';
+    return evento?.cancelledAtUtc ? 'Este evento está anulado' : '';
   }
 
   tituloCorto(): boolean {

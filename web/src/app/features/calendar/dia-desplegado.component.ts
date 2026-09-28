@@ -54,14 +54,14 @@ interface Franja {
               Vence hoy
             </p>
 
-            @for (cosa of sinHora(); track cosa.tipo + cosa.id) {
+            @for (cosa of sinHora(); track cosa.type + cosa.id) {
               <button type="button" (click)="abrirCosa.emit(cosa)"
                 class="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm
                        hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring">
-                <ng-icon [name]="iconoDe(cosa.tipo)" size="14" class="shrink-0 text-muted-foreground" />
-                <span class="truncate">{{ cosa.titulo }}</span>
-                @if (cosa.detalle) {
-                  <span class="ml-auto shrink-0 text-xs text-muted-foreground">{{ cosa.detalle }}</span>
+                <ng-icon [name]="iconoDe(cosa.type)" size="14" class="shrink-0 text-muted-foreground" />
+                <span class="truncate">{{ cosa.title }}</span>
+                @if (cosa.detail) {
+                  <span class="ml-auto shrink-0 text-xs text-muted-foreground">{{ cosa.detail }}</span>
                 }
               </button>
             }
@@ -89,12 +89,12 @@ interface Franja {
                   (contextmenu)="$event.stopPropagation(); menuEnEvento.emit({ evento: $event, cosa })"
                   class="flex w-full items-center gap-2 rounded-md border-l-2 px-2 py-1.5 text-left text-sm
                          transition-colors focus:outline-none focus:ring-2 focus:ring-ring"
-                  [class]="cosa.anulado
+                  [class]="cosa.isCancelled
                     ? 'border-muted-foreground bg-muted/50 text-muted-foreground line-through'
                     : 'border-primary bg-primary/10 hover:bg-primary/20'">
-                  <span class="shrink-0 text-xs tabular-nums">{{ cosa.hora | date:'HH:mm' }}</span>
-                  <span class="truncate">{{ cosa.titulo }}</span>
-                  @if (cosa.anulado) {
+                  <span class="shrink-0 text-xs tabular-nums">{{ cosa.time | date:'HH:mm' }}</span>
+                  <span class="truncate">{{ cosa.title }}</span>
+                  @if (cosa.isCancelled) {
                     <span class="ml-auto shrink-0 text-[10px] uppercase tracking-wider no-underline" i18n>Anulado</span>
                   }
                 </button>
@@ -116,13 +116,13 @@ export class DiaDesplegadoComponent {
   readonly menuEnHora = output<{ evento: MouseEvent; hora: number }>();
 
   readonly diaLegible = computed(() =>
-    new Date(this.agenda().dia + 'T12:00:00').toLocaleDateString('es', {
+    new Date(this.agenda().day + 'T12:00:00').toLocaleDateString('es', {
       weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
     }));
 
   readonly sinHora = computed<CosaDelDia[]>(() => {
     const a = this.agenda();
-    return [...a.tareasQueVencen, ...a.proyectosQueTerminan, ...a.ticketsDelDia.filter(t => !t.hora)];
+    return [...a.tasksDue, ...a.projectsEnding, ...a.ticketsOpened.filter(t => !t.time)];
   });
 
   readonly resumen = computed(() => {
@@ -131,10 +131,10 @@ export class DiaDesplegadoComponent {
 
     // Se dice sólo lo que hay. «0 tickets» es ruido que hay que leer para descubrir que no dice
     // nada; un día sin nada lo dice con una frase entera.
-    if (a.eventos.length) partes.push(`${a.eventos.length} evento${a.eventos.length > 1 ? 's' : ''}`);
-    if (a.tareasQueVencen.length) partes.push(`${a.tareasQueVencen.length} tarea${a.tareasQueVencen.length > 1 ? 's' : ''} que vence${a.tareasQueVencen.length > 1 ? 'n' : ''}`);
-    if (a.ticketsDelDia.length) partes.push(`${a.ticketsDelDia.length} ticket${a.ticketsDelDia.length > 1 ? 's' : ''}`);
-    if (a.proyectosQueTerminan.length) partes.push(`${a.proyectosQueTerminan.length} proyecto${a.proyectosQueTerminan.length > 1 ? 's' : ''} que termina${a.proyectosQueTerminan.length > 1 ? 'n' : ''}`);
+    if (a.events.length) partes.push(`${a.events.length} evento${a.events.length > 1 ? 's' : ''}`);
+    if (a.tasksDue.length) partes.push(`${a.tasksDue.length} tarea${a.tasksDue.length > 1 ? 's' : ''} que vence${a.tasksDue.length > 1 ? 'n' : ''}`);
+    if (a.ticketsOpened.length) partes.push(`${a.ticketsOpened.length} ticket${a.ticketsOpened.length > 1 ? 's' : ''}`);
+    if (a.projectsEnding.length) partes.push(`${a.projectsEnding.length} proyecto${a.projectsEnding.length > 1 ? 's' : ''} que termina${a.projectsEnding.length > 1 ? 'n' : ''}`);
 
     return partes.length ? partes.join(' · ') : 'Nada en el calendario este día';
   });
@@ -146,8 +146,8 @@ export class DiaDesplegadoComponent {
    * caja en blanco, y para que haya dónde pulsar y crear.
    */
   readonly franjas = computed<Franja[]>(() => {
-    const conHora = this.agenda().eventos.filter(e => e.hora);
-    const horas = conHora.map(e => new Date(e.hora!).getHours());
+    const conHora = this.agenda().events.filter(e => e.time);
+    const horas = conHora.map(e => new Date(e.time!).getHours());
 
     const desde = Math.min(8, ...horas);
     const hasta = Math.max(19, ...horas);
@@ -157,7 +157,7 @@ export class DiaDesplegadoComponent {
     for (let hora = desde; hora <= hasta; hora++) {
       franjas.push({
         hora,
-        eventos: conHora.filter(e => new Date(e.hora!).getHours() === hora)
+        eventos: conHora.filter(e => new Date(e.time!).getHours() === hora)
       });
     }
 

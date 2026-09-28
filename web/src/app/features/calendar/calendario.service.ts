@@ -17,27 +17,27 @@ export interface EventoDelCalendario {
   taskId: string | null;
   ticketId: string | null;
   /** Si está anulado. Sigue en el calendario, tachado. */
-  canceladoEnUtc: string | null;
-  motivoDeCancelacion: string | null;
+  cancelledAtUtc: string | null;
+  cancellationReason: string | null;
 }
 
 /** Una cosa que cae en un día, venga del módulo que venga. */
 export interface CosaDelDia {
-  tipo: 'Event' | 'Task' | 'Ticket' | 'Project';
+  type: 'Event' | 'Task' | 'Ticket' | 'Project';
   id: string;
-  titulo: string;
-  detalle: string | null;
-  hora: string | null;
-  horaFin: string | null;
-  anulado: boolean;
+  title: string;
+  detail: string | null;
+  time: string | null;
+  endTime: string | null;
+  isCancelled: boolean;
 }
 
 export interface AgendaDeUnDia {
-  dia: string;
-  eventos: CosaDelDia[];
-  tareasQueVencen: CosaDelDia[];
-  ticketsDelDia: CosaDelDia[];
-  proyectosQueTerminan: CosaDelDia[];
+  day: string;
+  events: CosaDelDia[];
+  tasksDue: CosaDelDia[];
+  ticketsOpened: CosaDelDia[];
+  projectsEnding: CosaDelDia[];
 }
 
 /** Lo que hace falta para crear o modificar un evento. */
@@ -108,11 +108,11 @@ export class CalendarioService {
 
   /** Anula el evento: se queda en el calendario, tachado. */
   anular(id: string, motivo: string | null): Promise<EventoDelCalendario> {
-    return firstValueFrom(this.api.post<EventoDelCalendario>(`/calendar/events/${id}/anular`, { motivo }));
+    return firstValueFrom(this.api.post<EventoDelCalendario>(`/calendar/events/${id}/cancel`, { reason: motivo }));
   }
 
   reactivar(id: string): Promise<EventoDelCalendario> {
-    return firstValueFrom(this.api.post<EventoDelCalendario>(`/calendar/events/${id}/reactivar`, {}));
+    return firstValueFrom(this.api.post<EventoDelCalendario>(`/calendar/events/${id}/reactivate`, {}));
   }
 
   /**
@@ -120,7 +120,7 @@ export class CalendarioService {
    * mandarlos todos no habría forma de distinguir «quítalo» de «no lo toques».
    */
   enlazar(id: string, enlaces: { projectId: string | null; taskId: string | null; ticketId: string | null }) {
-    return firstValueFrom(this.api.put<EventoDelCalendario>(`/calendar/events/${id}/enlaces`, enlaces));
+    return firstValueFrom(this.api.put<EventoDelCalendario>(`/calendar/events/${id}/links`, enlaces));
   }
 
   /** A la papelera. Recuperable. */
@@ -130,13 +130,13 @@ export class CalendarioService {
 
   async papelera(): Promise<EventoDelCalendario[]> {
     const respuesta = await firstValueFrom(
-      this.api.get<Paginado<EventoDelCalendario>>('/calendar/events/papelera'));
+      this.api.get<Paginado<EventoDelCalendario>>('/calendar/events/trash'));
 
     return respuesta?.items ?? [];
   }
 
   restaurar(id: string): Promise<EventoDelCalendario> {
-    return firstValueFrom(this.api.post<EventoDelCalendario>(`/calendar/events/${id}/restaurar`, {}));
+    return firstValueFrom(this.api.post<EventoDelCalendario>(`/calendar/events/${id}/restore`, {}));
   }
 }
 

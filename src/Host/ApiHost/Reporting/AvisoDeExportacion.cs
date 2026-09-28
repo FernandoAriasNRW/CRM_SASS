@@ -1,7 +1,7 @@
 using BuildingBlocks.Application.Events;
 using MediatR;
 using Notifications.Application.Commands;
-using Notifications.Application.Preferencias;
+using Notifications.Application.Preferences;
 using Notifications.Domain.Entities;
 using Reporting.Domain.Events;
 
@@ -21,7 +21,7 @@ namespace ApiHost.Reporting;
 /// </summary>
 public sealed class AvisoDeExportacionLista(
     IMediator mediator,
-    IRepositorioDePreferencias preferencias,
+    INotificationPreferencesRepository preferencias,
     ILogger<AvisoDeExportacionLista> registro)
     : INotificationHandler<DomainEventNotification<ExportacionListaEvent>>
 {
@@ -40,7 +40,7 @@ public sealed class AvisoDeExportacionLista(
 
 public sealed class AvisoDeExportacionFallida(
     IMediator mediator,
-    IRepositorioDePreferencias preferencias,
+    INotificationPreferencesRepository preferencias,
     ILogger<AvisoDeExportacionFallida> registro)
     : INotificationHandler<DomainEventNotification<ExportacionFallidaEvent>>
 {
@@ -64,7 +64,7 @@ internal static class AvisosDeExportacion
 {
     public static async Task AvisarAsync(
         IMediator mediator,
-        IRepositorioDePreferencias preferencias,
+        INotificationPreferencesRepository preferencias,
         ILogger registro,
         Guid tenantId,
         Guid destinatario,
@@ -77,12 +77,12 @@ internal static class AvisosDeExportacion
         // Las preferencias mandan, igual que en las automatizaciones. Se usa la propia función
         // del dominio de Notifications en vez de repetir aquí las reglas —incluidas las horas de
         // silencio y su cruce de medianoche—: son las mismas reglas y no pueden divergir.
-        var suyas = await preferencias.DeLaPersonaAsync(tenantId, destinatario, ct)
-                    ?? PreferenciasDeNotificacion.PorDefecto(tenantId, destinatario);
+        var suyas = await preferencias.GetForUserAsync(tenantId, destinatario, ct)
+                    ?? NotificationPreferences.CreateDefault(tenantId, destinatario);
 
         var ahora = TimeOnly.FromDateTime(DateTime.UtcNow);
 
-        if (!suyas.DejaPasar(TiposDeAviso.ExportacionLista, ahora))
+        if (!suyas.ShouldDeliver(NotificationTypes.ExportReady, ahora))
         {
             // No es un fallo: es la persona ejerciendo la preferencia que la pantalla le ofrece.
             // La exportación sigue estando en su lista, así que apagar el aviso no esconde el
