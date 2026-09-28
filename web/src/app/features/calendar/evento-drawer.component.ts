@@ -6,7 +6,7 @@ import { lucideCalendarDays, lucideLink, lucideLoaderCircle } from '@ng-icons/lu
 import { DrawerComponent } from '../../shared/ui/drawer.component';
 import { ToastService } from '../../shared/services/toast.service';
 import { MentionsService } from '../docs/mentions.service';
-import type { MentionCandidate } from '../docs/extensions/mention';
+import { MENTION_TYPE_LABELS, type MentionCandidate, type MentionType } from '../docs/extensions/mention';
 import {
   CalendarioService, aFechaHoraLocal,
   type DatosDelEvento, type EventoDelCalendario
@@ -121,7 +121,7 @@ const TIPOS: { clave: string; etiqueta: string }[] = [
 
           @for (e of enlazados(); track e.id) {
             <div class="flex items-center justify-between rounded-md bg-secondary px-2 py-1.5 text-sm">
-              <span class="truncate"><span class="text-muted-foreground">{{ e.tipo }} ·</span> {{ e.etiqueta }}</span>
+              <span class="truncate"><span class="text-muted-foreground">{{ typeLabels[e.type] }} ·</span> {{ e.label }}</span>
               <button type="button" (click)="quitarEnlace(e)"
                 class="ml-2 shrink-0 text-xs text-muted-foreground hover:text-destructive
                        focus:outline-none focus:ring-2 focus:ring-ring rounded"
@@ -139,13 +139,13 @@ const TIPOS: { clave: string; etiqueta: string }[] = [
 
             @if (candidatos().length > 0) {
               <ul class="absolute z-10 mt-1 max-h-52 w-full overflow-y-auto rounded-md border border-border bg-card shadow-lg">
-                @for (c of candidatos(); track c.tipo + c.id) {
+                @for (c of candidatos(); track c.type + c.id) {
                   <li>
                     <button type="button" (click)="anadirEnlace(c)"
                       class="flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm hover:bg-accent
                              focus:outline-none focus:bg-accent">
-                      <span class="text-xs text-muted-foreground">{{ c.tipo }}</span>
-                      <span class="truncate">{{ c.etiqueta }}</span>
+                      <span class="text-xs text-muted-foreground">{{ typeLabels[c.type] }}</span>
+                      <span class="truncate">{{ c.label }}</span>
                     </button>
                   </li>
                 }
@@ -198,6 +198,9 @@ export class EventoDrawerComponent {
   inicio = '';
   fin = '';
   busqueda = '';
+
+  /** El nombre en pantalla de cada tipo enlazable. */
+  readonly typeLabels = MENTION_TYPE_LABELS;
 
   readonly enlazados = signal<MentionCandidate[]>([]);
   readonly candidatos = signal<MentionCandidate[]>([]);
@@ -277,15 +280,15 @@ export class EventoDrawerComponent {
     // Sólo cosas, no personas: enlazar un evento con alguien sería invitarlo, que es otra
     // función y no existe todavía. Ofrecerlo aquí prometería algo que no pasa.
     const encontrados = await this.menciones.search('#', consulta);
-    const yaPuestos = new Set(this.enlazados().map(e => e.tipo + e.id));
+    const yaPuestos = new Set(this.enlazados().map(e => e.type + e.id));
 
-    this.candidatos.set(encontrados.filter(c => !yaPuestos.has(c.tipo + c.id)));
+    this.candidatos.set(encontrados.filter(c => !yaPuestos.has(c.type + c.id)));
   }
 
   anadirEnlace(candidato: MentionCandidate): void {
     // Uno de cada tipo: los enlaces son tres campos en el evento, no una lista. Añadir un
     // segundo ticket sustituye al primero en vez de perderse en silencio al guardar.
-    this.enlazados.update(actuales => [...actuales.filter(e => e.tipo !== candidato.tipo), candidato]);
+    this.enlazados.update(actuales => [...actuales.filter(e => e.type !== candidato.type), candidato]);
     this.busqueda = '';
     this.candidatos.set([]);
   }
@@ -352,11 +355,11 @@ export class EventoDrawerComponent {
   }
 
   private enlacesComoCampos() {
-    const de = (tipo: string) => this.enlazados().find(e => e.tipo === tipo)?.id ?? null;
+    const de = (type: MentionType) => this.enlazados().find(e => e.type === type)?.id ?? null;
 
     return {
-      projectId: de('Proyecto'),
-      taskId: de('Tarea'),
+      projectId: de('Project'),
+      taskId: de('Task'),
       ticketId: de('Ticket')
     };
   }
@@ -369,9 +372,9 @@ function enlacesDe(evento: EventoDelCalendario): MentionCandidate[] {
   // Sin el título de lo enlazado: el evento sólo trae los identificadores. Se enseña el tipo y se
   // deja el identificador acortado, que al menos permite reconocerlo y quitarlo. Ponerles nombre
   // exige pedir cada uno a su módulo, y es trabajo aparte.
-  if (evento.projectId) puestos.push({ id: evento.projectId, etiqueta: corto(evento.projectId), tipo: 'Proyecto' });
-  if (evento.taskId) puestos.push({ id: evento.taskId, etiqueta: corto(evento.taskId), tipo: 'Tarea' });
-  if (evento.ticketId) puestos.push({ id: evento.ticketId, etiqueta: corto(evento.ticketId), tipo: 'Ticket' });
+  if (evento.projectId) puestos.push({ id: evento.projectId, label: corto(evento.projectId), type: 'Project' });
+  if (evento.taskId) puestos.push({ id: evento.taskId, label: corto(evento.taskId), type: 'Task' });
+  if (evento.ticketId) puestos.push({ id: evento.ticketId, label: corto(evento.ticketId), type: 'Ticket' });
 
   return puestos;
 }

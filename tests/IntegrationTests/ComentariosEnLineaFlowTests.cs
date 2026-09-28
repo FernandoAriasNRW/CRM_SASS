@@ -90,11 +90,11 @@ public sealed class ComentariosEnLineaFlowTests(CrmApiFactory factory)
         // El hilo va por Comments, con la anotación como entidad comentada. Si esto no funcionara,
         // la anotación sería una marca de color sin conversación detrás.
         var comentario = await cliente.PostAsJsonAsync(
-            $"/api/v1/comments/Anotacion/{anotacion}", new { Text = "Yo lo diría de otra forma" });
+            $"/api/v1/comments/Annotation/{anotacion}", new { Text = "Yo lo diría de otra forma" });
 
         comentario.IsSuccessStatusCode.Should().BeTrue(await comentario.Content.ReadAsStringAsync());
 
-        var hilo = await cliente.GetFromJsonAsync<JsonElement>($"/api/v1/comments/Anotacion/{anotacion}");
+        var hilo = await cliente.GetFromJsonAsync<JsonElement>($"/api/v1/comments/Annotation/{anotacion}");
         hilo.EnumerateArray().Should().ContainSingle()
             .Which.GetProperty("text").GetString().Should().Be("Yo lo diría de otra forma");
     }

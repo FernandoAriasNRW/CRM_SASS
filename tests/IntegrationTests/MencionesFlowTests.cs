@@ -103,9 +103,9 @@ public sealed class MencionesFlowTests(CrmApiFactory factory)
         var (_, paginaId) = await CrearDocumentoAsync(cliente);
 
         await GuardarAsync(cliente, paginaId, "Acta de reunión",
-            $"""<p>Se acordó avanzar con <span data-mencion-tipo="Tarea" data-mencion-id="{tareaId}">esa tarea</span>.</p>""");
+            $"""<p>Se acordó avanzar con <span data-mention-type="Task" data-mention-id="{tareaId}">esa tarea</span>.</p>""");
 
-        var quien = await GetMentioningDocumentsAsync(cliente, "Tarea", tareaId);
+        var quien = await GetMentioningDocumentsAsync(cliente, "Task", tareaId);
 
         // Se busca **esta** página, no se exige ser la única que menciona la tarea. Todas las
         // pruebas de esta clase trabajan sobre la misma tarea del sembrador, así que exigir
@@ -133,14 +133,14 @@ public sealed class MencionesFlowTests(CrmApiFactory factory)
         var (_, paginaId) = await CrearDocumentoAsync(cliente);
 
         await GuardarAsync(cliente, paginaId, "Con mención",
-            $"""<p><span data-mencion-tipo="Tarea" data-mencion-id="{tareaId}">La tarea</span></p>""");
+            $"""<p><span data-mention-type="Task" data-mention-id="{tareaId}">La tarea</span></p>""");
 
-        (await GetMentioningDocumentsAsync(cliente, "Tarea", tareaId)).EnumerateArray()
+        (await GetMentioningDocumentsAsync(cliente, "Task", tareaId)).EnumerateArray()
             .Should().ContainSingle(m => m.GetProperty("pageId").GetGuid() == paginaId);
 
         await GuardarAsync(cliente, paginaId, "Sin mención", "<p>Ya no se habla de nada.</p>");
 
-        (await GetMentioningDocumentsAsync(cliente, "Tarea", tareaId)).EnumerateArray()
+        (await GetMentioningDocumentsAsync(cliente, "Task", tareaId)).EnumerateArray()
             .Should().NotContain(m => m.GetProperty("pageId").GetGuid() == paginaId,
                 "la mención se borró del texto, así que la tarea no puede seguir enseñando el documento");
     }
@@ -158,13 +158,13 @@ public sealed class MencionesFlowTests(CrmApiFactory factory)
         var tareaId = await UnaTareaAsync(cliente);
         var (_, paginaId) = await CrearDocumentoAsync(cliente);
 
-        var html = $"""<p><span data-mencion-tipo="Tarea" data-mencion-id="{tareaId}">Otra vez</span></p>""";
+        var html = $"""<p><span data-mention-type="Task" data-mention-id="{tareaId}">Otra vez</span></p>""";
 
         await GuardarAsync(cliente, paginaId, "Uno", html);
         await GuardarAsync(cliente, paginaId, "Dos", html);
         await GuardarAsync(cliente, paginaId, "Tres", html);
 
-        (await GetMentioningDocumentsAsync(cliente, "Tarea", tareaId)).EnumerateArray()
+        (await GetMentioningDocumentsAsync(cliente, "Task", tareaId)).EnumerateArray()
             .Count(m => m.GetProperty("pageId").GetGuid() == paginaId)
             .Should().Be(1);
     }
@@ -175,7 +175,7 @@ public sealed class MencionesFlowTests(CrmApiFactory factory)
     {
         var cliente = await AutenticarAsync();
 
-        var quien = await GetMentioningDocumentsAsync(cliente, "Tarea", Guid.NewGuid());
+        var quien = await GetMentioningDocumentsAsync(cliente, "Task", Guid.NewGuid());
 
         quien.EnumerateArray().Should().BeEmpty();
     }
@@ -195,12 +195,12 @@ public sealed class MencionesFlowTests(CrmApiFactory factory)
 
         await GuardarAsync(cliente, paginaId, "Varias",
             $"""
-             <p><span data-mencion-tipo="Ticket" data-mencion-id="{ticketId}">Un ticket</span>
-             y <span data-mencion-tipo="Persona" data-mencion-id="{personaId}">alguien</span></p>
+             <p><span data-mention-type="Ticket" data-mention-id="{ticketId}">Un ticket</span>
+             y <span data-mention-type="Person" data-mention-id="{personaId}">alguien</span></p>
              """);
 
         (await GetMentioningDocumentsAsync(cliente, "Ticket", ticketId)).EnumerateArray().Should().ContainSingle();
-        (await GetMentioningDocumentsAsync(cliente, "Persona", personaId)).EnumerateArray().Should().ContainSingle();
+        (await GetMentioningDocumentsAsync(cliente, "Person", personaId)).EnumerateArray().Should().ContainSingle();
     }
 
     /// <summary>
@@ -219,7 +219,7 @@ public sealed class MencionesFlowTests(CrmApiFactory factory)
         respuesta.StatusCode.Should().Be(HttpStatusCode.BadRequest);
 
         var mensaje = await respuesta.Content.ReadAsStringAsync();
-        mensaje.Should().Contain("Factura").And.Contain("Tarea");
+        mensaje.Should().Contain("Factura").And.Contain("Task");
     }
 
     /// <summary>Una mención mal formada no se guarda, y el guardado del texto no falla por ello.</summary>
@@ -230,7 +230,7 @@ public sealed class MencionesFlowTests(CrmApiFactory factory)
         var (documentoId, paginaId) = await CrearDocumentoAsync(cliente);
 
         await GuardarAsync(cliente, paginaId, "Rota",
-            """<p><span data-mencion-tipo="Tarea">Sin identificador</span></p>""");
+            """<p><span data-mention-type="Task">Sin identificador</span></p>""");
 
         // Lo que importa es que el texto de la persona se haya guardado: una mención a medias no
         // puede costarle el contenido.
@@ -247,7 +247,7 @@ public sealed class MencionesFlowTests(CrmApiFactory factory)
     {
         var anonimo = factory.CreateClient();
 
-        (await anonimo.GetAsync($"/api/v1/docs/mentions/Tarea/{Guid.NewGuid()}")).StatusCode
+        (await anonimo.GetAsync($"/api/v1/docs/mentions/Task/{Guid.NewGuid()}")).StatusCode
             .Should().Be(HttpStatusCode.Unauthorized);
     }
 }

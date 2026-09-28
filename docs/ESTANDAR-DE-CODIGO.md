@@ -220,8 +220,9 @@ Un concepto, un nombre. Ordenado por área.
 | mover página, renombrar | `MovePage`, `Rename` |
 | es descendiente | `IsDescendantOf` |
 | aviso (bloque), tono | `Callout`, `Tone` |
-| desplegable | `Toggle` (bloque) |
-| columnas / columna | `Columns` / `Column` |
+| tonos de aviso: nota, ojo, peligro, bien | `note`, `warning`, `danger`, `success` (valores guardados) |
+| desplegable | `Toggle` (bloque; clase `toggle`) |
+| columnas / columna, cuántas | `Columns` / `Column`, `count` |
 | bloque de código | `CodeBlock` |
 | comandos del editor | `EditorCommands` |
 | pedir URL | `PromptUrl` |
@@ -237,8 +238,10 @@ Un concepto, un nombre. Ordenado por área.
 | tipos comentables | `CommentableEntityTypes` |
 | entidad comentada (en un comentario) | `EntityType` + `EntityId` |
 | esquema (índice) del documento, entrada | `DocumentOutline`, `OutlineEntry` |
-| marca de comentario (en el editor) | `CommentMark` (`setComment`, `unsetComment`) |
+| marca de comentario (en el editor), texto comentado | `CommentMark` (`setComment`, `unsetComment`), clase `commented` |
 | mención (nodo del editor), candidato, buscador | `Mention`, `MentionCandidate`, `MentionSearch` |
+| atributos de la mención: tipo, entidad, etiqueta | `type`, `entityId`, `label` (HTML: `data-mention-type`, `data-mention-id`) |
+| nombre en pantalla de cada tipo mencionable | `MENTION_TYPE_LABELS` |
 | mencionado en | `MentionedIn` |
 | clase de URL (imagen, vídeo, adjunto, enlace) | `UrlKind` |
 | estado de guardado: quieto, pendiente, guardando | `SaveState`: `idle`, `pending`, `saving` |
@@ -332,7 +335,7 @@ suites completas en verde, catálogo i18n re-extraído al final.
 | 4b ✅ | **Frontend de tareas y proyectos** | Gantt, carga de trabajo y la ficha: 329 identificadores, diff aparte para poder revisarlo |
 | 5a ✅ | **Docs + Comments** (backend) | Plantillas, anotaciones, árbol y menciones; tablas y rutas |
 | 5b ✅ | **Frontend de documentos y comentarios** | Editor y extensiones: más de 200 identificadores, diff aparte |
-| 5c | **Valores guardados de los tipos de entidad** («Tarea» → «Task»…) | Viven en tablas de cinco módulos y dentro del HTML de las páginas: cambio propio con su migración de datos |
+| 5c ✅ | **Valores guardados de los tipos de entidad** («Tarea» → «Task»…) | Viven en tablas de cinco módulos y dentro del HTML de las páginas: cambio propio con su migración de datos |
 | 6 | **Calendar + Notifications + Communication** | Agenda |
 | 7 | **Reporting** (motor, exportaciones, programaciones, paneles) | El bloque más grande del Host |
 | 8 | **CustomFields + Automations + Webhook + Tags** | Fórmulas y reglas |
@@ -377,9 +380,9 @@ compilaba y las menciones daban 500. Después de cada renombrado:
 ficheros del Host pertenecen a otro módulo (las exportaciones a Reporting, los avisos de
 automatización a Automations, la agenda a Calendar) y van con él.
 
-**Los valores guardados no son nombres.** `EntityTypes.Task` se renombró, pero su valor sigue
-siendo `"Tarea"`: está escrito dentro del HTML de los documentos (`data-mencion-tipo`) y en las
-tablas de favoritos y menciones. Cambiarlo exige migrar ese contenido, y va con el bloque de Docs.
+**Los valores guardados no son nombres.** Renombrar `EntityTypes.Task` no cambia su valor: está
+escrito dentro del HTML de los documentos y en las tablas de favoritos, comentarios y menciones, y
+cambiarlo exige migrar ese contenido. Por eso fue un bloque aparte, el 5c.
 
 ### Hecho en el bloque 1
 
@@ -542,6 +545,49 @@ tablas de favoritos y menciones. Cambiarlo exige migrar ese contenido, y va con 
   padre no da error —Angular la toma por un evento del DOM y simplemente nunca llega—, así que los
   nombres de entradas y salidas se cambiaron a mano en cada padre; y una salida traducida a
   `close` o `cancel` choca con eventos nativos, así que siguen la convención `closed`/`cancelled`.
+
+### Hecho en el bloque 5c (valores guardados)
+
+- **Tipos de entidad:** `EntityTypes` pasa de «Tarea», «Proyecto», «Documento» a «Task», «Project»,
+  «Document» («Ticket» ya lo era), y con él `MentionableTypes.Person` («Persona» → «Person») y
+  `CommentableEntityTypes.Annotation` («Anotacion» → «Annotation»). `TipoDeEntidad` de campos
+  personalizados deja de escribirlos a mano y los toma de `EntityTypes`. Como el vocabulario de
+  permisos ya estaba en inglés, `PermissionTypes.FromEntityType` queda como la identidad (se
+  mantiene como único punto de paso). La agenda del día devuelve también «Event», «Task»,
+  «Ticket» y «Project».
+- **Cuatro migraciones de datos** `StoredValuesToEnglish` (Identity, Comments, Docs y
+  CustomFields), sin cambio de esquema: `Favorites.EntityType`, `Comments.EntityType`,
+  `DocumentMentions.MentionedType` y `CustomFieldDefinitions.EntidadDestino` (la columna se
+  renombra en el bloque 8).
+- **El HTML de las páginas** se reescribe con `REGEXP_REPLACE` **sólo dentro de las etiquetas**
+  (`(<[^>]*)atributo` → `$1nuevo`), así que el texto que alguien haya escrito tal cual en una página
+  no se toca: `data-mencion-tipo`/`-id` → `data-mention-type`/`-id` (con su valor),
+  `data-tipo="aviso"` → `data-type="callout"`, `data-tono` → `data-tone` con los tonos
+  `nota`/`ojo`/`peligro`/`bien` → `note`/`warning`/`danger`/`success`,
+  `data-tipo="columnas"`/`"columna"` → `data-type="columns"`/`"column"`, `data-cantidad` →
+  `data-count`, `data-anotacion` → `data-annotation`, y las clases `aviso`, `columnas`, `columna`,
+  `comentado`, `desplegable` y `mencion` → `callout`, `columns`, `column`, `commented`, `toggle` y
+  `mention`. En el editor, los nombres de los nodos y las claves de sus atributos pasan igual
+  (`tipo`/`entidadId`/`etiqueta` → `type`/`entityId`/`label`, `tono` → `tone`, `cantidad` →
+  `count`, `anotacionId` → `annotationId`), y las plantillas predefinidas del servidor escriben ya
+  los nombres nuevos.
+- **Comprobado contra la base de desarrollo** con una página sembrada que llevaba cada caso (los
+  cinco tipos de mención, los cuatro tonos, tres columnas, un desplegable, un comentario y el texto
+  `data-tono="bien"` escrito en un párrafo): cada valor quedó en su sitio y el párrafo intacto. La
+  bajada deja las páginas byte a byte como estaban (mismo MD5). **Un fallo propio que salió así:**
+  la bajada iba primero en orden inverso, y el genérico `data-tone="` → `data-tono="` se habría
+  adelantado a los tonos concretos, dejando `data-tono="success"`. Va en el mismo orden que la
+  subida.
+- **Dos pruebas nuevas que fijan el contrato con los datos:** `stored-markup.spec.ts` abre en el
+  editor el HTML **tal como lo deja la migración** y comprueba que reconoce cada bloque y lo vuelve
+  a escribir igual; `PlantillasPredefinidasTests` comprueba que las plantillas del servidor sólo
+  usan tonos que el editor conoce.
+- **Un texto de la interfaz que se habría colado:** el cajón de eventos del calendario enseñaba el
+  tipo del enlace tal cual (`{{ e.tipo }} ·`), así que habría pasado de «Tarea ·» a «Task ·». Ahora
+  usa `MENTION_TYPE_LABELS`, con el nombre traducible de cada tipo.
+- **Sin alias:** no se sigue leyendo el formato viejo. La migración deja la base sin él, y una
+  pestaña abierta desde antes del despliegue que guarde después escribiría el formato viejo; se
+  acepta, igual que en el resto de cambios de contrato de este plan.
 
 ---
 

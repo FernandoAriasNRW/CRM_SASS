@@ -30,11 +30,11 @@ const SESION = {
 const DEFINICIONES = [
   {
     id: 'dddddddd-0000-0000-0000-000000000002', nombre: 'Canal de entrada', tipo: 'Seleccion',
-    entidadDestino: 'Tarea', obligatorio: true, opciones: ['Web', 'Teléfono'], posicion: 5,
+    entidadDestino: 'Task', obligatorio: true, opciones: ['Web', 'Teléfono'], posicion: 5,
   },
   {
     id: 'dddddddd-0000-0000-0000-000000000001', nombre: 'Cliente facturable', tipo: 'Texto',
-    entidadDestino: 'Tarea', obligatorio: false, opciones: [], posicion: 0,
+    entidadDestino: 'Task', obligatorio: false, opciones: [], posicion: 0,
   },
 ];
 

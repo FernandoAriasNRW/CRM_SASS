@@ -28,7 +28,7 @@ describe('CustomFieldsFormComponent', () => {
     servicio.valoresDe.and.returnValue(of(campos));
 
     fixture = TestBed.createComponent(CustomFieldsFormComponent);
-    fixture.componentRef.setInput('entidad', 'Tarea');
+    fixture.componentRef.setInput('entidad', 'Task');
     fixture.componentRef.setInput('entityId', 'tarea-1');
     fixture.detectChanges();
     await fixture.whenStable();

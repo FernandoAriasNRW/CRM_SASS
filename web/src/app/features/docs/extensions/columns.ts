@@ -6,7 +6,7 @@ declare module '@tiptap/core' {
   interface Commands<ReturnType> {
     columns: {
       /** Inserta un bloque de dos o tres columnas, cada una con un párrafo vacío. */
-      insertColumns: (cantidad: 2 | 3) => ReturnType;
+      insertColumns: (count: 2 | 3) => ReturnType;
       /**
        * Deshace las columnas en las que está el cursor: su contenido queda seguido, una columna
        * detrás de otra, en vez de borrarse.
@@ -23,17 +23,17 @@ declare module '@tiptap/core' {
  * pulsar retroceso en una columna vacía se llevaba el texto de la de al lado.
  */
 export const Column = Node.create({
-  name: 'columna',
+  name: 'column',
   content: 'block+',
   isolating: true,
   defining: true,
 
   parseHTML() {
-    return [{ tag: 'div[data-tipo="columna"]' }];
+    return [{ tag: 'div[data-type="column"]' }];
   },
 
   renderHTML({ HTMLAttributes }) {
-    return ['div', mergeAttributes(HTMLAttributes, { 'data-tipo': 'columna', class: 'columna' }), 0];
+    return ['div', mergeAttributes(HTMLAttributes, { 'data-type': 'column', class: 'column' }), 0];
   },
 });
 
@@ -52,41 +52,41 @@ export const Column = Node.create({
  * En pantallas estrechas se apilan: tres columnas en un móvil son tres tiras ilegibles.
  */
 export const Columns = Node.create({
-  name: 'columnas',
+  name: 'columns',
   group: 'block',
-  content: 'columna{2,3}',
+  content: 'column{2,3}',
   isolating: true,
   defining: true,
 
   addAttributes() {
     return {
-      cantidad: {
+      count: {
         default: 2,
-        parseHTML: (element) => (element.getAttribute('data-cantidad') === '3' ? 3 : 2),
-        renderHTML: (attributes) => ({ 'data-cantidad': String(attributes['cantidad']) })
+        parseHTML: (element) => (element.getAttribute('data-count') === '3' ? 3 : 2),
+        renderHTML: (attributes) => ({ 'data-count': String(attributes['count']) })
       }
     };
   },
 
   parseHTML() {
-    return [{ tag: 'div[data-tipo="columnas"]' }];
+    return [{ tag: 'div[data-type="columns"]' }];
   },
 
   renderHTML({ HTMLAttributes }) {
-    return ['div', mergeAttributes(HTMLAttributes, { 'data-tipo': 'columnas', class: 'columnas' }), 0];
+    return ['div', mergeAttributes(HTMLAttributes, { 'data-type': 'columns', class: 'columns' }), 0];
   },
 
   addCommands() {
     return {
-      insertColumns: (cantidad: 2 | 3) => ({ chain, state }) => {
+      insertColumns: (count: 2 | 3) => ({ chain, state }) => {
         const from = state.selection.from;
 
         return chain()
           .insertContent({
             type: this.name,
-            attrs: { cantidad },
-            content: Array.from({ length: cantidad }, () => ({
-              type: 'columna',
+            attrs: { count },
+            content: Array.from({ length: count }, () => ({
+              type: 'column',
               content: [{ type: 'paragraph' }]
             }))
           })

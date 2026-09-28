@@ -64,7 +64,7 @@ public sealed class ComparticionFlowTests(CrmApiFactory factory)
 
         try
         {
-            (await cliente.PutAsJsonAsync($"/api/v1/sharing/Tarea/{tareaId}/{yo}", new { Level = "Edit" }))
+            (await cliente.PutAsJsonAsync($"/api/v1/sharing/Task/{tareaId}/{yo}", new { Level = "Edit" }))
                 .StatusCode.Should().Be(HttpStatusCode.NoContent);
 
             var compartidas = await IdsAsync(cliente, "/api/v1/tasks?pageSize=200&filter=shared");
@@ -74,7 +74,7 @@ public sealed class ComparticionFlowTests(CrmApiFactory factory)
         }
         finally
         {
-            await cliente.DeleteAsync($"/api/v1/sharing/Tarea/{tareaId}/{yo}");
+            await cliente.DeleteAsync($"/api/v1/sharing/Task/{tareaId}/{yo}");
         }
     }
 
@@ -85,8 +85,8 @@ public sealed class ComparticionFlowTests(CrmApiFactory factory)
 
         var tareaId = (await IdsAsync(cliente, "/api/v1/tasks?pageSize=1"))[0];
 
-        await cliente.PutAsJsonAsync($"/api/v1/sharing/Tarea/{tareaId}/{yo}", new { Level = "View" });
-        await cliente.DeleteAsync($"/api/v1/sharing/Tarea/{tareaId}/{yo}");
+        await cliente.PutAsJsonAsync($"/api/v1/sharing/Task/{tareaId}/{yo}", new { Level = "View" });
+        await cliente.DeleteAsync($"/api/v1/sharing/Task/{tareaId}/{yo}");
 
         var compartidas = await IdsAsync(cliente, "/api/v1/tasks?pageSize=200&filter=shared");
         compartidas.Should().NotContain(tareaId);
@@ -132,7 +132,7 @@ public sealed class ComparticionFlowTests(CrmApiFactory factory)
 
         try
         {
-            await cliente.PutAsJsonAsync($"/api/v1/sharing/Tarea/{candidata}/{yo}", new { Level = "View" });
+            await cliente.PutAsJsonAsync($"/api/v1/sharing/Task/{candidata}/{yo}", new { Level = "View" });
 
             var privadasDespues = await IdsAsync(cliente, "/api/v1/tasks?pageSize=200&filter=private");
 
@@ -142,7 +142,7 @@ public sealed class ComparticionFlowTests(CrmApiFactory factory)
         }
         finally
         {
-            await cliente.DeleteAsync($"/api/v1/sharing/Tarea/{candidata}/{yo}");
+            await cliente.DeleteAsync($"/api/v1/sharing/Task/{candidata}/{yo}");
         }
     }
 
@@ -155,15 +155,15 @@ public sealed class ComparticionFlowTests(CrmApiFactory factory)
 
         try
         {
-            await cliente.PutAsJsonAsync($"/api/v1/sharing/Tarea/{tareaId}/{yo}", new { Level = "Full" });
+            await cliente.PutAsJsonAsync($"/api/v1/sharing/Task/{tareaId}/{yo}", new { Level = "Full" });
 
-            var conQuien = await cliente.GetFromJsonAsync<JsonElement>($"/api/v1/sharing/Tarea/{tareaId}");
+            var conQuien = await cliente.GetFromJsonAsync<JsonElement>($"/api/v1/sharing/Task/{tareaId}");
 
             conQuien.EnumerateArray().Select(x => x.GetGuid()).Should().Contain(yo);
         }
         finally
         {
-            await cliente.DeleteAsync($"/api/v1/sharing/Tarea/{tareaId}/{yo}");
+            await cliente.DeleteAsync($"/api/v1/sharing/Task/{tareaId}/{yo}");
         }
     }
 
@@ -177,16 +177,16 @@ public sealed class ComparticionFlowTests(CrmApiFactory factory)
 
         try
         {
-            await cliente.PutAsJsonAsync($"/api/v1/sharing/Tarea/{tareaId}/{yo}", new { Level = "View" });
-            await cliente.PutAsJsonAsync($"/api/v1/sharing/Tarea/{tareaId}/{yo}", new { Level = "Full" });
+            await cliente.PutAsJsonAsync($"/api/v1/sharing/Task/{tareaId}/{yo}", new { Level = "View" });
+            await cliente.PutAsJsonAsync($"/api/v1/sharing/Task/{tareaId}/{yo}", new { Level = "Full" });
 
-            var conQuien = await cliente.GetFromJsonAsync<JsonElement>($"/api/v1/sharing/Tarea/{tareaId}");
+            var conQuien = await cliente.GetFromJsonAsync<JsonElement>($"/api/v1/sharing/Task/{tareaId}");
 
             conQuien.EnumerateArray().Should().HaveCount(1);
         }
         finally
         {
-            await cliente.DeleteAsync($"/api/v1/sharing/Tarea/{tareaId}/{yo}");
+            await cliente.DeleteAsync($"/api/v1/sharing/Task/{tareaId}/{yo}");
         }
     }
 
@@ -197,7 +197,7 @@ public sealed class ComparticionFlowTests(CrmApiFactory factory)
 
         var tareaId = (await IdsAsync(cliente, "/api/v1/tasks?pageSize=1"))[0];
 
-        (await cliente.PutAsJsonAsync($"/api/v1/sharing/Tarea/{tareaId}/{yo}", new { Level = "Jefe" }))
+        (await cliente.PutAsJsonAsync($"/api/v1/sharing/Task/{tareaId}/{yo}", new { Level = "Jefe" }))
             .StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
@@ -215,7 +215,7 @@ public sealed class ComparticionFlowTests(CrmApiFactory factory)
     {
         var anonimo = factory.CreateClient();
 
-        (await anonimo.PutAsJsonAsync($"/api/v1/sharing/Tarea/{Guid.NewGuid()}/{Guid.NewGuid()}", new { Level = "View" }))
+        (await anonimo.PutAsJsonAsync($"/api/v1/sharing/Task/{Guid.NewGuid()}/{Guid.NewGuid()}", new { Level = "View" }))
             .StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 }

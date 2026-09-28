@@ -9,7 +9,7 @@ import { type EditorCommand, type PromptUrl, matchingCommands } from './editor-c
  * `comandos-del-editor.ts`, que es donde se puede probar sin montar un editor.
  */
 export const getSuggestionItems = ({ query, editor }: { query: string; editor: Editor }) =>
-  matchingCommands(query, { insideColumns: editor.isActive('columnas') });
+  matchingCommands(query, { insideColumns: editor.isActive('columns') });
 
 interface SuggestionProps {
   items: EditorCommand[];
@@ -32,7 +32,7 @@ interface SuggestionProps {
  * proyecto, como el desplegable de menciones, que ya lo hacía bien.
  *
  * Se construye con DOM a mano porque TipTap espera un renderizador síncrono y en Angular no hay un
- * equivalente cómodo a `ReactRenderer`. Es la misma técnica que usa `mencion.ts`.
+ * equivalente cómodo a `ReactRenderer`. Es la misma técnica que usa `mention.ts`.
  */
 export function renderItems(promptUrl: PromptUrl) {
   return () => {

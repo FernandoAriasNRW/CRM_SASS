@@ -9,7 +9,7 @@ import type { AnnotationDto } from './docs.service';
  * El panel de comentarios en línea de una página.
  *
  * <b>El hilo lo pinta el componente que ya existe</b> —el mismo de tareas, tickets y proyectos—
- * pasándole `Anotacion` como entidad. Comentar es la misma operación con las mismas reglas: quién
+ * pasándole `Annotation` como entidad. Comentar es la misma operación con las mismas reglas: quién
  * edita, quién borra, un solo nivel de respuestas. Escribir aquí un hilo propio habría sido un
  * cuarto sitio donde arreglar el mismo fallo.
  *
@@ -91,7 +91,7 @@ import type { AnnotationDto } from './docs.service';
             </p>
           }
 
-          <app-comments entityType="Anotacion" [entityId]="annotation.id" />
+          <app-comments entityType="Annotation" [entityId]="annotation.id" />
         </article>
       }
     </div>

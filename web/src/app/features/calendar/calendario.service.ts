@@ -23,7 +23,7 @@ export interface EventoDelCalendario {
 
 /** Una cosa que cae en un día, venga del módulo que venga. */
 export interface CosaDelDia {
-  tipo: 'Evento' | 'Tarea' | 'Ticket' | 'Proyecto';
+  tipo: 'Event' | 'Task' | 'Ticket' | 'Project';
   id: string;
   titulo: string;
   detalle: string | null;

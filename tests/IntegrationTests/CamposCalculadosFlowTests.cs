@@ -46,7 +46,7 @@ public sealed class CamposCalculadosFlowTests(CrmApiFactory factory)
         {
             nombre,
             tipo,
-            entidadDestino = "Tarea",
+            entidadDestino = "Task",
             obligatorio = false,
             opciones = (string[]?)null,
             posicion = 0,
@@ -61,7 +61,7 @@ public sealed class CamposCalculadosFlowTests(CrmApiFactory factory)
         HttpClient cliente, string nombre, string tipo, string? formula) =>
         cliente.PostAsJsonAsync("/api/v1/custom-fields", new
         {
-            nombre, tipo, entidadDestino = "Tarea", obligatorio = false,
+            nombre, tipo, entidadDestino = "Task", obligatorio = false,
             opciones = (string[]?)null, posicion = 0, formula,
         });
 
@@ -75,7 +75,7 @@ public sealed class CamposCalculadosFlowTests(CrmApiFactory factory)
 
     private static async Task<JsonElement> CampoDeAsync(HttpClient cliente, Guid entidad, Guid campo)
     {
-        var todos = await cliente.GetFromJsonAsync<JsonElement>($"/api/v1/custom-fields/values/Tarea/{entidad}");
+        var todos = await cliente.GetFromJsonAsync<JsonElement>($"/api/v1/custom-fields/values/Task/{entidad}");
 
         return todos.EnumerateArray().Single(c => c.GetProperty("definitionId").GetGuid() == campo);
     }

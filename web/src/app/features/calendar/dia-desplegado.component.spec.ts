@@ -15,7 +15,7 @@ describe('DiaDesplegadoComponent', () => {
   let componente: DiaDesplegadoComponent;
 
   const evento = (id: string, hora: string, anulado = false): CosaDelDia => ({
-    tipo: 'Evento', id, titulo: `Evento ${id}`, detalle: null,
+    tipo: 'Event', id, titulo: `Evento ${id}`, detalle: null,
     hora, horaFin: null, anulado
   });
 
@@ -73,7 +73,7 @@ describe('DiaDesplegadoComponent', () => {
    */
   it('lo que no tiene hora va aparte', () => {
     const tarea: CosaDelDia = {
-      tipo: 'Tarea', id: 't1', titulo: 'Migrar la base', detalle: 'En curso',
+      tipo: 'Task', id: 't1', titulo: 'Migrar la base', detalle: 'En curso',
       hora: null, horaFin: null, anulado: false
     };
 

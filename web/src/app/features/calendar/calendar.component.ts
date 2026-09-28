@@ -230,14 +230,14 @@ export class CalendarComponent implements OnInit {
    * pantalla que mantener y que se quedaría atrás.
    */
   abrirCosa(cosa: CosaDelDia): void {
-    if (cosa.tipo === 'Evento') {
+    if (cosa.tipo === 'Event') {
       const evento = this.eventos().find(e => e.id === cosa.id);
       if (evento) this.abrirFormulario(evento);
       return;
     }
 
     const rutas: Record<string, string> = {
-      Tarea: '/tasks', Ticket: '/tickets', Proyecto: '/projects'
+      Task: '/tasks', Ticket: '/tickets', Project: '/projects'
     };
 
     void this.router.navigate([rutas[cosa.tipo]], { queryParams: { id: cosa.id } });

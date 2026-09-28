@@ -2059,7 +2059,7 @@ Pendiente</source>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/calendar/evento-drawer.component.ts</context>
-          <context context-type="linenumber">249</context>
+          <context context-type="linenumber">252</context>
         </context-group>
       </trans-unit>
       <trans-unit id="7903107589011690575" datatype="html">
@@ -2334,6 +2334,10 @@ Pendiente</source>
           <context context-type="linenumber">19</context>
         </context-group>
         <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/extensions/mention.ts</context>
+          <context context-type="linenumber">18</context>
+        </context-group>
+        <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tasks/gantt.component.html</context>
           <context context-type="linenumber">13,14</context>
         </context-group>
@@ -2453,21 +2457,21 @@ Pendiente</source>
         <source>Modificar evento</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/calendar/evento-drawer.component.ts</context>
-          <context context-type="linenumber">249</context>
+          <context context-type="linenumber">252</context>
         </context-group>
       </trans-unit>
       <trans-unit id="7678138894707121061" datatype="html">
         <source>Evento modificado</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/calendar/evento-drawer.component.ts</context>
-          <context context-type="linenumber">321</context>
+          <context context-type="linenumber">324</context>
         </context-group>
       </trans-unit>
       <trans-unit id="9105545273739284325" datatype="html">
         <source>Evento creado</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/calendar/evento-drawer.component.ts</context>
-          <context context-type="linenumber">321</context>
+          <context context-type="linenumber">324</context>
         </context-group>
       </trans-unit>
       <trans-unit id="2054609818419433933" datatype="html">
@@ -3035,6 +3039,10 @@ Pendiente</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
           <context context-type="linenumber">353,354</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/extensions/mention.ts</context>
+          <context context-type="linenumber">21</context>
         </context-group>
       </trans-unit>
       <trans-unit id="4871571573427035383" datatype="html">
@@ -3871,6 +3879,35 @@ Pendiente</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/docs/extensions/editor-commands.ts</context>
           <context context-type="linenumber">316</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3926607342166670745" datatype="html">
+        <source>Persona</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/extensions/mention.ts</context>
+          <context context-type="linenumber">17</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/workload.component.html</context>
+          <context context-type="linenumber">11,12</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2097731515016603806" datatype="html">
+        <source>Ticket</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/extensions/mention.ts</context>
+          <context context-type="linenumber">19</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6284275986149864078" datatype="html">
+        <source>Proyecto</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/extensions/mention.ts</context>
+          <context context-type="linenumber">20</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/tasks.component.ts</context>
+          <context context-type="linenumber">159</context>
         </context-group>
       </trans-unit>
       <trans-unit id="2921678257689813286" datatype="html">
@@ -6056,13 +6093,6 @@ Pendiente</source>
           <context context-type="linenumber">153</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="6284275986149864078" datatype="html">
-        <source>Proyecto</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/tasks/tasks.component.ts</context>
-          <context context-type="linenumber">159</context>
-        </context-group>
-      </trans-unit>
       <trans-unit id="8121921990776935406" datatype="html">
         <source><x id="PH" equiv-text="task.checklistDone ?? 0"/> de <x id="PH_1" equiv-text="task.checklistTotal"/> puntos hechos</source>
         <context-group purpose="location">
@@ -6131,13 +6161,6 @@ Pendiente</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tasks/workload.component.html</context>
           <context context-type="linenumber">4,5</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="3926607342166670745" datatype="html">
-        <source>Persona</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/tasks/workload.component.html</context>
-          <context context-type="linenumber">11,12</context>
         </context-group>
       </trans-unit>
       <trans-unit id="3448462145758383019" datatype="html">

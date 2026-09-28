@@ -53,8 +53,12 @@ public static class BuiltInTemplates
                $"<li data-type=\"taskItem\" data-checked=\"false\"><p>{e}</p></li>"))
            + "</ul>";
 
+    /// <summary>
+    /// Un aviso con su tono: <c>note</c>, <c>warning</c>, <c>danger</c> o <c>success</c>, los mismos
+    /// que acepta la extensión del editor (<c>callout.ts</c>). Otro valor lo pinta como nota.
+    /// </summary>
     private static string Callout(string tone, string text)
-        => $"<div data-tipo=\"aviso\" data-tono=\"{tone}\"><p>{text}</p></div>";
+        => $"<div data-type=\"callout\" data-tone=\"{tone}\"><p>{text}</p></div>";
 
     // ── Resumen de proyecto ─────────────────────────────────────────────────────────────────
 
@@ -73,7 +77,7 @@ public static class BuiltInTemplates
             + "<h2>Hitos</h2>"
             + Checklist("Arranque y revisión de la arquitectura", "Primera entrega usable", "Pruebas con usuarios", "Puesta en producción")
             + "<h2>Riesgos y dependencias</h2>"
-            + Callout("ojo", "Anota los riesgos con nombre y fecha: un riesgo sin responsable no lo vigila nadie."))]);
+            + Callout("warning", "Anota los riesgos con nombre y fecha: un riesgo sin responsable no lo vigila nadie."))]);
 
     private static TemplateContent ProjectOverviewEn() => new(
         "Project overview",
@@ -90,7 +94,7 @@ public static class BuiltInTemplates
             + "<h2>Milestones</h2>"
             + Checklist("Kickoff and architecture review", "First usable release", "User testing", "Production release")
             + "<h2>Risks and dependencies</h2>"
-            + Callout("ojo", "Give every risk an owner and a date: a risk nobody owns is a risk nobody watches."))]);
+            + Callout("warning", "Give every risk an owner and a date: a risk nobody owns is a risk nobody watches."))]);
 
     // ── Acta de reunión ─────────────────────────────────────────────────────────────────────
 
@@ -107,7 +111,7 @@ public static class BuiltInTemplates
             + "<h2>Notas</h2>"
             + "<p></p>"
             + "<h2>Acuerdos</h2>"
-            + Callout("bien", "Un acuerdo por línea, con quién lo lleva. Lo que no tiene responsable no se hace.")
+            + Callout("success", "Un acuerdo por línea, con quién lo lleva. Lo que no tiene responsable no se hace.")
             + "<h2>Tareas</h2>"
             + Checklist("Tarea — responsable — fecha"))]);
 
@@ -124,7 +128,7 @@ public static class BuiltInTemplates
             + "<h2>Notes</h2>"
             + "<p></p>"
             + "<h2>Decisions</h2>"
-            + Callout("bien", "One decision per line, with who owns it. What has no owner does not get done.")
+            + Callout("success", "One decision per line, with who owns it. What has no owner does not get done.")
             + "<h2>Action items</h2>"
             + Checklist("Task — owner — date"))]);
 
@@ -137,7 +141,7 @@ public static class BuiltInTemplates
         [("Primeros pasos",
             "<h1>Wiki del equipo</h1>"
             + "<p>El sitio donde vive lo que el equipo necesita saber: cómo se trabaja, dónde está cada cosa y a quién preguntar.</p>"
-            + Callout("nota", "Usa una página por tema y cuélgalas unas de otras desde el árbol de la izquierda.")
+            + Callout("note", "Usa una página por tema y cuélgalas unas de otras desde el árbol de la izquierda.")
             + "<h2>Enlaces rápidos</h2>"
             + "<ul><li><p>Guía de incorporación</p></li><li><p>Documentación de la API</p></li><li><p>Sistema de diseño</p></li></ul>"
             + "<h2>Normas de trabajo</h2>"
@@ -150,7 +154,7 @@ public static class BuiltInTemplates
         [("Getting started",
             "<h1>Team wiki</h1>"
             + "<p>Where everything the team needs to know lives: how we work, where things are and who to ask.</p>"
-            + Callout("nota", "Use one page per topic and nest them from the tree on the left.")
+            + Callout("note", "Use one page per topic and nest them from the tree on the left.")
             + "<h2>Quick links</h2>"
             + "<ul><li><p>Onboarding guide</p></li><li><p>API documentation</p></li><li><p>Design system</p></li></ul>"
             + "<h2>Ways of working</h2>"
@@ -172,7 +176,7 @@ public static class BuiltInTemplates
             + "<p>Qué necesita el cliente con sus palabras, antes de traducirlo a tareas.</p>"
             + "<h2>Lista de alta</h2>"
             + Checklist("Cuenta creada y permisos dados", "Reunión de arranque hecha", "Requisitos revisados y aceptados", "Integración funcionando")
-            + Callout("peligro", "No se da el alta por terminada sin la aceptación por escrito de los requisitos."))]);
+            + Callout("danger", "No se da el alta por terminada sin la aceptación por escrito de los requisitos."))]);
 
     private static TemplateContent ClientOnboardingEn() => new(
         "Client onboarding",
@@ -188,5 +192,5 @@ public static class BuiltInTemplates
             + "<p>What the client needs, in their own words, before turning it into tasks.</p>"
             + "<h2>Onboarding checklist</h2>"
             + Checklist("Account created and permissions granted", "Kickoff meeting held", "Requirements reviewed and signed off", "Integration working")
-            + Callout("peligro", "Onboarding is not done until the requirements are signed off in writing."))]);
+            + Callout("danger", "Onboarding is not done until the requirements are signed off in writing."))]);
 }

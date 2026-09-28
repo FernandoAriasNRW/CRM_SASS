@@ -50,7 +50,7 @@ describe('MencionesService', () => {
 
     expect(requested).toEqual(['/users?pageSize=5&search=ana']);
     expect(candidates).toEqual([
-      { id: 'u1', etiqueta: 'Ana Ruiz', tipo: 'Persona', detail: 'ana@ejemplo.com' }
+      { id: 'u1', label: 'Ana Ruiz', type: 'Person', detail: 'ana@ejemplo.com' }
     ]);
   });
 
@@ -97,7 +97,7 @@ describe('MencionesService', () => {
     const candidates = await service.search('#', 'migrar');
 
     expect(candidates).toEqual([
-      { id: 't1', etiqueta: 'Migrar la base', tipo: 'Tarea', detail: 'Abierta' }
+      { id: 't1', label: 'Migrar la base', type: 'Task', detail: 'Abierta' }
     ]);
   });
 });

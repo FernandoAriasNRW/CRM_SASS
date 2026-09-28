@@ -5,15 +5,27 @@ import tippy, { type Instance } from 'tippy.js';
 
 /**
  * Qué se puede mencionar. Los nombres son los que el servidor lee de
- * `TiposMencionables`; escribir otro deja la mención fuera del índice **sin dar ningún error**.
+ * `MentionableTypes`; escribir otro deja la mención fuera del índice **sin dar ningún error**.
  */
-export type MentionType = 'Persona' | 'Tarea' | 'Ticket' | 'Proyecto' | 'Documento';
+export type MentionType = 'Person' | 'Task' | 'Ticket' | 'Project' | 'Document';
+
+/**
+ * Cómo se le llama a cada tipo en pantalla. El valor de {@link MentionType} es un dato que se
+ * guarda y viaja a la API; enseñarlo tal cual pondría «Task» delante de una tarea.
+ */
+export const MENTION_TYPE_LABELS: Record<MentionType, string> = {
+  Person: $localize`Persona`,
+  Task: $localize`Tarea`,
+  Ticket: $localize`Ticket`,
+  Project: $localize`Proyecto`,
+  Document: $localize`Documento`
+};
 
 /** Un candidato del desplegable de menciones. */
 export interface MentionCandidate {
   id: string;
-  etiqueta: string;
-  tipo: MentionType;
+  label: string;
+  type: MentionType;
   /** Contexto para distinguir dos con el mismo nombre: el proyecto, el estado… */
   detail?: string;
 }
@@ -27,15 +39,15 @@ export type MentionSearch = (
  * <b>El contrato con el servidor, en un solo sitio.</b>
  *
  * El servidor extrae las menciones leyendo estos dos atributos del HTML guardado
- * (`LectorDeMenciones`). Si aquí cambiaran los nombres, las menciones dejarían de indexarse y
+ * (`MentionReader`). Si aquí cambiaran los nombres, las menciones dejarían de indexarse y
  * ninguna tarea volvería a saber qué documentos hablan de ella — **sin que nada fallara**.
  *
  * Por eso están como constantes con nombre y no escritos a mano en el renderizador, y por eso hay
  * una prueba de integración que escribe una mención con este formato y comprueba que la tarea la
  * ve desde el otro lado.
  */
-export const TYPE_ATTRIBUTE = 'data-mencion-tipo';
-export const ID_ATTRIBUTE = 'data-mencion-id';
+export const TYPE_ATTRIBUTE = 'data-mention-type';
+export const ID_ATTRIBUTE = 'data-mention-id';
 
 /**
  * Menciones dentro del editor: `@` para personas y `#` para tareas, tickets y proyectos.
@@ -48,7 +60,7 @@ export const ID_ATTRIBUTE = 'data-mencion-id';
  * la resuelve el servidor a partir de lo que este nodo escribe.
  */
 export const Mention = Node.create<{ search: MentionSearch | null }>({
-  name: 'mencion',
+  name: 'mention',
 
   group: 'inline',
   inline: true,
@@ -64,17 +76,17 @@ export const Mention = Node.create<{ search: MentionSearch | null }>({
 
   addAttributes() {
     return {
-      tipo: {
+      type: {
         default: null,
         parseHTML: (element) => element.getAttribute(TYPE_ATTRIBUTE),
-        renderHTML: (attributes) => (attributes['tipo'] ? { [TYPE_ATTRIBUTE]: attributes['tipo'] } : {})
+        renderHTML: (attributes) => (attributes['type'] ? { [TYPE_ATTRIBUTE]: attributes['type'] } : {})
       },
-      entidadId: {
+      entityId: {
         default: null,
         parseHTML: (element) => element.getAttribute(ID_ATTRIBUTE),
-        renderHTML: (attributes) => (attributes['entidadId'] ? { [ID_ATTRIBUTE]: attributes['entidadId'] } : {})
+        renderHTML: (attributes) => (attributes['entityId'] ? { [ID_ATTRIBUTE]: attributes['entityId'] } : {})
       },
-      etiqueta: {
+      label: {
         default: '',
         parseHTML: (element) => element.textContent ?? '',
         // La etiqueta no se escribe como atributo: **es el texto del nodo**. Guardarla también en
@@ -89,20 +101,20 @@ export const Mention = Node.create<{ search: MentionSearch | null }>({
   },
 
   renderHTML({ node, HTMLAttributes }) {
-    const tipo = node.attrs['tipo'] as MentionType | null;
+    const type = node.attrs['type'] as MentionType | null;
 
     return [
       'span',
       mergeAttributes(HTMLAttributes, {
-        class: 'mencion inline-flex items-center rounded px-1 bg-primary/10 text-primary font-medium'
+        class: 'mention inline-flex items-center rounded px-1 bg-primary/10 text-primary font-medium'
       }),
-      `${tipo === 'Persona' ? '@' : '#'}${node.attrs['etiqueta']}`
+      `${type === 'Person' ? '@' : '#'}${node.attrs['label']}`
     ];
   },
 
   renderText({ node }) {
-    const tipo = node.attrs['tipo'] as MentionType | null;
-    return `${tipo === 'Persona' ? '@' : '#'}${node.attrs['etiqueta']}`;
+    const type = node.attrs['type'] as MentionType | null;
+    return `${type === 'Person' ? '@' : '#'}${node.attrs['label']}`;
   },
 
   addProseMirrorPlugins() {
@@ -114,7 +126,7 @@ export const Mention = Node.create<{ search: MentionSearch | null }>({
       Suggestion({
         editor: this.editor,
         char: trigger,
-        pluginKey: new PluginKey(`mencion-${trigger}`),
+        pluginKey: new PluginKey(`mention-${trigger}`),
         allowSpaces: false,
 
         items: async ({ query }) => (search ? search(trigger, query) : []),
@@ -125,11 +137,11 @@ export const Mention = Node.create<{ search: MentionSearch | null }>({
           editor.chain().focus()
             .insertContentAt(range, [
               {
-                type: 'mencion',
+                type: 'mention',
                 attrs: {
-                  tipo: candidate.tipo,
-                  entidadId: candidate.id,
-                  etiqueta: candidate.etiqueta
+                  type: candidate.type,
+                  entityId: candidate.id,
+                  label: candidate.label
                 }
               },
               // Un espacio detrás: sin él, lo siguiente que se escribe se pega a la mención y
@@ -177,9 +189,9 @@ function renderDropdown() {
         'w-full text-left px-2 py-1.5 text-sm rounded flex items-center gap-2 ' +
         (i === selected ? 'bg-secondary' : 'bg-transparent');
 
-      const etiqueta = document.createElement('span');
-      etiqueta.textContent = candidate.etiqueta;
-      button.appendChild(etiqueta);
+      const label = document.createElement('span');
+      label.textContent = candidate.label;
+      button.appendChild(label);
 
       if (candidate.detail) {
         const detail = document.createElement('span');

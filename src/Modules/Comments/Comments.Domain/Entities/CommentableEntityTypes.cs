@@ -25,7 +25,7 @@ public static class CommentableEntityTypes
     /// un documento tiene muchas conversaciones a la vez, cada una pegada a un sitio distinto.
     /// Dónde está pegada lo guarda Docs; el hilo, este módulo.
     /// </summary>
-    public const string Annotation = "Anotacion";
+    public const string Annotation = "Annotation";
 
     public static IReadOnlyList<string> All() => [Task, Ticket, Project, Annotation];
 
