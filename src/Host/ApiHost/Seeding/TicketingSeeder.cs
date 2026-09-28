@@ -24,7 +24,7 @@ public sealed class TicketingSeeder(TicketingDbContext ticketsDb) : IModuleSeede
         var tenantId = context.TenantId;
 
         using var _ = ticketsDb.AsTenant(tenantId);
-        try { await ticketsDb.Database.ExecuteSqlAsync($"UPDATE `Tickets` SET `TenantId` = {tenantId} WHERE `TenantId` != {tenantId}", cancellationToken); } catch { }
+        try { await OrphanRows.AdoptAsync(ticketsDb, "Tickets", "TenantId", tenantId, cancellationToken); } catch { }
 
         if (await ticketsDb.Tickets.CountAsync(t => t.TenantId == tenantId, cancellationToken) >= 5)
             return;

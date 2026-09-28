@@ -17,9 +17,9 @@ public sealed class ProjectsSeeder(ProjectsDbContext projectsDb) : IModuleSeeder
         using var _ = projectsDb.AsTenant(tenantId);
         try
         {
-            await projectsDb.Database.ExecuteSqlAsync($"UPDATE `Spaces` SET `TenantId` = {tenantId} WHERE `TenantId` != {tenantId}", cancellationToken);
-            await projectsDb.Database.ExecuteSqlAsync($"UPDATE `Folders` SET `TenantId` = {tenantId} WHERE `TenantId` != {tenantId}", cancellationToken);
-            await projectsDb.Database.ExecuteSqlAsync($"UPDATE `Projects` SET `TenantId` = {tenantId} WHERE `TenantId` != {tenantId}", cancellationToken);
+            await OrphanRows.AdoptAsync(projectsDb, "Spaces", "TenantId", tenantId, cancellationToken);
+            await OrphanRows.AdoptAsync(projectsDb, "Folders", "TenantId", tenantId, cancellationToken);
+            await OrphanRows.AdoptAsync(projectsDb, "Projects", "TenantId", tenantId, cancellationToken);
         }
         catch { }
 

@@ -1452,3 +1452,27 @@ arreglo aparte y más grande: son documentos enteros.
 **Los tickets sembrados están duplicados igual**: 230 en «Abierto» con cinco títulos. El sembrador
 ya no los crea, pero la limpieza no se ha hecho — borrar 225 tickets es una decisión de quien es
 dueño de los datos, no una consecuencia de arreglar las plantillas.
+
+## 21. La siembra se quedaba con los datos de todas las organizaciones
+
+Once sembradores empezaban con `UPDATE … SET TenantId = <demo> WHERE TenantId != <demo>` (dieciséis
+tablas: usuarios, permisos, vistas, equipos, espacios, carpetas, proyectos, tareas, tickets,
+etiquetas, documentos, avisos, eventos, conversaciones, mensajes y suscripciones de webhook). La
+siembra corre en `InitializeDatabase`, **en cada arranque y en cualquier entorno**, así que cada vez
+que la API arrancaba, **todo lo de las demás organizaciones pasaba a la de demostración**: sus
+usuarios pasaban a iniciar sesión en ella y sus datos dejaban de ser suyos.
+
+Se vio al preparar el bloque 6 del paso a inglés, leyendo `CalendarSeeder`. En la base de
+desarrollo ya había pasado: una organización conservaba sus campos personalizados —su sembrador no
+tenía ese `UPDATE`— pero ni un usuario ni una tarea. Ese daño no se puede deshacer: no queda
+constancia de a qué organización pertenecía cada fila.
+
+La intención era otra: «adoptar» las filas **sin inquilino** (`Guid.Empty`) que dejó el defecto del
+inquilino que llegaba vacío (§2). Ahora lo hace `OrphanRows.AdoptAsync`, una sola vez y con esa
+condición, y `SiembraSinCruzarInquilinosFlowTests` copia una fila de cada tabla con un inquilino
+ajeno, siembra y comprueba que sigue siendo suya (fallaba antes del arreglo), y que una fila sin
+inquilino sí se adopta.
+
+**Queda por decidir:** la siembra de demostración —con `admin@acme.com` / `admin123`— también corre
+en producción. Sin el `UPDATE` ya no roba datos, pero crear esa organización y ese usuario en un
+entorno real es una decisión de despliegue, no técnica.

@@ -14,7 +14,7 @@ public sealed class WebhookSeeder(WebhookDbContext webhookDb) : IModuleSeeder
         var tenantId = context.TenantId;
 
         using var _ = webhookDb.AsTenant(tenantId);
-        try { await webhookDb.Database.ExecuteSqlAsync($"UPDATE `webhook_subscriptions` SET `TenantId` = {tenantId} WHERE `TenantId` != {tenantId}", cancellationToken); } catch { }
+        try { await OrphanRows.AdoptAsync(webhookDb, "webhook_subscriptions", "TenantId", tenantId, cancellationToken); } catch { }
 
         if (await webhookDb.Subscriptions.AnyAsync(w => w.TenantId == tenantId, cancellationToken))
             return;
