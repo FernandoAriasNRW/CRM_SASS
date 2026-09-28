@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Notifications.Application.Commands;
-using Notifications.Application.Preferencias;
+using Notifications.Application.Preferences;
 using Notifications.Application.Queries;
 using Notifications.Infrastructure;
 using Notifications.Infrastructure.Persistence;
@@ -55,12 +55,12 @@ public static class NotificationsEndpoints
     // Aquí el destinatario sí llega en el cuerpo, y debe seguir así: notificar a otra persona
     // es justo lo que hace este endpoint. Lo que no puede elegir quien llama es *en qué
     // organización* deja la notificación, ni firmarla con el nombre de otro.
-    group.MapPost("", async (CreateNotificationCommand command, IUserContext usuario, IMediator mediator) =>
+    group.MapPost("", async (CreateNotificationCommand command, IUserContext currentUser, IMediator mediator) =>
     {
       var result = await mediator.Send(command with
       {
-        TenantId = usuario.TenantId,
-        SenderUserId = usuario.UserId,
+        TenantId = currentUser.TenantId,
+        SenderUserId = currentUser.UserId,
       });
 
       return result.IsSuccess
@@ -117,23 +117,23 @@ public static class NotificationsEndpoints
     // escritos aquí mismo, y el PUT respondía con el cuerpo que había recibido sin guardar
     // nada. La pantalla funcionaba —los interruptores se movían, el aviso decía «guardado»— y
     // al recargar todo volvía a su sitio. Prometer y no cumplir es peor que no ofrecerlo.
-    group.MapGet("/preferences", async (IUserContext usuario, IMediator mediator) =>
+    group.MapGet("/preferences", async (IUserContext currentUser, IMediator mediator) =>
     {
-      var result = await mediator.Send(new GetPreferenciasQuery(usuario.TenantId, usuario.UserId));
+      var result = await mediator.Send(new GetNotificationPreferencesQuery(currentUser.TenantId, currentUser.UserId));
       return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
     });
 
     // El cuerpo se enlaza a un tipo, no a `object`. Con `object` cualquier JSON valía y se
     // devolvía tal cual: no había forma de que una hora mal escrita diera error.
-    group.MapPut("/preferences", async (PreferenciasRequest cuerpo, IUserContext usuario, IMediator mediator) =>
+    group.MapPut("/preferences", async (NotificationPreferencesRequest body, IUserContext currentUser, IMediator mediator) =>
     {
-      var result = await mediator.Send(new SetPreferenciasCommand(
-          usuario.TenantId, usuario.UserId,
-          cuerpo.EmailEnabled, cuerpo.PushEnabled,
-          cuerpo.TaskAssigned, cuerpo.TaskCompleted, cuerpo.TaskDueSoon,
-          cuerpo.TicketCreated, cuerpo.TicketUpdated, cuerpo.ProjectUpdated,
-          cuerpo.MentionEnabled, cuerpo.ExportReady,
-          cuerpo.QuietHoursEnabled, cuerpo.QuietHoursStart, cuerpo.QuietHoursEnd));
+      var result = await mediator.Send(new SetNotificationPreferencesCommand(
+          currentUser.TenantId, currentUser.UserId,
+          body.EmailEnabled, body.PushEnabled,
+          body.TaskAssigned, body.TaskCompleted, body.TaskDueSoon,
+          body.TicketCreated, body.TicketUpdated, body.ProjectUpdated,
+          body.MentionEnabled, body.ExportReady,
+          body.QuietHoursEnabled, body.QuietHoursStart, body.QuietHoursEnd));
 
       return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
     });
@@ -149,7 +149,7 @@ public static class NotificationsEndpoints
 /// interfaz manda un JSON sin `exportReady`, la preferencia queda encendida —que es lo que
 /// espera quien no la ha tocado— en vez de apagarse sola por omisión.
 /// </summary>
-public sealed record PreferenciasRequest(
+public sealed record NotificationPreferencesRequest(
     bool EmailEnabled = true,
     bool PushEnabled = false,
     bool TaskAssigned = true,

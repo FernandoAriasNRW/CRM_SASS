@@ -126,14 +126,14 @@ public sealed class RescheduleEventHandler(
 /// <summary>
 /// Handler para cancelar (soft delete) un evento de calendario.
 /// </summary>
-public sealed class CancelEventHandler(
+public sealed class MoveEventToTrashHandler(
     ICalendarEventRepository repository,
-    ICalendarUnitOfWork unitOfWork) : ICommandHandler<CancelEventCommand, bool>
+    ICalendarUnitOfWork unitOfWork) : ICommandHandler<MoveEventToTrashCommand, bool>
 {
     private readonly ICalendarEventRepository _repository = repository;
     private readonly ICalendarUnitOfWork _unitOfWork = unitOfWork;
 
-    public async Task<Result<bool>> Handle(CancelEventCommand request, CancellationToken ct)
+    public async Task<Result<bool>> Handle(MoveEventToTrashCommand request, CancellationToken ct)
     {
         var calendarEvent = await _repository.GetByIdAsync(request.TenantId, request.EventId, ct);
 
@@ -143,8 +143,9 @@ public sealed class CancelEventHandler(
         if (calendarEvent.IsDeleted)
             return Result<bool>.Failure("El evento ya está en la papelera");
 
-        // A la papelera. El comando se sigue llamando «Cancel» porque su nombre viaja en un
-        // webhook publicado, pero lo que hace es esto: quitarlo de en medio, recuperable.
+        // A la papelera: quitarlo de en medio, recuperable. Hasta el bloque 6a este comando se
+        // llamaba «Cancel» y publicaba «calendar.event.cancelled»; la anulación, que lo deja a la
+        // vista, es CancelEventCommand.
         calendarEvent.MoveToTrash(request.DeletedBy);
 
         await _repository.UpdateAsync(calendarEvent, ct);
@@ -217,50 +218,50 @@ public sealed class PermanentDeleteEventHandler(
 }
 
 /// <summary>
-/// Anula un evento dejándolo a la vista, tachado. Ver <c>AnularEventoCommand</c> para por qué no
+/// Anula un evento dejándolo a la vista, tachado. Ver <c>CancelEventCommand</c> para por qué no
 /// es lo mismo que mandarlo a la papelera.
 /// </summary>
-public sealed class AnularEventoHandler(
+public sealed class CancelEventHandler(
     ICalendarEventRepository repository,
-    ICalendarUnitOfWork unitOfWork) : ICommandHandler<AnularEventoCommand, CalendarEventDto>
+    ICalendarUnitOfWork unitOfWork) : ICommandHandler<CancelEventCommand, CalendarEventDto>
 {
-    public async Task<Result<CalendarEventDto>> Handle(AnularEventoCommand request, CancellationToken ct)
+    public async Task<Result<CalendarEventDto>> Handle(CancelEventCommand request, CancellationToken ct)
     {
-        var evento = await repository.GetByIdAsync(request.TenantId, request.EventId, ct);
+        var calendarEvent = await repository.GetByIdAsync(request.TenantId, request.EventId, ct);
 
-        if (evento is null)
+        if (calendarEvent is null)
             return Result<CalendarEventDto>.Failure("Evento no encontrado");
 
-        var resultado = evento.Cancelar(request.PorQuien, request.Motivo);
-        if (resultado.IsFailure)
-            return Result<CalendarEventDto>.Failure(resultado.Error!);
+        var result = calendarEvent.Cancel(request.UserId, request.Reason);
+        if (result.IsFailure)
+            return Result<CalendarEventDto>.Failure(result.Error!);
 
-        await repository.UpdateAsync(evento, ct);
+        await repository.UpdateAsync(calendarEvent, ct);
         await unitOfWork.SaveChangesAsync(ct);
 
-        return Result<CalendarEventDto>.Success(evento.ToDto());
+        return Result<CalendarEventDto>.Success(calendarEvent.ToDto());
     }
 }
 
-public sealed class ReactivarEventoHandler(
+public sealed class ReactivateEventHandler(
     ICalendarEventRepository repository,
-    ICalendarUnitOfWork unitOfWork) : ICommandHandler<ReactivarEventoCommand, CalendarEventDto>
+    ICalendarUnitOfWork unitOfWork) : ICommandHandler<ReactivateEventCommand, CalendarEventDto>
 {
-    public async Task<Result<CalendarEventDto>> Handle(ReactivarEventoCommand request, CancellationToken ct)
+    public async Task<Result<CalendarEventDto>> Handle(ReactivateEventCommand request, CancellationToken ct)
     {
-        var evento = await repository.GetByIdAsync(request.TenantId, request.EventId, ct);
+        var calendarEvent = await repository.GetByIdAsync(request.TenantId, request.EventId, ct);
 
-        if (evento is null)
+        if (calendarEvent is null)
             return Result<CalendarEventDto>.Failure("Evento no encontrado");
 
-        var resultado = evento.Reactivar();
-        if (resultado.IsFailure)
-            return Result<CalendarEventDto>.Failure(resultado.Error!);
+        var result = calendarEvent.Reactivate();
+        if (result.IsFailure)
+            return Result<CalendarEventDto>.Failure(result.Error!);
 
-        await repository.UpdateAsync(evento, ct);
+        await repository.UpdateAsync(calendarEvent, ct);
         await unitOfWork.SaveChangesAsync(ct);
 
-        return Result<CalendarEventDto>.Success(evento.ToDto());
+        return Result<CalendarEventDto>.Success(calendarEvent.ToDto());
     }
 }
 
@@ -272,24 +273,24 @@ public sealed class ReactivarEventoHandler(
 /// puerto por módulo; a cambio, un enlace a algo borrado se ve como un enlace que no lleva a
 /// ninguna parte, que es un fallo visible y recuperable, no silencioso.
 /// </summary>
-public sealed class EnlazarEventoHandler(
+public sealed class LinkEventHandler(
     ICalendarEventRepository repository,
-    ICalendarUnitOfWork unitOfWork) : ICommandHandler<EnlazarEventoCommand, CalendarEventDto>
+    ICalendarUnitOfWork unitOfWork) : ICommandHandler<LinkEventCommand, CalendarEventDto>
 {
-    public async Task<Result<CalendarEventDto>> Handle(EnlazarEventoCommand request, CancellationToken ct)
+    public async Task<Result<CalendarEventDto>> Handle(LinkEventCommand request, CancellationToken ct)
     {
-        var evento = await repository.GetByIdAsync(request.TenantId, request.EventId, ct);
+        var calendarEvent = await repository.GetByIdAsync(request.TenantId, request.EventId, ct);
 
-        if (evento is null)
+        if (calendarEvent is null)
             return Result<CalendarEventDto>.Failure("Evento no encontrado");
 
-        var resultado = evento.Enlazar(request.ProjectId, request.TaskId, request.TicketId);
-        if (resultado.IsFailure)
-            return Result<CalendarEventDto>.Failure(resultado.Error!);
+        var result = calendarEvent.Link(request.ProjectId, request.TaskId, request.TicketId);
+        if (result.IsFailure)
+            return Result<CalendarEventDto>.Failure(result.Error!);
 
-        await repository.UpdateAsync(evento, ct);
+        await repository.UpdateAsync(calendarEvent, ct);
         await unitOfWork.SaveChangesAsync(ct);
 
-        return Result<CalendarEventDto>.Success(evento.ToDto());
+        return Result<CalendarEventDto>.Success(calendarEvent.ToDto());
     }
 }

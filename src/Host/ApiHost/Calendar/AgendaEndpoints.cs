@@ -11,15 +11,15 @@ public static class AgendaEndpoints
 {
     public static IEndpointRouteBuilder MapAgendaEndpoints(this IEndpointRouteBuilder app)
     {
-        var grupo = app.MapGroup("/api/v1/calendar").WithTags("Calendar").RequireAuthorization();
+        var group = app.MapGroup("/api/v1/calendar").WithTags("Calendar").RequireAuthorization();
 
-        grupo.MapGet("/agenda/{dia:datetime}", async (
-            DateTime dia, AgendaDelDia agenda, CancellationToken ct) =>
+        group.MapGet("/agenda/{day:datetime}", async (
+            DateTime day, DailyAgenda agenda, CancellationToken ct) =>
         {
             // Sólo la parte de fecha. La ruta acepta un `datetime` porque es el único
             // convertidor que trae el enrutador, pero la agenda es de un día: si llegara con
             // hora, «el 8 a las 15:00» y «el 8 a las 09:00» serían dos días distintos.
-            return Results.Ok(await agenda.DeAsync(DateOnly.FromDateTime(dia), ct));
+            return Results.Ok(await agenda.ForDayAsync(DateOnly.FromDateTime(day), ct));
         });
 
         return app;

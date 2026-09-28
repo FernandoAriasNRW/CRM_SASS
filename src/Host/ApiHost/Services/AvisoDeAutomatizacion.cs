@@ -2,7 +2,7 @@ using Automations.Domain.ValueObjects;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Notifications.Application.Commands;
-using Notifications.Application.Preferencias;
+using Notifications.Application.Preferences;
 using Notifications.Domain.Entities;
 using WorkItems.Infrastructure.Persistence;
 
@@ -30,7 +30,7 @@ namespace ApiHost.Services;
 public sealed class AvisoDeAutomatizacion(
     IMediator mediator,
     WorkItemsDbContext tareas,
-    IRepositorioDePreferencias preferencias)
+    INotificationPreferencesRepository preferencias)
 {
     public async Task AvisarAsync(Guid tenantId, Guid tareaId, string destinatario, CancellationToken ct)
     {
@@ -59,12 +59,12 @@ public sealed class AvisoDeAutomatizacion(
         // Las preferencias mandan. Se usa la propia función del dominio de Notifications en vez
         // de repetir la lógica aquí: son las mismas reglas, incluidas las horas de silencio y su
         // cruce de medianoche.
-        var suyas = await preferencias.DeLaPersonaAsync(tenantId, quien, ct)
-                    ?? PreferenciasDeNotificacion.PorDefecto(tenantId, quien);
+        var suyas = await preferencias.GetForUserAsync(tenantId, quien, ct)
+                    ?? NotificationPreferences.CreateDefault(tenantId, quien);
 
         var ahora = TimeOnly.FromDateTime(DateTime.UtcNow);
 
-        if (!suyas.DejaPasar(TiposDeAviso.TareaPorVencer, ahora))
+        if (!suyas.ShouldDeliver(NotificationTypes.TaskDueSoon, ahora))
         {
             // No es un fallo: es la persona ejerciendo su preferencia. Se devuelve sin más para
             // que el motor lo cuente como aplicado —la regla hizo lo que tenía que hacer— en vez

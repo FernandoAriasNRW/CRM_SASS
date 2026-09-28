@@ -15,16 +15,16 @@ describe('DiaDesplegadoComponent', () => {
   let componente: DiaDesplegadoComponent;
 
   const evento = (id: string, hora: string, anulado = false): CosaDelDia => ({
-    tipo: 'Event', id, titulo: `Evento ${id}`, detalle: null,
-    hora, horaFin: null, anulado
+    type: 'Event', id, title: `Evento ${id}`, detail: null,
+    time: hora, endTime: null, isCancelled: anulado
   });
 
   const agenda = (parcial: Partial<AgendaDeUnDia> = {}): AgendaDeUnDia => ({
-    dia: '2026-09-08',
-    eventos: [],
-    tareasQueVencen: [],
-    ticketsDelDia: [],
-    proyectosQueTerminan: [],
+    day: '2026-09-08',
+    events: [],
+    tasksDue: [],
+    ticketsOpened: [],
+    projectsEnding: [],
     ...parcial
   });
 
@@ -53,7 +53,7 @@ describe('DiaDesplegadoComponent', () => {
    * en los datos y no habría dónde pintarlo.
    */
   it('se estira para que quepa lo que cae fuera del horario normal', () => {
-    pintar(agenda({ eventos: [evento('a', '2026-09-08T06:30:00'), evento('b', '2026-09-08T22:00:00')] }));
+    pintar(agenda({ events: [evento('a', '2026-09-08T06:30:00'), evento('b', '2026-09-08T22:00:00')] }));
 
     const horas = componente.franjas().map(f => f.hora);
     expect(horas[0]).toBe(6);
@@ -61,7 +61,7 @@ describe('DiaDesplegadoComponent', () => {
   });
 
   it('coloca cada evento en su hora', () => {
-    pintar(agenda({ eventos: [evento('a', '2026-09-08T09:15:00'), evento('b', '2026-09-08T09:45:00')] }));
+    pintar(agenda({ events: [evento('a', '2026-09-08T09:15:00'), evento('b', '2026-09-08T09:45:00')] }));
 
     const alasNueve = componente.franjas().find(f => f.hora === 9)!;
     expect(alasNueve.eventos.map(e => e.id)).toEqual(['a', 'b']);
@@ -73,11 +73,11 @@ describe('DiaDesplegadoComponent', () => {
    */
   it('lo que no tiene hora va aparte', () => {
     const tarea: CosaDelDia = {
-      tipo: 'Task', id: 't1', titulo: 'Migrar la base', detalle: 'En curso',
-      hora: null, horaFin: null, anulado: false
+      type: 'Task', id: 't1', title: 'Migrar la base', detail: 'En curso',
+      time: null, endTime: null, isCancelled: false
     };
 
-    pintar(agenda({ tareasQueVencen: [tarea], eventos: [evento('a', '2026-09-08T09:00:00')] }));
+    pintar(agenda({ tasksDue: [tarea], events: [evento('a', '2026-09-08T09:00:00')] }));
 
     expect(componente.sinHora().map(c => c.id)).toEqual(['t1']);
     expect(componente.franjas().flatMap(f => f.eventos).map(e => e.id)).toEqual(['a']);
@@ -86,16 +86,16 @@ describe('DiaDesplegadoComponent', () => {
   it('el resumen cuenta sólo lo que hay', () => {
     expect(componente.resumen()).toBe('Nada en el calendario este día');
 
-    pintar(agenda({ eventos: [evento('a', '2026-09-08T09:00:00')] }));
+    pintar(agenda({ events: [evento('a', '2026-09-08T09:00:00')] }));
     expect(componente.resumen()).toBe('1 evento');
 
-    pintar(agenda({ eventos: [evento('a', '2026-09-08T09:00:00'), evento('b', '2026-09-08T10:00:00')] }));
+    pintar(agenda({ events: [evento('a', '2026-09-08T09:00:00'), evento('b', '2026-09-08T10:00:00')] }));
     expect(componente.resumen()).toBe('2 eventos');
   });
 
   /** Un evento anulado se sigue viendo, tachado: es todo el sentido de separarlo de la papelera. */
   it('pinta tachado lo anulado, sin quitarlo', () => {
-    pintar(agenda({ eventos: [evento('a', '2026-09-08T09:00:00', true)] }));
+    pintar(agenda({ events: [evento('a', '2026-09-08T09:00:00', true)] }));
 
     const boton = Array.from(
       fixture.nativeElement.querySelectorAll('button') as NodeListOf<HTMLElement>

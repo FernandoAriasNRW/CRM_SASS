@@ -134,11 +134,11 @@
                 -->
                 @for (evento of dia.eventos.slice(0, 2); track evento.id) {
                   <button type="button"
-                    (click)="$event.stopPropagation(); abrirCosa({ tipo: 'Event', id: evento.id, titulo: evento.title, detalle: null, hora: evento.startTime, horaFin: evento.endTime, anulado: !!evento.canceladoEnUtc })"
+                    (click)="$event.stopPropagation(); abrirCosa({ type: 'Event', id: evento.id, title: evento.title, detail: null, time: evento.startTime, endTime: evento.endTime, isCancelled: !!evento.cancelledAtUtc })"
                     (contextmenu)="menuEnEvento($event, evento, dia.fecha)"
                     class="block w-full truncate rounded px-1.5 py-0.5 text-left text-[11px] transition-colors
                            focus:outline-none focus:ring-2 focus:ring-ring"
-                    [class]="evento.canceladoEnUtc
+                    [class]="evento.cancelledAtUtc
                       ? 'bg-muted text-muted-foreground line-through'
                       : 'bg-primary/15 text-foreground hover:bg-primary/25'">
                     {{ evento.startTime | date:'HH:mm' }} {{ evento.title }}

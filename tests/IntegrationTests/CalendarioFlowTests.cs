@@ -70,7 +70,7 @@ public sealed class CalendarioFlowTests(CrmApiFactory factory)
         var cliente = await AutenticarAsync();
         var id = await CrearEventoAsync(cliente, "Reunión que se anula", new DateTime(2027, 3, 10, 10, 0, 0));
 
-        var anular = await cliente.PostAsJsonAsync($"/api/v1/calendar/events/{id}/anular", new { Motivo = "El cliente lo aplaza" });
+        var anular = await cliente.PostAsJsonAsync($"/api/v1/calendar/events/{id}/cancel", new { Reason = "El cliente lo aplaza" });
         anular.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var enLista = (await EventosAsync(cliente)).SingleOrDefault(e => e.GetProperty("id").GetGuid() == id);
@@ -78,9 +78,9 @@ public sealed class CalendarioFlowTests(CrmApiFactory factory)
         enLista.ValueKind.Should().NotBe(JsonValueKind.Undefined,
             "un evento anulado sigue estando: si desaparece, la gente se presenta a una reunión que ya no existe");
 
-        enLista.GetProperty("canceladoEnUtc").ValueKind.Should().NotBe(JsonValueKind.Null,
+        enLista.GetProperty("cancelledAtUtc").ValueKind.Should().NotBe(JsonValueKind.Null,
             "tiene que venir marcado para poder pintarlo tachado");
-        enLista.GetProperty("motivoDeCancelacion").GetString().Should().Be("El cliente lo aplaza");
+        enLista.GetProperty("cancellationReason").GetString().Should().Be("El cliente lo aplaza");
     }
 
     [Fact]
@@ -89,13 +89,13 @@ public sealed class CalendarioFlowTests(CrmApiFactory factory)
         var cliente = await AutenticarAsync();
         var id = await CrearEventoAsync(cliente, "Reunión que se recupera", new DateTime(2027, 3, 11, 10, 0, 0));
 
-        await cliente.PostAsJsonAsync($"/api/v1/calendar/events/{id}/anular", new { Motivo = (string?)null });
+        await cliente.PostAsJsonAsync($"/api/v1/calendar/events/{id}/cancel", new { Reason = (string?)null });
 
-        var reactivar = await cliente.PostAsync($"/api/v1/calendar/events/{id}/reactivar", null);
+        var reactivar = await cliente.PostAsync($"/api/v1/calendar/events/{id}/reactivate", null);
         reactivar.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var evento = (await EventosAsync(cliente)).Single(e => e.GetProperty("id").GetGuid() == id);
-        evento.GetProperty("canceladoEnUtc").ValueKind.Should().Be(JsonValueKind.Null);
+        evento.GetProperty("cancelledAtUtc").ValueKind.Should().Be(JsonValueKind.Null);
     }
 
     /// <summary>
@@ -117,11 +117,11 @@ public sealed class CalendarioFlowTests(CrmApiFactory factory)
         (await EventosAsync(cliente)).Select(e => e.GetProperty("id").GetGuid())
             .Should().NotContain(id, "lo que está en la papelera no se pinta en el calendario");
 
-        (await EventosAsync(cliente, "/api/v1/calendar/events/papelera"))
+        (await EventosAsync(cliente, "/api/v1/calendar/events/trash"))
             .Select(e => e.GetProperty("id").GetGuid())
             .Should().Contain(id, "la papelera existía en el repositorio y no la exponía ningún endpoint");
 
-        var restaurar = await cliente.PostAsync($"/api/v1/calendar/events/{id}/restaurar", null);
+        var restaurar = await cliente.PostAsync($"/api/v1/calendar/events/{id}/restore", null);
         restaurar.StatusCode.Should().Be(HttpStatusCode.OK,
             "restaurar contestaba «Evento no encontrado» porque el filtro global escondía la fila "
             + "que el propio parámetro `includeDeleted` decía traer");
@@ -152,7 +152,7 @@ public sealed class CalendarioFlowTests(CrmApiFactory factory)
         var recienCreado = await cliente.GetFromJsonAsync<JsonElement>($"/api/v1/calendar/events/{id}");
         recienCreado.GetProperty("ticketId").GetGuid().Should().Be(ticketId);
 
-        var enlazar = await cliente.PutAsJsonAsync($"/api/v1/calendar/events/{id}/enlaces",
+        var enlazar = await cliente.PutAsJsonAsync($"/api/v1/calendar/events/{id}/links",
             new { ProjectId = (Guid?)null, TaskId = tareaId, TicketId = ticketId });
         enlazar.StatusCode.Should().Be(HttpStatusCode.OK);
 
@@ -161,7 +161,7 @@ public sealed class CalendarioFlowTests(CrmApiFactory factory)
             "un evento puede colgar de un ticket y de una tarea a la vez");
         conLosDos.GetProperty("ticketId").GetGuid().Should().Be(ticketId);
 
-        var desenlazar = await cliente.PutAsJsonAsync($"/api/v1/calendar/events/{id}/enlaces",
+        var desenlazar = await cliente.PutAsJsonAsync($"/api/v1/calendar/events/{id}/links",
             new { ProjectId = (Guid?)null, TaskId = tareaId, TicketId = (Guid?)null });
         desenlazar.StatusCode.Should().Be(HttpStatusCode.OK);
 
@@ -213,13 +213,13 @@ public sealed class CalendarioFlowTests(CrmApiFactory factory)
 
         var agenda = await cliente.GetFromJsonAsync<JsonElement>($"/api/v1/calendar/agenda/{dia:yyyy-MM-dd}");
 
-        agenda.GetProperty("eventos").EnumerateArray()
-            .Select(e => e.GetProperty("titulo").GetString())
+        agenda.GetProperty("events").EnumerateArray()
+            .Select(e => e.GetProperty("title").GetString())
             .Should().Contain("Reunión de la agenda");
 
         // Y las otras tres secciones vienen, aunque estén vacías: una agenda a la que le falta un
         // apartado según el día hace pensar que la aplicación se comporta distinto cada vez.
-        foreach (var seccion in new[] { "tareasQueVencen", "ticketsDelDia", "proyectosQueTerminan" })
+        foreach (var seccion in new[] { "tasksDue", "ticketsOpened", "projectsEnding" })
         {
             agenda.TryGetProperty(seccion, out var lista).Should().BeTrue($"falta «{seccion}»");
             lista.ValueKind.Should().Be(JsonValueKind.Array);
@@ -232,7 +232,7 @@ public sealed class CalendarioFlowTests(CrmApiFactory factory)
         var agendaDelTicket = await cliente.GetFromJsonAsync<JsonElement>(
             $"/api/v1/calendar/agenda/{diaDelTicket:yyyy-MM-dd}");
 
-        agendaDelTicket.GetProperty("ticketsDelDia").EnumerateArray()
+        agendaDelTicket.GetProperty("ticketsOpened").EnumerateArray()
             .Select(t => t.GetProperty("id").GetGuid())
             .Should().Contain(unTicket.GetProperty("id").GetGuid(),
                 "un ticket abierto ese día tiene que salir en la agenda de ese día");
@@ -252,7 +252,7 @@ public sealed class CalendarioFlowTests(CrmApiFactory factory)
 
         await cliente.DeleteAsync($"/api/v1/calendar/events/{id}");
 
-        var anular = await cliente.PostAsJsonAsync($"/api/v1/calendar/events/{id}/anular", new { Motivo = (string?)null });
+        var anular = await cliente.PostAsJsonAsync($"/api/v1/calendar/events/{id}/cancel", new { Reason = (string?)null });
         anular.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 }

@@ -27,8 +27,8 @@ public sealed record CalendarEventDto(
     bool IsDeleted,
     DateTime? DeletedAt,
     Guid? DeletedBy,
-    DateTime? CanceladoEnUtc,
-    string? MotivoDeCancelacion);
+    DateTime? CancelledAtUtc,
+    string? CancellationReason);
 
 /// <summary>
 /// Extensiones para mapeo de DTOs.
@@ -50,19 +50,19 @@ public static class CalendarEventDtoExtensions
             entity.Title,
             entity.Description,
             entity.Type.Name,
-            EnUtc(entity.StartTime),
-            EnUtc(entity.EndTime),
+            AsUtc(entity.StartTime),
+            AsUtc(entity.EndTime),
             entity.Location,
             entity.IsAllDay,
             entity.Recurrence.Name,
             entity.RecurrenceInterval,
-            EnUtcONulo(entity.RecurrenceEndDate),
-            EnUtc(entity.CreatedAt),
+            AsUtcOrNull(entity.RecurrenceEndDate),
+            AsUtc(entity.CreatedAt),
             entity.IsDeleted,
-            EnUtcONulo(entity.DeletedAt),
+            AsUtcOrNull(entity.DeletedAt),
             entity.DeletedBy,
-            EnUtcONulo(entity.CanceladoEnUtc),
-            entity.MotivoDeCancelacion);
+            AsUtcOrNull(entity.CancelledAtUtc),
+            entity.CancellationReason);
     }
 
     /// <summary>
@@ -84,10 +84,10 @@ public static class CalendarEventDtoExtensions
     /// el servidor, y taparlo en el cliente dejaría el mismo tropiezo puesto para los webhooks,
     /// las exportaciones y cualquier otro consumidor.
     /// </summary>
-    private static DateTime EnUtc(DateTime fecha)
-        => fecha.Kind == DateTimeKind.Unspecified
-            ? DateTime.SpecifyKind(fecha, DateTimeKind.Utc)
-            : fecha.ToUniversalTime();
+    private static DateTime AsUtc(DateTime date)
+        => date.Kind == DateTimeKind.Unspecified
+            ? DateTime.SpecifyKind(date, DateTimeKind.Utc)
+            : date.ToUniversalTime();
 
-    private static DateTime? EnUtcONulo(DateTime? fecha) => fecha is null ? null : EnUtc(fecha.Value);
+    private static DateTime? AsUtcOrNull(DateTime? date) => date is null ? null : AsUtc(date.Value);
 }

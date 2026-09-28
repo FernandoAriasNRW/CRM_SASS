@@ -60,7 +60,7 @@ describe('CalendarioService', () => {
   it('anula por su propia ruta, que no es la de borrar', async () => {
     await servicio.anular('e1', 'El cliente lo aplaza');
 
-    expect(api.post).toHaveBeenCalledWith('/calendar/events/e1/anular', { motivo: 'El cliente lo aplaza' });
+    expect(api.post).toHaveBeenCalledWith('/calendar/events/e1/cancel', { reason: 'El cliente lo aplaza' });
     expect(api.delete).not.toHaveBeenCalled();
   });
 
@@ -73,13 +73,13 @@ describe('CalendarioService', () => {
     expect(api.delete).toHaveBeenCalledWith('/calendar/events/e1');
 
     await servicio.restaurar('e1');
-    expect(api.post).toHaveBeenCalledWith('/calendar/events/e1/restaurar', {});
+    expect(api.post).toHaveBeenCalledWith('/calendar/events/e1/restore', {});
   });
 
   it('los enlaces van los tres juntos, para que un nulo signifique «quítalo»', async () => {
     await servicio.enlazar('e1', { projectId: null, taskId: 't1', ticketId: null });
 
-    expect(api.put).toHaveBeenCalledWith('/calendar/events/e1/enlaces',
+    expect(api.put).toHaveBeenCalledWith('/calendar/events/e1/links',
       { projectId: null, taskId: 't1', ticketId: null });
   });
 });

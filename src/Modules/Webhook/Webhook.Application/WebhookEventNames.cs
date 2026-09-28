@@ -36,10 +36,15 @@ public static class WebhookEventNames
     public const string NotificationDeleted = "notification.deleted";
 
     // ── Calendar ──────────────────────────────────────────
+    // «Cancelled» es la anulación: el evento sigue en el calendario, tachado. Irse a la papelera
+    // es «trashed». Hasta el bloque 6a era al revés: la papelera publicaba «cancelled» y la
+    // anulación «calendar.event.anulado», que no estaba en este catálogo.
     public const string CalendarEventCreated     = "calendar.event.created";
     public const string CalendarEventUpdated     = "calendar.event.updated";
     public const string CalendarEventRescheduled = "calendar.event.rescheduled";
     public const string CalendarEventCancelled   = "calendar.event.cancelled";
+    public const string CalendarEventLinked      = "calendar.event.linked";
+    public const string CalendarEventTrashed     = "calendar.event.trashed";
     public const string CalendarEventRestored    = "calendar.event.restored";
 
     // ── Communication ─────────────────────────────────────

@@ -23,12 +23,12 @@ public sealed record CalendarRescheduledEvent(
 /// <summary>
 /// Evento de dominio publicado cuando un evento va a la papelera.
 ///
-/// Conserva el nombre <c>CalendarCancelled</c> porque hay suscriptores fuera —los webhooks lo
-/// publican con ese nombre— y renombrarlo rompería a quien ya escuche. Lo que significa está en
-/// <c>CalendarEvent.MoveToTrash</c>: no es la cancelación de la reunión, es quitarla de en
-/// medio. La cancelación de verdad es <see cref="EventoCanceladoEvent"/>.
+/// Se llamaba <c>CalendarCancelledEvent</c> aunque no es la cancelación de la reunión, sino quitarla
+/// de en medio (<c>CalendarEvent.MoveToTrash</c>). La cancelación de verdad es
+/// <see cref="CalendarEventCancelledEvent"/>. Lo que ven los suscriptores de webhooks no es este
+/// nombre sino el del comando: «calendar.event.trashed» (ver <c>WebhookEventNames</c>).
 /// </summary>
-public sealed record CalendarCancelledEvent(
+public sealed record CalendarEventTrashedEvent(
     Guid Id,
     Guid TenantId,
     Guid? DeletedBy) : DomainEvent;
@@ -46,12 +46,12 @@ public sealed record CalendarUpdatedEvent(
 /// <summary>
 /// El evento se ha anulado pero sigue en el calendario, tachado.
 ///
-/// Es distinto de <see cref="CalendarCancelledEvent"/>, que es irse a la papelera. Se separan
+/// Es distinto de <see cref="CalendarEventTrashedEvent"/>, que es irse a la papelera. Se separan
 /// porque quien escuche esto querrá avisar a los asistentes —«la reunión del jueves se anula»—, y
 /// eso no tiene sentido para un evento que alguien creó por error y borró.
 /// </summary>
-public sealed record EventoCanceladoEvent(
+public sealed record CalendarEventCancelledEvent(
     Guid Id,
     Guid TenantId,
-    Guid PorQuien,
-    string? Motivo) : DomainEvent;
+    Guid CancelledBy,
+    string? Reason) : DomainEvent;
