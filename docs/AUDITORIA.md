@@ -1489,3 +1489,32 @@ En `docker-compose` salen de `.env` (`DEMO_DATA_SEED_ON_STARTUP`, `INITIAL_ADMIN
 `.env.example`). Las pruebas de integración encienden las dos primeras explícitamente, porque
 trabajan sobre la demostración. `SiembraBajoConfiguracionFlowTests` fija que sin configuración todo
 está apagado y que el endpoint no existe.
+
+### 21.1 La limpieza de la base
+
+Lo que dejaron estos defectos y los anteriores (la siembra en cada arranque, los 695
+«admin@acme.com» que se borraron sin borrar lo que apuntaba a ellos, y las organizaciones vaciadas)
+se limpia con `scripts/db/limpiar-huerfanos-y-duplicados.sql`. No nombra ninguna organización, es
+idempotente y va en una transacción; con `ROLLBACK` en vez de `COMMIT` enseña lo que haría.
+
+- **Organizaciones sin ningún usuario:** todo lo suyo se borra. Nadie puede volver a verlo.
+- **Copias sembradas:** de cada grupo se queda la copia viva —la que apunta a usuarios que existen
+  o de la que cuelga algo—; las demás apuntaban a los administradores fantasma. Los eventos no eran
+  iguales (cada siembra los creó con otras fechas), así que se reconocen por el título y un
+  organizador que ya no existe, habiendo una copia viva. Los documentos sólo si son idénticos
+  (título y todas sus páginas).
+- **Lo que apunta a algo que ya no existe** (avisos, miembros, permisos, comentarios, menciones…):
+  se borra.
+- **Lo que tiene contenido propio y un dueño que ya no existe** (documentos como «Arquitectura del
+  Sistema», eventos, proyectos): **no se borra**, pasa al administrador más antiguo de su
+  organización. Los enlaces rotos (agente, equipo, proyecto de un evento…) se vacían.
+
+En la base de desarrollo, el 28 de septiembre de 2026, con copia previa (`backups/`, ignorada por
+git): equipos 184 → 4, miembros 190 → 10, espacios, conversaciones y suscripciones de webhook 138 →
+3, tickets 233 → 8, mensajes 139 → 4, avisos 187 → 3 (184 iban a usuarios que no existen), eventos
+38 → 6, documentos 38 → 20, informes 46 → 6, y las exportaciones, paneles y campos personalizados de
+las diez organizaciones sin usuarios. Una segunda pasada no cambia nada. La API, arrancada con la
+configuración por defecto, no siembra y enseña los datos que quedan.
+
+**No se pudo recuperar** lo que la siembra se llevó de otras organizaciones: no queda constancia de
+a cuál pertenecía cada fila, así que se trata como de la demostración.
