@@ -62,12 +62,12 @@ public sealed class IdentitySeeder(IdentityDbContext identityDb, ILogger<Identit
         // `Guid.Empty`, vuelven vacías, y el sembrador cree que no hay nada sembrado.
         using var _ = identityDb.AsTenant(tenantId);
 
-        // Alinea usuarios, permisos y vistas huérfanos con el inquilino.
+        // Adopta los usuarios, permisos y vistas que se quedaron sin inquilino (ver OrphanRows).
         try
         {
-            await identityDb.Database.ExecuteSqlAsync($"UPDATE `User` SET `TenantId` = {tenantId} WHERE `TenantId` != {tenantId}", cancellationToken);
-            await identityDb.Database.ExecuteSqlAsync($"UPDATE `EntityPermissions` SET `TenantId` = {tenantId} WHERE `TenantId` != {tenantId}", cancellationToken);
-            await identityDb.Database.ExecuteSqlAsync($"UPDATE `SavedViews` SET `TenantId` = {tenantId} WHERE `TenantId` != {tenantId}", cancellationToken);
+            await OrphanRows.AdoptAsync(identityDb, "User", "TenantId", tenantId, cancellationToken);
+            await OrphanRows.AdoptAsync(identityDb, "EntityPermissions", "TenantId", tenantId, cancellationToken);
+            await OrphanRows.AdoptAsync(identityDb, "SavedViews", "TenantId", tenantId, cancellationToken);
         }
         catch { }
 

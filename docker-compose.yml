@@ -54,6 +54,13 @@ services:
       - Jwt__Audience=${JWT_AUDIENCE:-crm-saas-web}
       - RabbitMQ__Host=rabbitmq
 
+      # Siembra y primer administrador: apagados salvo que `.env` diga lo contrario (ver
+      # `.env.example` y `SeedingSettings`). Nada se siembra solo.
+      - DemoData__SeedOnStartup=${DEMO_DATA_SEED_ON_STARTUP:-false}
+      - DemoData__AllowSeedEndpoint=${DEMO_DATA_ALLOW_SEED_ENDPOINT:-false}
+      - InitialAdmin__Email=${INITIAL_ADMIN_EMAIL:-}
+      - InitialAdmin__Password=${INITIAL_ADMIN_PASSWORD:-}
+
       # Dónde acaban los ficheros que se adjuntan a un documento.
       #
       # Con credenciales de Cloudinary se suben a Cloudinary; sin ellas, al disco del servidor. La

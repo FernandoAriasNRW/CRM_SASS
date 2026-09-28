@@ -40,6 +40,13 @@ public sealed class CrmApiFactory : WebApplicationFactory<Program>, IAsyncLifeti
         // ejecución, un fallo que no dice nada del código y que volvería cada pocas pruebas
         // nuevas. No se desactiva del todo para que el middleware siga en el camino.
         builder.UseSetting("RateLimiting:PermitLimit", "100000");
+
+        // Las pruebas trabajan sobre la organización de demostración, así que la piden: desde
+        // septiembre de 2026 nada se siembra solo (ver `SeedingSettings`).
+        builder.UseSetting("DemoData:SeedOnStartup", "true");
+
+        // Y el endpoint de siembra, para poder comprobar que exige ser Admin.
+        builder.UseSetting("DemoData:AllowSeedEndpoint", "true");
     }
 
     public async Task InitializeAsync() => await _mysql.StartAsync();

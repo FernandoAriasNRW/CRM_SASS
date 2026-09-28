@@ -68,3 +68,4 @@ test-results/
 playwright-report/
 web/blob-report/
 web/.playwright/
+backups/

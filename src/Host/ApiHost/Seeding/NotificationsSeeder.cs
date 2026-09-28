@@ -16,7 +16,7 @@ public sealed class NotificationsSeeder(NotificationsDbContext notificationsDb) 
         var adminId = context.Admin.Id;
 
         using var _ = notificationsDb.AsTenant(tenantId);
-        try { await notificationsDb.Database.ExecuteSqlAsync($"UPDATE `Notifications` SET `TenantId` = {tenantId} WHERE `TenantId` != {tenantId}", cancellationToken); } catch { }
+        try { await OrphanRows.AdoptAsync(notificationsDb, "Notifications", "TenantId", tenantId, cancellationToken); } catch { }
 
         if (await notificationsDb.Notifications.AnyAsync(n => n.TenantId == tenantId && n.RecipientUserId == adminId, cancellationToken))
             return;

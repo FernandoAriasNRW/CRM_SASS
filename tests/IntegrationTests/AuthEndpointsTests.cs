@@ -56,10 +56,9 @@ public sealed class AuthEndpointsTests(CrmApiFactory factory)
         // no vuelva a quedar expuesto sin que nadie se entere.
         var response = await Client.PostAsync("/api/v1/admin/seed-database", null);
 
-        response.StatusCode.Should().BeOneOf(
-            HttpStatusCode.Unauthorized,
-            HttpStatusCode.Forbidden,
-            HttpStatusCode.NotFound);
+        // Las pruebas lo encienden (`DemoData:AllowSeedEndpoint`), así que existe: tiene que
+        // pedir credenciales, no responder 404.
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
     [Fact]

@@ -18,8 +18,8 @@ public sealed class CommunicationSeeder(CommunicationsDbContext communicationDb)
         using var _ = communicationDb.AsTenant(tenantId);
         try
         {
-            await communicationDb.Database.ExecuteSqlAsync($"UPDATE `Conversations` SET `TenantId` = {tenantId} WHERE `TenantId` != {tenantId}", cancellationToken);
-            await communicationDb.Database.ExecuteSqlAsync($"UPDATE `Messages` SET `TenantId` = {tenantId} WHERE `TenantId` != {tenantId}", cancellationToken);
+            await OrphanRows.AdoptAsync(communicationDb, "Conversations", "TenantId", tenantId, cancellationToken);
+            await OrphanRows.AdoptAsync(communicationDb, "Messages", "TenantId", tenantId, cancellationToken);
         }
         catch { }
 

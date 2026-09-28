@@ -14,7 +14,7 @@ public sealed class TagsSeeder(TagsDbContext tagsDb) : IModuleSeeder
         var tenantId = context.TenantId;
 
         using var _ = tagsDb.AsTenant(tenantId);
-        try { await tagsDb.Database.ExecuteSqlAsync($"UPDATE `Tags` SET `TenantId` = {tenantId} WHERE `TenantId` != {tenantId}", cancellationToken); } catch { }
+        try { await OrphanRows.AdoptAsync(tagsDb, "Tags", "TenantId", tenantId, cancellationToken); } catch { }
 
         if (await tagsDb.Tags.AnyAsync(t => t.TenantId == tenantId, cancellationToken))
             return;

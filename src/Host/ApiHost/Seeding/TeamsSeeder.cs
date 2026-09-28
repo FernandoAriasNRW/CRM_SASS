@@ -21,7 +21,7 @@ public sealed class TeamsSeeder(TeamsDbContext teamsDb) : IModuleSeeder
         // de que haya proyectos— tampoco se creaban. Declarar el inquilino lo arregla sin
         // apagar el resto de filtros, que es lo que haría IgnoreQueryFilters.
         using var _ = teamsDb.AsTenant(tenantId);
-        try { await teamsDb.Database.ExecuteSqlAsync($"UPDATE `Teams` SET `TenantId` = {tenantId} WHERE `TenantId` != {tenantId}", cancellationToken); } catch { }
+        try { await OrphanRows.AdoptAsync(teamsDb, "Teams", "TenantId", tenantId, cancellationToken); } catch { }
 
         if (await teamsDb.Teams.AnyAsync(t => t.TenantId == tenantId, cancellationToken))
             return;

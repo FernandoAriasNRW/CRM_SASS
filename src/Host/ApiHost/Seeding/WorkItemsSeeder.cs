@@ -33,7 +33,7 @@ public sealed class WorkItemsSeeder(WorkItemsDbContext workItemsDb) : IModuleSee
         var tenantId = context.TenantId;
 
         using var _ = workItemsDb.AsTenant(tenantId);
-        try { await workItemsDb.Database.ExecuteSqlAsync($"UPDATE `Tasks` SET `TenantId` = {tenantId} WHERE `TenantId` != {tenantId}", cancellationToken); } catch { }
+        try { await OrphanRows.AdoptAsync(workItemsDb, "Tasks", "TenantId", tenantId, cancellationToken); } catch { }
 
         var existingCount = await workItemsDb.Tasks.CountAsync(t => t.TenantId == tenantId, cancellationToken);
         if (existingCount >= 10 || context.Projects.Count == 0)

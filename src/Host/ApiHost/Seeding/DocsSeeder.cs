@@ -16,7 +16,7 @@ public sealed class DocsSeeder(DocsDbContext docsDb) : IModuleSeeder
         var admin = context.Admin;
 
         using var _ = docsDb.AsTenant(tenantId);
-        try { await docsDb.Database.ExecuteSqlAsync($"UPDATE `Documents` SET `TenantId` = {tenantId} WHERE `TenantId` != {tenantId}", cancellationToken); } catch { }
+        try { await OrphanRows.AdoptAsync(docsDb, "Documents", "TenantId", tenantId, cancellationToken); } catch { }
 
         if (await docsDb.Documents.AnyAsync(d => d.TenantId == tenantId, cancellationToken))
             return;

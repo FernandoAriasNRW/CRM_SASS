@@ -1452,3 +1452,69 @@ arreglo aparte y más grande: son documentos enteros.
 **Los tickets sembrados están duplicados igual**: 230 en «Abierto» con cinco títulos. El sembrador
 ya no los crea, pero la limpieza no se ha hecho — borrar 225 tickets es una decisión de quien es
 dueño de los datos, no una consecuencia de arreglar las plantillas.
+
+## 21. La siembra se quedaba con los datos de todas las organizaciones
+
+Once sembradores empezaban con `UPDATE … SET TenantId = <demo> WHERE TenantId != <demo>` (dieciséis
+tablas: usuarios, permisos, vistas, equipos, espacios, carpetas, proyectos, tareas, tickets,
+etiquetas, documentos, avisos, eventos, conversaciones, mensajes y suscripciones de webhook). La
+siembra corre en `InitializeDatabase`, **en cada arranque y en cualquier entorno**, así que cada vez
+que la API arrancaba, **todo lo de las demás organizaciones pasaba a la de demostración**: sus
+usuarios pasaban a iniciar sesión en ella y sus datos dejaban de ser suyos.
+
+Se vio al preparar el bloque 6 del paso a inglés, leyendo `CalendarSeeder`. En la base de
+desarrollo ya había pasado: una organización conservaba sus campos personalizados —su sembrador no
+tenía ese `UPDATE`— pero ni un usuario ni una tarea. Ese daño no se puede deshacer: no queda
+constancia de a qué organización pertenecía cada fila.
+
+La intención era otra: «adoptar» las filas **sin inquilino** (`Guid.Empty`) que dejó el defecto del
+inquilino que llegaba vacío (§2). Ahora lo hace `OrphanRows.AdoptAsync`, una sola vez y con esa
+condición, y `SiembraSinCruzarInquilinosFlowTests` copia una fila de cada tabla con un inquilino
+ajeno, siembra y comprueba que sigue siendo suya (fallaba antes del arreglo), y que una fila sin
+inquilino sí se adopta.
+
+**Y nada se siembra solo.** La siembra de demostración corría en cada arranque y en cualquier
+entorno, y una base vacía nacía con `admin@acme.com` / `admin123` —una cuenta de administrador con
+la contraseña escrita en el repositorio—. Por decisión de Fernando, ahora todo se enciende a mano en
+la configuración de cada entorno, apagado por defecto también en pruebas y en producción
+(`SeedingSettings`):
+
+| Variable | Qué hace |
+|---|---|
+| `DemoData__SeedOnStartup` | Sembrar la demostración al arrancar |
+| `DemoData__AllowSeedEndpoint` | Exponer `POST /api/v1/admin/seed-database` (sólo Admin) |
+| `InitialAdmin__Email`, `InitialAdmin__Password` | Primer administrador si la base no tiene usuarios (contraseña de 12+ caracteres) |
+
+En `docker-compose` salen de `.env` (`DEMO_DATA_SEED_ON_STARTUP`, `INITIAL_ADMIN_EMAIL`…, ver
+`.env.example`). Las pruebas de integración encienden las dos primeras explícitamente, porque
+trabajan sobre la demostración. `SiembraBajoConfiguracionFlowTests` fija que sin configuración todo
+está apagado y que el endpoint no existe.
+
+### 21.1 La limpieza de la base
+
+Lo que dejaron estos defectos y los anteriores (la siembra en cada arranque, los 695
+«admin@acme.com» que se borraron sin borrar lo que apuntaba a ellos, y las organizaciones vaciadas)
+se limpia con `scripts/db/limpiar-huerfanos-y-duplicados.sql`. No nombra ninguna organización, es
+idempotente y va en una transacción; con `ROLLBACK` en vez de `COMMIT` enseña lo que haría.
+
+- **Organizaciones sin ningún usuario:** todo lo suyo se borra. Nadie puede volver a verlo.
+- **Copias sembradas:** de cada grupo se queda la copia viva —la que apunta a usuarios que existen
+  o de la que cuelga algo—; las demás apuntaban a los administradores fantasma. Los eventos no eran
+  iguales (cada siembra los creó con otras fechas), así que se reconocen por el título y un
+  organizador que ya no existe, habiendo una copia viva. Los documentos sólo si son idénticos
+  (título y todas sus páginas).
+- **Lo que apunta a algo que ya no existe** (avisos, miembros, permisos, comentarios, menciones…):
+  se borra.
+- **Lo que tiene contenido propio y un dueño que ya no existe** (documentos como «Arquitectura del
+  Sistema», eventos, proyectos): **no se borra**, pasa al administrador más antiguo de su
+  organización. Los enlaces rotos (agente, equipo, proyecto de un evento…) se vacían.
+
+En la base de desarrollo, el 28 de septiembre de 2026, con copia previa (`backups/`, ignorada por
+git): equipos 184 → 4, miembros 190 → 10, espacios, conversaciones y suscripciones de webhook 138 →
+3, tickets 233 → 8, mensajes 139 → 4, avisos 187 → 3 (184 iban a usuarios que no existen), eventos
+38 → 6, documentos 38 → 20, informes 46 → 6, y las exportaciones, paneles y campos personalizados de
+las diez organizaciones sin usuarios. Una segunda pasada no cambia nada. La API, arrancada con la
+configuración por defecto, no siembra y enseña los datos que quedan.
+
+**No se pudo recuperar** lo que la siembra se llevó de otras organizaciones: no queda constancia de
+a cuál pertenecía cada fila, así que se trata como de la demostración.

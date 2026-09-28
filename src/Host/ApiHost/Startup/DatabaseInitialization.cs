@@ -5,8 +5,8 @@ namespace ApiHost.Startup;
 
 /// <summary>
 /// Lo que se hace con la base de datos antes de servir la primera petición: comprobar el
-/// aislamiento por inquilino, aplicar migraciones, garantizar un administrador y sembrar datos
-/// de demostración.
+/// aislamiento por inquilino y aplicar migraciones. Crear el primer administrador y sembrar la
+/// demostración sólo si la configuración lo pide (<see cref="SeedingSettings"/>).
 /// </summary>
 public static class DatabaseInitialization
 {
@@ -35,10 +35,14 @@ public static class DatabaseInitialization
             services.GetRequiredService<CrmDbContext>()
         };
 
+        var seeding = SeedingSettings.From(app.Configuration);
+
         EnsureTenantIsolation(dbContexts);
         ApplyMigrations(dbContexts);
-        EnsureAnAdministratorExists(services);
-        SeedDemoData(services);
+        EnsureAnAdministratorExists(services, seeding);
+
+        if (seeding.SeedOnStartup)
+            SeedDemoData(services);
     }
 
     /// <summary>
@@ -95,6 +99,13 @@ public static class DatabaseInitialization
     /// <summary>
     /// Red de seguridad: si no hay ni un usuario, no se podría entrar a arreglar nada.
     ///
+    /// **Sólo con un administrador configurado** (<c>InitialAdmin:Email</c> y
+    /// <c>InitialAdmin:Password</c>). Antes se creaba siempre <c>admin@acme.com</c> con la
+    /// contraseña <c>admin123</c>, en cualquier entorno: una base de producción recién creada
+    /// arrancaba con una cuenta de administrador cuya contraseña está escrita en el repositorio.
+    /// Sin configuración no se crea nadie y se avisa; si la siembra de demostración está encendida,
+    /// ella crea a su administrador de demostración.
+    ///
     /// **`IgnoreQueryFilters` no es opcional aquí, y su ausencia costó 695 usuarios.** Esto corre en
     /// el arranque, sin petición y por tanto sin usuario, así que el filtro de inquilino compara
     /// contra `Guid.Empty` y `User.Any()` devolvía **false teniendo once usuarios dentro**. Cada
@@ -106,15 +117,34 @@ public static class DatabaseInitialization
     /// administrador está en la papelera, esto tiene que crear uno nuevo —si no, nadie puede entrar
     /// a sacarlo—.
     /// </summary>
-    private static void EnsureAnAdministratorExists(IServiceProvider services)
+    private static void EnsureAnAdministratorExists(IServiceProvider services, SeedingSettings seeding)
     {
         var identity = services.GetRequiredService<global::Identity.Infrastructure.Persistence.IdentityDbContext>();
         if (identity.User.IgnoreQueryFilters().Any(u => !u.IsDeleted))
             return;
 
+        if (!seeding.HasInitialAdmin)
+        {
+            if (!seeding.SeedOnStartup)
+                services.GetRequiredService<ILogger<Program>>().LogWarning(
+                    "La base no tiene usuarios y no hay administrador inicial configurado: nadie podrá "
+                    + "iniciar sesión. Configura InitialAdmin__Email e InitialAdmin__Password.");
+            return;
+        }
+
+        // Una contraseña corta aquí es una puerta abierta: se rechaza al arrancar, que es cuando
+        // alguien está mirando, y no se crea la cuenta.
+        if (seeding.InitialAdminPassword!.Length < SeedingSettings.MinInitialAdminPasswordLength)
+            throw new InvalidOperationException(
+                $"InitialAdmin:Password debe tener al menos {SeedingSettings.MinInitialAdminPasswordLength} caracteres.");
+
         var adminRole = global::Identity.Domain.ValueObjects.UserRole.Admin;
-        var email = global::Identity.Domain.ValueObjects.Email.Create("admin@acme.com").Value!;
-        var password = global::Identity.Domain.ValueObjects.PasswordHash.Create("admin123");
+        var emailResult = global::Identity.Domain.ValueObjects.Email.Create(seeding.InitialAdminEmail!);
+        if (emailResult.IsFailure)
+            throw new InvalidOperationException($"InitialAdmin:Email no es un correo válido: {emailResult.Error}");
+
+        var email = emailResult.Value!;
+        var password = global::Identity.Domain.ValueObjects.PasswordHash.Create(seeding.InitialAdminPassword);
         var user = global::Identity.Domain.Entities.User.Create(Guid.NewGuid(), "Admin", email, password, adminRole).Value!;
         identity.User.Add(user);
         identity.SaveChanges();

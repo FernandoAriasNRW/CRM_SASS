@@ -16,7 +16,7 @@ public sealed class CalendarSeeder(CalendarDbContext calendarDb) : IModuleSeeder
         var organizerId = context.Admin.Id;
 
         using var _ = calendarDb.AsTenant(tenantId);
-        try { await calendarDb.Database.ExecuteSqlAsync($"UPDATE `calendar_events` SET `tenant_id` = {tenantId} WHERE `tenant_id` != {tenantId}", cancellationToken); } catch { }
+        try { await OrphanRows.AdoptAsync(calendarDb, "calendar_events", "tenant_id", tenantId, cancellationToken); } catch { }
 
         if (await calendarDb.CalendarEvents.AnyAsync(e => e.TenantId == tenantId, cancellationToken))
             return;
