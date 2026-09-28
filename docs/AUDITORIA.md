@@ -1473,6 +1473,19 @@ condición, y `SiembraSinCruzarInquilinosFlowTests` copia una fila de cada tabla
 ajeno, siembra y comprueba que sigue siendo suya (fallaba antes del arreglo), y que una fila sin
 inquilino sí se adopta.
 
-**Queda por decidir:** la siembra de demostración —con `admin@acme.com` / `admin123`— también corre
-en producción. Sin el `UPDATE` ya no roba datos, pero crear esa organización y ese usuario en un
-entorno real es una decisión de despliegue, no técnica.
+**Y nada se siembra solo.** La siembra de demostración corría en cada arranque y en cualquier
+entorno, y una base vacía nacía con `admin@acme.com` / `admin123` —una cuenta de administrador con
+la contraseña escrita en el repositorio—. Por decisión de Fernando, ahora todo se enciende a mano en
+la configuración de cada entorno, apagado por defecto también en pruebas y en producción
+(`SeedingSettings`):
+
+| Variable | Qué hace |
+|---|---|
+| `DemoData__SeedOnStartup` | Sembrar la demostración al arrancar |
+| `DemoData__AllowSeedEndpoint` | Exponer `POST /api/v1/admin/seed-database` (sólo Admin) |
+| `InitialAdmin__Email`, `InitialAdmin__Password` | Primer administrador si la base no tiene usuarios (contraseña de 12+ caracteres) |
+
+En `docker-compose` salen de `.env` (`DEMO_DATA_SEED_ON_STARTUP`, `INITIAL_ADMIN_EMAIL`…, ver
+`.env.example`). Las pruebas de integración encienden las dos primeras explícitamente, porque
+trabajan sobre la demostración. `SiembraBajoConfiguracionFlowTests` fija que sin configuración todo
+está apagado y que el endpoint no existe.

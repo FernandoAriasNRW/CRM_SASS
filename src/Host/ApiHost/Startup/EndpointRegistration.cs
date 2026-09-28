@@ -47,12 +47,11 @@ public static class EndpointRegistration
         app.MapCommentsEndpoints();
         app.MapDocsEndpoints();
 
-        // Seed de datos de demostración.
-        //
-        // Sólo existe fuera de producción: reinicializar datos es destructivo y no debe
-        // ser alcanzable en un entorno real ni siquiera por un administrador despistado.
-        // Adicionalmente exige rol Admin autenticado.
-        if (!app.Environment.IsProduction())
+        // Sembrar la demostración a mano. No existe salvo que la configuración lo pida
+        // (`DemoData:AllowSeedEndpoint`), en cualquier entorno, y exige rol Admin. Antes dependía
+        // de no estar en producción: cualquier entorno de pruebas o de preproducción lo tenía
+        // abierto sin que nadie lo hubiera decidido.
+        if (SeedingSettings.From(app.Configuration).AllowSeedEndpoint)
         {
             app.MapPost("/api/v1/admin/seed-database", async (Services.DataSeederService seeder, CancellationToken ct) =>
             {
