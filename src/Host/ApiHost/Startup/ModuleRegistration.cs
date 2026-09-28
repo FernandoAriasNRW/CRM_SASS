@@ -175,6 +175,7 @@ public static class ModuleRegistration
             cfg.RegisterServicesFromAssembly(typeof(global::CustomFields.Application.Commands.DefineCustomFieldCommand).Assembly); // CustomFields
             cfg.RegisterServicesFromAssembly(typeof(global::Automations.Application.DefineAutomationRuleCommand).Assembly); // Automations
             cfg.RegisterServicesFromAssembly(typeof(global::Comments.Application.AddCommentCommand).Assembly); // Comments
+            cfg.RegisterServicesFromAssembly(typeof(global::Tags.Application.Commands.CreateTagCommand).Assembly); // Tags
 
             // Pipeline behavior: valida el request con FluentValidation.
             // Va PRIMERO: no tiene sentido autorizar ni despachar una petición malformada.
@@ -199,7 +200,8 @@ public static class ModuleRegistration
             typeof(CreateCalendarEventHandler).Assembly,    // Calendar
             typeof(global::Reporting.Application.Handlers.Commands.CreateReportHandler).Assembly,
             typeof(global::Communication.Application.Handlers.Commands.CreateConversationHandler).Assembly,
-            typeof(global::Teams.Application.Commands.CreateTeamCommand).Assembly
+            typeof(global::Teams.Application.Commands.CreateTeamCommand).Assembly,
+            typeof(global::Tags.Application.Commands.CreateTagCommand).Assembly
         ], includeInternalTypes: true);
     }
 }

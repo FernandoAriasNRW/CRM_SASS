@@ -1,8 +1,10 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
+using Tags.Application.Abstractions.Queries;
 using Tags.Application.Abstractions.Repositories;
 using Tags.Infrastructure.Persistence;
+using Tags.Infrastructure.Queries;
 using Tags.Infrastructure.Repositories;
 
 namespace Tags.Infrastructure;
@@ -18,6 +20,7 @@ public static class DependencyInjection
                 b => b.MigrationsAssembly(typeof(TagsDbContext).Assembly.FullName)));
 
         services.AddScoped<ITagRepository, TagRepository>();
+        services.AddScoped<ITagQueries, TagQueries>();
 
         return services;
     }

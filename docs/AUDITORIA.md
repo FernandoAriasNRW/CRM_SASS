@@ -890,7 +890,12 @@ datos. Se detalla en la sección 15.
 - **El equipo de un ticket no se valida**: Ticketing guarda el identificador sin poder consultar el
   módulo de equipos. Un identificador inventado se guarda tal cual.
 - **Las etiquetas de los tickets son claves de la pantalla** («billing»), no las entidades del
-  módulo de etiquetas. Conviven dos sistemas y habrá que unificarlos.
+  módulo de etiquetas. Conviven dos sistemas y habrá que unificarlos. Desde septiembre de 2026 la
+  API del módulo sí funciona (`GET` y `POST /api/v1/tags`; antes eran marcadores que devolvían un
+  array vacío y respondían 200 sin guardar), pero **el frontend todavía no la usa**: las fichas de
+  tarea y ticket siguen con las listas fijas de `shared/utils/tags.ts`. Tampoco hay aún editar ni
+  borrar, y la categoría es texto libre: las etiquetas sembradas usan valores («Priority», «Tech»)
+  que no están en `TagCategory`.
 - **Los adjuntos de un ticket no se pueden quitar**, y no hay nada que los borre del almacenamiento
   si algún día se vacía la papelera de tickets.
 - **Espacios, carpetas, anotaciones y subidas no piden autorización por entidad**, y los
