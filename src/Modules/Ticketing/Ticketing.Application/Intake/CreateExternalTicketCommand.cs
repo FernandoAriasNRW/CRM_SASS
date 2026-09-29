@@ -16,8 +16,10 @@ namespace Ticketing.Application.Intake;
 /// clave es la autorización, y sólo permite esto. Lo que el cliente pudiera mandar sobre la
 /// organización no existe en el comando; sale de la clave.
 ///
-/// Obligatorio: asunto, mensaje, nombre, email, teléfono y empresa. Todo lo demás —adjuntos,
-/// clasificación, etiquetas, equipo, estado y prioridad— es opcional.
+/// Obligatorio: asunto (el título del ticket), mensaje, nombre, email, teléfono y empresa.
+/// Opcional: adjuntos. Nada más: prioridad, estado, clasificación, equipo y etiquetas se deciden
+/// dentro, una vez creado. <c>RetiredFields</c> son los de esa lista que la petición trajo
+/// igualmente, para rechazarla en vez de fingir que se aplicaron.
 /// </summary>
 public sealed record CreateExternalTicketCommand(
     string Key,
@@ -27,9 +29,5 @@ public sealed record CreateExternalTicketCommand(
     string? RequesterEmail,
     string? RequesterPhone,
     string? RequesterCompany,
-    string? Priority,
-    string? Status,
-    string? Classification,
-    Guid? TeamId,
-    IReadOnlyList<string> Tags,
-    IReadOnlyList<IncomingFile> Attachments) : ICommand<ExternalTicketCreatedDto>;
+    IReadOnlyList<IncomingFile> Attachments,
+    IReadOnlyList<string>? RetiredFields = null) : ICommand<ExternalTicketCreatedDto>;

@@ -10,7 +10,7 @@ import {
 } from '@ng-icons/lucide';
 import type { TicketAttachment, Ticket } from './ticket-create-modal.component';
 import { mensajeDeError } from '../../shared/utils/mensaje-de-error';
-import { TICKET_TAGS, type Tag } from '../../shared/utils/tags';
+import { TagFieldComponent } from '../../shared/ui/tag-field.component';
 import {
   TICKET_STATUSES, TICKET_PRIORITIES, statusBadge,
   priorityLabel, statusLabel
@@ -19,14 +19,13 @@ import {
 
 
 import { DrawerComponent } from '../../shared/ui/drawer.component';
-import { ClickableDirective } from '../../shared/directives/clickable.directive';
 import { CommentsComponent } from '../../shared/ui/comments.component';
 import { MentionedInComponent } from '../../shared/ui/mentioned-in.component';
 
 @Component({
   selector: 'app-ticket-detail-panel',
   standalone: true,
-  imports: [MentionedInComponent, CommentsComponent, ClickableDirective, FormsModule, BadgeComponent, NgIconComponent, DrawerComponent],
+  imports: [MentionedInComponent, CommentsComponent, FormsModule, BadgeComponent, NgIconComponent, DrawerComponent, TagFieldComponent],
   viewProviders: [provideIcons({
     lucideX, lucideCheck, lucideUser, lucideTag,
     lucideFlag, lucideMessageSquare, lucidePaperclip,
@@ -47,13 +46,12 @@ export class TicketDetailPanelComponent implements OnInit {
   description = '';
   status = '';
   priority = 'normal';
-  selectedTags = signal<string[]>([]);
-  showTagPicker = signal(false);
+  /** Los ids de las etiquetas del ticket. */
+  readonly tagIds = signal<string[]>([]);
   activeTab = signal<'comments' | 'activity'>('comments');
 
   readonly statuses = TICKET_STATUSES;
   readonly priorities = TICKET_PRIORITIES;
-  readonly availableTags = TICKET_TAGS;
   readonly noContactData = $localize`Sin datos de contacto`;
 
   classification = '';
@@ -74,8 +72,7 @@ export class TicketDetailPanelComponent implements OnInit {
     this.status = t.status;
     this.priority = t.priority ?? 'normal';
     this.classification = t.classification ?? '';
-    // Leía `tags`, un campo que el servidor nunca mandó: la ficha abría siempre sin etiquetas.
-    this.selectedTags.set((t.tags ?? '').split(',').map(s => s.trim()).filter(Boolean));
+    this.tagIds.set(t.tagIds ?? []);
     this.loadAttachments();
   }
 
@@ -151,28 +148,14 @@ export class TicketDetailPanelComponent implements OnInit {
     });
   }
 
-  toggleTag(key: string): void {
-    this.selectedTags.update(tags =>
-      tags.includes(key) ? tags.filter(t => t !== key) : [...tags, key]
-    );
-    // Como lista y en su propio PATCH. Antes iba por `saveField`, que no mandaba las etiquetas:
-    // se veían marcadas y al volver a abrir el ticket no estaban.
-    const keys = this.selectedTags();
-    this.api.patch(`/tickets/${this.ticket().id}`, { tags: keys }).subscribe({
-      next: () => this.updated.emit({ ...this.ticket(), tags: keys.join(',') }),
+  /** Guarda las etiquetas como ids del módulo de etiquetas, en su propio PATCH. */
+  changeTags(ids: string[]): void {
+    this.tagIds.set(ids);
+    this.api.patch(`/tickets/${this.ticket().id}`, { tagIds: ids }).subscribe({
+      next: () => this.updated.emit({ ...this.ticket(), tagIds: ids }),
       error: () => {},
     });
   }
-
-  isTagSelected(key: string): boolean {
-    return this.selectedTags().includes(key);
-  }
-
-  getTag(key: string): Tag | undefined {
-    return TICKET_TAGS.find(t => t.key === key);
-  }
-
-
 
   close(): void { this.closed.emit(); }
 }

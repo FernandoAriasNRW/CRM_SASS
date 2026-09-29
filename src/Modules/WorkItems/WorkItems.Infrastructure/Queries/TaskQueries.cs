@@ -213,7 +213,8 @@ public sealed class TaskQueries(WorkItemsDbContext context) : ITaskQueries
             ? null
             : new RecurrenceDto(t.Recurrence.Frequency, t.Recurrence.Interval,
                                 t.Recurrence.NextOccurrence, t.Recurrence.EndDate),
-        t.StartDate));
+        t.StartDate,
+        t.TagIds));
   }
 
   public async Task<TaskDependenciesDto> GetDependenciesAsync(Guid tenantId, Guid taskId, CancellationToken ct = default)

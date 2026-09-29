@@ -30,6 +30,7 @@ public static class WorkItemsInfrastructureExtensions
     services.AddScoped<ITaskRepository, EfTaskRepository>();
     services.AddScoped<ITaskDependencyRepository, EfTaskDependencyRepository>();
     services.AddScoped<ITaskQueries, TaskQueries>();
+    services.AddScoped<BuildingBlocks.Application.Abstractions.ITagReferences, Persistence.TaskTagReferences>();
 
     services.AddScoped<Recurrence.RecurringTaskGenerator>();
     services.AddHostedService<Recurrence.RecurringTasksWorker>();

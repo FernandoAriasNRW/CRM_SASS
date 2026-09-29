@@ -10,7 +10,9 @@ public sealed record PatchProjectCommand(
     string? Name,
     string? Description,
     string? Status,
-    DateOnly? EstimatedEndDate
+    DateOnly? EstimatedEndDate,
+    /// <summary>Las etiquetas, todas: sustituyen a las que tuviera. <c>null</c> no las toca.</summary>
+    IReadOnlyList<Guid>? TagIds = null
 ) : ICommand<bool>, IWebhookTriggered, IAuthorizeEntity
 {
     public string EntityType => "Project";

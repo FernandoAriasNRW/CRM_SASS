@@ -86,7 +86,7 @@ public sealed class ProjectQueries(ProjectsDbContext context) : IProjectQueries
             .OrderByDescending(p => p.StartDate)
             .Skip(pagination.Skip).Take(pagination.Take)
             .Select(p => new ProjectDto(p.Id, p.TenantId, p.SpaceId, p.FolderId, p.Name.Value, p.Description,
-                p.StartDate, p.EstimatedEndDate, p.Status.Value, p.OwnerId))
+                p.StartDate, p.EstimatedEndDate, p.Status.Value, p.OwnerId, p.TagIds))
             .ToListAsync(ct);
 
         return PagedResult<ProjectDto>.Create(items, totalCount, pagination.Page, pagination.PageSize);
@@ -97,7 +97,7 @@ public sealed class ProjectQueries(ProjectsDbContext context) : IProjectQueries
         return await context.Projects.AsNoTracking()
             .Where(p => p.TenantId == tenantId && p.Id == id)
             .Select(p => new ProjectDto(p.Id, p.TenantId, p.SpaceId, p.FolderId, p.Name.Value, p.Description,
-                p.StartDate, p.EstimatedEndDate, p.Status.Value, p.OwnerId))
+                p.StartDate, p.EstimatedEndDate, p.Status.Value, p.OwnerId, p.TagIds))
             .FirstOrDefaultAsync(ct);
     }
 

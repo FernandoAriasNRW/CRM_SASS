@@ -106,6 +106,9 @@ public static class ModuleRegistration
         services.AddScoped<Seeding.IModuleSeeder, Seeding.NotificationsSeeder>();
         services.AddScoped<Seeding.IModuleSeeder, Seeding.WebhookSeeder>();
         services.AddScoped<Seeding.IModuleSeeder, Seeding.TagsSeeder>();
+
+        // Convierte al arrancar las etiquetas antiguas de los tickets (ver DatabaseInitialization).
+        services.AddScoped<Tags.LegacyTicketTagsConverter>();
         services.AddScoped<Services.DataSeederService>();
     }
 

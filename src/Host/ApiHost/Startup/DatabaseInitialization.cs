@@ -45,6 +45,7 @@ public static class DatabaseInitialization
             SeedDemoData(services);
 
         ProvisionBuiltInTags(services);
+        ConvertLegacyTicketTags(services);
     }
 
     /// <summary>
@@ -185,6 +186,25 @@ public static class DatabaseInitialization
             // tumba el arranque, pero se registra como error para que se vea.
             services.GetRequiredService<ILogger<Program>>()
                 .LogError(ex, "No se pudieron crear las etiquetas predefinidas. La aplicación arranca sin ellas.");
+        }
+    }
+
+    /// <summary>
+    /// Las claves antiguas de los tickets a etiquetas de verdad. Después de aprovisionar, porque sus
+    /// destinos son predefinidas. Ver <see cref="Tags.LegacyTicketTagsConverter"/>.
+    /// </summary>
+    private static void ConvertLegacyTicketTags(IServiceProvider services)
+    {
+        try
+        {
+            services.GetRequiredService<Tags.LegacyTicketTagsConverter>().ConvertAsync().GetAwaiter().GetResult();
+        }
+        catch (Exception ex)
+        {
+            // No tumba el arranque: los tickets siguen funcionando, sólo sin esas etiquetas. Se
+            // reintenta en el siguiente arranque, porque la conversión es idempotente.
+            services.GetRequiredService<ILogger<Program>>()
+                .LogError(ex, "No se pudieron convertir las etiquetas antiguas de los tickets.");
         }
     }
 

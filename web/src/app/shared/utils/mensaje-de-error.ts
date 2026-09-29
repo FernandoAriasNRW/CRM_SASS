@@ -8,6 +8,8 @@
  * - `BadRequest(result.Error)` manda **una cadena suelta** —así rechazan campos personalizados,
  *   tareas y casi todos los módulos—.
  * - El manejador global de excepciones manda un **ProblemDetails**, y el motivo va en `detail`.
+ *   Si es de validación, `detail` es genérico («Uno o más campos…») y el motivo de verdad va en
+ *   `errors`, por campo: se devuelve el primero.
  * - Algunos endpoints antiguos mandan un objeto con `message`.
  *
  * Lo que **nunca** se devuelve es `error.message` de Angular: es la cadena «Http failure response
@@ -19,7 +21,12 @@ export function mensajeDeError(respuesta: unknown, porDefecto: string): string {
 
   if (typeof cuerpo === 'string' && cuerpo.trim()) return cuerpo;
 
-  const objeto = cuerpo as { detail?: string; message?: string } | undefined;
+  const objeto = cuerpo as { detail?: string; message?: string; errors?: Record<string, unknown> } | undefined;
+
+  const primero = Object.values(objeto?.errors ?? {})
+    .flatMap(mensajes => (Array.isArray(mensajes) ? mensajes : []))
+    .find((m): m is string => typeof m === 'string' && m.trim().length > 0);
+  if (primero) return primero;
 
   if (objeto?.detail?.trim()) return objeto.detail;
   if (objeto?.message?.trim()) return objeto.message;

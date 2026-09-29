@@ -25,8 +25,8 @@ export interface Ticket {
   requesterCompany?: string | null;
   classification?: string | null;
   teamId?: string | null;
-  /** Las claves de las etiquetas separadas por comas, como las guarda el servidor. */
-  tags?: string;
+  /** Las etiquetas: ids del módulo de etiquetas (`GET /tags`). */
+  tagIds?: string[];
 }
 
 /** Una imagen o un vídeo adjunto a un ticket. */

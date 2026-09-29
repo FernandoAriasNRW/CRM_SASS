@@ -47,7 +47,9 @@ public sealed record TaskDto(
     /// Cuándo empieza el trabajo, o null si no se ha dicho. Sin ella el diagrama de Gantt pinta
     /// la tarea como un hito en su vencimiento en lugar de inventarle una barra.
     /// </summary>
-    DateOnly? StartDate = null
+    DateOnly? StartDate = null,
+    /// <summary>Las etiquetas (ids del módulo Tags); la pantalla las resuelve con <c>GET /tags</c>.</summary>
+    IReadOnlyList<Guid>? TagIds = null
 );
 
 /// <summary>El patrón de repetición tal como lo ve la interfaz.</summary>

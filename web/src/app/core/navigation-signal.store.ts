@@ -50,7 +50,8 @@ export const DEFAULT_NAV_ITEMS: NavItem[] = [
   { id: 'teams', label: $localize`Equipos`, icon: 'lucideUsers', route: '/teams', hasSubmenu: true, hasCustomizer: true },
   { id: 'chat', label: $localize`Chat`, icon: 'lucideMessageSquare', route: '/chat' },
   { id: 'calendar', label: $localize`Calendario`, icon: 'lucideCalendar', route: '/calendar' },
-  { id: 'reports', label: $localize`Informes`, icon: 'lucideChartBar', route: '/reports' }
+  { id: 'reports', label: $localize`Informes`, icon: 'lucideChartBar', route: '/reports' },
+  { id: 'tags', label: $localize`Etiquetas`, icon: 'lucideTag', route: '/tags' }
 ];
 
 const DEFAULT_SUBMENUS: Record<string, SubmenuItem[]> = {
@@ -124,7 +125,13 @@ export class NavigationSignalStore {
       // Default: everything after 6
       return items.slice(6);
     }
-    return prefs.unpinnedIds.map(id => items.find(i => i.id === id)!).filter(Boolean);
+    // Lo que no está en ninguna de las dos listas guardadas va aquí: es un módulo que llegó
+    // después de que la persona ordenara su menú. Sin esto no le aparecería nunca.
+    const known = new Set([...prefs.pinnedIds, ...prefs.unpinnedIds]);
+    return [
+      ...prefs.unpinnedIds.map(id => items.find(i => i.id === id)!).filter(Boolean),
+      ...items.filter(i => !known.has(i.id)),
+    ];
   });
 
   getSubmenuItems(menuId: string): SubmenuItem[] {

@@ -1,0 +1,123 @@
+<app-drawer [isOpen]="true" (closed)="close()" [title]="title()" [subtitle]="subtitle()" size="md">
+  <div drawer-icon class="w-9 h-9 rounded-lg bg-muted flex items-center justify-center shrink-0" aria-hidden="true">
+    <span class="w-3.5 h-3.5 rounded-full" [style.background-color]="colorHex"></span>
+  </div>
+
+  @if (tag(); as current) {
+    <div drawer-badge>
+      <ui-badge variant="outline">{{ current.kindLabel }}</ui-badge>
+    </div>
+  }
+
+  <div class="p-6 space-y-6">
+    @if (!editable()) {
+      <p class="text-xs text-muted-foreground rounded-lg border border-border bg-muted/40 p-3" data-testid="tag-read-only">
+        {{ readOnlyReason() }}
+      </p>
+    }
+
+    <form id="tag-form" class="space-y-4" (ngSubmit)="save()">
+      <div class="space-y-1.5">
+        <label for="tag-name" class="text-xs font-medium text-foreground" i18n>Nombre</label>
+        <input id="tag-name" name="name" [(ngModel)]="name" maxlength="100" required [disabled]="!editable()"
+               class="w-full px-3 py-2 text-sm bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-70" />
+      </div>
+
+      <div class="space-y-1.5">
+        <label for="tag-category" class="text-xs font-medium text-foreground" i18n>Categoría</label>
+        @if (isAutomatic()) {
+          <p id="tag-category" class="text-sm text-muted-foreground">{{ tag()?.categoryLabel }}</p>
+        } @else {
+          <select id="tag-category" name="category" [(ngModel)]="category" required [disabled]="!editable()"
+                  class="w-full px-3 py-2 text-sm bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-70">
+            <option value="" disabled i18n>Elige una categoría</option>
+            @for (option of selectableCategories(); track option.name) {
+              <option [value]="option.name">{{ option.label }}</option>
+            }
+          </select>
+        }
+      </div>
+
+      <div class="space-y-1.5">
+        <label for="tag-color" class="text-xs font-medium text-foreground" i18n>Color</label>
+        <div class="flex items-center gap-2">
+          <input id="tag-color" type="color" name="color" [(ngModel)]="colorHex" [disabled]="!editable()"
+                 class="w-10 h-9 p-0.5 rounded-lg border border-border bg-background cursor-pointer disabled:cursor-default" />
+          <input name="colorText" [(ngModel)]="colorHex" maxlength="7" [disabled]="!editable()"
+                 i18n-aria-label aria-label="Color en hexadecimal"
+                 class="w-28 px-3 py-2 text-sm font-mono bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-70" />
+        </div>
+        @if (editable()) {
+          <div class="flex flex-wrap gap-1.5 pt-1" role="group" i18n-aria-label aria-label="Colores sugeridos">
+            @for (swatch of swatches; track swatch) {
+              <button type="button" (click)="pickColor(swatch)" [attr.aria-label]="swatch"
+                      [attr.aria-pressed]="colorHex.toUpperCase() === swatch"
+                      class="w-6 h-6 rounded-full border-2 transition-transform hover:scale-110"
+                      [class.border-foreground]="colorHex.toUpperCase() === swatch"
+                      [class.border-transparent]="colorHex.toUpperCase() !== swatch"
+                      [style.background-color]="swatch"></button>
+            }
+          </div>
+        }
+      </div>
+    </form>
+
+    @if (error()) {
+      <p role="alert" class="text-sm text-destructive" data-testid="tag-error">{{ error() }}</p>
+    }
+
+    @if (tag(); as current) {
+      <div class="border-t border-border pt-4">
+        <h3 class="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3" i18n>Detalles</h3>
+        <dl class="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
+          <dt class="text-muted-foreground" i18n>Tipo</dt>
+          <dd>{{ current.kindLabel }}</dd>
+
+          <dt class="text-muted-foreground" i18n>Categoría</dt>
+          <dd>{{ current.categoryLabel }}</dd>
+
+          <dt class="text-muted-foreground" i18n>Creada por</dt>
+          <dd>
+            @if (current.createdBy) {
+              <app-user-avatar [userId]="current.createdBy" />
+            } @else {
+              <span class="text-muted-foreground" i18n>El sistema</span>
+            }
+          </dd>
+
+          @if (current.kind === 'builtIn') {
+            <dt class="text-muted-foreground" i18n>Idioma</dt>
+            <dd class="text-muted-foreground" i18n>Viene con la aplicación y se muestra en el idioma de cada persona.</dd>
+          }
+        </dl>
+      </div>
+    }
+  </div>
+
+  <div drawer-footer class="flex items-center justify-between gap-2 w-full">
+    <div class="flex items-center gap-2 min-w-0">
+      @if (tag(); as current) {
+        @if (editable()) {
+          @if (confirmingDelete()) {
+            <span class="text-xs text-foreground" i18n>¿Borrarla? Se quitará de todo lo que la lleva.</span>
+            <button uiButton variant="destructive" size="sm" (click)="remove()" [disabled]="saving()" data-testid="tag-confirm-delete" i18n>Sí, borrar</button>
+            <button uiButton variant="ghost" size="sm" (click)="confirmingDelete.set(false)" i18n>No</button>
+          } @else {
+            <button uiButton variant="outline" size="sm" (click)="confirmingDelete.set(true)" class="text-destructive" data-testid="tag-delete" i18n>Borrar</button>
+          }
+        }
+      }
+    </div>
+
+    <div class="flex items-center gap-2">
+      <button uiButton variant="outline" size="sm" (click)="close()">
+        @if (editable()) { <span i18n>Cancelar</span> } @else { <span i18n>Cerrar</span> }
+      </button>
+      @if (editable()) {
+        <button uiButton size="sm" type="submit" form="tag-form" [disabled]="!canSave()" data-testid="tag-save">
+          @if (isNew()) { <span i18n>Crear etiqueta</span> } @else { <span i18n>Guardar</span> }
+        </button>
+      }
+    </div>
+  </div>
+</app-drawer>

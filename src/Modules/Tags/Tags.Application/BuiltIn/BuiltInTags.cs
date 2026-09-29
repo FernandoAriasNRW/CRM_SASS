@@ -55,6 +55,19 @@ public static class BuiltInTags
         new("implementation", TagCategory.DevelopmentPhase, "Implementación", "Implementation", "#16A34A"),
         new("testing", TagCategory.DevelopmentPhase, "Pruebas", "Testing", "#CA8A04"),
         new("deployment", TagCategory.DevelopmentPhase, "Despliegue", "Deployment", "#7C3AED"),
+
+        // Soporte: lo que antes eran las claves fijas de los tickets. Las claves se conservan para
+        // que la conversión de lo guardado (LegacyTicketTagsConverter) sea directa.
+        new("billing", TagCategory.Support, "Facturación", "Billing", "#16A34A"),
+        new("technical", TagCategory.Support, "Técnico", "Technical", "#2563EB"),
+        new("account", TagCategory.Support, "Cuenta", "Account", "#475569"),
+        new("onboarding", TagCategory.Support, "Onboarding", "Onboarding", "#7C3AED"),
+        new("integration", TagCategory.Support, "Integración", "Integration", "#4F46E5"),
+        new("data-loss", TagCategory.Support, "Pérdida de datos", "Data loss", "#DC2626"),
+        new("performance", TagCategory.Support, "Rendimiento", "Performance", "#EA580C"),
+        new("ui", TagCategory.Support, "Interfaz", "User interface", "#DB2777"),
+        new("waiting-client", TagCategory.Support, "Esperando cliente", "Waiting on customer", "#CA8A04"),
+        new("escalated", TagCategory.Support, "Escalado", "Escalated", "#C2410C"),
     ];
 
     private static readonly Dictionary<string, BuiltInTag> ByKey = All.ToDictionary(t => t.Key);
@@ -68,6 +81,7 @@ public static class BuiltInTags
         [TagCategory.Security] = ("Seguridad", "Security"),
         [TagCategory.WorkType] = ("Tipo de trabajo", "Work type"),
         [TagCategory.DevelopmentPhase] = ("Fase de desarrollo", "Development phase"),
+        [TagCategory.Support] = ("Soporte", "Support"),
     };
 
     public static BuiltInTag? Find(string? key) => key is not null && ByKey.TryGetValue(key, out var tag) ? tag : null;

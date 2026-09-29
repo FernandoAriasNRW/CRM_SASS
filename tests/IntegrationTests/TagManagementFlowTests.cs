@@ -210,6 +210,23 @@ public sealed class TagManagementFlowTests(CrmApiFactory factory)
             .Should().Be(0, "renombrarla no hace que vuelva la original");
     }
 
+    [Fact]
+    public async Task Editing_a_built_in_tag_with_its_english_name_keeps_it_built_in()
+    {
+        var admin = await AdminAsync();
+        var english = await admin.Client.GetFromJsonAsync<JsonElement>($"{Tags}?language=en");
+        var partner = english.EnumerateArray().Single(t => t.GetProperty("builtInKey").GetString() == "partner");
+        partner.GetProperty("name").GetString().Should().Be("Partner");
+
+        // Lo que manda la pantalla en inglés al cambiar sólo el color: el nombre tal como lo ve.
+        (await RenameAsync(admin, IdOf(partner), "Partner", "Business", "#123456")).StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var spanish = (await FindAsync(admin, IdOf(partner)))!.Value;
+        spanish.GetProperty("builtInKey").GetString().Should().Be("partner", "cambiar el color no la convierte en propia");
+        spanish.GetProperty("name").GetString().Should().Be("Socio");
+        spanish.GetProperty("colorHex").GetString().Should().Be("#123456");
+    }
+
     // ── Permiso concedido ───────────────────────────────────────────────────────────────────
 
     [Fact]

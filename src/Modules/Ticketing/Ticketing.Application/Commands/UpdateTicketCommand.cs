@@ -16,10 +16,10 @@ public sealed record UpdateTicketCommand(
     /// <summary><c>Guid.Empty</c> quita el equipo; <c>null</c> no lo toca.</summary>
     Guid? TeamId = null,
     /// <summary>
-    /// Las etiquetas por su clave. <b>La ficha ya las mandaba y nadie las guardaba</b>: el
-    /// comando no tenía dónde recibirlas, así que se perdían al cerrar el ticket.
+    /// Las etiquetas (ids del módulo Tags), todas: sustituyen a las que tuviera. <c>null</c> no
+    /// las toca; una lista vacía las quita.
     /// </summary>
-    IReadOnlyList<string>? Tags = null
+    IReadOnlyList<Guid>? TagIds = null
 ) : ICommand<bool>, IWebhookTriggered, IAuthorizeEntity
 {
     public string EntityType => "Ticket";

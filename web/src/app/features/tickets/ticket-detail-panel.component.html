@@ -109,36 +109,8 @@
           <span class="text-muted-foreground w-24 shrink-0 flex items-center gap-1.5 text-xs font-medium pt-1">
             <ng-icon name="lucideTag" size="13" /> Etiquetas
           </span>
-          <div class="flex flex-wrap gap-1.5 flex-1">
-            @for (key of selectedTags(); track key) {
-              @if (getTag(key); as tag) {
-                <span appClickable [class]="tag.color + ' ' + tag.textColor + ' text-xs px-2 py-0.5 rounded-full flex items-center gap-1 cursor-pointer hover:opacity-80'"
-                      (click)="toggleTag(key)">
-                  {{ tag.label }}
-                  <span class="text-xs leading-none" i18n>&times;</span>
-                </span>
-              }
-            }
-            <button (click)="showTagPicker.set(!showTagPicker())"
-                    class="text-xs text-muted-foreground border border-dashed border-border rounded-full px-2 py-0.5 hover:border-primary hover:text-primary transition-colors" i18n>
-              + Etiqueta
-            </button>
-          </div>
+          <app-tag-field class="flex-1" [tagIds]="tagIds()" (tagIdsChange)="changeTags($event)" />
         </div>
-
-        <!-- Picker de etiquetas -->
-        @if (showTagPicker()) {
-          <div class="col-span-2 ml-24 flex flex-wrap gap-1.5 p-3 rounded-lg border border-border bg-card">
-            @for (tag of availableTags; track tag.key) {
-              <button
-                (click)="toggleTag(tag.key)"
-                [class]="tag.color + ' ' + tag.textColor + ' text-xs px-2.5 py-1 rounded-full transition-all border-2 ' + (isTagSelected(tag.key) ? 'border-primary shadow-sm' : 'border-transparent')"
-              >
-                {{ tag.label }}
-              </button>
-            }
-          </div>
-        }
       </div>
 
       <!--

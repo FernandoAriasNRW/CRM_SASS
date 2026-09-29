@@ -10,7 +10,9 @@ public sealed record ProjectDto(
     DateOnly StartDate,
     DateOnly EstimatedEndDate,
     string Status,
-    Guid OwnerId
+    Guid OwnerId,
+    /// <summary>Las etiquetas (ids del módulo Tags); la pantalla las resuelve con <c>GET /tags</c>.</summary>
+    IReadOnlyList<Guid>? TagIds = null
 );
 
 public sealed record ProjectsPaginatedResponse(

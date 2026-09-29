@@ -79,9 +79,13 @@ public static class ProjectsEndpoints
     group.MapPatch("/{id:guid}", async (IUserContext currentUser, Guid id, PatchProjectCommand command, IMediator mediator) =>
     {
       var tenantId = currentUser.TenantId;
-      var actualCommand = new PatchProjectCommand(tenantId, id, command.Name, command.Description, command.Status, command.EstimatedEndDate);
+      var actualCommand = new PatchProjectCommand(
+          tenantId, id, command.Name, command.Description, command.Status, command.EstimatedEndDate, command.TagIds);
       var result = await mediator.Send(actualCommand);
-      return result.IsSuccess ? Results.Ok() : Results.NotFound(result.Error);
+
+      // 404 sólo si no existe: unas etiquetas que no son de la organización son un 400.
+      if (result.IsSuccess) return Results.Ok();
+      return result.Error == "Proyecto no encontrado" ? Results.NotFound(result.Error) : Results.BadRequest(result.Error);
     });
 
     group.MapDelete("/{id:guid}", async (IUserContext currentUser, Guid id, IMediator mediator) =>

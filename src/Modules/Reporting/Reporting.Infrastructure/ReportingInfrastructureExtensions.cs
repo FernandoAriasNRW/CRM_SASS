@@ -23,6 +23,7 @@ public static class ReportingInfrastructureExtensions
         services.AddScoped<IReportingUnitOfWork, ReportingModuleUnitOfWork>();
 
         services.AddScoped<IReportRepository, EfReportRepository>();
+        services.AddScoped<BuildingBlocks.Application.Abstractions.ITagReferences, Persistence.ReportingTagReferences>();
         services.AddScoped<Reporting.Application.Exports.IExportRepository,
                            Reporting.Infrastructure.Persistence.ExportRepository>();
 
