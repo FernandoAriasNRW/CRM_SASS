@@ -27,7 +27,8 @@ public sealed class CreateProjectCommandHandler(
 
 public sealed class PatchProjectCommandHandler(
     IProjectRepository repository,
-    IProjectsUnitOfWork unitOfWork) : ICommandHandler<PatchProjectCommand, bool>
+    IProjectsUnitOfWork unitOfWork,
+    ITagCatalog tagCatalog) : ICommandHandler<PatchProjectCommand, bool>
 {
   public async Task<Result<bool>> Handle(PatchProjectCommand request, CancellationToken cancellationToken)
   {
@@ -35,7 +36,20 @@ public sealed class PatchProjectCommandHandler(
     if (project is null)
       return Result<bool>.Failure("Proyecto no encontrado");
 
+    // Las etiquetas se comprueban antes de tocar nada, para no dejar el proyecto medio guardado.
+    IReadOnlyList<Guid>? tagIds = null;
+    if (request.TagIds is not null)
+    {
+      tagIds = TagIdList.Normalize(request.TagIds);
+      var tagError = await TagIdList.ValidateAsync(tagCatalog, request.TenantId, tagIds, cancellationToken);
+      if (tagError is not null)
+        return Result<bool>.Failure(tagError);
+    }
+
     project.Update(request.Name, request.Description, request.EstimatedEndDate);
+
+    if (tagIds is not null)
+      project.SetTags(tagIds);
 
     if (!string.IsNullOrEmpty(request.Status))
       project.ChangeStatus(new ProjectStatus(request.Status, request.Status));

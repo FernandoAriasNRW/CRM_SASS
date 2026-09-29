@@ -15,7 +15,8 @@ namespace IntegrationTests;
 /// para crear tickets, y la organización sale de ella, no de lo que mande quien llama.
 ///
 /// Obligatorio: asunto, mensaje, nombre, email, teléfono y empresa. Opcional: adjuntos (imágenes
-/// o vídeos), clasificación, etiquetas, equipo, estado y prioridad.
+/// o vídeos). Nada más: prioridad, estado, clasificación, equipo y etiquetas se deciden dentro, y
+/// si una integración los manda se rechaza la petición nombrándolos.
 /// </summary>
 [Collection(ApiCollection.Name)]
 public sealed class TicketIntakeFlowTests(CrmApiFactory factory)
@@ -107,27 +108,62 @@ public sealed class TicketIntakeFlowTests(CrmApiFactory factory)
     }
 
     [Fact]
-    public async Task Los_opcionales_se_guardan_si_llegan()
+    public async Task A_ticket_from_outside_starts_open_with_medium_priority_and_no_tags()
     {
         var admin = await AdministradorAsync();
         var (_, clave) = await CrearClaveAsync(admin);
-        var equipo = Guid.NewGuid();
 
-        var cuerpo = Minimo();
-        cuerpo["priority"] = "High";
-        cuerpo["status"] = "InProgress";
-        cuerpo["classification"] = "Facturación";
-        cuerpo["teamId"] = equipo;
-        cuerpo["tags"] = new[] { "billing", "Urgent", "billing" };
-
-        var id = await IdCreadoAsync(await ClienteDeFuera(clave).PostAsJsonAsync(Entrada, cuerpo));
+        var id = await IdCreadoAsync(await ClienteDeFuera(clave).PostAsJsonAsync(Entrada, Minimo()));
 
         var ticket = await admin.GetFromJsonAsync<JsonElement>($"/api/v1/tickets/{id}");
-        ticket.GetProperty("priority").GetString().Should().Be("High");
-        ticket.GetProperty("status").GetString().Should().Be("InProgress");
-        ticket.GetProperty("classification").GetString().Should().Be("Facturación");
-        ticket.GetProperty("teamId").GetGuid().Should().Be(equipo);
-        ticket.GetProperty("tags").GetString().Should().Be("billing,urgent", "sin repetidas y en minúsculas");
+        ticket.GetProperty("priority").GetString().Should().Be("Medium");
+        ticket.GetProperty("status").GetString().Should().Be("Open");
+        ticket.GetProperty("tagIds").EnumerateArray().Should().BeEmpty();
+    }
+
+    /// <summary>
+    /// Una integración de antes que siga mandando prioridad, estado, clasificación, equipo o
+    /// etiquetas recibe un 400 que los nombra, y no se crea nada: ignorarlos le haría creer que se
+    /// aplicaron.
+    /// </summary>
+    [Theory]
+    [InlineData("priority", "High")]
+    [InlineData("status", "InProgress")]
+    [InlineData("classification", "Facturación")]
+    [InlineData("teamId", "7d4f3c1e-0000-0000-0000-000000000001")]
+    [InlineData("tags", "billing")]
+    public async Task A_retired_field_in_json_is_rejected_by_name(string field, string value)
+    {
+        var admin = await AdministradorAsync();
+        var (_, clave) = await CrearClaveAsync(admin);
+        var titulo = $"Con campo retirado {Guid.NewGuid():N}";
+        var cuerpo = Minimo(titulo);
+        cuerpo[field] = value;
+
+        var respuesta = await ClienteDeFuera(clave).PostAsJsonAsync(Entrada, cuerpo);
+
+        respuesta.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await respuesta.Content.ReadAsStringAsync()).Should().Contain(field);
+
+        var lista = await admin.GetFromJsonAsync<JsonElement>($"/api/v1/tickets?search={Uri.EscapeDataString(titulo)}");
+        lista.GetRawText().Should().NotContain(titulo, "no se crea el ticket");
+    }
+
+    [Fact]
+    public async Task A_retired_field_in_a_form_is_rejected_too()
+    {
+        var admin = await AdministradorAsync();
+        var (_, clave) = await CrearClaveAsync(admin);
+
+        using var formulario = new MultipartFormDataContent();
+        foreach (var (campo, valor) in Minimo())
+            formulario.Add(new StringContent(valor!.ToString()!), campo);
+        formulario.Add(new StringContent("billing,bug"), "tags");
+
+        var respuesta = await ClienteDeFuera(clave).PostAsync(Entrada, formulario);
+
+        respuesta.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await respuesta.Content.ReadAsStringAsync()).Should().Contain("tags");
     }
 
     /// <summary>
@@ -143,7 +179,6 @@ public sealed class TicketIntakeFlowTests(CrmApiFactory factory)
         using var formulario = new MultipartFormDataContent();
         foreach (var (campo, valor) in Minimo())
             formulario.Add(new StringContent(valor!.ToString()!), campo);
-        formulario.Add(new StringContent("billing,bug"), "tags");
         formulario.Add(Fichero("captura.png", "image/png", 2048), "attachments", "captura.png");
         formulario.Add(Fichero("grabacion.mp4", "video/mp4", 4096), "attachments", "grabacion.mp4");
 
@@ -154,9 +189,6 @@ public sealed class TicketIntakeFlowTests(CrmApiFactory factory)
         adjuntos.EnumerateArray().Select(a => a.GetProperty("name").GetString())
             .Should().BeEquivalentTo("captura.png", "grabacion.mp4");
         adjuntos.EnumerateArray().Should().OnlyContain(a => a.GetProperty("fromExternal").GetBoolean());
-
-        var ticket = await admin.GetFromJsonAsync<JsonElement>($"/api/v1/tickets/{id}");
-        ticket.GetProperty("tags").GetString().Should().Be("billing,bug");
     }
 
     /// <summary>Sólo imágenes y vídeos: un ejecutable disfrazado no entra, y el ticket tampoco.</summary>
@@ -304,8 +336,8 @@ public sealed class TicketIntakeFlowTests(CrmApiFactory factory)
     }
 
     /// <summary>
-    /// Desde la aplicación: adjuntar en la ficha y guardar clasificación, equipo y etiquetas.
-    /// Las etiquetas de la ficha se mandaban y no se guardaban nunca.
+    /// Desde la aplicación: adjuntar en la ficha y guardar clasificación y etiquetas. Las etiquetas
+    /// son las del módulo de etiquetas, por id.
     /// </summary>
     [Fact]
     public async Task Desde_la_aplicacion_se_adjunta_y_se_guardan_las_etiquetas()
@@ -324,12 +356,19 @@ public sealed class TicketIntakeFlowTests(CrmApiFactory factory)
         adjuntos.EnumerateArray().Should().ContainSingle()
             .Which.GetProperty("fromExternal").GetBoolean().Should().BeFalse();
 
-        (await admin.PatchAsJsonAsync($"/api/v1/tickets/{id}",
-            new { Tags = new[] { "billing", "bug" }, Classification = "Acceso" }))
-            .StatusCode.Should().Be(HttpStatusCode.OK);
+        var etiquetas = await admin.GetFromJsonAsync<JsonElement>("/api/v1/tags");
+        Guid Etiqueta(string clave) => etiquetas.EnumerateArray()
+            .Single(t => t.GetProperty("builtInKey").GetString() == clave).GetProperty("id").GetGuid();
+        var facturacion = Etiqueta("billing");
+        var bug = Etiqueta("bug");
+
+        var guardado = await admin.PatchAsJsonAsync($"/api/v1/tickets/{id}",
+            new { TagIds = new[] { facturacion, bug, facturacion }, Classification = "Acceso" });
+        guardado.StatusCode.Should().Be(HttpStatusCode.OK, await guardado.Content.ReadAsStringAsync());
 
         var ticket = await admin.GetFromJsonAsync<JsonElement>($"/api/v1/tickets/{id}");
-        ticket.GetProperty("tags").GetString().Should().Be("billing,bug");
+        ticket.GetProperty("tagIds").EnumerateArray().Select(t => t.GetGuid())
+            .Should().Equal([facturacion, bug], "sin repetidas y en el orden en que llegan");
         ticket.GetProperty("classification").GetString().Should().Be("Acceso");
         ticket.GetProperty("title").GetString().Should().Be("Ticket desde la aplicación", "lo que no se manda no se toca");
     }

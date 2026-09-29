@@ -28,6 +28,7 @@ public static class TicketingInfrastructureExtensions
     services.AddScoped<ITicketingUnitOfWork, TicketingModuleUnitOfWork>();
 
     services.AddScoped<ITicketRepository, EfTicketRepository>();
+    services.AddScoped<BuildingBlocks.Application.Abstractions.ITagReferences, Persistence.TicketTagReferences>();
     services.AddScoped<Ticketing.Application.Intake.IIntakeKeyRepository, EfIntakeKeyRepository>();
     services.AddScoped<Ticketing.Application.Intake.ITicketAttachmentRepository, EfTicketAttachmentRepository>();
     services.AddScoped<ITicketQueries, TicketQueries>();

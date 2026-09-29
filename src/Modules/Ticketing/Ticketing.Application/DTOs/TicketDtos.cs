@@ -21,7 +21,8 @@ public sealed record TicketDto(
     string? RequesterCompany = null,
     string? Classification = null,
     Guid? TeamId = null,
-    string Tags = ""
+    /// <summary>Las etiquetas (ids del módulo Tags); la pantalla las resuelve con <c>GET /tags</c>.</summary>
+    IReadOnlyList<Guid>? TagIds = null
 )
 {
   internal static TicketDto? FromEntity(Ticket ticket)
@@ -44,7 +45,7 @@ public sealed record TicketDto(
       ticket.RequesterCompany,
       ticket.Classification,
       ticket.TeamId,
-      ticket.Tags
+      ticket.TagIds
     );
   }
 }

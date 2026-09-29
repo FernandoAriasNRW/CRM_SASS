@@ -136,6 +136,19 @@ public static class ReportingEndpoints
       return result.IsSuccess ? Results.NoContent() : Results.BadRequest(result.Error);
     });
 
+    // Las etiquetas del informe, todas de una vez. 404 si no existe; 400 si alguna no es una
+    // etiqueta de la organización.
+    group.MapPut("/{id:guid}/tags", async (IUserContext currentUser, Guid id, SetTagsRequest request, IMediator mediator) =>
+    {
+      var result = await mediator.Send(new Reporting.Application.Tags.SetReportTagsCommand(
+          currentUser.TenantId, id, request.TagIds ?? []));
+
+      if (result.IsSuccess) return Results.NoContent();
+      return result.Error == Reporting.Application.Tags.SetReportTagsHandler.ReportNotFound
+          ? Results.NotFound(result.Error)
+          : Results.BadRequest(result.Error);
+    });
+
     // Las exportaciones de un informe, con su estado y —si falló— su motivo.
     group.MapGet("/{id:guid}/exports", async (
         IUserContext currentUser, Guid id, IMediator mediator) =>

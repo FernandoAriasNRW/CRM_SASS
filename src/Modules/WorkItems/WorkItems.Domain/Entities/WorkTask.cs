@@ -515,6 +515,17 @@ public sealed class WorkTask : AggregateRoot, ITenantEntity, ISoftDeletable, IAr
         public const string NotAnAssignee = "Esa persona no es responsable de la tarea";
     }
 
+    /// <summary>
+    /// Cambia todas las etiquetas de una vez, que es lo que manda la pantalla. Que existan en la
+    /// organización lo comprueba la aplicación con <c>ITagCatalog</c>: el agregado no puede
+    /// preguntar a otro módulo.
+    /// </summary>
+    public void SetTags(IEnumerable<Guid> tagIds)
+    {
+        TagIds.Clear();
+        TagIds.AddRange(tagIds.Where(id => id != Guid.Empty).Distinct());
+    }
+
     public void AddTag(Guid tagId)
     {
         if (!TagIds.Contains(tagId))

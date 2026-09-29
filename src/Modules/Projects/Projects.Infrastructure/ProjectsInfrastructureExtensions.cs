@@ -31,6 +31,7 @@ public static class ProjectsInfrastructureExtensions
     services.AddScoped<ISpaceRepository, EfSpaceRepository>();
     services.AddScoped<IFolderRepository, EfFolderRepository>();
     services.AddScoped<IProjectQueries, ProjectQueries>();
+    services.AddScoped<BuildingBlocks.Application.Abstractions.ITagReferences, Persistence.ProjectTagReferences>();
     return services;
   }
 }

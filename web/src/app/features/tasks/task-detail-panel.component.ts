@@ -20,9 +20,8 @@ import {
   FREQUENCIES,
   type TaskItem, type TaskDependencies, type TaskDependencyRef, type ChecklistItem, type Recurrence,
 } from './task-create-modal.component';
-import { TASK_TAGS, type Tag } from '../../shared/utils/tags';
+import { TagFieldComponent } from '../../shared/ui/tag-field.component';
 import { UsersService, type TenantUser } from '../../core/users.service';
-import { ClickableDirective } from '../../shared/directives/clickable.directive';
 import { CustomFieldsFormComponent } from '../../shared/ui/custom-fields-form.component';
 import { CommentsComponent } from '../../shared/ui/comments.component';
 import { MentionedInComponent } from '../../shared/ui/mentioned-in.component';
@@ -35,7 +34,7 @@ const INITIAL_STATUS = 'To Do';
 @Component({
   selector: 'app-task-detail-panel',
   standalone: true,
-  imports: [MentionedInComponent, ClickableDirective, FormsModule, DatePipe, BadgeComponent, AvatarComponent, NgIconComponent, SkeletonComponent, DrawerComponent, CustomFieldsFormComponent, CommentsComponent],
+  imports: [MentionedInComponent, FormsModule, DatePipe, BadgeComponent, AvatarComponent, NgIconComponent, SkeletonComponent, DrawerComponent, CustomFieldsFormComponent, CommentsComponent, TagFieldComponent],
   viewProviders: [provideIcons({
     lucideX, lucideCheck, lucideCalendar, lucideClock, lucideUser,
     lucideTag, lucideFlag, lucideMessageSquare, lucidePaperclip,
@@ -58,6 +57,8 @@ export class TaskDetailPanelComponent implements OnInit {
    * Responsables de la tarea. El orden que llega de la API no significa nada, así que quién es
    * el principal se sabe comparando con `principal`, no por la posición.
    */
+  /** Los ids de las etiquetas de la tarea. */
+  readonly tagIds = signal<string[]>([]);
   assignees = signal<string[]>([]);
   principal = signal('');
   chosenUser = '';
@@ -69,8 +70,6 @@ export class TaskDetailPanelComponent implements OnInit {
   priority: string = DEFAULT_PRIORITY;
   dueDate = '';
   estimatedHours = 0;
-  selectedTags = signal<string[]>([]);
-  showTagPicker = signal(false);
   saving = signal(false);
   subtasks = signal<TaskItem[]>([]);
   loadingSubtasks = signal(false);
@@ -91,7 +90,6 @@ export class TaskDetailPanelComponent implements OnInit {
 
   readonly priorities = PRIORITIES;
   readonly statuses = TASK_STATUSES;
-  readonly availableTags = TASK_TAGS;
 
   readonly currentPriority = computed(() =>
     PRIORITIES.find(p => p.key === this.priority) ?? PRIORITIES[2]
@@ -109,10 +107,7 @@ export class TaskDetailPanelComponent implements OnInit {
     this.priority = t.priority ?? DEFAULT_PRIORITY;
     this.dueDate = t.dueDate ?? '';
     this.estimatedHours = t.estimatedHours ?? 0;
-    // Parsear etiquetas guardadas como string separado por comas
-    if ((t as any).tags) {
-      this.selectedTags.set(String((t as any).tags).split(',').map((s: string) => s.trim()).filter(Boolean));
-    }
+    this.tagIds.set(t.tagIds ?? []);
     this.assignees.set(t.assignees ?? (t.assigneeId ? [t.assigneeId] : []));
     this.principal.set(t.assigneeId ?? '');
     if (!this.isSubtask()) this.loadSubtasks();
@@ -491,7 +486,7 @@ export class TaskDetailPanelComponent implements OnInit {
     this.api.patch(`/tasks/${this.task().id}`, payload).subscribe({
       next: () => {
         this.saving.set(false);
-        this.updated.emit({ ...this.task(), title: this.title, description: this.description, status: this.status, priority: this.priority, dueDate: this.dueDate, estimatedHours: this.estimatedHours });
+        this.updated.emit({ ...this.task(), title: this.title, description: this.description, status: this.status, priority: this.priority, dueDate: this.dueDate, estimatedHours: this.estimatedHours, tagIds: this.tagIds() });
         if (field === 'title') {
           this.toast.success('Guardado', 'Título actualizado');
         }
@@ -503,19 +498,13 @@ export class TaskDetailPanelComponent implements OnInit {
     });
   }
 
-  toggleTag(key: string): void {
-    this.selectedTags.update(tags =>
-      tags.includes(key) ? tags.filter(t => t !== key) : [...tags, key]
-    );
-    this.saveField('tags', this.selectedTags().join(','));
-  }
-
-  isTagSelected(key: string): boolean {
-    return this.selectedTags().includes(key);
-  }
-
-  getTag(key: string): Tag | undefined {
-    return TASK_TAGS.find(t => t.key === key);
+  /**
+   * Guarda las etiquetas como ids del módulo de etiquetas. Antes se mandaban claves fijas en un
+   * campo `tags` que el servidor no tenía, así que ninguna etiqueta de tarea llegó a guardarse.
+   */
+  changeTags(ids: string[]): void {
+    this.tagIds.set(ids);
+    this.saveField('tagIds', ids);
   }
 
   /**

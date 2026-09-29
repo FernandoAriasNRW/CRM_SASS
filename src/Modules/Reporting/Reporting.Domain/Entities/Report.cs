@@ -109,6 +109,16 @@ public sealed class Report : AggregateRoot, ITenantEntity, ISoftDeletable
     /// <summary>La definición ya leída, o <c>null</c> si no es a medida.</summary>
     public Definitions.ReportDefinition? ReadDefinition() => Definitions.ReportDefinition.Read(DefinitionJson);
 
+    /// <summary>
+    /// Cambia todas las etiquetas de una vez. Que existan en la organización lo comprueba la
+    /// aplicación con <c>ITagCatalog</c>: el agregado no puede preguntar a otro módulo.
+    /// </summary>
+    public void SetTags(IEnumerable<Guid> tagIds)
+    {
+        TagIds.Clear();
+        TagIds.AddRange(tagIds.Where(id => id != Guid.Empty).Distinct());
+    }
+
     public void AddTag(Guid tagId)
     {
         if (!TagIds.Contains(tagId))

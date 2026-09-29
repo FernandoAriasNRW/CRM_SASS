@@ -27,8 +27,14 @@ public static class TagCategory
     /// <summary>En qué fase del ciclo de desarrollo está: requisitos, diseño, implementación…</summary>
     public const string DevelopmentPhase = "DevelopmentPhase";
 
+    /// <summary>
+    /// De qué va una petición de soporte: facturación, cuenta, integración… Sustituye a las claves
+    /// fijas que usaban los tickets («billing», «waiting-client»).
+    /// </summary>
+    public const string Support = "Support";
+
     public static readonly IReadOnlyList<string> All =
-        [Team, Project, Milestone, Business, Security, WorkType, DevelopmentPhase];
+        [Team, Project, Milestone, Business, Security, WorkType, DevelopmentPhase, Support];
 
     public static bool IsBuiltIn(string? category) => category is not null && All.Contains(category);
 

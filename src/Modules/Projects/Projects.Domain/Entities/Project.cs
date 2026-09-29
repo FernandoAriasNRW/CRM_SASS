@@ -128,6 +128,16 @@ public sealed class Project : AggregateRoot, ITenantEntity, ISoftDeletable, IArc
     DeletedBy = null;
   }
 
+  /// <summary>
+  /// Cambia todas las etiquetas de una vez. Que existan en la organización lo comprueba la
+  /// aplicación con <c>ITagCatalog</c>: el agregado no puede preguntar a otro módulo.
+  /// </summary>
+  public void SetTags(IEnumerable<Guid> tagIds)
+  {
+      TagIds.Clear();
+      TagIds.AddRange(tagIds.Where(id => id != Guid.Empty).Distinct());
+  }
+
   public void AddTag(Guid tagId)
   {
     if (!TagIds.Contains(tagId))

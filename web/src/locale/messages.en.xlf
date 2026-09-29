@@ -8307,6 +8307,38 @@ Pending</target>
           <context context-type="linenumber">19</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="9015151771760176314" datatype="html">
+        <source>Adjuntos: hasta 10 imágenes o vídeos de 50 MB cada uno. La prioridad, el estado, la clasificación, el equipo y las etiquetas se asignan dentro de la aplicación: si la petición los trae, se rechaza.</source>
+        <target state="final">Attachments: up to 10 images or videos of 50 MB each. Priority, status, classification, team and tags are set inside the application: a request that includes them is rejected.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/ticket-intake/admin-ticket-intake.component.html</context>
+          <context context-type="linenumber">116,117</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5446891293111743830" datatype="html">
+        <source>La organización todavía no tiene etiquetas.</source>
+        <target state="final">The organization has no tags yet.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/tag-field.component.html</context>
+          <context context-type="linenumber">38,39</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1397962945337690532" datatype="html">
+        <source>Cargando etiquetas…</source>
+        <target state="final">Loading tags…</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/tag-field.component.html</context>
+          <context context-type="linenumber">40,41</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1941171232341875875" datatype="html">
+        <source>Quitar la etiqueta <x id="PH" equiv-text="name"/></source>
+        <target state="final">Remove tag <x id="PH" equiv-text="name"/></target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/tag-field.component.ts</context>
+          <context context-type="linenumber">51</context>
+        </context-group>
+      </trans-unit>
     </body>
   </file>
 </xliff>

@@ -46,7 +46,8 @@ public sealed class CreateTicketHandler(
 /// </summary>
 public sealed class UpdateTicketHandler(
     ITicketRepository repository,
-    ITicketingUnitOfWork unitOfWork) : ICommandHandler<UpdateTicketCommand, bool>
+    ITicketingUnitOfWork unitOfWork,
+    ITagCatalog tagCatalog) : ICommandHandler<UpdateTicketCommand, bool>
 {
   public async Task<Result<bool>> Handle(UpdateTicketCommand request, CancellationToken cancellationToken)
   {
@@ -95,8 +96,15 @@ public sealed class UpdateTicketHandler(
     if (request.TeamId is not null)
       ticket.AssignTeam(request.TeamId);
 
-    if (request.Tags is not null)
-      ticket.ChangeTags(request.Tags);
+    if (request.TagIds is not null)
+    {
+      var tagIds = TagIdList.Normalize(request.TagIds);
+      var tagError = await TagIdList.ValidateAsync(tagCatalog, request.TenantId, tagIds, cancellationToken);
+      if (tagError is not null)
+        return Result<bool>.Failure(tagError);
+
+      ticket.SetTags(tagIds);
+    }
 
     if (request.AssignedAgentId is not null)
     {

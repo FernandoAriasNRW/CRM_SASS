@@ -46,8 +46,11 @@ public sealed class Ticket : AggregateRoot, ITenantEntity, ISoftDeletable, IArch
     public Guid? TeamId { get; private set; }
 
     /// <summary>
-    /// Las etiquetas por su clave («billing», «bug»), separadas por comas. Son las del vocabulario
-    /// de la pantalla, que no son las entidades del módulo de etiquetas de <see cref="TagIds"/>.
+    /// <b>Heredado, sólo se lee para convertirlo.</b> Las etiquetas por su clave de pantalla
+    /// («billing», «bug»), separadas por comas, de cuando los tickets no usaban el módulo de
+    /// etiquetas. Al arrancar se pasan a <see cref="TagIds"/> y se vacía
+    /// (<c>ApiHost/Tags/LegacyTicketTagsConverter</c>); nada nuevo escribe aquí. Cuando esté vacía
+    /// en todas las bases, la columna se puede quitar.
     /// </summary>
     public string Tags { get; private set; } = string.Empty;
 
@@ -98,7 +101,8 @@ public sealed class Ticket : AggregateRoot, ITenantEntity, ISoftDeletable, IArch
     /// </summary>
     public static Result<Ticket> CreateFromExternal(IntakeKey key, ExternalTicketRequest request)
     {
-        var created = Create(key.TenantId, Guid.Empty, request.Title, request.Description, request.Priority);
+        // Prioridad media: la decide quien atiende el ticket, no quien lo manda.
+        var created = Create(key.TenantId, Guid.Empty, request.Title, request.Description, TicketPriority.Medium);
         if (created.IsFailure)
             return created;
 
@@ -109,13 +113,6 @@ public sealed class Ticket : AggregateRoot, ITenantEntity, ISoftDeletable, IArch
         ticket.RequesterEmail = Trimmed(request.RequesterEmail);
         ticket.RequesterPhone = Trimmed(request.RequesterPhone);
         ticket.RequesterCompany = Trimmed(request.RequesterCompany);
-        ticket.Classify(request.Classification);
-        ticket.AssignTeam(request.TeamId);
-        ticket.ChangeTags(request.Tags);
-
-        // Es el alta: no hay estado anterior del que venir, así que no pasa por las transiciones.
-        if (request.Status is not null)
-            ticket.StatusValue = request.Status.Value;
 
         return Result<Ticket>.Success(ticket);
     }
@@ -124,12 +121,26 @@ public sealed class Ticket : AggregateRoot, ITenantEntity, ISoftDeletable, IArch
 
     public void AssignTeam(Guid? teamId) => TeamId = teamId == Guid.Empty ? null : teamId;
 
-    /// <summary>Sustituye las etiquetas. Sin repetidas, en minúsculas y en el orden en que llegan.</summary>
-    public void ChangeTags(IEnumerable<string>? tags)
-        => Tags = string.Join(',', (tags ?? [])
-            .Select(e => e.Trim().ToLowerInvariant())
-            .Where(e => e.Length > 0 && !e.Contains(','))
-            .Distinct());
+    /// <summary>
+    /// Sustituye las etiquetas. Que existan en la organización lo comprueba la aplicación con
+    /// <c>ITagCatalog</c>: el agregado no puede preguntar a otro módulo.
+    /// </summary>
+    public void SetTags(IEnumerable<Guid> tagIds)
+    {
+        TagIds.Clear();
+        TagIds.AddRange(tagIds.Where(id => id != Guid.Empty).Distinct());
+    }
+
+    /// <summary>
+    /// Pasa las claves heredadas de <see cref="Tags"/> a etiquetas de verdad y las borra. Las que no
+    /// se pudieron traducir se pierden a propósito: quien convierte las registra.
+    /// </summary>
+    public void ReplaceLegacyTags(IEnumerable<Guid> tagIds)
+    {
+        foreach (var id in tagIds)
+            AddTag(id);
+        Tags = string.Empty;
+    }
 
     private static string? Trimmed(string? text) => string.IsNullOrWhiteSpace(text) ? null : text.Trim();
 
