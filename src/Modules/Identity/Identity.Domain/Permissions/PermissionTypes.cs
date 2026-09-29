@@ -25,6 +25,12 @@ public static class PermissionTypes
     public const string Settings = "Settings";
 
     /// <summary>
+    /// Etiquetas. Con <c>Full</c> sobre todas (<c>Guid.Empty</c>) una persona puede editar y borrar
+    /// cualquier etiqueta, no sólo las suyas (ver <c>Tags.Application.Authorization.TagAccess</c>).
+    /// </summary>
+    public const string Tag = "Tag";
+
+    /// <summary>
     /// El nombre en el vocabulario de la tabla, acepte lo que acepte.
     ///
     /// Se normaliza al guardar y al consultar, no sólo en la migración: un cliente antiguo, una
@@ -40,6 +46,7 @@ public static class PermissionTypes
         "Webhooks" => Webhook,
         "Teams" => Team,
         "Reports" => Report,
+        "Tags" => Tag,
         _ => type
     };
 

@@ -1,7 +1,6 @@
 using BuildingBlocks.Application.Abstractions;
 using BuildingBlocks.Domain;
 using Tags.Application.Abstractions.Repositories;
-using Tags.Application.BuiltIn;
 using Tags.Application.DTOs;
 using Tags.Domain.Entities;
 
@@ -18,25 +17,19 @@ public sealed class CreateTagHandler(ITagRepository tags) : ICommandHandler<Crea
         var name = request.Name.Trim();
         var category = request.Category.Trim();
 
-        // Una predefinida se guarda en español; «VIP client» en inglés sería la misma etiqueta
-        // repetida con otro nombre, y el índice único no lo vería.
-        var repeatsBuiltIn = BuiltInTags.All.Any(t => t.Category == category
-            && (string.Equals(t.SpanishName, name, StringComparison.OrdinalIgnoreCase)
-                || string.Equals(t.EnglishName, name, StringComparison.OrdinalIgnoreCase)));
-
-        if (repeatsBuiltIn || await tags.ExistsByNameAsync(request.TenantId, category, name, cancellationToken))
+        if (await tags.NameIsTakenAsync(request.TenantId, category, name, exceptTag: null, cancellationToken))
             return Result<TagDto>.Failure($"Ya existe una etiqueta llamada «{name}» en esa categoría");
 
         var tag = Tag.Create(
             request.TenantId,
             name,
             string.IsNullOrEmpty(request.ColorHex) ? DefaultColorHex : request.ColorHex.ToUpperInvariant(),
-            category);
+            category,
+            createdBy: request.CreatedBy);
 
         await tags.AddAsync(tag, cancellationToken);
 
-        return Result<TagDto>.Success(new TagDto(
-            tag.Id, tag.Name, tag.ColorHex, tag.Category, BuiltInTags.CategoryLabel(tag.Category, null),
-            tag.ExternalReferenceId, tag.BuiltInKey));
+        // Quien la crea puede gestionarla siempre.
+        return Result<TagDto>.Success(TagDtoMapper.From(tag, canManage: true));
     }
 }

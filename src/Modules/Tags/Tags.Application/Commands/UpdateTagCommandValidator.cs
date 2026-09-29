@@ -3,9 +3,9 @@ using Tags.Application.Abstractions.Repositories;
 
 namespace Tags.Application.Commands;
 
-public sealed class CreateTagCommandValidator : AbstractValidator<CreateTagCommand>
+public sealed class UpdateTagCommandValidator : AbstractValidator<UpdateTagCommand>
 {
-    public CreateTagCommandValidator(ITagCategoryRepository categories)
+    public UpdateTagCommandValidator(ITagCategoryRepository categories)
     {
         Include(new TagFieldsValidator(categories));
     }
