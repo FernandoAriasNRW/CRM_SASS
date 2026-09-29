@@ -312,6 +312,9 @@ Un concepto, un nombre. Ordenado por área.
 | entidad destino, obligatorio, opciones, posición | `TargetEntity`, `IsRequired`, `Options`, `Position` |
 | calculadora de campos, evaluador de fórmula, validador de valor | `FieldCalculator`, `FormulaEvaluator`, `ValueValidator` |
 | tipos de campo: texto, número, fecha, selección, selección múltiple, usuario | `Text`, `Number`, `Date`, `Select`, `MultiSelect`, `User` |
+| motor de automatizaciones, ejecutor de acciones, evaluador de condiciones | `AutomationEngine`, `ActionExecutor`, `ConditionEvaluator` |
+| disparo (un evento que llega al motor), vigilante de vencimientos | `AutomationTriggerEvent`, `DueDateWatcher` |
+| resultado de una ejecución: aplicada, no cumplió las condiciones, fallida | `ExecutionOutcomes`: `Applied`, `ConditionsNotMet`, `Failed` |
 
 ---
 
@@ -380,7 +383,7 @@ suites completas en verde, catálogo i18n re-extraído al final.
 | 7c ✅ | **Frontend de informes y paneles** | 135 identificadores y cuatro ficheros |
 | 7d ✅ | **El JSON guardado de informes y paneles** (claves de la definición y del recuadro, y valores del catálogo) | Como el 5c: datos guardados, con su migración |
 | 8a ✅ | **CustomFields** (módulo, columnas, tipos de campo guardados y el contrato en el frontend) | 236 identificadores; migración con renombrado y datos |
-| 8b | **Automations + Webhook + Tags** (backend, con las reglas guardadas) | Condiciones y acciones guardadas en español: con su migración |
+| 8b ✅ | **Automations + Webhook + Tags** (backend, con las reglas guardadas) | 380 identificadores; migración con renombrado y datos |
 | 8c | **Frontend de campos personalizados y automatizaciones** | Lo que no arrastró el contrato |
 | 9 | **Frontend transversal** (`shared/`, `core/`, e2e) | Lo que no arrastraron los PRs anteriores |
 | 10 | **Nombres de las pruebas** | Son frases, no identificadores de producción; traducirlas dentro de cada bloque ensucia el diff de revisión |
@@ -801,6 +804,28 @@ cambiarlo exige migrar ese contenido. Por eso fue un bloque aparte, el 5c.
   diff de contratos no lo vio. Queda en la skill como comprobación aparte.
 - Los nombres de las funciones de las fórmulas (`SI`, `REDONDEAR`…) siguen en español: los escribe
   el usuario.
+
+### Hecho en el bloque 8b (Automations, Webhook y Tags)
+
+- 380 identificadores con Roslyn: `MotorDeAutomatizaciones` → `AutomationEngine`,
+  `EvaluadorDeCondiciones` → `ConditionEvaluator`, `EjecucionDeAutomatizacion` →
+  `AutomationExecution`, el vocabulario (`TriggerTypes`, `EventFields`, `ConditionOperators`,
+  `ActionTypes`) y, en el Host, `PuenteDeAutomatizaciones` → `AutomationsBridge`,
+  `VigilanteDeVencimientos` → `DueDateWatcher`, `AvisoDeAutomatizacion` → `AutomationNotifier`.
+  Webhook y Tags sólo tenían un nombre suelto.
+- **Rutas:** `/automations/vocabulario` → `/vocabulary`, `/{id}/ejecuciones` → `/executions`, y la
+  consulta `?cuantas=` → `?count=`. Revisadas a mano (la lección de la 8a).
+- **Migración `RenameAutomationsToEnglish`:** columnas e índices de las cuatro tablas, y el
+  vocabulario guardado (`TareaCreada` → `TaskCreated`, `Estado` → `Status`, `Igual` → `EqualTo`,
+  `CambiarPrioridad` → `ChangePriority`, `Aplicada` → `Applied`…). **No se toca lo que escribe el
+  usuario** (el valor de una condición, a quién se asigna); sólo el destinatario especial de
+  «Notificar» (`Responsable` → `Assignee`). Probada ida y vuelta con reglas de ejemplo.
+- **La pantalla enseñaba los códigos tal cual.** Mientras fueron palabras en castellano se leían
+  bien; en inglés no. Ahora el frontend tiene una etiqueta por código (`automationLabel`), y si el
+  servidor manda uno que no conoce, lo enseña tal cual en vez de dejar la opción en blanco.
+- Visto de paso, sin cambiar: el vocabulario ofrece todos los campos para cualquier disparador,
+  pero «se crea una tarea» sólo manda proyecto y responsable, así que una condición sobre el título
+  nunca se cumple. Queda como tarea aparte.
 
 ---
 

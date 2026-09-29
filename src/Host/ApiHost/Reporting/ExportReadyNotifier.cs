@@ -12,7 +12,7 @@ namespace ApiHost.Reporting;
 ///
 /// <b>Vive en el host porque cruza dos módulos</b>: Reporting sabe que la exportación terminó y
 /// Notifications sabe entregar el aviso; ninguno referencia al otro. Es el mismo reparto que
-/// <see cref="ApiHost.Services.AvisoDeAutomatizacion"/>, y se sigue igual a propósito: dos formas
+/// <see cref="ApiHost.Services.AutomationNotifier"/>, y se sigue igual a propósito: dos formas
 /// distintas de avisar acabarían respetando las preferencias de dos maneras distintas.
 ///
 /// <b>Se avisa también del fallo.</b> Es lo que el plan señalaba: quien pide un informe y no

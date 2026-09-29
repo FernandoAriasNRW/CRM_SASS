@@ -7,7 +7,7 @@ import {
   lucideLoader2, lucideCircleAlert, lucideX,
 } from '@ng-icons/lucide';
 import {
-  AutomationsService, OPERADOR_SIN_VALOR,
+  AutomationsService, OPERADOR_SIN_VALOR, automationLabel,
   type AccionDeRegla, type CondicionDeRegla, type ReglaDeAutomatizacion,
   type VocabularioDeAutomatizacion,
 } from '../../../core/automations.service';
@@ -44,8 +44,11 @@ export class AdminAutomationsComponent implements OnInit {
   readonly largoMaximoDelNombre = LARGO_MAXIMO_DEL_NOMBRE;
   readonly operadorSinValor = OPERADOR_SIN_VALOR;
 
+  /** Para enseñar cada código del vocabulario en castellano. */
+  readonly automationLabel = automationLabel;
+
   readonly vocabulario = signal<VocabularioDeAutomatizacion>({
-    disparadores: [], campos: [], operadores: [], acciones: [],
+    triggers: [], fields: [], operators: [], actions: [],
   });
 
   readonly reglas = signal<ReglaDeAutomatizacion[]>([]);
@@ -57,10 +60,10 @@ export class AdminAutomationsComponent implements OnInit {
   readonly editando = signal<string | null>(null);
   readonly borrando = signal<string | null>(null);
 
-  nombre = '';
-  disparador = '';
-  condiciones: CondicionDeRegla[] = [];
-  acciones: AccionDeRegla[] = [];
+  name = '';
+  trigger = '';
+  conditions: CondicionDeRegla[] = [];
+  actions: AccionDeRegla[] = [];
 
   readonly esNueva = computed(() => this.editando() === '');
 
@@ -92,20 +95,20 @@ export class AdminAutomationsComponent implements OnInit {
 
   nueva(): void {
     this.editando.set('');
-    this.nombre = '';
-    this.disparador = this.vocabulario().disparadores[0] ?? '';
-    this.condiciones = [];
+    this.name = '';
+    this.trigger = this.vocabulario().triggers[0] ?? '';
+    this.conditions = [];
     // Una regla sin acciones no hace nada, así que el formulario empieza con una.
-    this.acciones = [this.accionEnBlanco()];
+    this.actions = [this.accionEnBlanco()];
     this.error.set('');
   }
 
   editar(regla: ReglaDeAutomatizacion): void {
     this.editando.set(regla.id);
-    this.nombre = regla.nombre;
-    this.disparador = regla.disparador;
-    this.condiciones = regla.condiciones.map(c => ({ ...c }));
-    this.acciones = regla.acciones.map(a => ({ ...a }));
+    this.name = regla.name;
+    this.trigger = regla.trigger;
+    this.conditions = regla.conditions.map(c => ({ ...c }));
+    this.actions = regla.actions.map(a => ({ ...a }));
     this.error.set('');
   }
 
@@ -115,34 +118,34 @@ export class AdminAutomationsComponent implements OnInit {
   }
 
   private accionEnBlanco(): AccionDeRegla {
-    return { tipo: this.vocabulario().acciones[0] ?? '', valor: '' };
+    return { type: this.vocabulario().actions[0] ?? '', value: '' };
   }
 
   agregarCondicion(): void {
-    if (this.condiciones.length >= MAXIMO_DE_CONDICIONES) return;
+    if (this.conditions.length >= MAXIMO_DE_CONDICIONES) return;
 
-    this.condiciones = [...this.condiciones, {
-      campo: this.vocabulario().campos[0] ?? '',
-      operador: this.vocabulario().operadores[0] ?? '',
-      valor: '',
+    this.conditions = [...this.conditions, {
+      field: this.vocabulario().fields[0] ?? '',
+      operator: this.vocabulario().operators[0] ?? '',
+      value: '',
     }];
   }
 
   quitarCondicion(indice: number): void {
-    this.condiciones = this.condiciones.filter((_, i) => i !== indice);
+    this.conditions = this.conditions.filter((_, i) => i !== indice);
   }
 
   agregarAccion(): void {
-    if (this.acciones.length >= MAXIMO_DE_ACCIONES) return;
-    this.acciones = [...this.acciones, this.accionEnBlanco()];
+    if (this.actions.length >= MAXIMO_DE_ACCIONES) return;
+    this.actions = [...this.actions, this.accionEnBlanco()];
   }
 
   quitarAccion(indice: number): void {
-    this.acciones = this.acciones.filter((_, i) => i !== indice);
+    this.actions = this.actions.filter((_, i) => i !== indice);
   }
 
   necesitaValor(condicion: CondicionDeRegla): boolean {
-    return condicion.operador !== OPERADOR_SIN_VALOR;
+    return condicion.operator !== OPERADOR_SIN_VALOR;
   }
 
   /**
@@ -152,22 +155,22 @@ export class AdminAutomationsComponent implements OnInit {
    * `computed` sobre eso se quedaría con el primer valor para siempre.
    */
   get impedimento(): string {
-    const nombre = this.nombre.trim();
+    const name = this.name.trim();
 
-    if (!nombre) return $localize`La automatización necesita un nombre`;
-    if (nombre.length > LARGO_MAXIMO_DEL_NOMBRE) {
+    if (!name) return $localize`La automatización necesita un nombre`;
+    if (name.length > LARGO_MAXIMO_DEL_NOMBRE) {
       return $localize`El nombre no puede pasar de ${LARGO_MAXIMO_DEL_NOMBRE} caracteres`;
     }
 
-    if (!this.disparador) return $localize`Hay que elegir cuándo se dispara`;
+    if (!this.trigger) return $localize`Hay que elegir cuándo se dispara`;
 
     // Una regla sin acciones se ejecutaría entera para no hacer nada.
-    if (!this.acciones.length) return $localize`La automatización necesita al menos una acción`;
-    if (this.acciones.some(a => !a.tipo || !a.valor.trim())) {
+    if (!this.actions.length) return $localize`La automatización necesita al menos una acción`;
+    if (this.actions.some(a => !a.type || !a.value.trim())) {
       return $localize`Cada acción necesita un valor`;
     }
 
-    if (this.condiciones.some(c => this.necesitaValor(c) && !(c.valor ?? '').trim())) {
+    if (this.conditions.some(c => this.necesitaValor(c) && !(c.value ?? '').trim())) {
       return $localize`Cada condición necesita un valor con el que comparar`;
     }
 
@@ -181,15 +184,15 @@ export class AdminAutomationsComponent implements OnInit {
     if (id === null) return;
 
     const regla = {
-      nombre: this.nombre.trim(),
-      disparador: this.disparador,
-      condiciones: this.condiciones.map(c => ({
-        campo: c.campo,
-        operador: c.operador,
+      name: this.name.trim(),
+      trigger: this.trigger,
+      conditions: this.conditions.map(c => ({
+        field: c.field,
+        operator: c.operator,
         // «Está vacío» no compara contra nada: mandar un valor sería ruido que el servidor tira.
-        valor: this.necesitaValor(c) ? (c.valor ?? '').trim() : null,
+        value: this.necesitaValor(c) ? (c.value ?? '').trim() : null,
       })),
-      acciones: this.acciones.map(a => ({ tipo: a.tipo, valor: a.valor.trim() })),
+      actions: this.actions.map(a => ({ type: a.type, value: a.value.trim() })),
     };
 
     this.guardando.set(true);
@@ -220,7 +223,7 @@ export class AdminAutomationsComponent implements OnInit {
    * esta pantalla.
    */
   alternarActiva(regla: ReglaDeAutomatizacion): void {
-    const antes = regla.activa;
+    const antes = regla.isActive;
     this.aplicarEnLista(regla.id, !antes);
 
     this.servicio.activar(regla.id, !antes).subscribe({
@@ -231,8 +234,8 @@ export class AdminAutomationsComponent implements OnInit {
     });
   }
 
-  private aplicarEnLista(id: string, activa: boolean): void {
-    this.reglas.update(reglas => reglas.map(r => r.id === id ? { ...r, activa } : r));
+  private aplicarEnLista(id: string, isActive: boolean): void {
+    this.reglas.update(reglas => reglas.map(r => r.id === id ? { ...r, isActive } : r));
   }
 
   borrar(regla: ReglaDeAutomatizacion): void {
@@ -254,14 +257,17 @@ export class AdminAutomationsComponent implements OnInit {
 
   /** Un resumen legible de la regla, para no obligar a abrirla para saber qué hace. */
   resumenDe(regla: ReglaDeAutomatizacion): string {
-    const acciones = regla.acciones.map(a => `${a.tipo}: ${a.valor}`).join(', ');
+    const actions = regla.actions.map(a => `${automationLabel(a.type)}: ${a.value}`).join(', ');
 
-    if (!regla.condiciones.length) return acciones;
+    if (!regla.conditions.length) return actions;
 
-    const condiciones = regla.condiciones
-      .map(c => c.operador === OPERADOR_SIN_VALOR ? `${c.campo} ${c.operador}` : `${c.campo} ${c.operador} ${c.valor}`)
+    const conditions = regla.conditions
+      .map(c => {
+        const head = `${automationLabel(c.field)} ${automationLabel(c.operator)}`;
+        return c.operator === OPERADOR_SIN_VALOR ? head : `${head} ${c.value}`;
+      })
       .join(' · ');
 
-    return `${condiciones} → ${acciones}`;
+    return `${conditions} → ${actions}`;
   }
 }

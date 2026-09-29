@@ -44,7 +44,7 @@ public sealed class AutomatizacionesPorTiempoFlowTests(CrmApiFactory factory)
 
     private static Task<HttpResponseMessage> DefinirAsync(
         HttpClient cliente, string nombre, string disparador, object[] condiciones, object[] acciones) =>
-        cliente.PostAsJsonAsync("/api/v1/automations", new { nombre, disparador, condiciones, acciones });
+        cliente.PostAsJsonAsync("/api/v1/automations", new { name = nombre, trigger = disparador, conditions = condiciones, actions = acciones });
 
     /// <summary>
     /// El vocabulario se sirve, no se repite en el cliente. Si la interfaz ofreciera opciones que
@@ -55,22 +55,22 @@ public sealed class AutomatizacionesPorTiempoFlowTests(CrmApiFactory factory)
     {
         var cliente = await AutenticarAsync();
 
-        var vocabulario = await cliente.GetFromJsonAsync<JsonElement>("/api/v1/automations/vocabulario");
+        var vocabulario = await cliente.GetFromJsonAsync<JsonElement>("/api/v1/automations/vocabulary");
 
         static string[] Lista(JsonElement e, string nombre) =>
             e.GetProperty(nombre).EnumerateArray().Select(x => x.GetString()!).ToArray();
 
-        Lista(vocabulario, "disparadores").Should().Contain("TareaPorVencer");
-        Lista(vocabulario, "campos").Should().Contain("DiasParaVencer");
-        Lista(vocabulario, "operadores").Should().Contain(["MenorOIgual", "MayorOIgual"]);
-        Lista(vocabulario, "acciones").Should().Contain("Notificar");
+        Lista(vocabulario, "triggers").Should().Contain("TaskDueSoon");
+        Lista(vocabulario, "fields").Should().Contain("DaysUntilDue");
+        Lista(vocabulario, "operators").Should().Contain(["LessOrEqual", "GreaterOrEqual"]);
+        Lista(vocabulario, "actions").Should().Contain("Notify");
 
         // Los metadatos que la interfaz necesita para no ofrecer combinaciones que el dominio
         // rechaza. Servidos también, por el mismo motivo.
-        Lista(vocabulario, "camposNumericos").Should().Equal("DiasParaVencer");
-        Lista(vocabulario, "operadoresNumericos").Should().BeEquivalentTo(["MenorOIgual", "MayorOIgual"]);
-        Lista(vocabulario, "disparadoresPorTiempo").Should().Equal("TareaPorVencer");
-        vocabulario.GetProperty("destinatarioResponsable").GetString().Should().Be("Responsable");
+        Lista(vocabulario, "numericFields").Should().Equal("DaysUntilDue");
+        Lista(vocabulario, "numericOperators").Should().BeEquivalentTo(["LessOrEqual", "GreaterOrEqual"]);
+        Lista(vocabulario, "timeTriggers").Should().Equal("TaskDueSoon");
+        vocabulario.GetProperty("assigneeRecipient").GetString().Should().Be("Assignee");
     }
 
     /// <summary>La automatización canónica de este tipo de producto, de punta a punta.</summary>
@@ -79,9 +79,9 @@ public sealed class AutomatizacionesPorTiempoFlowTests(CrmApiFactory factory)
     {
         var cliente = await AutenticarAsync();
 
-        var respuesta = await DefinirAsync(cliente, Unico("Avisar antes de vencer"), "TareaPorVencer",
-            condiciones: [new { campo = "DiasParaVencer", operador = "MenorOIgual", valor = "2" }],
-            acciones: [new { tipo = "Notificar", valor = "Responsable" }]);
+        var respuesta = await DefinirAsync(cliente, Unico("Avisar antes de vencer"), "TaskDueSoon",
+            condiciones: [new { field = "DaysUntilDue", @operator = "LessOrEqual", value = "2" }],
+            acciones: [new { type = "Notify", value = "Assignee" }]);
 
         respuesta.StatusCode.Should().Be(HttpStatusCode.Created, await respuesta.Content.ReadAsStringAsync());
     }
@@ -92,9 +92,9 @@ public sealed class AutomatizacionesPorTiempoFlowTests(CrmApiFactory factory)
         var cliente = await AutenticarAsync();
 
         // Días negativos: ya venció. Es la forma de expresar «lleva retraso».
-        var respuesta = await DefinirAsync(cliente, Unico("Urgente si lleva retraso"), "TareaPorVencer",
-            condiciones: [new { campo = "DiasParaVencer", operador = "MenorOIgual", valor = "-1" }],
-            acciones: [new { tipo = "CambiarPrioridad", valor = "Urgent" }]);
+        var respuesta = await DefinirAsync(cliente, Unico("Urgente si lleva retraso"), "TaskDueSoon",
+            condiciones: [new { field = "DaysUntilDue", @operator = "LessOrEqual", value = "-1" }],
+            acciones: [new { type = "ChangePriority", value = "Urgent" }]);
 
         respuesta.StatusCode.Should().Be(HttpStatusCode.Created, await respuesta.Content.ReadAsStringAsync());
     }
@@ -108,9 +108,9 @@ public sealed class AutomatizacionesPorTiempoFlowTests(CrmApiFactory factory)
     {
         var cliente = await AutenticarAsync();
 
-        var respuesta = await DefinirAsync(cliente, Unico("Sin sentido"), "TareaCambiaDeEstado",
-            condiciones: [new { campo = "Estado", operador = "MenorOIgual", valor = "Done" }],
-            acciones: [new { tipo = "CambiarPrioridad", valor = "High" }]);
+        var respuesta = await DefinirAsync(cliente, Unico("Sin sentido"), "TaskStatusChanged",
+            condiciones: [new { field = "Status", @operator = "LessOrEqual", value = "Done" }],
+            acciones: [new { type = "ChangePriority", value = "High" }]);
 
         respuesta.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
@@ -120,9 +120,9 @@ public sealed class AutomatizacionesPorTiempoFlowTests(CrmApiFactory factory)
     {
         var cliente = await AutenticarAsync();
 
-        var respuesta = await DefinirAsync(cliente, Unico("Pronto"), "TareaPorVencer",
-            condiciones: [new { campo = "DiasParaVencer", operador = "Igual", valor = "pronto" }],
-            acciones: [new { tipo = "CambiarPrioridad", valor = "High" }]);
+        var respuesta = await DefinirAsync(cliente, Unico("Pronto"), "TaskDueSoon",
+            condiciones: [new { field = "DaysUntilDue", @operator = "EqualTo", value = "pronto" }],
+            acciones: [new { type = "ChangePriority", value = "High" }]);
 
         respuesta.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
@@ -140,12 +140,12 @@ public sealed class AutomatizacionesPorTiempoFlowTests(CrmApiFactory factory)
 
         // Acotada a un proyecto inexistente. Ver el comentario de la clase: una regla activa sin
         // condiciones en el inquilino compartido cambiaría las tareas de las demás pruebas.
-        var alta = await DefinirAsync(cliente, Unico("Sin estrenar"), "TareaCreada",
-            condiciones: [new { campo = "ProyectoId", operador = "Igual", valor = Guid.NewGuid().ToString() }],
-            acciones: [new { tipo = "CambiarPrioridad", valor = "High" }]);
+        var alta = await DefinirAsync(cliente, Unico("Sin estrenar"), "TaskCreated",
+            condiciones: [new { field = "ProjectId", @operator = "EqualTo", value = Guid.NewGuid().ToString() }],
+            acciones: [new { type = "ChangePriority", value = "High" }]);
         var id = (await alta.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetGuid();
 
-        var respuesta = await cliente.GetAsync($"/api/v1/automations/{id}/ejecuciones");
+        var respuesta = await cliente.GetAsync($"/api/v1/automations/{id}/executions");
 
         respuesta.StatusCode.Should().Be(HttpStatusCode.OK);
         (await respuesta.Content.ReadFromJsonAsync<JsonElement>()).EnumerateArray().Should().BeEmpty();
@@ -162,9 +162,9 @@ public sealed class AutomatizacionesPorTiempoFlowTests(CrmApiFactory factory)
         var cliente = await AutenticarAsync();
 
         // Condición imposible: ningún proyecto tiene ese identificador.
-        var alta = await DefinirAsync(cliente, Unico("Nunca se cumple"), "TareaCreada",
-            condiciones: [new { campo = "ProyectoId", operador = "Igual", valor = Guid.NewGuid().ToString() }],
-            acciones: [new { tipo = "CambiarPrioridad", valor = "High" }]);
+        var alta = await DefinirAsync(cliente, Unico("Nunca se cumple"), "TaskCreated",
+            condiciones: [new { field = "ProjectId", @operator = "EqualTo", value = Guid.NewGuid().ToString() }],
+            acciones: [new { type = "ChangePriority", value = "High" }]);
         var id = (await alta.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetGuid();
 
         // Crear una tarea dispara TareaCreada.
@@ -179,11 +179,11 @@ public sealed class AutomatizacionesPorTiempoFlowTests(CrmApiFactory factory)
         });
         tarea.EnsureSuccessStatusCode();
 
-        var historial = await cliente.GetFromJsonAsync<JsonElement>($"/api/v1/automations/{id}/ejecuciones");
+        var historial = await cliente.GetFromJsonAsync<JsonElement>($"/api/v1/automations/{id}/executions");
 
         historial.EnumerateArray().Should().NotBeEmpty("la regla saltó, aunque no hiciera nada");
-        historial.EnumerateArray().First().GetProperty("resultado").GetString()
-            .Should().Be("NoCumplioCondiciones",
+        historial.EnumerateArray().First().GetProperty("outcome").GetString()
+            .Should().Be("ConditionsNotMet",
                 "es exactamente la información que el contador de la regla no podía dar");
     }
 
@@ -197,9 +197,9 @@ public sealed class AutomatizacionesPorTiempoFlowTests(CrmApiFactory factory)
         // clase: una regla activa sin condiciones alcanzaría a las tareas de las demás.
         var miProyecto = Guid.NewGuid();
 
-        var alta = await DefinirAsync(cliente, Unico("Urgente en mi proyecto"), "TareaCreada",
-            condiciones: [new { campo = "ProyectoId", operador = "Igual", valor = miProyecto.ToString() }],
-            acciones: [new { tipo = "CambiarPrioridad", valor = "Urgent" }]);
+        var alta = await DefinirAsync(cliente, Unico("Urgente en mi proyecto"), "TaskCreated",
+            condiciones: [new { field = "ProjectId", @operator = "EqualTo", value = miProyecto.ToString() }],
+            acciones: [new { type = "ChangePriority", value = "Urgent" }]);
         var id = (await alta.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetGuid();
 
         var tarea = await cliente.PostAsJsonAsync("/api/v1/tasks", new
@@ -213,13 +213,13 @@ public sealed class AutomatizacionesPorTiempoFlowTests(CrmApiFactory factory)
         });
         var tareaId = (await tarea.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetGuid();
 
-        var historial = await cliente.GetFromJsonAsync<JsonElement>($"/api/v1/automations/{id}/ejecuciones");
+        var historial = await cliente.GetFromJsonAsync<JsonElement>($"/api/v1/automations/{id}/executions");
 
         var mia = historial.EnumerateArray()
             .FirstOrDefault(e => e.GetProperty("entityId").GetGuid() == tareaId);
 
         mia.ValueKind.Should().NotBe(JsonValueKind.Undefined, "la ejecución sobre esa tarea tiene que constar");
-        mia.GetProperty("resultado").GetString().Should().Be("Aplicada");
+        mia.GetProperty("outcome").GetString().Should().Be("Applied");
 
         // Y la acción ocurrió de verdad, no sólo se anotó.
         var recargada = await cliente.GetFromJsonAsync<JsonElement>($"/api/v1/tasks/{tareaId}");

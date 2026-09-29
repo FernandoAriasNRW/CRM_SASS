@@ -1,10 +1,10 @@
 using Automations.Application.Abstractions;
 using Automations.Domain.Entities;
-using Automations.Domain.Servicios;
+using Automations.Domain.Services;
 using Automations.Domain.ValueObjects;
 using Microsoft.Extensions.Logging;
 
-namespace Automations.Application.Servicios;
+namespace Automations.Application.Services;
 
 /// <summary>
 /// Ejecuta las reglas que corresponden a un evento.
@@ -19,12 +19,12 @@ namespace Automations.Application.Servicios;
 /// devolver un error porque una automatización esté rota: quien la movió no configuró esa regla
 /// y no puede hacer nada al respecto. Por eso todo va dentro de un try y sale por el registro.
 /// </summary>
-public sealed class MotorDeAutomatizaciones(
-    IAutomationRuleRepository repositorio,
-    IRepositorioDeEjecuciones ejecuciones,
+public sealed class AutomationEngine(
+    IAutomationRuleRepository repository,
+    IExecutionRepository executions,
     IAutomationsUnitOfWork unitOfWork,
-    IEjecutorDeAcciones ejecutor,
-    ILogger<MotorDeAutomatizaciones> log) : IMotorDeAutomatizaciones
+    IActionExecutor executor,
+    ILogger<AutomationEngine> log) : IAutomationEngine
 {
     /// <summary>
     /// Si el hilo lógico actual ya está aplicando una automatización.
@@ -35,83 +35,83 @@ public sealed class MotorDeAutomatizaciones(
     /// otra —una pone «En progreso», otra al verlo lo devuelve a «Por hacer»— se llamarían hasta
     /// tumbar el proceso.
     /// </summary>
-    private static readonly AsyncLocal<bool> _aplicandoAcciones = new();
+    private static readonly AsyncLocal<bool> _applyingActions = new();
 
-    public async Task<int> EjecutarAsync(DisparoDeAutomatizacion disparo, CancellationToken ct = default)
+    public async Task<int> RunAsync(AutomationTriggerEvent triggerEvent, CancellationToken ct = default)
     {
         // Las acciones de una automatización no disparan otras automatizaciones. Encadenarlas
         // exigiría detectar ciclos y un presupuesto de profundidad, y prometerlo a medias sería
         // peor: la cascada funcionaría casi siempre y un día se comería la base de datos.
-        if (_aplicandoAcciones.Value)
+        if (_applyingActions.Value)
         {
             log.LogDebug(
                 "Se ignora el disparador {Disparador} sobre {Entidad}: viene de otra automatización",
-                disparo.Disparador, disparo.EntityId);
+                triggerEvent.Trigger, triggerEvent.EntityId);
             return 0;
         }
 
-        var reglas = await repositorio.GetActivasPorDisparadorAsync(
-            disparo.TenantId, disparo.Disparador, ct);
+        var rules = await repository.GetActiveByTriggerAsync(
+            triggerEvent.TenantId, triggerEvent.Trigger, ct);
 
-        if (reglas.Count == 0) return 0;
+        if (rules.Count == 0) return 0;
 
-        var ejecutadas = 0;
-        var anotadas = 0;
+        var executed = 0;
+        var recorded = 0;
 
-        var ahora = DateTime.UtcNow;
-        var hoy = DateOnly.FromDateTime(ahora);
+        var now = DateTime.UtcNow;
+        var today = DateOnly.FromDateTime(now);
 
-        foreach (var regla in reglas)
+        foreach (var rule in rules)
         {
             // Memoria, y sólo para los disparadores por tiempo. Los de evento saltan una vez
             // porque el evento ocurre una vez; el de vencimiento lo revisa un trabajo diario y
             // volvería a disparar mañana y pasado sobre la misma tarea, convirtiendo «avisar dos
             // días antes» en avisar todos los días hasta que venza.
-            if (TipoDeDisparador.EsPorTiempo(disparo.Disparador)
-                && await ejecuciones.YaSeEjecutoHoyAsync(disparo.TenantId, regla.Id, disparo.EntityId, hoy, ct))
+            if (TriggerTypes.IsTimeBased(triggerEvent.Trigger)
+                && await executions.AlreadyRanTodayAsync(triggerEvent.TenantId, rule.Id, triggerEvent.EntityId, today, ct))
             {
                 continue;
             }
 
-            if (!EvaluadorDeCondiciones.Cumple(regla.Condiciones, disparo.Datos))
+            if (!ConditionEvaluator.Matches(rule.Conditions, triggerEvent.Data))
             {
                 // Se anota también cuando NO se cumplen. Es el caso que el contador de la regla
                 // no sabía distinguir y el que más despista: quien la configuró ve el contador a
                 // cero y concluye que el disparador está roto, cuando lo que falla es una
                 // condición que escribió él.
-                await ejecuciones.AnotarAsync(EjecucionDeAutomatizacion.Anotar(
-                    disparo.TenantId, regla.Id, disparo.EntityId,
-                    ResultadoDeEjecucion.NoCumplioCondiciones, null, ahora), ct);
+                await executions.RecordAsync(AutomationExecution.Record(
+                    triggerEvent.TenantId, rule.Id, triggerEvent.EntityId,
+                    ExecutionOutcomes.ConditionsNotMet, null, now), ct);
 
-                anotadas++;
+                recorded++;
                 continue;
             }
 
-            var alguna = false;
-            string? primerError = null;
+            var any = false;
+            string? firstError = null;
 
-            foreach (var accion in regla.Acciones)
+            foreach (var action in rule.Actions)
             {
-                _aplicandoAcciones.Value = true;
+                _applyingActions.Value = true;
                 try
                 {
-                    await ejecutor.EjecutarAsync(
-                        disparo.TenantId, disparo.EntityId, accion.Tipo, accion.Valor, ct);
-                    alguna = true;
+                    await executor.RunAsync(
+                        triggerEvent.TenantId, triggerEvent.EntityId, action.Type, action.Value, ct);
+                    any = true;
                 }
                 catch (Exception ex)
                 {
-                    primerError ??= $"{accion.Tipo}: {ex.Message}";
+                    firstError ??= $"{action.Type}: {ex.Message}";
 
                     log.LogError(ex,
                         "La automatización {Regla} no pudo aplicar {Accion} sobre {Entidad}",
-                        regla.Id, accion.Tipo, disparo.EntityId);
+                        rule.Id, action.Type, triggerEvent.EntityId);
                 }
                 finally
                 {
                     // En el `finally` y no después: si una acción falla, la marca tiene que
                     // levantarse igual o el resto de la petición se quedaría sin automatizaciones.
-                    _aplicandoAcciones.Value = false;
+                    _applyingActions.Value = false;
                 }
             }
 
@@ -120,25 +120,25 @@ public sealed class MotorDeAutomatizaciones(
             //
             // Pero la ejecución fallida SÍ se anota: es lo que hay que poder mirar cuando
             // alguien pregunta por qué su automatización no hace nada.
-            await ejecuciones.AnotarAsync(EjecucionDeAutomatizacion.Anotar(
-                disparo.TenantId, regla.Id, disparo.EntityId,
-                alguna ? ResultadoDeEjecucion.Aplicada : ResultadoDeEjecucion.Fallida,
-                primerError, ahora), ct);
+            await executions.RecordAsync(AutomationExecution.Record(
+                triggerEvent.TenantId, rule.Id, triggerEvent.EntityId,
+                any ? ExecutionOutcomes.Applied : ExecutionOutcomes.Failed,
+                firstError, now), ct);
 
-            anotadas++;
+            recorded++;
 
-            if (!alguna) continue;
+            if (!any) continue;
 
-            regla.AnotarEjecucion(ahora);
-            await repositorio.UpdateAsync(regla, ct);
-            ejecutadas++;
+            rule.RecordExecution(now);
+            await repository.UpdateAsync(rule, ct);
+            executed++;
         }
 
         // Se guarda si hubo algo que anotar, no sólo si algo se aplicó: si no, las ejecuciones
         // que no cumplieron condiciones —las más interesantes para diagnosticar— se perderían.
-        if (anotadas > 0)
+        if (recorded > 0)
             await unitOfWork.SaveChangesAsync(ct);
 
-        return ejecutadas;
+        return executed;
     }
 }

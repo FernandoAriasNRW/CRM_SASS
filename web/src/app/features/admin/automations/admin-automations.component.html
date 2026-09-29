@@ -48,17 +48,17 @@
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <label class="space-y-1 block">
           <span class="text-xs font-medium text-muted-foreground" i18n>Nombre</span>
-          <input type="text" [(ngModel)]="nombre" [maxlength]="largoMaximoDelNombre"
+          <input type="text" [(ngModel)]="name" [maxlength]="largoMaximoDelNombre"
                  i18n-placeholder placeholder="Bajar la prioridad al cerrar"
                  class="w-full px-3 py-1.5 text-xs bg-white dark:bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-1 focus:ring-primary" />
         </label>
 
         <label class="space-y-1 block">
           <span class="text-xs font-medium text-muted-foreground" i18n>Cuándo</span>
-          <select [(ngModel)]="disparador"
+          <select [(ngModel)]="trigger"
                   class="w-full px-3 py-1.5 text-xs bg-white dark:bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-1 focus:ring-primary">
-            @for (opcion of vocabulario().disparadores; track opcion) {
-              <option [value]="opcion">{{ opcion }}</option>
+            @for (opcion of vocabulario().triggers; track opcion) {
+              <option [value]="opcion">{{ automationLabel(opcion) }}</option>
             }
           </select>
         </label>
@@ -74,24 +74,24 @@
           </button>
         </div>
 
-        @for (condicion of condiciones; track $index) {
+        @for (condicion of conditions; track $index) {
           <div class="flex items-center gap-2">
-            <select [(ngModel)]="condicion.campo" i18n-aria-label aria-label="Campo"
+            <select [(ngModel)]="condicion.field" i18n-aria-label aria-label="Campo"
                     class="px-2 py-1.5 text-xs bg-white dark:bg-background border border-border rounded-lg">
-              @for (campo of vocabulario().campos; track campo) {
-                <option [value]="campo">{{ campo }}</option>
+              @for (field of vocabulario().fields; track field) {
+                <option [value]="field">{{ automationLabel(field) }}</option>
               }
             </select>
 
-            <select [(ngModel)]="condicion.operador" i18n-aria-label aria-label="Operador"
+            <select [(ngModel)]="condicion.operator" i18n-aria-label aria-label="Operador"
                     class="px-2 py-1.5 text-xs bg-white dark:bg-background border border-border rounded-lg">
-              @for (operador of vocabulario().operadores; track operador) {
-                <option [value]="operador">{{ operador }}</option>
+              @for (operator of vocabulario().operators; track operator) {
+                <option [value]="operator">{{ automationLabel(operator) }}</option>
               }
             </select>
 
             @if (necesitaValor(condicion)) {
-              <input type="text" [(ngModel)]="condicion.valor" i18n-aria-label aria-label="Valor de la condición"
+              <input type="text" [(ngModel)]="condicion.value" i18n-aria-label aria-label="Valor de la condición"
                      class="flex-1 px-2 py-1.5 text-xs bg-white dark:bg-background border border-border rounded-lg" />
             } @else {
               <!-- «Está vacío» no compara contra nada, así que no se pide un valor que se iba
@@ -121,16 +121,16 @@
           </button>
         </div>
 
-        @for (accion of acciones; track $index) {
+        @for (accion of actions; track $index) {
           <div class="flex items-center gap-2">
-            <select [(ngModel)]="accion.tipo" i18n-aria-label aria-label="Acción"
+            <select [(ngModel)]="accion.type" i18n-aria-label aria-label="Acción"
                     class="px-2 py-1.5 text-xs bg-white dark:bg-background border border-border rounded-lg">
-              @for (tipo of vocabulario().acciones; track tipo) {
-                <option [value]="tipo">{{ tipo }}</option>
+              @for (type of vocabulario().actions; track type) {
+                <option [value]="type">{{ automationLabel(type) }}</option>
               }
             </select>
 
-            <input type="text" [(ngModel)]="accion.valor" i18n-aria-label aria-label="Valor de la acción"
+            <input type="text" [(ngModel)]="accion.value" i18n-aria-label aria-label="Valor de la acción"
                    class="flex-1 px-2 py-1.5 text-xs bg-white dark:bg-background border border-border rounded-lg" />
 
             <button (click)="quitarAccion($index)" i18n-aria-label aria-label="Quitar la acción"
@@ -184,19 +184,19 @@
         <tbody>
           @for (regla of reglas(); track regla.id) {
             <tr class="border-t border-border">
-              <td class="px-4 py-2 font-medium text-foreground">{{ regla.nombre }}</td>
-              <td class="px-4 py-2 text-muted-foreground">{{ regla.disparador }}</td>
+              <td class="px-4 py-2 font-medium text-foreground">{{ regla.name }}</td>
+              <td class="px-4 py-2 text-muted-foreground">{{ automationLabel(regla.trigger) }}</td>
               <td class="px-4 py-2 text-muted-foreground max-w-md truncate" [title]="resumenDe(regla)">
                 {{ resumenDe(regla) }}
               </td>
               <!-- Es lo primero que se mira cuando alguien dice que una regla no funciona:
                    separa «no salta» de «salta y hace otra cosa». -->
-              <td class="px-4 py-2 text-right text-muted-foreground tabular-nums">{{ regla.vecesEjecutada }}</td>
+              <td class="px-4 py-2 text-right text-muted-foreground tabular-nums">{{ regla.executionCount }}</td>
               <td class="px-4 py-2">
                 <label class="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" [checked]="regla.activa" (change)="alternarActiva(regla)"
-                         [attr.aria-label]="regla.nombre" class="rounded border-border" />
-                  @if (regla.activa) {
+                  <input type="checkbox" [checked]="regla.isActive" (change)="alternarActiva(regla)"
+                         [attr.aria-label]="regla.name" class="rounded border-border" />
+                  @if (regla.isActive) {
                     <span class="text-[11px] text-muted-foreground" i18n>Sí</span>
                   } @else {
                     <span class="text-[11px] text-muted-foreground" i18n>No</span>

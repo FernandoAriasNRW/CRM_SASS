@@ -8307,6 +8307,150 @@ Pending</target>
           <context context-type="linenumber">19</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="8377827551469290672" datatype="html">
+        <source>Se crea una tarea</source>
+        <target state="final">A task is created</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/core/automations.service.ts</context>
+          <context context-type="linenumber">72</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8219108845017396711" datatype="html">
+        <source>Cambia el estado de una tarea</source>
+        <target state="final">A task's status changes</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/core/automations.service.ts</context>
+          <context context-type="linenumber">73</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2521813341720275258" datatype="html">
+        <source>Cambia la prioridad de una tarea</source>
+        <target state="final">A task's priority changes</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/core/automations.service.ts</context>
+          <context context-type="linenumber">74</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="599806739367588254" datatype="html">
+        <source>Una tarea está por vencer</source>
+        <target state="final">A task is about to be due</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/core/automations.service.ts</context>
+          <context context-type="linenumber">75</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4724386939331900839" datatype="html">
+        <source>Estado anterior</source>
+        <target state="final">Previous status</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/core/automations.service.ts</context>
+          <context context-type="linenumber">78</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="418149951377226032" datatype="html">
+        <source>Prioridad anterior</source>
+        <target state="final">Previous priority</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/core/automations.service.ts</context>
+          <context context-type="linenumber">80</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5053485827612204865" datatype="html">
+        <source>Responsable</source>
+        <target state="final">Assignee</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/core/automations.service.ts</context>
+          <context context-type="linenumber">82</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3846573538592864530" datatype="html">
+        <source>Días para vencer</source>
+        <target state="final">Days until due</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/core/automations.service.ts</context>
+          <context context-type="linenumber">83</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1323925847469750143" datatype="html">
+        <source>es igual a</source>
+        <target state="final">equals</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/core/automations.service.ts</context>
+          <context context-type="linenumber">86</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7310840743053411282" datatype="html">
+        <source>es distinto de</source>
+        <target state="final">is not</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/core/automations.service.ts</context>
+          <context context-type="linenumber">87</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1287905368086812768" datatype="html">
+        <source>contiene</source>
+        <target state="final">contains</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/core/automations.service.ts</context>
+          <context context-type="linenumber">88</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1756506492713969195" datatype="html">
+        <source>está vacío</source>
+        <target state="final">is empty</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/core/automations.service.ts</context>
+          <context context-type="linenumber">89</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="193692499698363229" datatype="html">
+        <source>es menor o igual que</source>
+        <target state="final">is at most</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/core/automations.service.ts</context>
+          <context context-type="linenumber">90</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4313176443444323647" datatype="html">
+        <source>es mayor o igual que</source>
+        <target state="final">is at least</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/core/automations.service.ts</context>
+          <context context-type="linenumber">91</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6320772859569660867" datatype="html">
+        <source>Cambiar el estado</source>
+        <target state="final">Change status</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/core/automations.service.ts</context>
+          <context context-type="linenumber">93</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3742992746308914783" datatype="html">
+        <source>Cambiar la prioridad</source>
+        <target state="final">Change priority</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/core/automations.service.ts</context>
+          <context context-type="linenumber">94</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5770172338613425368" datatype="html">
+        <source>Asignar a</source>
+        <target state="final">Assign to</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/core/automations.service.ts</context>
+          <context context-type="linenumber">95</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4668752475483939728" datatype="html">
+        <source>Avisar</source>
+        <target state="final">Notify</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/core/automations.service.ts</context>
+          <context context-type="linenumber">96</context>
+        </context-group>
+      </trans-unit>
     </body>
   </file>
 </xliff>

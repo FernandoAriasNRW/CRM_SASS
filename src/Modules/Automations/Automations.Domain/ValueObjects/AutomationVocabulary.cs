@@ -7,11 +7,11 @@ namespace Automations.Domain.ValueObjects;
 /// que algún módulo emita de verdad. Ofrecer disparadores que no están conectados sería dejar
 /// que alguien configure una automatización que nunca se ejecuta y no sepa por qué.
 /// </summary>
-public static class TipoDeDisparador
+public static class TriggerTypes
 {
-    public const string TareaCreada = "TareaCreada";
-    public const string TareaCambiaDeEstado = "TareaCambiaDeEstado";
-    public const string TareaCambiaDePrioridad = "TareaCambiaDePrioridad";
+    public const string TaskCreated = "TaskCreated";
+    public const string TaskStatusChanged = "TaskStatusChanged";
+    public const string TaskPriorityChanged = "TaskPriorityChanged";
 
     /// <summary>
     /// Se revisa una vez al día: para cada tarea sin terminar, cuántos días faltan para su
@@ -26,32 +26,32 @@ public static class TipoDeDisparador
     /// trae un problema que los otros no tienen: volvería a saltar cada día sobre la misma
     /// tarea. Lo resuelve el registro de ejecuciones, que le hace de memoria.
     /// </summary>
-    public const string TareaPorVencer = "TareaPorVencer";
+    public const string TaskDueSoon = "TaskDueSoon";
 
-    public static IReadOnlyList<string> Todos() =>
-        [TareaCreada, TareaCambiaDeEstado, TareaCambiaDePrioridad, TareaPorVencer];
+    public static IReadOnlyList<string> All() =>
+        [TaskCreated, TaskStatusChanged, TaskPriorityChanged, TaskDueSoon];
 
-    public static bool Existe(string tipo) => Todos().Contains(tipo);
+    public static bool Exists(string type) => All().Contains(type);
 
     /// <summary>
     /// Los que revisa el trabajo diario en vez de un evento. Sólo éstos necesitan protegerse de
     /// repetirse, porque son los únicos que se evalúan una y otra vez sobre la misma tarea.
     /// </summary>
-    public static bool EsPorTiempo(string tipo) => tipo == TareaPorVencer;
+    public static bool IsTimeBased(string type) => type == TaskDueSoon;
 }
 
 /// <summary>
 /// Los datos que una condición puede mirar. Se nombran igual en todos los disparadores que los
 /// tengan, para que cambiar el disparador de una regla no obligue a reescribir sus condiciones.
 /// </summary>
-public static class CampoDelEvento
+public static class EventFields
 {
-    public const string Estado = "Estado";
-    public const string EstadoAnterior = "EstadoAnterior";
-    public const string Prioridad = "Prioridad";
-    public const string PrioridadAnterior = "PrioridadAnterior";
-    public const string ProyectoId = "ProyectoId";
-    public const string ResponsableId = "ResponsableId";
+    public const string Status = "Status";
+    public const string PreviousStatus = "PreviousStatus";
+    public const string Priority = "Priority";
+    public const string PreviousPriority = "PreviousPriority";
+    public const string ProjectId = "ProjectId";
+    public const string AssigneeId = "AssigneeId";
 
     /// <summary>
     /// Cuántos días faltan para el vencimiento. Negativo si ya venció, 0 si vence hoy.
@@ -60,16 +60,16 @@ public static class CampoDelEvento
     /// y no como fecha absoluta a propósito: quien escribe la regla piensa en «avísame dos días
     /// antes», no en «el 14 de marzo».
     /// </summary>
-    public const string DiasParaVencer = "DiasParaVencer";
+    public const string DaysUntilDue = "DaysUntilDue";
 
     /// <summary>El título. Útil con «Contiene» para reglas por convención de nombre.</summary>
-    public const string Titulo = "Titulo";
+    public const string Title = "Title";
 
-    public static IReadOnlyList<string> Todos() =>
-        [Estado, EstadoAnterior, Prioridad, PrioridadAnterior, ProyectoId, ResponsableId,
-         DiasParaVencer, Titulo];
+    public static IReadOnlyList<string> All() =>
+        [Status, PreviousStatus, Priority, PreviousPriority, ProjectId, AssigneeId,
+         DaysUntilDue, Title];
 
-    public static bool Existe(string campo) => Todos().Contains(campo);
+    public static bool Exists(string field) => All().Contains(field);
 
     /// <summary>
     /// Los que se comparan como número y no como texto.
@@ -78,7 +78,7 @@ public static class CampoDelEvento
     /// carácter a carácter, y una regla de «lleva más de diez días de retraso» no saltaría nunca
     /// sin dar ningún error.
     /// </summary>
-    public static bool EsNumerico(string campo) => campo == DiasParaVencer;
+    public static bool IsNumeric(string field) => field == DaysUntilDue;
 }
 
 /// <summary>
@@ -86,30 +86,30 @@ public static class CampoDelEvento
 ///
 /// Aquí decía que no había comparaciones numéricas «porque todos los campos que hoy expone un
 /// evento son identificadores o etiquetas», y que se añadirían cuando hubiera un campo numérico.
-/// Ya lo hay: <see cref="CampoDelEvento.DiasParaVencer"/>.
+/// Ya lo hay: <see cref="EventFields.DaysUntilDue"/>.
 ///
 /// **Sólo comparan como número los campos numéricos.** Sobre el resto se rechaza al guardar la
 /// regla, en lugar de caer en la comparación alfabética que era lo que había que evitar.
 /// </summary>
-public static class Operador
+public static class ConditionOperators
 {
-    public const string Igual = "Igual";
-    public const string Distinto = "Distinto";
-    public const string Contiene = "Contiene";
-    public const string EstaVacio = "EstaVacio";
-    public const string MenorOIgual = "MenorOIgual";
-    public const string MayorOIgual = "MayorOIgual";
+    public const string EqualTo = "EqualTo";
+    public const string NotEqualTo = "NotEqualTo";
+    public const string Contains = "Contains";
+    public const string IsEmpty = "IsEmpty";
+    public const string LessOrEqual = "LessOrEqual";
+    public const string GreaterOrEqual = "GreaterOrEqual";
 
-    public static IReadOnlyList<string> Todos() =>
-        [Igual, Distinto, Contiene, EstaVacio, MenorOIgual, MayorOIgual];
+    public static IReadOnlyList<string> All() =>
+        [EqualTo, NotEqualTo, Contains, IsEmpty, LessOrEqual, GreaterOrEqual];
 
-    public static bool Existe(string operador) => Todos().Contains(operador);
+    public static bool Exists(string op) => All().Contains(op);
 
     /// <summary>El único que no necesita valor de comparación.</summary>
-    public static bool NecesitaValor(string operador) => operador != EstaVacio;
+    public static bool NeedsValue(string op) => op != IsEmpty;
 
     /// <summary>Los que exigen un campo numérico enfrente.</summary>
-    public static bool EsNumerico(string operador) => operador is MenorOIgual or MayorOIgual;
+    public static bool IsNumeric(string op) => op is LessOrEqual or GreaterOrEqual;
 }
 
 /// <summary>
@@ -120,15 +120,15 @@ public static class Operador
 /// llamar a webhooks tampoco entra: para eso ya está el módulo de webhooks, y duplicarlo aquí
 /// daría dos sitios donde configurar lo mismo.
 /// </summary>
-public static class TipoDeAccion
+public static class ActionTypes
 {
-    public const string CambiarEstado = "CambiarEstado";
-    public const string CambiarPrioridad = "CambiarPrioridad";
-    public const string AsignarA = "AsignarA";
+    public const string ChangeStatus = "ChangeStatus";
+    public const string ChangePriority = "ChangePriority";
+    public const string AssignTo = "AssignTo";
 
     /// <summary>
     /// Avisar a una persona. El valor es su identificador, o
-    /// <see cref="DestinatarioResponsable"/> para quien tenga la tarea asignada.
+    /// <see cref="AssigneeRecipient"/> para quien tenga la tarea asignada.
     ///
     /// Es la acción que faltaba, y la que hace útiles a las demás: hasta ahora una regla podía
     /// cambiar datos pero no contárselo a nadie, y buena parte de lo que se automatiza en un
@@ -138,19 +138,19 @@ public static class TipoDeAccion
     /// recibirlo porque alguien configure una automatización: automatizar no es un permiso para
     /// saltarse lo que la persona ya decidió.
     /// </summary>
-    public const string Notificar = "Notificar";
+    public const string Notify = "Notify";
 
     /// <summary>
-    /// Valor especial de <see cref="Notificar"/>: avisa a quien tenga la tarea.
+    /// Valor especial de <see cref="Notify"/>: avisa a quien tenga la tarea.
     ///
     /// Sin esto habría que escribir el identificador de una persona concreta en la regla, y la
     /// regla dejaría de valer en cuanto la tarea cambiara de manos — que es justo cuando más
     /// falta hace el aviso.
     /// </summary>
-    public const string DestinatarioResponsable = "Responsable";
+    public const string AssigneeRecipient = "Assignee";
 
-    public static IReadOnlyList<string> Todos() =>
-        [CambiarEstado, CambiarPrioridad, AsignarA, Notificar];
+    public static IReadOnlyList<string> All() =>
+        [ChangeStatus, ChangePriority, AssignTo, Notify];
 
-    public static bool Existe(string tipo) => Todos().Contains(tipo);
+    public static bool Exists(string type) => All().Contains(type);
 }
