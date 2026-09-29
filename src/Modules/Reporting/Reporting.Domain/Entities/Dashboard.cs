@@ -11,7 +11,7 @@ public sealed class Dashboard : Entity, ITenantEntity
     public bool IsPublic { get; private set; }
     public Guid CreatedById { get; private set; }
     /// <summary>
-    /// Los widgets del panel, serializados. Ver <see cref="Paneles.DisposicionDelPanel"/>.
+    /// Los widgets del panel, serializados. Ver <see cref="Dashboards.DashboardLayout"/>.
     ///
     /// <b>Hasta ahora esta columna no la leía nadie.</b> Se podía crear un panel, ponerle nombre y
     /// marcarlo público, y pulsarlo no hacía nada: la pantalla guardaba la selección en una señal
@@ -52,16 +52,16 @@ public sealed class Dashboard : Entity, ITenantEntity
     /// Nace privado por lo mismo: lo que alguien coloca para sí no aparece en la pantalla de los
     /// demás hasta que decida compartirlo.
     /// </summary>
-    public static Dashboard CrearPanelPersonal(Guid tenantId, Guid userId, string titulo = "Mi panel")
+    public static Dashboard CreatePersonal(Guid tenantId, Guid userId, string title = "Mi panel")
         => new()
         {
             Id = Guid.NewGuid(),
             TenantId = tenantId,
-            Title = titulo,
+            Title = title,
             IsDefault = true,
             IsPublic = false,
             CreatedById = userId,
-            WidgetsJson = new Paneles.DisposicionDelPanel().ASerializar()
+            WidgetsJson = new Dashboards.DashboardLayout().Serialize()
         };
 
     /// <summary>
@@ -71,17 +71,17 @@ public sealed class Dashboard : Entity, ITenantEntity
     /// rejilla se guarda bien y **se rompe al pintarlo**, que es cuando quien lo movió ya ha
     /// cerrado la pantalla.
     /// </summary>
-    public Result Colocar(Paneles.DisposicionDelPanel disposicion)
+    public Result Place(Dashboards.DashboardLayout layout)
     {
-        var validacion = disposicion.Validar();
+        var validacion = layout.Validate();
         if (validacion.IsFailure) return validacion;
 
-        WidgetsJson = disposicion.ASerializar();
+        WidgetsJson = layout.Serialize();
         return Result.Success();
     }
 
     /// <summary>Los widgets ya leídos. Vacío si el panel no tiene ninguno todavía.</summary>
-    public Paneles.DisposicionDelPanel LeerDisposicion() => Paneles.DisposicionDelPanel.Leer(WidgetsJson);
+    public Dashboards.DashboardLayout ReadLayout() => Dashboards.DashboardLayout.Read(WidgetsJson);
 
     public void AddTag(Guid tagId)
     {

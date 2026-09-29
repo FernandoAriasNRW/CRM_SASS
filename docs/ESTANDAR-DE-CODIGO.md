@@ -278,6 +278,16 @@ Un concepto, un nombre. Ordenado por área.
 | programación | `Schedule` |
 | panel, recuadro, disposición | `Dashboard`, `Widget`, `Layout` |
 | gráfica | `Chart` |
+| forma de pintar un informe (barras, líneas, tarta, tabla, número) | `Visualization` |
+| catálogo de informes, campo disponible, medida disponible | `ReportCatalog`, `AvailableField`, `AvailableMeasure` |
+| definición de informe, filtro de informe, tabla de informe | `ReportDefinition`, `ReportFilter`, `ReportTable` |
+| escritor de informe (CSV, Excel, PDF) | `IReportWriter`, `CsvWriter`, `ExcelWriter`, `PdfWriter` |
+| vista previa | `Preview` |
+| estado de exportación: pendiente, generando, lista, fallida | `ExportStatus`: `Pending`, `Generating`, `Ready`, `Failed` |
+| solicitada, comenzada, terminada, intentos, tamaño | `RequestedAtUtc`, `StartedAtUtc`, `FinishedAtUtc`, `Attempts`, `SizeBytes` |
+| programación de informe, frecuencia: diaria, semanal, mensual | `ReportSchedule`, `ScheduleFrequency`: `Daily`, `Weekly`, `Monthly` |
+| destinatario, último día generado, toca ahora | `RecipientId`, `LastGeneratedDay`, `IsDue` |
+| panel de inicio, recuadro sugerido, colocar | `StarterDashboard`, `SuggestedWidget`, `Place` |
 
 ### Campos personalizados y automatizaciones
 
@@ -355,7 +365,10 @@ suites completas en verde, catálogo i18n re-extraído al final.
 | 5c ✅ | **Valores guardados de los tipos de entidad** («Tarea» → «Task»…) | Viven en tablas de cinco módulos y dentro del HTML de las páginas: cambio propio con su migración de datos |
 | 6a ✅ | **Calendar + Notifications + Communication** (backend) | Anular, enlazar y papelera; preferencias de aviso; agenda del día |
 | 6b ✅ | **Frontend del calendario** | 155 identificadores, casi todos del calendario: diff aparte |
-| 7 | **Reporting** (motor, exportaciones, programaciones, paneles) | El bloque más grande del Host |
+| 7a ✅ | **Reporting** (módulo: dominio, aplicación, infraestructura, presentación) | 299 identificadores, tablas y rutas |
+| 7b | **Reporting en el Host** (motor, generador de exportaciones, planificador, panel) | ~200 identificadores |
+| 7c | **Frontend de informes y paneles** | ~150 identificadores |
+| 7d | **El JSON guardado de informes y paneles** (claves de la definición y del recuadro, y valores del catálogo) | Como el 5c: datos guardados, con su migración |
 | 8 | **CustomFields + Automations + Webhook + Tags** | Fórmulas y reglas |
 | 9 | **Frontend transversal** (`shared/`, `core/`, e2e) | Lo que no arrastraron los PRs anteriores |
 | 10 | **Nombres de las pruebas** | Son frases, no identificadores de producción; traducirlas dentro de cada bloque ensucia el diff de revisión |
@@ -665,6 +678,37 @@ cambiarlo exige migrar ese contenido. Por eso fue un bloque aparte, el 5c.
   (`clave`, `etiqueta`, `icono`, `separadorAntes`, `destructiva`), sus entradas y salidas y
   `abrirEn`.
 - Textos: comparadas con `main` las cadenas y los atributos planos de cada fichero; ninguno cambió.
+
+### Hecho en el bloque 7a (módulo Reporting)
+
+- 299 identificadores del módulo con un **mapa generado**: un diccionario único español → inglés
+  cruzado con los nombres de cada fichero, menos los protegidos. Lo que el detector de español no
+  ve (`ADto`, `ASerializar`, `Reencolar`, `TamanoBytes`, `PanelDto`) se buscó a ojo en las
+  declaraciones y se hizo en una segunda pasada.
+- Tipos: `CatalogoDeInformes` → `ReportCatalog`, `DefinicionDeInforme` → `ReportDefinition`,
+  `Exportacion` → `Export`, `ProgramacionDeInforme` → `ReportSchedule`, `DisposicionDelPanel` →
+  `DashboardLayout`, `PanelDeInicio` → `StarterDashboard`, los escritores y los repositorios.
+  Espacios de nombres `Definicion`/`Definiciones`/`Exportaciones`/`Paneles`/`Programaciones` →
+  `Definitions`/`Exports`/`Dashboards`/`Schedules`, y un tipo por fichero en los `*Cqrs.cs`.
+- Tablas `Exportaciones`, `ContenidosDeExportacion` y `Programaciones` → `Exports`,
+  `ExportContents` y `ReportSchedules`, con sus columnas e índices, y `Reports.DefinicionJson` →
+  `DefinitionJson`. **La migración se reescribió a mano**: EF proponía borrar y crear las tres
+  tablas. Probada contra la base de desarrollo con una exportación, su contenido y una programación
+  sembrados antes, con un valor distinto en cada columna.
+- Rutas: `/exportaciones` → `/exports`, `/programaciones` → `/schedules`, `/catalogo`,
+  `/vista-previa`, `/definicion`, `/exportar`, `/descargar`, `/mio`, `/datos`, `/disposicion` →
+  `/catalog`, `/preview`, `/definition`, `/export`, `/download`, `/mine`, `/data`, `/layout`.
+- **Valores que viajan en la API**, no en la base: los estados de exportación (`Pendiente`… →
+  `Pending`…), las frecuencias (`Semanal` → `Weekly`) y los tipos de campo del catálogo (`Fecha` →
+  `Date`). En la base son números o no se guardan.
+- **Se queda para la 7d** lo que se serializa en `DefinitionJson` y `WidgetsJson`: las propiedades
+  de `ReportDefinition` (`Origen`, `Agrupacion`, `Medida`, `Forma`, `Filtros`, `Granularidad`,
+  `MaximoDeGrupos`), de `ReportFilter` (`Campo`, `Operador`, `Valor`) y de `Widget` (`Ancho`,
+  `Alto`, `Forma`, `Titulo`), y los valores del catálogo (`"Tareas"`, `"conteo"`, `"barras"`…).
+  Renombrar los tipos no rompe nada —su nombre no viaja en el JSON—, pero sus propiedades sí.
+- Del frontend va sólo el contrato: catálogo, vista previa, exportaciones y datos del panel.
+- **Dos choques de variables locales** que el diccionario provocó (`mio`/`mios` → `mine`,
+  `nuevo`/`creados` → `created`) los señaló el compilador y se resolvieron a mano.
 
 ---
 

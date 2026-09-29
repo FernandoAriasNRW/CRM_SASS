@@ -22,35 +22,6 @@ namespace Reporting.Infrastructure.Persistence.Migrations
 
             MySqlModelBuilderExtensions.AutoIncrementColumns(modelBuilder);
 
-            modelBuilder.Entity("Reporting.Domain.Entities.ContenidoDeExportacion", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("char(36)");
-
-                    b.Property<byte[]>("Bytes")
-                        .IsRequired()
-                        .HasColumnType("LONGBLOB");
-
-                    b.Property<Guid>("ExportacionId")
-                        .HasColumnType("char(36)");
-
-                    b.Property<Guid>("TenantId")
-                        .HasColumnType("char(36)");
-
-                    b.Property<string>("TipoDeContenido")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ExportacionId")
-                        .IsUnique()
-                        .HasDatabaseName("UX_ContenidosDeExportacion_ExportacionId");
-
-                    b.ToTable("ContenidosDeExportacion");
-                });
-
             modelBuilder.Entity("Reporting.Domain.Entities.Dashboard", b =>
                 {
                     b.Property<Guid>("Id")
@@ -86,104 +57,86 @@ namespace Reporting.Infrastructure.Persistence.Migrations
                     b.ToTable("Dashboards");
                 });
 
-            modelBuilder.Entity("Reporting.Domain.Entities.Exportacion", b =>
+            modelBuilder.Entity("Reporting.Domain.Entities.Export", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("char(36)");
 
-                    b.Property<DateTime?>("ComenzadaUtc")
-                        .HasColumnType("datetime(6)");
+                    b.Property<int>("Attempts")
+                        .HasColumnType("int");
 
                     b.Property<string>("Error")
                         .HasColumnType("longtext");
 
-                    b.Property<int>("EstadoValue")
-                        .HasColumnType("int");
-
-                    b.Property<int>("FormatoValue")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Intentos")
-                        .HasColumnType("int");
-
-                    b.Property<string>("NombreDeFichero")
+                    b.Property<string>("FileName")
                         .HasColumnType("longtext");
+
+                    b.Property<DateTime?>("FinishedAtUtc")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("FormatValue")
+                        .HasColumnType("int");
 
                     b.Property<Guid>("ReportId")
                         .HasColumnType("char(36)");
 
-                    b.Property<Guid>("SolicitadaPorId")
-                        .HasColumnType("char(36)");
-
-                    b.Property<DateTime>("SolicitadaUtc")
+                    b.Property<DateTime>("RequestedAtUtc")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<long>("TamanoBytes")
+                    b.Property<Guid>("RequestedById")
+                        .HasColumnType("char(36)");
+
+                    b.Property<long>("SizeBytes")
                         .HasColumnType("bigint");
+
+                    b.Property<DateTime?>("StartedAtUtc")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("StatusValue")
+                        .HasColumnType("int");
 
                     b.Property<Guid>("TenantId")
                         .HasColumnType("char(36)");
 
-                    b.Property<DateTime?>("TerminadaUtc")
-                        .HasColumnType("datetime(6)");
-
                     b.HasKey("Id");
 
-                    b.HasIndex("EstadoValue", "SolicitadaUtc")
-                        .HasDatabaseName("IX_Exportaciones_Estado_Solicitada");
+                    b.HasIndex("StatusValue", "RequestedAtUtc")
+                        .HasDatabaseName("IX_Exports_StatusValue_RequestedAtUtc");
 
                     b.HasIndex("TenantId", "ReportId")
-                        .HasDatabaseName("IX_Exportaciones_TenantId_ReportId");
+                        .HasDatabaseName("IX_Exports_TenantId_ReportId");
 
-                    b.ToTable("Exportaciones");
+                    b.ToTable("Exports");
                 });
 
-            modelBuilder.Entity("Reporting.Domain.Entities.ProgramacionDeInforme", b =>
+            modelBuilder.Entity("Reporting.Domain.Entities.ExportContent", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("char(36)");
 
-                    b.Property<bool>("Activa")
-                        .HasColumnType("tinyint(1)");
+                    b.Property<byte[]>("Bytes")
+                        .IsRequired()
+                        .HasColumnType("LONGBLOB");
 
-                    b.Property<DateTime>("CreadaUtc")
-                        .HasColumnType("datetime(6)");
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasColumnType("longtext");
 
-                    b.Property<Guid>("DestinatarioId")
-                        .HasColumnType("char(36)");
-
-                    b.Property<int?>("Dia")
-                        .HasColumnType("int");
-
-                    b.Property<int>("FormatoValue")
-                        .HasColumnType("int");
-
-                    b.Property<int>("FrecuenciaValue")
-                        .HasColumnType("int");
-
-                    b.Property<TimeOnly>("Hora")
-                        .HasColumnType("time(6)");
-
-                    b.Property<Guid>("ReportId")
+                    b.Property<Guid>("ExportId")
                         .HasColumnType("char(36)");
 
                     b.Property<Guid>("TenantId")
                         .HasColumnType("char(36)");
 
-                    b.Property<DateOnly?>("UltimoDiaGenerado")
-                        .HasColumnType("date");
-
                     b.HasKey("Id");
 
-                    b.HasIndex("Activa")
-                        .HasDatabaseName("IX_Programaciones_Activa");
+                    b.HasIndex("ExportId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_ExportContents_ExportId");
 
-                    b.HasIndex("TenantId", "ReportId")
-                        .HasDatabaseName("IX_Programaciones_TenantId_ReportId");
-
-                    b.ToTable("Programaciones");
+                    b.ToTable("ExportContents");
                 });
 
             modelBuilder.Entity("Reporting.Domain.Entities.Report", b =>
@@ -198,7 +151,7 @@ namespace Reporting.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("CreatedById")
                         .HasColumnType("char(36)");
 
-                    b.Property<string>("DefinicionJson")
+                    b.Property<string>("DefinitionJson")
                         .HasColumnType("longtext");
 
                     b.Property<int>("FormatValue")
@@ -227,6 +180,53 @@ namespace Reporting.Infrastructure.Persistence.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Reports");
+                });
+
+            modelBuilder.Entity("Reporting.Domain.Entities.ReportSchedule", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int?>("Day")
+                        .HasColumnType("int");
+
+                    b.Property<int>("FormatValue")
+                        .HasColumnType("int");
+
+                    b.Property<int>("FrequencyValue")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<DateOnly?>("LastGeneratedDay")
+                        .HasColumnType("date");
+
+                    b.Property<Guid>("RecipientId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid>("ReportId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<TimeOnly>("Time")
+                        .HasColumnType("time(6)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IsActive")
+                        .HasDatabaseName("IX_ReportSchedules_IsActive");
+
+                    b.HasIndex("TenantId", "ReportId")
+                        .HasDatabaseName("IX_ReportSchedules_TenantId_ReportId");
+
+                    b.ToTable("ReportSchedules");
                 });
 #pragma warning restore 612, 618
         }

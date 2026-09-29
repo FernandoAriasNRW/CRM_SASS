@@ -38,7 +38,7 @@ public sealed class PanelFlowTests(CrmApiFactory factory)
 
     private static async Task<JsonElement> MiPanelAsync(HttpClient cliente)
     {
-        var respuesta = await cliente.GetAsync("/api/v1/dashboards/mio");
+        var respuesta = await cliente.GetAsync("/api/v1/dashboards/mine");
         respuesta.StatusCode.Should().Be(HttpStatusCode.OK, await respuesta.Content.ReadAsStringAsync());
         return await respuesta.Content.ReadFromJsonAsync<JsonElement>();
     }
@@ -59,7 +59,7 @@ public sealed class PanelFlowTests(CrmApiFactory factory)
 
         var panel = await MiPanelAsync(cliente);
 
-        panel.GetProperty("esMio").GetBoolean().Should().BeTrue();
+        panel.GetProperty("isMine").GetBoolean().Should().BeTrue();
         panel.GetProperty("widgets").EnumerateArray().Should().NotBeEmpty(
             "un panel de inicio vacío no le dice nada a quien entra por primera vez");
     }
@@ -117,20 +117,20 @@ public sealed class PanelFlowTests(CrmApiFactory factory)
         var panel = await MiPanelAsync(cliente);
         var panelId = panel.GetProperty("id").GetGuid();
 
-        var datos = await cliente.GetFromJsonAsync<JsonElement>($"/api/v1/dashboards/{panelId}/datos");
+        var datos = await cliente.GetFromJsonAsync<JsonElement>($"/api/v1/dashboards/{panelId}/data");
         var recuadros = datos.EnumerateArray().ToList();
 
         recuadros.Should().NotBeEmpty();
 
         var rotos = recuadros
             .Where(r => r.GetProperty("error").ValueKind != JsonValueKind.Null)
-            .Select(r => $"{r.GetProperty("titulo").GetString()}: {r.GetProperty("error").GetString()}")
+            .Select(r => $"{r.GetProperty("title").GetString()}: {r.GetProperty("error").GetString()}")
             .ToList();
 
         rotos.Should().BeEmpty("los recuadros de partida tienen que funcionar el primer día");
 
         recuadros.Should().Contain(
-            r => r.GetProperty("filas").EnumerateArray().Any(),
+            r => r.GetProperty("rows").EnumerateArray().Any(),
             "al menos uno tiene que traer datos; si todos salen vacíos, el panel no dice nada");
     }
 
@@ -144,13 +144,13 @@ public sealed class PanelFlowTests(CrmApiFactory factory)
         var panel = await MiPanelAsync(cliente);
         var panelId = panel.GetProperty("id").GetGuid();
 
-        var datos = await cliente.GetFromJsonAsync<JsonElement>($"/api/v1/dashboards/{panelId}/datos");
+        var datos = await cliente.GetFromJsonAsync<JsonElement>($"/api/v1/dashboards/{panelId}/data");
 
         foreach (var recuadro in datos.EnumerateArray())
         {
             recuadro.GetProperty("forma").GetString().Should().NotBeNullOrWhiteSpace();
-            recuadro.GetProperty("titulo").GetString().Should().NotBeNullOrWhiteSpace();
-            recuadro.GetProperty("columnas").EnumerateArray().Should().NotBeEmpty();
+            recuadro.GetProperty("title").GetString().Should().NotBeNullOrWhiteSpace();
+            recuadro.GetProperty("columns").EnumerateArray().Should().NotBeEmpty();
         }
     }
 
@@ -185,7 +185,7 @@ public sealed class PanelFlowTests(CrmApiFactory factory)
 
         try
         {
-            var datos = await cliente.GetFromJsonAsync<JsonElement>($"/api/v1/dashboards/{panelId}/datos");
+            var datos = await cliente.GetFromJsonAsync<JsonElement>($"/api/v1/dashboards/{panelId}/data");
             var recuadros = datos.EnumerateArray().ToList();
 
             var roto = recuadros.Single(r => r.GetProperty("widgetId").GetGuid() == widgetId);
@@ -228,7 +228,7 @@ public sealed class PanelFlowTests(CrmApiFactory factory)
             .ToList();
 
         var guardado = await cliente.PutAsJsonAsync(
-            $"/api/v1/dashboards/{panelId}/disposicion", new { Widgets = widgets });
+            $"/api/v1/dashboards/{panelId}/layout", new { Widgets = widgets });
 
         guardado.StatusCode.Should().Be(HttpStatusCode.NoContent, await guardado.Content.ReadAsStringAsync());
 
@@ -254,7 +254,7 @@ public sealed class PanelFlowTests(CrmApiFactory factory)
 
         var uno = panel.GetProperty("widgets").EnumerateArray().First();
 
-        var respuesta = await cliente.PutAsJsonAsync($"/api/v1/dashboards/{panelId}/disposicion", new
+        var respuesta = await cliente.PutAsJsonAsync($"/api/v1/dashboards/{panelId}/layout", new
         {
             Widgets = new[]
             {
@@ -338,7 +338,7 @@ public sealed class PanelFlowTests(CrmApiFactory factory)
     {
         var anonimo = factory.CreateClient();
 
-        (await anonimo.GetAsync("/api/v1/dashboards/mio")).StatusCode
+        (await anonimo.GetAsync("/api/v1/dashboards/mine")).StatusCode
             .Should().Be(HttpStatusCode.Unauthorized);
     }
 }

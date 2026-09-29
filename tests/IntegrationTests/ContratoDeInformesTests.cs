@@ -217,16 +217,16 @@ public sealed class ContratoDeInformesTests(CrmApiFactory factory)
         });
         var id = (await alta.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetGuid();
 
-        var sinNada = await cliente.GetFromJsonAsync<JsonElement>($"/api/v1/reports/{id}/exportaciones");
+        var sinNada = await cliente.GetFromJsonAsync<JsonElement>($"/api/v1/reports/{id}/exports");
         sinNada.EnumerateArray().Should().BeEmpty("recién creado no se ha exportado nunca");
 
-        await cliente.PostAsync($"/api/v1/reports/{id}/exportar?format=Excel", null);
+        await cliente.PostAsync($"/api/v1/reports/{id}/export?format=Excel", null);
 
-        var conUna = await cliente.GetFromJsonAsync<JsonElement>($"/api/v1/reports/{id}/exportaciones");
+        var conUna = await cliente.GetFromJsonAsync<JsonElement>($"/api/v1/reports/{id}/exports");
 
         var suya = conUna.EnumerateArray().Should().ContainSingle().Subject;
-        suya.GetProperty("formato").GetString().Should().Be("Excel");
-        suya.GetProperty("estado").GetString().Should().BeOneOf("Pendiente", "Generando", "Lista");
+        suya.GetProperty("format").GetString().Should().Be("Excel");
+        suya.GetProperty("status").GetString().Should().BeOneOf("Pending", "Generating", "Ready");
     }
 
     [Fact]

@@ -1,7 +1,7 @@
 using BuildingBlocks.Application.Abstractions;
 using Microsoft.EntityFrameworkCore;
-using Reporting.Application.Exportaciones;
-using Reporting.Application.Programaciones;
+using Reporting.Application.Exports;
+using Reporting.Application.Schedules;
 using Reporting.Domain.Entities;
 using Reporting.Infrastructure.Persistence;
 
@@ -62,12 +62,12 @@ public sealed class PlanificadorDeInformes(
     {
         using var ambito = ambitos.CreateScope();
 
-        var programaciones = ambito.ServiceProvider.GetRequiredService<IRepositorioDeProgramaciones>();
+        var programaciones = ambito.ServiceProvider.GetRequiredService<IScheduleRepository>();
         var contexto = ambito.ServiceProvider.GetRequiredService<ReportingDbContext>();
         var correo = ambito.ServiceProvider.GetRequiredService<IEmailService>();
         var destinatarios = ambito.ServiceProvider.GetRequiredService<CorreosDeDestinatarios>();
 
-        var activas = await programaciones.ActivasAsync(ct);
+        var activas = await programaciones.ActiveAsync(ct);
         if (activas.Count == 0) return;
 
         // La hora local del servidor. La programación guarda hora local del inquilino, y mientras
@@ -78,7 +78,7 @@ public sealed class PlanificadorDeInformes(
         foreach (var programacion in activas)
         {
             if (ct.IsCancellationRequested) return;
-            if (!programacion.TocaAhora(ahora)) continue;
+            if (!programacion.IsDue(ahora)) continue;
 
             try
             {
@@ -99,7 +99,7 @@ public sealed class PlanificadorDeInformes(
         ReportingDbContext contexto,
         IEmailService correo,
         CorreosDeDestinatarios destinatarios,
-        ProgramacionDeInforme programacion,
+        ReportSchedule programacion,
         DateTime ahora,
         CancellationToken ct)
     {
@@ -115,29 +115,29 @@ public sealed class PlanificadorDeInformes(
                 "La programación {Programacion} apunta a un informe que ya no existe; se desactiva",
                 programacion.Id);
 
-            programacion.Desactivar();
+            programacion.Deactivate();
             await contexto.SaveChangesAsync(ct);
             return;
         }
 
-        var exportacion = Exportacion.Solicitar(
-            programacion.TenantId, programacion.ReportId, programacion.DestinatarioId, programacion.Formato);
+        var exportacion = Export.Request(
+            programacion.TenantId, programacion.ReportId, programacion.RecipientId, programacion.Format);
 
         if (exportacion.IsFailure)
             throw new InvalidOperationException(exportacion.Error);
 
-        await contexto.Exportaciones.AddAsync(exportacion.Value!, ct);
+        await contexto.Exports.AddAsync(exportacion.Value!, ct);
 
         // Se anota **antes** de que nadie más pueda mirar. Si el correo falla después, el informe
         // ya está encolado y no se vuelve a encolar en la vuelta siguiente: un fallo de correo no
         // puede convertirse en veinte exportaciones del mismo informe.
-        programacion.AnotarGenerada(DateOnly.FromDateTime(ahora));
+        programacion.MarkGenerated(DateOnly.FromDateTime(ahora));
 
         await contexto.SaveChangesAsync(ct);
 
         registro.LogInformation(
             "Informe programado {Informe} encolado para {Persona} en {Formato}",
-            informe.Name, programacion.DestinatarioId, programacion.Formato.Name);
+            informe.Name, programacion.RecipientId, programacion.Format.Name);
 
         await AvisarPorCorreoAsync(correo, destinatarios, programacion, informe.Name, ct);
     }
@@ -157,11 +157,11 @@ public sealed class PlanificadorDeInformes(
     private async Task AvisarPorCorreoAsync(
         IEmailService correo,
         CorreosDeDestinatarios destinatarios,
-        ProgramacionDeInforme programacion,
+        ReportSchedule programacion,
         string nombreDelInforme,
         CancellationToken ct)
     {
-        var direccion = await destinatarios.CorreoDeAsync(programacion.TenantId, programacion.DestinatarioId, ct);
+        var direccion = await destinatarios.CorreoDeAsync(programacion.TenantId, programacion.RecipientId, ct);
 
         if (string.IsNullOrWhiteSpace(direccion))
         {
@@ -177,7 +177,7 @@ public sealed class PlanificadorDeInformes(
                 direccion,
                 $"Tu informe programado: {nombreDelInforme}",
                 $"<p>El informe <strong>{System.Net.WebUtility.HtmlEncode(nombreDelInforme)}</strong> "
-                + $"({programacion.Formato.Name}) se está generando.</p>"
+                + $"({programacion.Format.Name}) se está generando.</p>"
                 + "<p>Lo encontrarás en la pantalla de informes en cuanto esté listo.</p>",
                 ct);
         }

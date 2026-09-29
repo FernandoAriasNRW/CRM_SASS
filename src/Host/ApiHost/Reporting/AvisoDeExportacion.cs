@@ -23,17 +23,17 @@ public sealed class AvisoDeExportacionLista(
     IMediator mediator,
     INotificationPreferencesRepository preferencias,
     ILogger<AvisoDeExportacionLista> registro)
-    : INotificationHandler<DomainEventNotification<ExportacionListaEvent>>
+    : INotificationHandler<DomainEventNotification<ExportReadyEvent>>
 {
-    public async Task Handle(DomainEventNotification<ExportacionListaEvent> notificacion, CancellationToken ct)
+    public async Task Handle(DomainEventNotification<ExportReadyEvent> notificacion, CancellationToken ct)
     {
         var evento = notificacion.DomainEvent;
 
         await AvisosDeExportacion.AvisarAsync(
             mediator, preferencias, registro,
-            evento.TenantId, evento.SolicitadaPorId,
+            evento.TenantId, evento.RequestedById,
             "Tu exportación está lista",
-            $"«{evento.NombreDeFichero}» ya se puede descargar.",
+            $"«{evento.FileName}» ya se puede descargar.",
             ct);
     }
 }
@@ -42,15 +42,15 @@ public sealed class AvisoDeExportacionFallida(
     IMediator mediator,
     INotificationPreferencesRepository preferencias,
     ILogger<AvisoDeExportacionFallida> registro)
-    : INotificationHandler<DomainEventNotification<ExportacionFallidaEvent>>
+    : INotificationHandler<DomainEventNotification<ExportFailedEvent>>
 {
-    public async Task Handle(DomainEventNotification<ExportacionFallidaEvent> notificacion, CancellationToken ct)
+    public async Task Handle(DomainEventNotification<ExportFailedEvent> notificacion, CancellationToken ct)
     {
         var evento = notificacion.DomainEvent;
 
         await AvisosDeExportacion.AvisarAsync(
             mediator, preferencias, registro,
-            evento.TenantId, evento.SolicitadaPorId,
+            evento.TenantId, evento.RequestedById,
             "Tu exportación no salió",
             // El motivo va en el aviso, no sólo en la pantalla de exportaciones. Quien recibe
             // «falló» a secas tiene que ir a buscar el porqué; quien recibe el porqué a veces

@@ -58,18 +58,18 @@ public sealed class ConstructorDeInformesFlowTests(CrmApiFactory factory)
     {
         var cliente = await AutenticarAsync();
 
-        var catalogo = await cliente.GetFromJsonAsync<JsonElement>("/api/v1/reports/catalogo");
+        var catalogo = await cliente.GetFromJsonAsync<JsonElement>("/api/v1/reports/catalog");
 
-        catalogo.GetProperty("origenes").EnumerateArray().Should().NotBeEmpty();
-        catalogo.GetProperty("operadores").EnumerateArray().Should().NotBeEmpty();
-        catalogo.GetProperty("formas").EnumerateArray().Should().NotBeEmpty();
-        catalogo.GetProperty("granularidades").EnumerateArray().Should().NotBeEmpty();
+        catalogo.GetProperty("dataSources").EnumerateArray().Should().NotBeEmpty();
+        catalogo.GetProperty("operators").EnumerateArray().Should().NotBeEmpty();
+        catalogo.GetProperty("visualizations").EnumerateArray().Should().NotBeEmpty();
+        catalogo.GetProperty("granularities").EnumerateArray().Should().NotBeEmpty();
 
-        var tareas = catalogo.GetProperty("origenes").EnumerateArray()
-            .Single(o => o.GetProperty("clave").GetString() == "Tareas");
+        var tareas = catalogo.GetProperty("dataSources").EnumerateArray()
+            .Single(o => o.GetProperty("key").GetString() == "Tareas");
 
-        tareas.GetProperty("campos").EnumerateArray().Should().NotBeEmpty();
-        tareas.GetProperty("medidas").EnumerateArray().Should().NotBeEmpty();
+        tareas.GetProperty("fields").EnumerateArray().Should().NotBeEmpty();
+        tareas.GetProperty("measures").EnumerateArray().Should().NotBeEmpty();
     }
 
     /// <summary>
@@ -86,28 +86,28 @@ public sealed class ConstructorDeInformesFlowTests(CrmApiFactory factory)
     public async Task Todo_lo_que_el_catalogo_ofrece_se_puede_calcular()
     {
         var cliente = await AutenticarAsync();
-        var catalogo = await cliente.GetFromJsonAsync<JsonElement>("/api/v1/reports/catalogo");
+        var catalogo = await cliente.GetFromJsonAsync<JsonElement>("/api/v1/reports/catalog");
 
         var fallos = new List<string>();
 
-        foreach (var origen in catalogo.GetProperty("origenes").EnumerateArray())
+        foreach (var origen in catalogo.GetProperty("dataSources").EnumerateArray())
         {
-            var clave = origen.GetProperty("clave").GetString()!;
+            var clave = origen.GetProperty("key").GetString()!;
 
-            foreach (var campo in origen.GetProperty("campos").EnumerateArray())
+            foreach (var campo in origen.GetProperty("fields").EnumerateArray())
             {
-                var campoClave = campo.GetProperty("clave").GetString()!;
-                var esFecha = campo.GetProperty("tipo").GetString() == "Fecha";
+                var campoClave = campo.GetProperty("key").GetString()!;
+                var esFecha = campo.GetProperty("type").GetString() == "Date";
 
-                foreach (var medida in origen.GetProperty("medidas").EnumerateArray())
+                foreach (var medida in origen.GetProperty("measures").EnumerateArray())
                 {
-                    var medidaClave = medida.GetProperty("clave").GetString()!;
+                    var medidaClave = medida.GetProperty("key").GetString()!;
 
-                    var respuesta = await cliente.PostAsJsonAsync("/api/v1/reports/vista-previa", new
+                    var respuesta = await cliente.PostAsJsonAsync("/api/v1/reports/preview", new
                     {
-                        definicion = Definicion(clave, campoClave, medidaClave,
+                        definition = Definicion(clave, campoClave, medidaClave,
                                                 granularidad: esFecha ? "mes" : null),
-                        titulo = "Contrato"
+                        title = "Contrato"
                     });
 
                     if (respuesta.StatusCode != HttpStatusCode.OK)
@@ -134,49 +134,49 @@ public sealed class ConstructorDeInformesFlowTests(CrmApiFactory factory)
     public async Task Todos_los_operadores_se_pueden_aplicar_a_los_campos_de_su_tipo()
     {
         var cliente = await AutenticarAsync();
-        var catalogo = await cliente.GetFromJsonAsync<JsonElement>("/api/v1/reports/catalogo");
+        var catalogo = await cliente.GetFromJsonAsync<JsonElement>("/api/v1/reports/catalog");
 
-        var operadores = catalogo.GetProperty("operadores").EnumerateArray().ToList();
+        var operadores = catalogo.GetProperty("operators").EnumerateArray().ToList();
         var fallos = new List<string>();
 
-        foreach (var origen in catalogo.GetProperty("origenes").EnumerateArray())
+        foreach (var origen in catalogo.GetProperty("dataSources").EnumerateArray())
         {
-            var clave = origen.GetProperty("clave").GetString()!;
-            var agrupacion = origen.GetProperty("campos").EnumerateArray().First();
-            var agrupacionClave = agrupacion.GetProperty("clave").GetString()!;
-            var agrupacionEsFecha = agrupacion.GetProperty("tipo").GetString() == "Fecha";
+            var clave = origen.GetProperty("key").GetString()!;
+            var agrupacion = origen.GetProperty("fields").EnumerateArray().First();
+            var agrupacionClave = agrupacion.GetProperty("key").GetString()!;
+            var agrupacionEsFecha = agrupacion.GetProperty("type").GetString() == "Date";
 
-            foreach (var campo in origen.GetProperty("campos").EnumerateArray())
+            foreach (var campo in origen.GetProperty("fields").EnumerateArray())
             {
-                var campoClave = campo.GetProperty("clave").GetString()!;
-                var tipo = campo.GetProperty("tipo").GetString()!;
+                var campoClave = campo.GetProperty("key").GetString()!;
+                var tipo = campo.GetProperty("type").GetString()!;
 
                 // Los operadores **de este campo**, que el catálogo resuelve: el tipo no basta,
                 // porque «está vacío» sólo vale sobre campos que pueden no tener valor.
-                var suyos = campo.GetProperty("operadores").EnumerateArray()
+                var suyos = campo.GetProperty("operators").EnumerateArray()
                     .Select(o => o.GetString()).ToHashSet();
 
-                foreach (var operador in operadores.Where(o => suyos.Contains(o.GetProperty("clave").GetString())))
+                foreach (var operador in operadores.Where(o => suyos.Contains(o.GetProperty("key").GetString())))
                 {
-                    var opClave = operador.GetProperty("clave").GetString()!;
+                    var opClave = operador.GetProperty("key").GetString()!;
 
                     // Si el campo es una lista cerrada, se usa uno de sus valores reales. Antes
                     // se mandaba una cadena cualquiera y el servidor la rechazaba —con razón—,
                     // que es lo que destapó que la pantalla obligaba a escribir «Open» a mano.
-                    var valores = campo.GetProperty("valores").EnumerateArray()
+                    var valores = campo.GetProperty("values").EnumerateArray()
                         .Select(v => v.GetString()!).ToList();
 
-                    var valor = operador.GetProperty("necesitaValor").GetBoolean()
+                    var valor = operador.GetProperty("needsValue").GetBoolean()
                         ? valores.FirstOrDefault() ?? ValorDePrueba(tipo)
                         : null;
 
-                    var respuesta = await cliente.PostAsJsonAsync("/api/v1/reports/vista-previa", new
+                    var respuesta = await cliente.PostAsJsonAsync("/api/v1/reports/preview", new
                     {
-                        definicion = Definicion(
+                        definition = Definicion(
                             clave, agrupacionClave, "conteo",
                             filtros: [new { campo = campoClave, operador = opClave, valor }],
                             granularidad: agrupacionEsFecha ? "mes" : null),
-                        titulo = "Contrato de operadores"
+                        title = "Contrato de operadores"
                     });
 
                     if (respuesta.StatusCode != HttpStatusCode.OK)
@@ -194,9 +194,9 @@ public sealed class ConstructorDeInformesFlowTests(CrmApiFactory factory)
     /// <summary>Un valor plausible según el tipo, para que el filtro se pueda evaluar.</summary>
     private static string ValorDePrueba(string tipo) => tipo switch
     {
-        "Numero" => "1",
-        "Fecha" => "2020-01-01",
-        "Persona" or "Referencia" => Guid.Empty.ToString(),
+        "Number" => "1",
+        "Date" => "2020-01-01",
+        "Person" or "Reference" => Guid.Empty.ToString(),
         _ => "algo"
     };
 
@@ -209,19 +209,19 @@ public sealed class ConstructorDeInformesFlowTests(CrmApiFactory factory)
     {
         var cliente = await AutenticarAsync();
 
-        var respuesta = await cliente.PostAsJsonAsync("/api/v1/reports/vista-previa", new
+        var respuesta = await cliente.PostAsJsonAsync("/api/v1/reports/preview", new
         {
-            definicion = Definicion("Tareas", "estado", "conteo"),
-            titulo = "Tareas por estado"
+            definition = Definicion("Tareas", "estado", "conteo"),
+            title = "Tareas por estado"
         });
 
         respuesta.StatusCode.Should().Be(HttpStatusCode.OK, await respuesta.Content.ReadAsStringAsync());
 
         var previa = await respuesta.Content.ReadFromJsonAsync<JsonElement>();
 
-        previa.GetProperty("columnas").EnumerateArray().Should().HaveCount(2);
-        previa.GetProperty("filas").EnumerateArray().Should().NotBeEmpty("el sembrador crea tareas");
-        previa.GetProperty("subtitulo").GetString().Should().Contain("Tareas");
+        previa.GetProperty("columns").EnumerateArray().Should().HaveCount(2);
+        previa.GetProperty("rows").EnumerateArray().Should().NotBeEmpty("el sembrador crea tareas");
+        previa.GetProperty("subtitle").GetString().Should().Contain("Tareas");
     }
 
     /// <summary>
@@ -236,16 +236,16 @@ public sealed class ConstructorDeInformesFlowTests(CrmApiFactory factory)
     {
         var cliente = await AutenticarAsync();
 
-        var respuesta = await cliente.PostAsJsonAsync("/api/v1/reports/vista-previa", new
+        var respuesta = await cliente.PostAsJsonAsync("/api/v1/reports/preview", new
         {
-            definicion = Definicion("Tickets", "estado", "conteo",
+            definition = Definicion("Tickets", "estado", "conteo",
                 filtros: [new { campo = "prioridad", operador = "es", valor = "High" }]),
-            titulo = "Tickets urgentes"
+            title = "Tickets urgentes"
         });
 
         var previa = await respuesta.Content.ReadFromJsonAsync<JsonElement>();
 
-        previa.GetProperty("subtitulo").GetString().Should().Contain("Prioridad").And.Contain("High");
+        previa.GetProperty("subtitle").GetString().Should().Contain("Prioridad").And.Contain("High");
     }
 
     /// <summary>Filtrar de verdad cambia el resultado; si no, el filtro sería un adorno.</summary>
@@ -265,15 +265,15 @@ public sealed class ConstructorDeInformesFlowTests(CrmApiFactory factory)
 
     private static async Task<int> Total(HttpClient cliente, object definicion)
     {
-        var respuesta = await cliente.PostAsJsonAsync("/api/v1/reports/vista-previa",
-            new { definicion, titulo = "x" });
+        var respuesta = await cliente.PostAsJsonAsync("/api/v1/reports/preview",
+            new { definition = definicion, title = "x" });
 
         respuesta.StatusCode.Should().Be(HttpStatusCode.OK, await respuesta.Content.ReadAsStringAsync());
 
         var previa = await respuesta.Content.ReadFromJsonAsync<JsonElement>();
 
         // Se suman los valores de la segunda columna: es la medida.
-        return previa.GetProperty("filas").EnumerateArray()
+        return previa.GetProperty("rows").EnumerateArray()
             .Sum(f => int.Parse(f.EnumerateArray().Last().GetString()!));
     }
 
@@ -294,17 +294,17 @@ public sealed class ConstructorDeInformesFlowTests(CrmApiFactory factory)
 
         // Se piden los días medios hasta resolver **de los tickets sin resolver**: por definición
         // no hay ninguno que promediar.
-        var respuesta = await cliente.PostAsJsonAsync("/api/v1/reports/vista-previa", new
+        var respuesta = await cliente.PostAsJsonAsync("/api/v1/reports/preview", new
         {
-            definicion = Definicion("Tickets", "estado", "media_dias_resolucion",
+            definition = Definicion("Tickets", "estado", "media_dias_resolucion",
                 filtros: [new { campo = "resolucion", operador = "vacio", valor = (string?)null }]),
-            titulo = "Sin resolver"
+            title = "Sin resolver"
         });
 
         respuesta.StatusCode.Should().Be(HttpStatusCode.OK, await respuesta.Content.ReadAsStringAsync());
 
         var previa = await respuesta.Content.ReadFromJsonAsync<JsonElement>();
-        var filas = previa.GetProperty("filas").EnumerateArray().ToList();
+        var filas = previa.GetProperty("rows").EnumerateArray().ToList();
 
         filas.Should().NotBeEmpty("hay tickets sin resolver");
 
@@ -333,17 +333,17 @@ public sealed class ConstructorDeInformesFlowTests(CrmApiFactory factory)
         // Por vencimiento y por día: el sembrador crea todos los tickets el mismo mes, así que
         // agrupándolos por mes sale un solo grupo y la prueba no comprobaría nada. Los
         // vencimientos de las tareas sí se reparten en varios días.
-        var respuesta = await cliente.PostAsJsonAsync("/api/v1/reports/vista-previa", new
+        var respuesta = await cliente.PostAsJsonAsync("/api/v1/reports/preview", new
         {
-            definicion = Definicion("Tareas", "vencimiento", "conteo", "lineas", granularidad: "dia"),
-            titulo = "Tareas por día de vencimiento"
+            definition = Definicion("Tareas", "vencimiento", "conteo", "lineas", granularidad: "dia"),
+            title = "Tareas por día de vencimiento"
         });
 
         respuesta.StatusCode.Should().Be(HttpStatusCode.OK, await respuesta.Content.ReadAsStringAsync());
 
         var previa = await respuesta.Content.ReadFromJsonAsync<JsonElement>();
 
-        var dias = previa.GetProperty("filas").EnumerateArray()
+        var dias = previa.GetProperty("rows").EnumerateArray()
             .Select(f => f.EnumerateArray().First().GetString()!)
             .ToList();
 
@@ -361,10 +361,10 @@ public sealed class ConstructorDeInformesFlowTests(CrmApiFactory factory)
     {
         var cliente = await AutenticarAsync();
 
-        var respuesta = await cliente.PostAsJsonAsync("/api/v1/reports/vista-previa", new
+        var respuesta = await cliente.PostAsJsonAsync("/api/v1/reports/preview", new
         {
-            definicion = Definicion("Tareas", "agente", "conteo"),
-            titulo = "Imposible"
+            definition = Definicion("Tareas", "agente", "conteo"),
+            title = "Imposible"
         });
 
         respuesta.StatusCode.Should().Be(HttpStatusCode.BadRequest);
@@ -391,12 +391,12 @@ public sealed class ConstructorDeInformesFlowTests(CrmApiFactory factory)
         var informeId = await CrearInformeAsync(cliente);
 
         var guardado = await cliente.PutAsJsonAsync(
-            $"/api/v1/reports/{informeId}/definicion", Definicion("Tickets", "prioridad", "conteo", "barras"));
+            $"/api/v1/reports/{informeId}/definition", Definicion("Tickets", "prioridad", "conteo", "barras"));
 
         guardado.StatusCode.Should().Be(HttpStatusCode.NoContent, await guardado.Content.ReadAsStringAsync());
 
         // Se relee en otra petición: es la lección del PATCH que respondía 200 sin guardar.
-        var leida = await cliente.GetFromJsonAsync<JsonElement>($"/api/v1/reports/{informeId}/definicion");
+        var leida = await cliente.GetFromJsonAsync<JsonElement>($"/api/v1/reports/{informeId}/definition");
         leida.GetProperty("origen").GetString().Should().Be("Tickets");
         leida.GetProperty("agrupacion").GetString().Should().Be("prioridad");
         leida.GetProperty("forma").GetString().Should().Be("barras");
@@ -408,16 +408,16 @@ public sealed class ConstructorDeInformesFlowTests(CrmApiFactory factory)
         leida.TryGetProperty("gruposEfectivos", out _).Should().BeFalse();
 
         // Y el fichero exportado trae esa agrupación, no otra.
-        var peticion = await cliente.PostAsync($"/api/v1/reports/{informeId}/exportar?format=Csv", null);
+        var peticion = await cliente.PostAsync($"/api/v1/reports/{informeId}/export?format=Csv", null);
         peticion.StatusCode.Should().Be(HttpStatusCode.Accepted);
 
         var exportacionId = (await peticion.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetGuid();
         var final = await EsperarAsync(cliente, exportacionId);
 
-        final.GetProperty("estado").GetString().Should().Be("Lista",
+        final.GetProperty("status").GetString().Should().Be("Ready",
             "motivo: " + (final.TryGetProperty("error", out var e) ? e.ToString() : "ninguno"));
 
-        var descarga = await cliente.GetAsync($"/api/v1/exportaciones/{exportacionId}/descargar");
+        var descarga = await cliente.GetAsync($"/api/v1/exports/{exportacionId}/download");
         var texto = Encoding.UTF8.GetString(await descarga.Content.ReadAsByteArrayAsync());
 
         texto.Should().Contain("Prioridad", "la columna sale de la agrupación que se guardó");
@@ -437,7 +437,7 @@ public sealed class ConstructorDeInformesFlowTests(CrmApiFactory factory)
         var informeId = await CrearInformeAsync(cliente);
 
         var respuesta = await cliente.PutAsJsonAsync(
-            $"/api/v1/reports/{informeId}/definicion",
+            $"/api/v1/reports/{informeId}/definition",
             Definicion("Proyectos", "estado", "suma_horas"));
 
         respuesta.StatusCode.Should().Be(HttpStatusCode.BadRequest);
@@ -456,12 +456,12 @@ public sealed class ConstructorDeInformesFlowTests(CrmApiFactory factory)
         var cliente = await AutenticarAsync();
         var informeId = await CrearInformeAsync(cliente);
 
-        var peticion = await cliente.PostAsync($"/api/v1/reports/{informeId}/exportar?format=Csv", null);
+        var peticion = await cliente.PostAsync($"/api/v1/reports/{informeId}/export?format=Csv", null);
         var exportacionId = (await peticion.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetGuid();
 
         var final = await EsperarAsync(cliente, exportacionId);
 
-        final.GetProperty("estado").GetString().Should().Be("Fallida");
+        final.GetProperty("status").GetString().Should().Be("Failed");
         final.GetProperty("error").GetString().Should().Contain("constructor");
     }
 
@@ -473,8 +473,8 @@ public sealed class ConstructorDeInformesFlowTests(CrmApiFactory factory)
 
         while (DateTime.UtcNow < limite)
         {
-            var estado = await cliente.GetFromJsonAsync<JsonElement>($"/api/v1/exportaciones/{exportacionId}");
-            if (estado.GetProperty("estado").GetString() is "Lista" or "Fallida") return estado;
+            var estado = await cliente.GetFromJsonAsync<JsonElement>($"/api/v1/exports/{exportacionId}");
+            if (estado.GetProperty("status").GetString() is "Ready" or "Failed") return estado;
 
             await Task.Delay(500);
         }

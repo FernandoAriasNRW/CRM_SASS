@@ -16,13 +16,13 @@ public sealed class ReportingDbContext(DbContextOptions<ReportingDbContext> opti
   public DbSet<Dashboard> Dashboards => Set<Dashboard>();
 
   /// <summary>Las peticiones de exportar un informe a fichero, con su estado.</summary>
-  public DbSet<Exportacion> Exportaciones => Set<Exportacion>();
+  public DbSet<Export> Exports => Set<Export>();
 
   /// <summary>Los bytes, en su propia tabla para que listar exportaciones no los arrastre.</summary>
-  public DbSet<ContenidoDeExportacion> ContenidosDeExportacion => Set<ContenidoDeExportacion>();
+  public DbSet<ExportContent> ExportContents => Set<ExportContent>();
 
   /// <summary>Los informes que se generan solos cada tanto.</summary>
-  public DbSet<ProgramacionDeInforme> Programaciones => Set<ProgramacionDeInforme>();
+  public DbSet<ReportSchedule> ReportSchedules => Set<ReportSchedule>();
 
   // Aquí había tres modelos de lectura —proyectos, tareas y tickets— alimentados por
   // consumidores de MassTransit. Se eliminaron: los consumidores sólo atendían a los eventos de
@@ -42,36 +42,36 @@ public sealed class ReportingDbContext(DbContextOptions<ReportingDbContext> opti
     // El trabajador de exportaciones busca lo pendiente por estado y por antigüedad, cada pocos
     // segundos y sobre todos los inquilinos. Sin índice, ese sondeo recorre la tabla entera cada
     // vez, y la tabla sólo crece.
-    modelBuilder.Entity<Exportacion>()
-        .HasIndex(e => new { e.EstadoValue, e.SolicitadaUtc })
-        .HasDatabaseName("IX_Exportaciones_Estado_Solicitada");
+    modelBuilder.Entity<Export>()
+        .HasIndex(e => new { e.StatusValue, e.RequestedAtUtc })
+        .HasDatabaseName("IX_Exports_StatusValue_RequestedAtUtc");
 
-    modelBuilder.Entity<Exportacion>()
+    modelBuilder.Entity<Export>()
         .HasIndex(e => new { e.TenantId, e.ReportId })
-        .HasDatabaseName("IX_Exportaciones_TenantId_ReportId");
+        .HasDatabaseName("IX_Exports_TenantId_ReportId");
 
     // Un contenido por exportación. El índice único lo hace cumplir la base: si dos reintentos
     // llegaran a guardar los dos, la descarga tendría dos ficheros candidatos y elegiría uno
     // por orden de lectura, que es como se sirve el fichero equivocado.
-    modelBuilder.Entity<ContenidoDeExportacion>()
-        .HasIndex(c => c.ExportacionId)
+    modelBuilder.Entity<ExportContent>()
+        .HasIndex(c => c.ExportId)
         .IsUnique()
-        .HasDatabaseName("UX_ContenidosDeExportacion_ExportacionId");
+        .HasDatabaseName("UX_ExportContents_ExportId");
 
     // Los bytes van a LONGBLOB: el tipo por defecto de un byte[] en MySQL es BLOB, que corta a
     // 64 KB **sin avisar**. Un informe de mil filas lo pasa, y el fichero llegaría truncado.
-    modelBuilder.Entity<ContenidoDeExportacion>()
+    modelBuilder.Entity<ExportContent>()
         .Property(c => c.Bytes)
         .HasColumnType("LONGBLOB");
 
     // El trabajador pregunta por las activas cada pocos minutos y sobre todos los inquilinos.
-    modelBuilder.Entity<ProgramacionDeInforme>()
-        .HasIndex(p => p.Activa)
-        .HasDatabaseName("IX_Programaciones_Activa");
+    modelBuilder.Entity<ReportSchedule>()
+        .HasIndex(p => p.IsActive)
+        .HasDatabaseName("IX_ReportSchedules_IsActive");
 
-    modelBuilder.Entity<ProgramacionDeInforme>()
+    modelBuilder.Entity<ReportSchedule>()
         .HasIndex(p => new { p.TenantId, p.ReportId })
-        .HasDatabaseName("IX_Programaciones_TenantId_ReportId");
+        .HasDatabaseName("IX_ReportSchedules_TenantId_ReportId");
 
     // Aislamiento por tenant y soft delete, compuestos en un solo filtro.
     ApplyTenantFilters(modelBuilder);

@@ -55,26 +55,26 @@ public sealed class ProgramacionDeInformesFlowTests(CrmApiFactory factory)
         var cliente = await AutenticarAsync();
         var informeId = await CrearInformeAsync(cliente);
 
-        var respuesta = await cliente.PostAsJsonAsync($"/api/v1/reports/{informeId}/programaciones", new
+        var respuesta = await cliente.PostAsJsonAsync($"/api/v1/reports/{informeId}/schedules", new
         {
-            Frecuencia = "Semanal",
-            Formato = "Pdf",
-            Hora = "08:00",
-            Dia = 1
+            Frequency = "Weekly",
+            Format = "Pdf",
+            Time = "08:00",
+            Day = 1
         });
 
         respuesta.StatusCode.Should().Be(HttpStatusCode.Created, await respuesta.Content.ReadAsStringAsync());
 
         // Se relee en otra petición, no se mira lo que devolvió el POST: es la lección del PATCH
         // que respondía 200 sin guardar.
-        var lista = await cliente.GetFromJsonAsync<JsonElement>($"/api/v1/reports/{informeId}/programaciones");
+        var lista = await cliente.GetFromJsonAsync<JsonElement>($"/api/v1/reports/{informeId}/schedules");
 
         var suya = lista.EnumerateArray().Should().ContainSingle().Subject;
-        suya.GetProperty("frecuencia").GetString().Should().Be("Semanal");
-        suya.GetProperty("hora").GetString().Should().Be("08:00");
-        suya.GetProperty("dia").GetInt32().Should().Be(1);
-        suya.GetProperty("activa").GetBoolean().Should().BeTrue();
-        suya.GetProperty("ultimoDiaGenerado").ValueKind.Should().Be(JsonValueKind.Null,
+        suya.GetProperty("frequency").GetString().Should().Be("Weekly");
+        suya.GetProperty("time").GetString().Should().Be("08:00");
+        suya.GetProperty("day").GetInt32().Should().Be(1);
+        suya.GetProperty("isActive").GetBoolean().Should().BeTrue();
+        suya.GetProperty("lastGeneratedDay").ValueKind.Should().Be(JsonValueKind.Null,
             "recién creada no se ha generado nunca");
     }
 
@@ -84,7 +84,7 @@ public sealed class ProgramacionDeInformesFlowTests(CrmApiFactory factory)
         var cliente = await AutenticarAsync();
         var informeId = await CrearInformeAsync(cliente);
 
-        var lista = await cliente.GetFromJsonAsync<JsonElement>($"/api/v1/reports/{informeId}/programaciones");
+        var lista = await cliente.GetFromJsonAsync<JsonElement>($"/api/v1/reports/{informeId}/schedules");
 
         lista.EnumerateArray().Should().BeEmpty();
     }
@@ -102,22 +102,22 @@ public sealed class ProgramacionDeInformesFlowTests(CrmApiFactory factory)
         var cliente = await AutenticarAsync();
         var informeId = await CrearInformeAsync(cliente);
 
-        var creada = await cliente.PostAsJsonAsync($"/api/v1/reports/{informeId}/programaciones",
-            new { Frecuencia = "Diaria", Formato = "Csv", Hora = "07:30", Dia = (int?)null });
+        var creada = await cliente.PostAsJsonAsync($"/api/v1/reports/{informeId}/schedules",
+            new { Frequency = "Daily", Format = "Csv", Time = "07:30", Day = (int?)null });
 
         var id = (await creada.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetGuid();
 
-        (await cliente.PatchAsJsonAsync($"/api/v1/programaciones/{id}", new { Activa = false }))
+        (await cliente.PatchAsJsonAsync($"/api/v1/schedules/{id}", new { IsActive = false }))
             .StatusCode.Should().Be(HttpStatusCode.NoContent);
 
-        var apagada = await cliente.GetFromJsonAsync<JsonElement>($"/api/v1/reports/{informeId}/programaciones");
-        apagada.EnumerateArray().Single().GetProperty("activa").GetBoolean().Should().BeFalse();
+        var apagada = await cliente.GetFromJsonAsync<JsonElement>($"/api/v1/reports/{informeId}/schedules");
+        apagada.EnumerateArray().Single().GetProperty("isActive").GetBoolean().Should().BeFalse();
 
-        (await cliente.PatchAsJsonAsync($"/api/v1/programaciones/{id}", new { Activa = true }))
+        (await cliente.PatchAsJsonAsync($"/api/v1/schedules/{id}", new { IsActive = true }))
             .StatusCode.Should().Be(HttpStatusCode.NoContent);
 
-        var encendida = await cliente.GetFromJsonAsync<JsonElement>($"/api/v1/reports/{informeId}/programaciones");
-        encendida.EnumerateArray().Single().GetProperty("activa").GetBoolean().Should().BeTrue();
+        var encendida = await cliente.GetFromJsonAsync<JsonElement>($"/api/v1/reports/{informeId}/schedules");
+        encendida.EnumerateArray().Single().GetProperty("isActive").GetBoolean().Should().BeTrue();
     }
 
     [Fact]
@@ -126,15 +126,15 @@ public sealed class ProgramacionDeInformesFlowTests(CrmApiFactory factory)
         var cliente = await AutenticarAsync();
         var informeId = await CrearInformeAsync(cliente);
 
-        var creada = await cliente.PostAsJsonAsync($"/api/v1/reports/{informeId}/programaciones",
-            new { Frecuencia = "Mensual", Formato = "Excel", Hora = "09:00", Dia = 1 });
+        var creada = await cliente.PostAsJsonAsync($"/api/v1/reports/{informeId}/schedules",
+            new { Frequency = "Monthly", Format = "Excel", Time = "09:00", Day = 1 });
 
         var id = (await creada.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetGuid();
 
-        (await cliente.DeleteAsync($"/api/v1/programaciones/{id}")).StatusCode
+        (await cliente.DeleteAsync($"/api/v1/schedules/{id}")).StatusCode
             .Should().Be(HttpStatusCode.NoContent);
 
-        var lista = await cliente.GetFromJsonAsync<JsonElement>($"/api/v1/reports/{informeId}/programaciones");
+        var lista = await cliente.GetFromJsonAsync<JsonElement>($"/api/v1/reports/{informeId}/schedules");
         lista.EnumerateArray().Should().BeEmpty();
     }
 
@@ -144,7 +144,7 @@ public sealed class ProgramacionDeInformesFlowTests(CrmApiFactory factory)
     {
         var cliente = await AutenticarAsync();
 
-        (await cliente.DeleteAsync($"/api/v1/programaciones/{Guid.NewGuid()}")).StatusCode
+        (await cliente.DeleteAsync($"/api/v1/schedules/{Guid.NewGuid()}")).StatusCode
             .Should().Be(HttpStatusCode.NoContent);
     }
 
@@ -156,13 +156,13 @@ public sealed class ProgramacionDeInformesFlowTests(CrmApiFactory factory)
         var cliente = await AutenticarAsync();
         var informeId = await CrearInformeAsync(cliente);
 
-        var respuesta = await cliente.PostAsJsonAsync($"/api/v1/reports/{informeId}/programaciones",
-            new { Frecuencia = "CadaHora", Formato = "Pdf", Hora = "08:00", Dia = (int?)null });
+        var respuesta = await cliente.PostAsJsonAsync($"/api/v1/reports/{informeId}/schedules",
+            new { Frequency = "CadaHora", Format = "Pdf", Time = "08:00", Day = (int?)null });
 
         respuesta.StatusCode.Should().Be(HttpStatusCode.BadRequest);
 
         var mensaje = await respuesta.Content.ReadAsStringAsync();
-        mensaje.Should().Contain("CadaHora").And.Contain("Diaria");
+        mensaje.Should().Contain("CadaHora").And.Contain("Daily");
     }
 
     [Fact]
@@ -171,8 +171,8 @@ public sealed class ProgramacionDeInformesFlowTests(CrmApiFactory factory)
         var cliente = await AutenticarAsync();
         var informeId = await CrearInformeAsync(cliente);
 
-        var respuesta = await cliente.PostAsJsonAsync($"/api/v1/reports/{informeId}/programaciones",
-            new { Frecuencia = "Semanal", Formato = "Pdf", Hora = "08:00", Dia = (int?)null });
+        var respuesta = await cliente.PostAsJsonAsync($"/api/v1/reports/{informeId}/schedules",
+            new { Frequency = "Weekly", Format = "Pdf", Time = "08:00", Day = (int?)null });
 
         respuesta.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         (await respuesta.Content.ReadAsStringAsync()).Should().Contain("qué día");
@@ -190,8 +190,8 @@ public sealed class ProgramacionDeInformesFlowTests(CrmApiFactory factory)
         var cliente = await AutenticarAsync();
         var informeId = await CrearInformeAsync(cliente);
 
-        var respuesta = await cliente.PostAsJsonAsync($"/api/v1/reports/{informeId}/programaciones",
-            new { Frecuencia = "Mensual", Formato = "Pdf", Hora = "08:00", Dia = 31 });
+        var respuesta = await cliente.PostAsJsonAsync($"/api/v1/reports/{informeId}/schedules",
+            new { Frequency = "Monthly", Format = "Pdf", Time = "08:00", Day = 31 });
 
         respuesta.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         (await respuesta.Content.ReadAsStringAsync()).Should().Contain("febrero");
@@ -203,8 +203,8 @@ public sealed class ProgramacionDeInformesFlowTests(CrmApiFactory factory)
         var cliente = await AutenticarAsync();
         var informeId = await CrearInformeAsync(cliente);
 
-        var respuesta = await cliente.PostAsJsonAsync($"/api/v1/reports/{informeId}/programaciones",
-            new { Frecuencia = "Diaria", Formato = "Pdf", Hora = "por la mañana", Dia = (int?)null });
+        var respuesta = await cliente.PostAsJsonAsync($"/api/v1/reports/{informeId}/schedules",
+            new { Frequency = "Daily", Format = "Pdf", Time = "por la mañana", Day = (int?)null });
 
         respuesta.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         (await respuesta.Content.ReadAsStringAsync()).Should().Contain("08:00", "el mensaje enseña el formato");
@@ -215,8 +215,8 @@ public sealed class ProgramacionDeInformesFlowTests(CrmApiFactory factory)
     {
         var cliente = await AutenticarAsync();
 
-        var respuesta = await cliente.PostAsJsonAsync($"/api/v1/reports/{Guid.NewGuid()}/programaciones",
-            new { Frecuencia = "Diaria", Formato = "Pdf", Hora = "08:00", Dia = (int?)null });
+        var respuesta = await cliente.PostAsJsonAsync($"/api/v1/reports/{Guid.NewGuid()}/schedules",
+            new { Frequency = "Daily", Format = "Pdf", Time = "08:00", Day = (int?)null });
 
         respuesta.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
@@ -226,8 +226,8 @@ public sealed class ProgramacionDeInformesFlowTests(CrmApiFactory factory)
     {
         var anonimo = factory.CreateClient();
 
-        (await anonimo.PostAsJsonAsync($"/api/v1/reports/{Guid.NewGuid()}/programaciones",
-                new { Frecuencia = "Diaria", Formato = "Pdf", Hora = "08:00", Dia = (int?)null }))
+        (await anonimo.PostAsJsonAsync($"/api/v1/reports/{Guid.NewGuid()}/schedules",
+                new { Frequency = "Daily", Format = "Pdf", Time = "08:00", Day = (int?)null }))
             .StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 

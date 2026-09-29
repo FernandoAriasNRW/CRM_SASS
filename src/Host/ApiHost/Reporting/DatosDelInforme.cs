@@ -1,7 +1,7 @@
 using System.Globalization;
 using Microsoft.EntityFrameworkCore;
 using Projects.Infrastructure.Persistence;
-using Reporting.Application.Exportaciones;
+using Reporting.Application.Exports;
 using Reporting.Domain.Entities;
 using Reporting.Domain.ValueObjects;
 using Ticketing.Infrastructure.Persistence;
@@ -46,7 +46,7 @@ public sealed class DatosDelInforme(
     /// <summary>La cultura en que se formatean fechas y números del informe.</summary>
     private static readonly CultureInfo Espanol = CultureInfo.GetCultureInfo("es-ES");
 
-    public async Task<TablaDeInforme> ResolveAsync(Report informe, CancellationToken ct)
+    public async Task<ReportTable> ResolveAsync(Report informe, CancellationToken ct)
     {
         var tenantId = informe.TenantId;
 
@@ -90,9 +90,9 @@ public sealed class DatosDelInforme(
     /// dentro: un informe vacío parece un fallo del sistema, y esto es un informe a medio
     /// configurar.
     /// </summary>
-    private async Task<TablaDeInforme> AMedidaAsync(Report informe, CancellationToken ct)
+    private async Task<ReportTable> AMedidaAsync(Report informe, CancellationToken ct)
     {
-        var definicion = informe.LeerDefinicion();
+        var definicion = informe.ReadDefinition();
 
         if (definicion is null)
         {
@@ -104,7 +104,7 @@ public sealed class DatosDelInforme(
         return await motor.ResolveAsync(informe.Name, informe.TenantId, definicion, ct);
     }
 
-    private async Task<TablaDeInforme> KpisAsync(Report informe, Guid tenantId, CancellationToken ct)
+    private async Task<ReportTable> KpisAsync(Report informe, Guid tenantId, CancellationToken ct)
     {
         var kpi = await panel.GetKpiDataAsync(tenantId, ct);
 
@@ -127,10 +127,10 @@ public sealed class DatosDelInforme(
             ["Tiempo medio de ciclo (días)", Numero(kpi.AvgCycleTimeDays)]
         ];
 
-        return new TablaDeInforme(informe.Name, Subtitulo(filas.Count), ["Indicador", "Valor"], filas);
+        return new ReportTable(informe.Name, Subtitulo(filas.Count), ["Indicador", "Valor"], filas);
     }
 
-    private async Task<TablaDeInforme> DesgloseDeTareasAsync(Report informe, Guid tenantId, CancellationToken ct)
+    private async Task<ReportTable> DesgloseDeTareasAsync(Report informe, Guid tenantId, CancellationToken ct)
     {
         var desglose = await panel.GetTaskBreakdownAsync(tenantId, ct);
 
@@ -138,10 +138,10 @@ public sealed class DatosDelInforme(
             .Select(d => (IReadOnlyList<string>)[d.Status, d.Count.ToString(Espanol)])
             .ToList();
 
-        return new TablaDeInforme(informe.Name, Subtitulo(filas.Count), ["Estado", "Tareas"], filas);
+        return new ReportTable(informe.Name, Subtitulo(filas.Count), ["Estado", "Tareas"], filas);
     }
 
-    private async Task<TablaDeInforme> AvanceDeProyectosAsync(Report informe, Guid tenantId, CancellationToken ct)
+    private async Task<ReportTable> AvanceDeProyectosAsync(Report informe, Guid tenantId, CancellationToken ct)
     {
         var avance = await panel.GetProjectProgressAsync(tenantId, ct);
 
@@ -156,12 +156,12 @@ public sealed class DatosDelInforme(
             ])
             .ToList();
 
-        return new TablaDeInforme(
+        return new ReportTable(
             informe.Name, Subtitulo(filas.Count),
             ["Proyecto", "Estado", "Tareas", "Terminadas", "Avance"], filas);
     }
 
-    private async Task<TablaDeInforme> TareasAsync(Report informe, Guid tenantId, CancellationToken ct)
+    private async Task<ReportTable> TareasAsync(Report informe, Guid tenantId, CancellationToken ct)
     {
         // El detalle respeta los filtros globales: nada archivado ni en la papelera sale en un
         // informe. Es la ventaja de haberlos puesto en el filtro global y no consulta a
@@ -193,12 +193,12 @@ public sealed class DatosDelInforme(
             ])
             .ToList();
 
-        return new TablaDeInforme(
+        return new ReportTable(
             informe.Name, Subtitulo(filas.Count),
             ["Tarea", "Estado", "Prioridad", "Vence", "Horas estimadas", "Responsables"], filas);
     }
 
-    private async Task<TablaDeInforme> TicketsAsync(Report informe, Guid tenantId, CancellationToken ct)
+    private async Task<ReportTable> TicketsAsync(Report informe, Guid tenantId, CancellationToken ct)
     {
         var tickets = await ticketsDb.Tickets.AsNoTracking()
             .Where(t => t.TenantId == tenantId)
@@ -223,12 +223,12 @@ public sealed class DatosDelInforme(
             ])
             .ToList();
 
-        return new TablaDeInforme(
+        return new ReportTable(
             informe.Name, Subtitulo(filas.Count),
             ["Ticket", "Prioridad", "Estado", "Creado", "Resuelto", "Días"], filas);
     }
 
-    private async Task<TablaDeInforme> ActividadPorPersonaAsync(Report informe, Guid tenantId, CancellationToken ct)
+    private async Task<ReportTable> ActividadPorPersonaAsync(Report informe, Guid tenantId, CancellationToken ct)
     {
         // Se agrupa por responsable principal. Las tareas con varios responsables cuentan en el
         // principal y no en todos, para que la suma de la columna sea el total de tareas: un
@@ -260,7 +260,7 @@ public sealed class DatosDelInforme(
             ])
             .ToList();
 
-        return new TablaDeInforme(
+        return new ReportTable(
             informe.Name, Subtitulo(filas.Count),
             ["Persona", "Tareas", "Terminadas", "Horas estimadas"], filas);
     }
