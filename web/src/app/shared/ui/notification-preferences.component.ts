@@ -356,12 +356,12 @@ export class NotificationPreferencesComponent implements OnInit {
   savePreferences(): void {
     this.saving.set(true);
     this.api.put<NotificationPreferences>('/notifications/preferences', this.preferences).subscribe({
-      next: guardadas => {
+      next: saved => {
         // Se adopta lo que devuelve el servidor, no lo que se mandó. Hasta ahora el `PUT`
         // respondía con el mismo cuerpo de la petición sin guardar nada, así que la pantalla
         // confirmaba cambios que no existían y al recargar volvían atrás. Pintar la respuesta
         // real es lo que hace que el aviso de «guardado» signifique algo.
-        this.preferences = { ...this.preferences, ...guardadas };
+        this.preferences = { ...this.preferences, ...saved };
         this.saving.set(false);
         this.toast.success($localize`Preferencias guardadas`, 'Tus preferencias de notificación han sido actualizadas.');
       },

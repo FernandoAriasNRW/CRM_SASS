@@ -10,19 +10,19 @@ import {
 
 import { ToastService } from '../../shared/services/toast.service';
 import { MenuContextualComponent, type OpcionDelMenu } from '../../shared/ui/menu-contextual.component';
-import { DiaDesplegadoComponent } from './dia-desplegado.component';
-import { EventoDrawerComponent } from './evento-drawer.component';
+import { ExpandedDayComponent } from './expanded-day.component';
+import { EventDrawerComponent } from './event-drawer.component';
 import {
-  CalendarioService, aFechaIso,
-  type AgendaDeUnDia, type CosaDelDia, type EventoDelCalendario
-} from './calendario.service';
+  CalendarService, toIsoDate,
+  type DailyAgenda, type AgendaItem, type CalendarEvent
+} from './calendar.service';
 
 /** Un día de la rejilla del mes. `null` en los huecos de antes del día 1. */
-interface DiaDelMes {
-  numero: number;
-  fecha: Date;
-  esHoy: boolean;
-  eventos: EventoDelCalendario[];
+interface MonthDay {
+  dayNumber: number;
+  date: Date;
+  isToday: boolean;
+  events: CalendarEvent[];
 }
 
 /**
@@ -40,7 +40,7 @@ interface DiaDelMes {
 @Component({
   selector: 'app-calendar',
   standalone: true,
-  imports: [DatePipe, NgIcon, MenuContextualComponent, DiaDesplegadoComponent, EventoDrawerComponent],
+  imports: [DatePipe, NgIcon, MenuContextualComponent, ExpandedDayComponent, EventDrawerComponent],
   viewProviders: [provideIcons({
     lucideBan, lucideCalendarDays, lucideCalendarPlus, lucideCalendarRange, lucideChevronLeft,
     lucideChevronRight, lucideClipboardList, lucideEye, lucideFolderCheck, lucideLink,
@@ -49,41 +49,41 @@ interface DiaDelMes {
   templateUrl: './calendar.component.html'
 })
 export class CalendarComponent implements OnInit {
-  private readonly calendario = inject(CalendarioService);
-  private readonly avisos = inject(ToastService);
+  private readonly calendar = inject(CalendarService);
+  private readonly toast = inject(ToastService);
   private readonly router = inject(Router);
 
   private readonly menu = viewChild.required(MenuContextualComponent);
 
-  readonly eventos = signal<EventoDelCalendario[]>([]);
-  readonly mesActual = signal(new Date());
-  readonly cargando = signal(false);
+  readonly events = signal<CalendarEvent[]>([]);
+  readonly currentMonth = signal(new Date());
+  readonly loading = signal(false);
 
   /** El día abierto, con su agenda. Nulo mientras se ve el mes. */
-  readonly diaAbierto = signal<AgendaDeUnDia | null>(null);
+  readonly expandedDay = signal<DailyAgenda | null>(null);
 
-  readonly enPapelera = signal<EventoDelCalendario[] | null>(null);
+  readonly trashed = signal<CalendarEvent[] | null>(null);
 
   // El cajón del formulario
-  readonly drawerAbierto = signal(false);
-  readonly eventoEnEdicion = signal<EventoDelCalendario | null>(null);
-  readonly momentoPropuesto = signal<Date | null>(null);
+  readonly drawerOpen = signal(false);
+  readonly editingEvent = signal<CalendarEvent | null>(null);
+  readonly proposedTime = signal<Date | null>(null);
 
   /** Sobre qué se abrió el menú: un día de la rejilla o un evento concreto. */
-  private readonly objetoDelMenu = signal<{ dia: Date; evento: EventoDelCalendario | null } | null>(null);
+  private readonly menuTarget = signal<{ day: Date; calendarEvent: CalendarEvent | null } | null>(null);
 
   /**
    * Las abreviaturas de los días. Se escriben en vez de pedírselas al navegador porque
    * `toLocaleDateString` las devuelve en el idioma del sistema operativo, no en el de la
    * aplicación: con Windows en inglés saldrían «Mon, Tue» dentro de la versión española.
    */
-  readonly DIAS_SEMANA = [
+  readonly WEEKDAYS = [
     $localize`Lun`, $localize`Mar`, $localize`Mié`,
     $localize`Jue`, $localize`Vie`, $localize`Sáb`, $localize`Dom`
   ];
 
-  readonly mesLegible = computed(() =>
-    this.mesActual().toLocaleDateString('es', { month: 'long', year: 'numeric' }));
+  readonly monthLabel = computed(() =>
+    this.currentMonth().toLocaleDateString('es', { month: 'long', year: 'numeric' }));
 
   /**
    * La rejilla del mes, empezando en lunes.
@@ -91,135 +91,135 @@ export class CalendarComponent implements OnInit {
    * `getDay()` devuelve 0 para el domingo, y usarlo tal cual dejaba el mes desplazado un día: los
    * eventos aparecían en la columna equivocada, que es un fallo que se ve pero no se explica.
    */
-  readonly diasDelMes = computed<(DiaDelMes | null)[]>(() => {
-    const referencia = this.mesActual();
-    const anio = referencia.getFullYear();
-    const mes = referencia.getMonth();
+  readonly monthDays = computed<(MonthDay | null)[]>(() => {
+    const reference = this.currentMonth();
+    const anio = reference.getFullYear();
+    const month = reference.getMonth();
 
-    const primerDia = new Date(anio, mes, 1).getDay();
-    const huecosAntes = (primerDia + 6) % 7;
-    const cuantosDias = new Date(anio, mes + 1, 0).getDate();
+    const firstDay = new Date(anio, month, 1).getDay();
+    const leadingBlanks = (firstDay + 6) % 7;
+    const dayCount = new Date(anio, month + 1, 0).getDate();
 
-    const hoy = new Date();
-    const dias: (DiaDelMes | null)[] = Array(huecosAntes).fill(null);
+    const today = new Date();
+    const days: (MonthDay | null)[] = Array(leadingBlanks).fill(null);
 
-    for (let numero = 1; numero <= cuantosDias; numero++) {
-      const fecha = new Date(anio, mes, numero);
+    for (let dayNumber = 1; dayNumber <= dayCount; dayNumber++) {
+      const date = new Date(anio, month, dayNumber);
 
-      dias.push({
-        numero,
-        fecha,
-        esHoy: fecha.toDateString() === hoy.toDateString(),
-        eventos: this.eventos().filter(e => mismoDia(new Date(e.startTime), fecha))
+      days.push({
+        dayNumber,
+        date,
+        isToday: date.toDateString() === today.toDateString(),
+        events: this.events().filter(e => isSameDay(new Date(e.startTime), date))
       });
     }
 
-    return dias;
+    return days;
   });
 
   /** Lo que ofrece el menú del botón derecho. Depende de si se pulsó sobre un evento. */
-  readonly opcionesDelMenu = computed<OpcionDelMenu[]>(() => {
-    const sobre = this.objetoDelMenu();
-    const evento = sobre?.evento ?? null;
+  readonly menuOptions = computed<OpcionDelMenu[]>(() => {
+    const target = this.menuTarget();
+    const calendarEvent = target?.calendarEvent ?? null;
 
-    if (evento) {
+    if (calendarEvent) {
       return [
-        { clave: 'modificar', etiqueta: $localize`Modificar`, icono: 'lucidePencil' },
-        { clave: 'enlazar', etiqueta: $localize`Enlazar con tarea, ticket o proyecto`, icono: 'lucideLink' },
-        evento.cancelledAtUtc
-          ? { clave: 'reactivar', etiqueta: $localize`Deshacer la anulación`, icono: 'lucideRotateCcw', separadorAntes: true }
-          : { clave: 'anular', etiqueta: $localize`Cancelar el evento`, icono: 'lucideBan', separadorAntes: true },
-        { clave: 'papelera', etiqueta: $localize`Enviar a la papelera`, icono: 'lucideTrash2', destructiva: true }
+        { clave: 'edit', etiqueta: $localize`Modificar`, icono: 'lucidePencil' },
+        { clave: 'link', etiqueta: $localize`Enlazar con tarea, ticket o proyecto`, icono: 'lucideLink' },
+        calendarEvent.cancelledAtUtc
+          ? { clave: 'reactivate', etiqueta: $localize`Deshacer la anulación`, icono: 'lucideRotateCcw', separadorAntes: true }
+          : { clave: 'cancel', etiqueta: $localize`Cancelar el evento`, icono: 'lucideBan', separadorAntes: true },
+        { clave: 'trash', etiqueta: $localize`Enviar a la papelera`, icono: 'lucideTrash2', destructiva: true }
       ];
     }
 
     // Las del día. Es la lista que se pidió, en el orden en que se pidió.
     return [
-      { clave: 'crear', etiqueta: $localize`Crear nuevo evento`, icono: 'lucideCalendarPlus' },
-      { clave: 'ver-eventos', etiqueta: $localize`Ver eventos`, icono: 'lucideEye' },
+      { clave: 'create', etiqueta: $localize`Crear nuevo evento`, icono: 'lucideCalendarPlus' },
+      { clave: 'view-events', etiqueta: $localize`Ver eventos`, icono: 'lucideEye' },
       { clave: 'agenda', etiqueta: $localize`Ver agenda del día`, icono: 'lucideCalendarRange' },
-      { clave: 'tareas', etiqueta: $localize`Tareas para entregar hoy`, icono: 'lucideSquareCheck', separadorAntes: true },
+      { clave: 'tasks', etiqueta: $localize`Tareas para entregar hoy`, icono: 'lucideSquareCheck', separadorAntes: true },
       { clave: 'tickets', etiqueta: $localize`Tickets del día`, icono: 'lucideTicket' },
-      { clave: 'proyectos', etiqueta: $localize`Proyectos a finalizar hoy`, icono: 'lucideFolderCheck' },
-      { clave: 'ajustes', etiqueta: $localize`Ajustes`, icono: 'lucideSettings', separadorAntes: true },
-      { clave: 'papelera-dia', etiqueta: $localize`Enviar a la papelera los eventos`, icono: 'lucideTrash2', destructiva: true }
+      { clave: 'projects', etiqueta: $localize`Proyectos a finalizar hoy`, icono: 'lucideFolderCheck' },
+      { clave: 'settings', etiqueta: $localize`Ajustes`, icono: 'lucideSettings', separadorAntes: true },
+      { clave: 'trash-day', etiqueta: $localize`Enviar a la papelera los eventos`, icono: 'lucideTrash2', destructiva: true }
     ];
   });
 
-  readonly tituloDelMenu = computed(() => {
-    const sobre = this.objetoDelMenu();
-    if (!sobre) return null;
+  readonly menuTitle = computed(() => {
+    const target = this.menuTarget();
+    if (!target) return null;
 
-    return sobre.evento
-      ? sobre.evento.title
-      : sobre.dia.toLocaleDateString('es', { weekday: 'long', day: 'numeric', month: 'long' });
+    return target.calendarEvent
+      ? target.calendarEvent.title
+      : target.day.toLocaleDateString('es', { weekday: 'long', day: 'numeric', month: 'long' });
   });
 
   ngOnInit(): void {
-    void this.cargar();
+    void this.load();
   }
 
   // ── El mes ────────────────────────────────────────────────────────────────
 
-  async cargar(): Promise<void> {
-    this.cargando.set(true);
+  async load(): Promise<void> {
+    this.loading.set(true);
 
     try {
-      const referencia = this.mesActual();
-      const desde = new Date(referencia.getFullYear(), referencia.getMonth(), 1);
-      const hasta = new Date(referencia.getFullYear(), referencia.getMonth() + 1, 0, 23, 59, 59);
+      const reference = this.currentMonth();
+      const from = new Date(reference.getFullYear(), reference.getMonth(), 1);
+      const to = new Date(reference.getFullYear(), reference.getMonth() + 1, 0, 23, 59, 59);
 
-      this.eventos.set(await this.calendario.eventosEntre(desde, hasta));
+      this.events.set(await this.calendar.eventsBetween(from, to));
     } finally {
-      this.cargando.set(false);
+      this.loading.set(false);
     }
   }
 
-  mesAnterior(): void {
-    this.moverMes(-1);
+  previousMonth(): void {
+    this.shiftMonth(-1);
   }
 
-  mesSiguiente(): void {
-    this.moverMes(1);
+  nextMonth(): void {
+    this.shiftMonth(1);
   }
 
-  private moverMes(cuantos: number): void {
-    const referencia = this.mesActual();
-    this.mesActual.set(new Date(referencia.getFullYear(), referencia.getMonth() + cuantos, 1));
+  private shiftMonth(count: number): void {
+    const reference = this.currentMonth();
+    this.currentMonth.set(new Date(reference.getFullYear(), reference.getMonth() + count, 1));
 
     // Se cierra lo que estuviera abierto: un día de septiembre desplegado sobre el mes de octubre
     // enseñaría dos meses a la vez sin decir de cuál es cada cosa.
-    this.diaAbierto.set(null);
-    this.enPapelera.set(null);
-    void this.cargar();
+    this.expandedDay.set(null);
+    this.trashed.set(null);
+    void this.load();
   }
 
-  irAHoy(): void {
-    this.mesActual.set(new Date());
-    this.diaAbierto.set(null);
-    this.enPapelera.set(null);
-    void this.cargar();
+  goToToday(): void {
+    this.currentMonth.set(new Date());
+    this.expandedDay.set(null);
+    this.trashed.set(null);
+    void this.load();
   }
 
   // ── El día ────────────────────────────────────────────────────────────────
 
-  async abrirDia(dia: Date): Promise<void> {
-    this.enPapelera.set(null);
-    this.diaAbierto.set(await this.calendario.agenda(dia));
+  async openDay(day: Date): Promise<void> {
+    this.trashed.set(null);
+    this.expandedDay.set(await this.calendar.agenda(day));
   }
 
-  cerrarDia(): void {
-    this.diaAbierto.set(null);
+  closeDay(): void {
+    this.expandedDay.set(null);
   }
 
   /** Crea a una hora concreta del día abierto. */
-  crearAlas(hora: number): void {
-    const agenda = this.diaAbierto();
+  createAt(hour: number): void {
+    const agenda = this.expandedDay();
     if (!agenda) return;
 
-    const momento = new Date(`${agenda.day}T00:00:00`);
-    momento.setHours(hora);
-    this.abrirFormulario(null, momento);
+    const moment = new Date(`${agenda.day}T00:00:00`);
+    moment.setHours(hour);
+    this.openForm(null, moment);
   }
 
   /**
@@ -229,162 +229,162 @@ export class CalendarComponent implements OnInit {
    * comentarios, sus subtareas y sus campos, y una copia reducida dentro del calendario sería otra
    * pantalla que mantener y que se quedaría atrás.
    */
-  abrirCosa(cosa: CosaDelDia): void {
-    if (cosa.type === 'Event') {
-      const evento = this.eventos().find(e => e.id === cosa.id);
-      if (evento) this.abrirFormulario(evento);
+  openItem(item: AgendaItem): void {
+    if (item.type === 'Event') {
+      const calendarEvent = this.events().find(e => e.id === item.id);
+      if (calendarEvent) this.openForm(calendarEvent);
       return;
     }
 
-    const rutas: Record<string, string> = {
+    const routes: Record<string, string> = {
       Task: '/tasks', Ticket: '/tickets', Project: '/projects'
     };
 
-    void this.router.navigate([rutas[cosa.type]], { queryParams: { id: cosa.id } });
+    void this.router.navigate([routes[item.type]], { queryParams: { id: item.id } });
   }
 
   // ── El menú del botón derecho ─────────────────────────────────────────────
 
-  menuEnDia(evento: MouseEvent, dia: Date): void {
-    this.objetoDelMenu.set({ dia, evento: null });
-    this.menu().abrirEn(evento);
+  onDayContextMenu(mouseEvent: MouseEvent, day: Date): void {
+    this.menuTarget.set({ day, calendarEvent: null });
+    this.menu().abrirEn(mouseEvent);
   }
 
-  menuEnEvento(raton: MouseEvent, evento: EventoDelCalendario, dia: Date): void {
-    raton.stopPropagation();
-    this.objetoDelMenu.set({ dia, evento });
-    this.menu().abrirEn(raton);
+  onEventContextMenu(mouseEvent: MouseEvent, calendarEvent: CalendarEvent, day: Date): void {
+    mouseEvent.stopPropagation();
+    this.menuTarget.set({ day, calendarEvent });
+    this.menu().abrirEn(mouseEvent);
   }
 
-  menuEnCosaDelDia({ evento, cosa }: { evento: MouseEvent; cosa: CosaDelDia }): void {
-    const delCalendario = this.eventos().find(e => e.id === cosa.id) ?? null;
-    const agenda = this.diaAbierto();
+  onItemContextMenu({ mouseEvent, item }: { mouseEvent: MouseEvent; item: AgendaItem }): void {
+    const matchingEvent = this.events().find(e => e.id === item.id) ?? null;
+    const agenda = this.expandedDay();
 
-    this.objetoDelMenu.set({
-      dia: agenda ? new Date(`${agenda.day}T12:00:00`) : new Date(),
-      evento: delCalendario
+    this.menuTarget.set({
+      day: agenda ? new Date(`${agenda.day}T12:00:00`) : new Date(),
+      calendarEvent: matchingEvent
     });
 
-    this.menu().abrirEn(evento);
+    this.menu().abrirEn(mouseEvent);
   }
 
-  menuEnHora({ evento, hora }: { evento: MouseEvent; hora: number }): void {
-    const agenda = this.diaAbierto();
+  onHourContextMenu({ mouseEvent, hour }: { mouseEvent: MouseEvent; hour: number }): void {
+    const agenda = this.expandedDay();
     if (!agenda) return;
 
-    const momento = new Date(`${agenda.day}T00:00:00`);
-    momento.setHours(hora);
+    const moment = new Date(`${agenda.day}T00:00:00`);
+    moment.setHours(hour);
 
-    this.objetoDelMenu.set({ dia: momento, evento: null });
-    this.menu().abrirEn(evento);
+    this.menuTarget.set({ day: moment, calendarEvent: null });
+    this.menu().abrirEn(mouseEvent);
   }
 
-  async alElegirDelMenu(clave: string): Promise<void> {
-    const sobre = this.objetoDelMenu();
-    if (!sobre) return;
+  async onMenuChoice(key: string): Promise<void> {
+    const target = this.menuTarget();
+    if (!target) return;
 
-    const { dia, evento } = sobre;
+    const { day, calendarEvent } = target;
 
-    switch (clave) {
-      case 'crear':
-        this.abrirFormulario(null, aMediaManana(dia));
+    switch (key) {
+      case 'create':
+        this.openForm(null, atMidMorning(day));
         return;
 
-      case 'ver-eventos':
+      case 'view-events':
       case 'agenda':
         // Las dos abren el día: la agenda **es** la lista de eventos más lo que vence. Son dos
         // entradas porque se pidieron las dos, y llevan al mismo sitio porque partirlas en dos
         // pantallas casi iguales sería peor que tener una que lo diga todo.
-        await this.abrirDia(dia);
+        await this.openDay(day);
         return;
 
-      case 'tareas':
-        void this.router.navigate(['/tasks'], { queryParams: { dueDate: aFechaIso(dia) } });
+      case 'tasks':
+        void this.router.navigate(['/tasks'], { queryParams: { dueDate: toIsoDate(day) } });
         return;
 
       case 'tickets':
-        void this.router.navigate(['/tickets'], { queryParams: { startDate: aFechaIso(dia), endDate: aFechaIso(dia) } });
+        void this.router.navigate(['/tickets'], { queryParams: { startDate: toIsoDate(day), endDate: toIsoDate(day) } });
         return;
 
-      case 'proyectos':
-        void this.router.navigate(['/projects'], { queryParams: { endDate: aFechaIso(dia) } });
+      case 'projects':
+        void this.router.navigate(['/projects'], { queryParams: { endDate: toIsoDate(day) } });
         return;
 
-      case 'ajustes':
-        void this.router.navigate(['/profile'], { queryParams: { seccion: 'notificaciones' } });
+      case 'settings':
+        void this.router.navigate(['/profile'], { queryParams: { section: 'notificaciones' } });
         return;
 
-      case 'papelera-dia':
-        await this.mandarElDiaALaPapelera(dia);
+      case 'trash-day':
+        await this.trashDayEvents(day);
         return;
     }
 
-    if (!evento) return;
+    if (!calendarEvent) return;
 
-    switch (clave) {
-      case 'modificar':
-      case 'enlazar':
+    switch (key) {
+      case 'edit':
+      case 'link':
         // Enlazar abre el mismo formulario: los enlaces son parte del evento, y una ventana
         // aparte para tres campos sería un sitio más donde buscarlos.
-        this.abrirFormulario(evento);
+        this.openForm(calendarEvent);
         return;
 
-      case 'anular':
-        await this.anular(evento);
+      case 'cancel':
+        await this.cancel(calendarEvent);
         return;
 
-      case 'reactivar':
-        await this.reactivar(evento);
+      case 'reactivate':
+        await this.reactivate(calendarEvent);
         return;
 
-      case 'papelera':
-        await this.aLaPapelera(evento);
+      case 'trash':
+        await this.moveToTrash(calendarEvent);
         return;
     }
   }
 
   // ── Acciones sobre un evento ──────────────────────────────────────────────
 
-  private abrirFormulario(evento: EventoDelCalendario | null, momento: Date | null = null): void {
-    this.eventoEnEdicion.set(evento);
-    this.momentoPropuesto.set(momento);
-    this.drawerAbierto.set(true);
+  private openForm(calendarEvent: CalendarEvent | null, moment: Date | null = null): void {
+    this.editingEvent.set(calendarEvent);
+    this.proposedTime.set(moment);
+    this.drawerOpen.set(true);
   }
 
-  crearEvento(): void {
-    this.abrirFormulario(null);
+  createEvent(): void {
+    this.openForm(null);
   }
 
-  cerrarFormulario(): void {
-    this.drawerAbierto.set(false);
-    this.eventoEnEdicion.set(null);
+  closeForm(): void {
+    this.drawerOpen.set(false);
+    this.editingEvent.set(null);
   }
 
-  async alGuardar(): Promise<void> {
-    this.cerrarFormulario();
-    await this.refrescar();
+  async onSaved(): Promise<void> {
+    this.closeForm();
+    await this.refresh();
   }
 
-  private async anular(evento: EventoDelCalendario): Promise<void> {
-    const motivo = prompt(`¿Por qué se anula «${evento.title}»?`) ?? null;
+  private async cancel(calendarEvent: CalendarEvent): Promise<void> {
+    const reason = prompt(`¿Por qué se anula «${calendarEvent.title}»?`) ?? null;
 
-    await this.calendario.anular(evento.id, motivo);
-    this.avisos.success($localize`Evento anulado`, 'Sigue en el calendario, tachado.');
-    await this.refrescar();
+    await this.calendar.cancel(calendarEvent.id, reason);
+    this.toast.success($localize`Evento anulado`, 'Sigue en el calendario, tachado.');
+    await this.refresh();
   }
 
-  private async reactivar(evento: EventoDelCalendario): Promise<void> {
-    await this.calendario.reactivar(evento.id);
-    this.avisos.success($localize`Evento reactivado`, evento.title);
-    await this.refrescar();
+  private async reactivate(calendarEvent: CalendarEvent): Promise<void> {
+    await this.calendar.reactivate(calendarEvent.id);
+    this.toast.success($localize`Evento reactivado`, calendarEvent.title);
+    await this.refresh();
   }
 
-  private async aLaPapelera(evento: EventoDelCalendario): Promise<void> {
-    if (!confirm(`¿Enviar «${evento.title}» a la papelera?`)) return;
+  private async moveToTrash(calendarEvent: CalendarEvent): Promise<void> {
+    if (!confirm(`¿Enviar «${calendarEvent.title}» a la papelera?`)) return;
 
-    await this.calendario.aLaPapelera(evento.id);
-    this.avisos.success($localize`En la papelera`, 'Se puede recuperar desde la papelera.');
-    await this.refrescar();
+    await this.calendar.moveToTrash(calendarEvent.id);
+    this.toast.success($localize`En la papelera`, 'Se puede recuperar desde la papelera.');
+    await this.refresh();
   }
 
   /**
@@ -393,62 +393,62 @@ export class CalendarComponent implements OnInit {
    * Se pide confirmación con el número dentro. «¿Enviar 7 eventos a la papelera?» es una pregunta
    * que se puede contestar; «¿estás seguro?» no dice cuánto se va a llevar por delante.
    */
-  private async mandarElDiaALaPapelera(dia: Date): Promise<void> {
-    const delDia = this.eventos().filter(e => mismoDia(new Date(e.startTime), dia));
+  private async trashDayEvents(day: Date): Promise<void> {
+    const dayEvents = this.events().filter(e => isSameDay(new Date(e.startTime), day));
 
-    if (delDia.length === 0) {
-      this.avisos.info($localize`Nada que enviar`, 'Este día no tiene eventos.');
+    if (dayEvents.length === 0) {
+      this.toast.info($localize`Nada que enviar`, 'Este día no tiene eventos.');
       return;
     }
 
-    if (!confirm(`¿Enviar ${delDia.length} evento${delDia.length > 1 ? 's' : ''} a la papelera?`)) return;
+    if (!confirm(`¿Enviar ${dayEvents.length} evento${dayEvents.length > 1 ? 's' : ''} a la papelera?`)) return;
 
     // En serie y no en paralelo: son varias escrituras sobre el mismo agregado y lanzarlas a la
     // vez complica saber cuál falló si falla alguna.
-    for (const evento of delDia) {
-      await this.calendario.aLaPapelera(evento.id);
+    for (const calendarEvent of dayEvents) {
+      await this.calendar.moveToTrash(calendarEvent.id);
     }
 
-    this.avisos.success($localize`En la papelera`, `${delDia.length} evento${delDia.length > 1 ? 's' : ''}.`);
-    await this.refrescar();
+    this.toast.success($localize`En la papelera`, `${dayEvents.length} evento${dayEvents.length > 1 ? 's' : ''}.`);
+    await this.refresh();
   }
 
   // ── La papelera ───────────────────────────────────────────────────────────
 
-  async verPapelera(): Promise<void> {
-    this.diaAbierto.set(null);
-    this.enPapelera.set(await this.calendario.papelera());
+  async showTrash(): Promise<void> {
+    this.expandedDay.set(null);
+    this.trashed.set(await this.calendar.trash());
   }
 
-  cerrarPapelera(): void {
-    this.enPapelera.set(null);
+  closeTrash(): void {
+    this.trashed.set(null);
   }
 
-  async restaurar(evento: EventoDelCalendario): Promise<void> {
-    await this.calendario.restaurar(evento.id);
-    this.avisos.success($localize`Evento recuperado`, evento.title);
+  async restore(calendarEvent: CalendarEvent): Promise<void> {
+    await this.calendar.restore(calendarEvent.id);
+    this.toast.success($localize`Evento recuperado`, calendarEvent.title);
 
-    this.enPapelera.set(await this.calendario.papelera());
-    await this.cargar();
+    this.trashed.set(await this.calendar.trash());
+    await this.load();
   }
 
   /** Vuelve a pedir el mes y, si hay un día abierto, también su agenda. */
-  private async refrescar(): Promise<void> {
-    await this.cargar();
+  private async refresh(): Promise<void> {
+    await this.load();
 
-    const agenda = this.diaAbierto();
+    const agenda = this.expandedDay();
     if (agenda) {
-      this.diaAbierto.set(await this.calendario.agenda(new Date(`${agenda.day}T12:00:00`)));
+      this.expandedDay.set(await this.calendar.agenda(new Date(`${agenda.day}T12:00:00`)));
     }
   }
 }
 
-const mismoDia = (a: Date, b: Date) =>
+const isSameDay = (a: Date, b: Date) =>
   a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 
 /** Las 9:00 del día. Es la hora que casi nadie tiene que corregir. */
-function aMediaManana(dia: Date): Date {
-  const momento = new Date(dia);
-  momento.setHours(9, 0, 0, 0);
-  return momento;
+function atMidMorning(day: Date): Date {
+  const moment = new Date(day);
+  moment.setHours(9, 0, 0, 0);
+  return moment;
 }

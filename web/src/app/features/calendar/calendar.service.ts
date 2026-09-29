@@ -4,7 +4,7 @@ import { firstValueFrom } from 'rxjs';
 import { ApiService } from '../../core/api.service';
 
 /** Un evento del calendario, tal y como lo devuelve la API. */
-export interface EventoDelCalendario {
+export interface CalendarEvent {
   id: string;
   title: string;
   description: string | null;
@@ -22,7 +22,7 @@ export interface EventoDelCalendario {
 }
 
 /** Una cosa que cae en un día, venga del módulo que venga. */
-export interface CosaDelDia {
+export interface AgendaItem {
   type: 'Event' | 'Task' | 'Ticket' | 'Project';
   id: string;
   title: string;
@@ -32,16 +32,16 @@ export interface CosaDelDia {
   isCancelled: boolean;
 }
 
-export interface AgendaDeUnDia {
+export interface DailyAgenda {
   day: string;
-  events: CosaDelDia[];
-  tasksDue: CosaDelDia[];
-  ticketsOpened: CosaDelDia[];
-  projectsEnding: CosaDelDia[];
+  events: AgendaItem[];
+  tasksDue: AgendaItem[];
+  ticketsOpened: AgendaItem[];
+  projectsEnding: AgendaItem[];
 }
 
 /** Lo que hace falta para crear o modificar un evento. */
-export interface DatosDelEvento {
+export interface CalendarEventInput {
   title: string;
   description?: string | null;
   type: string;
@@ -74,7 +74,7 @@ interface Paginado<T> {
  * romper la pantalla en silencio.
  */
 @Injectable({ providedIn: 'root' })
-export class CalendarioService {
+export class CalendarService {
   private readonly api = inject(ApiService);
 
   /**
@@ -83,60 +83,60 @@ export class CalendarioService {
    * `pageSize` alto a propósito: un mes cabe de sobra, y pedirlo por páginas dejaría días a
    * medias sin que nada lo indicara —el hueco parecería un día libre—.
    */
-  async eventosEntre(desde: Date, hasta: Date): Promise<EventoDelCalendario[]> {
-    const respuesta = await firstValueFrom(
-      this.api.get<Paginado<EventoDelCalendario>>('/calendar/events', {
-        startDate: desde.toISOString(),
-        endDate: hasta.toISOString(),
+  async eventsBetween(from: Date, to: Date): Promise<CalendarEvent[]> {
+    const response = await firstValueFrom(
+      this.api.get<Paginado<CalendarEvent>>('/calendar/events', {
+        startDate: from.toISOString(),
+        endDate: to.toISOString(),
         pageSize: 500
       }));
 
-    return respuesta?.items ?? [];
+    return response?.items ?? [];
   }
 
-  agenda(dia: Date): Promise<AgendaDeUnDia> {
-    return firstValueFrom(this.api.get<AgendaDeUnDia>(`/calendar/agenda/${aFechaIso(dia)}`));
+  agenda(day: Date): Promise<DailyAgenda> {
+    return firstValueFrom(this.api.get<DailyAgenda>(`/calendar/agenda/${toIsoDate(day)}`));
   }
 
-  crear(datos: DatosDelEvento): Promise<EventoDelCalendario> {
-    return firstValueFrom(this.api.post<EventoDelCalendario>('/calendar/events', datos));
+  create(data: CalendarEventInput): Promise<CalendarEvent> {
+    return firstValueFrom(this.api.post<CalendarEvent>('/calendar/events', data));
   }
 
-  modificar(id: string, datos: Partial<DatosDelEvento>): Promise<EventoDelCalendario> {
-    return firstValueFrom(this.api.patch<EventoDelCalendario>(`/calendar/events/${id}`, datos));
+  update(id: string, data: Partial<CalendarEventInput>): Promise<CalendarEvent> {
+    return firstValueFrom(this.api.patch<CalendarEvent>(`/calendar/events/${id}`, data));
   }
 
   /** Anula el evento: se queda en el calendario, tachado. */
-  anular(id: string, motivo: string | null): Promise<EventoDelCalendario> {
-    return firstValueFrom(this.api.post<EventoDelCalendario>(`/calendar/events/${id}/cancel`, { reason: motivo }));
+  cancel(id: string, reason: string | null): Promise<CalendarEvent> {
+    return firstValueFrom(this.api.post<CalendarEvent>(`/calendar/events/${id}/cancel`, { reason: reason }));
   }
 
-  reactivar(id: string): Promise<EventoDelCalendario> {
-    return firstValueFrom(this.api.post<EventoDelCalendario>(`/calendar/events/${id}/reactivate`, {}));
+  reactivate(id: string): Promise<CalendarEvent> {
+    return firstValueFrom(this.api.post<CalendarEvent>(`/calendar/events/${id}/reactivate`, {}));
   }
 
   /**
    * Fija los enlaces del evento. Se mandan los tres siempre: un nulo quita el enlace, y sin
    * mandarlos todos no habría forma de distinguir «quítalo» de «no lo toques».
    */
-  enlazar(id: string, enlaces: { projectId: string | null; taskId: string | null; ticketId: string | null }) {
-    return firstValueFrom(this.api.put<EventoDelCalendario>(`/calendar/events/${id}/links`, enlaces));
+  link(id: string, links: { projectId: string | null; taskId: string | null; ticketId: string | null }) {
+    return firstValueFrom(this.api.put<CalendarEvent>(`/calendar/events/${id}/links`, links));
   }
 
   /** A la papelera. Recuperable. */
-  aLaPapelera(id: string): Promise<void> {
+  moveToTrash(id: string): Promise<void> {
     return firstValueFrom(this.api.delete<void>(`/calendar/events/${id}`));
   }
 
-  async papelera(): Promise<EventoDelCalendario[]> {
-    const respuesta = await firstValueFrom(
-      this.api.get<Paginado<EventoDelCalendario>>('/calendar/events/trash'));
+  async trash(): Promise<CalendarEvent[]> {
+    const response = await firstValueFrom(
+      this.api.get<Paginado<CalendarEvent>>('/calendar/events/trash'));
 
-    return respuesta?.items ?? [];
+    return response?.items ?? [];
   }
 
-  restaurar(id: string): Promise<EventoDelCalendario> {
-    return firstValueFrom(this.api.post<EventoDelCalendario>(`/calendar/events/${id}/restore`, {}));
+  restore(id: string): Promise<CalendarEvent> {
+    return firstValueFrom(this.api.post<CalendarEvent>(`/calendar/events/${id}/restore`, {}));
   }
 }
 
@@ -147,10 +147,10 @@ export class CalendarioService {
  * el 8 a las 20:00 es el 9 en UTC. La agenda del día saldría cambiada justo por la tarde, que es
  * cuando se mira.
  */
-export function aFechaIso(fecha: Date): string {
-  const mes = `${fecha.getMonth() + 1}`.padStart(2, '0');
-  const dia = `${fecha.getDate()}`.padStart(2, '0');
-  return `${fecha.getFullYear()}-${mes}-${dia}`;
+export function toIsoDate(date: Date): string {
+  const month = `${date.getMonth() + 1}`.padStart(2, '0');
+  const day = `${date.getDate()}`.padStart(2, '0');
+  return `${date.getFullYear()}-${month}-${day}`;
 }
 
 /**
@@ -159,8 +159,8 @@ export function aFechaIso(fecha: Date): string {
  * Mismo motivo que arriba, y con más consecuencia: darle un valor en UTC hace que el formulario
  * enseñe una hora distinta de la que el usuario acaba de elegir.
  */
-export function aFechaHoraLocal(fecha: Date): string {
-  const hora = `${fecha.getHours()}`.padStart(2, '0');
-  const minuto = `${fecha.getMinutes()}`.padStart(2, '0');
-  return `${aFechaIso(fecha)}T${hora}:${minuto}`;
+export function toLocalDateTime(date: Date): string {
+  const hour = `${date.getHours()}`.padStart(2, '0');
+  const minute = `${date.getMinutes()}`.padStart(2, '0');
+  return `${toIsoDate(date)}T${hour}:${minute}`;
 }
