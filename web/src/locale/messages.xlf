@@ -1770,7 +1770,7 @@ Pendiente</source>
           <context context-type="linenumber">39,40</context>
         </context-group>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/reports/constructor-de-informes.component.ts</context>
+          <context context-type="sourcefile">src/app/features/reports/report-builder.component.ts</context>
           <context context-type="linenumber">253,254</context>
         </context-group>
         <context-group purpose="location">
@@ -3506,7 +3506,7 @@ Pendiente</source>
           <context context-type="linenumber">64</context>
         </context-group>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/reports/exportaciones.service.ts</context>
+          <context context-type="sourcefile">src/app/features/reports/exports.service.ts</context>
           <context context-type="linenumber">134</context>
         </context-group>
       </trans-unit>
@@ -3957,7 +3957,7 @@ Pendiente</source>
           <context context-type="linenumber">34</context>
         </context-group>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/reports/constructor-de-informes.component.ts</context>
+          <context context-type="sourcefile">src/app/features/reports/report-builder.component.ts</context>
           <context context-type="linenumber">77</context>
         </context-group>
       </trans-unit>
@@ -5018,66 +5018,101 @@ Pendiente</source>
           <context context-type="linenumber">119</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="1453124955640330010" datatype="html">
+        <source>Preparando el informe. Te avisamos cuando esté.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/reports/exports.service.ts</context>
+          <context context-type="linenumber">71</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2949724591621687468" datatype="html">
+        <source>El informe está tardando. Seguirá generándose; búscalo en la lista de exportaciones.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/reports/exports.service.ts</context>
+          <context context-type="linenumber">77</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4031195481505711637" datatype="html">
+        <source>La exportación falló.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/reports/exports.service.ts</context>
+          <context context-type="linenumber">83</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1040816601604727882" datatype="html">
+        <source>No se pudo exportar el informe.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/reports/exports.service.ts</context>
+          <context context-type="linenumber">91</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6578227001858936794" datatype="html">
+        <source>Informe descargado.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/reports/exports.service.ts</context>
+          <context context-type="linenumber">155</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="7335656071404909669" datatype="html">
         <source>Constructor de informes</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/reports/constructor-de-informes.component.ts</context>
+          <context context-type="sourcefile">src/app/features/reports/report-builder.component.ts</context>
           <context context-type="linenumber">75,76</context>
         </context-group>
       </trans-unit>
       <trans-unit id="3328248801624290650" datatype="html">
         <source>Cargando el catálogo…</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/reports/constructor-de-informes.component.ts</context>
+          <context context-type="sourcefile">src/app/features/reports/report-builder.component.ts</context>
           <context context-type="linenumber">81,82</context>
         </context-group>
       </trans-unit>
       <trans-unit id="8166312070079305013" datatype="html">
         <source>No se pudo cargar el catálogo de informes.</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/reports/constructor-de-informes.component.ts</context>
+          <context context-type="sourcefile">src/app/features/reports/report-builder.component.ts</context>
           <context context-type="linenumber">83,84</context>
         </context-group>
       </trans-unit>
       <trans-unit id="1269796934540024401" datatype="html">
         <source>Datos de</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/reports/constructor-de-informes.component.ts</context>
+          <context context-type="sourcefile">src/app/features/reports/report-builder.component.ts</context>
           <context context-type="linenumber">89,90</context>
         </context-group>
       </trans-unit>
       <trans-unit id="7660603056288412235" datatype="html">
         <source>Agrupado por</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/reports/constructor-de-informes.component.ts</context>
+          <context context-type="sourcefile">src/app/features/reports/report-builder.component.ts</context>
           <context context-type="linenumber">99,100</context>
         </context-group>
       </trans-unit>
       <trans-unit id="8194276986070945206" datatype="html">
         <source>Agrupar la fecha</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/reports/constructor-de-informes.component.ts</context>
+          <context context-type="sourcefile">src/app/features/reports/report-builder.component.ts</context>
           <context context-type="linenumber">112,113</context>
         </context-group>
       </trans-unit>
       <trans-unit id="5387803419583567166" datatype="html">
         <source>Midiendo</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/reports/constructor-de-informes.component.ts</context>
+          <context context-type="sourcefile">src/app/features/reports/report-builder.component.ts</context>
           <context context-type="linenumber">123,124</context>
         </context-group>
       </trans-unit>
       <trans-unit id="4358480477665851139" datatype="html">
         <source>Pintado como</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/reports/constructor-de-informes.component.ts</context>
+          <context context-type="sourcefile">src/app/features/reports/report-builder.component.ts</context>
           <context context-type="linenumber">133,134</context>
         </context-group>
       </trans-unit>
       <trans-unit id="7532911879405106084" datatype="html">
         <source>Filtros</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/reports/constructor-de-informes.component.ts</context>
+          <context context-type="sourcefile">src/app/features/reports/report-builder.component.ts</context>
           <context context-type="linenumber">145,146</context>
         </context-group>
         <context-group purpose="location">
@@ -5088,113 +5123,78 @@ Pendiente</source>
       <trans-unit id="4192686494150703383" datatype="html">
         <source> Añadir filtro </source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/reports/constructor-de-informes.component.ts</context>
+          <context context-type="sourcefile">src/app/features/reports/report-builder.component.ts</context>
           <context context-type="linenumber">147</context>
         </context-group>
       </trans-unit>
       <trans-unit id="7108391386114972654" datatype="html">
         <source>Sin filtros: entra todo.</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/reports/constructor-de-informes.component.ts</context>
+          <context context-type="sourcefile">src/app/features/reports/report-builder.component.ts</context>
           <context context-type="linenumber">152,153</context>
         </context-group>
       </trans-unit>
       <trans-unit id="8962914386906245107" datatype="html">
         <source>Valor</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/reports/constructor-de-informes.component.ts</context>
+          <context context-type="sourcefile">src/app/features/reports/report-builder.component.ts</context>
           <context context-type="linenumber">193,194</context>
         </context-group>
       </trans-unit>
       <trans-unit id="6645958179466305844" datatype="html">
         <source>Quitar filtro</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/reports/constructor-de-informes.component.ts</context>
+          <context context-type="sourcefile">src/app/features/reports/report-builder.component.ts</context>
           <context context-type="linenumber">199</context>
         </context-group>
       </trans-unit>
       <trans-unit id="1723345460413587971" datatype="html">
         <source> Con estos filtros no hay datos. No es un error: es lo que hay. </source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/reports/constructor-de-informes.component.ts</context>
+          <context context-type="sourcefile">src/app/features/reports/report-builder.component.ts</context>
           <context context-type="linenumber">220</context>
         </context-group>
       </trans-unit>
       <trans-unit id="5597953777025318659" datatype="html">
         <source> Ver resultado </source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/reports/constructor-de-informes.component.ts</context>
+          <context context-type="sourcefile">src/app/features/reports/report-builder.component.ts</context>
           <context context-type="linenumber">255</context>
         </context-group>
       </trans-unit>
       <trans-unit id="4113182804267037649" datatype="html">
         <source> Guardar </source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/reports/constructor-de-informes.component.ts</context>
+          <context context-type="sourcefile">src/app/features/reports/report-builder.component.ts</context>
           <context context-type="linenumber">258</context>
         </context-group>
       </trans-unit>
       <trans-unit id="7719677780114462028" datatype="html">
         <source>No se pudo cargar el catálogo.</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/reports/constructor-de-informes.component.ts</context>
+          <context context-type="sourcefile">src/app/features/reports/report-builder.component.ts</context>
           <context context-type="linenumber">310</context>
         </context-group>
       </trans-unit>
       <trans-unit id="3736855329730769907" datatype="html">
         <source>No se pudo calcular el resultado.</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/reports/constructor-de-informes.component.ts</context>
+          <context context-type="sourcefile">src/app/features/reports/report-builder.component.ts</context>
           <context context-type="linenumber">440</context>
         </context-group>
       </trans-unit>
       <trans-unit id="5022839333651225030" datatype="html">
         <source>Informe guardado.</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/reports/constructor-de-informes.component.ts</context>
+          <context context-type="sourcefile">src/app/features/reports/report-builder.component.ts</context>
           <context context-type="linenumber">454</context>
         </context-group>
       </trans-unit>
       <trans-unit id="3060157024170002439" datatype="html">
         <source>No se pudo guardar el informe.</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/reports/constructor-de-informes.component.ts</context>
+          <context context-type="sourcefile">src/app/features/reports/report-builder.component.ts</context>
           <context context-type="linenumber">458</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="1453124955640330010" datatype="html">
-        <source>Preparando el informe. Te avisamos cuando esté.</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/reports/exportaciones.service.ts</context>
-          <context context-type="linenumber">71</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="2949724591621687468" datatype="html">
-        <source>El informe está tardando. Seguirá generándose; búscalo en la lista de exportaciones.</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/reports/exportaciones.service.ts</context>
-          <context context-type="linenumber">77</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="4031195481505711637" datatype="html">
-        <source>La exportación falló.</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/reports/exportaciones.service.ts</context>
-          <context context-type="linenumber">83</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="1040816601604727882" datatype="html">
-        <source>No se pudo exportar el informe.</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/reports/exportaciones.service.ts</context>
-          <context context-type="linenumber">91</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="6578227001858936794" datatype="html">
-        <source>Informe descargado.</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/reports/exportaciones.service.ts</context>
-          <context context-type="linenumber">155</context>
         </context-group>
       </trans-unit>
       <trans-unit id="7382126769107886475" datatype="html">
@@ -6681,7 +6681,7 @@ Pendiente</source>
       <trans-unit id="3024677306715062969" datatype="html">
         <source>Sin datos para este informe.</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/shared/ui/charts/grafica-de-informe.component.ts</context>
+          <context context-type="sourcefile">src/app/shared/ui/charts/report-chart.component.ts</context>
           <context context-type="linenumber">52,53</context>
         </context-group>
       </trans-unit>

@@ -63,25 +63,25 @@
     informe para cambiar de formato.
   -->
   <div class="flex items-center gap-1 justify-end">
-    @for (formato of formatos; track formato) {
+    @for (format of formats; track format) {
       <button
         uiButton variant="outline" size="sm"
-        [disabled]="estaExportando(item.id)"
-        (click)="exportar(item.id, formato)"
-        [attr.title]="'Exportar a ' + formato">
+        [disabled]="isExporting(item.id)"
+        (click)="requestExport(item.id, format)"
+        [attr.title]="'Exportar a ' + format">
         <ng-icon name="lucideDownload" size="14" class="mr-1" />
-        {{ formato }}
+        {{ format }}
       </button>
     }
 
     <!-- El constructor se abre por informe: es donde se decide qué enseña. -->
-    <button uiButton variant="ghost" size="sm" (click)="abrirConstructor(item)"
+    <button uiButton variant="ghost" size="sm" (click)="openBuilder(item)"
             i18n-title title="Configurar qué enseña este informe">
       <ng-icon name="lucideFilter" size="14" class="mr-1" />
       <span i18n>Construir</span>
     </button>
 
-    @if (estaExportando(item.id)) {
+    @if (isExporting(item.id)) {
       <span class="text-xs text-muted-foreground ml-1" i18n>Generando…</span>
     }
   </div>
@@ -91,10 +91,10 @@
   <app-report-create-modal (closed)="closeCreateModal()" (created)="onReportCreated()" />
 }
 
-@if (enConstruccion(); as informe) {
-  <app-constructor-de-informes
-    [reportId]="informe.id"
-    [titulo]="informe.name"
-    (cerrado)="cerrarConstructor()"
-    (guardado)="load()" />
+@if (reportInBuilder(); as report) {
+  <app-report-builder
+    [reportId]="report.id"
+    [reportTitle]="report.name"
+    (closed)="closeBuilder()"
+    (saved)="load()" />
 }

@@ -15,8 +15,8 @@ import { DashboardsService, Dashboard } from '../../shared/services/dashboards.s
 import { ActivatedRoute } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import {
-  GraficaDeInformeComponent, type DatosDeWidget
-} from '../../shared/ui/charts/grafica-de-informe.component';
+  ReportChartComponent, type WidgetData
+} from '../../shared/ui/charts/report-chart.component';
 
 interface KpiData {
   totalProjects: number;
@@ -75,7 +75,7 @@ import { DrawerComponent } from '../../shared/ui/drawer.component';
     LineChartComponent,
     ProgressBarComponent,
     DrawerComponent,
-    GraficaDeInformeComponent
+    ReportChartComponent
 ],
   viewProviders: [provideIcons({
     lucideFolderKanban, lucideCheckSquare, lucideTicket, lucideTrendingUp,
@@ -105,8 +105,8 @@ export class DashboardComponent implements OnInit {
   // para todo el mundo.
 
   readonly panel = signal<{ id: string; title: string } | null>(null);
-  readonly widgets = signal<DatosDeWidget[]>([]);
-  readonly cargandoPanel = signal(true);
+  readonly widgets = signal<WidgetData[]>([]);
+  readonly myDashboardLoading = signal(true);
 
   // Dashboards feature
   readonly customDashboards = signal<Dashboard[]>([]);
@@ -160,7 +160,7 @@ export class DashboardComponent implements OnInit {
       this.loadDashboards();
     });
     this.loadAllData();
-    void this.cargarPanel();
+    void this.loadMyDashboard();
   }
 
   loadDashboards(): void {
@@ -220,28 +220,28 @@ export class DashboardComponent implements OnInit {
    * la misma foto: con veinte llamadas escalonadas, el de arriba puede contar tickets de antes de
    * que llegara uno nuevo y el de abajo de después.
    */
-  async cargarPanel(): Promise<void> {
-    this.cargandoPanel.set(true);
+  async loadMyDashboard(): Promise<void> {
+    this.myDashboardLoading.set(true);
 
     try {
-      const mio = await firstValueFrom(
+      const mine = await firstValueFrom(
         this.api.get<{ id: string; title: string }>('/dashboards/mine'));
 
-      this.panel.set(mio);
-      this.disposicion.set((mio as unknown as { widgets: { id: string; x: number; y: number; ancho: number; alto: number }[] }).widgets ?? []);
+      this.panel.set(mine);
+      this.layout.set((mine as unknown as { widgets: { id: string; x: number; y: number; ancho: number; alto: number }[] }).widgets ?? []);
 
-      const datos = await firstValueFrom(
-        this.api.get<DatosDeWidget[]>(`/dashboards/${mio.id}/data`));
+      const data = await firstValueFrom(
+        this.api.get<WidgetData[]>(`/dashboards/${mine.id}/data`));
 
-      this.widgets.set(datos);
+      this.widgets.set(data);
     } finally {
-      this.cargandoPanel.set(false);
+      this.myDashboardLoading.set(false);
     }
   }
 
-  recargarPanel(): void { void this.cargarPanel(); }
+  reloadMyDashboard(): void { void this.loadMyDashboard(); }
 
-  async quitarWidget(widgetId: string): Promise<void> {
+  async removeWidget(widgetId: string): Promise<void> {
     const panel = this.panel();
     if (!panel) return;
 
@@ -259,22 +259,22 @@ export class DashboardComponent implements OnInit {
    * desfase pequeño y de los que se pagan caros: sin él, todos los recuadros aparecen una columna
    * a la izquierda y el último se sale de la pantalla.
    */
-  columnaDe(w: DatosDeWidget): string {
-    const widget = this.colocacion(w.widgetId);
+  gridColumnOf(w: WidgetData): string {
+    const widget = this.placementOf(w.widgetId);
     return widget ? `${widget.x + 1} / span ${widget.ancho}` : 'auto / span 6';
   }
 
-  filaDe(w: DatosDeWidget): string {
-    const widget = this.colocacion(w.widgetId);
+  gridRowOf(w: WidgetData): string {
+    const widget = this.placementOf(w.widgetId);
     return widget ? `span ${widget.alto}` : 'span 4';
   }
 
   /** La colocación viene con el panel, no con los datos: son dos cosas distintas. */
-  private colocacion(widgetId: string) {
-    return this.disposicion().find(w => w.id === widgetId);
+  private placementOf(widgetId: string) {
+    return this.layout().find(w => w.id === widgetId);
   }
 
-  private readonly disposicion = signal<
+  private readonly layout = signal<
     { id: string; x: number; y: number; ancho: number; alto: number }[]>([]);
 
   loadAllData(): void {
