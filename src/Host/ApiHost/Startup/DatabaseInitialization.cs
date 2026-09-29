@@ -43,6 +43,8 @@ public static class DatabaseInitialization
 
         if (seeding.SeedOnStartup)
             SeedDemoData(services);
+
+        ProvisionBuiltInTags(services);
     }
 
     /// <summary>
@@ -148,6 +150,42 @@ public static class DatabaseInitialization
         var user = global::Identity.Domain.Entities.User.Create(Guid.NewGuid(), "Admin", email, password, adminRole).Value!;
         identity.User.Add(user);
         identity.SaveChanges();
+    }
+
+    /// <summary>
+    /// Da a cada organización las etiquetas predefinidas que le falten (hitos, negocio, seguridad,
+    /// tipo de trabajo, fase de desarrollo).
+    ///
+    /// <b>Aquí y no en la siembra</b>, porque la siembra de demostración está apagada fuera de
+    /// desarrollo y las predefinidas son del producto, no de la demostración. Y en cada arranque
+    /// porque no hay un momento «nace una organización» del que colgarlo: las organizaciones salen
+    /// del primer administrador o de la siembra, las dos justo antes de esto. Es idempotente.
+    ///
+    /// Las organizaciones salen de los usuarios con <c>IgnoreQueryFilters</c>: sin petición, el
+    /// filtro de inquilino no deja ver ninguno (ver <see cref="EnsureAnAdministratorExists"/>).
+    /// </summary>
+    private static void ProvisionBuiltInTags(IServiceProvider services)
+    {
+        try
+        {
+            var identity = services.GetRequiredService<global::Identity.Infrastructure.Persistence.IdentityDbContext>();
+            var tenantIds = identity.User.IgnoreQueryFilters()
+                .Where(u => !u.IsDeleted)
+                .Select(u => u.TenantId)
+                .Distinct()
+                .ToList();
+
+            var provisioner = services.GetRequiredService<global::Tags.Application.Abstractions.IBuiltInTagProvisioner>();
+            foreach (var tenantId in tenantIds.Where(t => t != Guid.Empty))
+                provisioner.ProvisionAsync(tenantId).GetAwaiter().GetResult();
+        }
+        catch (Exception ex)
+        {
+            // Como la siembra: sin etiquetas predefinidas la API sigue siendo útil, así que no se
+            // tumba el arranque, pero se registra como error para que se vea.
+            services.GetRequiredService<ILogger<Program>>()
+                .LogError(ex, "No se pudieron crear las etiquetas predefinidas. La aplicación arranca sin ellas.");
+        }
     }
 
     private static void SeedDemoData(IServiceProvider services)

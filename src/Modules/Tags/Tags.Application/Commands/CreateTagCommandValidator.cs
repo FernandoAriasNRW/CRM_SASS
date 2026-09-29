@@ -1,4 +1,6 @@
 using FluentValidation;
+using Tags.Application.Abstractions.Repositories;
+using Tags.Domain.ValueObjects;
 
 namespace Tags.Application.Commands;
 
@@ -8,7 +10,7 @@ namespace Tags.Application.Commands;
 /// </summary>
 public sealed class CreateTagCommandValidator : AbstractValidator<CreateTagCommand>
 {
-    public CreateTagCommandValidator()
+    public CreateTagCommandValidator(ITagCategoryRepository categories)
     {
         RuleFor(x => x.Name)
             .Must(name => !string.IsNullOrWhiteSpace(name)).WithMessage("El nombre de la etiqueta es obligatorio")
@@ -18,10 +20,13 @@ public sealed class CreateTagCommandValidator : AbstractValidator<CreateTagComma
             .Matches("^#[0-9A-Fa-f]{6}$").WithMessage("El color tiene que ser hexadecimal, como #3B82F6")
             .When(x => !string.IsNullOrEmpty(x.ColorHex));
 
-        // La categoría no se limita a TagCategory.All: las etiquetas sembradas ya usan otras
-        // («Priority», «Tech»…), y rechazarlas aquí dejaría la lista con valores que no se pueden
-        // volver a crear.
         RuleFor(x => x.Category)
-            .MaximumLength(50).WithMessage("La categoría admite hasta 50 caracteres");
+            .Cascade(CascadeMode.Stop)
+            .Must(c => !string.IsNullOrWhiteSpace(c)).WithMessage("La categoría es obligatoria")
+            .Must(c => !TagCategory.IsAutomatic(c))
+                .WithMessage("Las etiquetas de equipos y proyectos se crean solas al crear el equipo o el proyecto")
+            .MustAsync(async (command, category, ct) =>
+                    TagCategory.IsBuiltIn(category) || await categories.ExistsAsync(command.TenantId, category.Trim(), ct))
+                .WithMessage(command => $"No existe la categoría «{command.Category}»");
     }
 }

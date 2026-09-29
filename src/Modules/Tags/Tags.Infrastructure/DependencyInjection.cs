@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
+using Tags.Application.Abstractions;
 using Tags.Application.Abstractions.Queries;
 using Tags.Application.Abstractions.Repositories;
 using Tags.Infrastructure.Persistence;
@@ -20,7 +21,9 @@ public static class DependencyInjection
                 b => b.MigrationsAssembly(typeof(TagsDbContext).Assembly.FullName)));
 
         services.AddScoped<ITagRepository, TagRepository>();
+        services.AddScoped<ITagCategoryRepository, TagCategoryRepository>();
         services.AddScoped<ITagQueries, TagQueries>();
+        services.AddScoped<IBuiltInTagProvisioner, BuiltInTagProvisioner>();
 
         return services;
     }

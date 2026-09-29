@@ -40,24 +40,30 @@ public sealed class EtiquetasAutomaticas(ITagRepository etiquetas)
     public Task Handle(DomainEventNotification<ProjectCreatedEvent> notificacion, CancellationToken ct)
     {
         var evento = notificacion.DomainEvent;
-
-        return etiquetas.AddAsync(Tag.Create(
-            tenantId: evento.TenantId,
-            name: evento.Name,
-            colorHex: ColorAlAzar(),
-            category: TagCategory.Project,
-            externalReferenceId: evento.ProjectId), ct);
+        return CreateIfMissingAsync(evento.TenantId, evento.Name, TagCategory.Project, evento.ProjectId, ct);
     }
 
     public Task Handle(DomainEventNotification<TeamCreatedEvent> notificacion, CancellationToken ct)
     {
         var evento = notificacion.DomainEvent;
+        return CreateIfMissingAsync(evento.TenantId, evento.Name, TagCategory.Team, evento.TeamId, ct);
+    }
 
-        return etiquetas.AddAsync(Tag.Create(
-            tenantId: evento.TenantId,
-            name: evento.Name,
+    /// <summary>
+    /// Dos proyectos con el mismo nombre no pueden tener dos etiquetas iguales: el índice único
+    /// (inquilino, categoría, nombre) lo impide, y chocar contra él lanzaría una excepción en mitad
+    /// del alta del proyecto por culpa de una etiqueta. El segundo se queda sin la suya.
+    /// </summary>
+    private async Task CreateIfMissingAsync(Guid tenantId, string name, string category, Guid referenceId, CancellationToken ct)
+    {
+        if (await etiquetas.ExistsByNameAsync(tenantId, category, name, ct))
+            return;
+
+        await etiquetas.AddAsync(Tag.Create(
+            tenantId: tenantId,
+            name: name,
             colorHex: ColorAlAzar(),
-            category: TagCategory.Team,
-            externalReferenceId: evento.TeamId), ct);
+            category: category,
+            externalReferenceId: referenceId), ct);
     }
 }

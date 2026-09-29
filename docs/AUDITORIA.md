@@ -891,11 +891,13 @@ datos. Se detalla en la sección 15.
   módulo de equipos. Un identificador inventado se guarda tal cual.
 - **Las etiquetas de los tickets son claves de la pantalla** («billing»), no las entidades del
   módulo de etiquetas. Conviven dos sistemas y habrá que unificarlos. Desde septiembre de 2026 la
-  API del módulo sí funciona (`GET` y `POST /api/v1/tags`; antes eran marcadores que devolvían un
-  array vacío y respondían 200 sin guardar), pero **el frontend todavía no la usa**: las fichas de
-  tarea y ticket siguen con las listas fijas de `shared/utils/tags.ts`. Tampoco hay aún editar ni
-  borrar, y la categoría es texto libre: las etiquetas sembradas usan valores («Priority», «Tech»)
-  que no están en `TagCategory`.
+  API del módulo sí funciona (antes eran marcadores que devolvían un array vacío y respondían 200
+  sin guardar): lista y crea etiquetas y categorías, con categorías predefinidas (equipo, proyecto,
+  hito, negocio, seguridad, tipo de trabajo, fase de desarrollo), categorías propias de cada
+  organización y etiquetas predefinidas en español e inglés. Pero **el frontend todavía no la usa**:
+  las fichas de tarea y ticket siguen con las listas fijas de `shared/utils/tags.ts`. Tampoco hay
+  aún editar ni borrar. Cuando haya borrar, ojo: las predefinidas se aprovisionan en cada arranque,
+  así que una borrada volvería a aparecer si no se recuerda que se quitó a propósito.
 - **Los adjuntos de un ticket no se pueden quitar**, y no hay nada que los borre del almacenamiento
   si algún día se vacía la papelera de tickets.
 - **Espacios, carpetas, anotaciones y subidas no piden autorización por entidad**, y los
