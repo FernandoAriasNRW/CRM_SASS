@@ -162,7 +162,7 @@ public class ProjectsTests
         _repositoryMock.GetByIdAsync(_tenantId, project.Id, false, Arg.Any<CancellationToken>())
             .Returns(project);
 
-        var patchHandler = new PatchProjectCommandHandler(_repositoryMock, _unitOfWorkMock);
+        var patchHandler = new PatchProjectCommandHandler(_repositoryMock, _unitOfWorkMock, Substitute.For<BuildingBlocks.Application.Abstractions.ITagCatalog>());
         var patchCommand = new PatchProjectCommand(
             TenantId: _tenantId,
             Id: project.Id,

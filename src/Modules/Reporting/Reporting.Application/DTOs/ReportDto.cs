@@ -31,6 +31,9 @@ public class ReportDto(Guid Id, Guid tenantId, Guid createdById, string name, st
   public string Format { get; set; } = format;
   public string? Parameters { get; set; } = parameters;
 
+  /// <summary>Las etiquetas (ids del módulo Tags). Se cambian con <c>PUT /reports/{id}/tags</c>.</summary>
+  public IReadOnlyList<Guid> TagIds { get; set; } = [];
+
   public static ReportDto FromEntity(Report report)
   {
     return new ReportDto(
@@ -41,7 +44,10 @@ public class ReportDto(Guid Id, Guid tenantId, Guid createdById, string name, st
         report.Type.Name,
         report.Format.Name,
         report.Parameters
-    );
+    )
+    {
+      TagIds = report.TagIds.ToList()
+    };
   }
 
   public Report ToEntity()

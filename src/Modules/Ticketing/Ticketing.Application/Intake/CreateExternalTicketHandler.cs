@@ -36,6 +36,9 @@ public sealed class CreateExternalTicketHandler(
         if (key is null)
             return Failure(IntakeErrors.InvalidKey);
 
+        if (request.RetiredFields is { Count: > 0 })
+            return Failure(RetiredIntakeFields.Error(request.RetiredFields));
+
         // Todos los que faltan a la vez, no el primero: quien integra un formulario arregla la
         // lista entera de una pasada en vez de descubrirla campo a campo.
         var missing = Required.Where(o => string.IsNullOrWhiteSpace(o.Field(request))).Select(o => o.Name).ToList();
@@ -51,37 +54,17 @@ public sealed class CreateExternalTicketHandler(
             (request.RequesterEmail, 320, "requesterEmail"),
             (request.RequesterPhone, 40, "requesterPhone"),
             (request.RequesterCompany, 200, "requesterCompany"),
-            (request.Classification, 100, "classification"),
         }.FirstOrDefault(c => c.Value is not null && c.Value.Trim().Length > c.Max);
         if (tooLong.Name is not null)
             return Failure($"{tooLong.Name} admite hasta {tooLong.Max} caracteres");
-
-        // Sin prioridad, la media: un formulario de cliente no suele preguntarla.
-        var priority = string.IsNullOrWhiteSpace(request.Priority)
-            ? TicketPriority.Medium
-            : TicketPriority.FromName<TicketPriority>(request.Priority.Trim());
-        if (priority is null)
-            return Failure("priority no es válida: Low, Medium, High o Critical");
-
-        TicketStatus? status = null;
-        if (!string.IsNullOrWhiteSpace(request.Status))
-        {
-            status = TicketStatus.FromName<TicketStatus>(request.Status.Trim());
-            if (status is null)
-                return Failure("status no es válido: Open, InProgress, PendingInfo, Resolved o Closed");
-        }
-
-        if (request.Tags.Count > 20 || request.Tags.Any(t => t.Trim().Length > 40))
-            return Failure("Se admiten hasta 20 etiquetas de hasta 40 caracteres");
 
         var rejection = AttachmentStorage.RejectionReason(request.Attachments);
         if (rejection is not null)
             return Failure(rejection);
 
         var created = Ticket.CreateFromExternal(key, new ExternalTicketRequest(
-            request.Title!.Trim(), request.Description!.Trim(), priority, status,
-            request.RequesterName, request.RequesterEmail, request.RequesterPhone, request.RequesterCompany,
-            request.Classification, request.TeamId, request.Tags));
+            request.Title!.Trim(), request.Description!.Trim(),
+            request.RequesterName, request.RequesterEmail, request.RequesterPhone, request.RequesterCompany));
         if (created.IsFailure)
             return Failure(created.Error!);
 

@@ -74,7 +74,8 @@ public sealed class MoveTaskCommandHandler(
 
 public sealed class PatchTaskCommandHandler(
     ITaskRepository repository,
-    IWorkItemsUnitOfWork unitOfWork) : ICommandHandler<PatchTaskCommand, bool>
+    IWorkItemsUnitOfWork unitOfWork,
+    ITagCatalog tagCatalog) : ICommandHandler<PatchTaskCommand, bool>
 {
   public async Task<Result<bool>> Handle(PatchTaskCommand request, CancellationToken cancellationToken)
   {
@@ -107,6 +108,18 @@ public sealed class PatchTaskCommandHandler(
           request.StartDate, request.QuitarFechaInicio);
     }
     catch (InvalidOperationException ex) { return Result<bool>.Failure(ex.Message); }
+
+    // Las etiquetas. Hasta ahora la ficha mandaba claves en un campo `tags` que este comando no
+    // tenía, así que se descartaban sin error y ninguna tarea llegó a guardar una etiqueta.
+    if (request.TagIds is not null)
+    {
+      var tagIds = TagIdList.Normalize(request.TagIds);
+      var error = await TagIdList.ValidateAsync(tagCatalog, request.TenantId, tagIds, cancellationToken);
+      if (error is not null)
+        return Result<bool>.Failure(error);
+
+      task.SetTags(tagIds);
+    }
 
     await repository.UpdateAsync(task, cancellationToken);
 

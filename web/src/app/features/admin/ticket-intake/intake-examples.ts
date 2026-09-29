@@ -16,10 +16,12 @@ export const REQUIRED_FIELDS = [
   'title', 'description', 'requesterName', 'requesterEmail', 'requesterPhone', 'requesterCompany',
 ] as const;
 
-/** Los que acepta si llegan. */
-export const OPTIONAL_FIELDS = [
-  'attachments', 'classification', 'tags', 'teamId', 'status', 'priority',
-] as const;
+/**
+ * Los que acepta si llegan: sólo los adjuntos. Prioridad, estado, clasificación, equipo y
+ * etiquetas se deciden dentro de la aplicación, y el servidor rechaza la petición que los traiga
+ * (`RetiredIntakeFields`).
+ */
+export const OPTIONAL_FIELDS = ['attachments'] as const;
 
 /** Cómo quedaría una cadena dentro de un literal de JavaScript entre comillas dobles. */
 function quoted(text: string): string {
@@ -70,9 +72,6 @@ export function curlExample(url: string, key: string): string {
     requesterEmail: 'marta@cliente.com',
     requesterPhone: '+34 600 000 000',
     requesterCompany: 'Cliente S.L.',
-    priority: 'High',
-    classification: 'Facturación',
-    tags: ['billing'],
   });
 
   return [

@@ -25,6 +25,9 @@ public static class DependencyInjection
         services.AddScoped<ITagQueries, TagQueries>();
         services.AddScoped<IBuiltInTagProvisioner, BuiltInTagProvisioner>();
 
+        // El puerto con el que los demás módulos comprueban las etiquetas que les llegan.
+        services.AddScoped<BuildingBlocks.Application.Abstractions.ITagCatalog, TagCatalog>();
+
         return services;
     }
 }

@@ -258,22 +258,17 @@ public static class TicketingEndpoints
         var f = await http.Request.ReadFormAsync(ct);
         string? Field(string name) => f.TryGetValue(name, out var v) ? v.ToString() : null;
 
-        // Las etiquetas pueden llegar repetidas (tags=a&tags=b) o juntas con comas.
-        var tags = f.TryGetValue("tags", out var t)
-            ? t.SelectMany(x => (x ?? string.Empty).Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)).ToList()
-            : new List<string>();
-
         return new(string.Empty, Field("title"), Field("description"), Field("requesterName"), Field("requesterEmail"),
-            Field("requesterPhone"), Field("requesterCompany"), Field("priority"), Field("status"), Field("classification"),
-            Guid.TryParse(Field("teamId"), out var teamId) ? teamId : null, tags, Files(f));
+            Field("requesterPhone"), Field("requesterCompany"), Files(f),
+            Ticketing.Application.Intake.RetiredIntakeFields.In(f.Keys.Concat(f.Files.Select(file => file.Name))));
       }
 
       var body = await http.Request.ReadFromJsonAsync<ExternalTicketBody>(ct);
       if (body is null) return null;
 
       return new(string.Empty, body.Title, body.Description, body.RequesterName, body.RequesterEmail,
-          body.RequesterPhone, body.RequesterCompany, body.Priority, body.Status, body.Classification,
-          body.TeamId, body.Tags ?? [], []);
+          body.RequesterPhone, body.RequesterCompany, [],
+          Ticketing.Application.Intake.RetiredIntakeFields.In(body.OtherFields?.Keys ?? Enumerable.Empty<string>()));
     }
     catch (Exception e) when (e is System.Text.Json.JsonException or InvalidDataException or BadHttpRequestException)
     {
@@ -292,6 +287,9 @@ public static class TicketingEndpoints
 /// <summary>
 /// El cuerpo del endpoint público, en inglés como el resto de la API: lo van a escribir
 /// integradores de fuera, y los nombres son los que ya tienen los tickets.
+///
+/// <c>OtherFields</c> recoge lo que llegue de más, para rechazar los campos retirados
+/// (<see cref="Ticketing.Application.Intake.RetiredIntakeFields"/>) en vez de ignorarlos en silencio.
 /// </summary>
 public sealed record ExternalTicketBody(
     string? Title,
@@ -299,11 +297,10 @@ public sealed record ExternalTicketBody(
     string? RequesterName,
     string? RequesterEmail,
     string? RequesterPhone,
-    string? RequesterCompany,
-    string? Priority,
-    string? Status,
-    string? Classification,
-    Guid? TeamId,
-    List<string>? Tags);
+    string? RequesterCompany)
+{
+    [System.Text.Json.Serialization.JsonExtensionData]
+    public Dictionary<string, System.Text.Json.JsonElement>? OtherFields { get; init; }
+}
 
 public sealed record CreateIntakeKeyRequest(string? Name);

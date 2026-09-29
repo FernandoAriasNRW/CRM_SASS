@@ -889,16 +889,15 @@ datos. Se detalla en la sección 15.
 - **Un paquete del frontend supera el presupuesto** de tamaño en 120 kB.
 - **El equipo de un ticket no se valida**: Ticketing guarda el identificador sin poder consultar el
   módulo de equipos. Un identificador inventado se guarda tal cual.
-- **Las etiquetas de los tickets son claves de la pantalla** («billing»), no las entidades del
-  módulo de etiquetas. Conviven dos sistemas y habrá que unificarlos. Desde septiembre de 2026 la
-  API del módulo sí funciona (antes eran marcadores que devolvían un array vacío y respondían 200
-  sin guardar): lista y crea etiquetas y categorías, con categorías predefinidas (equipo, proyecto,
-  hito, negocio, seguridad, tipo de trabajo, fase de desarrollo), categorías propias de cada
-  organización y etiquetas predefinidas en español e inglés. Pero **el frontend todavía no la usa**:
-  las fichas de tarea y ticket siguen con las listas fijas de `shared/utils/tags.ts`. Se pueden
-  editar y borrar (quien la creó, un administrador o quien tenga «Full» sobre etiquetas); el
-  borrado es definitivo porque hoy nada referencia una etiqueta, y **cuando las tareas y los tickets
-  se etiqueten con estas, borrar tendrá que soltarlas**.
+- **Etiquetas: un solo sistema desde septiembre de 2026.** Tareas, tickets, proyectos, informes y
+  dashboards guardan ids de etiquetas del módulo Tags (`TagIds`), comprobados con el puerto
+  `ITagCatalog`, y borrar una etiqueta la suelta de todos (`ITagReferences`). Las claves fijas de la
+  pantalla (`TASK_TAGS`, `TICKET_TAGS`) desaparecieron; las de los tickets se convierten al arrancar
+  (`LegacyTicketTagsConverter`). La pantalla `/tags` las lista y las crea, edita y borra en un
+  cajón, y crea categorías propias. Queda: proyectos, informes y dashboards se etiquetan por API
+  pero no tienen selector; borrar una categoría propia no existe todavía; la columna `Tickets.Tags` se puede quitar cuando esté vacía en todas las bases; y el
+  filtro «Mi equipo» de tareas y proyectos busca el id **del usuario** dentro de `TagIds`, así que
+  no devuelve nada (ya fallaba antes de este cambio).
 - **Los adjuntos de un ticket no se pueden quitar**, y no hay nada que los borre del almacenamiento
   si algún día se vacía la papelera de tickets.
 - **Espacios, carpetas, anotaciones y subidas no piden autorización por entidad**, y los

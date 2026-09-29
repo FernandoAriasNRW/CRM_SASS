@@ -40,6 +40,8 @@ export interface TaskItem {
   checklistDone?: number;
   /** Patrón de repetición, si la tarea es la plantilla de una serie. */
   recurrence?: Recurrence | null;
+  /** Las etiquetas: ids del módulo de etiquetas (`GET /tags`). */
+  tagIds?: string[];
 }
 
 /** Cada cuánto se repite una tarea. Las frecuencias las define el backend. */

@@ -50,17 +50,19 @@ public sealed class IntakeKeyTests
         var (clave, _) = IntakeKey.Generate(tenant, "a", Guid.NewGuid(), DateTime.UtcNow);
 
         var ticket = Ticket.CreateFromExternal(clave, new ExternalTicketRequest(
-            "Título suficiente", "Descripción", TicketPriority.Medium, TicketStatus.PendingInfo,
-            "  Ana  ", "ana@cliente.com", " ", "Cliente S.L.", "Acceso", Guid.Empty, [" Bug ", "bug", "billing"])).Value!;
+            "Título suficiente", "Descripción", "  Ana  ", "ana@cliente.com", " ", "Cliente S.L.")).Value!;
 
         ticket.TenantId.Should().Be(tenant);
         ticket.Source.Should().Be(Ticket.SourceExternal);
         ticket.IntakeKeyId.Should().Be(clave.Id);
         ticket.RequesterName.Should().Be("Ana");
         ticket.RequesterPhone.Should().BeNull("un espacio no es un teléfono");
-        ticket.Status.Should().Be(TicketStatus.PendingInfo);
-        ticket.TeamId.Should().BeNull("Guid.Empty no es un equipo");
-        ticket.TagList.Should().Equal("bug", "billing");
+        // Lo demás lo decide quien lo atiende, no quien lo manda.
+        ticket.Priority.Should().Be(TicketPriority.Medium);
+        ticket.Status.Should().Be(TicketStatus.Open);
+        ticket.TeamId.Should().BeNull();
+        ticket.Classification.Should().BeNull();
+        ticket.TagIds.Should().BeEmpty();
     }
 
     [Theory]

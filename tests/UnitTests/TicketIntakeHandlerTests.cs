@@ -24,8 +24,26 @@ public sealed class TicketIntakeHandlerTests
         => new(nombre, tipo, 128, () => new MemoryStream(new byte[128]));
 
     private CreateExternalTicketCommand Peticion(string clave, params IncomingFile[] adjuntos)
-        => new(clave, "Asunto suficiente", "Mensaje", "Marta", "marta@cliente.com", "600000000", "Cliente S.L.",
-            null, null, null, null, [], adjuntos);
+        => new(clave, "Asunto suficiente", "Mensaje", "Marta", "marta@cliente.com", "600000000", "Cliente S.L.", adjuntos);
+
+    /// <summary>
+    /// Una integración de antes puede seguir mandando prioridad o etiquetas. Se rechaza nombrando
+    /// los campos, sin crear nada: ignorarlos le haría creer que se aplicaron.
+    /// </summary>
+    [Fact]
+    public async Task Retired_fields_are_rejected_by_name_and_nothing_is_created()
+    {
+        var (clave, enClaro) = IntakeKey.Generate(Guid.NewGuid(), "Web", Guid.NewGuid(), DateTime.UtcNow);
+        _claves.FindActiveByHashAsync(IntakeKey.HashOf(enClaro), Arg.Any<CancellationToken>()).Returns(clave);
+
+        var resultado = await Handler().Handle(
+            Peticion(enClaro) with { RetiredFields = RetiredIntakeFields.In(["Tags", "priority", "title"]) },
+            CancellationToken.None);
+
+        resultado.IsFailure.Should().BeTrue();
+        resultado.Error.Should().Contain("priority").And.Contain("tags").And.NotContain("title");
+        await _tickets.DidNotReceiveWithAnyArgs().AddAsync(default!, default);
+    }
 
     /// <summary>
     /// Un fichero que el almacenamiento rechaza es culpa del fichero: se contesta con su nombre, se
