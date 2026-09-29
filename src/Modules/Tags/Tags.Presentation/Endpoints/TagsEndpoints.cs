@@ -21,7 +21,7 @@ public static class TagsEndpoints
         // navegador y no el que la persona eligió en la aplicación.
         group.MapGet("", async ([FromQuery] string? language, IUserContext user, ISender sender) =>
         {
-            var result = await sender.Send(new GetTagsQuery(user.TenantId, language));
+            var result = await sender.Send(new GetTagsQuery(user.TenantId, user.UserId, language));
             return Results.Ok(result.Value);
         })
         .WithName("GetTags")
@@ -33,7 +33,7 @@ public static class TagsEndpoints
         group.MapPost("", async (CreateTagRequest request, IUserContext user, ISender sender) =>
         {
             var result = await sender.Send(new CreateTagCommand(
-                user.TenantId, request.Name ?? string.Empty, request.ColorHex, request.Category ?? string.Empty));
+                user.TenantId, user.UserId, request.Name ?? string.Empty, request.ColorHex, request.Category ?? string.Empty));
 
             // Sin cabecera Location: todavía no hay un GET por id al que apuntar.
             return result.IsSuccess
@@ -41,6 +41,27 @@ public static class TagsEndpoints
                 : Results.Conflict(result.Error);
         })
         .WithName("CreateTag")
+        .WithOpenApi();
+
+        // Editar y borrar: quien la creó, un administrador o alguien con el permiso «Full» sobre
+        // etiquetas (ver TagAccess). 404 si no existe en la organización, 403 si no puede, 409 si es
+        // de un equipo o proyecto; esos tres los traduce el manejador global de excepciones.
+        group.MapPut("/{id:guid}", async (Guid id, UpdateTagRequest request, IUserContext user, ISender sender) =>
+        {
+            var result = await sender.Send(new UpdateTagCommand(
+                user.TenantId, user.UserId, id, request.Name ?? string.Empty, request.ColorHex, request.Category ?? string.Empty));
+
+            return result.IsSuccess ? Results.Ok(result.Value) : Results.Conflict(result.Error);
+        })
+        .WithName("UpdateTag")
+        .WithOpenApi();
+
+        group.MapDelete("/{id:guid}", async (Guid id, IUserContext user, ISender sender) =>
+        {
+            await sender.Send(new DeleteTagCommand(user.TenantId, user.UserId, id));
+            return Results.NoContent();
+        })
+        .WithName("DeleteTag")
         .WithOpenApi();
 
         group.MapGet("/categories", async ([FromQuery] string? language, IUserContext user, ISender sender) =>

@@ -19,6 +19,7 @@ public sealed class TiposDePermisoTests
     [InlineData("Webhooks", "Webhook")]
     [InlineData("Teams", "Team")]
     [InlineData("Reports", "Report")]
+    [InlineData("Tags", "Tag")]
     [InlineData("Task", "Task")]
     [InlineData("Settings", "Settings")]
     public void El_plural_se_guarda_en_singular(string recibido, string guardado)

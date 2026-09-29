@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Tags.Infrastructure.Persistence;
 
@@ -11,9 +12,11 @@ using Tags.Infrastructure.Persistence;
 namespace Tags.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(TagsDbContext))]
-    partial class TagsDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260929145338_TagAuthorsAndProvisionedBuiltIns")]
+    partial class TagAuthorsAndProvisionedBuiltIns
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

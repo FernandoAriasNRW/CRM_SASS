@@ -10,6 +10,7 @@ namespace Identity.Application.Handlers.Commands;
 
 public class SaveGranularPermissionsHandler(
     IEntityPermissionRepository permissionRepository,
+    IUserRepository users,
     IIdentityUnitOfWork unitOfWork)
     : IRequestHandler<SaveGranularPermissionsCommand, Result>
 {
@@ -17,6 +18,14 @@ public class SaveGranularPermissionsHandler(
     {
         var targetType = string.IsNullOrWhiteSpace(request.TargetType) ? "User" : request.TargetType;
         Guid? targetId = targetType == "User" ? request.UserId : (targetType == "Team" ? request.TeamId : null);
+
+        // Sólo a alguien de la organización. El filtro de inquilino hace que ExistsAsync no vea a
+        // nadie de fuera. Antes se guardaba el permiso para cualquier id: no daba acceso a nada
+        // (el servicio de permisos busca a la persona dentro del inquilino), pero dejaba filas
+        // huérfanas y respondía como si hubiera funcionado.
+        if (targetType == "User"
+            && (request.UserId is null || !await users.ExistsAsync(request.UserId.Value, cancellationToken)))
+            return Result.Failure("La persona no pertenece a la organización");
 
         var existingPermissions = await permissionRepository.GetPermissionsAsync(
             request.TenantId,
