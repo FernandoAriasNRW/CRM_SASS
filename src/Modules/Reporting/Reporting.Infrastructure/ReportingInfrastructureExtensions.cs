@@ -42,7 +42,7 @@ public static class ReportingInfrastructureExtensions
         services.AddScoped<ICustomDashboardRepository, CustomDashboardRepository>();
 
         // `IDashboardRepository` NO se registra aquí. Sus consultas cruzan tres módulos, así que
-        // su implementación vive en el host —ApiHost/Reporting/ConsultasDelPanel.cs— y allí se
+        // su implementación vive en el host —ApiHost/Reporting/DashboardQueries.cs— y allí se
         // registra. El módulo declara qué necesita; quién se lo da es cosa de quien compone.
 
         return services;

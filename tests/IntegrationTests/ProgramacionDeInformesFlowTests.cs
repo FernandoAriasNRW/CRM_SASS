@@ -11,7 +11,7 @@ namespace IntegrationTests;
 ///
 /// Lo que <b>no</b> se comprueba aquí es que un informe salga solo el lunes a las 8: eso exigiría
 /// esperar a un lunes. La decisión de cuándo toca es una función pura del dominio
-/// —<c>ProgramacionDeInforme.TocaAhora</c>— y está probada al detalle en las unitarias, con sus
+/// —<c>ReportSchedule.IsDue</c>— y está probada al detalle en las unitarias, con sus
 /// casos límite: el domingo, el día 1, el minuto antes de la hora, y el que impide que un informe
 /// diario llegue doce veces.
 ///

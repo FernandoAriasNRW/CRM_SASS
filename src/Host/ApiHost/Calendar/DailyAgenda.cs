@@ -13,7 +13,7 @@ namespace ApiHost.Calendar;
 /// <summary>
 /// La agenda de un día, que cruza cuatro módulos.
 ///
-/// <b>Vive en el host, como <see cref="ApiHost.Reporting.ConsultasDelPanel"/> y por lo mismo:</b>
+/// <b>Vive en el host, como <see cref="ApiHost.Reporting.DashboardQueries"/> y por lo mismo:</b>
 /// ningún módulo referencia a otro, así que lo que necesita datos de varios se compone aquí. Que
 /// Calendar supiera de tareas o de tickets rompería el aislamiento por una pantalla.
 ///

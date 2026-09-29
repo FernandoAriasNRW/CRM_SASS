@@ -28,9 +28,9 @@ namespace ApiHost.Reporting;
 /// siguiente vuelta la recoge pasado <see cref="Export.GivenUpAfter"/>; si se agotan
 /// los intentos, se marca fallida **con el motivo**.
 /// </summary>
-public sealed class GeneradorDeExportaciones(
+public sealed class ExportGenerator(
     IServiceScopeFactory ambitos,
-    ILogger<GeneradorDeExportaciones> registro) : BackgroundService
+    ILogger<ExportGenerator> logger) : BackgroundService
 {
     /// <summary>
     /// Cada cuánto se pregunta por trabajo nuevo.
@@ -38,7 +38,7 @@ public sealed class GeneradorDeExportaciones(
     /// Cinco segundos es lo que tarda alguien en mirar la pantalla después de pulsar «exportar»:
     /// más y parece que no pasa nada, menos y son consultas de sobra.
     /// </summary>
-    private static readonly TimeSpan CadaCuanto = TimeSpan.FromSeconds(5);
+    private static readonly TimeSpan Interval = TimeSpan.FromSeconds(5);
 
     /// <summary>
     /// Cuántas se cogen por vuelta.
@@ -47,17 +47,17 @@ public sealed class GeneradorDeExportaciones(
     /// consulta tres módulos y construye un fichero en memoria: en paralelo, cinco informes
     /// grandes a la vez se comen la memoria del proceso que además atiende las peticiones.
     /// </summary>
-    private const int PorTanda = 5;
+    private const int BatchSize = 5;
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        registro.LogInformation("Generador de exportaciones iniciado");
+        logger.LogInformation("Generador de exportaciones iniciado");
 
         while (!stoppingToken.IsCancellationRequested)
         {
             try
             {
-                await UnaTandaAsync(stoppingToken);
+                await ProcessBatchAsync(stoppingToken);
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
             {
@@ -69,113 +69,113 @@ public sealed class GeneradorDeExportaciones(
                 // trabajador: si muere, las exportaciones dejan de generarse para siempre y nadie
                 // se entera hasta que alguien pregunte. Se anota y se sigue en la vuelta
                 // siguiente.
-                registro.LogError(ex, "El generador de exportaciones falló buscando trabajo");
+                logger.LogError(ex, "El generador de exportaciones falló buscando trabajo");
             }
 
             try
             {
-                await Task.Delay(CadaCuanto, stoppingToken);
+                await Task.Delay(Interval, stoppingToken);
             }
             catch (OperationCanceledException) { break; }
         }
 
-        registro.LogInformation("Generador de exportaciones detenido");
+        logger.LogInformation("Generador de exportaciones detenido");
     }
 
-    private async Task UnaTandaAsync(CancellationToken ct)
+    private async Task ProcessBatchAsync(CancellationToken ct)
     {
-        using var ambito = ambitos.CreateScope();
-        var repositorio = ambito.ServiceProvider.GetRequiredService<IExportRepository>();
+        using var scope = ambitos.CreateScope();
+        var repository = scope.ServiceProvider.GetRequiredService<IExportRepository>();
 
-        var pendientes = await repositorio.PendingAsync(PorTanda, ct);
-        if (pendientes.Count == 0) return;
+        var pending = await repository.PendingAsync(BatchSize, ct);
+        if (pending.Count == 0) return;
 
-        foreach (var exportacion in pendientes)
+        foreach (var export in pending)
         {
             if (ct.IsCancellationRequested) return;
 
             // Cada exportación en su propio ámbito: los DbContext no se comparten entre
             // trabajos, así que un informe grande no deja el rastreador de cambios lleno para el
             // siguiente, y un fallo no arrastra al resto de la tanda.
-            using var suyo = ambitos.CreateScope();
-            await UnaAsync(suyo.ServiceProvider, exportacion.Id, ct);
+            using var own = ambitos.CreateScope();
+            await ProcessOneAsync(own.ServiceProvider, export.Id, ct);
         }
     }
 
-    private async Task UnaAsync(IServiceProvider servicios, Guid exportacionId, CancellationToken ct)
+    private async Task ProcessOneAsync(IServiceProvider services, Guid exportId, CancellationToken ct)
     {
-        var contexto = servicios.GetRequiredService<ReportingDbContext>();
-        var datos = servicios.GetRequiredService<DatosDelInforme>();
-        var escritores = servicios.GetRequiredService<ReportWriters>();
+        var db = services.GetRequiredService<ReportingDbContext>();
+        var data = services.GetRequiredService<ReportData>();
+        var writers = services.GetRequiredService<ReportWriters>();
 
         // Se guarda por la unidad de trabajo y no por el contexto: es lo único que reparte los
         // eventos de dominio en proceso, y de eso depende que salga el aviso. Guardando por el
         // contexto, la exportación terminaba, el fichero quedaba bien y **nadie se enteraba**.
-        var unidadDeTrabajo = servicios.GetRequiredService<IReportingUnitOfWork>();
+        var unitOfWork = services.GetRequiredService<IReportingUnitOfWork>();
 
         // Se relee sin el filtro de inquilino porque aquí no hay petición: el trabajo trae su
         // propio TenantId y con él se buscan el informe y todo lo demás.
-        var exportacion = await contexto.Exports
+        var export = await db.Exports
             .IgnoreQueryFilters()
-            .FirstOrDefaultAsync(e => e.Id == exportacionId, ct);
+            .FirstOrDefaultAsync(e => e.Id == exportId, ct);
 
-        if (exportacion is null) return;
+        if (export is null) return;
 
         // Segunda comprobación, ahora sobre la fila recién leída. Entre que la tanda la eligió y
         // este momento, otro proceso pudo cogerla; `Comenzar` devuelve false y se pasa.
-        if (!exportacion.Start()) return;
+        if (!export.Start()) return;
 
         // «Empezar» no levanta ningún evento, así que aquí basta con guardar.
-        await contexto.SaveChangesAsync(ct);
+        await db.SaveChangesAsync(ct);
 
         try
         {
-            var informe = await contexto.Reports
+            var report = await db.Reports
                 .IgnoreQueryFilters()
-                .FirstOrDefaultAsync(r => r.Id == exportacion.ReportId && r.TenantId == exportacion.TenantId, ct);
+                .FirstOrDefaultAsync(r => r.Id == export.ReportId && r.TenantId == export.TenantId, ct);
 
-            if (informe is null)
+            if (report is null)
                 throw new InvalidOperationException("El informe ya no existe");
 
-            var tabla = await datos.ResolveAsync(informe, ct);
-            var escritor = escritores.For(exportacion.Format.Name);
-            var bytes = escritor.Write(tabla);
+            var table = await data.ResolveAsync(report, ct);
+            var writer = writers.For(export.Format.Name);
+            var bytes = writer.Write(table);
 
-            var nombre = NombreDeFichero(informe.Name, escritor.Extension);
+            var name = FileName(report.Name, writer.Extension);
 
-            var contenido = ExportContent.Create(
-                exportacion.TenantId, exportacion.Id, bytes, escritor.ContentType);
+            var content = ExportContent.Create(
+                export.TenantId, export.Id, bytes, writer.ContentType);
 
-            await contexto.ExportContents.AddAsync(contenido, ct);
+            await db.ExportContents.AddAsync(content, ct);
 
-            exportacion.Finish(nombre, bytes.LongLength);
-            await unidadDeTrabajo.SaveChangesAndDispatchAsync(ct);
+            export.Finish(name, bytes.LongLength);
+            await unitOfWork.SaveChangesAndDispatchAsync(ct);
 
-            registro.LogInformation(
+            logger.LogInformation(
                 "Exportación {Exportacion} lista: {Nombre}, {Bytes} bytes",
-                exportacion.Id, nombre, bytes.LongLength);
+                export.Id, name, bytes.LongLength);
         }
         catch (Exception ex)
         {
             // El motivo se guarda en la fila, no sólo en el registro del servidor: quien pregunta
             // «¿por qué no salió mi informe?» no tiene acceso a los registros del servidor.
-            registro.LogError(ex, "La exportación {Exportacion} falló", exportacion.Id);
+            logger.LogError(ex, "La exportación {Exportacion} falló", export.Id);
 
-            exportacion.Fail(ex.Message);
+            export.Fail(ex.Message);
 
             try
             {
                 // También del fallo se avisa, así que también va por la unidad de trabajo.
-                await unidadDeTrabajo.SaveChangesAndDispatchAsync(ct);
+                await unitOfWork.SaveChangesAndDispatchAsync(ct);
             }
-            catch (Exception alGuardar)
+            catch (Exception onSaved)
             {
                 // Si ni siquiera se puede anotar el fallo, la exportación se quedaría colgada.
                 // La recogerá el reintento por antigüedad, y esto queda dicho para que quien lea
                 // el registro sepa por qué.
-                registro.LogError(alGuardar,
+                logger.LogError(onSaved,
                     "No se pudo anotar el fallo de la exportación {Exportacion}; quedará para reintento",
-                    exportacion.Id);
+                    export.Id);
             }
         }
     }
@@ -188,14 +188,14 @@ public sealed class GeneradorDeExportaciones(
     /// que Windows no admite en un nombre de fichero: un informe llamado «Ventas 2026/2027»
     /// generaría una ruta con una carpeta por medio.
     /// </summary>
-    private static string NombreDeFichero(string nombreDelInforme, string extension)
+    private static string FileName(string reportName, string extension)
     {
-        var prohibidos = Path.GetInvalidFileNameChars();
-        var limpio = new string(nombreDelInforme.Where(c => !prohibidos.Contains(c)).ToArray()).Trim();
+        var forbidden = Path.GetInvalidFileNameChars();
+        var clean = new string(reportName.Where(c => !forbidden.Contains(c)).ToArray()).Trim();
 
-        if (string.IsNullOrWhiteSpace(limpio)) limpio = "informe";
-        if (limpio.Length > 80) limpio = limpio[..80];
+        if (string.IsNullOrWhiteSpace(clean)) clean = "informe";
+        if (clean.Length > 80) clean = clean[..80];
 
-        return $"{limpio} {DateTime.UtcNow:yyyy-MM-dd}{extension}";
+        return $"{clean} {DateTime.UtcNow:yyyy-MM-dd}{extension}";
     }
 }

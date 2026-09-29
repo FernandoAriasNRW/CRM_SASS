@@ -8,15 +8,15 @@ import { ToastService } from '../../shared/services/toast.service';
 import { mensajeDeError } from '../../shared/utils/mensaje-de-error';
 
 /** El catálogo tal como lo sirve el servidor. La pantalla no escribe ninguna de estas listas. */
-export interface Catalogo {
-  dataSources: Origen[];
-  operators: Operador[];
-  visualizations: Opcion[];
-  granularities: Opcion[];
+export interface ReportCatalog {
+  dataSources: CatalogDataSource[];
+  operators: CatalogOperator[];
+  visualizations: CatalogOption[];
+  granularities: CatalogOption[];
 }
 
-export interface Origen { key: string; name: string; fields: Campo[]; measures: Opcion[]; }
-export interface Campo {
+export interface CatalogDataSource { key: string; name: string; fields: CatalogField[]; measures: CatalogOption[]; }
+export interface CatalogField {
   key: string;
   name: string;
   type: string;
@@ -25,22 +25,22 @@ export interface Campo {
   /** Los valores admitidos si es una lista cerrada; vacío si admite texto libre. */
   values: string[];
 }
-export interface Operador { key: string; name: string; types: string[]; needsValue: boolean; }
-export interface Opcion { key: string; name: string; }
+export interface CatalogOperator { key: string; name: string; types: string[]; needsValue: boolean; }
+export interface CatalogOption { key: string; name: string; }
 
-export interface Filtro { campo: string; operador: string; valor: string | null; }
+export interface ReportFilter { campo: string; operador: string; valor: string | null; }
 
-export interface Definicion {
+export interface ReportDefinition {
   origen: string;
   agrupacion: string;
   medida: string;
   forma: string;
-  filtros?: Filtro[];
+  filtros?: ReportFilter[];
   granularidad?: string | null;
   maximoDeGrupos?: number | null;
 }
 
-interface VistaPrevia {
+interface ReportPreview {
   title: string;
   subtitle: string | null;
   columns: string[];
@@ -63,23 +63,23 @@ interface VistaPrevia {
  * Por eso también hay vista previa: se ve el resultado antes de guardar.
  */
 @Component({
-  selector: 'app-constructor-de-informes',
+  selector: 'app-report-builder',
   standalone: true,
   imports: [FormsModule, ButtonComponent],
   template: `
-    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" (click)="cerrar()">
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" (click)="close()">
       <div class="bg-card rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto"
            (click)="$event.stopPropagation()">
 
         <div class="px-5 py-4 border-b border-border flex items-center justify-between">
           <h2 class="text-lg font-semibold" i18n>Constructor de informes</h2>
-          <button type="button" class="text-muted-foreground hover:text-foreground" (click)="cerrar()"
+          <button type="button" class="text-muted-foreground hover:text-foreground" (click)="close()"
                   i18n-aria-label aria-label="Cerrar">✕</button>
         </div>
 
-        @if (cargando()) {
+        @if (loading()) {
           <p class="p-6 text-sm text-muted-foreground" i18n>Cargando el catálogo…</p>
-        } @else if (!catalogo()) {
+        } @else if (!catalog()) {
           <p class="p-6 text-sm text-destructive" i18n>No se pudo cargar el catálogo de informes.</p>
         } @else {
           <div class="p-5 space-y-5">
@@ -88,8 +88,8 @@ interface VistaPrevia {
               <div>
                 <label class="text-sm font-medium block mb-1" i18n>Datos de</label>
                 <select class="w-full border border-border rounded-md px-3 py-2 text-sm bg-background"
-                        [ngModel]="origen()" (ngModelChange)="cambiarOrigen($event)" name="origen">
-                  @for (o of catalogo()!.dataSources; track o.key) {
+                        [ngModel]="dataSource()" (ngModelChange)="changeDataSource($event)" name="dataSource">
+                  @for (o of catalog()!.dataSources; track o.key) {
                     <option [value]="o.key">{{ o.name }}</option>
                   }
                 </select>
@@ -98,8 +98,8 @@ interface VistaPrevia {
               <div>
                 <label class="text-sm font-medium block mb-1" i18n>Agrupado por</label>
                 <select class="w-full border border-border rounded-md px-3 py-2 text-sm bg-background"
-                        [(ngModel)]="agrupacion" name="agrupacion">
-                  @for (c of camposDelOrigen(); track c.key) {
+                        [(ngModel)]="groupBy" name="groupBy">
+                  @for (c of sourceFields(); track c.key) {
                     <option [value]="c.key">{{ c.name }}</option>
                   }
                 </select>
@@ -107,12 +107,12 @@ interface VistaPrevia {
 
               <!-- La granularidad sólo aparece si se agrupa por una fecha: en otro caso el
                    servidor la rechaza, y ofrecerla sería prometer algo que no se acepta. -->
-              @if (agrupaPorFecha()) {
+              @if (groupsByDate()) {
                 <div>
                   <label class="text-sm font-medium block mb-1" i18n>Agrupar la fecha</label>
                   <select class="w-full border border-border rounded-md px-3 py-2 text-sm bg-background"
-                          [(ngModel)]="granularidad" name="granularidad">
-                    @for (g of catalogo()!.granularities; track g.key) {
+                          [(ngModel)]="granularity" name="granularity">
+                    @for (g of catalog()!.granularities; track g.key) {
                       <option [value]="g.key">{{ g.name }}</option>
                     }
                   </select>
@@ -122,8 +122,8 @@ interface VistaPrevia {
               <div>
                 <label class="text-sm font-medium block mb-1" i18n>Midiendo</label>
                 <select class="w-full border border-border rounded-md px-3 py-2 text-sm bg-background"
-                        [(ngModel)]="medida" name="medida">
-                  @for (m of medidasDelOrigen(); track m.key) {
+                        [(ngModel)]="measure" name="measure">
+                  @for (m of sourceMeasures(); track m.key) {
                     <option [value]="m.key">{{ m.name }}</option>
                   }
                 </select>
@@ -132,8 +132,8 @@ interface VistaPrevia {
               <div>
                 <label class="text-sm font-medium block mb-1" i18n>Pintado como</label>
                 <select class="w-full border border-border rounded-md px-3 py-2 text-sm bg-background"
-                        [(ngModel)]="forma" name="forma">
-                  @for (f of catalogo()!.visualizations; track f.key) {
+                        [(ngModel)]="visualization" name="visualization">
+                  @for (f of catalog()!.visualizations; track f.key) {
                     <option [value]="f.key">{{ f.name }}</option>
                   }
                 </select>
@@ -143,21 +143,21 @@ interface VistaPrevia {
             <div>
               <div class="flex items-center justify-between mb-2">
                 <label class="text-sm font-medium" i18n>Filtros</label>
-                <button uiButton variant="outline" size="sm" type="button" (click)="anadirFiltro()" i18n>
+                <button uiButton variant="outline" size="sm" type="button" (click)="addFilter()" i18n>
                   Añadir filtro
                 </button>
               </div>
 
-              @if (filtros().length === 0) {
+              @if (filters().length === 0) {
                 <p class="text-xs text-muted-foreground" i18n>Sin filtros: entra todo.</p>
               }
 
-              @for (f of filtros(); track $index) {
+              @for (f of filters(); track $index) {
                 <div class="flex items-center gap-2 mb-2">
                   <select class="flex-1 border border-border rounded-md px-2 py-1.5 text-sm bg-background"
-                          [ngModel]="f.campo" (ngModelChange)="cambiarCampoDeFiltro($index, $event)"
-                          [name]="'filtro-campo-' + $index">
-                    @for (c of camposDelOrigen(); track c.key) {
+                          [ngModel]="f.campo" (ngModelChange)="changeFilterField($index, $event)"
+                          [name]="'filter-field-' + $index">
+                    @for (c of sourceFields(); track c.key) {
                       <option [value]="c.key">{{ c.name }}</option>
                     }
                   </select>
@@ -165,13 +165,13 @@ interface VistaPrevia {
                   <!-- Sólo los operadores que valen para el tipo del campo elegido. «Mayor que»
                        sobre un estado no significa nada, y el servidor lo rechaza. -->
                   <select class="flex-1 border border-border rounded-md px-2 py-1.5 text-sm bg-background"
-                          [(ngModel)]="f.operador" [name]="'filtro-op-' + $index">
-                    @for (o of operadoresPara(f.campo); track o.key) {
+                          [(ngModel)]="f.operador" [name]="'filter-op-' + $index">
+                    @for (o of operatorsFor(f.campo); track o.key) {
                       <option [value]="o.key">{{ o.name }}</option>
                     }
                   </select>
 
-                  @if (necesitaValor(f.operador)) {
+                  @if (needsValue(f.operador)) {
                     <!--
                       Si el campo es una lista cerrada, se elige; si no, se escribe.
 
@@ -179,24 +179,24 @@ interface VistaPrevia {
                       existe, y el resultado es un informe vacío que parece un informe sin datos.
                       Los valores los sirve el servidor, así que un estado nuevo aparece solo.
                     -->
-                    @if (valoresDe(f.campo); as valores) {
-                      @if (valores.length > 0) {
+                    @if (valuesOf(f.campo); as values) {
+                      @if (values.length > 0) {
                         <select class="flex-1 border border-border rounded-md px-2 py-1.5 text-sm bg-background"
-                                [(ngModel)]="f.valor" [name]="'filtro-valor-' + $index">
-                          @for (v of valores; track v) {
+                                [(ngModel)]="f.valor" [name]="'filter-value-' + $index">
+                          @for (v of values; track v) {
                             <option [value]="v">{{ v }}</option>
                           }
                         </select>
                       } @else {
                         <input class="flex-1 border border-border rounded-md px-2 py-1.5 text-sm bg-background"
-                               [(ngModel)]="f.valor" [name]="'filtro-valor-' + $index"
+                               [(ngModel)]="f.valor" [name]="'filter-value-' + $index"
                                i18n-placeholder placeholder="Valor" />
                       }
                     }
                   }
 
                   <button type="button" class="text-muted-foreground hover:text-destructive px-2"
-                          (click)="quitarFiltro($index)" i18n-aria-label aria-label="Quitar filtro">✕</button>
+                          (click)="removeFilter($index)" i18n-aria-label aria-label="Quitar filtro">✕</button>
                 </div>
               }
             </div>
@@ -208,7 +208,7 @@ interface VistaPrevia {
               </p>
             }
 
-            @if (previa(); as p) {
+            @if (preview(); as p) {
               <div class="border border-border rounded-md">
                 <div class="px-3 py-2 border-b border-border">
                   <p class="text-sm font-medium">{{ p.title }}</p>
@@ -229,10 +229,10 @@ interface VistaPrevia {
                       </tr>
                     </thead>
                     <tbody>
-                      @for (fila of p.rows; track $index) {
+                      @for (row of p.rows; track $index) {
                         <tr class="border-b border-border/50">
-                          @for (celda of fila; track $index) {
-                            <td class="px-3 py-1.5">{{ celda }}</td>
+                          @for (cell of row; track $index) {
+                            <td class="px-3 py-1.5">{{ cell }}</td>
                           }
                         </tr>
                       }
@@ -250,11 +250,11 @@ interface VistaPrevia {
           </div>
 
           <div class="px-5 py-4 border-t border-border flex items-center justify-end gap-2">
-            <button uiButton variant="outline" type="button" (click)="cerrar()" i18n>Cancelar</button>
-            <button uiButton variant="outline" type="button" [disabled]="trabajando()" (click)="verPrevia()" i18n>
+            <button uiButton variant="outline" type="button" (click)="close()" i18n>Cancelar</button>
+            <button uiButton variant="outline" type="button" [disabled]="busy()" (click)="showPreview()" i18n>
               Ver resultado
             </button>
-            <button uiButton type="button" [disabled]="trabajando()" (click)="guardar()" i18n>
+            <button uiButton type="button" [disabled]="busy()" (click)="save()" i18n>
               Guardar
             </button>
           </div>
@@ -263,73 +263,73 @@ interface VistaPrevia {
     </div>
   `
 })
-export class ConstructorDeInformesComponent {
+export class ReportBuilderComponent {
   private readonly api = inject(ApiService);
   private readonly toast = inject(ToastService);
 
   /** El informe cuya definición se está construyendo. */
   readonly reportId = input.required<string>();
-  readonly titulo = input<string>('Informe');
+  readonly reportTitle = input<string>('Informe');
 
-  readonly cerrado = output<void>();
-  readonly guardado = output<void>();
+  readonly closed = output<void>();
+  readonly saved = output<void>();
 
-  readonly catalogo = signal<Catalogo | null>(null);
-  readonly cargando = signal(true);
-  readonly trabajando = signal(false);
+  readonly catalog = signal<ReportCatalog | null>(null);
+  readonly loading = signal(true);
+  readonly busy = signal(false);
   readonly error = signal('');
-  readonly previa = signal<VistaPrevia | null>(null);
+  readonly preview = signal<ReportPreview | null>(null);
 
-  readonly origen = signal('');
-  agrupacion = '';
-  medida = '';
-  forma = 'barras';
-  granularidad: string | null = 'mes';
+  readonly dataSource = signal('');
+  groupBy = '';
+  measure = '';
+  visualization = 'barras';
+  granularity: string | null = 'mes';
 
-  readonly filtros = signal<Filtro[]>([]);
+  readonly filters = signal<ReportFilter[]>([]);
 
   constructor() {
-    void this.cargar();
+    void this.load();
   }
 
-  private async cargar(): Promise<void> {
+  private async load(): Promise<void> {
     try {
-      const catalogo = await firstValueFrom(this.api.get<Catalogo>('/reports/catalog'));
-      this.catalogo.set(catalogo);
+      const catalog = await firstValueFrom(this.api.get<ReportCatalog>('/reports/catalog'));
+      this.catalog.set(catalog);
 
       // Si el informe ya tenía definición se reabre con ella; si no, se empieza por el primer
       // origen. `sinAviso` porque un informe sin definición todavía es lo normal, no un error
       // que haya que anunciar.
-      const guardada = await firstValueFrom(
-        this.api.get<Definicion>(`/reports/${this.reportId()}/definition`, undefined, { sinAviso: true })
+      const stored = await firstValueFrom(
+        this.api.get<ReportDefinition>(`/reports/${this.reportId()}/definition`, undefined, { sinAviso: true })
       ).catch(() => null);
 
-      if (guardada) this.aplicar(guardada);
-      else this.cambiarOrigen(catalogo.dataSources[0]?.key ?? '');
+      if (stored) this.apply(stored);
+      else this.changeDataSource(catalog.dataSources[0]?.key ?? '');
     } catch (e) {
       this.error.set(mensajeDeError(e, $localize`No se pudo cargar el catálogo.`));
     } finally {
-      this.cargando.set(false);
+      this.loading.set(false);
     }
   }
 
-  private aplicar(d: Definicion): void {
-    this.origen.set(d.origen);
-    this.agrupacion = d.agrupacion;
-    this.medida = d.medida;
-    this.forma = d.forma;
-    this.granularidad = d.granularidad ?? 'mes';
-    this.filtros.set([...(d.filtros ?? [])]);
+  private apply(d: ReportDefinition): void {
+    this.dataSource.set(d.origen);
+    this.groupBy = d.agrupacion;
+    this.measure = d.medida;
+    this.visualization = d.forma;
+    this.granularity = d.granularidad ?? 'mes';
+    this.filters.set([...(d.filtros ?? [])]);
   }
 
-  readonly origenActual = computed(() =>
-    this.catalogo()?.dataSources.find(o => o.key === this.origen()) ?? null);
+  readonly currentSource = computed(() =>
+    this.catalog()?.dataSources.find(o => o.key === this.dataSource()) ?? null);
 
-  readonly camposDelOrigen = computed(() => this.origenActual()?.fields ?? []);
-  readonly medidasDelOrigen = computed(() => this.origenActual()?.measures ?? []);
+  readonly sourceFields = computed(() => this.currentSource()?.fields ?? []);
+  readonly sourceMeasures = computed(() => this.currentSource()?.measures ?? []);
 
-  readonly agrupaPorFecha = computed(() =>
-    this.camposDelOrigen().find(c => c.key === this.agrupacion)?.type === 'Date');
+  readonly groupsByDate = computed(() =>
+    this.sourceFields().find(c => c.key === this.groupBy)?.type === 'Date');
 
   /**
    * Cambiar de origen limpia lo que dependía del anterior.
@@ -337,14 +337,14 @@ export class ConstructorDeInformesComponent {
    * Sin esto quedaría una agrupación de tickets sobre un informe de tareas: el servidor lo
    * rechaza, pero la pantalla habría dejado ver una combinación imposible como si valiera.
    */
-  cambiarOrigen(clave: string): void {
-    this.origen.set(clave);
+  changeDataSource(key: string): void {
+    this.dataSource.set(key);
 
-    const origen = this.origenActual();
-    this.agrupacion = origen?.fields[0]?.key ?? '';
-    this.medida = origen?.measures[0]?.key ?? 'conteo';
-    this.filtros.set([]);
-    this.previa.set(null);
+    const source = this.currentSource();
+    this.groupBy = source?.fields[0]?.key ?? '';
+    this.measure = source?.measures[0]?.key ?? 'conteo';
+    this.filters.set([]);
+    this.preview.set(null);
     this.error.set('');
   }
 
@@ -356,112 +356,112 @@ export class ConstructorDeInformesComponent {
    * el vencimiento de una tarea, que siempre tiene. Filtrando por tipo, la pantalla ofrecía una
    * combinación que el servidor rechaza.
    */
-  operadoresPara(claveDeCampo: string): Operador[] {
-    const campo = this.camposDelOrigen().find(c => c.key === claveDeCampo);
-    if (!campo) return [];
+  operatorsFor(fieldKey: string): CatalogOperator[] {
+    const field = this.sourceFields().find(c => c.key === fieldKey);
+    if (!field) return [];
 
-    return this.catalogo()?.operators.filter(o => campo.operators.includes(o.key)) ?? [];
+    return this.catalog()?.operators.filter(o => field.operators.includes(o.key)) ?? [];
   }
 
   /** Los valores admitidos de un campo, o lista vacía si admite texto libre. */
-  valoresDe(claveDeCampo: string): string[] {
-    return this.camposDelOrigen().find(c => c.key === claveDeCampo)?.values ?? [];
+  valuesOf(fieldKey: string): string[] {
+    return this.sourceFields().find(c => c.key === fieldKey)?.values ?? [];
   }
 
-  necesitaValor(claveDeOperador: string): boolean {
-    return this.catalogo()?.operators.find(o => o.key === claveDeOperador)?.needsValue ?? true;
+  needsValue(operatorKey: string): boolean {
+    return this.catalog()?.operators.find(o => o.key === operatorKey)?.needsValue ?? true;
   }
 
-  anadirFiltro(): void {
-    const campo = this.camposDelOrigen()[0];
-    if (!campo) return;
+  addFilter(): void {
+    const field = this.sourceFields()[0];
+    if (!field) return;
 
-    const operador = this.operadoresPara(campo.key)[0];
+    const operator = this.operatorsFor(field.key)[0];
 
-    this.filtros.update(f => [...f, {
-      campo: campo.key,
-      operador: operador?.key ?? 'es',
+    this.filters.update(f => [...f, {
+      campo: field.key,
+      operador: operator?.key ?? 'es',
       // Si el campo tiene lista, se empieza por su primer valor: un desplegable que arranca
       // vacío deja mandar un filtro sin valor sin que se note.
-      valor: campo.values[0] ?? ''
+      valor: field.values[0] ?? ''
     }]);
   }
 
   /** Al cambiar el campo, el operador puede dejar de valer para su tipo: se reajusta. */
-  cambiarCampoDeFiltro(indice: number, clave: string): void {
-    this.filtros.update(filtros => filtros.map((f, i) => {
-      if (i !== indice) return f;
+  changeFilterField(index: number, key: string): void {
+    this.filters.update(filters => filters.map((f, i) => {
+      if (i !== index) return f;
 
-      const operadores = this.operadoresPara(clave);
-      const sigueValiendo = operadores.some(o => o.key === f.operador);
+      const operators = this.operatorsFor(key);
+      const stillValid = operators.some(o => o.key === f.operador);
 
       // El valor del campo anterior casi nunca vale para el nuevo, y si el nuevo es una lista
       // cerrada hay que empezar por uno de los suyos.
-      const valores = this.valoresDe(clave);
+      const values = this.valuesOf(key);
 
       return {
-        campo: clave,
-        operador: sigueValiendo ? f.operador : operadores[0]?.key ?? 'es',
-        valor: valores.length > 0 ? valores[0] : ''
+        campo: key,
+        operador: stillValid ? f.operador : operators[0]?.key ?? 'es',
+        valor: values.length > 0 ? values[0] : ''
       };
     }));
   }
 
-  quitarFiltro(indice: number): void {
-    this.filtros.update(f => f.filter((_, i) => i !== indice));
+  removeFilter(index: number): void {
+    this.filters.update(f => f.filter((_, i) => i !== index));
   }
 
-  private definicion(): Definicion {
+  private definition(): ReportDefinition {
     return {
-      origen: this.origen(),
-      agrupacion: this.agrupacion,
-      medida: this.medida,
-      forma: this.forma,
-      filtros: this.filtros(),
-      granularidad: this.agrupaPorFecha() ? this.granularidad : null
+      origen: this.dataSource(),
+      agrupacion: this.groupBy,
+      medida: this.measure,
+      forma: this.visualization,
+      filtros: this.filters(),
+      granularidad: this.groupsByDate() ? this.granularity : null
     };
   }
 
-  async verPrevia(): Promise<void> {
-    this.trabajando.set(true);
+  async showPreview(): Promise<void> {
+    this.busy.set(true);
     this.error.set('');
 
     try {
-      const previa = await firstValueFrom(this.api.post<VistaPrevia>(
+      const preview = await firstValueFrom(this.api.post<ReportPreview>(
         '/reports/preview',
-        { definition: this.definicion(), title: this.titulo() },
+        { definition: this.definition(), title: this.reportTitle() },
         { sinAviso: true }));
 
-      this.previa.set(previa);
+      this.preview.set(preview);
     } catch (e) {
       // El servidor dice qué pieza no encaja. Se enseña dentro del constructor, junto a los
       // desplegables, en vez de como aviso flotante: aquí es donde hay que corregirlo.
-      this.previa.set(null);
+      this.preview.set(null);
       this.error.set(mensajeDeError(e, $localize`No se pudo calcular el resultado.`));
     } finally {
-      this.trabajando.set(false);
+      this.busy.set(false);
     }
   }
 
-  async guardar(): Promise<void> {
-    this.trabajando.set(true);
+  async save(): Promise<void> {
+    this.busy.set(true);
     this.error.set('');
 
     try {
       await firstValueFrom(this.api.put(
-        `/reports/${this.reportId()}/definition`, this.definicion(), { sinAviso: true }));
+        `/reports/${this.reportId()}/definition`, this.definition(), { sinAviso: true }));
 
       this.toast.success($localize`Informe guardado.`);
-      this.guardado.emit();
-      this.cerrado.emit();
+      this.saved.emit();
+      this.closed.emit();
     } catch (e) {
       this.error.set(mensajeDeError(e, $localize`No se pudo guardar el informe.`));
     } finally {
-      this.trabajando.set(false);
+      this.busy.set(false);
     }
   }
 
-  cerrar(): void {
-    this.cerrado.emit();
+  close(): void {
+    this.closed.emit();
   }
 }
