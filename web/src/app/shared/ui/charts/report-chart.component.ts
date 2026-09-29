@@ -14,7 +14,7 @@ export interface WidgetData {
   widgetId: string;
   reportId: string;
   title: string;
-  forma: string;
+  visualization: string;
   subtitle: string | null;
   columns: string[];
   rows: string[][];
@@ -83,7 +83,7 @@ export class ReportChartComponent {
   /** Si el tema del navegador es oscuro, para que los ejes no salgan negros sobre negro. */
   readonly dark = input(false);
 
-  readonly isTable = computed(() => this.data().forma === 'tabla');
+  readonly isTable = computed(() => this.data().visualization === 'table');
 
   /**
    * Los valores numéricos, sacados de la última columna.
@@ -114,12 +114,12 @@ export class ReportChartComponent {
     const mutedText = this.dark() ? '#9CA3AF' : '#6B7280';
 
     const common: EChartsOption = {
-      tooltip: { trigger: d.forma === 'tarta' ? 'item' : 'axis' },
+      tooltip: { trigger: d.visualization === 'pie' ? 'item' : 'axis' },
       grid: { left: 8, right: 16, top: 24, bottom: 8, containLabel: true },
       textStyle: { color: mutedText }
     };
 
-    if (d.forma === 'tarta') {
+    if (d.visualization === 'pie') {
       return {
         ...common,
         legend: { bottom: 0, textStyle: { color: mutedText } },
@@ -149,7 +149,7 @@ export class ReportChartComponent {
       yAxis: { type: 'value', axisLabel: { color: mutedText } }
     };
 
-    if (d.forma === 'lineas') {
+    if (d.visualization === 'line') {
       return {
         ...axis,
         series: [{

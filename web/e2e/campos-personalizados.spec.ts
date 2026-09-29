@@ -29,12 +29,12 @@ const SESION = {
 
 const DEFINICIONES = [
   {
-    id: 'dddddddd-0000-0000-0000-000000000002', nombre: 'Canal de entrada', tipo: 'Seleccion',
-    entidadDestino: 'Task', obligatorio: true, opciones: ['Web', 'Teléfono'], posicion: 5,
+    id: 'dddddddd-0000-0000-0000-000000000002', name: 'Canal de entrada', type: 'Select',
+    targetEntity: 'Task', isRequired: true, options: ['Web', 'Teléfono'], position: 5,
   },
   {
-    id: 'dddddddd-0000-0000-0000-000000000001', nombre: 'Cliente facturable', tipo: 'Texto',
-    entidadDestino: 'Task', obligatorio: false, opciones: [], posicion: 0,
+    id: 'dddddddd-0000-0000-0000-000000000001', name: 'Cliente facturable', type: 'Text',
+    targetEntity: 'Task', isRequired: false, options: [], position: 0,
   },
 ];
 
@@ -47,12 +47,12 @@ const TAREA = {
 
 const VALORES = [
   {
-    definitionId: DEFINICIONES[1].id, nombre: 'Cliente facturable', tipo: 'Texto',
-    obligatorio: false, opciones: [], posicion: 0, valor: 'Acme',
+    definitionId: DEFINICIONES[1].id, name: 'Cliente facturable', type: 'Text',
+    isRequired: false, options: [], position: 0, value: 'Acme',
   },
   {
-    definitionId: DEFINICIONES[0].id, nombre: 'Canal de entrada', tipo: 'Seleccion',
-    obligatorio: true, opciones: ['Web', 'Teléfono'], posicion: 5, valor: null,
+    definitionId: DEFINICIONES[0].id, name: 'Canal de entrada', type: 'Select',
+    isRequired: true, options: ['Web', 'Teléfono'], position: 5, value: null,
   },
 ];
 
@@ -189,7 +189,7 @@ test.describe('la pestaña que define los campos', () => {
 
     await expect(page.getByLabel(/opciones, una por línea/i)).toBeHidden();
 
-    await page.getByLabel('Tipo').selectOption('Seleccion');
+    await page.getByLabel('Tipo').selectOption('Select');
 
     await expect(page.getByLabel(/opciones, una por línea/i)).toBeVisible();
   });

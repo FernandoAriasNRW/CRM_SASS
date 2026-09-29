@@ -5,23 +5,23 @@ using BuildingBlocks.Domain;
 namespace Reporting.Domain.Definitions;
 
 /// <summary>Una condición sobre un campo.</summary>
-public sealed record ReportFilter(string Campo, string Operador, string? Valor)
+public sealed record ReportFilter(string Field, string Operator, string? Value)
 {
     public Result Validate(DataSource dataSource)
     {
-        var field = dataSource.Field(Campo);
+        var field = dataSource.Field(Field);
         if (field is null)
         {
             return Result.Failure(
-                $"«{Campo}» no es un campo de {dataSource.Name}. Los que hay: "
+                $"«{Field}» no es un campo de {dataSource.Name}. Los que hay: "
                 + string.Join(", ", dataSource.Fields.Select(c => c.Key)));
         }
 
-        var op = ReportCatalog.Operator(Operador);
+        var op = ReportCatalog.Operator(Operator);
         if (op is null)
         {
             return Result.Failure(
-                $"«{Operador}» no es un operador. Los que hay: "
+                $"«{Operator}» no es un operador. Los que hay: "
                 + string.Join(", ", ReportCatalog.Operators().Select(o => o.Key)));
         }
 
@@ -36,7 +36,7 @@ public sealed record ReportFilter(string Campo, string Operador, string? Valor)
                 + (op.ChecksEmptiness ? ", que siempre tiene valor" : $", que es de tipo {field.Type}"));
         }
 
-        if (op.NeedsValue && string.IsNullOrWhiteSpace(Valor))
+        if (op.NeedsValue && string.IsNullOrWhiteSpace(Value))
             return Result.Failure($"«{op.Name}» sobre {field.Name} necesita un valor");
 
         return Result.Success();

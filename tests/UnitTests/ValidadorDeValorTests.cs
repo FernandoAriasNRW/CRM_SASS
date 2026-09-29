@@ -1,5 +1,5 @@
 using CustomFields.Domain.Entities;
-using CustomFields.Domain.Servicios;
+using CustomFields.Domain.Services;
 using CustomFields.Domain.ValueObjects;
 using FluentAssertions;
 using Xunit;
@@ -18,7 +18,7 @@ public sealed class ValidadorDeValorTests
 {
     private static CustomFieldDefinition Campo(string tipo, bool obligatorio = false, params string[] opciones)
         => CustomFieldDefinition.Create(
-            Guid.NewGuid(), "Un campo", tipo, TipoDeEntidad.Tarea, obligatorio,
+            Guid.NewGuid(), "Un campo", tipo, TargetEntityTypes.Task, obligatorio,
             opciones.Length > 0 ? opciones : null, 0);
 
     [Fact]
@@ -26,18 +26,18 @@ public sealed class ValidadorDeValorTests
     {
         // Cadena vacía y nulo son lo mismo para quien rellena el formulario. Guardar las dos
         // formas daría recuentos distintos según cuál se consulte.
-        var resultado = ValidadorDeValor.Validar(Campo(TipoDeCampo.Texto), "   ");
+        var resultado = ValueValidator.Validate(Campo(FieldType.Text), "   ");
 
-        resultado.EsValido.Should().BeTrue();
-        resultado.ValorCanonico.Should().BeNull();
+        resultado.IsValid.Should().BeTrue();
+        resultado.CanonicalValue.Should().BeNull();
     }
 
     [Fact]
     public void Un_campo_obligatorio_rechaza_el_vacio_y_dice_cual_es()
     {
-        var resultado = ValidadorDeValor.Validar(Campo(TipoDeCampo.Texto, obligatorio: true), "");
+        var resultado = ValueValidator.Validate(Campo(FieldType.Text, obligatorio: true), "");
 
-        resultado.EsValido.Should().BeFalse();
+        resultado.IsValid.Should().BeFalse();
         resultado.Error.Should().Contain("Un campo", "el mensaje tiene que nombrar el campo que falta");
     }
 
@@ -51,10 +51,10 @@ public sealed class ValidadorDeValorTests
     {
         // Si cada quien guardara en su formato, ordenar o sumar daría resultados distintos según
         // quién escribió cada fila.
-        var resultado = ValidadorDeValor.Validar(Campo(TipoDeCampo.Numero), entrada);
+        var resultado = ValueValidator.Validate(Campo(FieldType.Number), entrada);
 
-        resultado.EsValido.Should().BeTrue();
-        resultado.ValorCanonico.Should().Be(esperado);
+        resultado.IsValid.Should().BeTrue();
+        resultado.CanonicalValue.Should().Be(esperado);
     }
 
     [Theory]
@@ -63,16 +63,16 @@ public sealed class ValidadorDeValorTests
     [InlineData("--3")]
     public void Lo_que_no_es_numero_se_rechaza(string entrada)
     {
-        ValidadorDeValor.Validar(Campo(TipoDeCampo.Numero), entrada).EsValido.Should().BeFalse();
+        ValueValidator.Validate(Campo(FieldType.Number), entrada).IsValid.Should().BeFalse();
     }
 
     [Fact]
     public void La_fecha_se_guarda_en_ISO()
     {
-        var resultado = ValidadorDeValor.Validar(Campo(TipoDeCampo.Fecha), "2026-03-04");
+        var resultado = ValueValidator.Validate(Campo(FieldType.Date), "2026-03-04");
 
-        resultado.EsValido.Should().BeTrue();
-        resultado.ValorCanonico.Should().Be("2026-03-04");
+        resultado.IsValid.Should().BeTrue();
+        resultado.CanonicalValue.Should().Be("2026-03-04");
     }
 
     [Theory]
@@ -81,18 +81,18 @@ public sealed class ValidadorDeValorTests
     [InlineData("ayer")]
     public void Una_fecha_imposible_se_rechaza(string entrada)
     {
-        ValidadorDeValor.Validar(Campo(TipoDeCampo.Fecha), entrada).EsValido.Should().BeFalse();
+        ValueValidator.Validate(Campo(FieldType.Date), entrada).IsValid.Should().BeFalse();
     }
 
     [Fact]
     public void La_seleccion_sólo_admite_una_de_sus_opciones()
     {
-        var campo = Campo(TipoDeCampo.Seleccion, false, "Alta", "Media", "Baja");
+        var campo = Campo(FieldType.Select, false, "Alta", "Media", "Baja");
 
-        ValidadorDeValor.Validar(campo, "Media").EsValido.Should().BeTrue();
+        ValueValidator.Validate(campo, "Media").IsValid.Should().BeTrue();
 
-        var invalida = ValidadorDeValor.Validar(campo, "Altísima");
-        invalida.EsValido.Should().BeFalse();
+        var invalida = ValueValidator.Validate(campo, "Altísima");
+        invalida.IsValid.Should().BeFalse();
         invalida.Error.Should().Contain("Altísima", "el mensaje tiene que decir qué valor sobra");
     }
 
@@ -101,39 +101,39 @@ public sealed class ValidadorDeValorTests
     {
         // Así dos entidades con la misma selección tienen el mismo valor guardado y se pueden
         // comparar y agrupar; si se guardara en el orden en que se marcó, no.
-        var campo = Campo(TipoDeCampo.SeleccionMultiple, false, "Rojo", "Verde", "Azul");
+        var campo = Campo(FieldType.MultiSelect, false, "Rojo", "Verde", "Azul");
 
-        var resultado = ValidadorDeValor.Validar(campo, "Azul\nRojo");
+        var resultado = ValueValidator.Validate(campo, "Azul\nRojo");
 
-        resultado.EsValido.Should().BeTrue();
-        resultado.ValorCanonico.Should().Be("Rojo\nAzul");
+        resultado.IsValid.Should().BeTrue();
+        resultado.CanonicalValue.Should().Be("Rojo\nAzul");
     }
 
     [Fact]
     public void La_seleccion_multiple_no_duplica()
     {
-        var campo = Campo(TipoDeCampo.SeleccionMultiple, false, "Rojo", "Verde");
+        var campo = Campo(FieldType.MultiSelect, false, "Rojo", "Verde");
 
-        ValidadorDeValor.Validar(campo, "Rojo\nRojo").ValorCanonico.Should().Be("Rojo");
+        ValueValidator.Validate(campo, "Rojo\nRojo").CanonicalValue.Should().Be("Rojo");
     }
 
     [Fact]
     public void La_seleccion_multiple_rechaza_una_opcion_que_no_existe()
     {
-        var campo = Campo(TipoDeCampo.SeleccionMultiple, false, "Rojo", "Verde");
+        var campo = Campo(FieldType.MultiSelect, false, "Rojo", "Verde");
 
-        ValidadorDeValor.Validar(campo, "Rojo\nMorado").EsValido.Should().BeFalse();
+        ValueValidator.Validate(campo, "Rojo\nMorado").IsValid.Should().BeFalse();
     }
 
     [Fact]
     public void El_campo_de_usuario_exige_un_identificador_de_verdad()
     {
-        var campo = Campo(TipoDeCampo.Usuario);
+        var campo = Campo(FieldType.User);
         var alguien = Guid.NewGuid();
 
-        ValidadorDeValor.Validar(campo, alguien.ToString()).ValorCanonico.Should().Be(alguien.ToString());
-        ValidadorDeValor.Validar(campo, "Fernando").EsValido.Should().BeFalse();
-        ValidadorDeValor.Validar(campo, Guid.Empty.ToString()).EsValido.Should().BeFalse(
+        ValueValidator.Validate(campo, alguien.ToString()).CanonicalValue.Should().Be(alguien.ToString());
+        ValueValidator.Validate(campo, "Fernando").IsValid.Should().BeFalse();
+        ValueValidator.Validate(campo, Guid.Empty.ToString()).IsValid.Should().BeFalse(
             "el Guid vacío no es una persona");
     }
 
@@ -141,7 +141,7 @@ public sealed class ValidadorDeValorTests
     public void Un_campo_de_seleccion_no_se_puede_definir_sin_opciones()
     {
         var crear = () => CustomFieldDefinition.Create(
-            Guid.NewGuid(), "Estado", TipoDeCampo.Seleccion, TipoDeEntidad.Tarea, false, null, 0);
+            Guid.NewGuid(), "Estado", FieldType.Select, TargetEntityTypes.Task, false, null, 0);
 
         crear.Should().Throw<InvalidOperationException>().WithMessage("*al menos una opción*");
     }
@@ -150,28 +150,28 @@ public sealed class ValidadorDeValorTests
     public void Las_opciones_repetidas_o_vacias_se_limpian_al_definir()
     {
         var campo = CustomFieldDefinition.Create(
-            Guid.NewGuid(), "Estado", TipoDeCampo.Seleccion, TipoDeEntidad.Tarea, false,
+            Guid.NewGuid(), "Estado", FieldType.Select, TargetEntityTypes.Task, false,
             ["Alta", "  ", "Alta", " Baja "], 0);
 
-        campo.Opciones.Should().Equal("Alta", "Baja");
+        campo.Options.Should().Equal("Alta", "Baja");
     }
 
     [Fact]
     public void Un_campo_que_no_es_de_seleccion_no_guarda_opciones()
     {
         var campo = CustomFieldDefinition.Create(
-            Guid.NewGuid(), "Notas", TipoDeCampo.Texto, TipoDeEntidad.Tarea, false, ["sobra"], 0);
+            Guid.NewGuid(), "Notas", FieldType.Text, TargetEntityTypes.Task, false, ["sobra"], 0);
 
-        campo.Opciones.Should().BeEmpty();
+        campo.Options.Should().BeEmpty();
     }
 
     [Fact]
     public void El_tipo_y_la_entidad_se_validan_al_definir()
     {
         var tipoRaro = () => CustomFieldDefinition.Create(
-            Guid.NewGuid(), "X", "Semaforo", TipoDeEntidad.Tarea, false, null, 0);
+            Guid.NewGuid(), "X", "Semaforo", TargetEntityTypes.Task, false, null, 0);
         var entidadRara = () => CustomFieldDefinition.Create(
-            Guid.NewGuid(), "X", TipoDeCampo.Texto, "Factura", false, null, 0);
+            Guid.NewGuid(), "X", FieldType.Text, "Factura", false, null, 0);
 
         tipoRaro.Should().Throw<InvalidOperationException>().WithMessage("*tipo de campo no existe*");
         entidadRara.Should().Throw<InvalidOperationException>().WithMessage("*Tarea o Proyecto*");
@@ -187,13 +187,13 @@ public sealed class ValidadorDeValorTests
     [Fact]
     public void Un_campo_calculado_no_se_puede_definir_sin_formula()
     {
-        TipoDeCampo.Todos().Should().Contain(TipoDeCampo.Formula);
+        FieldType.All().Should().Contain(FieldType.Formula);
 
         var sinFormula = () => CustomFieldDefinition.Create(
-            Guid.NewGuid(), "Total", TipoDeCampo.Formula, TipoDeEntidad.Tarea, false, null, 0);
+            Guid.NewGuid(), "Total", FieldType.Formula, TargetEntityTypes.Task, false, null, 0);
 
         sinFormula.Should().Throw<InvalidOperationException>()
-            .WithMessage(CustomFieldDefinition.Reglas.SinFormula);
+            .WithMessage(CustomFieldDefinition.Rules.MissingFormula);
     }
 
     /// <summary>
@@ -204,7 +204,7 @@ public sealed class ValidadorDeValorTests
     public void Una_formula_ilegible_se_rechaza_al_definir_el_campo()
     {
         var rota = () => CustomFieldDefinition.Create(
-            Guid.NewGuid(), "Total", TipoDeCampo.Formula, TipoDeEntidad.Tarea, false, null, 0, "2 * (3 +");
+            Guid.NewGuid(), "Total", FieldType.Formula, TargetEntityTypes.Task, false, null, 0, "2 * (3 +");
 
         rota.Should().Throw<InvalidOperationException>();
     }
@@ -217,9 +217,9 @@ public sealed class ValidadorDeValorTests
     public void Un_campo_calculado_no_puede_ser_obligatorio()
     {
         var campo = CustomFieldDefinition.Create(
-            Guid.NewGuid(), "Total", TipoDeCampo.Formula, TipoDeEntidad.Tarea,
-            obligatorio: true, null, 0, "1 + 1");
+            Guid.NewGuid(), "Total", FieldType.Formula, TargetEntityTypes.Task,
+            isRequired: true, null, 0, "1 + 1");
 
-        campo.Obligatorio.Should().BeFalse();
+        campo.IsRequired.Should().BeFalse();
     }
 }

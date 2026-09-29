@@ -228,7 +228,7 @@ export class DashboardComponent implements OnInit {
         this.api.get<{ id: string; title: string }>('/dashboards/mine'));
 
       this.panel.set(mine);
-      this.layout.set((mine as unknown as { widgets: { id: string; x: number; y: number; ancho: number; alto: number }[] }).widgets ?? []);
+      this.layout.set((mine as unknown as { widgets: { id: string; x: number; y: number; width: number; height: number }[] }).widgets ?? []);
 
       const data = await firstValueFrom(
         this.api.get<WidgetData[]>(`/dashboards/${mine.id}/data`));
@@ -261,12 +261,12 @@ export class DashboardComponent implements OnInit {
    */
   gridColumnOf(w: WidgetData): string {
     const widget = this.placementOf(w.widgetId);
-    return widget ? `${widget.x + 1} / span ${widget.ancho}` : 'auto / span 6';
+    return widget ? `${widget.x + 1} / span ${widget.width}` : 'auto / span 6';
   }
 
   gridRowOf(w: WidgetData): string {
     const widget = this.placementOf(w.widgetId);
-    return widget ? `span ${widget.alto}` : 'span 4';
+    return widget ? `span ${widget.height}` : 'span 4';
   }
 
   /** La colocación viene con el panel, no con los datos: son dos cosas distintas. */
@@ -275,7 +275,7 @@ export class DashboardComponent implements OnInit {
   }
 
   private readonly layout = signal<
-    { id: string; x: number; y: number; ancho: number; alto: number }[]>([]);
+    { id: string; x: number; y: number; width: number; height: number }[]>([]);
 
   loadAllData(): void {
     this.isLoading.set(true);

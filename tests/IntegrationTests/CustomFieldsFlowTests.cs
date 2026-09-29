@@ -42,12 +42,12 @@ public sealed class CustomFieldsFlowTests(CrmApiFactory factory)
     {
         var respuesta = await cliente.PostAsJsonAsync("/api/v1/custom-fields", new
         {
-            nombre,
-            tipo,
-            entidadDestino = "Task",
-            obligatorio,
-            opciones,
-            posicion = 0
+            name = nombre,
+            type = tipo,
+            targetEntity = "Task",
+            isRequired = obligatorio,
+            options = opciones,
+            position = 0
         });
 
         respuesta.StatusCode.Should().Be(HttpStatusCode.Created);
@@ -55,7 +55,7 @@ public sealed class CustomFieldsFlowTests(CrmApiFactory factory)
     }
 
     private static Task<HttpResponseMessage> PonerValorAsync(HttpClient cliente, Guid campo, Guid entidad, string? valor)
-        => cliente.PutAsJsonAsync($"/api/v1/custom-fields/values/{campo}/{entidad}", new { valor });
+        => cliente.PutAsJsonAsync($"/api/v1/custom-fields/values/{campo}/{entidad}", new { value = valor });
 
     private static async Task<JsonElement> ValoresDeAsync(HttpClient cliente, Guid entidad)
         => await cliente.GetFromJsonAsync<JsonElement>($"/api/v1/custom-fields/values/Task/{entidad}");
@@ -66,9 +66,9 @@ public sealed class CustomFieldsFlowTests(CrmApiFactory factory)
         var cliente = await AutenticarAsync();
         var nombre = $"Cliente {Guid.NewGuid():N}";
 
-        var id = await DefinirAsync(cliente, nombre, "Texto");
+        var id = await DefinirAsync(cliente, nombre, "Text");
 
-        var lista = await cliente.GetFromJsonAsync<JsonElement>("/api/v1/custom-fields?entidad=Task");
+        var lista = await cliente.GetFromJsonAsync<JsonElement>("/api/v1/custom-fields?entity=Task");
         lista.EnumerateArray().Select(c => c.GetProperty("id").GetGuid()).Should().Contain(id);
     }
 
@@ -77,11 +77,11 @@ public sealed class CustomFieldsFlowTests(CrmApiFactory factory)
     {
         var cliente = await AutenticarAsync();
         var nombre = $"Repetido {Guid.NewGuid():N}";
-        await DefinirAsync(cliente, nombre, "Texto");
+        await DefinirAsync(cliente, nombre, "Text");
 
         var segunda = await cliente.PostAsJsonAsync("/api/v1/custom-fields", new
         {
-            nombre, tipo = "Texto", entidadDestino = "Task", obligatorio = false, opciones = (string[]?)null, posicion = 0
+            name = nombre, type = "Text", targetEntity = "Task", isRequired = false, options = (string[]?)null, position = 0
         });
 
         segunda.StatusCode.Should().Be(HttpStatusCode.BadRequest);
@@ -92,7 +92,7 @@ public sealed class CustomFieldsFlowTests(CrmApiFactory factory)
     public async Task El_numero_llega_a_la_base_normalizado()
     {
         var cliente = await AutenticarAsync();
-        var campo = await DefinirAsync(cliente, $"Importe {Guid.NewGuid():N}", "Numero");
+        var campo = await DefinirAsync(cliente, $"Importe {Guid.NewGuid():N}", "Number");
         var entidad = Guid.NewGuid();
 
         // Se escribe con coma decimal, como en español.
@@ -101,14 +101,14 @@ public sealed class CustomFieldsFlowTests(CrmApiFactory factory)
         var valores = await ValoresDeAsync(cliente, entidad);
         var guardado = valores.EnumerateArray().Single(v => v.GetProperty("definitionId").GetGuid() == campo);
 
-        guardado.GetProperty("valor").GetString().Should().Be("1234.56", "se guarda con punto para poder ordenar y sumar");
+        guardado.GetProperty("value").GetString().Should().Be("1234.56", "se guarda con punto para poder ordenar y sumar");
     }
 
     [Fact]
     public async Task Un_valor_que_no_encaja_con_el_tipo_se_rechaza()
     {
         var cliente = await AutenticarAsync();
-        var campo = await DefinirAsync(cliente, $"Fecha {Guid.NewGuid():N}", "Fecha");
+        var campo = await DefinirAsync(cliente, $"Fecha {Guid.NewGuid():N}", "Date");
 
         var respuesta = await PonerValorAsync(cliente, campo, Guid.NewGuid(), "el martes");
 
@@ -120,7 +120,7 @@ public sealed class CustomFieldsFlowTests(CrmApiFactory factory)
     public async Task La_seleccion_multiple_se_guarda_en_el_orden_de_la_definicion()
     {
         var cliente = await AutenticarAsync();
-        var campo = await DefinirAsync(cliente, $"Colores {Guid.NewGuid():N}", "SeleccionMultiple",
+        var campo = await DefinirAsync(cliente, $"Colores {Guid.NewGuid():N}", "MultiSelect",
             opciones: ["Rojo", "Verde", "Azul"]);
         var entidad = Guid.NewGuid();
 
@@ -128,28 +128,28 @@ public sealed class CustomFieldsFlowTests(CrmApiFactory factory)
 
         var valores = await ValoresDeAsync(cliente, entidad);
         valores.EnumerateArray().Single(v => v.GetProperty("definitionId").GetGuid() == campo)
-            .GetProperty("valor").GetString().Should().Be("Rojo\nAzul");
+            .GetProperty("value").GetString().Should().Be("Rojo\nAzul");
     }
 
     [Fact]
     public async Task Los_campos_sin_valor_tambien_llegan_al_formulario()
     {
         var cliente = await AutenticarAsync();
-        var campo = await DefinirAsync(cliente, $"Sin rellenar {Guid.NewGuid():N}", "Texto");
+        var campo = await DefinirAsync(cliente, $"Sin rellenar {Guid.NewGuid():N}", "Text");
         var entidad = Guid.NewGuid();
 
         var valores = await ValoresDeAsync(cliente, entidad);
 
         var elCampo = valores.EnumerateArray().SingleOrDefault(v => v.GetProperty("definitionId").GetGuid() == campo);
         elCampo.ValueKind.Should().NotBe(JsonValueKind.Undefined, "un campo nuevo tiene que poder rellenarse");
-        elCampo.GetProperty("valor").ValueKind.Should().Be(JsonValueKind.Null);
+        elCampo.GetProperty("value").ValueKind.Should().Be(JsonValueKind.Null);
     }
 
     [Fact]
     public async Task Guardar_dos_veces_el_mismo_campo_actualiza_en_lugar_de_duplicar()
     {
         var cliente = await AutenticarAsync();
-        var campo = await DefinirAsync(cliente, $"Una vez {Guid.NewGuid():N}", "Texto");
+        var campo = await DefinirAsync(cliente, $"Una vez {Guid.NewGuid():N}", "Text");
         var entidad = Guid.NewGuid();
 
         await PonerValorAsync(cliente, campo, entidad, "primero");
@@ -158,14 +158,14 @@ public sealed class CustomFieldsFlowTests(CrmApiFactory factory)
         var valores = await ValoresDeAsync(cliente, entidad);
         valores.EnumerateArray().Count(v => v.GetProperty("definitionId").GetGuid() == campo).Should().Be(1);
         valores.EnumerateArray().Single(v => v.GetProperty("definitionId").GetGuid() == campo)
-            .GetProperty("valor").GetString().Should().Be("segundo");
+            .GetProperty("value").GetString().Should().Be("segundo");
     }
 
     [Fact]
     public async Task Borrar_el_campo_se_lleva_sus_valores()
     {
         var cliente = await AutenticarAsync();
-        var campo = await DefinirAsync(cliente, $"Efímero {Guid.NewGuid():N}", "Texto");
+        var campo = await DefinirAsync(cliente, $"Efímero {Guid.NewGuid():N}", "Text");
         var entidad = Guid.NewGuid();
         await PonerValorAsync(cliente, campo, entidad, "algo");
 
@@ -180,7 +180,7 @@ public sealed class CustomFieldsFlowTests(CrmApiFactory factory)
     public async Task Un_campo_obligatorio_no_admite_quedarse_vacio()
     {
         var cliente = await AutenticarAsync();
-        var campo = await DefinirAsync(cliente, $"Obligatorio {Guid.NewGuid():N}", "Texto", obligatorio: true);
+        var campo = await DefinirAsync(cliente, $"Obligatorio {Guid.NewGuid():N}", "Text", obligatorio: true);
 
         var respuesta = await PonerValorAsync(cliente, campo, Guid.NewGuid(), "   ");
 
@@ -192,20 +192,20 @@ public sealed class CustomFieldsFlowTests(CrmApiFactory factory)
     public async Task Renombrar_un_campo_no_toca_los_valores_ya_guardados()
     {
         var cliente = await AutenticarAsync();
-        var campo = await DefinirAsync(cliente, $"Antes {Guid.NewGuid():N}", "Texto");
+        var campo = await DefinirAsync(cliente, $"Antes {Guid.NewGuid():N}", "Text");
         var entidad = Guid.NewGuid();
         await PonerValorAsync(cliente, campo, entidad, "conservado");
 
         var nuevoNombre = $"Después {Guid.NewGuid():N}";
         var actualizado = await cliente.PutAsJsonAsync($"/api/v1/custom-fields/{campo}", new
         {
-            nombre = nuevoNombre, obligatorio = false, opciones = (string[]?)null, posicion = 1
+            name = nuevoNombre, isRequired = false, options = (string[]?)null, position = 1
         });
         actualizado.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var valores = await ValoresDeAsync(cliente, entidad);
         var elCampo = valores.EnumerateArray().Single(v => v.GetProperty("definitionId").GetGuid() == campo);
-        elCampo.GetProperty("nombre").GetString().Should().Be(nuevoNombre);
-        elCampo.GetProperty("valor").GetString().Should().Be("conservado");
+        elCampo.GetProperty("name").GetString().Should().Be(nuevoNombre);
+        elCampo.GetProperty("value").GetString().Should().Be("conservado");
     }
 }

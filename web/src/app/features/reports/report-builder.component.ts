@@ -20,7 +20,7 @@ export interface CatalogField {
   key: string;
   name: string;
   type: string;
-  /** Los operadores de **este** campo, resueltos por el servidor. Ver `operadoresPara`. */
+  /** Los operadores de **este** campo, resueltos por el servidor. Ver `operatorsFor`. */
   operators: string[];
   /** Los valores admitidos si es una lista cerrada; vacío si admite texto libre. */
   values: string[];
@@ -28,16 +28,16 @@ export interface CatalogField {
 export interface CatalogOperator { key: string; name: string; types: string[]; needsValue: boolean; }
 export interface CatalogOption { key: string; name: string; }
 
-export interface ReportFilter { campo: string; operador: string; valor: string | null; }
+export interface ReportFilter { field: string; operator: string; value: string | null; }
 
 export interface ReportDefinition {
-  origen: string;
-  agrupacion: string;
-  medida: string;
-  forma: string;
-  filtros?: ReportFilter[];
-  granularidad?: string | null;
-  maximoDeGrupos?: number | null;
+  dataSource: string;
+  groupBy: string;
+  measure: string;
+  visualization: string;
+  filters?: ReportFilter[];
+  granularity?: string | null;
+  maxGroups?: number | null;
 }
 
 interface ReportPreview {
@@ -155,7 +155,7 @@ interface ReportPreview {
               @for (f of filters(); track $index) {
                 <div class="flex items-center gap-2 mb-2">
                   <select class="flex-1 border border-border rounded-md px-2 py-1.5 text-sm bg-background"
-                          [ngModel]="f.campo" (ngModelChange)="changeFilterField($index, $event)"
+                          [ngModel]="f.field" (ngModelChange)="changeFilterField($index, $event)"
                           [name]="'filter-field-' + $index">
                     @for (c of sourceFields(); track c.key) {
                       <option [value]="c.key">{{ c.name }}</option>
@@ -165,13 +165,13 @@ interface ReportPreview {
                   <!-- Sólo los operadores que valen para el tipo del campo elegido. «Mayor que»
                        sobre un estado no significa nada, y el servidor lo rechaza. -->
                   <select class="flex-1 border border-border rounded-md px-2 py-1.5 text-sm bg-background"
-                          [(ngModel)]="f.operador" [name]="'filter-op-' + $index">
-                    @for (o of operatorsFor(f.campo); track o.key) {
+                          [(ngModel)]="f.operator" [name]="'filter-op-' + $index">
+                    @for (o of operatorsFor(f.field); track o.key) {
                       <option [value]="o.key">{{ o.name }}</option>
                     }
                   </select>
 
-                  @if (needsValue(f.operador)) {
+                  @if (needsValue(f.operator)) {
                     <!--
                       Si el campo es una lista cerrada, se elige; si no, se escribe.
 
@@ -179,17 +179,17 @@ interface ReportPreview {
                       existe, y el resultado es un informe vacío que parece un informe sin datos.
                       Los valores los sirve el servidor, así que un estado nuevo aparece solo.
                     -->
-                    @if (valuesOf(f.campo); as values) {
+                    @if (valuesOf(f.field); as values) {
                       @if (values.length > 0) {
                         <select class="flex-1 border border-border rounded-md px-2 py-1.5 text-sm bg-background"
-                                [(ngModel)]="f.valor" [name]="'filter-value-' + $index">
+                                [(ngModel)]="f.value" [name]="'filter-value-' + $index">
                           @for (v of values; track v) {
                             <option [value]="v">{{ v }}</option>
                           }
                         </select>
                       } @else {
                         <input class="flex-1 border border-border rounded-md px-2 py-1.5 text-sm bg-background"
-                               [(ngModel)]="f.valor" [name]="'filter-value-' + $index"
+                               [(ngModel)]="f.value" [name]="'filter-value-' + $index"
                                i18n-placeholder placeholder="Valor" />
                       }
                     }
@@ -283,8 +283,8 @@ export class ReportBuilderComponent {
   readonly dataSource = signal('');
   groupBy = '';
   measure = '';
-  visualization = 'barras';
-  granularity: string | null = 'mes';
+  visualization = 'bar';
+  granularity: string | null = 'month';
 
   readonly filters = signal<ReportFilter[]>([]);
 
@@ -314,12 +314,12 @@ export class ReportBuilderComponent {
   }
 
   private apply(d: ReportDefinition): void {
-    this.dataSource.set(d.origen);
-    this.groupBy = d.agrupacion;
-    this.measure = d.medida;
-    this.visualization = d.forma;
-    this.granularity = d.granularidad ?? 'mes';
-    this.filters.set([...(d.filtros ?? [])]);
+    this.dataSource.set(d.dataSource);
+    this.groupBy = d.groupBy;
+    this.measure = d.measure;
+    this.visualization = d.visualization;
+    this.granularity = d.granularity ?? 'month';
+    this.filters.set([...(d.filters ?? [])]);
   }
 
   readonly currentSource = computed(() =>
@@ -342,7 +342,7 @@ export class ReportBuilderComponent {
 
     const source = this.currentSource();
     this.groupBy = source?.fields[0]?.key ?? '';
-    this.measure = source?.measures[0]?.key ?? 'conteo';
+    this.measure = source?.measures[0]?.key ?? 'count';
     this.filters.set([]);
     this.preview.set(null);
     this.error.set('');
@@ -379,11 +379,11 @@ export class ReportBuilderComponent {
     const operator = this.operatorsFor(field.key)[0];
 
     this.filters.update(f => [...f, {
-      campo: field.key,
-      operador: operator?.key ?? 'es',
+      field: field.key,
+      operator: operator?.key ?? 'is',
       // Si el campo tiene lista, se empieza por su primer valor: un desplegable que arranca
       // vacío deja mandar un filtro sin valor sin que se note.
-      valor: field.values[0] ?? ''
+      value: field.values[0] ?? ''
     }]);
   }
 
@@ -393,16 +393,16 @@ export class ReportBuilderComponent {
       if (i !== index) return f;
 
       const operators = this.operatorsFor(key);
-      const stillValid = operators.some(o => o.key === f.operador);
+      const stillValid = operators.some(o => o.key === f.operator);
 
       // El valor del campo anterior casi nunca vale para el nuevo, y si el nuevo es una lista
       // cerrada hay que empezar por uno de los suyos.
       const values = this.valuesOf(key);
 
       return {
-        campo: key,
-        operador: stillValid ? f.operador : operators[0]?.key ?? 'es',
-        valor: values.length > 0 ? values[0] : ''
+        field: key,
+        operator: stillValid ? f.operator : operators[0]?.key ?? 'is',
+        value: values.length > 0 ? values[0] : ''
       };
     }));
   }
@@ -413,12 +413,12 @@ export class ReportBuilderComponent {
 
   private definition(): ReportDefinition {
     return {
-      origen: this.dataSource(),
-      agrupacion: this.groupBy,
-      medida: this.measure,
-      forma: this.visualization,
-      filtros: this.filters(),
-      granularidad: this.groupsByDate() ? this.granularity : null
+      dataSource: this.dataSource(),
+      groupBy: this.groupBy,
+      measure: this.measure,
+      visualization: this.visualization,
+      filters: this.filters(),
+      granularity: this.groupsByDate() ? this.granularity : null
     };
   }
 

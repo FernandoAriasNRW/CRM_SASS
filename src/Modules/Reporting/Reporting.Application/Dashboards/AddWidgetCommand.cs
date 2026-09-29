@@ -12,4 +12,4 @@ namespace Reporting.Application.Dashboards;
 
 /// <summary>Pone un informe existente en el panel, abajo del todo.</summary>
 public sealed record AddWidgetCommand(
-    Guid TenantId, Guid UserId, Guid PanelId, Guid ReportId, string? Forma) : ICommand<Widget>;
+    Guid TenantId, Guid UserId, Guid PanelId, Guid ReportId, string? Visualization) : ICommand<Widget>;

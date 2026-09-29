@@ -14,28 +14,28 @@ namespace CustomFields.Domain.Entities;
 /// </summary>
 public sealed class CustomFieldDefinition : AggregateRoot, ITenantEntity
 {
-    public const int LargoMaximoDelNombre = 80;
-    public const int MaximoDeOpciones = 50;
+    public const int MaxNameLength = 80;
+    public const int MaxOptions = 50;
 
     public Guid TenantId { get; private set; }
 
     /// <summary>Lo que ve quien rellena el campo.</summary>
-    public string Nombre { get; private set; } = string.Empty;
+    public string Name { get; private set; } = string.Empty;
 
-    /// <summary>Uno de <see cref="TipoDeCampo"/>.</summary>
-    public string Tipo { get; private set; } = string.Empty;
+    /// <summary>Uno de <see cref="FieldType"/>.</summary>
+    public string Type { get; private set; } = string.Empty;
 
     /// <summary>Sobre qué entidad aplica: tarea o proyecto.</summary>
-    public string EntidadDestino { get; private set; } = string.Empty;
+    public string TargetEntity { get; private set; } = string.Empty;
 
     /// <summary>Si hay que rellenarlo para guardar la entidad.</summary>
-    public bool Obligatorio { get; private set; }
+    public bool IsRequired { get; private set; }
 
     /// <summary>Opciones de los tipos de selección, en el orden en que se muestran.</summary>
-    public List<string> Opciones { get; private set; } = [];
+    public List<string> Options { get; private set; } = [];
 
     /// <summary>Orden en que aparece el campo en el formulario.</summary>
-    public int Posicion { get; private set; }
+    public int Position { get; private set; }
 
     /// <summary>
     /// La expresión de un campo calculado, o <c>null</c> en los demás.
@@ -49,44 +49,44 @@ public sealed class CustomFieldDefinition : AggregateRoot, ITenantEntity
     private CustomFieldDefinition() { }
 
     public static CustomFieldDefinition Create(
-        Guid tenantId, string nombre, string tipo, string entidadDestino,
-        bool obligatorio, IEnumerable<string>? opciones, int posicion, string? formula = null)
+        Guid tenantId, string name, string type, string targetEntity,
+        bool isRequired, IEnumerable<string>? options, int position, string? formula = null)
     {
-        var nombreLimpio = (nombre ?? string.Empty).Trim();
+        var cleanName = (name ?? string.Empty).Trim();
 
-        if (nombreLimpio.Length == 0)
-            throw new InvalidOperationException(Reglas.NombreObligatorio);
+        if (cleanName.Length == 0)
+            throw new InvalidOperationException(Rules.NameRequired);
 
-        if (nombreLimpio.Length > LargoMaximoDelNombre)
-            throw new InvalidOperationException(Reglas.NombreDemasiadoLargo);
+        if (cleanName.Length > MaxNameLength)
+            throw new InvalidOperationException(Rules.NameTooLong);
 
-        if (!TipoDeCampo.Existe(tipo))
-            throw new InvalidOperationException(Reglas.TipoDesconocido);
+        if (!FieldType.Exists(type))
+            throw new InvalidOperationException(Rules.UnknownType);
 
-        if (!TipoDeEntidad.Existe(entidadDestino))
-            throw new InvalidOperationException(Reglas.EntidadDesconocida);
+        if (!TargetEntityTypes.Exists(targetEntity))
+            throw new InvalidOperationException(Rules.UnknownEntity);
 
-        var listaDeOpciones = NormalizarOpciones(tipo, opciones);
-        var formulaLimpia = NormalizarFormula(tipo, formula);
+        var optionList = NormalizeOptions(type, options);
+        var cleanFormula = NormalizeFormula(type, formula);
 
-        var definicion = new CustomFieldDefinition
+        var definition = new CustomFieldDefinition
         {
             Id = Guid.NewGuid(),
             TenantId = tenantId,
-            Nombre = nombreLimpio,
-            Tipo = tipo,
-            EntidadDestino = entidadDestino,
+            Name = cleanName,
+            Type = type,
+            TargetEntity = targetEntity,
             // Un campo calculado no se rellena, así que exigirlo no tendría a quién
             // exigírselo: marcarlo obligatorio dejaría el formulario sin poder guardarse.
-            Obligatorio = !TipoDeCampo.SeCalcula(tipo) && obligatorio,
-            Opciones = listaDeOpciones,
-            Posicion = posicion,
-            Formula = formulaLimpia
+            IsRequired = !FieldType.IsComputed(type) && isRequired,
+            Options = optionList,
+            Position = position,
+            Formula = cleanFormula
         };
 
-        definicion.RaiseDomainEvent(new CustomFieldDefinedEvent(definicion.Id, tenantId, nombreLimpio, tipo, entidadDestino));
+        definition.RaiseDomainEvent(new CustomFieldDefinedEvent(definition.Id, tenantId, cleanName, type, targetEntity));
 
-        return definicion;
+        return definition;
     }
 
     /// <summary>
@@ -97,24 +97,24 @@ public sealed class CustomFieldDefinition : AggregateRoot, ITenantEntity
     /// la anterior. Para eso se borra el campo y se crea otro, que además deja claro que los
     /// datos viejos se pierden.
     /// </summary>
-    public void Actualizar(string nombre, bool obligatorio, IEnumerable<string>? opciones, int posicion,
+    public void Update(string name, bool isRequired, IEnumerable<string>? options, int position,
         string? formula = null)
     {
-        var nombreLimpio = (nombre ?? string.Empty).Trim();
+        var cleanName = (name ?? string.Empty).Trim();
 
-        if (nombreLimpio.Length == 0)
-            throw new InvalidOperationException(Reglas.NombreObligatorio);
+        if (cleanName.Length == 0)
+            throw new InvalidOperationException(Rules.NameRequired);
 
-        if (nombreLimpio.Length > LargoMaximoDelNombre)
-            throw new InvalidOperationException(Reglas.NombreDemasiadoLargo);
+        if (cleanName.Length > MaxNameLength)
+            throw new InvalidOperationException(Rules.NameTooLong);
 
-        Nombre = nombreLimpio;
-        Obligatorio = !TipoDeCampo.SeCalcula(Tipo) && obligatorio;
-        Opciones = NormalizarOpciones(Tipo, opciones);
-        Posicion = posicion;
-        Formula = NormalizarFormula(Tipo, formula);
+        Name = cleanName;
+        IsRequired = !FieldType.IsComputed(Type) && isRequired;
+        Options = NormalizeOptions(Type, options);
+        Position = position;
+        Formula = NormalizeFormula(Type, formula);
 
-        RaiseDomainEvent(new CustomFieldUpdatedEvent(Id, TenantId, Nombre));
+        RaiseDomainEvent(new CustomFieldUpdatedEvent(Id, TenantId, Name));
     }
 
     /// <summary>
@@ -124,61 +124,61 @@ public sealed class CustomFieldDefinition : AggregateRoot, ITenantEntity
     /// ciclo se comprueba en la capa de aplicación, que es la única que ve los demás campos del
     /// inquilino. El dominio comprueba lo que puede comprobar solo.
     /// </summary>
-    private static string? NormalizarFormula(string tipo, string? formula)
+    private static string? NormalizeFormula(string type, string? formula)
     {
-        if (!TipoDeCampo.SeCalcula(tipo))
+        if (!FieldType.IsComputed(type))
             return null;
 
-        var texto = (formula ?? string.Empty).Trim();
+        var text = (formula ?? string.Empty).Trim();
 
-        if (texto.Length == 0)
-            throw new InvalidOperationException(Reglas.SinFormula);
+        if (text.Length == 0)
+            throw new InvalidOperationException(Rules.MissingFormula);
 
-        var analisis = Servicios.AnalizadorDeFormula.Analizar(texto);
+        var analysis = Services.FormulaParser.Parse(text);
 
-        if (!analisis.EsValida)
-            throw new InvalidOperationException(analisis.Error);
+        if (!analysis.IsValid)
+            throw new InvalidOperationException(analysis.Error);
 
-        return texto;
+        return text;
     }
 
-    private static List<string> NormalizarOpciones(string tipo, IEnumerable<string>? opciones)
+    private static List<string> NormalizeOptions(string type, IEnumerable<string>? options)
     {
-        if (!TipoDeCampo.UsaOpciones(tipo))
+        if (!FieldType.UsesOptions(type))
             return [];
 
-        var lista = (opciones ?? [])
+        var list = (options ?? [])
             .Select(o => (o ?? string.Empty).Trim())
             .Where(o => o.Length > 0)
             .Distinct()
             .ToList();
 
-        if (lista.Count == 0)
-            throw new InvalidOperationException(Reglas.SinOpciones);
+        if (list.Count == 0)
+            throw new InvalidOperationException(Rules.MissingOptions);
 
-        if (lista.Count > MaximoDeOpciones)
-            throw new InvalidOperationException(Reglas.DemasiadasOpciones);
+        if (list.Count > MaxOptions)
+            throw new InvalidOperationException(Rules.TooManyOptions);
 
-        return lista;
+        return list;
     }
 
-    public static class Reglas
+    public static class Rules
     {
-        public const string NombreObligatorio = "El campo necesita un nombre";
-        public static readonly string NombreDemasiadoLargo =
-            $"El nombre del campo no puede pasar de {LargoMaximoDelNombre} caracteres";
-        public const string TipoDesconocido = "El tipo de campo no existe";
-        public const string EntidadDesconocida = "El campo sólo puede aplicarse a Tarea o Proyecto";
-        public const string SinOpciones = "Un campo de selección necesita al menos una opción";
-        public static readonly string DemasiadasOpciones =
-            $"Un campo de selección no puede tener más de {MaximoDeOpciones} opciones";
-        public const string NombreRepetido = "Ya hay un campo con ese nombre para esa entidad";
-        public const string SinFormula = "Un campo calculado necesita una fórmula";
-        public const string FormulaEnCiclo =
+        public const string NameRequired = "El campo necesita un nombre";
+        public static readonly string NameTooLong =
+            $"El nombre del campo no puede pasar de {MaxNameLength} caracteres";
+        public const string UnknownType = "El tipo de campo no existe";
+        public const string UnknownEntity = "El campo sólo puede aplicarse a Tarea o Proyecto";
+        public const string MissingOptions = "Un campo de selección necesita al menos una opción";
+        public static readonly string TooManyOptions =
+            $"Un campo de selección no puede tener más de {MaxOptions} opciones";
+        public const string DuplicateName = "Ya hay un campo con ese nombre para esa entidad";
+        public const string MissingFormula = "Un campo calculado necesita una fórmula";
+        public const string FormulaCycle =
             "La fórmula se refiere a sí misma, directa o indirectamente, y no se podría calcular";
-        public static readonly string ReferenciaNoNumerica =
+        public static readonly string NonNumericReference =
             "Una fórmula sólo puede usar campos de tipo Número u otros campos calculados";
-        public const string NoSeRellenaUnCalculado =
+        public const string ComputedIsReadOnly =
             "Un campo calculado no se rellena: su valor sale de su fórmula";
     }
 }

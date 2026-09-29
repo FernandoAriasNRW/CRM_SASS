@@ -12,13 +12,13 @@ import { UsersService } from '../../core/users.service';
  */
 describe('CustomFieldsFormComponent', () => {
   const TEXTO: CustomFieldValue = {
-    definitionId: 'def-texto', nombre: 'Cliente facturable', tipo: 'Texto',
-    obligatorio: false, opciones: [], posicion: 0, valor: 'Acme',
+    definitionId: 'def-texto', name: 'Cliente facturable', type: 'Text',
+    isRequired: false, options: [], position: 0, value: 'Acme',
   };
 
   const MULTIPLE: CustomFieldValue = {
-    definitionId: 'def-multiple', nombre: 'Canales', tipo: 'SeleccionMultiple',
-    obligatorio: false, opciones: ['Web', 'Teléfono', 'Correo'], posicion: 1, valor: 'Web',
+    definitionId: 'def-multiple', name: 'Canales', type: 'MultiSelect',
+    isRequired: false, options: ['Web', 'Teléfono', 'Correo'], position: 1, value: 'Web',
   };
 
   let servicio: jasmine.SpyObj<CustomFieldsService>;
@@ -91,7 +91,7 @@ describe('CustomFieldsFormComponent', () => {
     fixture.componentInstance.guardar(TEXTO, 'no soy un número');
     fixture.detectChanges();
 
-    expect(fixture.componentInstance.campos()[0].valor).toBe('Acme');
+    expect(fixture.componentInstance.campos()[0].value).toBe('Acme');
     expect(fixture.componentInstance.errores()['def-texto']).toBe('No es un número');
     expect(fixture.nativeElement.textContent).toContain('No es un número');
   });
@@ -119,9 +119,9 @@ describe('CustomFieldsFormComponent', () => {
 
     fixture.componentInstance.guardar(TEXTO, 'Globex');
     servicio.guardarValor.and.returnValue(throwError(() => ({ error: 'No vale' })));
-    fixture.componentInstance.guardar({ ...TEXTO, valor: 'Globex' }, 'Initech');
+    fixture.componentInstance.guardar({ ...TEXTO, value: 'Globex' }, 'Initech');
 
-    expect(fixture.componentInstance.campos()[0].valor).toBe('Globex');
+    expect(fixture.componentInstance.campos()[0].value).toBe('Globex');
   });
 
   describe('selección múltiple', () => {
@@ -153,8 +153,8 @@ describe('CustomFieldsFormComponent', () => {
 
   it('un tipo que esta versión no sabe pintar enseña el valor en crudo', async () => {
     const desconocido: CustomFieldValue = {
-      definitionId: 'def-raro', nombre: 'Fórmula', tipo: 'Calculado',
-      obligatorio: false, opciones: [], posicion: 0, valor: '42',
+      definitionId: 'def-raro', name: 'Fórmula', type: 'Calculado',
+      isRequired: false, options: [], position: 0, value: '42',
     };
 
     await montar([desconocido]);

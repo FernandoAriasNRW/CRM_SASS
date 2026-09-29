@@ -103,7 +103,7 @@ public class DisposicionDelPanelTests
 
         leida.Placed.Should().HaveCount(1);
         leida.Placed[0].X.Should().Be(3);
-        leida.Placed[0].Alto.Should().Be(5);
+        leida.Placed[0].Height.Should().Be(5);
     }
 
     /// <summary>
@@ -207,8 +207,8 @@ public class PanelDeInicioTests
             for (var i = 1; i < ordenados.Count; i++)
             {
                 ordenados[i].X.Should().BeGreaterThanOrEqualTo(
-                    ordenados[i - 1].X + ordenados[i - 1].Ancho,
-                    $"«{ordenados[i].Titulo}» se monta encima de «{ordenados[i - 1].Titulo}»");
+                    ordenados[i - 1].X + ordenados[i - 1].Width,
+                    $"«{ordenados[i].Title}» se monta encima de «{ordenados[i - 1].Title}»");
             }
         }
     }
@@ -226,7 +226,7 @@ public class PanelDeInicioTests
         var antes = panel.WidgetsJson;
 
         var invalida = new DashboardLayout(
-            [new Widget(Guid.NewGuid(), Guid.NewGuid(), X: 10, Y: 0, Ancho: 6, Alto: 4)]);
+            [new Widget(Guid.NewGuid(), Guid.NewGuid(), X: 10, Y: 0, Width: 6, Height: 4)]);
 
         panel.Place(invalida).IsFailure.Should().BeTrue();
         panel.WidgetsJson.Should().Be(antes, "una disposición rechazada no puede haberse guardado a medias");
