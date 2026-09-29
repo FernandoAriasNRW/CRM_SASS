@@ -174,6 +174,9 @@ Un concepto, un nombre. Ordenado por área.
 | enviar a la papelera (un evento), eventos en la papelera | `MoveToTrash`, `Trashed` (`GetTrashedEventsQuery`) |
 | agenda del día, cosa del día | `DailyAgenda` (`DailyAgendaDto`), `AgendaItem` |
 | tareas que vencen, tickets del día, proyectos que terminan | `TasksDue`, `TicketsOpened`, `ProjectsEnding` |
+| día desplegado, franja (de una hora), día del mes (en la rejilla) | `ExpandedDay`, `HourSlot`, `MonthDay` |
+| cajón del evento, momento propuesto | `EventDrawer`, `proposedTime` |
+| menú del botón derecho sobre un día, un evento, una hora | `onDayContextMenu`, `onEventContextMenu`, `onHourContextMenu` (salidas: `itemContextMenu`, `hourContextMenu`) |
 | aviso (notificación), tipos de aviso | `Notification`, `NotificationTypes` |
 | preferencias de aviso, por defecto | `NotificationPreferences`, `CreateDefault` |
 | dejar pasar un aviso, quiere recibirlo, en horas de silencio | `ShouldDeliver`, `IsEnabled`, `IsQuietAt` |
@@ -345,7 +348,7 @@ suites completas en verde, catálogo i18n re-extraído al final.
 | 5b ✅ | **Frontend de documentos y comentarios** | Editor y extensiones: más de 200 identificadores, diff aparte |
 | 5c ✅ | **Valores guardados de los tipos de entidad** («Tarea» → «Task»…) | Viven en tablas de cinco módulos y dentro del HTML de las páginas: cambio propio con su migración de datos |
 | 6a ✅ | **Calendar + Notifications + Communication** (backend) | Anular, enlazar y papelera; preferencias de aviso; agenda del día |
-| 6b | **Frontend del calendario** | 162 identificadores, casi todos del calendario: diff aparte |
+| 6b ✅ | **Frontend del calendario** | 155 identificadores, casi todos del calendario: diff aparte |
 | 7 | **Reporting** (motor, exportaciones, programaciones, paneles) | El bloque más grande del Host |
 | 8 | **CustomFields + Automations + Webhook + Tags** | Fórmulas y reglas |
 | 9 | **Frontend transversal** (`shared/`, `core/`, e2e) | Lo que no arrastraron los PRs anteriores |
@@ -635,6 +638,27 @@ cambiarlo exige migrar ese contenido. Por eso fue un bloque aparte, el 5c.
   distintos en la misma pasada: se unificaron en `UserId`.
 - Del frontend va sólo el contrato (campos de la agenda y del evento, rutas y `reason`). Los
   identificadores, en el 6b.
+
+### Hecho en el bloque 6b (frontend del calendario)
+
+- 155 identificadores en 8 ficheros; `CalendarioService` → `CalendarService`,
+  `DiaDesplegadoComponent` → `ExpandedDayComponent` (`app-expanded-day`), `EventoDrawerComponent`
+  → `EventDrawerComponent` (`app-event-drawer`), `EventoDelCalendario` → `CalendarEvent`,
+  `CosaDelDia` → `AgendaItem`, `AgendaDeUnDia` → `DailyAgenda`, con sus ficheros.
+- **Dos nombres que significaban dos cosas.** `evento` era a la vez un evento del calendario y el
+  `MouseEvent` de los menús (`{ evento: MouseEvent; … }`): los segundos se separaron a mano como
+  `mouseEvent` antes del mapa por tokens, que los habría llamado `calendarEvent`. Y `menuEnEvento`
+  y `menuEnHora` eran salidas del hijo y métodos del padre; como una salida no puede empezar por
+  `on`, el hijo emite `itemContextMenu`/`hourContextMenu` y el padre los atiende con
+  `onItemContextMenu`/`onHourContextMenu`.
+- Las entradas y salidas se cambiaron a mano en el padre, y se comprobó con un script que cada
+  `(salida)` que escucha existe en el hijo (una que no existe no da error).
+- Las claves de las opciones del menú, que sólo se comparan en el componente, también
+  (`'anular'` → `'cancel'`, `'papelera-dia'` → `'trash-day'`…).
+- **Se queda para el bloque 9** lo del menú contextual compartido: `OpcionDelMenu` y sus campos
+  (`clave`, `etiqueta`, `icono`, `separadorAntes`, `destructiva`), sus entradas y salidas y
+  `abrirEn`.
+- Textos: comparadas con `main` las cadenas y los atributos planos de cada fichero; ninguno cambió.
 
 ---
 
