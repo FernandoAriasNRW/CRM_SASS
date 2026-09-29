@@ -293,6 +293,7 @@ Un concepto, un nombre. Ordenado por área.
 | panel de inicio, recuadro sugerido, colocar | `StarterDashboard`, `SuggestedWidget`, `Place` |
 | generador de exportaciones, planificador de informes, datos del informe | `ExportGenerator`, `ReportScheduler`, `ReportData` |
 | consultas del panel, aviso de exportación lista / fallida | `DashboardQueries`, `ExportReadyNotifier` / `ExportFailedNotifier` |
+| constructor de informes, gráfica de informe, datos de un recuadro | `ReportBuilder`, `ReportChart`, `WidgetData` |
 
 ### Campos personalizados y automatizaciones
 
@@ -372,7 +373,7 @@ suites completas en verde, catálogo i18n re-extraído al final.
 | 6b ✅ | **Frontend del calendario** | 155 identificadores, casi todos del calendario: diff aparte |
 | 7a ✅ | **Reporting** (módulo: dominio, aplicación, infraestructura, presentación) | 299 identificadores, tablas y rutas |
 | 7b ✅ | **Reporting en el Host** (motor, generador de exportaciones, planificador, panel) | 158 identificadores |
-| 7c | **Frontend de informes y paneles** | ~150 identificadores |
+| 7c ✅ | **Frontend de informes y paneles** | 135 identificadores y cuatro ficheros |
 | 7d | **El JSON guardado de informes y paneles** (claves de la definición y del recuadro, y valores del catálogo) | Como el 5c: datos guardados, con su migración |
 | 8 | **CustomFields + Automations + Webhook + Tags** | Fórmulas y reglas |
 | 9 | **Frontend transversal** (`shared/`, `core/`, e2e) | Lo que no arrastraron los PRs anteriores |
@@ -728,6 +729,29 @@ cambiarlo exige migrar ese contenido. Por eso fue un bloque aparte, el 5c.
 - Se quedan en español, a propósito, los textos de las cabeceras de columna de los informes
   («Estado», «Prioridad», «Horas estimadas»…), que son lo que lee quien abre el fichero, y las
   referencias a las propiedades de `ReportDefinition` y `ReportFilter` que se serializan (7d).
+
+### Hecho en el bloque 7c (frontend de informes y paneles)
+
+- 135 identificadores con `rename-frontend.py` en el constructor, el servicio de exportaciones, la
+  pantalla de informes, el panel y la gráfica: `ConstructorDeInformesComponent` →
+  `ReportBuilderComponent` (`app-report-builder`), `ExportacionesService` → `ExportsService`,
+  `GraficaDeInformeComponent` → `ReportChartComponent` (`app-report-chart`), `DatosDeWidget` →
+  `WidgetData`, `Exportacion` → `Export`, `EstadoDeExportacion` → `ExportStatus`. Los ficheros
+  pasan a `report-builder.component.ts`, `exports.service.ts`, `report-chart.component.ts` y
+  `echarts-modules.ts`.
+- Entradas y salidas renombradas a mano en las plantillas padre: `[reportTitle]`, `(closed)`,
+  `(saved)`, `[data]`.
+- **Se quedan en español, a propósito, las propiedades que viajan a la API y se guardan en JSON**:
+  `origen`, `agrupacion`, `medida`, `forma`, `filtros`, `granularidad`, `maximoDeGrupos` de la
+  definición; `campo`, `operador`, `valor` del filtro; `forma` de los datos del recuadro y
+  `ancho`/`alto` de la colocación; y los valores del catálogo (`'barras'`, `'mes'`, `'conteo'`,
+  `'es'`…). Comparten nombre con miembros del componente, así que esos miembros se renombraron a
+  mano antes de pasar la herramienta (`dataSource`, `groupBy`, `measure`, `visualization`,
+  `granularity`, `filters`), para que el mapa no tocara las propiedades. Van en la 7d.
+- Quedan para el bloque 9 las utilidades compartidas que usan estos ficheros: `mensajeDeError`,
+  `descargarFichero` y la opción `sinAviso` de `ApiService`.
+- Sin cambios de contrato: los textos y los identificadores del catálogo i18n son los mismos que
+  en `main`.
 
 ---
 

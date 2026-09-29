@@ -194,7 +194,7 @@ antes.
 
 > **Cómo quedó.** ECharts con `ngx-echarts@21` —la que corresponde a este Angular—, importada con
 > los módulos justos: tres tipos de gráfica, cuatro componentes y el renderizador de canvas. El
-> mapa de módulos vive en un solo fichero (`echarts-modulos.ts`), que era la condición del estudio.
+> mapa de módulos vive en un solo fichero (`echarts-modules.ts`), que era la condición del estudio.
 >
 > **El coste, medido:** el paquete del panel pasa de 62 kB a 789 kB en bruto, **224 kB por la
 > red**, y sólo se descarga al abrir el panel. Se le ha dado presupuesto propio (aviso a 850 kB,

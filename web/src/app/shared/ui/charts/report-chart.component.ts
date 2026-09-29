@@ -2,7 +2,7 @@ import { Component, computed, input } from '@angular/core';
 import { NgxEchartsDirective, provideEchartsCore } from 'ngx-echarts';
 import type { EChartsOption } from 'echarts';
 
-import { echarts } from './echarts-modulos';
+import { echarts } from './echarts-modules';
 
 /**
  * Lo que el servidor manda para pintar un recuadro: una tabla y cómo quiere verse.
@@ -10,7 +10,7 @@ import { echarts } from './echarts-modulos';
  * Es la misma forma que devuelve la vista previa del constructor, a propósito: el panel y el
  * constructor enseñan lo mismo porque pintan lo mismo.
  */
-export interface DatosDeWidget {
+export interface WidgetData {
   widgetId: string;
   reportId: string;
   title: string;
@@ -34,12 +34,12 @@ export interface DatosDeWidget {
  * no migrar los informes que la gente haya construido.
  */
 @Component({
-  selector: 'app-grafica-de-informe',
+  selector: 'app-report-chart',
   standalone: true,
   imports: [NgxEchartsDirective],
   providers: [provideEchartsCore({ echarts })],
   template: `
-    @if (datos().error; as error) {
+    @if (data().error; as error) {
       <!--
         Un recuadro roto lo dice **en su sitio**, con el motivo que manda el servidor. Dejarlo en
         blanco haría pensar que no hay datos, que es otra cosa y se arregla de otra manera.
@@ -47,25 +47,25 @@ export interface DatosDeWidget {
       <div class="h-full flex items-center justify-center p-4 text-center">
         <p class="text-sm text-muted-foreground">{{ error }}</p>
       </div>
-    } @else if (datos().rows.length === 0) {
+    } @else if (data().rows.length === 0) {
       <div class="h-full flex items-center justify-center p-4 text-center">
         <p class="text-sm text-muted-foreground" i18n>Sin datos para este informe.</p>
       </div>
-    } @else if (esTabla()) {
+    } @else if (isTable()) {
       <div class="h-full overflow-auto">
         <table class="w-full text-sm">
           <thead class="sticky top-0 bg-card">
             <tr class="border-b border-border">
-              @for (c of datos().columns; track c) {
+              @for (c of data().columns; track c) {
                 <th class="text-left px-3 py-1.5 font-medium">{{ c }}</th>
               }
             </tr>
           </thead>
           <tbody>
-            @for (fila of datos().rows; track $index) {
+            @for (row of data().rows; track $index) {
               <tr class="border-b border-border/50">
-                @for (celda of fila; track $index) {
-                  <td class="px-3 py-1">{{ celda }}</td>
+                @for (cell of row; track $index) {
+                  <td class="px-3 py-1">{{ cell }}</td>
                 }
               </tr>
             }
@@ -73,17 +73,17 @@ export interface DatosDeWidget {
         </table>
       </div>
     } @else {
-      <div echarts [options]="opciones()" [autoResize]="true" class="h-full w-full"></div>
+      <div echarts [options]="options()" [autoResize]="true" class="h-full w-full"></div>
     }
   `
 })
-export class GraficaDeInformeComponent {
-  readonly datos = input.required<DatosDeWidget>();
+export class ReportChartComponent {
+  readonly data = input.required<WidgetData>();
 
   /** Si el tema del navegador es oscuro, para que los ejes no salgan negros sobre negro. */
-  readonly oscuro = input(false);
+  readonly dark = input(false);
 
-  readonly esTabla = computed(() => this.datos().forma === 'tabla');
+  readonly isTable = computed(() => this.data().forma === 'tabla');
 
   /**
    * Los valores numéricos, sacados de la última columna.
@@ -93,65 +93,65 @@ export class GraficaDeInformeComponent {
    * que escribe cuando no hay nada que promediar) se convierte en `null`, no en 0: ECharts deja el
    * hueco en la serie, que es lo honesto, en vez de dibujar una caída a cero que no ocurrió.
    */
-  private readonly valores = computed(() =>
-    this.datos().rows.map(fila => {
-      const crudo = fila[fila.length - 1];
-      if (!crudo || crudo === '—') return null;
+  private readonly values = computed(() =>
+    this.data().rows.map(row => {
+      const raw = row[row.length - 1];
+      if (!raw || raw === '—') return null;
 
-      const numero = Number(crudo.replace(/\./g, '').replace(',', '.').replace(/[^\d.-]/g, ''));
-      return Number.isFinite(numero) ? numero : null;
+      const num = Number(raw.replace(/\./g, '').replace(',', '.').replace(/[^\d.-]/g, ''));
+      return Number.isFinite(num) ? num : null;
     }));
 
-  private readonly etiquetas = computed(() => this.datos().rows.map(f => f[0]));
+  private readonly labels = computed(() => this.data().rows.map(f => f[0]));
 
-  readonly opciones = computed<EChartsOption>(() => {
-    const d = this.datos();
-    const etiquetas = this.etiquetas();
-    const valores = this.valores();
+  readonly options = computed<EChartsOption>(() => {
+    const d = this.data();
+    const labels = this.labels();
+    const values = this.values();
 
     // Un color por serie y el resto de la paleta por defecto: el gris de los ejes se elige según
     // el tema porque ECharts no lo hereda del CSS.
-    const textoTenue = this.oscuro() ? '#9CA3AF' : '#6B7280';
+    const mutedText = this.dark() ? '#9CA3AF' : '#6B7280';
 
-    const comunes: EChartsOption = {
+    const common: EChartsOption = {
       tooltip: { trigger: d.forma === 'tarta' ? 'item' : 'axis' },
       grid: { left: 8, right: 16, top: 24, bottom: 8, containLabel: true },
-      textStyle: { color: textoTenue }
+      textStyle: { color: mutedText }
     };
 
     if (d.forma === 'tarta') {
       return {
-        ...comunes,
-        legend: { bottom: 0, textStyle: { color: textoTenue } },
+        ...common,
+        legend: { bottom: 0, textStyle: { color: mutedText } },
         series: [{
           type: 'pie',
           radius: ['45%', '70%'],
           // Sin las etiquetas encima: en un recuadro pequeño se pisan entre ellas y tapan la
           // gráfica. La leyenda de abajo y el tooltip dicen lo mismo sin estorbar.
           label: { show: false },
-          data: etiquetas.map((nombre, i) => ({ name: nombre, value: valores[i] ?? 0 }))
+          data: labels.map((name, i) => ({ name: name, value: values[i] ?? 0 }))
         }]
       };
     }
 
-    const eje: EChartsOption = {
-      ...comunes,
+    const axis: EChartsOption = {
+      ...common,
       xAxis: {
         type: 'category',
-        data: etiquetas,
+        data: labels,
         axisLabel: {
-          color: textoTenue,
+          color: mutedText,
           // Las etiquetas largas —nombres de proyecto, identificadores— se giran para que quepan
           // en vez de recortarse con puntos suspensivos.
-          rotate: etiquetas.some(e => e.length > 10) ? 30 : 0
+          rotate: labels.some(e => e.length > 10) ? 30 : 0
         }
       },
-      yAxis: { type: 'value', axisLabel: { color: textoTenue } }
+      yAxis: { type: 'value', axisLabel: { color: mutedText } }
     };
 
     if (d.forma === 'lineas') {
       return {
-        ...eje,
+        ...axis,
         series: [{
           type: 'line',
           smooth: true,
@@ -159,7 +159,7 @@ export class GraficaDeInformeComponent {
           // promediar— se ve como hueco. Uniéndolo, la línea pasaría por encima como si hubiera
           // datos que no hay.
           connectNulls: false,
-          data: valores
+          data: values
         }]
       };
     }
@@ -167,6 +167,6 @@ export class GraficaDeInformeComponent {
     // Barras y barras apiladas comparten forma mientras haya una sola serie: apilar necesita una
     // segunda dimensión que el catálogo todavía no ofrece. Se pinta como barras en vez de
     // rechazarlo, y queda anotado.
-    return { ...eje, series: [{ type: 'bar', data: valores }] };
+    return { ...axis, series: [{ type: 'bar', data: values }] };
   });
 }
