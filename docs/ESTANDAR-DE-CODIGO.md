@@ -124,6 +124,8 @@ Un concepto, un nombre. Ordenado por área.
 | etiquetas antiguas de los tickets (claves de pantalla) | legacy tags (`LegacyTicketTagsConverter`) |
 | campos retirados (de la entrada externa) | `RetiredIntakeFields` |
 | campo de etiquetas (componente) | `TagField` (`app-tag-field`) |
+| tipo de etiqueta: predefinida / automática / propia | `TagKind`: `builtIn` / `automatic` / `custom` |
+| cajón de una etiqueta | `TagDrawer` (`app-tag-drawer`) |
 | hito, negocio, seguridad (categorías) | `Milestone`, `Business`, `Security` |
 | tipo de trabajo, fase de desarrollo (categorías) | `WorkType`, `DevelopmentPhase` |
 | almacenamiento, almacén en disco | `Storage`, `DiskStorage` |

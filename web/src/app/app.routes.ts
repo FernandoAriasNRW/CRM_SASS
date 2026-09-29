@@ -12,6 +12,7 @@ export const routes: Routes = [
       { path: 'projects',     loadComponent: () => import('./features/projects/projects.component').then(m => m.ProjectsComponent) },
       { path: 'tasks',        loadComponent: () => import('./features/tasks/tasks.component').then(m => m.TasksComponent) },
       { path: 'tickets',      loadComponent: () => import('./features/tickets/tickets.component').then(m => m.TicketsComponent) },
+      { path: 'tags',         loadComponent: () => import('./features/tags/tags.component').then(m => m.TagsComponent) },
       { path: 'chat',         loadComponent: () => import('./features/chat/chat.component').then(m => m.ChatComponent) },
       { path: 'calendar',     loadComponent: () => import('./features/calendar/calendar.component').then(m => m.CalendarComponent) },
       { path: 'reports',      loadComponent: () => import('./features/reports/reports.component').then(m => m.ReportsComponent) },

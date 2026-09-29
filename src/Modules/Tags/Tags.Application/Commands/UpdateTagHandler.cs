@@ -3,6 +3,7 @@ using BuildingBlocks.Application.Authorization;
 using BuildingBlocks.Domain;
 using Tags.Application.Abstractions.Repositories;
 using Tags.Application.Authorization;
+using Tags.Application.BuiltIn;
 using Tags.Application.DTOs;
 
 namespace Tags.Application.Commands;
@@ -24,6 +25,16 @@ public sealed class UpdateTagHandler(ITagRepository tags, IEntityPermissionServi
 
         var name = request.Name.Trim();
         var category = request.Category.Trim();
+
+        // Una predefinida se ve en el idioma de la pantalla: quien la edita en inglés manda
+        // «VIP client» aunque lo guardado sea «Cliente VIP». Eso no es renombrarla —si lo fuera,
+        // cambiar sólo el color le quitaría la clave y dejaría de traducirse—, así que se conserva
+        // el nombre guardado.
+        var builtIn = BuiltInTags.Find(tag.BuiltInKey);
+        if (builtIn is not null
+            && (string.Equals(name, builtIn.SpanishName, StringComparison.OrdinalIgnoreCase)
+                || string.Equals(name, builtIn.EnglishName, StringComparison.OrdinalIgnoreCase)))
+            name = tag.Name;
 
         if (await tags.NameIsTakenAsync(request.TenantId, category, name, exceptTag: tag, cancellationToken))
             return Result<TagDto>.Failure($"Ya existe una etiqueta llamada «{name}» en esa categoría");

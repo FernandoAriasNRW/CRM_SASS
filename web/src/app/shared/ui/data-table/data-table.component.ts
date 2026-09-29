@@ -70,10 +70,12 @@ export interface TableState {
     
           <!-- Column Settings & Save View -->
           <div class="flex items-center gap-2">
-            <button uiButton variant="ghost" (click)="onSaveView.emit(state())">
-              <ng-icon name="lucideSave" class="w-4 h-4 mr-2"></ng-icon>
-              <span i18n>Guardar vista</span>
-            </button>
+            @if (canSaveView) {
+              <button uiButton variant="ghost" (click)="onSaveView.emit(state())">
+                <ng-icon name="lucideSave" class="w-4 h-4 mr-2"></ng-icon>
+                <span i18n>Guardar vista</span>
+              </button>
+            }
     
             <div class="relative" #settingsDropdown>
               <button uiButton variant="outline" (click)="toggleColumnSettings()">
@@ -277,6 +279,8 @@ export class DataTableComponent<T extends object = Record<string, unknown>> impl
   @Input() totalItems = 0;
   @Input() loading = false;
   @Input() hasActions = false;
+  /** Si ofrece «Guardar vista». Una lista sin vistas guardadas no debe enseñar un botón que no hace nada. */
+  @Input() canSaveView = true;
   @Input() actionsTemplate!: TemplateRef<unknown>;
   
   @Input() set initialState(val: Partial<TableState>) {

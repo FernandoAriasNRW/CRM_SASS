@@ -1,0 +1,70 @@
+<div class="space-y-4 h-full min-h-0 flex flex-col">
+
+  <div class="flex flex-col border-b border-border bg-card rounded-t-lg shadow-sm">
+    <div class="flex items-center justify-between px-4 py-3 gap-3 flex-wrap">
+      <div>
+        <h2 class="text-xl font-semibold tracking-tight" i18n>Etiquetas</h2>
+        <p class="text-xs text-muted-foreground" i18n>Las de la organización, para tareas, tickets, proyectos, informes y paneles.</p>
+      </div>
+      <div class="flex items-center gap-2">
+        <button uiButton variant="outline" size="sm" (click)="refresh()">
+          <ng-icon name="lucideRefreshCw" size="14" class="mr-1.5" /> <span i18n>Actualizar</span>
+        </button>
+        <button uiButton variant="outline" size="sm" (click)="toggleCategoryForm()" [attr.aria-expanded]="categoryFormOpen()" data-testid="new-category">
+          <ng-icon name="lucideFolderPlus" size="14" class="mr-1.5" /> <span i18n>Nueva categoría</span>
+        </button>
+        <button uiButton size="sm" (click)="create()" data-testid="new-tag">
+          <ng-icon name="lucidePlus" size="14" class="mr-1.5" /> <span i18n>Nueva etiqueta</span>
+        </button>
+      </div>
+    </div>
+
+    @if (categoryFormOpen()) {
+      <form class="flex items-start gap-2 px-4 pb-3 flex-wrap" (ngSubmit)="saveCategory()">
+        <div class="flex flex-col gap-1">
+          <label for="new-category-name" class="sr-only" i18n>Nombre de la categoría</label>
+          <input id="new-category-name" name="newCategory" [(ngModel)]="newCategory" maxlength="50"
+                 i18n-placeholder placeholder="Nombre de la categoría"
+                 class="w-64 px-3 py-1.5 text-sm bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary" />
+          @if (categoryError()) {
+            <p role="alert" class="text-xs text-destructive">{{ categoryError() }}</p>
+          }
+        </div>
+        <button uiButton size="sm" type="submit" [disabled]="!newCategory.trim() || savingCategory()" i18n>Crear categoría</button>
+        <button uiButton variant="ghost" size="sm" type="button" (click)="toggleCategoryForm()" i18n>Cancelar</button>
+      </form>
+    }
+  </div>
+
+  <div class="flex-1 min-h-0">
+    <ui-data-table
+      [columns]="columns"
+      [data]="pageRows()"
+      [totalItems]="total()"
+      [loading]="!loaded()"
+      [initialState]="tableState()"
+      [canSaveView]="false"
+      (stateChange)="onStateChange($event)"
+      (rowClick)="open($event)">
+    </ui-data-table>
+  </div>
+
+  <ng-template #nameTemplate let-item>
+    <span class="inline-flex items-center gap-2 text-[13px] font-medium text-foreground">
+      <span class="w-2.5 h-2.5 rounded-full shrink-0" [style.background-color]="item.colorHex" aria-hidden="true"></span>
+      {{ item.name }}
+    </span>
+  </ng-template>
+
+  <ng-template #createdByTemplate let-item>
+    @if (item.createdBy) {
+      <app-user-avatar [userId]="item.createdBy" />
+    } @else {
+      <span class="text-[13px] text-muted-foreground" i18n>El sistema</span>
+    }
+  </ng-template>
+</div>
+
+@if (selected() !== undefined) {
+  <app-tag-drawer [tag]="selected() ?? null" (closed)="closeDrawer()" />
+}
