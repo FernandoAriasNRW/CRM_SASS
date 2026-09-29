@@ -5,69 +5,69 @@ using CustomFields.Application.Commands;
 using CustomFields.Application.DTOs;
 using CustomFields.Application.Queries;
 using CustomFields.Domain.Entities;
-using CustomFields.Domain.Servicios;
+using CustomFields.Domain.Services;
 using CustomFields.Domain.ValueObjects;
 
 namespace CustomFields.Application.Handlers;
 
 public sealed class DefineCustomFieldCommandHandler(
-    ICustomFieldRepository repositorio,
+    ICustomFieldRepository repository,
     ICustomFieldsUnitOfWork unitOfWork) : ICommandHandler<DefineCustomFieldCommand, CustomFieldDefinitionDto>
 {
   public async Task<Result<CustomFieldDefinitionDto>> Handle(DefineCustomFieldCommand request, CancellationToken ct)
   {
     // El nombre es lo que ve la gente al rellenar: dos campos «Cliente» en la misma entidad
     // serían indistinguibles en el formulario.
-    if (await repositorio.ExisteNombreAsync(request.TenantId, request.EntidadDestino, request.Nombre.Trim(), null, ct))
-      return Result<CustomFieldDefinitionDto>.Failure(CustomFieldDefinition.Reglas.NombreRepetido);
+    if (await repository.NameExistsAsync(request.TenantId, request.TargetEntity, request.Name.Trim(), null, ct))
+      return Result<CustomFieldDefinitionDto>.Failure(CustomFieldDefinition.Rules.DuplicateName);
 
-    CustomFieldDefinition definicion;
+    CustomFieldDefinition definition;
     try
     {
-      definicion = CustomFieldDefinition.Create(
-          request.TenantId, request.Nombre, request.Tipo, request.EntidadDestino,
-          request.Obligatorio, request.Opciones, request.Posicion, request.Formula);
+      definition = CustomFieldDefinition.Create(
+          request.TenantId, request.Name, request.Type, request.TargetEntity,
+          request.IsRequired, request.Options, request.Position, request.Formula);
     }
     catch (InvalidOperationException ex) { return Result<CustomFieldDefinitionDto>.Failure(ex.Message); }
 
     // El dominio ya comprobó que la fórmula se puede leer. Lo que sólo se puede comprobar aquí
     // es contra qué apunta, porque hace falta ver los demás campos del inquilino.
-    var problema = await ValidarFormula.ContraLosDemasAsync(
-        repositorio, request.TenantId, request.EntidadDestino, request.Nombre, request.Formula, null, ct);
+    var problem = await FormulaValidator.ValidateAgainstOthersAsync(
+        repository, request.TenantId, request.TargetEntity, request.Name, request.Formula, null, ct);
 
-    if (problema is not null)
-      return Result<CustomFieldDefinitionDto>.Failure(problema);
+    if (problem is not null)
+      return Result<CustomFieldDefinitionDto>.Failure(problem);
 
-    await repositorio.AddDefinitionAsync(definicion, ct);
+    await repository.AddDefinitionAsync(definition, ct);
     await unitOfWork.SaveChangesAsync(ct);
 
-    return Result<CustomFieldDefinitionDto>.Success(ADto(definicion));
+    return Result<CustomFieldDefinitionDto>.Success(ADto(definition));
   }
 
   internal static CustomFieldDefinitionDto ADto(CustomFieldDefinition d) =>
-      new(d.Id, d.Nombre, d.Tipo, d.EntidadDestino, d.Obligatorio, d.Opciones, d.Posicion, d.Formula);
+      new(d.Id, d.Name, d.Type, d.TargetEntity, d.IsRequired, d.Options, d.Position, d.Formula);
 }
 
 public sealed class UpdateCustomFieldCommandHandler(
-    ICustomFieldRepository repositorio,
+    ICustomFieldRepository repository,
     ICustomFieldsUnitOfWork unitOfWork) : ICommandHandler<UpdateCustomFieldCommand, bool>
 {
   public async Task<Result<bool>> Handle(UpdateCustomFieldCommand request, CancellationToken ct)
   {
-    var definicion = await repositorio.GetDefinitionAsync(request.TenantId, request.Id, ct);
-    if (definicion is null)
+    var definition = await repository.GetDefinitionAsync(request.TenantId, request.Id, ct);
+    if (definition is null)
       return Result<bool>.Failure("El campo no existe");
 
-    if (await repositorio.ExisteNombreAsync(request.TenantId, definicion.EntidadDestino, request.Nombre.Trim(), request.Id, ct))
-      return Result<bool>.Failure(CustomFieldDefinition.Reglas.NombreRepetido);
+    if (await repository.NameExistsAsync(request.TenantId, definition.TargetEntity, request.Name.Trim(), request.Id, ct))
+      return Result<bool>.Failure(CustomFieldDefinition.Rules.DuplicateName);
 
-    var problema = await ValidarFormula.ContraLosDemasAsync(
-        repositorio, request.TenantId, definicion.EntidadDestino, request.Nombre, request.Formula, request.Id, ct);
+    var problem = await FormulaValidator.ValidateAgainstOthersAsync(
+        repository, request.TenantId, definition.TargetEntity, request.Name, request.Formula, request.Id, ct);
 
-    if (problema is not null)
-      return Result<bool>.Failure(problema);
+    if (problem is not null)
+      return Result<bool>.Failure(problem);
 
-    try { definicion.Actualizar(request.Nombre, request.Obligatorio, request.Opciones, request.Posicion, request.Formula); }
+    try { definition.Update(request.Name, request.IsRequired, request.Options, request.Position, request.Formula); }
     catch (InvalidOperationException ex) { return Result<bool>.Failure(ex.Message); }
 
     await unitOfWork.SaveChangesAsync(ct);
@@ -76,19 +76,19 @@ public sealed class UpdateCustomFieldCommandHandler(
 }
 
 public sealed class RemoveCustomFieldCommandHandler(
-    ICustomFieldRepository repositorio,
+    ICustomFieldRepository repository,
     ICustomFieldsUnitOfWork unitOfWork) : ICommandHandler<RemoveCustomFieldCommand, bool>
 {
   public async Task<Result<bool>> Handle(RemoveCustomFieldCommand request, CancellationToken ct)
   {
-    var definicion = await repositorio.GetDefinitionAsync(request.TenantId, request.Id, ct);
-    if (definicion is null)
+    var definition = await repository.GetDefinitionAsync(request.TenantId, request.Id, ct);
+    if (definition is null)
       return Result<bool>.Failure("El campo no existe");
 
     // Los valores se van con la definición: dejarlos sería guardar respuestas a una pregunta
     // que ya nadie hace.
-    await repositorio.RemoveValuesOfDefinitionAsync(request.TenantId, request.Id, ct);
-    repositorio.RemoveDefinition(definicion);
+    await repository.RemoveValuesOfDefinitionAsync(request.TenantId, request.Id, ct);
+    repository.RemoveDefinition(definition);
     await unitOfWork.SaveChangesAsync(ct);
 
     return Result<bool>.Success(true);
@@ -96,48 +96,48 @@ public sealed class RemoveCustomFieldCommandHandler(
 }
 
 public sealed class SetCustomFieldValueCommandHandler(
-    ICustomFieldRepository repositorio,
+    ICustomFieldRepository repository,
     ICustomFieldsUnitOfWork unitOfWork) : ICommandHandler<SetCustomFieldValueCommand, bool>
 {
   public async Task<Result<bool>> Handle(SetCustomFieldValueCommand request, CancellationToken ct)
   {
-    var definicion = await repositorio.GetDefinitionAsync(request.TenantId, request.DefinitionId, ct);
-    if (definicion is null)
+    var definition = await repository.GetDefinitionAsync(request.TenantId, request.DefinitionId, ct);
+    if (definition is null)
       return Result<bool>.Failure("El campo no existe");
 
     // Un campo calculado no se rellena. Aceptar el valor y luego ignorarlo al leer sería peor
     // que rechazarlo: quien lo escribió vería el suyo desaparecer sin explicación.
-    if (TipoDeCampo.SeCalcula(definicion.Tipo))
-      return Result<bool>.Failure(CustomFieldDefinition.Reglas.NoSeRellenaUnCalculado);
+    if (FieldType.IsComputed(definition.Type))
+      return Result<bool>.Failure(CustomFieldDefinition.Rules.ComputedIsReadOnly);
 
     // La validación es del dominio y devuelve el valor ya en forma canónica; el handler sólo
     // guarda lo que ella aprueba.
-    var resultado = ValidadorDeValor.Validar(definicion, request.Valor);
-    if (!resultado.EsValido)
-      return Result<bool>.Failure(resultado.Error!);
+    var result = ValueValidator.Validate(definition, request.Value);
+    if (!result.IsValid)
+      return Result<bool>.Failure(result.Error!);
 
-    var existente = await repositorio.GetValueAsync(request.TenantId, request.DefinitionId, request.EntityId, ct);
+    var existing = await repository.GetValueAsync(request.TenantId, request.DefinitionId, request.EntityId, ct);
 
-    if (existente is null)
-      await repositorio.AddValueAsync(
-          CustomFieldValue.Create(request.TenantId, request.DefinitionId, request.EntityId, resultado.ValorCanonico), ct);
+    if (existing is null)
+      await repository.AddValueAsync(
+          CustomFieldValue.Create(request.TenantId, request.DefinitionId, request.EntityId, result.CanonicalValue), ct);
     else
-      existente.Cambiar(resultado.ValorCanonico);
+      existing.Change(result.CanonicalValue);
 
     await unitOfWork.SaveChangesAsync(ct);
     return Result<bool>.Success(true);
   }
 }
 
-public sealed class GetCustomFieldsQueryHandler(ICustomFieldRepository repositorio)
+public sealed class GetCustomFieldsQueryHandler(ICustomFieldRepository repository)
     : IQueryHandler<GetCustomFieldsQuery, IReadOnlyList<CustomFieldDefinitionDto>>
 {
   public async Task<Result<IReadOnlyList<CustomFieldDefinitionDto>>> Handle(GetCustomFieldsQuery request, CancellationToken ct)
   {
-    var definiciones = await repositorio.GetDefinitionsAsync(request.TenantId, request.EntidadDestino, ct);
+    var definitions = await repository.GetDefinitionsAsync(request.TenantId, request.TargetEntity, ct);
 
     return Result<IReadOnlyList<CustomFieldDefinitionDto>>.Success(
-        definiciones.Select(DefineCustomFieldCommandHandler.ADto).ToList());
+        definitions.Select(DefineCustomFieldCommandHandler.ADto).ToList());
   }
 }
 
@@ -148,38 +148,38 @@ public sealed class GetCustomFieldsQueryHandler(ICustomFieldRepository repositor
 /// llegaran las rellenas, un campo nuevo no aparecería nunca en el formulario y nadie podría
 /// rellenarlo.
 /// </summary>
-public sealed class GetCustomFieldValuesQueryHandler(ICustomFieldRepository repositorio)
+public sealed class GetCustomFieldValuesQueryHandler(ICustomFieldRepository repository)
     : IQueryHandler<GetCustomFieldValuesQuery, IReadOnlyList<CustomFieldValueDto>>
 {
   public async Task<Result<IReadOnlyList<CustomFieldValueDto>>> Handle(GetCustomFieldValuesQuery request, CancellationToken ct)
   {
-    var definiciones = await repositorio.GetDefinitionsAsync(request.TenantId, request.EntidadDestino, ct);
-    var valores = await repositorio.GetValuesAsync(request.TenantId, request.EntityId, ct);
+    var definitions = await repository.GetDefinitionsAsync(request.TenantId, request.TargetEntity, ct);
+    var values = await repository.GetValuesAsync(request.TenantId, request.EntityId, ct);
 
-    var porDefinicion = valores.ToDictionary(v => v.DefinitionId, v => v.Valor);
+    var byDefinition = values.ToDictionary(v => v.DefinitionId, v => v.Value);
 
     // Los campos calculados no tienen valor guardado: se calculan aquí, cada vez. Es lo que
     // garantiza que nunca estén desfasados —ver el comentario de TipoDeCampo.Formula— y lo que
     // permite que una fórmula use el resultado de otra.
-    var calculados = CalculadoraDeCampos.Calcular(definiciones, porDefinicion)
+    var computedValues = FieldCalculator.Compute(definitions, byDefinition)
         .ToDictionary(c => c.DefinitionId);
 
-    var salida = definiciones
-        .OrderBy(d => d.Posicion)
-        .ThenBy(d => d.Nombre)
+    var output = definitions
+        .OrderBy(d => d.Position)
+        .ThenBy(d => d.Name)
         .Select(d =>
         {
-            if (calculados.TryGetValue(d.Id, out var calculado))
+            if (computedValues.TryGetValue(d.Id, out var computedValue))
                 return new CustomFieldValueDto(
-                    d.Id, d.Nombre, d.Tipo, d.Obligatorio, d.Opciones, d.Posicion,
-                    calculado.Valor, d.Formula, calculado.Error);
+                    d.Id, d.Name, d.Type, d.IsRequired, d.Options, d.Position,
+                    computedValue.Value, d.Formula, computedValue.Error);
 
             return new CustomFieldValueDto(
-                d.Id, d.Nombre, d.Tipo, d.Obligatorio, d.Opciones, d.Posicion,
-                porDefinicion.TryGetValue(d.Id, out var valor) ? valor : null, d.Formula);
+                d.Id, d.Name, d.Type, d.IsRequired, d.Options, d.Position,
+                byDefinition.TryGetValue(d.Id, out var value) ? value : null, d.Formula);
         })
         .ToList();
 
-    return Result<IReadOnlyList<CustomFieldValueDto>>.Success(salida);
+    return Result<IReadOnlyList<CustomFieldValueDto>>.Success(output);
   }
 }

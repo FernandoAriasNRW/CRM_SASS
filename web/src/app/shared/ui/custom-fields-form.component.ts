@@ -57,7 +57,7 @@ export class CustomFieldsFormComponent implements OnInit {
     this.servicio.valoresDe(this.entidad(), this.entityId()).subscribe({
       next: campos => {
         this.campos.set(campos ?? []);
-        this.ultimoValido = Object.fromEntries((campos ?? []).map(c => [c.definitionId, c.valor]));
+        this.ultimoValido = Object.fromEntries((campos ?? []).map(c => [c.definitionId, c.value]));
         this.cargando.set(false);
       },
       error: () => this.cargando.set(false),
@@ -66,11 +66,11 @@ export class CustomFieldsFormComponent implements OnInit {
 
   /** Lo marcado en una selección múltiple. */
   estaMarcada(campo: CustomFieldValue, opcion: string): boolean {
-    return (campo.valor ?? '').split(SEPARADOR_MULTIPLE).includes(opcion);
+    return (campo.value ?? '').split(SEPARADOR_MULTIPLE).includes(opcion);
   }
 
   alternarOpcion(campo: CustomFieldValue, opcion: string): void {
-    const actuales = (campo.valor ?? '').split(SEPARADOR_MULTIPLE).filter(Boolean);
+    const actuales = (campo.value ?? '').split(SEPARADOR_MULTIPLE).filter(Boolean);
     const nuevas = actuales.includes(opcion)
       ? actuales.filter(o => o !== opcion)
       : [...actuales, opcion];
@@ -81,9 +81,9 @@ export class CustomFieldsFormComponent implements OnInit {
   /**
    * Guarda un valor y deja el error del servidor junto al campo si lo rechaza.
    */
-  guardar(campo: CustomFieldValue, valor: string | null): void {
+  guardar(campo: CustomFieldValue, value: string | null): void {
     const anterior = this.ultimoValido[campo.definitionId] ?? null;
-    const limpio = valor === '' ? null : valor;
+    const limpio = value === '' ? null : value;
 
     this.aplicarEnPantalla(campo.definitionId, limpio);
     this.guardando.set(campo.definitionId);
@@ -105,8 +105,8 @@ export class CustomFieldsFormComponent implements OnInit {
     });
   }
 
-  private aplicarEnPantalla(definitionId: string, valor: string | null): void {
-    this.campos.update(campos => campos.map(c => c.definitionId === definitionId ? { ...c, valor } : c));
+  private aplicarEnPantalla(definitionId: string, value: string | null): void {
+    this.campos.update(campos => campos.map(c => c.definitionId === definitionId ? { ...c, value } : c));
   }
 
   private limpiarError(definitionId: string): void {

@@ -16,7 +16,7 @@ const LARGO_MAXIMO_DEL_NOMBRE = 80;
 const MAXIMO_DE_OPCIONES = 50;
 
 /** Los tipos que se definen con una lista de opciones. Lo decide `TipoDeCampo.UsaOpciones`. */
-const TIPOS_CON_OPCIONES = ['Seleccion', 'SeleccionMultiple'];
+const TIPOS_CON_OPCIONES = ['Select', 'MultiSelect'];
 
 /**
  * Administración de las definiciones de campos personalizados.
@@ -57,12 +57,12 @@ export class AdminCustomFieldsComponent implements OnInit {
   readonly editando = signal<string | null>(null);
   readonly borrando = signal<string | null>(null);
 
-  nombre = '';
-  tipo: string = TIPOS_DE_CAMPO[0].key;
-  obligatorio = false;
+  name = '';
+  type: string = TIPOS_DE_CAMPO[0].key;
+  isRequired = false;
   /** Una opción por línea: es lo más rápido de escribir y de reordenar. */
-  opciones = '';
-  posicion = 0;
+  options = '';
+  position = 0;
   /** La expresión de un campo calculado. */
   formula = '';
 
@@ -70,8 +70,8 @@ export class AdminCustomFieldsComponent implements OnInit {
 
   // `tipo`, `nombre` y `opciones` son campos normales atados con ngModel, no señales, así que lo
   // que dependa de ellos tiene que ser un getter: un computed() no volvería a calcularse nunca.
-  get usaOpciones(): boolean { return TIPOS_CON_OPCIONES.includes(this.tipo); }
-  get usaFormula(): boolean { return seCalcula(this.tipo); }
+  get usaOpciones(): boolean { return TIPOS_CON_OPCIONES.includes(this.type); }
+  get usaFormula(): boolean { return seCalcula(this.type); }
 
   /**
    * Los campos que una fórmula puede usar: los numéricos y otros calculados. Se ofrecen para
@@ -83,23 +83,23 @@ export class AdminCustomFieldsComponent implements OnInit {
    */
   get camposUsables(): CustomFieldDefinition[] {
     const id = this.editando();
-    return this.ordenadas().filter(d => (d.tipo === 'Numero' || seCalcula(d.tipo)) && d.id !== id);
+    return this.ordenadas().filter(d => (d.type === 'Number' || seCalcula(d.type)) && d.id !== id);
   }
 
-  insertarReferencia(nombre: string): void {
-    this.formula = `${this.formula}[${nombre}]`;
+  insertarReferencia(name: string): void {
+    this.formula = `${this.formula}[${name}]`;
   }
 
   readonly ordenadas = computed(() =>
-    [...this.definiciones()].sort((a, b) => a.posicion - b.posicion || a.nombre.localeCompare(b.nombre))
+    [...this.definiciones()].sort((a, b) => a.position - b.position || a.name.localeCompare(b.name))
   );
 
   ngOnInit(): void {
     this.cargar();
   }
 
-  etiquetaDelTipo(tipo: string): string {
-    return TIPOS_DE_CAMPO.find(t => t.key === tipo)?.label ?? tipo;
+  etiquetaDelTipo(type: string): string {
+    return TIPOS_DE_CAMPO.find(t => t.key === type)?.label ?? type;
   }
 
   cambiarEntidad(entidad: string): void {
@@ -127,25 +127,25 @@ export class AdminCustomFieldsComponent implements OnInit {
 
   nuevo(): void {
     this.editando.set('');
-    this.nombre = '';
-    this.tipo = TIPOS_DE_CAMPO[0].key;
-    this.obligatorio = false;
-    this.opciones = '';
+    this.name = '';
+    this.type = TIPOS_DE_CAMPO[0].key;
+    this.isRequired = false;
+    this.options = '';
     this.formula = '';
     // Detrás del último, que es donde se espera que aparezca un campo recién creado.
-    this.posicion = this.ordenadas().length
-      ? Math.max(...this.ordenadas().map(d => d.posicion)) + 1
+    this.position = this.ordenadas().length
+      ? Math.max(...this.ordenadas().map(d => d.position)) + 1
       : 0;
     this.error.set('');
   }
 
   editar(definicion: CustomFieldDefinition): void {
     this.editando.set(definicion.id);
-    this.nombre = definicion.nombre;
-    this.tipo = definicion.tipo;
-    this.obligatorio = definicion.obligatorio;
-    this.opciones = (definicion.opciones ?? []).join('\n');
-    this.posicion = definicion.posicion;
+    this.name = definicion.name;
+    this.type = definicion.type;
+    this.isRequired = definicion.isRequired;
+    this.options = (definicion.options ?? []).join('\n');
+    this.position = definicion.position;
     this.error.set('');
   }
 
@@ -158,7 +158,7 @@ export class AdminCustomFieldsComponent implements OnInit {
   private opcionesLimpias(): string[] {
     if (!this.usaOpciones) return [];
 
-    const lista = this.opciones
+    const lista = this.options
       .split('\n')
       .map(o => o.trim())
       .filter(o => o.length > 0);
@@ -173,10 +173,10 @@ export class AdminCustomFieldsComponent implements OnInit {
    * falta el nombre. El servidor sigue siendo el que manda: si las dos discrepan, gana su error.
    */
   get impedimento(): string {
-    const nombre = this.nombre.trim();
+    const name = this.name.trim();
 
-    if (!nombre) return $localize`El campo necesita un nombre`;
-    if (nombre.length > LARGO_MAXIMO_DEL_NOMBRE) {
+    if (!name) return $localize`El campo necesita un nombre`;
+    if (name.length > LARGO_MAXIMO_DEL_NOMBRE) {
       return $localize`El nombre del campo no puede pasar de ${LARGO_MAXIMO_DEL_NOMBRE} caracteres`;
     }
 
@@ -185,9 +185,9 @@ export class AdminCustomFieldsComponent implements OnInit {
     }
 
     if (this.usaOpciones) {
-      const opciones = this.opcionesLimpias();
-      if (!opciones.length) return $localize`Un campo de selección necesita al menos una opción`;
-      if (opciones.length > MAXIMO_DE_OPCIONES) {
+      const options = this.opcionesLimpias();
+      if (!options.length) return $localize`Un campo de selección necesita al menos una opción`;
+      if (options.length > MAXIMO_DE_OPCIONES) {
         return $localize`Un campo de selección no puede tener más de ${MAXIMO_DE_OPCIONES} opciones`;
       }
     }
@@ -202,10 +202,10 @@ export class AdminCustomFieldsComponent implements OnInit {
     if (id === null) return;
 
     const comun = {
-      nombre: this.nombre.trim(),
-      obligatorio: this.obligatorio,
-      opciones: this.opcionesLimpias(),
-      posicion: this.posicion,
+      name: this.name.trim(),
+      isRequired: this.isRequired,
+      options: this.opcionesLimpias(),
+      position: this.position,
       // Sólo si aplica: mandarla en un campo de texto la guardaría para nada y confundiría a
       // quien leyera la definición después.
       formula: this.usaFormula ? this.formula.trim() : null,
@@ -217,7 +217,7 @@ export class AdminCustomFieldsComponent implements OnInit {
     // El alta devuelve la definición creada y la edición no devuelve nada; aquí no se usa ninguna
     // de las dos, así que el tipo común basta y evita que la unión deje de ser invocable.
     const peticion: Observable<unknown> = id === ''
-      ? this.servicio.definir({ ...comun, tipo: this.tipo, entidadDestino: this.entidad() })
+      ? this.servicio.definir({ ...comun, type: this.type, targetEntity: this.entidad() })
       : this.servicio.actualizar(id, this.entidad(), comun);
 
     peticion.subscribe({

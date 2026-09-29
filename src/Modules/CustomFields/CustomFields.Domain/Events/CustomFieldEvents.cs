@@ -2,9 +2,9 @@ using BuildingBlocks.Domain.Primitives;
 
 namespace CustomFields.Domain.Events;
 
-public sealed record CustomFieldDefinedEvent(Guid DefinitionId, Guid TenantId, string Nombre, string Tipo, string EntidadDestino) : DomainEvent;
+public sealed record CustomFieldDefinedEvent(Guid DefinitionId, Guid TenantId, string Name, string Type, string TargetEntity) : DomainEvent;
 
-public sealed record CustomFieldUpdatedEvent(Guid DefinitionId, Guid TenantId, string Nombre) : DomainEvent;
+public sealed record CustomFieldUpdatedEvent(Guid DefinitionId, Guid TenantId, string Name) : DomainEvent;
 
 public sealed record CustomFieldRemovedEvent(Guid DefinitionId, Guid TenantId) : DomainEvent;
 

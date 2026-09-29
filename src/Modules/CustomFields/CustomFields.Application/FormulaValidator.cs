@@ -1,6 +1,6 @@
 using CustomFields.Application.Abstractions;
 using CustomFields.Domain.Entities;
-using CustomFields.Domain.Servicios;
+using CustomFields.Domain.Services;
 using CustomFields.Domain.ValueObjects;
 
 namespace CustomFields.Application;
@@ -17,69 +17,69 @@ namespace CustomFields.Application;
 /// Todo esto ocurre **al guardar**, en el formulario, donde quien escribió la fórmula puede
 /// corregirla. Descubrir un ciclo al abrir una tarea tres semanas después no le sirve a nadie.
 /// </summary>
-public static class ValidarFormula
+public static class FormulaValidator
 {
     /// <summary>
     /// Devuelve el problema, o <c>null</c> si la fórmula es válida.
     ///
-    /// <paramref name="idQueSeEdita"/> es el campo que se está modificando, para excluirlo del
+    /// <paramref name="editedId"/> es el campo que se está modificando, para excluirlo del
     /// grafo: si se dejara, editar una fórmula se compararía contra su propia versión anterior
     /// y daría ciclos donde no los hay.
     /// </summary>
-    public static async Task<string?> ContraLosDemasAsync(
-        ICustomFieldRepository repositorio,
+    public static async Task<string?> ValidateAgainstOthersAsync(
+        ICustomFieldRepository repository,
         Guid tenantId,
-        string entidadDestino,
-        string nombre,
+        string targetEntity,
+        string name,
         string? formula,
-        Guid? idQueSeEdita,
+        Guid? editedId,
         CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(formula))
             return null;   // no es un campo calculado, o el dominio ya lo habrá rechazado
 
-        var analisis = AnalizadorDeFormula.Analizar(formula);
-        if (!analisis.EsValida)
-            return analisis.Error;
+        var analysis = FormulaParser.Parse(formula);
+        if (!analysis.IsValid)
+            return analysis.Error;
 
-        var referencias = AnalizadorDeFormula.ReferenciasDe(analisis.Arbol!);
+        var references = FormulaParser.ReferencesOf(analysis.Tree!);
 
         // Sólo los campos de la misma entidad. Una fórmula de un campo de tarea no puede usar
         // un campo de proyecto: no hay una tarea con un solo proyecto en el que apoyarse desde
         // aquí, y fingir que la hay daría resultados según qué proyecto tocara.
-        var vecinos = (await repositorio.GetDefinitionsAsync(tenantId, entidadDestino, ct))
-            .Where(d => idQueSeEdita is null || d.Id != idQueSeEdita)
+        var neighbours = (await repository.GetDefinitionsAsync(tenantId, targetEntity, ct))
+            .Where(d => editedId is null || d.Id != editedId)
             .ToList();
 
-        var porNombre = vecinos.ToDictionary(
-            d => d.Nombre, d => d, DetectorDeCiclosDeFormula.ComparadorDeNombres);
+        var byName = neighbours.ToDictionary(
+            d => d.Name, d => d, FormulaCycleDetector.NameComparer);
 
-        foreach (var referencia in referencias)
+        foreach (var reference in references)
         {
-            if (!porNombre.TryGetValue(referencia, out var campo))
-                return $"La fórmula usa el campo «{referencia}», que no existe en {entidadDestino}";
+            if (!byName.TryGetValue(reference, out var field))
+                return $"La fórmula usa el campo «{reference}», que no existe en {targetEntity}";
 
-            if (!TipoDeCampo.SirveEnFormula(campo.Tipo))
-                return $"«{referencia}» es de tipo {campo.Tipo}. "
-                     + CustomFieldDefinition.Reglas.ReferenciaNoNumerica;
+            if (!FieldType.UsableInFormula(field.Type))
+                return $"«{reference}» es de tipo {field.Type}. "
+                     + CustomFieldDefinition.Rules.NonNumericReference;
         }
 
-        var existentes = vecinos
-            .Where(d => TipoDeCampo.SeCalcula(d.Tipo) && d.Formula is not null)
+        var existingFields = neighbours
+            .Where(d => FieldType.IsComputed(d.Type) && d.Formula is not null)
             .Select(d =>
             {
-                var suyo = AnalizadorDeFormula.Analizar(d.Formula);
+                var own = FormulaParser.Parse(d.Formula);
 
                 // Una fórmula ya guardada que no se puede leer no debería existir, pero si la
                 // hay se cuenta como sin referencias en vez de reventar aquí: el problema es de
                 // ese campo, y no tiene por qué impedir guardar éste.
-                return new DetectorDeCiclosDeFormula.Dependencia(
-                    d.Nombre,
-                    suyo.EsValida ? AnalizadorDeFormula.ReferenciasDe(suyo.Arbol!) : []);
+                return new FormulaCycleDetector.Dependency(
+                    d.Name,
+                    own.IsValid ? FormulaParser.ReferencesOf(own.Tree!) : []);
             });
 
-        return DetectorDeCiclosDeFormula.CerrariaUnCiclo(existentes, nombre.Trim(), referencias)
-            ? CustomFieldDefinition.Reglas.FormulaEnCiclo
+        return FormulaCycleDetector.WouldCreateCycle(existingFields, name.Trim(), references)
+            ? CustomFieldDefinition.Rules.FormulaCycle
             : null;
     }
 }

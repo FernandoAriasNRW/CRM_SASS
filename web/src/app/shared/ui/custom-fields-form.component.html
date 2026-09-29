@@ -8,46 +8,46 @@
 
     @for (campo of campos(); track campo.definitionId) {
       <div class="flex items-start gap-3 text-sm">
-        <span class="text-muted-foreground w-28 shrink-0 pt-1 truncate" [title]="campo.nombre">
-          {{ campo.nombre }}
-          @if (campo.obligatorio) {
+        <span class="text-muted-foreground w-28 shrink-0 pt-1 truncate" [title]="campo.name">
+          {{ campo.name }}
+          @if (campo.isRequired) {
             <span class="text-destructive" aria-hidden="true">*</span>
           }
         </span>
 
         <div class="flex-1 min-w-0">
-          @switch (campo.tipo) {
-            @case ('Texto') {
-              <input type="text" [ngModel]="campo.valor" (blur)="guardar(campo, $any($event.target).value)"
-                     [attr.aria-label]="campo.nombre"
+          @switch (campo.type) {
+            @case ('Text') {
+              <input type="text" [ngModel]="campo.value" (blur)="guardar(campo, $any($event.target).value)"
+                     [attr.aria-label]="campo.name"
                      class="w-full bg-transparent border border-transparent hover:border-border focus:border-border rounded-md px-2 py-1 outline-none transition-colors focus:ring-1 focus:ring-ring" />
             }
-            @case ('Numero') {
+            @case ('Number') {
               <!-- El texto se manda tal cual: la coma decimal la normaliza el servidor, y
                    hacerlo también aquí sería tener dos reglas que algún día discreparán. -->
-              <input type="text" inputmode="decimal" [ngModel]="campo.valor"
+              <input type="text" inputmode="decimal" [ngModel]="campo.value"
                      (blur)="guardar(campo, $any($event.target).value)"
-                     [attr.aria-label]="campo.nombre"
+                     [attr.aria-label]="campo.name"
                      class="w-full bg-transparent border border-transparent hover:border-border focus:border-border rounded-md px-2 py-1 outline-none transition-colors focus:ring-1 focus:ring-ring" />
             }
-            @case ('Fecha') {
-              <input type="date" [ngModel]="campo.valor" (change)="guardar(campo, $any($event.target).value)"
-                     [attr.aria-label]="campo.nombre"
+            @case ('Date') {
+              <input type="date" [ngModel]="campo.value" (change)="guardar(campo, $any($event.target).value)"
+                     [attr.aria-label]="campo.name"
                      class="bg-transparent border border-border rounded-md px-2 py-1 outline-none focus:ring-1 focus:ring-ring" />
             }
-            @case ('Seleccion') {
-              <select [ngModel]="campo.valor" (ngModelChange)="guardar(campo, $event)"
-                      [attr.aria-label]="campo.nombre"
+            @case ('Select') {
+              <select [ngModel]="campo.value" (ngModelChange)="guardar(campo, $event)"
+                      [attr.aria-label]="campo.name"
                       class="w-full bg-transparent border border-border rounded-md px-2 py-1 outline-none focus:ring-1 focus:ring-ring">
                 <option value="" i18n>Sin valor</option>
-                @for (opcion of campo.opciones; track opcion) {
+                @for (opcion of campo.options; track opcion) {
                   <option [value]="opcion">{{ opcion }}</option>
                 }
               </select>
             }
-            @case ('SeleccionMultiple') {
+            @case ('MultiSelect') {
               <div class="flex flex-wrap gap-1.5">
-                @for (opcion of campo.opciones; track opcion) {
+                @for (opcion of campo.options; track opcion) {
                   <button type="button" (click)="alternarOpcion(campo, opcion)"
                           [attr.aria-pressed]="estaMarcada(campo, opcion)"
                           class="text-xs px-2 py-0.5 rounded-full border transition-colors"
@@ -61,9 +61,9 @@
                 }
               </div>
             }
-            @case ('Usuario') {
-              <select [ngModel]="campo.valor" (ngModelChange)="guardar(campo, $event)"
-                      [attr.aria-label]="campo.nombre"
+            @case ('User') {
+              <select [ngModel]="campo.value" (ngModelChange)="guardar(campo, $event)"
+                      [attr.aria-label]="campo.name"
                       class="w-full bg-transparent border border-border rounded-md px-2 py-1 outline-none focus:ring-1 focus:ring-ring">
                 <option value="" i18n>Sin asignar</option>
                 @for (persona of personas; track persona.id) {
@@ -85,8 +85,8 @@
                     <ng-icon name="lucideCircleAlert" size="12" class="mt-0.5 shrink-0" />
                     {{ campo.error }}
                   </span>
-                } @else if (campo.valor) {
-                  <span class="font-medium tabular-nums">{{ campo.valor }}</span>
+                } @else if (campo.value) {
+                  <span class="font-medium tabular-nums">{{ campo.value }}</span>
                 } @else {
                   <!-- Sin valor porque falta rellenar algo de lo que depende. Se dice, en vez
                        de enseñar un cero: un total en cero se lee como un dato. -->
@@ -104,7 +104,7 @@
               <!-- Un tipo que el backend conoce y esta versión del frontend no. Se muestra el
                    valor en crudo en lugar de esconder el campo: es preferible enseñarlo sin
                    editor a que alguien crea que su dato se ha perdido. -->
-              <span class="text-muted-foreground">{{ campo.valor }}</span>
+              <span class="text-muted-foreground">{{ campo.value }}</span>
             }
           }
 
