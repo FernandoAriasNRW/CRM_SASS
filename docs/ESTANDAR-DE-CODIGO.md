@@ -288,6 +288,8 @@ Un concepto, un nombre. Ordenado por área.
 | programación de informe, frecuencia: diaria, semanal, mensual | `ReportSchedule`, `ScheduleFrequency`: `Daily`, `Weekly`, `Monthly` |
 | destinatario, último día generado, toca ahora | `RecipientId`, `LastGeneratedDay`, `IsDue` |
 | panel de inicio, recuadro sugerido, colocar | `StarterDashboard`, `SuggestedWidget`, `Place` |
+| generador de exportaciones, planificador de informes, datos del informe | `ExportGenerator`, `ReportScheduler`, `ReportData` |
+| consultas del panel, aviso de exportación lista / fallida | `DashboardQueries`, `ExportReadyNotifier` / `ExportFailedNotifier` |
 
 ### Campos personalizados y automatizaciones
 
@@ -366,7 +368,7 @@ suites completas en verde, catálogo i18n re-extraído al final.
 | 6a ✅ | **Calendar + Notifications + Communication** (backend) | Anular, enlazar y papelera; preferencias de aviso; agenda del día |
 | 6b ✅ | **Frontend del calendario** | 155 identificadores, casi todos del calendario: diff aparte |
 | 7a ✅ | **Reporting** (módulo: dominio, aplicación, infraestructura, presentación) | 299 identificadores, tablas y rutas |
-| 7b | **Reporting en el Host** (motor, generador de exportaciones, planificador, panel) | ~200 identificadores |
+| 7b ✅ | **Reporting en el Host** (motor, generador de exportaciones, planificador, panel) | 158 identificadores |
 | 7c | **Frontend de informes y paneles** | ~150 identificadores |
 | 7d | **El JSON guardado de informes y paneles** (claves de la definición y del recuadro, y valores del catálogo) | Como el 5c: datos guardados, con su migración |
 | 8 | **CustomFields + Automations + Webhook + Tags** | Fórmulas y reglas |
@@ -709,6 +711,20 @@ cambiarlo exige migrar ese contenido. Por eso fue un bloque aparte, el 5c.
 - Del frontend va sólo el contrato: catálogo, vista previa, exportaciones y datos del panel.
 - **Dos choques de variables locales** que el diccionario provocó (`mio`/`mios` → `mine`,
   `nuevo`/`creados` → `created`) los señaló el compilador y se resolvieron a mano.
+
+### Hecho en el bloque 7b (Reporting en el Host)
+
+- 158 identificadores en los seis ficheros de `ApiHost/Reporting`, con el mismo mapa generado que en
+  la 7a: `MotorDeInformes` → `ReportEngine`, `DatosDelInforme` → `ReportData`,
+  `GeneradorDeExportaciones` → `ExportGenerator`, `PlanificadorDeInformes` → `ReportScheduler`,
+  `ConsultasDelPanel` → `DashboardQueries` y los avisos de exportación (`ExportReadyNotifier`,
+  `ExportFailedNotifier`), con sus ficheros; un tipo por fichero (`RecipientEmails` y los avisos,
+  separados).
+- **Sin cambios de contrato ni de base de datos**: es código interno del Host. El diff de contratos
+  contra `main` sale vacío.
+- Se quedan en español, a propósito, los textos de las cabeceras de columna de los informes
+  («Estado», «Prioridad», «Horas estimadas»…), que son lo que lee quien abre el fichero, y las
+  referencias a las propiedades de `ReportDefinition` y `ReportFilter` que se serializan (7d).
 
 ---
 

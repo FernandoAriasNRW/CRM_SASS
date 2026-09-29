@@ -32,7 +32,7 @@ namespace ApiHost.Reporting;
 /// panel con eso habría dado cifras estables y falsas, que es peor que no tenerlas. Se
 /// eliminaron junto con esta refactorización.
 /// </summary>
-public sealed class ConsultasDelPanel(
+public sealed class DashboardQueries(
     ProjectsDbContext projectsDb,
     WorkItemsDbContext workItemsDb,
     TicketingDbContext ticketingDb) : IDashboardRepository
@@ -63,15 +63,15 @@ public sealed class ConsultasDelPanel(
         // Se descartan las que no tengan las dos fechas —las cerradas antes de que existieran
         // las columnas— en vez de suponerles una: un promedio sobre fechas inventadas es peor
         // que un promedio sobre menos tareas, porque no se distingue de uno bueno.
-        var duraciones = await workItemsDb.Tasks.AsNoTracking()
+        var durations = await workItemsDb.Tasks.AsNoTracking()
             .Where(t => t.TenantId == tenantId && t.CompletedAtUtc != null)
             .Select(t => EF.Functions.DateDiffSecond(t.CreatedAtUtc, t.CompletedAtUtc!.Value))
             .ToListAsync(cancellationToken);
 
         // Sin ninguna tarea cerrada no hay media que dar. `null` viaja hasta la interfaz, que
         // enseña un hueco; devolver 0 diría «se entrega en el acto», que es lo contrario.
-        double? leadTime = duraciones.Count > 0
-            ? Math.Round(duraciones.Average() / 86400.0, 1)
+        double? leadTime = durations.Count > 0
+            ? Math.Round(durations.Average() / 86400.0, 1)
             : null;
 
         return new KpiDataDto(
@@ -177,34 +177,34 @@ public sealed class ConsultasDelPanel(
         // decisiones mirándolo.
         //
         // Ahora sale de `CompletedAtUtc`: para cada día, cuántas tareas seguían sin cerrar.
-        var cierres = pTasks
+        var closings = pTasks
             .Where(t => t.CompletedAtUtc.HasValue)
             .Select(t => DateOnly.FromDateTime(t.CompletedAtUtc!.Value))
             .ToList();
 
         // El eje va del arranque del proyecto —o de la primera tarea creada, si no hay fecha—
         // hasta hoy. No se extiende al futuro: un quemado no predice, sólo cuenta lo ocurrido.
-        var hoy = DateOnly.FromDateTime(DateTime.UtcNow);
-        var inicio = project?.StartDate
-            ?? (pTasks.Count > 0 ? DateOnly.FromDateTime(pTasks.Min(t => t.CreatedAtUtc)) : hoy);
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var start = project?.StartDate
+            ?? (pTasks.Count > 0 ? DateOnly.FromDateTime(pTasks.Min(t => t.CreatedAtUtc)) : today);
 
-        if (inicio > hoy) inicio = hoy;
+        if (start > today) start = today;
 
-        var dias = Math.Max(1, hoy.DayNumber - inicio.DayNumber);
+        var days = Math.Max(1, today.DayNumber - start.DayNumber);
         var dataPoints = new List<BurndownDataPointDto>();
 
-        for (int i = 0; i <= dias; i++)
+        for (int i = 0; i <= days; i++)
         {
-            var dia = inicio.AddDays(i);
+            var day = start.AddDays(i);
 
             // Lo real: las que a fecha de ese día aún no se habían cerrado.
-            var restantes = totalTasks - cierres.Count(c => c <= dia);
+            var remaining = totalTasks - closings.Count(c => c <= day);
 
             // Lo ideal: repartir el trabajo a ritmo constante entre el inicio y hoy. Es una
             // referencia para comparar, no una predicción.
-            var ideal = (int)Math.Round(Math.Max(0, totalTasks - (i * (double)totalTasks / dias)));
+            var ideal = (int)Math.Round(Math.Max(0, totalTasks - (i * (double)totalTasks / days)));
 
-            dataPoints.Add(new BurndownDataPointDto(dia.ToString("yyyy-MM-dd"), restantes, ideal));
+            dataPoints.Add(new BurndownDataPointDto(day.ToString("yyyy-MM-dd"), remaining, ideal));
         }
 
         return new ProjectBurndownDto(projectId, projectName, dataPoints);

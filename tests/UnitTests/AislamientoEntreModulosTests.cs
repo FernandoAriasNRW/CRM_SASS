@@ -84,7 +84,7 @@ public sealed class AislamientoEntreModulosTests
 
         infracciones.Should().BeEmpty(
             "ningún módulo puede referenciar a otro; lo que cruza módulos se compone en el host, " +
-            "como ApiHost/Reporting/ConsultasDelPanel.cs o PuenteDeAutomatizaciones. Infracciones:\n" +
+            "como ApiHost/Reporting/DashboardQueries.cs o PuenteDeAutomatizaciones. Infracciones:\n" +
             string.Join("\n", infracciones));
     }
 
