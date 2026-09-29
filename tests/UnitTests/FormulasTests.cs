@@ -1,7 +1,7 @@
-using CustomFields.Domain.Servicios;
+using CustomFields.Domain.Services;
 using FluentAssertions;
 using Xunit;
-using static CustomFields.Domain.Servicios.AnalizadorDeFormula;
+using static CustomFields.Domain.Services.FormulaParser;
 
 namespace UnitTests;
 
@@ -14,23 +14,23 @@ namespace UnitTests;
 /// </summary>
 public sealed class FormulasTests
 {
-    private static Nodo Arbol(string formula)
+    private static Node Arbol(string formula)
     {
-        var r = Analizar(formula);
-        r.EsValida.Should().BeTrue($"«{formula}» debería analizarse. Error: {r.Error}");
-        return r.Arbol!;
+        var r = Parse(formula);
+        r.IsValid.Should().BeTrue($"«{formula}» debería analizarse. Error: {r.Error}");
+        return r.Tree!;
     }
 
-    private static EvaluadorDeFormula.Resultado Evaluar(string formula, Dictionary<string, decimal?>? campos = null)
+    private static FormulaEvaluator.EvaluationResult Evaluar(string formula, Dictionary<string, decimal?>? campos = null)
     {
         var valores = new Dictionary<string, decimal?>(campos ?? [], StringComparer.OrdinalIgnoreCase);
 
-        return EvaluadorDeFormula.Evaluar(Arbol(formula), nombre =>
-            valores.TryGetValue(nombre, out var v) ? v : throw new EvaluadorDeFormula.CampoDesconocidoException(nombre));
+        return FormulaEvaluator.Evaluate(Arbol(formula), nombre =>
+            valores.TryGetValue(nombre, out var v) ? v : throw new FormulaEvaluator.UnknownFieldException(nombre));
     }
 
     private static decimal? ValorDe(string formula, Dictionary<string, decimal?>? campos = null)
-        => Evaluar(formula, campos).Valor;
+        => Evaluar(formula, campos).Value;
 
     #region Aritmética
 
@@ -92,7 +92,7 @@ public sealed class FormulasTests
     [Fact]
     public void Las_referencias_se_extraen_del_arbol_sin_repetir()
     {
-        var referencias = ReferenciasDe(Arbol("[A] + [B] * [A] - [C]"));
+        var referencias = ReferencesOf(Arbol("[A] + [B] * [A] - [C]"));
 
         referencias.Should().BeEquivalentTo(["A", "B", "C"]);
     }
@@ -115,9 +115,9 @@ public sealed class FormulasTests
 
         var resultado = Evaluar("[Horas] * [Precio]", campos);
 
-        resultado.HayValor.Should().BeFalse();
-        resultado.SinDato.Should().BeTrue();
-        resultado.EsError.Should().BeFalse("faltar un dato no es un error de la fórmula");
+        resultado.HasValue.Should().BeFalse();
+        resultado.NoData.Should().BeTrue();
+        resultado.IsError.Should().BeFalse("faltar un dato no es un error de la fórmula");
     }
 
     [Fact]
@@ -125,7 +125,7 @@ public sealed class FormulasTests
     {
         var campos = new Dictionary<string, decimal?> { ["A"] = 1, ["B"] = null };
 
-        Evaluar("([A] + 1) * 2 + [B] * 100", campos).SinDato.Should().BeTrue();
+        Evaluar("([A] + 1) * 2 + [B] * 100", campos).NoData.Should().BeTrue();
     }
 
     /// <summary>
@@ -155,9 +155,9 @@ public sealed class FormulasTests
     {
         var resultado = Evaluar("10 / 0");
 
-        resultado.EsError.Should().BeTrue();
-        resultado.SinDato.Should().BeFalse();
-        resultado.Error.Should().Be(EvaluadorDeFormula.Errores.DivisionPorCero);
+        resultado.IsError.Should().BeTrue();
+        resultado.NoData.Should().BeFalse();
+        resultado.Error.Should().Be(FormulaEvaluator.Errors.DivisionByZero);
     }
 
     [Fact]
@@ -165,7 +165,7 @@ public sealed class FormulasTests
     {
         var resultado = Evaluar("[Campo Fantasma] + 1", new Dictionary<string, decimal?>());
 
-        resultado.EsError.Should().BeTrue();
+        resultado.IsError.Should().BeTrue();
         resultado.Error.Should().Contain("Campo Fantasma");
     }
 
@@ -222,9 +222,9 @@ public sealed class FormulasTests
     [InlineData("1 < 2 < 3")]            // comparaciones encadenadas
     public void Una_formula_mal_escrita_se_rechaza_al_guardarla(string formula)
     {
-        var resultado = Analizar(formula);
+        var resultado = Parse(formula);
 
-        resultado.EsValida.Should().BeFalse($"«{formula}» no debería aceptarse");
+        resultado.IsValid.Should().BeFalse($"«{formula}» no debería aceptarse");
         resultado.Error.Should().NotBeNullOrWhiteSpace("el mensaje es lo único que tiene quien la escribió para arreglarla");
     }
 
@@ -237,21 +237,21 @@ public sealed class FormulasTests
     {
         var larga = string.Join(" + ", Enumerable.Repeat("1", 400));
 
-        Analizar(larga).EsValida.Should().BeFalse();
+        Parse(larga).IsValid.Should().BeFalse();
     }
 
     #endregion
 
     #region Ciclos
 
-    private static DetectorDeCiclosDeFormula.Dependencia Dep(string campo, params string[] referencias)
+    private static FormulaCycleDetector.Dependency Dep(string campo, params string[] referencias)
         => new(campo, referencias);
 
     /// <summary>El ciclo más corto y el más fácil de escribir sin querer.</summary>
     [Fact]
     public void Un_campo_que_se_referencia_a_si_mismo_es_un_ciclo()
     {
-        DetectorDeCiclosDeFormula.CerrariaUnCiclo([], "Total", ["Total"]).Should().BeTrue();
+        FormulaCycleDetector.WouldCreateCycle([], "Total", ["Total"]).Should().BeTrue();
     }
 
     [Fact]
@@ -260,7 +260,7 @@ public sealed class FormulasTests
         // B depende de C, C depende de A. Dar a A una referencia a B cierra A → B → C → A.
         var existentes = new[] { Dep("B", "C"), Dep("C", "A") };
 
-        DetectorDeCiclosDeFormula.CerrariaUnCiclo(existentes, "A", ["B"]).Should().BeTrue();
+        FormulaCycleDetector.WouldCreateCycle(existentes, "A", ["B"]).Should().BeTrue();
     }
 
     [Fact]
@@ -268,7 +268,7 @@ public sealed class FormulasTests
     {
         var existentes = new[] { Dep("B", "C"), Dep("C", "Horas") };
 
-        DetectorDeCiclosDeFormula.CerrariaUnCiclo(existentes, "A", ["B"]).Should().BeFalse();
+        FormulaCycleDetector.WouldCreateCycle(existentes, "A", ["B"]).Should().BeFalse();
     }
 
     /// <summary>
@@ -280,14 +280,14 @@ public sealed class FormulasTests
     {
         var existentes = new[] { Dep("B", "D"), Dep("C", "D") };
 
-        DetectorDeCiclosDeFormula.CerrariaUnCiclo(existentes, "A", ["B", "C"]).Should().BeFalse();
+        FormulaCycleDetector.WouldCreateCycle(existentes, "A", ["B", "C"]).Should().BeFalse();
     }
 
     [Fact]
     public void El_orden_de_calculo_pone_cada_campo_despues_de_los_que_usa()
     {
         // A usa B, B usa C. Hay que calcular C, luego B, luego A.
-        var orden = DetectorDeCiclosDeFormula.OrdenDeCalculo([Dep("A", "B"), Dep("B", "C")]);
+        var orden = FormulaCycleDetector.ComputationOrder([Dep("A", "B"), Dep("B", "C")]);
 
         orden.Should().NotBeNull();
         orden!.Should().ContainInOrder("B", "A");
@@ -296,7 +296,7 @@ public sealed class FormulasTests
     [Fact]
     public void No_hay_orden_de_calculo_si_hay_ciclo()
     {
-        DetectorDeCiclosDeFormula.OrdenDeCalculo([Dep("A", "B"), Dep("B", "A")]).Should().BeNull();
+        FormulaCycleDetector.ComputationOrder([Dep("A", "B"), Dep("B", "A")]).Should().BeNull();
     }
 
     #endregion

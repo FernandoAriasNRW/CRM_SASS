@@ -44,12 +44,12 @@ public sealed class CamposCalculadosFlowTests(CrmApiFactory factory)
     {
         var respuesta = await cliente.PostAsJsonAsync("/api/v1/custom-fields", new
         {
-            nombre,
-            tipo,
-            entidadDestino = "Task",
-            obligatorio = false,
-            opciones = (string[]?)null,
-            posicion = 0,
+            name = nombre,
+            type = tipo,
+            targetEntity = "Task",
+            isRequired = false,
+            options = (string[]?)null,
+            position = 0,
             formula,
         });
 
@@ -61,14 +61,14 @@ public sealed class CamposCalculadosFlowTests(CrmApiFactory factory)
         HttpClient cliente, string nombre, string tipo, string? formula) =>
         cliente.PostAsJsonAsync("/api/v1/custom-fields", new
         {
-            nombre, tipo, entidadDestino = "Task", obligatorio = false,
-            opciones = (string[]?)null, posicion = 0, formula,
+            name = nombre, type = tipo, targetEntity = "Task", isRequired = false,
+            options = (string[]?)null, position = 0, formula,
         });
 
     private static async Task PonerValorAsync(HttpClient cliente, Guid campo, Guid entidad, string valor)
     {
         var respuesta = await cliente.PutAsJsonAsync(
-            $"/api/v1/custom-fields/values/{campo}/{entidad}", new { valor });
+            $"/api/v1/custom-fields/values/{campo}/{entidad}", new { value = valor });
 
         respuesta.StatusCode.Should().Be(HttpStatusCode.OK, await respuesta.Content.ReadAsStringAsync());
     }
@@ -90,8 +90,8 @@ public sealed class CamposCalculadosFlowTests(CrmApiFactory factory)
         var horas = Unico("Horas");
         var precio = Unico("Precio");
 
-        var idHoras = await DefinirAsync(cliente, horas, "Numero");
-        var idPrecio = await DefinirAsync(cliente, precio, "Numero");
+        var idHoras = await DefinirAsync(cliente, horas, "Number");
+        var idPrecio = await DefinirAsync(cliente, precio, "Number");
         var idTotal = await DefinirAsync(cliente, Unico("Total"), "Formula", $"[{horas}] * [{precio}]");
 
         await PonerValorAsync(cliente, idHoras, tarea, "8");
@@ -99,8 +99,8 @@ public sealed class CamposCalculadosFlowTests(CrmApiFactory factory)
 
         var total = await CampoDeAsync(cliente, tarea, idTotal);
 
-        total.GetProperty("valor").GetString().Should().Be("400");
-        total.GetProperty("tipo").GetString().Should().Be("Formula");
+        total.GetProperty("value").GetString().Should().Be("400");
+        total.GetProperty("type").GetString().Should().Be("Formula");
     }
 
     /// <summary>
@@ -116,15 +116,15 @@ public sealed class CamposCalculadosFlowTests(CrmApiFactory factory)
         var horas = Unico("Horas");
         var precio = Unico("Precio");
 
-        var idHoras = await DefinirAsync(cliente, horas, "Numero");
-        await DefinirAsync(cliente, precio, "Numero");
+        var idHoras = await DefinirAsync(cliente, horas, "Number");
+        await DefinirAsync(cliente, precio, "Number");
         var idTotal = await DefinirAsync(cliente, Unico("Total"), "Formula", $"[{horas}] * [{precio}]");
 
         await PonerValorAsync(cliente, idHoras, tarea, "8");   // el precio se queda en blanco
 
         var total = await CampoDeAsync(cliente, tarea, idTotal);
 
-        total.GetProperty("valor").ValueKind.Should().Be(JsonValueKind.Null);
+        total.GetProperty("value").ValueKind.Should().Be(JsonValueKind.Null);
         total.GetProperty("error").ValueKind.Should().Be(JsonValueKind.Null,
             "faltar un dato es normal, no un error de la fórmula");
     }
@@ -143,7 +143,7 @@ public sealed class CamposCalculadosFlowTests(CrmApiFactory factory)
         var total = Unico("Total");
         var conIva = Unico("Con IVA");
 
-        var idHoras = await DefinirAsync(cliente, horas, "Numero");
+        var idHoras = await DefinirAsync(cliente, horas, "Number");
         await DefinirAsync(cliente, total, "Formula", $"[{horas}] * 100");
         var idConIva = await DefinirAsync(cliente, conIva, "Formula", $"[{total}] * 1,21");
 
@@ -151,7 +151,7 @@ public sealed class CamposCalculadosFlowTests(CrmApiFactory factory)
 
         var resultado = await CampoDeAsync(cliente, tarea, idConIva);
 
-        resultado.GetProperty("valor").GetString().Should().Be("242");
+        resultado.GetProperty("value").GetString().Should().Be("242");
     }
 
     /// <summary>Cambiar un ingrediente cambia el resultado sin tocar nada más.</summary>
@@ -162,14 +162,14 @@ public sealed class CamposCalculadosFlowTests(CrmApiFactory factory)
         var tarea = Guid.NewGuid();
 
         var horas = Unico("Horas");
-        var idHoras = await DefinirAsync(cliente, horas, "Numero");
+        var idHoras = await DefinirAsync(cliente, horas, "Number");
         var idDoble = await DefinirAsync(cliente, Unico("Doble"), "Formula", $"[{horas}] * 2");
 
         await PonerValorAsync(cliente, idHoras, tarea, "10");
-        (await CampoDeAsync(cliente, tarea, idDoble)).GetProperty("valor").GetString().Should().Be("20");
+        (await CampoDeAsync(cliente, tarea, idDoble)).GetProperty("value").GetString().Should().Be("20");
 
         await PonerValorAsync(cliente, idHoras, tarea, "21");
-        (await CampoDeAsync(cliente, tarea, idDoble)).GetProperty("valor").GetString().Should().Be("42",
+        (await CampoDeAsync(cliente, tarea, idDoble)).GetProperty("value").GetString().Should().Be("42",
             "el valor se calcula al leerlo, así que no puede quedarse desfasado");
     }
 
@@ -179,11 +179,11 @@ public sealed class CamposCalculadosFlowTests(CrmApiFactory factory)
         var cliente = await AutenticarAsync();
 
         var horas = Unico("Horas");
-        await DefinirAsync(cliente, horas, "Numero");
+        await DefinirAsync(cliente, horas, "Number");
         var idTotal = await DefinirAsync(cliente, Unico("Total"), "Formula", $"[{horas}] * 2");
 
         var respuesta = await cliente.PutAsJsonAsync(
-            $"/api/v1/custom-fields/values/{idTotal}/{Guid.NewGuid()}", new { valor = "999" });
+            $"/api/v1/custom-fields/values/{idTotal}/{Guid.NewGuid()}", new { value = "999" });
 
         respuesta.StatusCode.Should().Be(HttpStatusCode.BadRequest,
             "aceptarlo y luego ignorarlo al leer sería peor: el valor desaparecería sin explicación");
@@ -233,7 +233,7 @@ public sealed class CamposCalculadosFlowTests(CrmApiFactory factory)
         var cliente = await AutenticarAsync();
 
         var nota = Unico("Nota");
-        await DefinirAsync(cliente, nota, "Texto");
+        await DefinirAsync(cliente, nota, "Text");
 
         var respuesta = await IntentarDefinirAsync(cliente, Unico("Cuenta"), "Formula", $"[{nota}] + 1");
 
@@ -253,7 +253,7 @@ public sealed class CamposCalculadosFlowTests(CrmApiFactory factory)
         var b = Unico("B");
 
         var horas = Unico("Horas");
-        await DefinirAsync(cliente, horas, "Numero");
+        await DefinirAsync(cliente, horas, "Number");
 
         // A se apoya en algo neutro; luego B se apoya en A; y entonces se intenta que A se
         // apoye en B, lo que cerraría A → B → A.
@@ -262,10 +262,10 @@ public sealed class CamposCalculadosFlowTests(CrmApiFactory factory)
 
         var respuesta = await cliente.PutAsJsonAsync($"/api/v1/custom-fields/{idA}", new
         {
-            nombre = a,
-            obligatorio = false,
-            opciones = (string[]?)null,
-            posicion = 0,
+            name = a,
+            isRequired = false,
+            options = (string[]?)null,
+            position = 0,
             formula = $"[{b}] + 1",
         });
 

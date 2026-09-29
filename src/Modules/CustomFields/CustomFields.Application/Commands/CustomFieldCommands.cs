@@ -6,12 +6,12 @@ namespace CustomFields.Application.Commands;
 
 public sealed record DefineCustomFieldCommand(
     Guid TenantId,
-    string Nombre,
-    string Tipo,
-    string EntidadDestino,
-    bool Obligatorio,
-    IReadOnlyList<string>? Opciones,
-    int Posicion,
+    string Name,
+    string Type,
+    string TargetEntity,
+    bool IsRequired,
+    IReadOnlyList<string>? Options,
+    int Position,
     /// <summary>Sólo para los campos de tipo Formula; en los demás se ignora.</summary>
     string? Formula = null
 ) : ICommand<CustomFieldDefinitionDto>;
@@ -19,10 +19,10 @@ public sealed record DefineCustomFieldCommand(
 public sealed record UpdateCustomFieldCommand(
     Guid TenantId,
     Guid Id,
-    string Nombre,
-    bool Obligatorio,
-    IReadOnlyList<string>? Opciones,
-    int Posicion,
+    string Name,
+    bool IsRequired,
+    IReadOnlyList<string>? Options,
+    int Position,
     string? Formula = null
 ) : ICommand<bool>;
 
@@ -38,5 +38,5 @@ public sealed record SetCustomFieldValueCommand(
     Guid TenantId,
     Guid DefinitionId,
     Guid EntityId,
-    string? Valor
+    string? Value
 ) : ICommand<bool>;

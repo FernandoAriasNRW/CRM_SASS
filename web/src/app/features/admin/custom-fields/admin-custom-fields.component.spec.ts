@@ -11,13 +11,13 @@ import { CustomFieldsService, type CustomFieldDefinition } from '../../../core/c
  */
 describe('AdminCustomFieldsComponent', () => {
   const CLIENTE: CustomFieldDefinition = {
-    id: 'def-1', nombre: 'Cliente facturable', tipo: 'Texto', entidadDestino: 'Task',
-    obligatorio: false, opciones: [], posicion: 2, formula: null
+    id: 'def-1', name: 'Cliente facturable', type: 'Text', targetEntity: 'Task',
+    isRequired: false, options: [], position: 2, formula: null
   };
 
   const CANAL: CustomFieldDefinition = {
-    id: 'def-2', nombre: 'Canal', tipo: 'Seleccion', entidadDestino: 'Task',
-    obligatorio: true, opciones: ['Web', 'Teléfono'], posicion: 0, formula: null
+    id: 'def-2', name: 'Canal', type: 'Select', targetEntity: 'Task',
+    isRequired: true, options: ['Web', 'Teléfono'], position: 0, formula: null
   };
 
   let servicio: jasmine.SpyObj<CustomFieldsService>;
@@ -77,42 +77,42 @@ describe('AdminCustomFieldsComponent', () => {
     });
 
     it('un campo sin nombre', () => {
-      componente.nombre = '   ';
+      componente.name = '   ';
 
       expect(componente.impedimento).toBeTruthy();
     });
 
     it('un nombre más largo de lo que admite el dominio', () => {
-      componente.nombre = 'x'.repeat(81);
+      componente.name = 'x'.repeat(81);
 
       expect(componente.impedimento).toBeTruthy();
     });
 
     it('una selección sin ninguna opción', () => {
-      componente.nombre = 'Canal';
-      componente.tipo = 'Seleccion';
-      componente.opciones = '   \n  \n';
+      componente.name = 'Canal';
+      componente.type = 'Select';
+      componente.options = '   \n  \n';
 
       expect(componente.impedimento).toBeTruthy();
     });
 
     it('nada, cuando el campo está bien', () => {
-      componente.nombre = 'Canal';
-      componente.tipo = 'Seleccion';
-      componente.opciones = 'Web\nTeléfono';
+      componente.name = 'Canal';
+      componente.type = 'Select';
+      componente.options = 'Web\nTeléfono';
 
       expect(componente.impedimento).toBe('');
     });
 
     it('un campo de texto no necesita opciones', () => {
-      componente.nombre = 'Cliente facturable';
-      componente.tipo = 'Texto';
+      componente.name = 'Cliente facturable';
+      componente.type = 'Text';
 
       expect(componente.impedimento).toBe('');
     });
 
     it('e impedido, no se manda nada al servidor', () => {
-      componente.nombre = '';
+      componente.name = '';
 
       componente.guardar();
 
@@ -123,38 +123,38 @@ describe('AdminCustomFieldsComponent', () => {
   it('crea el campo con el nombre y las opciones ya limpias', async () => {
     await montar();
     componente.nuevo();
-    componente.nombre = '  Canal  ';
-    componente.tipo = 'Seleccion';
-    componente.opciones = 'Web\n  Web  \n\nTeléfono\n';
-    componente.obligatorio = true;
-    componente.posicion = 3;
+    componente.name = '  Canal  ';
+    componente.type = 'Select';
+    componente.options = 'Web\n  Web  \n\nTeléfono\n';
+    componente.isRequired = true;
+    componente.position = 3;
 
     componente.guardar();
 
     expect(servicio.definir).toHaveBeenCalledWith({
-      nombre: 'Canal',
-      obligatorio: true,
-      opciones: ['Web', 'Teléfono'],
-      posicion: 3,
+      name: 'Canal',
+      isRequired: true,
+      options: ['Web', 'Teléfono'],
+      position: 3,
       // Nula porque este campo es de selección: la fórmula sólo se manda en los calculados,
       // y guardarla en los demás confundiría a quien leyera la definición después.
       formula: null,
-      tipo: 'Seleccion',
-      entidadDestino: 'Task',
+      type: 'Select',
+      targetEntity: 'Task',
     });
   });
 
   it('un campo sin opciones no las manda aunque quedaran escritas de antes', async () => {
     await montar();
     componente.nuevo();
-    componente.tipo = 'Seleccion';
-    componente.opciones = 'Web\nTeléfono';
-    componente.tipo = 'Texto';
-    componente.nombre = 'Cliente facturable';
+    componente.type = 'Select';
+    componente.options = 'Web\nTeléfono';
+    componente.type = 'Text';
+    componente.name = 'Cliente facturable';
 
     componente.guardar();
 
-    expect(servicio.definir).toHaveBeenCalledWith(jasmine.objectContaining({ opciones: [] }));
+    expect(servicio.definir).toHaveBeenCalledWith(jasmine.objectContaining({ options: [] }));
   });
 
   it('el campo nuevo se coloca detrás del último', async () => {
@@ -162,7 +162,7 @@ describe('AdminCustomFieldsComponent', () => {
 
     componente.nuevo();
 
-    expect(componente.posicion).toBe(3);
+    expect(componente.position).toBe(3);
   });
 
   it('editar carga el campo y deja de ser nuevo, que es lo que bloquea el tipo', async () => {
@@ -171,30 +171,30 @@ describe('AdminCustomFieldsComponent', () => {
     componente.editar(CANAL);
 
     expect(componente.esNuevo()).toBeFalse();
-    expect(componente.nombre).toBe('Canal');
-    expect(componente.opciones).toBe('Web\nTeléfono');
+    expect(componente.name).toBe('Canal');
+    expect(componente.options).toBe('Web\nTeléfono');
   });
 
   it('editar actualiza en lugar de crear', async () => {
     await montar([CANAL]);
     componente.editar(CANAL);
-    componente.nombre = 'Canal de entrada';
+    componente.name = 'Canal de entrada';
 
     componente.guardar();
 
     expect(servicio.definir).not.toHaveBeenCalled();
     expect(servicio.actualizar).toHaveBeenCalledWith('def-2', 'Task', {
-      nombre: 'Canal de entrada',
-      obligatorio: true,
-      opciones: ['Web', 'Teléfono'],
-      posicion: 0, formula: null
+      name: 'Canal de entrada',
+      isRequired: true,
+      options: ['Web', 'Teléfono'],
+      position: 0, formula: null
     });
   });
 
   it('tras guardar cierra el formulario y relee la lista', async () => {
     await montar([CLIENTE]);
     componente.nuevo();
-    componente.nombre = 'Otro';
+    componente.name = 'Otro';
 
     componente.guardar();
 
@@ -206,7 +206,7 @@ describe('AdminCustomFieldsComponent', () => {
     await montar();
     servicio.definir.and.returnValue(throwError(() => ({ error: 'Ya hay un campo con ese nombre para esa entidad' })));
     componente.nuevo();
-    componente.nombre = 'Canal';
+    componente.name = 'Canal';
 
     componente.guardar();
 

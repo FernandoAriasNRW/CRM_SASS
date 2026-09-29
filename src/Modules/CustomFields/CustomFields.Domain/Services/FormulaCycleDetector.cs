@@ -1,4 +1,4 @@
-namespace CustomFields.Domain.Servicios;
+namespace CustomFields.Domain.Services;
 
 /// <summary>
 /// Decide si una fórmula se referiría a sí misma, directa o indirectamente.
@@ -16,63 +16,63 @@ namespace CustomFields.Domain.Servicios;
 /// tres semanas después. El evaluador tiene igualmente su tope de profundidad, porque los datos
 /// pueden llegar por otras vías.
 /// </summary>
-public static class DetectorDeCiclosDeFormula
+public static class FormulaCycleDetector
 {
     /// <summary>
     /// Los nombres de campo se comparan sin distinguir mayúsculas ni acentos de más: quien
     /// escribe `[horas estimadas]` se refiere a «Horas estimadas». Que la fórmula funcione o no
     /// según cómo se teclee una mayúscula sería una crueldad innecesaria.
     /// </summary>
-    public static readonly StringComparer ComparadorDeNombres = StringComparer.OrdinalIgnoreCase;
+    public static readonly StringComparer NameComparer = StringComparer.OrdinalIgnoreCase;
 
     /// <summary>Qué campos referencia cada campo con fórmula.</summary>
-    public readonly record struct Dependencia(string Campo, IReadOnlyList<string> Referencias);
+    public readonly record struct Dependency(string Field, IReadOnlyList<string> References);
 
     /// <summary>
-    /// Si dar a <paramref name="campo"/> esas <paramref name="referencias"/> cerraría un ciclo,
+    /// Si dar a <paramref name="field"/> esas <paramref name="references"/> cerraría un ciclo,
     /// contando las fórmulas que ya existen.
     ///
-    /// <paramref name="existentes"/> no debe incluir al propio campo: se sustituye por lo que se
+    /// <paramref name="existingFields"/> no debe incluir al propio campo: se sustituye por lo que se
     /// está intentando guardar. Si se incluyera, editar una fórmula se compararía contra su
     /// versión anterior y daría ciclos donde no los hay.
     /// </summary>
-    public static bool CerrariaUnCiclo(
-        IEnumerable<Dependencia> existentes,
-        string campo,
-        IEnumerable<string> referencias)
+    public static bool WouldCreateCycle(
+        IEnumerable<Dependency> existingFields,
+        string field,
+        IEnumerable<string> references)
     {
-        var referenciasDe = new Dictionary<string, IReadOnlyList<string>>(ComparadorDeNombres);
+        var referencesOf = new Dictionary<string, IReadOnlyList<string>>(NameComparer);
 
-        foreach (var d in existentes)
-            referenciasDe[d.Campo] = d.Referencias;
+        foreach (var d in existingFields)
+            referencesOf[d.Field] = d.References;
 
-        var nuevas = referencias.ToList();
-        referenciasDe[campo] = nuevas;
+        var added = references.ToList();
+        referencesOf[field] = added;
 
         // Referirse a uno mismo es el ciclo más corto y el más fácil de escribir sin querer.
-        if (nuevas.Contains(campo, ComparadorDeNombres))
+        if (added.Contains(field, NameComparer))
             return true;
 
         // Recorrido iterativo con conjunto de visitados. Recursivo sería más corto, pero un
         // grafo que ya tuviera un ciclo —por datos anteriores a esta comprobación, o por dos
         // escrituras a la vez— haría girar para siempre a la versión ingenua, que es justo el
         // fallo que se quiere evitar.
-        var porVisitar = new Stack<string>(nuevas);
-        var vistos = new HashSet<string>(ComparadorDeNombres);
+        var toVisit = new Stack<string>(added);
+        var seen = new HashSet<string>(NameComparer);
 
-        while (porVisitar.Count > 0)
+        while (toVisit.Count > 0)
         {
-            var actual = porVisitar.Pop();
+            var actual = toVisit.Pop();
 
-            if (ComparadorDeNombres.Equals(actual, campo))
+            if (NameComparer.Equals(actual, field))
                 return true;
 
-            if (!vistos.Add(actual))
+            if (!seen.Add(actual))
                 continue;
 
-            if (referenciasDe.TryGetValue(actual, out var siguientes))
-                foreach (var s in siguientes)
-                    porVisitar.Push(s);
+            if (referencesOf.TryGetValue(actual, out var next))
+                foreach (var s in next)
+                    toVisit.Push(s);
         }
 
         return false;
@@ -86,35 +86,35 @@ public static class DetectorDeCiclosDeFormula
     /// tarea, por ejemplo—: sin orden, un campo que depende de otro con fórmula se evaluaría
     /// contra un valor que todavía no existe y saldría como hueco.
     /// </summary>
-    public static IReadOnlyList<string>? OrdenDeCalculo(IEnumerable<Dependencia> dependencias)
+    public static IReadOnlyList<string>? ComputationOrder(IEnumerable<Dependency> dependencies)
     {
-        var referenciasDe = dependencias.ToDictionary(d => d.Campo, d => d.Referencias, ComparadorDeNombres);
-        var orden = new List<string>();
-        var estado = new Dictionary<string, int>(ComparadorDeNombres); // 1 = en curso, 2 = terminado
+        var referencesOf = dependencies.ToDictionary(d => d.Field, d => d.References, NameComparer);
+        var order = new List<string>();
+        var state = new Dictionary<string, int>(NameComparer); // 1 = en curso, 2 = terminado
 
-        foreach (var campo in referenciasDe.Keys)
-            if (!Visitar(campo))
+        foreach (var field in referencesOf.Keys)
+            if (!Visit(field))
                 return null;
 
-        return orden;
+        return order;
 
-        bool Visitar(string campo)
+        bool Visit(string field)
         {
-            if (estado.TryGetValue(campo, out var e))
+            if (state.TryGetValue(field, out var e))
                 return e != 1;   // volver a entrar en uno «en curso» es un ciclo
 
             // Un campo sin fórmula es una hoja: su valor lo pone quien rellena el formulario.
-            if (!referenciasDe.TryGetValue(campo, out var referencias))
+            if (!referencesOf.TryGetValue(field, out var references))
                 return true;
 
-            estado[campo] = 1;
+            state[field] = 1;
 
-            foreach (var referencia in referencias)
-                if (!Visitar(referencia))
+            foreach (var reference in references)
+                if (!Visit(reference))
                     return false;
 
-            estado[campo] = 2;
-            orden.Add(campo);
+            state[field] = 2;
+            order.Add(field);
             return true;
         }
     }

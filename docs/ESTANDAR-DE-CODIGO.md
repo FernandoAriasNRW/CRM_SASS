@@ -309,6 +309,9 @@ Un concepto, un nombre. Ordenado por área.
 | condición, acción, ejecución | `Condition`, `Action`, `Execution` |
 | disparador | `Trigger` |
 | operador | `Operator` |
+| entidad destino, obligatorio, opciones, posición | `TargetEntity`, `IsRequired`, `Options`, `Position` |
+| calculadora de campos, evaluador de fórmula, validador de valor | `FieldCalculator`, `FormulaEvaluator`, `ValueValidator` |
+| tipos de campo: texto, número, fecha, selección, selección múltiple, usuario | `Text`, `Number`, `Date`, `Select`, `MultiSelect`, `User` |
 
 ---
 
@@ -376,7 +379,9 @@ suites completas en verde, catálogo i18n re-extraído al final.
 | 7b ✅ | **Reporting en el Host** (motor, generador de exportaciones, planificador, panel) | 158 identificadores |
 | 7c ✅ | **Frontend de informes y paneles** | 135 identificadores y cuatro ficheros |
 | 7d ✅ | **El JSON guardado de informes y paneles** (claves de la definición y del recuadro, y valores del catálogo) | Como el 5c: datos guardados, con su migración |
-| 8 | **CustomFields + Automations + Webhook + Tags** | Fórmulas y reglas |
+| 8a ✅ | **CustomFields** (módulo, columnas, tipos de campo guardados y el contrato en el frontend) | 236 identificadores; migración con renombrado y datos |
+| 8b | **Automations + Webhook + Tags** (backend, con las reglas guardadas) | Condiciones y acciones guardadas en español: con su migración |
+| 8c | **Frontend de campos personalizados y automatizaciones** | Lo que no arrastró el contrato |
 | 9 | **Frontend transversal** (`shared/`, `core/`, e2e) | Lo que no arrastraron los PRs anteriores |
 | 10 | **Nombres de las pruebas** | Son frases, no identificadores de producción; traducirlas dentro de cada bloque ensucia el diff de revisión |
 | 11 | **`TimeProvider` en todos los módulos** | Cambiar el reloj módulo a módulo deja dos formas de dar la hora conviviendo; va de una vez, al final |
@@ -776,6 +781,26 @@ cambiarlo exige migrar ese contenido. Por eso fue un bloque aparte, el 5c.
 - **Lo que las pruebas cazaron:** el motor reconocía las medias porque su clave empezaba por
   `media`; con las claves nuevas una media sin datos salía «0» en vez de «—». Ahora mira el
   prefijo `avg_`.
+
+### Hecho en el bloque 8a (CustomFields)
+
+- 236 identificadores con Roslyn y un mapa generado: `AnalizadorDeFormula` → `FormulaParser`,
+  `EvaluadorDeFormula` → `FormulaEvaluator`, `CalculadoraDeCampos` → `FieldCalculator`,
+  `DetectorDeCiclosDeFormula` → `FormulaCycleDetector`, `ValidadorDeValor` → `ValueValidator`,
+  `TipoDeCampo` → `FieldType`, `TipoDeEntidad` → `TargetEntityTypes`, `ValidarFormula` →
+  `FormulaValidator`; el espacio de nombres `Servicios` → `Services` y sus ficheros.
+- **Columnas e índices** renombrados (`Nombre`, `Tipo`, `EntidadDestino`, `Obligatorio`, `Opciones`,
+  `Posicion`, `Valor` → `Name`, `Type`, `TargetEntity`, `IsRequired`, `Options`, `Position`,
+  `Value`), y **los tipos guardados** en la misma migración (`Texto` → `Text`, `Numero` → `Number`,
+  `SeleccionMultiple` → `MultiSelect`…; `Formula` no cambia). Probada ida y vuelta.
+- **Contrato**: el JSON de definiciones y valores sale en inglés, y la consulta pasa de
+  `?entidad=` a `?entity=`. El frontend se ajustó en el mismo cambio —interfaces, plantillas y
+  pruebas—; sus demás nombres van en la 8c.
+- **Lo que cazaron las pruebas:** Roslyn renombró el parámetro `entidad` de un endpoint pero no
+  la plantilla de la ruta (`/values/{entidad}/…`), que es una cadena. La ruta dejó de enlazar y el
+  diff de contratos no lo vio. Queda en la skill como comprobación aparte.
+- Los nombres de las funciones de las fórmulas (`SI`, `REDONDEAR`…) siguen en español: los escribe
+  el usuario.
 
 ---
 

@@ -5,11 +5,11 @@ namespace CustomFields.Application.Queries;
 
 public sealed record GetCustomFieldsQuery(
     Guid TenantId,
-    string? EntidadDestino
+    string? TargetEntity
 ) : IQuery<IReadOnlyList<CustomFieldDefinitionDto>>;
 
 public sealed record GetCustomFieldValuesQuery(
     Guid TenantId,
-    string EntidadDestino,
+    string TargetEntity,
     Guid EntityId
 ) : IQuery<IReadOnlyList<CustomFieldValueDto>>;

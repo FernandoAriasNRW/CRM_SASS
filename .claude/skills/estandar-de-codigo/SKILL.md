@@ -85,6 +85,11 @@ dotnet run --project tools/contract-snapshot -- <bin-de-main>  > /tmp/main.txt
 dotnet run --project tools/contract-snapshot -- <bin-de-la-rama> > /tmp/rama.txt
 diff /tmp/main.txt /tmp/rama.txt     # cada campo que cambie, búscalo en web/ por el nombre viejo
 
+# 3b. Lo que el diff de contratos NO ve: los parámetros de los endpoints. Renombrar el parámetro
+#     de una lambda cambia el nombre de la consulta (?entidad= → ?entity=) y, si sale en la
+#     plantilla de la ruta, la deja sin enlazar. Revisar a mano cada MapGet/MapPost tocado.
+git diff main -- 'src/**/Endpoints/*.cs' | grep -E '^[-+].*Map(Get|Post|Put|Delete)'
+
 # 4. Pruebas
 dotnet test tests/UnitTests
 dotnet test tests/IntegrationTests          # necesita Docker levantado

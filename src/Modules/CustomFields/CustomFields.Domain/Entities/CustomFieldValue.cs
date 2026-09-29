@@ -21,35 +21,35 @@ public sealed class CustomFieldValue : AggregateRoot, ITenantEntity
     public Guid EntityId { get; private set; }
 
     /// <summary>Ya validado y en forma canónica. Nulo significa «sin valor».</summary>
-    public string? Valor { get; private set; }
+    public string? Value { get; private set; }
 
     private CustomFieldValue() { }
 
-    public static CustomFieldValue Create(Guid tenantId, Guid definitionId, Guid entityId, string? valorCanonico)
+    public static CustomFieldValue Create(Guid tenantId, Guid definitionId, Guid entityId, string? canonicalValue)
     {
         if (definitionId == Guid.Empty || entityId == Guid.Empty)
             throw new InvalidOperationException("El valor necesita un campo y una entidad");
 
-        var valor = new CustomFieldValue
+        var value = new CustomFieldValue
         {
             Id = Guid.NewGuid(),
             TenantId = tenantId,
             DefinitionId = definitionId,
             EntityId = entityId,
-            Valor = valorCanonico
+            Value = canonicalValue
         };
 
-        valor.RaiseDomainEvent(new CustomFieldValueSetEvent(valor.Id, tenantId, definitionId, entityId));
+        value.RaiseDomainEvent(new CustomFieldValueSetEvent(value.Id, tenantId, definitionId, entityId));
 
-        return valor;
+        return value;
     }
 
-    public void Cambiar(string? valorCanonico)
+    public void Change(string? canonicalValue)
     {
-        if (Valor == valorCanonico)
+        if (Value == canonicalValue)
             return;
 
-        Valor = valorCanonico;
+        Value = canonicalValue;
         RaiseDomainEvent(new CustomFieldValueSetEvent(Id, TenantId, DefinitionId, EntityId));
     }
 }

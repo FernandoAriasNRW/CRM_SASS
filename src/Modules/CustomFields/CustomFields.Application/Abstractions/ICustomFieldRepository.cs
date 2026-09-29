@@ -12,20 +12,20 @@ public interface ICustomFieldRepository
 {
   Task<CustomFieldDefinition?> GetDefinitionAsync(Guid tenantId, Guid id, CancellationToken ct = default);
 
-  Task<IReadOnlyList<CustomFieldDefinition>> GetDefinitionsAsync(Guid tenantId, string? entidadDestino, CancellationToken ct = default);
+  Task<IReadOnlyList<CustomFieldDefinition>> GetDefinitionsAsync(Guid tenantId, string? targetEntity, CancellationToken ct = default);
 
   /// <summary>Si ya hay un campo con ese nombre para la misma entidad. El nombre es lo que ve la gente.</summary>
-  Task<bool> ExisteNombreAsync(Guid tenantId, string entidadDestino, string nombre, Guid? excluyendo, CancellationToken ct = default);
+  Task<bool> NameExistsAsync(Guid tenantId, string targetEntity, string name, Guid? excludingId, CancellationToken ct = default);
 
-  Task AddDefinitionAsync(CustomFieldDefinition definicion, CancellationToken ct = default);
+  Task AddDefinitionAsync(CustomFieldDefinition definition, CancellationToken ct = default);
 
-  void RemoveDefinition(CustomFieldDefinition definicion);
+  void RemoveDefinition(CustomFieldDefinition definition);
 
   Task<IReadOnlyList<CustomFieldValue>> GetValuesAsync(Guid tenantId, Guid entityId, CancellationToken ct = default);
 
   Task<CustomFieldValue?> GetValueAsync(Guid tenantId, Guid definitionId, Guid entityId, CancellationToken ct = default);
 
-  Task AddValueAsync(CustomFieldValue valor, CancellationToken ct = default);
+  Task AddValueAsync(CustomFieldValue value, CancellationToken ct = default);
 
   /// <summary>
   /// Borra los valores de una definición.

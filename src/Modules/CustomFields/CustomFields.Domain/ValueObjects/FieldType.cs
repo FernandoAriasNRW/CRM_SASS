@@ -5,18 +5,18 @@ namespace CustomFields.Domain.ValueObjects;
 ///
 /// La fórmula estuvo fuera de esta lista a propósito mientras no hubo motor detrás, porque un
 /// tipo que se puede elegir y no calcula nada es peor que no ofrecerlo. Ya lo hay:
-/// <see cref="Servicios.AnalizadorDeFormula"/> lee la expresión,
-/// <see cref="Servicios.EvaluadorDeFormula"/> la calcula y
-/// <see cref="Servicios.DetectorDeCiclosDeFormula"/> impide que se refiera a sí misma.
+/// <see cref="Services.FormulaParser"/> lee la expresión,
+/// <see cref="Services.FormulaEvaluator"/> la calcula y
+/// <see cref="Services.FormulaCycleDetector"/> impide que se refiera a sí misma.
 /// </summary>
-public static class TipoDeCampo
+public static class FieldType
 {
-    public const string Texto = "Texto";
-    public const string Numero = "Numero";
-    public const string Fecha = "Fecha";
-    public const string Seleccion = "Seleccion";
-    public const string SeleccionMultiple = "SeleccionMultiple";
-    public const string Usuario = "Usuario";
+    public const string Text = "Text";
+    public const string Number = "Number";
+    public const string Date = "Date";
+    public const string Select = "Select";
+    public const string MultiSelect = "MultiSelect";
+    public const string User = "User";
 
     /// <summary>
     /// Un campo que no se rellena: se calcula a partir de otros.
@@ -33,23 +33,23 @@ public static class TipoDeCampo
     /// </summary>
     public const string Formula = "Formula";
 
-    public static IReadOnlyList<string> Todos() =>
-        [Texto, Numero, Fecha, Seleccion, SeleccionMultiple, Usuario, Formula];
+    public static IReadOnlyList<string> All() =>
+        [Text, Number, Date, Select, MultiSelect, User, Formula];
 
-    public static bool Existe(string tipo) => Todos().Contains(tipo);
+    public static bool Exists(string type) => All().Contains(type);
 
     /// <summary>Los tipos que se definen con una lista de opciones.</summary>
-    public static bool UsaOpciones(string tipo) => tipo is Seleccion or SeleccionMultiple;
+    public static bool UsesOptions(string type) => type is Select or MultiSelect;
 
     /// <summary>Los que se calculan solos y por tanto no se rellenan a mano.</summary>
-    public static bool SeCalcula(string tipo) => tipo == Formula;
+    public static bool IsComputed(string type) => type == Formula;
 
     /// <summary>
     /// Los que una fórmula puede usar como número.
     ///
-    /// Sólo <see cref="Numero"/> y otras fórmulas. Se descartó dejar que un texto que «parece un
+    /// Sólo <see cref="Number"/> y otras fórmulas. Se descartó dejar que un texto que «parece un
     /// número» cuente: haría que la fórmula funcionara o no según lo que alguien tecleara ese
     /// día en un campo de texto libre, y el fallo aparecería como un hueco sin explicación.
     /// </summary>
-    public static bool SirveEnFormula(string tipo) => tipo is Numero or Formula;
+    public static bool UsableInFormula(string type) => type is Number or Formula;
 }

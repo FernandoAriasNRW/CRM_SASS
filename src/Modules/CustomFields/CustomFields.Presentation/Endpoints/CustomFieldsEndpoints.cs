@@ -25,9 +25,9 @@ public static class CustomFieldsEndpoints
     var group = app.MapGroup("/api/v1/custom-fields").WithTags("CustomFields").RequireAuthorization();
 
     // Definiciones
-    group.MapGet("", async (IUserContext currentUser, IMediator mediator, [FromQuery] string? entidad) =>
+    group.MapGet("", async (IUserContext currentUser, IMediator mediator, [FromQuery] string? entity) =>
     {
-      var result = await mediator.Send(new GetCustomFieldsQuery(currentUser.TenantId, entidad));
+      var result = await mediator.Send(new GetCustomFieldsQuery(currentUser.TenantId, entity));
       return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
     });
 
@@ -54,16 +54,16 @@ public static class CustomFieldsEndpoints
     // Valores de una entidad concreta. Devuelve todas las definiciones que aplican, con valor o
     // sin él: un campo recién creado tiene que aparecer en el formulario aunque nadie lo haya
     // rellenado todavía.
-    group.MapGet("/values/{entidad}/{entityId:guid}", async (IUserContext currentUser, string entidad, Guid entityId, IMediator mediator) =>
+    group.MapGet("/values/{entity}/{entityId:guid}", async (IUserContext currentUser, string entity, Guid entityId, IMediator mediator) =>
     {
-      var result = await mediator.Send(new GetCustomFieldValuesQuery(currentUser.TenantId, entidad, entityId));
+      var result = await mediator.Send(new GetCustomFieldValuesQuery(currentUser.TenantId, entity, entityId));
       return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
     });
 
     group.MapPut("/values/{definitionId:guid}/{entityId:guid}", async (IUserContext currentUser, Guid definitionId, Guid entityId, SetCustomFieldValueCommand command, IMediator mediator) =>
     {
       var result = await mediator.Send(new SetCustomFieldValueCommand(
-          currentUser.TenantId, definitionId, entityId, command.Valor));
+          currentUser.TenantId, definitionId, entityId, command.Value));
 
       return result.IsSuccess ? Results.Ok() : Results.BadRequest(result.Error);
     });

@@ -64,14 +64,14 @@
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <label class="space-y-1 block">
           <span class="text-xs font-medium text-muted-foreground" i18n>Nombre</span>
-          <input type="text" [(ngModel)]="nombre" [maxlength]="largoMaximoDelNombre"
+          <input type="text" [(ngModel)]="name" [maxlength]="largoMaximoDelNombre"
                  i18n-placeholder placeholder="Cliente facturable"
                  class="w-full px-3 py-1.5 text-xs bg-white dark:bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-1 focus:ring-primary" />
         </label>
 
         <label class="space-y-1 block">
           <span class="text-xs font-medium text-muted-foreground" i18n>Tipo</span>
-          <select [(ngModel)]="tipo" [disabled]="!esNuevo()"
+          <select [(ngModel)]="type" [disabled]="!esNuevo()"
                   class="w-full px-3 py-1.5 text-xs bg-white dark:bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-60">
             @for (opcion of tipos; track opcion.key) {
               <option [value]="opcion.key">{{ opcion.label }}</option>
@@ -86,14 +86,14 @@
 
         <label class="space-y-1 block">
           <span class="text-xs font-medium text-muted-foreground" i18n>Posición</span>
-          <input type="number" [(ngModel)]="posicion" min="0"
+          <input type="number" [(ngModel)]="position" min="0"
                  class="w-full px-3 py-1.5 text-xs bg-white dark:bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-1 focus:ring-primary" />
         </label>
 
         <!-- Un campo calculado no se rellena, así que exigirlo no tendría a quién exigírselo:
              la casilla se desactiva en vez de esconderse, para que se entienda por qué. -->
         <label class="flex items-center gap-2 pt-5" [class.opacity-50]="usaFormula">
-          <input type="checkbox" [(ngModel)]="obligatorio" [disabled]="usaFormula" class="rounded border-border" />
+          <input type="checkbox" [(ngModel)]="isRequired" [disabled]="usaFormula" class="rounded border-border" />
           <span class="text-xs font-medium text-muted-foreground" i18n>Obligatorio</span>
           @if (usaFormula) {
             <span class="text-[11px] text-muted-foreground" i18n>(un campo calculado no se rellena)</span>
@@ -119,9 +119,9 @@
               <span class="flex flex-wrap items-center gap-1 pt-1">
                 <span class="text-[11px] text-muted-foreground" i18n>Campos disponibles:</span>
                 @for (campo of camposUsables; track campo.id) {
-                  <button type="button" (click)="insertarReferencia(campo.nombre)"
+                  <button type="button" (click)="insertarReferencia(campo.name)"
                           class="text-[11px] px-1.5 py-0.5 rounded border border-border text-muted-foreground hover:border-primary hover:text-primary transition-colors">
-                    {{ campo.nombre }}
+                    {{ campo.name }}
                   </button>
                 }
               </span>
@@ -137,7 +137,7 @@
         @if (usaOpciones) {
           <label class="space-y-1 block md:col-span-2">
             <span class="text-xs font-medium text-muted-foreground" i18n>Opciones, una por línea</span>
-            <textarea [(ngModel)]="opciones" rows="5"
+            <textarea [(ngModel)]="options" rows="5"
                       i18n-placeholder placeholder="Sí&#10;No&#10;Pendiente"
                       class="w-full px-3 py-1.5 text-xs bg-white dark:bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-1 focus:ring-primary resize-y"></textarea>
             <span class="text-[11px] text-muted-foreground" i18n>Se muestran en este orden. Las repetidas y las líneas vacías se descartan.</span>
@@ -183,14 +183,14 @@
         <tbody>
           @for (definicion of ordenadas(); track definicion.id) {
             <tr class="border-t border-border">
-              <td class="px-4 py-2 text-muted-foreground">{{ definicion.posicion }}</td>
-              <td class="px-4 py-2 font-medium text-foreground">{{ definicion.nombre }}</td>
-              <td class="px-4 py-2 text-muted-foreground">{{ etiquetaDelTipo(definicion.tipo) }}</td>
+              <td class="px-4 py-2 text-muted-foreground">{{ definicion.position }}</td>
+              <td class="px-4 py-2 font-medium text-foreground">{{ definicion.name }}</td>
+              <td class="px-4 py-2 text-muted-foreground">{{ etiquetaDelTipo(definicion.type) }}</td>
               <td class="px-4 py-2 text-muted-foreground">
-                @if (definicion.obligatorio) { <span i18n>Sí</span> } @else { <span i18n>No</span> }
+                @if (definicion.isRequired) { <span i18n>Sí</span> } @else { <span i18n>No</span> }
               </td>
-              <td class="px-4 py-2 text-muted-foreground max-w-xs truncate" [title]="definicion.opciones.join(', ')">
-                {{ definicion.opciones.join(', ') }}
+              <td class="px-4 py-2 text-muted-foreground max-w-xs truncate" [title]="definicion.options.join(', ')">
+                {{ definicion.options.join(', ') }}
               </td>
               <td class="px-4 py-2">
                 @if (borrando() === definicion.id) {

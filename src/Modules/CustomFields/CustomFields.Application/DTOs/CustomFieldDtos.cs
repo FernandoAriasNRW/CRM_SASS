@@ -2,12 +2,12 @@ namespace CustomFields.Application.DTOs;
 
 public sealed record CustomFieldDefinitionDto(
     Guid Id,
-    string Nombre,
-    string Tipo,
-    string EntidadDestino,
-    bool Obligatorio,
-    IReadOnlyList<string> Opciones,
-    int Posicion,
+    string Name,
+    string Type,
+    string TargetEntity,
+    bool IsRequired,
+    IReadOnlyList<string> Options,
+    int Position,
     /// <summary>La expresión, si es un campo calculado.</summary>
     string? Formula
 );
@@ -18,12 +18,12 @@ public sealed record CustomFieldDefinitionDto(
 /// </summary>
 public sealed record CustomFieldValueDto(
     Guid DefinitionId,
-    string Nombre,
-    string Tipo,
-    bool Obligatorio,
-    IReadOnlyList<string> Opciones,
-    int Posicion,
-    string? Valor,
+    string Name,
+    string Type,
+    bool IsRequired,
+    IReadOnlyList<string> Options,
+    int Position,
+    string? Value,
     /// <summary>La expresión, si es un campo calculado. La pantalla la enseña como ayuda.</summary>
     string? Formula = null,
     /// <summary>

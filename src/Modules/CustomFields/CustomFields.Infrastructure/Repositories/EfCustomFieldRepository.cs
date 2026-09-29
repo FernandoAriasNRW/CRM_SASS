@@ -10,28 +10,28 @@ public sealed class EfCustomFieldRepository(CustomFieldsDbContext context) : ICu
   public async Task<CustomFieldDefinition?> GetDefinitionAsync(Guid tenantId, Guid id, CancellationToken ct = default)
       => await context.Definitions.FirstOrDefaultAsync(d => d.TenantId == tenantId && d.Id == id, ct);
 
-  public async Task<IReadOnlyList<CustomFieldDefinition>> GetDefinitionsAsync(Guid tenantId, string? entidadDestino, CancellationToken ct = default)
+  public async Task<IReadOnlyList<CustomFieldDefinition>> GetDefinitionsAsync(Guid tenantId, string? targetEntity, CancellationToken ct = default)
   {
-    var consulta = context.Definitions.AsNoTracking().Where(d => d.TenantId == tenantId);
+    var query = context.Definitions.AsNoTracking().Where(d => d.TenantId == tenantId);
 
-    if (!string.IsNullOrWhiteSpace(entidadDestino))
-      consulta = consulta.Where(d => d.EntidadDestino == entidadDestino);
+    if (!string.IsNullOrWhiteSpace(targetEntity))
+      query = query.Where(d => d.TargetEntity == targetEntity);
 
-    return await consulta.OrderBy(d => d.Posicion).ThenBy(d => d.Nombre).ToListAsync(ct);
+    return await query.OrderBy(d => d.Position).ThenBy(d => d.Name).ToListAsync(ct);
   }
 
-  public async Task<bool> ExisteNombreAsync(Guid tenantId, string entidadDestino, string nombre, Guid? excluyendo, CancellationToken ct = default)
+  public async Task<bool> NameExistsAsync(Guid tenantId, string targetEntity, string name, Guid? excludingId, CancellationToken ct = default)
       => await context.Definitions.AnyAsync(
           d => d.TenantId == tenantId
-               && d.EntidadDestino == entidadDestino
-               && d.Nombre == nombre
-               && (excluyendo == null || d.Id != excluyendo), ct);
+               && d.TargetEntity == targetEntity
+               && d.Name == name
+               && (excludingId == null || d.Id != excludingId), ct);
 
-  public async Task AddDefinitionAsync(CustomFieldDefinition definicion, CancellationToken ct = default)
-      => await context.Definitions.AddAsync(definicion, ct);
+  public async Task AddDefinitionAsync(CustomFieldDefinition definition, CancellationToken ct = default)
+      => await context.Definitions.AddAsync(definition, ct);
 
-  public void RemoveDefinition(CustomFieldDefinition definicion)
-      => context.Definitions.Remove(definicion);
+  public void RemoveDefinition(CustomFieldDefinition definition)
+      => context.Definitions.Remove(definition);
 
   public async Task<IReadOnlyList<CustomFieldValue>> GetValuesAsync(Guid tenantId, Guid entityId, CancellationToken ct = default)
       => await context.Values.AsNoTracking()
@@ -42,15 +42,15 @@ public sealed class EfCustomFieldRepository(CustomFieldsDbContext context) : ICu
       => await context.Values.FirstOrDefaultAsync(
           v => v.TenantId == tenantId && v.DefinitionId == definitionId && v.EntityId == entityId, ct);
 
-  public async Task AddValueAsync(CustomFieldValue valor, CancellationToken ct = default)
-      => await context.Values.AddAsync(valor, ct);
+  public async Task AddValueAsync(CustomFieldValue value, CancellationToken ct = default)
+      => await context.Values.AddAsync(value, ct);
 
   public async Task RemoveValuesOfDefinitionAsync(Guid tenantId, Guid definitionId, CancellationToken ct = default)
   {
-    var valores = await context.Values
+    var values = await context.Values
         .Where(v => v.TenantId == tenantId && v.DefinitionId == definitionId)
         .ToListAsync(ct);
 
-    context.Values.RemoveRange(valores);
+    context.Values.RemoveRange(values);
   }
 }

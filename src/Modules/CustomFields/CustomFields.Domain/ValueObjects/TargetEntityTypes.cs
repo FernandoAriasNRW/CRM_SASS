@@ -12,12 +12,12 @@ namespace CustomFields.Domain.ValueObjects;
 /// Los valores salen de <see cref="EntityTypes"/>: escritos aquí a mano, el día que cambiaran allí
 /// los campos de esa entidad dejarían de encontrarse sin ningún error.
 /// </summary>
-public static class TipoDeEntidad
+public static class TargetEntityTypes
 {
-    public const string Tarea = EntityTypes.Task;
-    public const string Proyecto = EntityTypes.Project;
+    public const string Task = EntityTypes.Task;
+    public const string Project = EntityTypes.Project;
 
-    public static IReadOnlyList<string> Todos() => [Tarea, Proyecto];
+    public static IReadOnlyList<string> All() => [Task, Project];
 
-    public static bool Existe(string tipo) => Todos().Contains(tipo);
+    public static bool Exists(string type) => All().Contains(type);
 }
