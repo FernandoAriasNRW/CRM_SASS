@@ -17,7 +17,7 @@ namespace UnitTests;
 public class DefinicionDeInformeTests
 {
     private static ReportDefinition Valida() =>
-        new(Origen: "Tareas", Agrupacion: "estado", Medida: "conteo", Forma: "barras");
+        new(DataSource: "Tasks", GroupBy: "status", Measure: "count", Visualization: "bar");
 
     [Fact]
     public void Una_definicion_completa_vale()
@@ -28,12 +28,12 @@ public class DefinicionDeInformeTests
     [Fact]
     public void Un_origen_que_no_existe_dice_cuales_hay()
     {
-        var definicion = Valida() with { Origen = "Facturas" };
+        var definicion = Valida() with { DataSource = "Facturas" };
 
         var resultado = definicion.Validate();
 
         resultado.IsFailure.Should().BeTrue();
-        resultado.Error.Should().Contain("Facturas").And.Contain("Tareas");
+        resultado.Error.Should().Contain("Facturas").And.Contain("Tasks");
     }
 
     [Fact]
@@ -41,30 +41,30 @@ public class DefinicionDeInformeTests
     {
         // «agente» es de tickets, no de tareas. Sin esta comprobación el motor caería en su
         // `default` al generar, que es cuando quien lo construyó ya no está delante.
-        var definicion = Valida() with { Agrupacion = "agente" };
+        var definicion = Valida() with { GroupBy = "agent" };
 
         var resultado = definicion.Validate();
 
         resultado.IsFailure.Should().BeTrue();
-        resultado.Error.Should().Contain("agente").And.Contain("estado");
+        resultado.Error.Should().Contain("agent").And.Contain("status");
     }
 
     [Fact]
     public void Una_medida_que_el_origen_no_tiene_se_rechaza()
     {
         // Los proyectos sólo se pueden contar; no tienen horas que sumar.
-        var definicion = Valida() with { Origen = "Proyectos", Agrupacion = "estado", Medida = "suma_horas" };
+        var definicion = Valida() with { DataSource = "Projects", GroupBy = "status", Measure = "sum_estimated_hours" };
 
         var resultado = definicion.Validate();
 
         resultado.IsFailure.Should().BeTrue();
-        resultado.Error.Should().Contain("suma_horas").And.Contain("conteo");
+        resultado.Error.Should().Contain("sum_estimated_hours").And.Contain("count");
     }
 
     [Fact]
     public void Una_forma_inventada_se_rechaza()
     {
-        var resultado = (Valida() with { Forma = "holograma" }).Validate();
+        var resultado = (Valida() with { Visualization = "holograma" }).Validate();
 
         resultado.IsFailure.Should().BeTrue();
         resultado.Error.Should().Contain("holograma");
@@ -80,7 +80,7 @@ public class DefinicionDeInformeTests
     [Fact]
     public void Agrupar_por_fecha_sin_granularidad_se_rechaza()
     {
-        var resultado = (Valida() with { Agrupacion = "vencimiento" }).Validate();
+        var resultado = (Valida() with { GroupBy = "due_date" }).Validate();
 
         resultado.IsFailure.Should().BeTrue();
         resultado.Error.Should().Contain("día, semana, mes o año");
@@ -89,7 +89,7 @@ public class DefinicionDeInformeTests
     [Fact]
     public void Agrupar_por_fecha_con_granularidad_vale()
     {
-        var definicion = Valida() with { Agrupacion = "vencimiento", Granularidad = "mes" };
+        var definicion = Valida() with { GroupBy = "due_date", Granularity = "month" };
 
         definicion.Validate().IsSuccess.Should().BeTrue();
     }
@@ -97,7 +97,7 @@ public class DefinicionDeInformeTests
     [Fact]
     public void Una_granularidad_inventada_se_rechaza()
     {
-        var definicion = Valida() with { Agrupacion = "vencimiento", Granularidad = "quincena" };
+        var definicion = Valida() with { GroupBy = "due_date", Granularity = "quincena" };
 
         definicion.Validate().Error.Should().Contain("quincena");
     }
@@ -107,7 +107,7 @@ public class DefinicionDeInformeTests
     [Fact]
     public void Un_filtro_sobre_un_campo_que_no_existe_se_rechaza()
     {
-        var definicion = Valida() with { Filtros = [new ReportFilter("color", "es", "azul")] };
+        var definicion = Valida() with { Filters = [new ReportFilter("color", "is", "azul")] };
 
         definicion.Validate().Error.Should().Contain("color");
     }
@@ -121,7 +121,7 @@ public class DefinicionDeInformeTests
     [Fact]
     public void Mayor_que_sobre_un_texto_se_rechaza()
     {
-        var definicion = Valida() with { Filtros = [new ReportFilter("estado", "mayor_que", "Done")] };
+        var definicion = Valida() with { Filters = [new ReportFilter("status", "greater_than", "Done")] };
 
         var resultado = definicion.Validate();
 
@@ -133,7 +133,7 @@ public class DefinicionDeInformeTests
     public void Contiene_sobre_una_persona_se_rechaza()
     {
         // Un responsable es un identificador; «contiene» sobre él sería buscar dentro de un GUID.
-        var definicion = Valida() with { Filtros = [new ReportFilter("responsable", "contiene", "ana")] };
+        var definicion = Valida() with { Filters = [new ReportFilter("assignee", "contains", "ana")] };
 
         definicion.Validate().IsFailure.Should().BeTrue();
     }
@@ -141,7 +141,7 @@ public class DefinicionDeInformeTests
     [Fact]
     public void Un_operador_que_necesita_valor_sin_valor_se_rechaza()
     {
-        var definicion = Valida() with { Filtros = [new ReportFilter("estado", "es", null)] };
+        var definicion = Valida() with { Filters = [new ReportFilter("status", "is", null)] };
 
         definicion.Validate().Error.Should().Contain("necesita un valor");
     }
@@ -152,9 +152,9 @@ public class DefinicionDeInformeTests
     {
         var definicion = Valida() with
         {
-            Origen = "Tickets",
-            Agrupacion = "estado",
-            Filtros = [new ReportFilter("resolucion", "vacio", null)]
+            DataSource = "Tickets",
+            GroupBy = "status",
+            Filters = [new ReportFilter("resolved_at", "empty", null)]
         };
 
         definicion.Validate().IsSuccess.Should().BeTrue();
@@ -165,10 +165,10 @@ public class DefinicionDeInformeTests
     {
         var definicion = Valida() with
         {
-            Filtros =
+            Filters =
             [
-                new ReportFilter("estado", "es", "Done"),
-                new ReportFilter("prioridad", "mayor_que", "High")
+                new ReportFilter("status", "is", "Done"),
+                new ReportFilter("priority", "greater_than", "High")
             ]
         };
 
@@ -191,18 +191,18 @@ public class DefinicionDeInformeTests
     public void Una_definicion_sobrevive_a_guardarse_y_leerse()
     {
         var original = new ReportDefinition(
-            "Tickets", "creacion", "media_dias_resolucion", "lineas",
-            [new ReportFilter("prioridad", "es", "High")],
-            Granularidad: "semana",
-            MaximoDeGrupos: 5);
+            "Tickets", "created_at", "avg_days_to_resolve", "line",
+            [new ReportFilter("priority", "is", "High")],
+            Granularity: "week",
+            MaxGroups: 5);
 
         var leida = ReportDefinition.Read(original.Serialize());
 
         leida.Should().NotBeNull();
-        leida!.Origen.Should().Be("Tickets");
-        leida.Granularidad.Should().Be("semana");
-        leida.MaximoDeGrupos.Should().Be(5);
-        leida.AppliedFilters.Should().ContainSingle(f => f.Campo == "prioridad" && f.Valor == "High");
+        leida!.DataSource.Should().Be("Tickets");
+        leida.Granularity.Should().Be("week");
+        leida.MaxGroups.Should().Be(5);
+        leida.AppliedFilters.Should().ContainSingle(f => f.Field == "priority" && f.Value == "High");
     }
 
     /// <summary>
@@ -248,7 +248,7 @@ public class DefinicionDeInformeTests
     public void Todos_los_origenes_saben_contar()
     {
         foreach (var origen in ReportCatalog.DataSources())
-            origen.Measure("conteo").Should().NotBeNull($"{origen.Key} tiene que poder contarse");
+            origen.Measure("count").Should().NotBeNull($"{origen.Key} tiene que poder contarse");
     }
 
     /// <summary>

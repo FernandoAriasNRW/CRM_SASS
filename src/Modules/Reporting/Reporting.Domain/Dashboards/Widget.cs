@@ -15,11 +15,11 @@ namespace Reporting.Domain.Dashboards;
 /// La consecuencia práctica, que es lo bueno: cualquier widget se puede abrir en el constructor de
 /// informes y ajustar, y cualquier informe se puede poner en el panel.
 /// </summary>
-/// <param name="Forma">
+/// <param name="Visualization">
 /// Cómo se pinta aquí, si se quiere distinto de como lo guardó el informe. El mismo informe puede
 /// verse como tarta en un panel y como tabla en otro sin duplicarlo.
 /// </param>
-/// <param name="Titulo">
+/// <param name="Title">
 /// El título dentro del panel, si se quiere distinto del nombre del informe. «Tickets por estado»
 /// puede llamarse «Cómo va el buzón» en el panel de quien lo mira cada mañana.
 /// </param>
@@ -28,10 +28,10 @@ public sealed record Widget(
     Guid ReportId,
     int X,
     int Y,
-    int Ancho,
-    int Alto,
-    string? Forma = null,
-    string? Titulo = null)
+    int Width,
+    int Height,
+    string? Visualization = null,
+    string? Title = null)
 {
     /// <summary>
     /// Columnas de la rejilla.
@@ -55,10 +55,10 @@ public sealed record Widget(
         if (ReportId == Guid.Empty)
             return Result.Failure(Rules.MissingReport);
 
-        if (Ancho < MinWidth || Ancho > Columns)
+        if (Width < MinWidth || Width > Columns)
             return Result.Failure(Rules.WidthOutOfRange);
 
-        if (Alto < MinHeight || Alto > MaxHeight)
+        if (Height < MinHeight || Height > MaxHeight)
             return Result.Failure(Rules.HeightOutOfRange);
 
         if (X < 0 || Y < 0)
@@ -67,7 +67,7 @@ public sealed record Widget(
         // Un widget que empieza en la columna 10 y mide 4 se sale de la rejilla. En pantalla eso
         // se ve como un recuadro cortado o bajado de fila según el navegador, así que se rechaza
         // aquí en vez de dejar que cada uno lo dibuje a su manera.
-        if (X + Ancho > Columns)
+        if (X + Width > Columns)
             return Result.Failure(Rules.OutsideGrid);
 
         return Result.Success();

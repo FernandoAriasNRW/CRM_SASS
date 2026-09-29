@@ -32,15 +32,15 @@ public sealed class AddWidgetHandler(
 
         // Va abajo del todo y a media anchura: aparece donde se mira al terminar de añadirlo, sin
         // desplazar nada de lo que ya estaba colocado.
-        var nextRow = current.Count == 0 ? 0 : current.Max(w => w.Y + w.Alto);
+        var nextRow = current.Count == 0 ? 0 : current.Max(w => w.Y + w.Height);
 
         var widget = new Widget(
             Id: Guid.NewGuid(),
             ReportId: request.ReportId,
             X: 0, Y: nextRow,
-            Ancho: 6, Alto: 4,
-            Forma: request.Forma ?? report.ReadDefinition()?.Forma,
-            Titulo: report.Name);
+            Width: 6, Height: 4,
+            Visualization: request.Visualization ?? report.ReadDefinition()?.Visualization,
+            Title: report.Name);
 
         var result = panel.Place(new DashboardLayout([.. current, widget]));
         if (result.IsFailure)

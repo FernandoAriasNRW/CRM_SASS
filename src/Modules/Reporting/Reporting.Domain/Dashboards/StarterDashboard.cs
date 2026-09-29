@@ -28,33 +28,33 @@ namespace Reporting.Domain.Dashboards;
 public static class StarterDashboard
 {
     /// <summary>Un informe de partida: cómo se llama y qué pide.</summary>
-    public sealed record SuggestedWidget(string Name, ReportDefinition Definition, int Ancho, int Alto);
+    public sealed record SuggestedWidget(string Name, ReportDefinition Definition, int Width, int Height);
 
     public static IReadOnlyList<SuggestedWidget> Reports() =>
     [
         new("Tickets por estado",
-            new ReportDefinition("Tickets", "estado", "conteo", "tarta"),
-            Ancho: 4, Alto: 4),
+            new ReportDefinition("Tickets", "status", "count", "pie"),
+            Width: 4, Height: 4),
 
         new("Tickets por prioridad",
-            new ReportDefinition("Tickets", "prioridad", "conteo", "barras"),
-            Ancho: 4, Alto: 4),
+            new ReportDefinition("Tickets", "priority", "count", "bar"),
+            Width: 4, Height: 4),
 
         new("Tareas por estado",
-            new ReportDefinition("Tareas", "estado", "conteo", "barras"),
-            Ancho: 4, Alto: 4),
+            new ReportDefinition("Tasks", "status", "count", "bar"),
+            Width: 4, Height: 4),
 
         new("Tareas por responsable",
-            new ReportDefinition("Tareas", "responsable", "conteo", "barras"),
-            Ancho: 6, Alto: 4),
+            new ReportDefinition("Tasks", "assignee", "count", "bar"),
+            Width: 6, Height: 4),
 
         new("Tareas por proyecto",
-            new ReportDefinition("Tareas", "proyecto", "conteo", "barras"),
-            Ancho: 6, Alto: 4),
+            new ReportDefinition("Tasks", "project", "count", "bar"),
+            Width: 6, Height: 4),
 
         new("Tickets abiertos por mes",
-            new ReportDefinition("Tickets", "creacion", "conteo", "lineas", Granularidad: "mes"),
-            Ancho: 12, Alto: 4)
+            new ReportDefinition("Tickets", "created_at", "count", "line", Granularity: "month"),
+            Width: 12, Height: 4)
     ];
 
     /// <summary>
@@ -75,7 +75,7 @@ public static class StarterDashboard
         foreach (var (reportId, suggested) in reports)
         {
             // Si no cabe en lo que queda de fila, se baja a la siguiente.
-            if (x + suggested.Ancho > Widget.Columns)
+            if (x + suggested.Width > Widget.Columns)
             {
                 x = 0;
                 y += rowHeight;
@@ -87,13 +87,13 @@ public static class StarterDashboard
                 ReportId: reportId,
                 X: x,
                 Y: y,
-                Ancho: suggested.Ancho,
-                Alto: suggested.Alto,
-                Forma: suggested.Definition.Forma,
-                Titulo: suggested.Name));
+                Width: suggested.Width,
+                Height: suggested.Height,
+                Visualization: suggested.Definition.Visualization,
+                Title: suggested.Name));
 
-            x += suggested.Ancho;
-            rowHeight = Math.Max(rowHeight, suggested.Alto);
+            x += suggested.Width;
+            rowHeight = Math.Max(rowHeight, suggested.Height);
         }
 
         return widgets;

@@ -8,5 +8,5 @@ namespace Reporting.Domain.Definitions;
 /// </summary>
 public sealed record AvailableMeasure(string Key, string Name, string? OnField)
 {
-    public static readonly AvailableMeasure Count = new("conteo", "Cuántos hay", null);
+    public static readonly AvailableMeasure Count = new("count", "Cuántos hay", null);
 }

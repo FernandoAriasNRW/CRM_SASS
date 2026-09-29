@@ -294,6 +294,7 @@ Un concepto, un nombre. Ordenado por área.
 | generador de exportaciones, planificador de informes, datos del informe | `ExportGenerator`, `ReportScheduler`, `ReportData` |
 | consultas del panel, aviso de exportación lista / fallida | `DashboardQueries`, `ExportReadyNotifier` / `ExportFailedNotifier` |
 | constructor de informes, gráfica de informe, datos de un recuadro | `ReportBuilder`, `ReportChart`, `WidgetData` |
+| agrupación, forma, máximo de grupos; ancho y alto de un recuadro | `GroupBy`, `Visualization`, `MaxGroups`; `Width`, `Height` |
 
 ### Campos personalizados y automatizaciones
 
@@ -374,7 +375,7 @@ suites completas en verde, catálogo i18n re-extraído al final.
 | 7a ✅ | **Reporting** (módulo: dominio, aplicación, infraestructura, presentación) | 299 identificadores, tablas y rutas |
 | 7b ✅ | **Reporting en el Host** (motor, generador de exportaciones, planificador, panel) | 158 identificadores |
 | 7c ✅ | **Frontend de informes y paneles** | 135 identificadores y cuatro ficheros |
-| 7d | **El JSON guardado de informes y paneles** (claves de la definición y del recuadro, y valores del catálogo) | Como el 5c: datos guardados, con su migración |
+| 7d ✅ | **El JSON guardado de informes y paneles** (claves de la definición y del recuadro, y valores del catálogo) | Como el 5c: datos guardados, con su migración |
 | 8 | **CustomFields + Automations + Webhook + Tags** | Fórmulas y reglas |
 | 9 | **Frontend transversal** (`shared/`, `core/`, e2e) | Lo que no arrastraron los PRs anteriores |
 | 10 | **Nombres de las pruebas** | Son frases, no identificadores de producción; traducirlas dentro de cada bloque ensucia el diff de revisión |
@@ -752,6 +753,29 @@ cambiarlo exige migrar ese contenido. Por eso fue un bloque aparte, el 5c.
   `descargarFichero` y la opción `sinAviso` de `ApiService`.
 - Sin cambios de contrato: los textos y los identificadores del catálogo i18n son los mismos que
   en `main`.
+
+### Hecho en el bloque 7d (el JSON guardado de informes y paneles)
+
+- **Claves del JSON**, renombradas con Roslyn en los registros que se serializan:
+  `ReportDefinition` (`dataSource`, `groupBy`, `measure`, `visualization`, `filters`, `granularity`,
+  `maxGroups`), `ReportFilter` (`field`, `operator`, `value`) y `Widget` (`width`, `height`,
+  `visualization`, `title`); también `WidgetDataDto` y la petición de añadir un recuadro.
+- **Claves del catálogo**, en `snake_case` como ya lo eran las medidas: orígenes `Tasks`,
+  `Tickets`, `Projects`; campos `status`, `priority`, `assignee`, `project`, `due_date`,
+  `created_at`, `estimated_hours`, `agent`, `resolved_at`, `owner`, `start_date`; medidas `count`,
+  `sum_estimated_hours`, `avg_estimated_hours`, `avg_days_to_resolve`; granularidades `day`,
+  `week`, `month`, `year`; formas `table`, `bar`, `stacked_bar`, `line`, `pie`; operadores `is`,
+  `is_not`, `contains`, `greater_than`, `less_than`, `empty`, `not_empty`. Los nombres que ve el
+  usuario («Estado», «Barras»…) siguen en español.
+- **Migración `StoredJsonToEnglish`** sobre `Reports.DefinitionJson` y `Dashboards.WidgetsJson`:
+  primero las claves y después los valores, y **cada valor sólo detrás de su clave**
+  (`"groupBy":"estado"`), así que el texto libre de un filtro no cambia aunque coincida con una
+  clave del catálogo; tampoco se toca una clave con la comilla escapada, que es texto. Probada en
+  una copia de la base de desarrollo: ida, vuelta idéntica a la copia de seguridad, y una fila con
+  filtros, mayúsculas distintas y comillas escapadas.
+- **Lo que las pruebas cazaron:** el motor reconocía las medias porque su clave empezaba por
+  `media`; con las claves nuevas una media sin datos salía «0» en vez de «—». Ahora mira el
+  prefijo `avg_`.
 
 ---
 

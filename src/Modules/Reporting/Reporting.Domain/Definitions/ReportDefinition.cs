@@ -20,15 +20,15 @@ namespace Reporting.Domain.Definitions;
 /// está en el catálogo, no existe.
 /// </summary>
 public sealed record ReportDefinition(
-    string Origen,
-    string Agrupacion,
-    string Medida,
-    string Forma,
-    IReadOnlyList<ReportFilter>? Filtros = null,
+    string DataSource,
+    string GroupBy,
+    string Measure,
+    string Visualization,
+    IReadOnlyList<ReportFilter>? Filters = null,
     /// <summary>Cómo se agrupa la fecha, si la agrupación es por una. Ver el catálogo.</summary>
-    string? Granularidad = null,
+    string? Granularity = null,
     /// <summary>Cuántos grupos como mucho; el resto se resume en «Otros». Nulo, todos.</summary>
-    int? MaximoDeGrupos = null)
+    int? MaxGroups = null)
 {
     /// <summary>
     /// Los filtros, nunca nulos.
@@ -41,7 +41,7 @@ public sealed record ReportDefinition(
     /// Lo cazó una prueba, no la lectura del código.
     /// </summary>
     [JsonIgnore]
-    public IReadOnlyList<ReportFilter> AppliedFilters => Filtros ?? [];
+    public IReadOnlyList<ReportFilter> AppliedFilters => Filters ?? [];
 
     /// <summary>
     /// Cuántos grupos caben en una gráfica antes de dejar de leerse.
@@ -68,33 +68,33 @@ public sealed record ReportDefinition(
     /// </summary>
     public Result Validate()
     {
-        var dataSource = ReportCatalog.FindDataSource(Origen);
+        var dataSource = ReportCatalog.FindDataSource(DataSource);
         if (dataSource is null)
         {
             return Result.Failure(
-                $"El origen «{Origen}» no existe. Los que hay: "
+                $"El origen «{DataSource}» no existe. Los que hay: "
                 + string.Join(", ", ReportCatalog.DataSources().Select(o => o.Key)));
         }
 
-        var groupBy = dataSource.Field(Agrupacion);
+        var groupBy = dataSource.Field(GroupBy);
         if (groupBy is null)
         {
             return Result.Failure(
-                $"«{Agrupacion}» no es un campo de {dataSource.Name}. Los que hay: "
+                $"«{GroupBy}» no es un campo de {dataSource.Name}. Los que hay: "
                 + string.Join(", ", dataSource.Fields.Select(c => c.Key)));
         }
 
-        if (dataSource.Measure(Medida) is null)
+        if (dataSource.Measure(Measure) is null)
         {
             return Result.Failure(
-                $"«{Medida}» no es una medida de {dataSource.Name}. Las que hay: "
+                $"«{Measure}» no es una medida de {dataSource.Name}. Las que hay: "
                 + string.Join(", ", dataSource.Measures.Select(m => m.Key)));
         }
 
-        if (ReportCatalog.Visualizations().All(f => f.Key != Forma))
+        if (ReportCatalog.Visualizations().All(f => f.Key != Visualization))
         {
             return Result.Failure(
-                $"«{Forma}» no es una forma de pintar. Las que hay: "
+                $"«{Visualization}» no es una forma de pintar. Las que hay: "
                 + string.Join(", ", ReportCatalog.Visualizations().Select(f => f.Key)));
         }
 
@@ -102,13 +102,13 @@ public sealed record ReportDefinition(
         // dejaría guardado un dato que nadie mira y que confunde al leer la definición.
         if (groupBy.Type == FieldType.Date)
         {
-            if (Granularidad is null)
+            if (Granularity is null)
                 return Result.Failure($"Agrupar por «{groupBy.Name}» necesita decir si es por día, semana, mes o año");
 
-            if (ReportCatalog.DateGranularities().All(g => g.Key != Granularidad))
+            if (ReportCatalog.DateGranularities().All(g => g.Key != Granularity))
             {
                 return Result.Failure(
-                    $"«{Granularidad}» no es una granularidad. Las que hay: "
+                    $"«{Granularity}» no es una granularidad. Las que hay: "
                     + string.Join(", ", ReportCatalog.DateGranularities().Select(g => g.Key)));
             }
         }
@@ -119,7 +119,7 @@ public sealed record ReportDefinition(
             if (result.IsFailure) return result;
         }
 
-        if (MaximoDeGrupos is <= 0)
+        if (MaxGroups is <= 0)
             return Result.Failure("El máximo de grupos tiene que ser mayor que cero");
 
         return Result.Success();
@@ -134,7 +134,7 @@ public sealed record ReportDefinition(
     /// campos que el servidor ignora.
     /// </summary>
     [JsonIgnore]
-    public int EffectiveGroups => MaximoDeGrupos ?? DefaultGroups;
+    public int EffectiveGroups => MaxGroups ?? DefaultGroups;
 
     public string Serialize() => JsonSerializer.Serialize(this, Json);
 

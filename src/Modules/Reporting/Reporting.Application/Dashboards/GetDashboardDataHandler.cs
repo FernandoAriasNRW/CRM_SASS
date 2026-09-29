@@ -43,8 +43,8 @@ public sealed class GetDashboardDataHandler(
 
     private async Task<WidgetDataDto> SingleWidgetAsync(Guid tenantId, Widget widget, CancellationToken ct)
     {
-        var title = widget.Titulo ?? "Informe";
-        var visualization = widget.Forma ?? "tabla";
+        var title = widget.Title ?? "Informe";
+        var visualization = widget.Visualization ?? "table";
 
         var report = await reports.GetByIdAsync(tenantId, widget.ReportId, ct);
 
@@ -69,8 +69,8 @@ public sealed class GetDashboardDataHandler(
 
             return new WidgetDataDto(
                 widget.Id, widget.ReportId,
-                widget.Titulo ?? report.Name,
-                widget.Forma ?? definition.Forma,
+                widget.Title ?? report.Name,
+                widget.Visualization ?? definition.Visualization,
                 table.Subtitle, table.Columns,
                 table.Rows.Take(RowsPerWidget).ToList(),
                 Error: null);
