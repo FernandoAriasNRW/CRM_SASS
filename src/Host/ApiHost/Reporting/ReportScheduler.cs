@@ -20,21 +20,21 @@ namespace ApiHost.Reporting;
 /// máximo con el que puede llegar un informe de las 8:00, y para un informe diario eso no lo nota
 /// nadie.
 /// </summary>
-public sealed class PlanificadorDeInformes(
+public sealed class ReportScheduler(
     IServiceScopeFactory ambitos,
-    ILogger<PlanificadorDeInformes> registro) : BackgroundService
+    ILogger<ReportScheduler> logger) : BackgroundService
 {
-    private static readonly TimeSpan CadaCuanto = TimeSpan.FromMinutes(5);
+    private static readonly TimeSpan Interval = TimeSpan.FromMinutes(5);
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        registro.LogInformation("Planificador de informes iniciado");
+        logger.LogInformation("Planificador de informes iniciado");
 
         while (!stoppingToken.IsCancellationRequested)
         {
             try
             {
-                await UnaVueltaAsync(stoppingToken);
+                await RunOnceAsync(stoppingToken);
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
             {
@@ -45,101 +45,101 @@ public sealed class PlanificadorDeInformes(
                 // Igual que el generador: un fallo al mirar el reloj no puede matar el trabajador,
                 // o los informes programados dejarían de salir y nadie se enteraría hasta que
                 // alguien echara en falta el suyo.
-                registro.LogError(ex, "El planificador de informes falló en su vuelta");
+                logger.LogError(ex, "El planificador de informes falló en su vuelta");
             }
 
             try
             {
-                await Task.Delay(CadaCuanto, stoppingToken);
+                await Task.Delay(Interval, stoppingToken);
             }
             catch (OperationCanceledException) { break; }
         }
 
-        registro.LogInformation("Planificador de informes detenido");
+        logger.LogInformation("Planificador de informes detenido");
     }
 
-    private async Task UnaVueltaAsync(CancellationToken ct)
+    private async Task RunOnceAsync(CancellationToken ct)
     {
-        using var ambito = ambitos.CreateScope();
+        using var scope = ambitos.CreateScope();
 
-        var programaciones = ambito.ServiceProvider.GetRequiredService<IScheduleRepository>();
-        var contexto = ambito.ServiceProvider.GetRequiredService<ReportingDbContext>();
-        var correo = ambito.ServiceProvider.GetRequiredService<IEmailService>();
-        var destinatarios = ambito.ServiceProvider.GetRequiredService<CorreosDeDestinatarios>();
+        var schedules = scope.ServiceProvider.GetRequiredService<IScheduleRepository>();
+        var db = scope.ServiceProvider.GetRequiredService<ReportingDbContext>();
+        var email = scope.ServiceProvider.GetRequiredService<IEmailService>();
+        var recipients = scope.ServiceProvider.GetRequiredService<RecipientEmails>();
 
-        var activas = await programaciones.ActiveAsync(ct);
-        if (activas.Count == 0) return;
+        var active = await schedules.ActiveAsync(ct);
+        if (active.Count == 0) return;
 
         // La hora local del servidor. La programación guarda hora local del inquilino, y mientras
         // no haya zona horaria por inquilino, ésta es la aproximación honesta: está anotado en la
         // auditoría como lo que hay que afinar cuando haya clientes en varios husos.
-        var ahora = DateTime.Now;
+        var now = DateTime.Now;
 
-        foreach (var programacion in activas)
+        foreach (var schedule in active)
         {
             if (ct.IsCancellationRequested) return;
-            if (!programacion.IsDue(ahora)) continue;
+            if (!schedule.IsDue(now)) continue;
 
             try
             {
-                await DispararAsync(contexto, correo, destinatarios, programacion, ahora, ct);
+                await TriggerAsync(db, email, recipients, schedule, now, ct);
             }
             catch (Exception ex)
             {
                 // Un informe que falla no puede impedir que salgan los demás. Se anota y se sigue
                 // con el siguiente.
-                registro.LogError(ex,
+                logger.LogError(ex,
                     "No se pudo disparar la programación {Programacion} del informe {Informe}",
-                    programacion.Id, programacion.ReportId);
+                    schedule.Id, schedule.ReportId);
             }
         }
     }
 
-    private async Task DispararAsync(
-        ReportingDbContext contexto,
-        IEmailService correo,
-        CorreosDeDestinatarios destinatarios,
-        ReportSchedule programacion,
-        DateTime ahora,
+    private async Task TriggerAsync(
+        ReportingDbContext db,
+        IEmailService email,
+        RecipientEmails recipients,
+        ReportSchedule schedule,
+        DateTime now,
         CancellationToken ct)
     {
-        var informe = await contexto.Reports
+        var report = await db.Reports
             .IgnoreQueryFilters()
-            .FirstOrDefaultAsync(r => r.Id == programacion.ReportId && r.TenantId == programacion.TenantId, ct);
+            .FirstOrDefaultAsync(r => r.Id == schedule.ReportId && r.TenantId == schedule.TenantId, ct);
 
-        if (informe is null)
+        if (report is null)
         {
             // El informe se borró y la programación se quedó huérfana. Se apaga en vez de
             // intentarlo cada cinco minutos para siempre.
-            registro.LogWarning(
+            logger.LogWarning(
                 "La programación {Programacion} apunta a un informe que ya no existe; se desactiva",
-                programacion.Id);
+                schedule.Id);
 
-            programacion.Deactivate();
-            await contexto.SaveChangesAsync(ct);
+            schedule.Deactivate();
+            await db.SaveChangesAsync(ct);
             return;
         }
 
-        var exportacion = Export.Request(
-            programacion.TenantId, programacion.ReportId, programacion.RecipientId, programacion.Format);
+        var export = Export.Request(
+            schedule.TenantId, schedule.ReportId, schedule.RecipientId, schedule.Format);
 
-        if (exportacion.IsFailure)
-            throw new InvalidOperationException(exportacion.Error);
+        if (export.IsFailure)
+            throw new InvalidOperationException(export.Error);
 
-        await contexto.Exports.AddAsync(exportacion.Value!, ct);
+        await db.Exports.AddAsync(export.Value!, ct);
 
         // Se anota **antes** de que nadie más pueda mirar. Si el correo falla después, el informe
         // ya está encolado y no se vuelve a encolar en la vuelta siguiente: un fallo de correo no
         // puede convertirse en veinte exportaciones del mismo informe.
-        programacion.MarkGenerated(DateOnly.FromDateTime(ahora));
+        schedule.MarkGenerated(DateOnly.FromDateTime(now));
 
-        await contexto.SaveChangesAsync(ct);
+        await db.SaveChangesAsync(ct);
 
-        registro.LogInformation(
+        logger.LogInformation(
             "Informe programado {Informe} encolado para {Persona} en {Formato}",
-            informe.Name, programacion.RecipientId, programacion.Format.Name);
+            report.Name, schedule.RecipientId, schedule.Format.Name);
 
-        await AvisarPorCorreoAsync(correo, destinatarios, programacion, informe.Name, ct);
+        await NotifyByEmailAsync(email, recipients, schedule, report.Name, ct);
     }
 
     /// <summary>
@@ -154,55 +154,38 @@ public sealed class PlanificadorDeInformes(
     /// igualmente, además del aviso dentro de la aplicación. Que no salga el correo no puede
     /// deshacer el trabajo.
     /// </summary>
-    private async Task AvisarPorCorreoAsync(
-        IEmailService correo,
-        CorreosDeDestinatarios destinatarios,
-        ReportSchedule programacion,
-        string nombreDelInforme,
+    private async Task NotifyByEmailAsync(
+        IEmailService email,
+        RecipientEmails recipients,
+        ReportSchedule schedule,
+        string reportName,
         CancellationToken ct)
     {
-        var direccion = await destinatarios.CorreoDeAsync(programacion.TenantId, programacion.RecipientId, ct);
+        var address = await recipients.EmailOfAsync(schedule.TenantId, schedule.RecipientId, ct);
 
-        if (string.IsNullOrWhiteSpace(direccion))
+        if (string.IsNullOrWhiteSpace(address))
         {
-            registro.LogWarning(
+            logger.LogWarning(
                 "La programación {Programacion} no tiene a quién mandar el correo; el informe se genera igual",
-                programacion.Id);
+                schedule.Id);
             return;
         }
 
         try
         {
-            await correo.SendAsync(
-                direccion,
-                $"Tu informe programado: {nombreDelInforme}",
-                $"<p>El informe <strong>{System.Net.WebUtility.HtmlEncode(nombreDelInforme)}</strong> "
-                + $"({programacion.Format.Name}) se está generando.</p>"
+            await email.SendAsync(
+                address,
+                $"Tu informe programado: {reportName}",
+                $"<p>El informe <strong>{System.Net.WebUtility.HtmlEncode(reportName)}</strong> "
+                + $"({schedule.Format.Name}) se está generando.</p>"
                 + "<p>Lo encontrarás en la pantalla de informes en cuanto esté listo.</p>",
                 ct);
         }
         catch (Exception ex)
         {
-            registro.LogWarning(ex,
+            logger.LogWarning(ex,
                 "No se pudo mandar el correo de la programación {Programacion}; el informe se genera igual",
-                programacion.Id);
+                schedule.Id);
         }
     }
-}
-
-/// <summary>
-/// La dirección de correo de una persona.
-///
-/// <b>Vive en el host</b> porque cruza módulos: Reporting sabe a quién quiere avisar y sólo
-/// Identity sabe su correo, y ninguno referencia al otro. Es el mismo reparto de siempre.
-/// </summary>
-public sealed class CorreosDeDestinatarios(Identity.Infrastructure.Persistence.IdentityDbContext identidad)
-{
-    public async Task<string?> CorreoDeAsync(Guid tenantId, Guid userId, CancellationToken ct)
-        => await identidad.User
-            .IgnoreQueryFilters()
-            .AsNoTracking()
-            .Where(u => u.TenantId == tenantId && u.Id == userId)
-            .Select(u => u.Email.Value)
-            .FirstOrDefaultAsync(ct);
 }

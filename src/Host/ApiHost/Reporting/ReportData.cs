@@ -12,13 +12,13 @@ namespace ApiHost.Reporting;
 /// <summary>
 /// Resuelve un informe a la tabla que se va a exportar.
 ///
-/// <b>Vive en el host por la misma razón que <see cref="ConsultasDelPanel"/>:</b> un informe de
+/// <b>Vive en el host por la misma razón que <see cref="DashboardQueries"/>:</b> un informe de
 /// tareas mira WorkItems, uno de tickets mira Ticketing, y ninguno de los dos módulos referencia
 /// al otro ni a Reporting. El host es quien los conoce a todos.
 ///
 /// <b>Es el mismo motor que pinta el informe en pantalla</b>, que era la advertencia del plan:
 /// «con el mismo motor de consulta que pinta el reporte en pantalla». Los agregados —KPIs,
-/// desglose, avance— salen de <see cref="ConsultasDelPanel"/>, exactamente los mismos números
+/// desglose, avance— salen de <see cref="DashboardQueries"/>, exactamente los mismos números
 /// que ve el panel. Si se hubieran reescrito aquí, el PDF y la pantalla acabarían discrepando y
 /// nadie sabría cuál creer.
 ///
@@ -26,11 +26,11 @@ namespace ApiHost.Reporting;
 /// panel no lo necesita porque no lo enseña, y un informe exportado sin detalle es una foto de
 /// unos totales que ya se veían.
 /// </summary>
-public sealed class DatosDelInforme(
-    ConsultasDelPanel panel,
-    MotorDeInformes motor,
-    ProjectsDbContext proyectosDb,
-    WorkItemsDbContext tareasDb,
+public sealed class ReportData(
+    DashboardQueries panel,
+    ReportEngine motor,
+    ProjectsDbContext projectsDb,
+    WorkItemsDbContext tasksDb,
     TicketingDbContext ticketsDb)
 {
     /// <summary>
@@ -41,14 +41,14 @@ public sealed class DatosDelInforme(
     /// informe recortado en silencio es peor que uno corto, porque quien lo lea creerá que ésos
     /// son todos los datos.
     /// </summary>
-    public const int FilasMaximas = 20_000;
+    public const int MaxRows = 20_000;
 
     /// <summary>La cultura en que se formatean fechas y números del informe.</summary>
-    private static readonly CultureInfo Espanol = CultureInfo.GetCultureInfo("es-ES");
+    private static readonly CultureInfo Spanish = CultureInfo.GetCultureInfo("es-ES");
 
-    public async Task<ReportTable> ResolveAsync(Report informe, CancellationToken ct)
+    public async Task<ReportTable> ResolveAsync(Report report, CancellationToken ct)
     {
-        var tenantId = informe.TenantId;
+        var tenantId = report.TenantId;
 
         // El inquilino se declara en los tres contextos antes de consultar nada.
         //
@@ -59,27 +59,27 @@ public sealed class DatosDelInforme(
         //
         // Desde una petición HTTP es redundante —el inquilino ya es ése— y no molesta: se pone el
         // mismo valor que ya había.
-        using var _ = tareasDb.AsTenant(tenantId);
+        using var _ = tasksDb.AsTenant(tenantId);
         using var __ = ticketsDb.AsTenant(tenantId);
-        using var ___ = proyectosDb.AsTenant(tenantId);
+        using var ___ = projectsDb.AsTenant(tenantId);
 
         // El nombre que le puso quien lo creó encabeza el documento; el tipo decide qué datos
         // trae. Son dos cosas distintas y conviene no mezclarlas: dos informes del mismo tipo
         // pueden llamarse distinto porque filtran distinto.
-        return informe.Type.Name switch
+        return report.Type.Name switch
         {
-            nameof(ReportType.KpiSummary) => await KpisAsync(informe, tenantId, ct),
-            nameof(ReportType.TaskBreakdown) => await DesgloseDeTareasAsync(informe, tenantId, ct),
-            nameof(ReportType.ProjectProgress) => await AvanceDeProyectosAsync(informe, tenantId, ct),
-            nameof(ReportType.TaskSummary) => await TareasAsync(informe, tenantId, ct),
-            nameof(ReportType.TicketAnalytics) => await TicketsAsync(informe, tenantId, ct),
-            nameof(ReportType.UserActivity) => await ActividadPorPersonaAsync(informe, tenantId, ct),
+            nameof(ReportType.KpiSummary) => await KpisAsync(report, tenantId, ct),
+            nameof(ReportType.TaskBreakdown) => await TaskBreakdownAsync(report, tenantId, ct),
+            nameof(ReportType.ProjectProgress) => await ProjectProgressAsync(report, tenantId, ct),
+            nameof(ReportType.TaskSummary) => await TasksAsync(report, tenantId, ct),
+            nameof(ReportType.TicketAnalytics) => await TicketsAsync(report, tenantId, ct),
+            nameof(ReportType.UserActivity) => await ActivityByPersonAsync(report, tenantId, ct),
 
             // Los informes a medida los resuelve el motor a partir de su definición guardada.
-            nameof(ReportType.Custom) => await AMedidaAsync(informe, ct),
+            nameof(ReportType.Custom) => await CustomAsync(report, ct),
 
             _ => throw new InvalidOperationException(
-                $"El tipo de informe «{informe.Type.Name}» no sabe generar datos todavía")
+                $"El tipo de informe «{report.Type.Name}» no sabe generar datos todavía")
         };
     }
 
@@ -90,21 +90,21 @@ public sealed class DatosDelInforme(
     /// dentro: un informe vacío parece un fallo del sistema, y esto es un informe a medio
     /// configurar.
     /// </summary>
-    private async Task<ReportTable> AMedidaAsync(Report informe, CancellationToken ct)
+    private async Task<ReportTable> CustomAsync(Report report, CancellationToken ct)
     {
-        var definicion = informe.ReadDefinition();
+        var definition = report.ReadDefinition();
 
-        if (definicion is null)
+        if (definition is null)
         {
             throw new InvalidOperationException(
                 "Este informe está marcado como personalizado pero no tiene definición. "
                 + "Ábrelo en el constructor y elige el origen, la agrupación y la medida.");
         }
 
-        return await motor.ResolveAsync(informe.Name, informe.TenantId, definicion, ct);
+        return await motor.ResolveAsync(report.Name, report.TenantId, definition, ct);
     }
 
-    private async Task<ReportTable> KpisAsync(Report informe, Guid tenantId, CancellationToken ct)
+    private async Task<ReportTable> KpisAsync(Report report, Guid tenantId, CancellationToken ct)
     {
         var kpi = await panel.GetKpiDataAsync(tenantId, ct);
 
@@ -112,64 +112,64 @@ public sealed class DatosDelInforme(
         // abajo en cualquier formato y añadir un indicador no descuadra la tabla.
         // Expresión de colección y no inicializador con llaves: `{ ["a", "b"] }` C# lo lee como
         // un inicializador de indexador, no como una lista de listas.
-        List<IReadOnlyList<string>> filas =
+        List<IReadOnlyList<string>> rows =
         [
-            ["Proyectos", kpi.TotalProjects.ToString(Espanol)],
-            ["Tareas", kpi.TotalTasks.ToString(Espanol)],
-            ["Tareas terminadas", kpi.DoneTasks.ToString(Espanol)],
-            ["Porcentaje completado", kpi.Throughput.ToString("0.#", Espanol) + " %"],
-            ["Tickets abiertos", kpi.OpenTickets.ToString(Espanol)],
-            ["Tickets en curso", kpi.InProgressTickets.ToString(Espanol)],
+            ["Proyectos", kpi.TotalProjects.ToString(Spanish)],
+            ["Tareas", kpi.TotalTasks.ToString(Spanish)],
+            ["Tareas terminadas", kpi.DoneTasks.ToString(Spanish)],
+            ["Porcentaje completado", kpi.Throughput.ToString("0.#", Spanish) + " %"],
+            ["Tickets abiertos", kpi.OpenTickets.ToString(Spanish)],
+            ["Tickets en curso", kpi.InProgressTickets.ToString(Spanish)],
 
             // Los huecos se escriben como raya y no como cero. Un cero aquí diría «se entrega en
             // el acto», que es lo contrario de «todavía no se puede calcular».
-            ["Tiempo medio de entrega (días)", Numero(kpi.AvgLeadTimeDays)],
-            ["Tiempo medio de ciclo (días)", Numero(kpi.AvgCycleTimeDays)]
+            ["Tiempo medio de entrega (días)", FormatNumber(kpi.AvgLeadTimeDays)],
+            ["Tiempo medio de ciclo (días)", FormatNumber(kpi.AvgCycleTimeDays)]
         ];
 
-        return new ReportTable(informe.Name, Subtitulo(filas.Count), ["Indicador", "Valor"], filas);
+        return new ReportTable(report.Name, Subtitle(rows.Count), ["Indicador", "Valor"], rows);
     }
 
-    private async Task<ReportTable> DesgloseDeTareasAsync(Report informe, Guid tenantId, CancellationToken ct)
+    private async Task<ReportTable> TaskBreakdownAsync(Report report, Guid tenantId, CancellationToken ct)
     {
-        var desglose = await panel.GetTaskBreakdownAsync(tenantId, ct);
+        var breakdown = await panel.GetTaskBreakdownAsync(tenantId, ct);
 
-        var filas = desglose
-            .Select(d => (IReadOnlyList<string>)[d.Status, d.Count.ToString(Espanol)])
+        var rows = breakdown
+            .Select(d => (IReadOnlyList<string>)[d.Status, d.Count.ToString(Spanish)])
             .ToList();
 
-        return new ReportTable(informe.Name, Subtitulo(filas.Count), ["Estado", "Tareas"], filas);
+        return new ReportTable(report.Name, Subtitle(rows.Count), ["Estado", "Tareas"], rows);
     }
 
-    private async Task<ReportTable> AvanceDeProyectosAsync(Report informe, Guid tenantId, CancellationToken ct)
+    private async Task<ReportTable> ProjectProgressAsync(Report report, Guid tenantId, CancellationToken ct)
     {
-        var avance = await panel.GetProjectProgressAsync(tenantId, ct);
+        var progress = await panel.GetProjectProgressAsync(tenantId, ct);
 
-        var filas = avance
+        var rows = progress
             .Select(p => (IReadOnlyList<string>)
             [
                 p.Name,
                 p.Status,
-                p.TotalTasks.ToString(Espanol),
-                p.DoneTasks.ToString(Espanol),
-                p.CompletionPct.ToString("0.#", Espanol) + " %"
+                p.TotalTasks.ToString(Spanish),
+                p.DoneTasks.ToString(Spanish),
+                p.CompletionPct.ToString("0.#", Spanish) + " %"
             ])
             .ToList();
 
         return new ReportTable(
-            informe.Name, Subtitulo(filas.Count),
-            ["Proyecto", "Estado", "Tareas", "Terminadas", "Avance"], filas);
+            report.Name, Subtitle(rows.Count),
+            ["Proyecto", "Estado", "Tareas", "Terminadas", "Avance"], rows);
     }
 
-    private async Task<ReportTable> TareasAsync(Report informe, Guid tenantId, CancellationToken ct)
+    private async Task<ReportTable> TasksAsync(Report report, Guid tenantId, CancellationToken ct)
     {
         // El detalle respeta los filtros globales: nada archivado ni en la papelera sale en un
         // informe. Es la ventaja de haberlos puesto en el filtro global y no consulta a
         // consulta —esta consulta se escribió después y los hereda sin saberlo—.
-        var tareas = await tareasDb.Tasks.AsNoTracking()
+        var tasks = await tasksDb.Tasks.AsNoTracking()
             .Where(t => t.TenantId == tenantId)
             .OrderByDescending(t => t.DueDate)
-            .Take(FilasMaximas)
+            .Take(MaxRows)
             .Select(t => new
             {
                 Titulo = t.Title.Value,
@@ -181,59 +181,59 @@ public sealed class DatosDelInforme(
             })
             .ToListAsync(ct);
 
-        var filas = tareas
+        var rows = tasks
             .Select(t => (IReadOnlyList<string>)
             [
                 t.Titulo,
                 t.Estado,
                 t.Prioridad,
-                t.DueDate.ToString("dd/MM/yyyy", Espanol),
-                t.EstimatedHours.ToString("0.##", Espanol),
-                t.Responsables.ToString(Espanol)
+                t.DueDate.ToString("dd/MM/yyyy", Spanish),
+                t.EstimatedHours.ToString("0.##", Spanish),
+                t.Responsables.ToString(Spanish)
             ])
             .ToList();
 
         return new ReportTable(
-            informe.Name, Subtitulo(filas.Count),
-            ["Tarea", "Estado", "Prioridad", "Vence", "Horas estimadas", "Responsables"], filas);
+            report.Name, Subtitle(rows.Count),
+            ["Tarea", "Estado", "Prioridad", "Vence", "Horas estimadas", "Responsables"], rows);
     }
 
-    private async Task<ReportTable> TicketsAsync(Report informe, Guid tenantId, CancellationToken ct)
+    private async Task<ReportTable> TicketsAsync(Report report, Guid tenantId, CancellationToken ct)
     {
         var tickets = await ticketsDb.Tickets.AsNoTracking()
             .Where(t => t.TenantId == tenantId)
             .OrderByDescending(t => t.CreatedAt)
-            .Take(FilasMaximas)
+            .Take(MaxRows)
             .Select(t => new { t.Title, t.PriorityValue, t.StatusValue, t.CreatedAt, t.ResolvedAt })
             .ToListAsync(ct);
 
-        var filas = tickets
+        var rows = tickets
             .Select(t => (IReadOnlyList<string>)
             [
                 t.Title,
                 Ticketing.Domain.ValueObjects.TicketPriority.FromValue<Ticketing.Domain.ValueObjects.TicketPriority>(t.PriorityValue).Name,
                 Ticketing.Domain.ValueObjects.TicketStatus.FromValue<Ticketing.Domain.ValueObjects.TicketStatus>(t.StatusValue).Name,
-                t.CreatedAt.ToString("dd/MM/yyyy", Espanol),
-                t.ResolvedAt?.ToString("dd/MM/yyyy", Espanol) ?? "—",
+                t.CreatedAt.ToString("dd/MM/yyyy", Spanish),
+                t.ResolvedAt?.ToString("dd/MM/yyyy", Spanish) ?? "—",
 
                 // Los días que lleva abierto, o los que tardó. Es la columna por la que se ordena
                 // cuando alguien busca qué se está atascando, y calcularla aquí evita que cada
                 // quien la saque a mano en una hoja de cálculo.
-                ((t.ResolvedAt ?? DateTime.UtcNow) - t.CreatedAt).TotalDays.ToString("0.#", Espanol)
+                ((t.ResolvedAt ?? DateTime.UtcNow) - t.CreatedAt).TotalDays.ToString("0.#", Spanish)
             ])
             .ToList();
 
         return new ReportTable(
-            informe.Name, Subtitulo(filas.Count),
-            ["Ticket", "Prioridad", "Estado", "Creado", "Resuelto", "Días"], filas);
+            report.Name, Subtitle(rows.Count),
+            ["Ticket", "Prioridad", "Estado", "Creado", "Resuelto", "Días"], rows);
     }
 
-    private async Task<ReportTable> ActividadPorPersonaAsync(Report informe, Guid tenantId, CancellationToken ct)
+    private async Task<ReportTable> ActivityByPersonAsync(Report report, Guid tenantId, CancellationToken ct)
     {
         // Se agrupa por responsable principal. Las tareas con varios responsables cuentan en el
         // principal y no en todos, para que la suma de la columna sea el total de tareas: un
         // informe cuyas partes suman más que el total es un informe que nadie usa dos veces.
-        var porPersona = await tareasDb.Tasks.AsNoTracking()
+        var byPerson = await tasksDb.Tasks.AsNoTracking()
             .Where(t => t.TenantId == tenantId && t.AssigneeId != Guid.Empty)
             .GroupBy(t => t.AssigneeId)
             .Select(g => new
@@ -244,29 +244,29 @@ public sealed class DatosDelInforme(
                 Horas = g.Sum(t => t.EstimatedHours)
             })
             .OrderByDescending(x => x.Total)
-            .Take(FilasMaximas)
+            .Take(MaxRows)
             .ToListAsync(ct);
 
         // El identificador y no el nombre: los nombres viven en Identity, y este informe ya cruza
         // dos módulos. Ponerle nombre exige un puerto nuevo, y es trabajo aparte —queda anotado
         // en la auditoría—.
-        var filas = porPersona
+        var rows = byPerson
             .Select(p => (IReadOnlyList<string>)
             [
                 p.Persona.ToString(),
-                p.Total.ToString(Espanol),
-                p.Terminadas.ToString(Espanol),
-                p.Horas.ToString("0.##", Espanol)
+                p.Total.ToString(Spanish),
+                p.Terminadas.ToString(Spanish),
+                p.Horas.ToString("0.##", Spanish)
             ])
             .ToList();
 
         return new ReportTable(
-            informe.Name, Subtitulo(filas.Count),
-            ["Persona", "Tareas", "Terminadas", "Horas estimadas"], filas);
+            report.Name, Subtitle(rows.Count),
+            ["Persona", "Tareas", "Terminadas", "Horas estimadas"], rows);
     }
 
-    private static string Numero(double? valor)
-        => valor?.ToString("0.#", Espanol) ?? "—";
+    private static string FormatNumber(double? value)
+        => value?.ToString("0.#", Spanish) ?? "—";
 
     /// <summary>
     /// La línea de contexto: cuándo se generó y cuántas filas trae.
@@ -274,12 +274,12 @@ public sealed class DatosDelInforme(
     /// Avisa cuando el informe llegó al tope. Recortar sin decirlo es la peor opción: quien lea
     /// el fichero dará por hecho que ésos son todos los datos.
     /// </summary>
-    private static string Subtitulo(int filas)
+    private static string Subtitle(int rows)
     {
-        var generado = $"Generado el {DateTime.UtcNow.ToString("dd/MM/yyyy HH:mm", Espanol)} UTC";
+        var generated = $"Generado el {DateTime.UtcNow.ToString("dd/MM/yyyy HH:mm", Spanish)} UTC";
 
-        return filas >= FilasMaximas
-            ? $"{generado} · {filas:N0} filas (recortado: el informe tiene más datos de los que caben)"
-            : $"{generado} · {filas:N0} filas";
+        return rows >= MaxRows
+            ? $"{generated} · {rows:N0} filas (recortado: el informe tiene más datos de los que caben)"
+            : $"{generated} · {rows:N0} filas";
     }
 }

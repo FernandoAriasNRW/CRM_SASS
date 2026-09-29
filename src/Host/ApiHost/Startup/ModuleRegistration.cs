@@ -114,13 +114,13 @@ public static class ModuleRegistration
         // El panel de informes cruza Projects, WorkItems y Ticketing, así que su implementación vive
         // aquí y no dentro del módulo: ningún módulo referencia a otro. Reporting declara el contrato;
         // el host, que sí conoce a todos, lo satisface. Mismo criterio que PuenteDeAutomatizaciones.
-        services.AddScoped<global::Reporting.Application.Abstractions.IDashboardRepository, Reporting.ConsultasDelPanel>();
+        services.AddScoped<global::Reporting.Application.Abstractions.IDashboardRepository, Reporting.DashboardQueries>();
 
         // Y la fuente de datos de las exportaciones, por lo mismo: un informe de tareas mira WorkItems y
-        // uno de tickets mira Ticketing. Reutiliza ConsultasDelPanel para los agregados, de modo que el
+        // uno de tickets mira Ticketing. Reutiliza DashboardQueries para los agregados, de modo que el
         // PDF y la pantalla dan los mismos números.
-        services.AddScoped<Reporting.ConsultasDelPanel>();
-        services.AddScoped<Reporting.DatosDelInforme>();
+        services.AddScoped<Reporting.DashboardQueries>();
+        services.AddScoped<Reporting.ReportData>();
 
         // La agenda de un día, que junta los eventos con lo que vence ese día en tareas, tickets y
         // proyectos. Vive en el host por lo mismo que las dos de arriba: cruza módulos.
@@ -128,20 +128,20 @@ public static class ModuleRegistration
 
         // El motor de los informes a medida: traduce la definición neutra que construyó el usuario a
         // filas. Mismo sitio y mismo motivo que lo de arriba.
-        services.AddScoped<Reporting.MotorDeInformes>();
+        services.AddScoped<Reporting.ReportEngine>();
         services.AddScoped<global::Reporting.Application.Definitions.IReportResolver>(
-            sp => sp.GetRequiredService<Reporting.MotorDeInformes>());
+            sp => sp.GetRequiredService<Reporting.ReportEngine>());
 
         // El trabajador que genera los ficheros. Va en segundo plano porque quien exporta recupera el
         // control enseguida, y porque los informes programados ocurren sin nadie delante: un solo camino
         // para las dos cosas.
-        services.AddHostedService<Reporting.GeneradorDeExportaciones>();
+        services.AddHostedService<Reporting.ExportGenerator>();
 
         // Y el que dispara los informes programados. No genera nada: deja la exportación pedida y el
         // generador de arriba la recoge, para que un informe programado y uno pedido a mano recorran el
         // mismo camino.
-        services.AddScoped<Reporting.CorreosDeDestinatarios>();
-        services.AddHostedService<Reporting.PlanificadorDeInformes>();
+        services.AddScoped<Reporting.RecipientEmails>();
+        services.AddHostedService<Reporting.ReportScheduler>();
 
         // El puente entre las tareas y las automatizaciones vive aquí porque es el unico sitio que
         // conoce a los dos modulos. Ver PuenteDeAutomatizaciones.
