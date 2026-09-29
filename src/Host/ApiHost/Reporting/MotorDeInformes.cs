@@ -1,18 +1,18 @@
 using System.Globalization;
 using Microsoft.EntityFrameworkCore;
 using Projects.Infrastructure.Persistence;
-using Reporting.Application.Exportaciones;
-using Reporting.Domain.Definicion;
+using Reporting.Application.Exports;
+using Reporting.Domain.Definitions;
 using Ticketing.Infrastructure.Persistence;
 using WorkItems.Infrastructure.Persistence;
 
 namespace ApiHost.Reporting;
 
 /// <summary>
-/// Traduce una <see cref="DefinicionDeInforme"/> a filas.
+/// Traduce una <see cref="ReportDefinition"/> a filas.
 ///
 /// <b>Traduce, no interpreta.</b> Cada pieza de la definición se resuelve con un <c>switch</c>
-/// contra <see cref="CatalogoDeInformes"/>; no se compone SQL ni se construyen expresiones desde
+/// contra <see cref="ReportCatalog"/>; no se compone SQL ni se construyen expresiones desde
 /// texto. Es lo que hace que un constructor de informes en manos de los usuarios no sea una vía
 /// para ejecutar consultas arbitrarias: lo que no está en el catálogo no llega hasta aquí, y si
 /// llegara, caería en el <c>default</c> con un mensaje que dice qué falta.
@@ -31,7 +31,7 @@ namespace ApiHost.Reporting;
 public sealed class MotorDeInformes(
     WorkItemsDbContext tareasDb,
     TicketingDbContext ticketsDb,
-    ProjectsDbContext proyectosDb) : global::Reporting.Application.Definiciones.IResolutorDeInformes
+    ProjectsDbContext proyectosDb) : global::Reporting.Application.Definitions.IReportResolver
 {
     private static readonly CultureInfo Espanol = CultureInfo.GetCultureInfo("es-ES");
 
@@ -53,7 +53,7 @@ public sealed class MotorDeInformes(
     /// Salen de los propios objetos de valor del dominio, no de una lista escrita aquí: añadir un
     /// estado nuevo a un ticket lo pone en el constructor de informes sin tocar nada.
     /// </summary>
-    public IReadOnlyList<string> ValoresDe(string origen, string campo) => (origen, campo) switch
+    public IReadOnlyList<string> ValuesOf(string origen, string campo) => (origen, campo) switch
     {
         ("Tareas", "estado") => WorkItems.Domain.ValueObjects.TaskStatus
             .All().Select(e => e.Value).ToList(),
@@ -76,10 +76,10 @@ public sealed class MotorDeInformes(
         _ => []
     };
 
-    public async Task<TablaDeInforme> ResolveAsync(
-        string titulo, Guid tenantId, DefinicionDeInforme definicion, CancellationToken ct)
+    public async Task<ReportTable> ResolveAsync(
+        string titulo, Guid tenantId, ReportDefinition definicion, CancellationToken ct)
     {
-        var validacion = definicion.Validar();
+        var validacion = definicion.Validate();
         if (validacion.IsFailure)
             throw new InvalidOperationException(validacion.Error);
 
@@ -90,14 +90,14 @@ public sealed class MotorDeInformes(
         using var __ = ticketsDb.AsTenant(tenantId);
         using var ___ = proyectosDb.AsTenant(tenantId);
 
-        var origen = CatalogoDeInformes.Origen(definicion.Origen)!;
+        var origen = ReportCatalog.FindDataSource(definicion.Origen)!;
 
-        var crudo = origen.Clave switch
+        var crudo = origen.Key switch
         {
             "Tareas" => await DeTareasAsync(tenantId, definicion, ct),
             "Tickets" => await DeTicketsAsync(tenantId, definicion, ct),
             "Proyectos" => await DeProyectosAsync(tenantId, definicion, ct),
-            _ => throw new InvalidOperationException($"El origen «{origen.Clave}» no tiene motor todavía")
+            _ => throw new InvalidOperationException($"El origen «{origen.Key}» no tiene motor todavía")
         };
 
         return Componer(titulo, definicion, origen, crudo);
@@ -114,11 +114,11 @@ public sealed class MotorDeInformes(
 
     #region Los tres orígenes
 
-    private async Task<List<FilaCruda>> DeTareasAsync(Guid tenantId, DefinicionDeInforme d, CancellationToken ct)
+    private async Task<List<FilaCruda>> DeTareasAsync(Guid tenantId, ReportDefinition d, CancellationToken ct)
     {
         var consulta = tareasDb.Tasks.AsNoTracking().Where(t => t.TenantId == tenantId);
 
-        foreach (var filtro in d.FiltrosAplicados)
+        foreach (var filtro in d.AppliedFilters)
         {
             consulta = filtro.Campo.ToLowerInvariant() switch
             {
@@ -176,11 +176,11 @@ public sealed class MotorDeInformes(
             .ToList();
     }
 
-    private async Task<List<FilaCruda>> DeTicketsAsync(Guid tenantId, DefinicionDeInforme d, CancellationToken ct)
+    private async Task<List<FilaCruda>> DeTicketsAsync(Guid tenantId, ReportDefinition d, CancellationToken ct)
     {
         var consulta = ticketsDb.Tickets.AsNoTracking().Where(t => t.TenantId == tenantId);
 
-        foreach (var filtro in d.FiltrosAplicados)
+        foreach (var filtro in d.AppliedFilters)
         {
             consulta = filtro.Campo.ToLowerInvariant() switch
             {
@@ -236,11 +236,11 @@ public sealed class MotorDeInformes(
             .ToList();
     }
 
-    private async Task<List<FilaCruda>> DeProyectosAsync(Guid tenantId, DefinicionDeInforme d, CancellationToken ct)
+    private async Task<List<FilaCruda>> DeProyectosAsync(Guid tenantId, ReportDefinition d, CancellationToken ct)
     {
         var consulta = proyectosDb.Projects.AsNoTracking().Where(p => p.TenantId == tenantId);
 
-        foreach (var filtro in d.FiltrosAplicados)
+        foreach (var filtro in d.AppliedFilters)
         {
             consulta = filtro.Campo.ToLowerInvariant() switch
             {
@@ -276,10 +276,10 @@ public sealed class MotorDeInformes(
 
     #region Componer el resultado
 
-    private static TablaDeInforme Componer(
-        string titulo, DefinicionDeInforme d, OrigenDeDatos origen, List<FilaCruda> crudo)
+    private static ReportTable Componer(
+        string titulo, ReportDefinition d, DataSource origen, List<FilaCruda> crudo)
     {
-        var medida = origen.Medida(d.Medida)!;
+        var medida = origen.Measure(d.Medida)!;
         var esMedia = d.Medida.StartsWith("media", StringComparison.OrdinalIgnoreCase);
 
         var grupos = crudo
@@ -312,7 +312,7 @@ public sealed class MotorDeInformes(
         //
         // El orden alfabético vale como orden cronológico porque las claves se escriben con el
         // año delante —«2026-08», «2026-S32»—, que es justo para lo que se eligió ese formato.
-        var agrupaPorFecha = origen.Campo(d.Agrupacion)?.Tipo == TipoDeCampo.Fecha;
+        var agrupaPorFecha = origen.Field(d.Agrupacion)?.Type == FieldType.Date;
 
         grupos = agrupaPorFecha
             ? grupos.OrderBy(g => g.Grupo, StringComparer.Ordinal).ToList()
@@ -320,14 +320,14 @@ public sealed class MotorDeInformes(
 
         var recortado = false;
 
-        if (grupos.Count > d.GruposEfectivos)
+        if (grupos.Count > d.EffectiveGroups)
         {
             // La cola se junta en «Otros» en vez de desaparecer: los totales tienen que seguir
             // cuadrando con la lista completa, o el informe miente por omisión. En una media, en
             // cambio, juntar la cola daría un número sin significado, así que ahí se recorta y se
             // dice.
-            var cabeza = grupos.Take(d.GruposEfectivos).ToList();
-            var cola = grupos.Skip(d.GruposEfectivos).ToList();
+            var cabeza = grupos.Take(d.EffectiveGroups).ToList();
+            var cola = grupos.Skip(d.EffectiveGroups).ToList();
 
             if (!esMedia)
                 cabeza.Add(new { Grupo = Otros, Valor = (double?)cola.Sum(g => g.Valor ?? 0) });
@@ -345,10 +345,10 @@ public sealed class MotorDeInformes(
             ])
             .ToList();
 
-        return new TablaDeInforme(
+        return new ReportTable(
             titulo,
             Subtitulo(d, origen, medida, crudo.Count, recortado),
-            [origen.Campo(d.Agrupacion)!.Nombre, medida.Nombre],
+            [origen.Field(d.Agrupacion)!.Name, medida.Name],
             filas);
     }
 
@@ -372,24 +372,24 @@ public sealed class MotorDeInformes(
     /// «Tickets por estado» son todos o sólo los de una persona.
     /// </summary>
     private static string Subtitulo(
-        DefinicionDeInforme d, OrigenDeDatos origen, MedidaDisponible medida, int filas, bool recortado)
+        ReportDefinition d, DataSource origen, AvailableMeasure medida, int filas, bool recortado)
     {
         var partes = new List<string>
         {
-            origen.Nombre,
-            $"agrupado por {origen.Campo(d.Agrupacion)!.Nombre.ToLowerInvariant()}",
-            medida.Nombre.ToLowerInvariant()
+            origen.Name,
+            $"agrupado por {origen.Field(d.Agrupacion)!.Name.ToLowerInvariant()}",
+            medida.Name.ToLowerInvariant()
         };
 
-        if (d.FiltrosAplicados.Count > 0)
+        if (d.AppliedFilters.Count > 0)
         {
-            var filtros = d.FiltrosAplicados.Select(f =>
+            var filtros = d.AppliedFilters.Select(f =>
             {
-                var campo = origen.Campo(f.Campo)?.Nombre ?? f.Campo;
-                var operador = CatalogoDeInformes.Operador(f.Operador);
-                return operador?.NecesitaValor == false
-                    ? $"{campo} {operador.Nombre.ToLowerInvariant()}"
-                    : $"{campo} {operador?.Nombre.ToLowerInvariant() ?? f.Operador} {f.Valor}";
+                var campo = origen.Field(f.Campo)?.Name ?? f.Campo;
+                var operador = ReportCatalog.Operator(f.Operador);
+                return operador?.NeedsValue == false
+                    ? $"{campo} {operador.Name.ToLowerInvariant()}"
+                    : $"{campo} {operador?.Name.ToLowerInvariant() ?? f.Operador} {f.Valor}";
             });
 
             partes.Add("filtrado por " + string.Join(" y ", filtros));
@@ -398,7 +398,7 @@ public sealed class MotorDeInformes(
         partes.Add($"sobre {filas:N0} filas");
 
         if (recortado)
-            partes.Add($"sólo los {d.GruposEfectivos} mayores");
+            partes.Add($"sólo los {d.EffectiveGroups} mayores");
 
         return string.Join(" · ", partes)
                + $" · Generado el {DateTime.UtcNow.ToString("dd/MM/yyyy HH:mm", Espanol)} UTC";
@@ -417,7 +417,7 @@ public sealed class MotorDeInformes(
         typeof(string).GetMethod(nameof(string.Contains), [typeof(string)])!;
 
     private static IQueryable<T> AplicarTexto<T>(
-        IQueryable<T> consulta, FiltroDeInforme f, System.Linq.Expressions.Expression<Func<T, string>> campo)
+        IQueryable<T> consulta, ReportFilter f, System.Linq.Expressions.Expression<Func<T, string>> campo)
     {
         return f.Operador.ToLowerInvariant() switch
         {
@@ -460,7 +460,7 @@ public sealed class MotorDeInformes(
     }
 
     private static IQueryable<T> AplicarGuid<T>(
-        IQueryable<T> consulta, FiltroDeInforme f, System.Linq.Expressions.Expression<Func<T, Guid>> campo)
+        IQueryable<T> consulta, ReportFilter f, System.Linq.Expressions.Expression<Func<T, Guid>> campo)
     {
         var parametro = campo.Parameters[0];
         var operador = f.Operador.ToLowerInvariant();
@@ -494,7 +494,7 @@ public sealed class MotorDeInformes(
     }
 
     private static IQueryable<T> AplicarGuidNulo<T>(
-        IQueryable<T> consulta, FiltroDeInforme f, System.Linq.Expressions.Expression<Func<T, Guid?>> campo)
+        IQueryable<T> consulta, ReportFilter f, System.Linq.Expressions.Expression<Func<T, Guid?>> campo)
     {
         var parametro = campo.Parameters[0];
         var nulo = System.Linq.Expressions.Expression.Constant(null, typeof(Guid?));
@@ -509,7 +509,7 @@ public sealed class MotorDeInformes(
 
         return consulta.Where(System.Linq.Expressions.Expression.Lambda<Func<T, bool>>(cuerpo, parametro));
 
-        static System.Linq.Expressions.Expression Igualdad(System.Linq.Expressions.Expression cuerpo, FiltroDeInforme f)
+        static System.Linq.Expressions.Expression Igualdad(System.Linq.Expressions.Expression cuerpo, ReportFilter f)
         {
             if (!Guid.TryParse(f.Valor, out var valor))
                 throw new InvalidOperationException($"«{f.Valor}» no es un identificador válido para {f.Campo}");
@@ -524,7 +524,7 @@ public sealed class MotorDeInformes(
     }
 
     private static IQueryable<T> AplicarNumero<T>(
-        IQueryable<T> consulta, FiltroDeInforme f, System.Linq.Expressions.Expression<Func<T, double>> campo)
+        IQueryable<T> consulta, ReportFilter f, System.Linq.Expressions.Expression<Func<T, double>> campo)
     {
         if (!double.TryParse(f.Valor, NumberStyles.Any, CultureInfo.InvariantCulture, out var valor)
             && !double.TryParse(f.Valor, NumberStyles.Any, Espanol, out valor))
@@ -548,7 +548,7 @@ public sealed class MotorDeInformes(
     }
 
     private static IQueryable<T> AplicarFecha<T>(
-        IQueryable<T> consulta, FiltroDeInforme f, System.Linq.Expressions.Expression<Func<T, DateTime>> campo)
+        IQueryable<T> consulta, ReportFilter f, System.Linq.Expressions.Expression<Func<T, DateTime>> campo)
     {
         var valor = LeerFecha(f);
         var parametro = campo.Parameters[0];
@@ -565,7 +565,7 @@ public sealed class MotorDeInformes(
     }
 
     private static IQueryable<T> AplicarFechaNula<T>(
-        IQueryable<T> consulta, FiltroDeInforme f, System.Linq.Expressions.Expression<Func<T, DateTime?>> campo)
+        IQueryable<T> consulta, ReportFilter f, System.Linq.Expressions.Expression<Func<T, DateTime?>> campo)
     {
         var parametro = campo.Parameters[0];
         var nulo = System.Linq.Expressions.Expression.Constant(null, typeof(DateTime?));
@@ -584,7 +584,7 @@ public sealed class MotorDeInformes(
         return consulta.Where(System.Linq.Expressions.Expression.Lambda<Func<T, bool>>(cuerpo, parametro));
     }
 
-    private static DateTime LeerFecha(FiltroDeInforme f)
+    private static DateTime LeerFecha(ReportFilter f)
     {
         // Se admite ISO y el formato español, porque el valor puede venir del constructor de la
         // pantalla o de una definición escrita a mano. Se fija UTC: sin eso, la misma definición
@@ -642,7 +642,7 @@ public sealed class MotorDeInformes(
     /// </summary>
     private static IQueryable<T> AplicarCodigo<T>(
         IQueryable<T> consulta,
-        FiltroDeInforme f,
+        ReportFilter f,
         System.Linq.Expressions.Expression<Func<T, int>> campo,
         Func<string, int?> aCodigo)
     {

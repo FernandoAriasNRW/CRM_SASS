@@ -9,24 +9,24 @@ import { mensajeDeError } from '../../shared/utils/mensaje-de-error';
 
 /** El catálogo tal como lo sirve el servidor. La pantalla no escribe ninguna de estas listas. */
 export interface Catalogo {
-  origenes: Origen[];
-  operadores: Operador[];
-  formas: Opcion[];
-  granularidades: Opcion[];
+  dataSources: Origen[];
+  operators: Operador[];
+  visualizations: Opcion[];
+  granularities: Opcion[];
 }
 
-export interface Origen { clave: string; nombre: string; campos: Campo[]; medidas: Opcion[]; }
+export interface Origen { key: string; name: string; fields: Campo[]; measures: Opcion[]; }
 export interface Campo {
-  clave: string;
-  nombre: string;
-  tipo: string;
+  key: string;
+  name: string;
+  type: string;
   /** Los operadores de **este** campo, resueltos por el servidor. Ver `operadoresPara`. */
-  operadores: string[];
+  operators: string[];
   /** Los valores admitidos si es una lista cerrada; vacío si admite texto libre. */
-  valores: string[];
+  values: string[];
 }
-export interface Operador { clave: string; nombre: string; tipos: string[]; necesitaValor: boolean; }
-export interface Opcion { clave: string; nombre: string; }
+export interface Operador { key: string; name: string; types: string[]; needsValue: boolean; }
+export interface Opcion { key: string; name: string; }
 
 export interface Filtro { campo: string; operador: string; valor: string | null; }
 
@@ -41,11 +41,11 @@ export interface Definicion {
 }
 
 interface VistaPrevia {
-  titulo: string;
-  subtitulo: string | null;
-  columnas: string[];
-  filas: string[][];
-  totalDeFilas: number;
+  title: string;
+  subtitle: string | null;
+  columns: string[];
+  rows: string[][];
+  totalRows: number;
 }
 
 /**
@@ -89,8 +89,8 @@ interface VistaPrevia {
                 <label class="text-sm font-medium block mb-1" i18n>Datos de</label>
                 <select class="w-full border border-border rounded-md px-3 py-2 text-sm bg-background"
                         [ngModel]="origen()" (ngModelChange)="cambiarOrigen($event)" name="origen">
-                  @for (o of catalogo()!.origenes; track o.clave) {
-                    <option [value]="o.clave">{{ o.nombre }}</option>
+                  @for (o of catalogo()!.dataSources; track o.key) {
+                    <option [value]="o.key">{{ o.name }}</option>
                   }
                 </select>
               </div>
@@ -99,8 +99,8 @@ interface VistaPrevia {
                 <label class="text-sm font-medium block mb-1" i18n>Agrupado por</label>
                 <select class="w-full border border-border rounded-md px-3 py-2 text-sm bg-background"
                         [(ngModel)]="agrupacion" name="agrupacion">
-                  @for (c of camposDelOrigen(); track c.clave) {
-                    <option [value]="c.clave">{{ c.nombre }}</option>
+                  @for (c of camposDelOrigen(); track c.key) {
+                    <option [value]="c.key">{{ c.name }}</option>
                   }
                 </select>
               </div>
@@ -112,8 +112,8 @@ interface VistaPrevia {
                   <label class="text-sm font-medium block mb-1" i18n>Agrupar la fecha</label>
                   <select class="w-full border border-border rounded-md px-3 py-2 text-sm bg-background"
                           [(ngModel)]="granularidad" name="granularidad">
-                    @for (g of catalogo()!.granularidades; track g.clave) {
-                      <option [value]="g.clave">{{ g.nombre }}</option>
+                    @for (g of catalogo()!.granularities; track g.key) {
+                      <option [value]="g.key">{{ g.name }}</option>
                     }
                   </select>
                 </div>
@@ -123,8 +123,8 @@ interface VistaPrevia {
                 <label class="text-sm font-medium block mb-1" i18n>Midiendo</label>
                 <select class="w-full border border-border rounded-md px-3 py-2 text-sm bg-background"
                         [(ngModel)]="medida" name="medida">
-                  @for (m of medidasDelOrigen(); track m.clave) {
-                    <option [value]="m.clave">{{ m.nombre }}</option>
+                  @for (m of medidasDelOrigen(); track m.key) {
+                    <option [value]="m.key">{{ m.name }}</option>
                   }
                 </select>
               </div>
@@ -133,8 +133,8 @@ interface VistaPrevia {
                 <label class="text-sm font-medium block mb-1" i18n>Pintado como</label>
                 <select class="w-full border border-border rounded-md px-3 py-2 text-sm bg-background"
                         [(ngModel)]="forma" name="forma">
-                  @for (f of catalogo()!.formas; track f.clave) {
-                    <option [value]="f.clave">{{ f.nombre }}</option>
+                  @for (f of catalogo()!.visualizations; track f.key) {
+                    <option [value]="f.key">{{ f.name }}</option>
                   }
                 </select>
               </div>
@@ -157,8 +157,8 @@ interface VistaPrevia {
                   <select class="flex-1 border border-border rounded-md px-2 py-1.5 text-sm bg-background"
                           [ngModel]="f.campo" (ngModelChange)="cambiarCampoDeFiltro($index, $event)"
                           [name]="'filtro-campo-' + $index">
-                    @for (c of camposDelOrigen(); track c.clave) {
-                      <option [value]="c.clave">{{ c.nombre }}</option>
+                    @for (c of camposDelOrigen(); track c.key) {
+                      <option [value]="c.key">{{ c.name }}</option>
                     }
                   </select>
 
@@ -166,8 +166,8 @@ interface VistaPrevia {
                        sobre un estado no significa nada, y el servidor lo rechaza. -->
                   <select class="flex-1 border border-border rounded-md px-2 py-1.5 text-sm bg-background"
                           [(ngModel)]="f.operador" [name]="'filtro-op-' + $index">
-                    @for (o of operadoresPara(f.campo); track o.clave) {
-                      <option [value]="o.clave">{{ o.nombre }}</option>
+                    @for (o of operadoresPara(f.campo); track o.key) {
+                      <option [value]="o.key">{{ o.name }}</option>
                     }
                   </select>
 
@@ -211,11 +211,11 @@ interface VistaPrevia {
             @if (previa(); as p) {
               <div class="border border-border rounded-md">
                 <div class="px-3 py-2 border-b border-border">
-                  <p class="text-sm font-medium">{{ p.titulo }}</p>
-                  @if (p.subtitulo) { <p class="text-xs text-muted-foreground">{{ p.subtitulo }}</p> }
+                  <p class="text-sm font-medium">{{ p.title }}</p>
+                  @if (p.subtitle) { <p class="text-xs text-muted-foreground">{{ p.subtitle }}</p> }
                 </div>
 
-                @if (p.filas.length === 0) {
+                @if (p.rows.length === 0) {
                   <p class="px-3 py-4 text-sm text-muted-foreground" i18n>
                     Con estos filtros no hay datos. No es un error: es lo que hay.
                   </p>
@@ -223,13 +223,13 @@ interface VistaPrevia {
                   <table class="w-full text-sm">
                     <thead>
                       <tr class="border-b border-border">
-                        @for (c of p.columnas; track c) {
+                        @for (c of p.columns; track c) {
                           <th class="text-left px-3 py-2 font-medium">{{ c }}</th>
                         }
                       </tr>
                     </thead>
                     <tbody>
-                      @for (fila of p.filas; track $index) {
+                      @for (fila of p.rows; track $index) {
                         <tr class="border-b border-border/50">
                           @for (celda of fila; track $index) {
                             <td class="px-3 py-1.5">{{ celda }}</td>
@@ -239,9 +239,9 @@ interface VistaPrevia {
                     </tbody>
                   </table>
 
-                  @if (p.totalDeFilas > p.filas.length) {
+                  @if (p.totalRows > p.rows.length) {
                     <p class="px-3 py-2 text-xs text-muted-foreground">
-                      Se enseñan {{ p.filas.length }} de {{ p.totalDeFilas }} filas.
+                      Se enseñan {{ p.rows.length }} de {{ p.totalRows }} filas.
                     </p>
                   }
                 }
@@ -294,18 +294,18 @@ export class ConstructorDeInformesComponent {
 
   private async cargar(): Promise<void> {
     try {
-      const catalogo = await firstValueFrom(this.api.get<Catalogo>('/reports/catalogo'));
+      const catalogo = await firstValueFrom(this.api.get<Catalogo>('/reports/catalog'));
       this.catalogo.set(catalogo);
 
       // Si el informe ya tenía definición se reabre con ella; si no, se empieza por el primer
       // origen. `sinAviso` porque un informe sin definición todavía es lo normal, no un error
       // que haya que anunciar.
       const guardada = await firstValueFrom(
-        this.api.get<Definicion>(`/reports/${this.reportId()}/definicion`, undefined, { sinAviso: true })
+        this.api.get<Definicion>(`/reports/${this.reportId()}/definition`, undefined, { sinAviso: true })
       ).catch(() => null);
 
       if (guardada) this.aplicar(guardada);
-      else this.cambiarOrigen(catalogo.origenes[0]?.clave ?? '');
+      else this.cambiarOrigen(catalogo.dataSources[0]?.key ?? '');
     } catch (e) {
       this.error.set(mensajeDeError(e, $localize`No se pudo cargar el catálogo.`));
     } finally {
@@ -323,13 +323,13 @@ export class ConstructorDeInformesComponent {
   }
 
   readonly origenActual = computed(() =>
-    this.catalogo()?.origenes.find(o => o.clave === this.origen()) ?? null);
+    this.catalogo()?.dataSources.find(o => o.key === this.origen()) ?? null);
 
-  readonly camposDelOrigen = computed(() => this.origenActual()?.campos ?? []);
-  readonly medidasDelOrigen = computed(() => this.origenActual()?.medidas ?? []);
+  readonly camposDelOrigen = computed(() => this.origenActual()?.fields ?? []);
+  readonly medidasDelOrigen = computed(() => this.origenActual()?.measures ?? []);
 
   readonly agrupaPorFecha = computed(() =>
-    this.camposDelOrigen().find(c => c.clave === this.agrupacion)?.tipo === 'Fecha');
+    this.camposDelOrigen().find(c => c.key === this.agrupacion)?.type === 'Date');
 
   /**
    * Cambiar de origen limpia lo que dependía del anterior.
@@ -341,8 +341,8 @@ export class ConstructorDeInformesComponent {
     this.origen.set(clave);
 
     const origen = this.origenActual();
-    this.agrupacion = origen?.campos[0]?.clave ?? '';
-    this.medida = origen?.medidas[0]?.clave ?? 'conteo';
+    this.agrupacion = origen?.fields[0]?.key ?? '';
+    this.medida = origen?.measures[0]?.key ?? 'conteo';
     this.filtros.set([]);
     this.previa.set(null);
     this.error.set('');
@@ -357,33 +357,33 @@ export class ConstructorDeInformesComponent {
    * combinación que el servidor rechaza.
    */
   operadoresPara(claveDeCampo: string): Operador[] {
-    const campo = this.camposDelOrigen().find(c => c.clave === claveDeCampo);
+    const campo = this.camposDelOrigen().find(c => c.key === claveDeCampo);
     if (!campo) return [];
 
-    return this.catalogo()?.operadores.filter(o => campo.operadores.includes(o.clave)) ?? [];
+    return this.catalogo()?.operators.filter(o => campo.operators.includes(o.key)) ?? [];
   }
 
   /** Los valores admitidos de un campo, o lista vacía si admite texto libre. */
   valoresDe(claveDeCampo: string): string[] {
-    return this.camposDelOrigen().find(c => c.clave === claveDeCampo)?.valores ?? [];
+    return this.camposDelOrigen().find(c => c.key === claveDeCampo)?.values ?? [];
   }
 
   necesitaValor(claveDeOperador: string): boolean {
-    return this.catalogo()?.operadores.find(o => o.clave === claveDeOperador)?.necesitaValor ?? true;
+    return this.catalogo()?.operators.find(o => o.key === claveDeOperador)?.needsValue ?? true;
   }
 
   anadirFiltro(): void {
     const campo = this.camposDelOrigen()[0];
     if (!campo) return;
 
-    const operador = this.operadoresPara(campo.clave)[0];
+    const operador = this.operadoresPara(campo.key)[0];
 
     this.filtros.update(f => [...f, {
-      campo: campo.clave,
-      operador: operador?.clave ?? 'es',
+      campo: campo.key,
+      operador: operador?.key ?? 'es',
       // Si el campo tiene lista, se empieza por su primer valor: un desplegable que arranca
       // vacío deja mandar un filtro sin valor sin que se note.
-      valor: campo.valores[0] ?? ''
+      valor: campo.values[0] ?? ''
     }]);
   }
 
@@ -393,7 +393,7 @@ export class ConstructorDeInformesComponent {
       if (i !== indice) return f;
 
       const operadores = this.operadoresPara(clave);
-      const sigueValiendo = operadores.some(o => o.clave === f.operador);
+      const sigueValiendo = operadores.some(o => o.key === f.operador);
 
       // El valor del campo anterior casi nunca vale para el nuevo, y si el nuevo es una lista
       // cerrada hay que empezar por uno de los suyos.
@@ -401,7 +401,7 @@ export class ConstructorDeInformesComponent {
 
       return {
         campo: clave,
-        operador: sigueValiendo ? f.operador : operadores[0]?.clave ?? 'es',
+        operador: sigueValiendo ? f.operador : operadores[0]?.key ?? 'es',
         valor: valores.length > 0 ? valores[0] : ''
       };
     }));
@@ -428,8 +428,8 @@ export class ConstructorDeInformesComponent {
 
     try {
       const previa = await firstValueFrom(this.api.post<VistaPrevia>(
-        '/reports/vista-previa',
-        { definicion: this.definicion(), titulo: this.titulo() },
+        '/reports/preview',
+        { definition: this.definicion(), title: this.titulo() },
         { sinAviso: true }));
 
       this.previa.set(previa);
@@ -449,7 +449,7 @@ export class ConstructorDeInformesComponent {
 
     try {
       await firstValueFrom(this.api.put(
-        `/reports/${this.reportId()}/definicion`, this.definicion(), { sinAviso: true }));
+        `/reports/${this.reportId()}/definition`, this.definicion(), { sinAviso: true }));
 
       this.toast.success($localize`Informe guardado.`);
       this.guardado.emit();

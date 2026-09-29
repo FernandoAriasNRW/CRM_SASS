@@ -13,11 +13,11 @@ import { echarts } from './echarts-modulos';
 export interface DatosDeWidget {
   widgetId: string;
   reportId: string;
-  titulo: string;
+  title: string;
   forma: string;
-  subtitulo: string | null;
-  columnas: string[];
-  filas: string[][];
+  subtitle: string | null;
+  columns: string[];
+  rows: string[][];
   error: string | null;
 }
 
@@ -47,7 +47,7 @@ export interface DatosDeWidget {
       <div class="h-full flex items-center justify-center p-4 text-center">
         <p class="text-sm text-muted-foreground">{{ error }}</p>
       </div>
-    } @else if (datos().filas.length === 0) {
+    } @else if (datos().rows.length === 0) {
       <div class="h-full flex items-center justify-center p-4 text-center">
         <p class="text-sm text-muted-foreground" i18n>Sin datos para este informe.</p>
       </div>
@@ -56,13 +56,13 @@ export interface DatosDeWidget {
         <table class="w-full text-sm">
           <thead class="sticky top-0 bg-card">
             <tr class="border-b border-border">
-              @for (c of datos().columnas; track c) {
+              @for (c of datos().columns; track c) {
                 <th class="text-left px-3 py-1.5 font-medium">{{ c }}</th>
               }
             </tr>
           </thead>
           <tbody>
-            @for (fila of datos().filas; track $index) {
+            @for (fila of datos().rows; track $index) {
               <tr class="border-b border-border/50">
                 @for (celda of fila; track $index) {
                   <td class="px-3 py-1">{{ celda }}</td>
@@ -94,7 +94,7 @@ export class GraficaDeInformeComponent {
    * hueco en la serie, que es lo honesto, en vez de dibujar una caída a cero que no ocurrió.
    */
   private readonly valores = computed(() =>
-    this.datos().filas.map(fila => {
+    this.datos().rows.map(fila => {
       const crudo = fila[fila.length - 1];
       if (!crudo || crudo === '—') return null;
 
@@ -102,7 +102,7 @@ export class GraficaDeInformeComponent {
       return Number.isFinite(numero) ? numero : null;
     }));
 
-  private readonly etiquetas = computed(() => this.datos().filas.map(f => f[0]));
+  private readonly etiquetas = computed(() => this.datos().rows.map(f => f[0]));
 
   readonly opciones = computed<EChartsOption>(() => {
     const d = this.datos();

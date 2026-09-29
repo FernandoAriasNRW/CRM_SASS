@@ -187,7 +187,7 @@ export class ReportsComponent implements OnInit {
   /** Si este informe tiene una exportación en marcha, para desactivar el botón. */
   estaExportando(id: string): boolean {
     const estado = this.exportaciones.enMarcha()[id];
-    return estado === 'Pendiente' || estado === 'Generando';
+    return estado === 'Pending' || estado === 'Generating';
   }
 
   getFormatBadge(format: string): BadgeVariant {

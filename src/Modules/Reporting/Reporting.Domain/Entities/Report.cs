@@ -28,10 +28,10 @@ public sealed class Report : AggregateRoot, ITenantEntity, ISoftDeletable
     /// </summary>
     /// <remarks>
     /// Se llama <c>DefinicionJson</c> y no <c>Definicion</c> porque lo segundo tapaba al espacio
-    /// de nombres <c>Reporting.Domain.Definicion</c> dentro de esta clase. El nombre además dice
+    /// de nombres <c>Reporting.Domain.Definitions</c> dentro de esta clase. El nombre además dice
     /// la verdad: lo que hay en la columna es el JSON, no el objeto.
     /// </remarks>
-    public string? DefinicionJson { get; private set; }
+    public string? DefinitionJson { get; private set; }
 
     public DateTime CreatedAt { get; private set; }
     public bool IsDeleted { get; private set; }
@@ -91,12 +91,12 @@ public sealed class Report : AggregateRoot, ITenantEntity, ISoftDeletable
     /// definición que el motor no sabe traducir se guarda bien y **falla al exportarlo**, cuando
     /// quien lo construyó ya no está mirando.
     /// </summary>
-    public Result DefinirAMedida(Definicion.DefinicionDeInforme definicion)
+    public Result Define(Definitions.ReportDefinition definition)
     {
-        var validacion = definicion.Validar();
+        var validacion = definition.Validate();
         if (validacion.IsFailure) return validacion;
 
-        DefinicionJson = definicion.ASerializar();
+        DefinitionJson = definition.Serialize();
 
         // El tipo pasa a «Custom» por coherencia: un informe con definición es a medida, y dejarlo
         // como «TaskSummary» haría que el motor eligiera el camino de los de serie e ignorara
@@ -107,7 +107,7 @@ public sealed class Report : AggregateRoot, ITenantEntity, ISoftDeletable
     }
 
     /// <summary>La definición ya leída, o <c>null</c> si no es a medida.</summary>
-    public Definicion.DefinicionDeInforme? LeerDefinicion() => Definicion.DefinicionDeInforme.Leer(DefinicionJson);
+    public Definitions.ReportDefinition? ReadDefinition() => Definitions.ReportDefinition.Read(DefinitionJson);
 
     public void AddTag(Guid tagId)
     {

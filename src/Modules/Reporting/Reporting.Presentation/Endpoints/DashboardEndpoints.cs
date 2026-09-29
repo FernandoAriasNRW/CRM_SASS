@@ -1,6 +1,6 @@
 using BuildingBlocks.Application.Abstractions;
 using MediatR;
-using Reporting.Application.Paneles;
+using Reporting.Application.Dashboards;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
@@ -20,32 +20,32 @@ public static class DashboardEndpoints
         // Uno por persona, no uno por inquilino: «un dashboard es de quien lo mira; si se guarda
         // por inquilino, dos personas se pisan la configuración». Se crea con los informes de
         // partida la primera vez que alguien entra.
-        group.MapGet("/mio", async (IUserContext currentUser, IMediator mediator) =>
+        group.MapGet("/mine", async (IUserContext currentUser, IMediator mediator) =>
         {
             var tenantId = currentUser.TenantId;
             var userId = currentUser.UserId;
 
-            var result = await mediator.Send(new GetMiPanelQuery(tenantId, userId));
+            var result = await mediator.Send(new GetMyDashboardQuery(tenantId, userId));
             return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
         });
 
         // Los datos de todos los recuadros, en una sola petición. Ver GetDatosDelPanelQuery para
         // por qué no es una llamada por widget.
-        group.MapGet("/{id:guid}/datos", async (
+        group.MapGet("/{id:guid}/data", async (
             IUserContext currentUser, Guid id, IMediator mediator) =>
         {
             var tenantId = currentUser.TenantId;
 
-            var result = await mediator.Send(new GetDatosDelPanelQuery(tenantId, id));
+            var result = await mediator.Send(new GetDashboardDataQuery(tenantId, id));
             return result.IsSuccess ? Results.Ok(result.Value) : Results.NotFound(result.Error);
         });
 
         // PUT y no PATCH: la disposición se manda entera. Mover un recuadro cambia la posición de
         // los que lo rodean, así que enviar sólo el que se movió obligaría al servidor a recolocar
         // el resto adivinando.
-        group.MapPut("/{id:guid}/disposicion", async (
+        group.MapPut("/{id:guid}/layout", async (
             IUserContext currentUser, Guid id,
-            DisposicionRequest cuerpo, IMediator mediator) =>
+            LayoutRequest body, IMediator mediator) =>
         {
             var tenantId = currentUser.TenantId;
             var userId = currentUser.UserId;
@@ -54,20 +54,20 @@ public static class DashboardEndpoints
             // persona y panel— y ponerlos en otro orden compila igual. Ya pasó aquí mismo: se
             // mandaba el panel donde va la persona, y la comprobación de dueño rechazaba a su
             // propio dueño.
-            var result = await mediator.Send(new GuardarDisposicionCommand(
-                TenantId: tenantId, UserId: userId, PanelId: id, Widgets: cuerpo.Widgets));
+            var result = await mediator.Send(new SaveLayoutCommand(
+                TenantId: tenantId, UserId: userId, PanelId: id, Widgets: body.Widgets));
             return result.IsSuccess ? Results.NoContent() : Results.BadRequest(result.Error);
         });
 
         group.MapPost("/{id:guid}/widgets", async (
             IUserContext currentUser, Guid id,
-            AnadirWidgetRequest cuerpo, IMediator mediator) =>
+            AddWidgetRequest body, IMediator mediator) =>
         {
             var tenantId = currentUser.TenantId;
             var userId = currentUser.UserId;
 
-            var result = await mediator.Send(new AnadirWidgetCommand(
-                TenantId: tenantId, UserId: userId, PanelId: id, ReportId: cuerpo.ReportId, Forma: cuerpo.Forma));
+            var result = await mediator.Send(new AddWidgetCommand(
+                TenantId: tenantId, UserId: userId, PanelId: id, ReportId: body.ReportId, Forma: body.Forma));
             return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
         });
 
@@ -77,7 +77,7 @@ public static class DashboardEndpoints
             var tenantId = currentUser.TenantId;
             var userId = currentUser.UserId;
 
-            var result = await mediator.Send(new QuitarWidgetCommand(
+            var result = await mediator.Send(new RemoveWidgetCommand(
                 TenantId: tenantId, UserId: userId, PanelId: id, WidgetId: widgetId));
             return result.IsSuccess ? Results.NoContent() : Results.BadRequest(result.Error);
         });
@@ -153,6 +153,6 @@ public record CreateDashboardRequest(
     List<Guid> TagIds);
 
 /// <summary>La disposición entera del panel. Ver el endpoint para por qué va entera.</summary>
-public sealed record DisposicionRequest(IReadOnlyList<Reporting.Domain.Paneles.Widget> Widgets);
+public sealed record LayoutRequest(IReadOnlyList<Reporting.Domain.Dashboards.Widget> Widgets);
 
-public sealed record AnadirWidgetRequest(Guid ReportId, string? Forma);
+public sealed record AddWidgetRequest(Guid ReportId, string? Forma);

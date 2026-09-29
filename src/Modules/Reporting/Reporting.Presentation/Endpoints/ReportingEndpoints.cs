@@ -7,9 +7,9 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Reporting.Application.Commands;
-using Reporting.Application.Definiciones;
-using Reporting.Application.Exportaciones;
-using Reporting.Application.Programaciones;
+using Reporting.Application.Definitions;
+using Reporting.Application.Exports;
+using Reporting.Application.Schedules;
 using Reporting.Application.Queries;
 using Reporting.Infrastructure;
 
@@ -61,16 +61,16 @@ public static class ReportingEndpoints
     // endpoint anterior: llamaba a `MarkAsGenerated` con una URL inventada
     // —`/reports/{id}/{nombre}.pdf`— que no apuntaba a ningún fichero y que ningún endpoint
     // servía. La pantalla decía «generado» y no había nada que descargar.
-    group.MapPost("/{id:guid}/exportar", async (
+    group.MapPost("/{id:guid}/export", async (
         IUserContext currentUser, Guid id, string format, IMediator mediator) =>
     {
       var tenantId = currentUser.TenantId;
       var userId = currentUser.UserId;
 
-      var result = await mediator.Send(new SolicitarExportacionCommand(tenantId, id, userId, format));
+      var result = await mediator.Send(new RequestExportCommand(tenantId, id, userId, format));
 
       return result.IsSuccess
-          ? Results.Accepted($"/api/v1/exportaciones/{result.Value!.Id}", result.Value)
+          ? Results.Accepted($"/api/v1/exports/{result.Value!.Id}", result.Value)
           : Results.BadRequest(result.Error);
     });
 
@@ -84,10 +84,10 @@ public static class ReportingEndpoints
       var tenantId = currentUser.TenantId;
       var userId = currentUser.UserId;
 
-      var result = await mediator.Send(new SolicitarExportacionCommand(tenantId, id, userId, format));
+      var result = await mediator.Send(new RequestExportCommand(tenantId, id, userId, format));
 
       return result.IsSuccess
-          ? Results.Accepted($"/api/v1/exportaciones/{result.Value!.Id}", result.Value)
+          ? Results.Accepted($"/api/v1/exports/{result.Value!.Id}", result.Value)
           : Results.BadRequest(result.Error);
     });
 
@@ -97,51 +97,51 @@ public static class ReportingEndpoints
     // lista de lo que el motor sabe hacer. La pantalla se alimenta de aquí y no escribe ninguna
     // de estas opciones por su cuenta, que es lo que evita volver a ofrecer algo que el servidor
     // no conoce.
-    group.MapGet("/catalogo", async (IMediator mediator) =>
+    group.MapGet("/catalog", async (IMediator mediator) =>
     {
-      var result = await mediator.Send(new GetCatalogoQuery());
+      var result = await mediator.Send(new GetCatalogQuery());
       return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
     });
 
     // La vista previa: enseña el resultado **antes** de guardar. Sin ella, construir un informe
     // es escribir a ciegas y descubrir el resultado al exportarlo.
-    group.MapPost("/vista-previa", async (
-        IUserContext currentUser, VistaPreviaRequest cuerpo, IMediator mediator) =>
+    group.MapPost("/preview", async (
+        IUserContext currentUser, PreviewRequest body, IMediator mediator) =>
     {
       var tenantId = currentUser.TenantId;
 
-      var result = await mediator.Send(new VistaPreviaQuery(
-          tenantId, cuerpo.Titulo ?? "Vista previa", cuerpo.Definicion));
+      var result = await mediator.Send(new PreviewQuery(
+          tenantId, body.Title ?? "Vista previa", body.Definition));
 
       return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
     });
 
-    group.MapGet("/{id:guid}/definicion", async (
+    group.MapGet("/{id:guid}/definition", async (
         IUserContext currentUser, Guid id, IMediator mediator) =>
     {
       var tenantId = currentUser.TenantId;
-      var result = await mediator.Send(new GetDefinicionQuery(tenantId, id));
+      var result = await mediator.Send(new GetDefinitionQuery(tenantId, id));
       return result.IsSuccess ? Results.Ok(result.Value) : Results.NotFound(result.Error);
     });
 
     // PUT y no POST: guardar la definición dos veces deja el mismo informe. Con POST, la segunda
     // llamada tendría que decidir si es un conflicto, y no lo es.
-    group.MapPut("/{id:guid}/definicion", async (
+    group.MapPut("/{id:guid}/definition", async (
         IUserContext currentUser, Guid id,
-        Reporting.Domain.Definicion.DefinicionDeInforme definicion, IMediator mediator) =>
+        Reporting.Domain.Definitions.ReportDefinition definition, IMediator mediator) =>
     {
       var tenantId = currentUser.TenantId;
 
-      var result = await mediator.Send(new GuardarDefinicionCommand(tenantId, id, definicion));
+      var result = await mediator.Send(new SaveDefinitionCommand(tenantId, id, definition));
       return result.IsSuccess ? Results.NoContent() : Results.BadRequest(result.Error);
     });
 
     // Las exportaciones de un informe, con su estado y —si falló— su motivo.
-    group.MapGet("/{id:guid}/exportaciones", async (
+    group.MapGet("/{id:guid}/exports", async (
         IUserContext currentUser, Guid id, IMediator mediator) =>
     {
       var tenantId = currentUser.TenantId;
-      var result = await mediator.Send(new GetExportacionesQuery(tenantId, id));
+      var result = await mediator.Send(new GetExportsQuery(tenantId, id));
       return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
     });
 
@@ -175,57 +175,57 @@ public static class ReportingEndpoints
 
     // ── Informes programados ────────────────────────────────────────────────────────────────
 
-    group.MapGet("/{id:guid}/programaciones", async (
+    group.MapGet("/{id:guid}/schedules", async (
         IUserContext currentUser, Guid id, IMediator mediator) =>
     {
       var tenantId = currentUser.TenantId;
-      var result = await mediator.Send(new GetProgramacionesQuery(tenantId, id));
+      var result = await mediator.Send(new GetSchedulesQuery(tenantId, id));
       return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
     });
 
-    group.MapPost("/{id:guid}/programaciones", async (
-        IUserContext currentUser, Guid id, ProgramarRequest cuerpo, IMediator mediator) =>
+    group.MapPost("/{id:guid}/schedules", async (
+        IUserContext currentUser, Guid id, ScheduleRequest body, IMediator mediator) =>
     {
       var tenantId = currentUser.TenantId;
       var userId = currentUser.UserId;
 
       // El destinatario es quien programa. Programar un informe para otra persona es una decisión
       // distinta —y con implicaciones de permisos— que todavía no se ofrece.
-      var result = await mediator.Send(new ProgramarInformeCommand(
-          tenantId, id, userId, cuerpo.Frecuencia, cuerpo.Formato, cuerpo.Hora, cuerpo.Dia));
+      var result = await mediator.Send(new ScheduleReportCommand(
+          tenantId, id, userId, body.Frequency, body.Format, body.Time, body.Day));
 
       return result.IsSuccess
-          ? Results.Created($"/api/v1/reports/{id}/programaciones/{result.Value!.Id}", result.Value)
+          ? Results.Created($"/api/v1/reports/{id}/schedules/{result.Value!.Id}", result.Value)
           : Results.BadRequest(result.Error);
     });
 
-    var programaciones = app.MapGroup("/api/v1/programaciones").WithTags("Programaciones").RequireAuthorization();
+    var schedules = app.MapGroup("/api/v1/schedules").WithTags("Schedules").RequireAuthorization();
 
-    programaciones.MapPatch("/{programacionId:guid}", async (
-        IUserContext currentUser, Guid programacionId,
-        CambiarProgramacionRequest cuerpo, IMediator mediator) =>
+    schedules.MapPatch("/{scheduleId:guid}", async (
+        IUserContext currentUser, Guid scheduleId,
+        ChangeScheduleRequest body, IMediator mediator) =>
     {
       var tenantId = currentUser.TenantId;
-      var result = await mediator.Send(new CambiarProgramacionCommand(tenantId, programacionId, cuerpo.Activa));
+      var result = await mediator.Send(new ChangeScheduleCommand(tenantId, scheduleId, body.IsActive));
       return result.IsSuccess ? Results.NoContent() : Results.NotFound(result.Error);
     });
 
-    programaciones.MapDelete("/{programacionId:guid}", async (
-        IUserContext currentUser, Guid programacionId, IMediator mediator) =>
+    schedules.MapDelete("/{scheduleId:guid}", async (
+        IUserContext currentUser, Guid scheduleId, IMediator mediator) =>
     {
       var tenantId = currentUser.TenantId;
-      var result = await mediator.Send(new QuitarProgramacionCommand(tenantId, programacionId));
+      var result = await mediator.Send(new RemoveScheduleCommand(tenantId, scheduleId));
       return result.IsSuccess ? Results.NoContent() : Results.BadRequest(result.Error);
     });
 
-    var exportaciones = app.MapGroup("/api/v1/exportaciones").WithTags("Exportaciones").RequireAuthorization();
+    var exports = app.MapGroup("/api/v1/exports").WithTags("Exports").RequireAuthorization();
 
     // El estado de una exportación. Es lo que la pantalla consulta mientras espera.
-    exportaciones.MapGet("/{exportacionId:guid}", async (
-        IUserContext currentUser, Guid exportacionId, IMediator mediator) =>
+    exports.MapGet("/{exportId:guid}", async (
+        IUserContext currentUser, Guid exportId, IMediator mediator) =>
     {
       var tenantId = currentUser.TenantId;
-      var result = await mediator.Send(new GetExportacionQuery(tenantId, exportacionId));
+      var result = await mediator.Send(new GetExportQuery(tenantId, exportId));
       return result.IsSuccess ? Results.Ok(result.Value) : Results.NotFound(result.Error);
     });
 
@@ -234,17 +234,17 @@ public static class ReportingEndpoints
     // Es el endpoint que faltaba: antes se guardaba una URL inventada y no había nada detrás.
     // El nombre del fichero va en la respuesta para que el navegador lo use al guardarlo; sin
     // eso, el fichero se descarga con el identificador de la exportación por nombre.
-    exportaciones.MapGet("/{exportacionId:guid}/descargar", async (
-        IUserContext currentUser, Guid exportacionId, IMediator mediator) =>
+    exports.MapGet("/{exportId:guid}/download", async (
+        IUserContext currentUser, Guid exportId, IMediator mediator) =>
     {
       var tenantId = currentUser.TenantId;
 
-      var result = await mediator.Send(new DescargarExportacionQuery(tenantId, exportacionId));
+      var result = await mediator.Send(new DownloadExportQuery(tenantId, exportId));
 
       // 409 y no 404: la exportación existe, lo que pasa es que todavía no está lista o falló.
       // Un 404 haría pensar que se perdió, y la pantalla dejaría de preguntar.
       return result.IsSuccess
-          ? Results.File(result.Value!.Bytes, result.Value.TipoDeContenido, result.Value.Nombre)
+          ? Results.File(result.Value!.Bytes, result.Value.ContentType, result.Value.Name)
           : Results.Conflict(result.Error);
     });
 
@@ -260,8 +260,8 @@ public static class ReportingEndpoints
 /// El título es opcional porque en el constructor el informe puede no tener nombre todavía: se
 /// está probando qué enseñar antes de decidir cómo llamarlo.
 /// </summary>
-public sealed record VistaPreviaRequest(
-    Reporting.Domain.Definicion.DefinicionDeInforme Definicion, string? Titulo);
+public sealed record PreviewRequest(
+    Reporting.Domain.Definitions.ReportDefinition Definition, string? Title);
 
 /// <summary>
 /// Lo que hace falta para programar un informe.
@@ -270,6 +270,6 @@ public sealed record VistaPreviaRequest(
 /// sobra en las diarias. Un solo campo porque nunca se usan a la vez: dos harían posible guardar
 /// «cada lunes día 15», que no significa nada.
 /// </summary>
-public sealed record ProgramarRequest(string Frecuencia, string Formato, string Hora, int? Dia);
+public sealed record ScheduleRequest(string Frequency, string Format, string Time, int? Day);
 
-public sealed record CambiarProgramacionRequest(bool Activa);
+public sealed record ChangeScheduleRequest(bool IsActive);

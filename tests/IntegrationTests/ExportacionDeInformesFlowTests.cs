@@ -73,10 +73,10 @@ public sealed class ExportacionDeInformesFlowTests(CrmApiFactory factory)
 
         while (DateTime.UtcNow < limite)
         {
-            var estado = await cliente.GetFromJsonAsync<JsonElement>($"/api/v1/exportaciones/{exportacionId}");
-            var nombre = estado.GetProperty("estado").GetString();
+            var estado = await cliente.GetFromJsonAsync<JsonElement>($"/api/v1/exports/{exportacionId}");
+            var nombre = estado.GetProperty("status").GetString();
 
-            if (nombre is "Lista" or "Fallida") return estado;
+            if (nombre is "Ready" or "Failed") return estado;
 
             await Task.Delay(500);
         }
@@ -97,24 +97,24 @@ public sealed class ExportacionDeInformesFlowTests(CrmApiFactory factory)
         var cliente = await AutenticarAsync();
         var informeId = await CrearInformeAsync(cliente);
 
-        var peticion = await cliente.PostAsync($"/api/v1/reports/{informeId}/exportar?format=Csv", null);
+        var peticion = await cliente.PostAsync($"/api/v1/reports/{informeId}/export?format=Csv", null);
 
         // 202 y no 200: todavía no hay fichero, sólo la promesa de que lo habrá. Con 200 la
         // pantalla creería que ya puede descargar.
         peticion.StatusCode.Should().Be(HttpStatusCode.Accepted);
 
         var trabajo = await peticion.Content.ReadFromJsonAsync<JsonElement>();
-        trabajo.GetProperty("estado").GetString().Should().Be("Pendiente");
+        trabajo.GetProperty("status").GetString().Should().Be("Pending");
 
         var exportacionId = trabajo.GetProperty("id").GetGuid();
         var final = await EsperarAsync(cliente, exportacionId);
 
-        final.GetProperty("estado").GetString().Should().Be("Lista",
+        final.GetProperty("status").GetString().Should().Be("Ready",
             "si falló, el motivo está aquí: " + (final.TryGetProperty("error", out var e) ? e.ToString() : "sin motivo"));
 
-        final.GetProperty("tamanoBytes").GetInt64().Should().BeGreaterThan(0);
+        final.GetProperty("sizeBytes").GetInt64().Should().BeGreaterThan(0);
 
-        var descarga = await cliente.GetAsync($"/api/v1/exportaciones/{exportacionId}/descargar");
+        var descarga = await cliente.GetAsync($"/api/v1/exports/{exportacionId}/download");
         descarga.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var bytes = await descarga.Content.ReadAsByteArrayAsync();
@@ -139,12 +139,12 @@ public sealed class ExportacionDeInformesFlowTests(CrmApiFactory factory)
         var cliente = await AutenticarAsync();
         var informeId = await CrearInformeAsync(cliente);
 
-        var peticion = await cliente.PostAsync($"/api/v1/reports/{informeId}/exportar?format=Excel", null);
+        var peticion = await cliente.PostAsync($"/api/v1/reports/{informeId}/export?format=Excel", null);
         var exportacionId = (await peticion.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetGuid();
 
         await EsperarAsync(cliente, exportacionId);
 
-        var descarga = await cliente.GetAsync($"/api/v1/exportaciones/{exportacionId}/descargar");
+        var descarga = await cliente.GetAsync($"/api/v1/exports/{exportacionId}/download");
 
         descarga.Content.Headers.ContentType!.MediaType.Should()
             .Be("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
@@ -161,12 +161,12 @@ public sealed class ExportacionDeInformesFlowTests(CrmApiFactory factory)
         var cliente = await AutenticarAsync();
         var informeId = await CrearInformeAsync(cliente);
 
-        var peticion = await cliente.PostAsync($"/api/v1/reports/{informeId}/exportar?format={formato}", null);
+        var peticion = await cliente.PostAsync($"/api/v1/reports/{informeId}/export?format={formato}", null);
         var exportacionId = (await peticion.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetGuid();
 
         var final = await EsperarAsync(cliente, exportacionId);
 
-        final.GetProperty("estado").GetString().Should().Be("Lista",
+        final.GetProperty("status").GetString().Should().Be("Ready",
             $"el formato {formato} tiene que producir fichero. Motivo del fallo: "
             + (final.TryGetProperty("error", out var e) ? e.ToString() : "ninguno"));
     }
@@ -199,12 +199,12 @@ public sealed class ExportacionDeInformesFlowTests(CrmApiFactory factory)
 
         // Y lo mismo, exportado por el trabajador de segundo plano.
         var informeId = await CrearInformeAsync(cliente, tipo: "KpiSummary");
-        var peticion = await cliente.PostAsync($"/api/v1/reports/{informeId}/exportar?format=Csv", null);
+        var peticion = await cliente.PostAsync($"/api/v1/reports/{informeId}/export?format=Csv", null);
         var exportacionId = (await peticion.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetGuid();
 
         await EsperarAsync(cliente, exportacionId);
 
-        var descarga = await cliente.GetAsync($"/api/v1/exportaciones/{exportacionId}/descargar");
+        var descarga = await cliente.GetAsync($"/api/v1/exports/{exportacionId}/download");
         var texto = Encoding.UTF8.GetString(await descarga.Content.ReadAsByteArrayAsync());
 
         texto.Should().Contain($"Tareas;{tareasSegunLaApi}",
@@ -229,12 +229,12 @@ public sealed class ExportacionDeInformesFlowTests(CrmApiFactory factory)
         listado.GetProperty("totalCount").GetInt32().Should().BeGreaterThan(0, "hacen falta tareas");
 
         var informeId = await CrearInformeAsync(cliente, tipo: "TaskSummary");
-        var peticion = await cliente.PostAsync($"/api/v1/reports/{informeId}/exportar?format=Csv", null);
+        var peticion = await cliente.PostAsync($"/api/v1/reports/{informeId}/export?format=Csv", null);
         var exportacionId = (await peticion.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetGuid();
 
         await EsperarAsync(cliente, exportacionId);
 
-        var descarga = await cliente.GetAsync($"/api/v1/exportaciones/{exportacionId}/descargar");
+        var descarga = await cliente.GetAsync($"/api/v1/exports/{exportacionId}/download");
         var texto = Encoding.UTF8.GetString(await descarga.Content.ReadAsByteArrayAsync());
 
         var lineas = texto.Split('\n', StringSplitOptions.RemoveEmptyEntries);
@@ -264,12 +264,12 @@ public sealed class ExportacionDeInformesFlowTests(CrmApiFactory factory)
         var cliente = await AutenticarAsync();
         var informeId = await CrearInformeAsync(cliente, tipo: "Custom");
 
-        var peticion = await cliente.PostAsync($"/api/v1/reports/{informeId}/exportar?format=Csv", null);
+        var peticion = await cliente.PostAsync($"/api/v1/reports/{informeId}/export?format=Csv", null);
         var exportacionId = (await peticion.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetGuid();
 
         var final = await EsperarAsync(cliente, exportacionId);
 
-        final.GetProperty("estado").GetString().Should().Be("Fallida");
+        final.GetProperty("status").GetString().Should().Be("Failed");
 
         final.GetProperty("error").GetString().Should().NotBeNullOrWhiteSpace(
             "un fallo mudo obliga a mirar los registros del servidor, y quien pregunta no tiene acceso");
@@ -285,12 +285,12 @@ public sealed class ExportacionDeInformesFlowTests(CrmApiFactory factory)
         var cliente = await AutenticarAsync();
         var informeId = await CrearInformeAsync(cliente, tipo: "Custom");
 
-        var peticion = await cliente.PostAsync($"/api/v1/reports/{informeId}/exportar?format=Csv", null);
+        var peticion = await cliente.PostAsync($"/api/v1/reports/{informeId}/export?format=Csv", null);
         var exportacionId = (await peticion.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetGuid();
 
         await EsperarAsync(cliente, exportacionId);
 
-        var descarga = await cliente.GetAsync($"/api/v1/exportaciones/{exportacionId}/descargar");
+        var descarga = await cliente.GetAsync($"/api/v1/exports/{exportacionId}/download");
 
         // 409 y no 404: la exportación existe, lo que pasa es que no salió. Un 404 haría pensar
         // que se perdió.
@@ -309,8 +309,8 @@ public sealed class ExportacionDeInformesFlowTests(CrmApiFactory factory)
         var cliente = await AutenticarAsync();
         var informeId = await CrearInformeAsync(cliente);
 
-        var primera = await cliente.PostAsync($"/api/v1/reports/{informeId}/exportar?format=Pdf", null);
-        var segunda = await cliente.PostAsync($"/api/v1/reports/{informeId}/exportar?format=Pdf", null);
+        var primera = await cliente.PostAsync($"/api/v1/reports/{informeId}/export?format=Pdf", null);
+        var segunda = await cliente.PostAsync($"/api/v1/reports/{informeId}/export?format=Pdf", null);
 
         var una = (await primera.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetGuid();
         var otra = (await segunda.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetGuid();
@@ -325,8 +325,8 @@ public sealed class ExportacionDeInformesFlowTests(CrmApiFactory factory)
         var cliente = await AutenticarAsync();
         var informeId = await CrearInformeAsync(cliente);
 
-        var csv = await cliente.PostAsync($"/api/v1/reports/{informeId}/exportar?format=Csv", null);
-        var pdf = await cliente.PostAsync($"/api/v1/reports/{informeId}/exportar?format=Pdf", null);
+        var csv = await cliente.PostAsync($"/api/v1/reports/{informeId}/export?format=Csv", null);
+        var pdf = await cliente.PostAsync($"/api/v1/reports/{informeId}/export?format=Pdf", null);
 
         var uno = (await csv.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetGuid();
         var otro = (await pdf.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetGuid();
@@ -344,7 +344,7 @@ public sealed class ExportacionDeInformesFlowTests(CrmApiFactory factory)
         var cliente = await AutenticarAsync();
         var informeId = await CrearInformeAsync(cliente);
 
-        var respuesta = await cliente.PostAsync($"/api/v1/reports/{informeId}/exportar?format=Word", null);
+        var respuesta = await cliente.PostAsync($"/api/v1/reports/{informeId}/export?format=Word", null);
 
         respuesta.StatusCode.Should().Be(HttpStatusCode.BadRequest);
 
@@ -358,7 +358,7 @@ public sealed class ExportacionDeInformesFlowTests(CrmApiFactory factory)
     {
         var cliente = await AutenticarAsync();
 
-        var respuesta = await cliente.PostAsync($"/api/v1/reports/{Guid.NewGuid()}/exportar?format=Csv", null);
+        var respuesta = await cliente.PostAsync($"/api/v1/reports/{Guid.NewGuid()}/export?format=Csv", null);
 
         respuesta.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
@@ -382,7 +382,7 @@ public sealed class ExportacionDeInformesFlowTests(CrmApiFactory factory)
         var exportacionId = (await respuesta.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetGuid();
         var final = await EsperarAsync(cliente, exportacionId);
 
-        final.GetProperty("estado").GetString().Should().Be("Lista");
+        final.GetProperty("status").GetString().Should().Be("Ready");
     }
 
     [Fact]
@@ -391,9 +391,9 @@ public sealed class ExportacionDeInformesFlowTests(CrmApiFactory factory)
         var cliente = await AutenticarAsync();
         var informeId = await CrearInformeAsync(cliente);
 
-        await cliente.PostAsync($"/api/v1/reports/{informeId}/exportar?format=Csv", null);
+        await cliente.PostAsync($"/api/v1/reports/{informeId}/export?format=Csv", null);
 
-        var lista = await cliente.GetFromJsonAsync<JsonElement>($"/api/v1/reports/{informeId}/exportaciones");
+        var lista = await cliente.GetFromJsonAsync<JsonElement>($"/api/v1/reports/{informeId}/exports");
 
         lista.EnumerateArray().Should().NotBeEmpty();
     }
@@ -403,10 +403,10 @@ public sealed class ExportacionDeInformesFlowTests(CrmApiFactory factory)
     {
         var anonimo = factory.CreateClient();
 
-        (await anonimo.PostAsync($"/api/v1/reports/{Guid.NewGuid()}/exportar?format=Csv", null))
+        (await anonimo.PostAsync($"/api/v1/reports/{Guid.NewGuid()}/export?format=Csv", null))
             .StatusCode.Should().Be(HttpStatusCode.Unauthorized);
 
-        (await anonimo.GetAsync($"/api/v1/exportaciones/{Guid.NewGuid()}/descargar"))
+        (await anonimo.GetAsync($"/api/v1/exports/{Guid.NewGuid()}/download"))
             .StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 

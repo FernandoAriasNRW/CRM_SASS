@@ -129,7 +129,7 @@ public static class ModuleRegistration
         // El motor de los informes a medida: traduce la definición neutra que construyó el usuario a
         // filas. Mismo sitio y mismo motivo que lo de arriba.
         services.AddScoped<Reporting.MotorDeInformes>();
-        services.AddScoped<global::Reporting.Application.Definiciones.IResolutorDeInformes>(
+        services.AddScoped<global::Reporting.Application.Definitions.IReportResolver>(
             sp => sp.GetRequiredService<Reporting.MotorDeInformes>());
 
         // El trabajador que genera los ficheros. Va en segundo plano porque quien exporta recupera el

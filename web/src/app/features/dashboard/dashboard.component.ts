@@ -104,7 +104,7 @@ export class DashboardComponent implements OnInit {
   // los informes de partida la primera vez. Antes esta pantalla tenía tres gráficas fijas iguales
   // para todo el mundo.
 
-  readonly panel = signal<{ id: string; titulo: string } | null>(null);
+  readonly panel = signal<{ id: string; title: string } | null>(null);
   readonly widgets = signal<DatosDeWidget[]>([]);
   readonly cargandoPanel = signal(true);
 
@@ -225,13 +225,13 @@ export class DashboardComponent implements OnInit {
 
     try {
       const mio = await firstValueFrom(
-        this.api.get<{ id: string; titulo: string }>('/dashboards/mio'));
+        this.api.get<{ id: string; title: string }>('/dashboards/mine'));
 
       this.panel.set(mio);
       this.disposicion.set((mio as unknown as { widgets: { id: string; x: number; y: number; ancho: number; alto: number }[] }).widgets ?? []);
 
       const datos = await firstValueFrom(
-        this.api.get<DatosDeWidget[]>(`/dashboards/${mio.id}/datos`));
+        this.api.get<DatosDeWidget[]>(`/dashboards/${mio.id}/data`));
 
       this.widgets.set(datos);
     } finally {

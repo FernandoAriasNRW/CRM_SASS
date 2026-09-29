@@ -6,19 +6,19 @@ import { ToastService } from '../../shared/services/toast.service';
 import { mensajeDeError } from '../../shared/utils/mensaje-de-error';
 
 /** Los estados que puede tener una exportación. Son los del servidor, sin traducir. */
-export type EstadoDeExportacion = 'Pendiente' | 'Generando' | 'Lista' | 'Fallida';
+export type EstadoDeExportacion = 'Pending' | 'Generating' | 'Ready' | 'Failed';
 
 export interface Exportacion {
   id: string;
   reportId: string;
-  formato: string;
-  estado: EstadoDeExportacion;
-  solicitadaUtc: string;
-  terminadaUtc: string | null;
-  nombreDeFichero: string | null;
-  tamanoBytes: number;
+  format: string;
+  status: EstadoDeExportacion;
+  requestedAtUtc: string;
+  finishedAtUtc: string | null;
+  fileName: string | null;
+  sizeBytes: number;
   error: string | null;
-  intentos: number;
+  attempts: number;
 }
 
 /**
@@ -65,9 +65,9 @@ export class ExportacionesService {
   async exportar(reportId: string, formato: string): Promise<void> {
     try {
       const trabajo = await firstValueFrom(
-        this.api.post<Exportacion>(`/reports/${reportId}/exportar?format=${formato}`, {}));
+        this.api.post<Exportacion>(`/reports/${reportId}/export?format=${formato}`, {}));
 
-      this.marcar(reportId, trabajo.estado);
+      this.marcar(reportId, trabajo.status);
       this.toast.info($localize`Preparando el informe. Te avisamos cuando esté.`);
 
       const final = await this.esperar(trabajo.id);
@@ -78,14 +78,14 @@ export class ExportacionesService {
         return;
       }
 
-      if (final.estado === 'Fallida') {
+      if (final.status === 'Failed') {
         // El motivo viene del servidor y se enseña entero. «Falló» a secas obliga a preguntar.
         this.toast.error(final.error ?? $localize`La exportación falló.`);
-        this.marcar(reportId, 'Fallida');
+        this.marcar(reportId, 'Failed');
         return;
       }
 
-      this.marcar(reportId, 'Lista');
+      this.marcar(reportId, 'Ready');
       await this.descargar(final);
     } catch (error) {
       this.toast.error(mensajeDeError(error, $localize`No se pudo exportar el informe.`));
@@ -95,7 +95,7 @@ export class ExportacionesService {
 
   /** Las exportaciones de un informe, para pintarlas. */
   exportacionesDe(reportId: string) {
-    return this.api.get<Exportacion[]>(`/reports/${reportId}/exportaciones`);
+    return this.api.get<Exportacion[]>(`/reports/${reportId}/exports`);
   }
 
   /**
@@ -108,9 +108,9 @@ export class ExportacionesService {
     const limite = Date.now() + ExportacionesService.HASTA;
 
     while (Date.now() < limite) {
-      const estado = await firstValueFrom(this.api.get<Exportacion>(`/exportaciones/${exportacionId}`));
+      const estado = await firstValueFrom(this.api.get<Exportacion>(`/exports/${exportacionId}`));
 
-      if (estado.estado === 'Lista' || estado.estado === 'Fallida') return estado;
+      if (estado.status === 'Ready' || estado.status === 'Failed') return estado;
 
       await new Promise(seguir => setTimeout(seguir, ExportacionesService.CADA));
     }
@@ -127,7 +127,7 @@ export class ExportacionesService {
    */
   private async descargar(exportacion: Exportacion): Promise<void> {
     const respuesta = await firstValueFrom(
-      this.api.descargarFichero(`/exportaciones/${exportacion.id}/descargar`));
+      this.api.descargarFichero(`/exports/${exportacion.id}/download`));
 
     const cuerpo = respuesta.body;
     if (!cuerpo) {
@@ -136,8 +136,8 @@ export class ExportacionesService {
     }
 
     const nombre = this.nombreDe(respuesta.headers.get('content-disposition'))
-      ?? exportacion.nombreDeFichero
-      ?? `informe.${exportacion.formato.toLowerCase()}`;
+      ?? exportacion.fileName
+      ?? `informe.${exportacion.format.toLowerCase()}`;
 
     const url = URL.createObjectURL(cuerpo);
 

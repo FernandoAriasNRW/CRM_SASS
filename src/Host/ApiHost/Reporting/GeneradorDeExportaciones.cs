@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Reporting.Application.Abstractions;
-using Reporting.Application.Exportaciones;
+using Reporting.Application.Exports;
 using Reporting.Domain.Entities;
-using Reporting.Infrastructure.Exportaciones;
+using Reporting.Infrastructure.Exports;
 using Reporting.Infrastructure.Persistence;
 
 namespace ApiHost.Reporting;
@@ -25,7 +25,7 @@ namespace ApiHost.Reporting;
 /// <b>Lo que este trabajador nunca hace: dejar algo en «generando» para siempre.</b> Era el aviso
 /// del plan —«una exportación que se queda en generando para siempre es peor que un error,
 /// porque nadie sabe si esperar»—. Si el proceso muere a mitad, la fila queda «generando» y la
-/// siguiente vuelta la recoge pasado <see cref="Exportacion.SeDaPorPerdidaTras"/>; si se agotan
+/// siguiente vuelta la recoge pasado <see cref="Export.GivenUpAfter"/>; si se agotan
 /// los intentos, se marca fallida **con el motivo**.
 /// </summary>
 public sealed class GeneradorDeExportaciones(
@@ -85,9 +85,9 @@ public sealed class GeneradorDeExportaciones(
     private async Task UnaTandaAsync(CancellationToken ct)
     {
         using var ambito = ambitos.CreateScope();
-        var repositorio = ambito.ServiceProvider.GetRequiredService<IRepositorioDeExportaciones>();
+        var repositorio = ambito.ServiceProvider.GetRequiredService<IExportRepository>();
 
-        var pendientes = await repositorio.PendientesAsync(PorTanda, ct);
+        var pendientes = await repositorio.PendingAsync(PorTanda, ct);
         if (pendientes.Count == 0) return;
 
         foreach (var exportacion in pendientes)
@@ -106,7 +106,7 @@ public sealed class GeneradorDeExportaciones(
     {
         var contexto = servicios.GetRequiredService<ReportingDbContext>();
         var datos = servicios.GetRequiredService<DatosDelInforme>();
-        var escritores = servicios.GetRequiredService<EscritoresDeInforme>();
+        var escritores = servicios.GetRequiredService<ReportWriters>();
 
         // Se guarda por la unidad de trabajo y no por el contexto: es lo único que reparte los
         // eventos de dominio en proceso, y de eso depende que salga el aviso. Guardando por el
@@ -115,7 +115,7 @@ public sealed class GeneradorDeExportaciones(
 
         // Se relee sin el filtro de inquilino porque aquí no hay petición: el trabajo trae su
         // propio TenantId y con él se buscan el informe y todo lo demás.
-        var exportacion = await contexto.Exportaciones
+        var exportacion = await contexto.Exports
             .IgnoreQueryFilters()
             .FirstOrDefaultAsync(e => e.Id == exportacionId, ct);
 
@@ -123,7 +123,7 @@ public sealed class GeneradorDeExportaciones(
 
         // Segunda comprobación, ahora sobre la fila recién leída. Entre que la tanda la eligió y
         // este momento, otro proceso pudo cogerla; `Comenzar` devuelve false y se pasa.
-        if (!exportacion.Comenzar()) return;
+        if (!exportacion.Start()) return;
 
         // «Empezar» no levanta ningún evento, así que aquí basta con guardar.
         await contexto.SaveChangesAsync(ct);
@@ -138,17 +138,17 @@ public sealed class GeneradorDeExportaciones(
                 throw new InvalidOperationException("El informe ya no existe");
 
             var tabla = await datos.ResolveAsync(informe, ct);
-            var escritor = escritores.Para(exportacion.Formato.Name);
-            var bytes = escritor.Escribir(tabla);
+            var escritor = escritores.For(exportacion.Format.Name);
+            var bytes = escritor.Write(tabla);
 
             var nombre = NombreDeFichero(informe.Name, escritor.Extension);
 
-            var contenido = ContenidoDeExportacion.Crear(
-                exportacion.TenantId, exportacion.Id, bytes, escritor.TipoDeContenido);
+            var contenido = ExportContent.Create(
+                exportacion.TenantId, exportacion.Id, bytes, escritor.ContentType);
 
-            await contexto.ContenidosDeExportacion.AddAsync(contenido, ct);
+            await contexto.ExportContents.AddAsync(contenido, ct);
 
-            exportacion.Terminar(nombre, bytes.LongLength);
+            exportacion.Finish(nombre, bytes.LongLength);
             await unidadDeTrabajo.SaveChangesAndDispatchAsync(ct);
 
             registro.LogInformation(
@@ -161,7 +161,7 @@ public sealed class GeneradorDeExportaciones(
             // «¿por qué no salió mi informe?» no tiene acceso a los registros del servidor.
             registro.LogError(ex, "La exportación {Exportacion} falló", exportacion.Id);
 
-            exportacion.Fallar(ex.Message);
+            exportacion.Fail(ex.Message);
 
             try
             {
