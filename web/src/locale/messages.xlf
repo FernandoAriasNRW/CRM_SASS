@@ -718,7 +718,7 @@
           <context context-type="linenumber">164,165</context>
         </context-group>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/calendar/evento-drawer.component.ts</context>
+          <context context-type="sourcefile">src/app/features/calendar/event-drawer.component.ts</context>
           <context context-type="linenumber">162,163</context>
         </context-group>
         <context-group purpose="location">
@@ -765,7 +765,7 @@
           <context context-type="linenumber">161,162</context>
         </context-group>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/calendar/evento-drawer.component.ts</context>
+          <context context-type="sourcefile">src/app/features/calendar/event-drawer.component.ts</context>
           <context context-type="linenumber">170,171</context>
         </context-group>
         <context-group purpose="location">
@@ -1044,7 +1044,7 @@
           <context context-type="linenumber">177,178</context>
         </context-group>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/calendar/evento-drawer.component.ts</context>
+          <context context-type="sourcefile">src/app/features/calendar/event-drawer.component.ts</context>
           <context context-type="linenumber">88,89</context>
         </context-group>
       </trans-unit>
@@ -1508,7 +1508,7 @@ Pendiente</source>
           <context context-type="linenumber">141,142</context>
         </context-group>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/calendar/evento-drawer.component.ts</context>
+          <context context-type="sourcefile">src/app/features/calendar/event-drawer.component.ts</context>
           <context context-type="linenumber">106,107</context>
         </context-group>
         <context-group purpose="location">
@@ -2058,7 +2058,7 @@ Pendiente</source>
           <context context-type="linenumber">38,39</context>
         </context-group>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/calendar/evento-drawer.component.ts</context>
+          <context context-type="sourcefile">src/app/features/calendar/event-drawer.component.ts</context>
           <context context-type="linenumber">252</context>
         </context-group>
       </trans-unit>
@@ -2280,38 +2280,17 @@ Pendiente</source>
           <context context-type="linenumber">429</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="3228025428429513828" datatype="html">
-        <source>Volver al mes</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/calendar/dia-desplegado.component.ts</context>
-          <context context-type="linenumber">44,45</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="8267856735391074182" datatype="html">
-        <source> Vence hoy </source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/calendar/dia-desplegado.component.ts</context>
-          <context context-type="linenumber">54</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="5030661329539421997" datatype="html">
-        <source>Anulado</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/calendar/dia-desplegado.component.ts</context>
-          <context context-type="linenumber">98,99</context>
-        </context-group>
-      </trans-unit>
       <trans-unit id="5041800446022304878" datatype="html">
         <source>Reunión</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/calendar/evento-drawer.component.ts</context>
+          <context context-type="sourcefile">src/app/features/calendar/event-drawer.component.ts</context>
           <context context-type="linenumber">17</context>
         </context-group>
       </trans-unit>
       <trans-unit id="7681441480164444212" datatype="html">
         <source>Cita</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/calendar/evento-drawer.component.ts</context>
+          <context context-type="sourcefile">src/app/features/calendar/event-drawer.component.ts</context>
           <context context-type="linenumber">18</context>
         </context-group>
         <context-group purpose="location">
@@ -2330,7 +2309,7 @@ Pendiente</source>
       <trans-unit id="647617620745219975" datatype="html">
         <source>Tarea</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/calendar/evento-drawer.component.ts</context>
+          <context context-type="sourcefile">src/app/features/calendar/event-drawer.component.ts</context>
           <context context-type="linenumber">19</context>
         </context-group>
         <context-group purpose="location">
@@ -2345,28 +2324,28 @@ Pendiente</source>
       <trans-unit id="7286380839815943277" datatype="html">
         <source>Recordatorio</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/calendar/evento-drawer.component.ts</context>
+          <context context-type="sourcefile">src/app/features/calendar/event-drawer.component.ts</context>
           <context context-type="linenumber">20</context>
         </context-group>
       </trans-unit>
       <trans-unit id="2146283688063610663" datatype="html">
         <source>Fuera de oficina</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/calendar/evento-drawer.component.ts</context>
+          <context context-type="sourcefile">src/app/features/calendar/event-drawer.component.ts</context>
           <context context-type="linenumber">21</context>
         </context-group>
       </trans-unit>
       <trans-unit id="2907835938617280864" datatype="html">
         <source>Día festivo</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/calendar/evento-drawer.component.ts</context>
+          <context context-type="sourcefile">src/app/features/calendar/event-drawer.component.ts</context>
           <context context-type="linenumber">22</context>
         </context-group>
       </trans-unit>
       <trans-unit id="8331458230102334089" datatype="html">
         <source>Título</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/calendar/evento-drawer.component.ts</context>
+          <context context-type="sourcefile">src/app/features/calendar/event-drawer.component.ts</context>
           <context context-type="linenumber">54,55</context>
         </context-group>
         <context-group purpose="location">
@@ -2381,56 +2360,56 @@ Pendiente</source>
       <trans-unit id="1701224484578422690" datatype="html">
         <source>El título necesita al menos 3 caracteres.</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/calendar/evento-drawer.component.ts</context>
+          <context context-type="sourcefile">src/app/features/calendar/event-drawer.component.ts</context>
           <context context-type="linenumber">64,65</context>
         </context-group>
       </trans-unit>
       <trans-unit id="323759764195407110" datatype="html">
         <source>Empieza</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/calendar/evento-drawer.component.ts</context>
+          <context context-type="sourcefile">src/app/features/calendar/event-drawer.component.ts</context>
           <context context-type="linenumber">70,71</context>
         </context-group>
       </trans-unit>
       <trans-unit id="2494569077305823573" datatype="html">
         <source>Termina</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/calendar/evento-drawer.component.ts</context>
+          <context context-type="sourcefile">src/app/features/calendar/event-drawer.component.ts</context>
           <context context-type="linenumber">76,77</context>
         </context-group>
       </trans-unit>
       <trans-unit id="4929128828185379320" datatype="html">
         <source>Tiene que terminar después de empezar.</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/calendar/evento-drawer.component.ts</context>
+          <context context-type="sourcefile">src/app/features/calendar/event-drawer.component.ts</context>
           <context context-type="linenumber">81,82</context>
         </context-group>
       </trans-unit>
       <trans-unit id="4541209356441692141" datatype="html">
         <source>Dónde</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/calendar/evento-drawer.component.ts</context>
+          <context context-type="sourcefile">src/app/features/calendar/event-drawer.component.ts</context>
           <context context-type="linenumber">98,99</context>
         </context-group>
       </trans-unit>
       <trans-unit id="7578100985936373503" datatype="html">
         <source>Enlazar con</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/calendar/evento-drawer.component.ts</context>
+          <context context-type="sourcefile">src/app/features/calendar/event-drawer.component.ts</context>
           <context context-type="linenumber">115,116</context>
         </context-group>
       </trans-unit>
       <trans-unit id="6463899696901206081" datatype="html">
         <source> Escribe para buscar una tarea, un ticket o un proyecto. </source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/calendar/evento-drawer.component.ts</context>
+          <context context-type="sourcefile">src/app/features/calendar/event-drawer.component.ts</context>
           <context context-type="linenumber">119</context>
         </context-group>
       </trans-unit>
       <trans-unit id="476379910919387856" datatype="html">
         <source>Quitar</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/calendar/evento-drawer.component.ts</context>
+          <context context-type="sourcefile">src/app/features/calendar/event-drawer.component.ts</context>
           <context context-type="linenumber">128,129</context>
         </context-group>
         <context-group purpose="location">
@@ -2441,7 +2420,7 @@ Pendiente</source>
       <trans-unit id="4816444728661292008" datatype="html">
         <source>Buscar…</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/calendar/evento-drawer.component.ts</context>
+          <context context-type="sourcefile">src/app/features/calendar/event-drawer.component.ts</context>
           <context context-type="linenumber">137</context>
         </context-group>
         <context-group purpose="location">
@@ -2456,22 +2435,43 @@ Pendiente</source>
       <trans-unit id="6524126258216133372" datatype="html">
         <source>Modificar evento</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/calendar/evento-drawer.component.ts</context>
+          <context context-type="sourcefile">src/app/features/calendar/event-drawer.component.ts</context>
           <context context-type="linenumber">252</context>
         </context-group>
       </trans-unit>
       <trans-unit id="7678138894707121061" datatype="html">
         <source>Evento modificado</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/calendar/evento-drawer.component.ts</context>
+          <context context-type="sourcefile">src/app/features/calendar/event-drawer.component.ts</context>
           <context context-type="linenumber">324</context>
         </context-group>
       </trans-unit>
       <trans-unit id="9105545273739284325" datatype="html">
         <source>Evento creado</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/calendar/evento-drawer.component.ts</context>
+          <context context-type="sourcefile">src/app/features/calendar/event-drawer.component.ts</context>
           <context context-type="linenumber">324</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3228025428429513828" datatype="html">
+        <source>Volver al mes</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/calendar/expanded-day.component.ts</context>
+          <context context-type="linenumber">44,45</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8267856735391074182" datatype="html">
+        <source> Vence hoy </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/calendar/expanded-day.component.ts</context>
+          <context context-type="linenumber">54</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5030661329539421997" datatype="html">
+        <source>Anulado</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/calendar/expanded-day.component.ts</context>
+          <context context-type="linenumber">98,99</context>
         </context-group>
       </trans-unit>
       <trans-unit id="2054609818419433933" datatype="html">
