@@ -20,7 +20,7 @@ namespace Notifications.Domain.Entities;
 /// completó, un ticket que otro tocó— vienen apagados, porque encendidos hacen ruido y el ruido
 /// acaba con la persona ignorando *todos* los avisos, incluidos los que sí importaban.
 /// </summary>
-public sealed class PreferenciasDeNotificacion : AggregateRoot, ITenantEntity
+public sealed class NotificationPreferences : AggregateRoot, ITenantEntity
 {
     public Guid TenantId { get; private set; }
     public Guid UserId { get; private set; }
@@ -48,7 +48,7 @@ public sealed class PreferenciasDeNotificacion : AggregateRoot, ITenantEntity
     /// volver a mirar la pantalla cada poco. Se puede apagar como cualquier otro; era una
     /// condición explícita del encargo.
     /// </summary>
-    public bool ExportacionLista { get; private set; }
+    public bool ExportReady { get; private set; }
 
     // ── Sobre el trabajo de los demás ─────────────────────────────────────────────────────
     public bool TaskCompleted { get; private set; }
@@ -66,13 +66,13 @@ public sealed class PreferenciasDeNotificacion : AggregateRoot, ITenantEntity
     public TimeOnly QuietHoursStart { get; private set; }
     public TimeOnly QuietHoursEnd { get; private set; }
 
-    private PreferenciasDeNotificacion() { }
+    private NotificationPreferences() { }
 
     /// <summary>
     /// Las preferencias de quien nunca las ha tocado. Ver arriba el criterio de qué nace
     /// encendido.
     /// </summary>
-    public static PreferenciasDeNotificacion PorDefecto(Guid tenantId, Guid userId) => new()
+    public static NotificationPreferences CreateDefault(Guid tenantId, Guid userId) => new()
     {
         Id = Guid.NewGuid(),
         TenantId = tenantId,
@@ -84,7 +84,7 @@ public sealed class PreferenciasDeNotificacion : AggregateRoot, ITenantEntity
         TaskAssigned = true,
         TaskDueSoon = true,
         MentionEnabled = true,
-        ExportacionLista = true,
+        ExportReady = true,
 
         TaskCompleted = false,
         TicketCreated = true,
@@ -96,9 +96,9 @@ public sealed class PreferenciasDeNotificacion : AggregateRoot, ITenantEntity
         QuietHoursEnd = new TimeOnly(8, 0),
     };
 
-    public void Actualizar(
+    public void Update(
         bool emailEnabled, bool pushEnabled,
-        bool taskAssigned, bool taskDueSoon, bool mentionEnabled, bool exportacionLista,
+        bool taskAssigned, bool taskDueSoon, bool mentionEnabled, bool exportReady,
         bool taskCompleted, bool ticketCreated, bool ticketUpdated, bool projectUpdated,
         bool quietHoursEnabled, TimeOnly quietHoursStart, TimeOnly quietHoursEnd)
     {
@@ -108,7 +108,7 @@ public sealed class PreferenciasDeNotificacion : AggregateRoot, ITenantEntity
         TaskAssigned = taskAssigned;
         TaskDueSoon = taskDueSoon;
         MentionEnabled = mentionEnabled;
-        ExportacionLista = exportacionLista;
+        ExportReady = exportReady;
 
         TaskCompleted = taskCompleted;
         TicketCreated = ticketCreated;
@@ -126,23 +126,23 @@ public sealed class PreferenciasDeNotificacion : AggregateRoot, ITenantEntity
     /// Función pura, con la hora como argumento y no leída del reloj, para que se pueda probar
     /// la medianoche sin esperar a que sean las doce.
     /// </summary>
-    public bool DejaPasar(string tipo, TimeOnly ahora)
+    public bool ShouldDeliver(string type, TimeOnly now)
     {
-        if (!QuiereRecibir(tipo)) return false;
+        if (!IsEnabled(type)) return false;
 
-        return !QuietHoursEnabled || !EnSilencio(ahora);
+        return !QuietHoursEnabled || !IsQuietAt(now);
     }
 
-    public bool QuiereRecibir(string tipo) => tipo switch
+    public bool IsEnabled(string type) => type switch
     {
-        TiposDeAviso.TareaAsignada => TaskAssigned,
-        TiposDeAviso.TareaCompletada => TaskCompleted,
-        TiposDeAviso.TareaPorVencer => TaskDueSoon,
-        TiposDeAviso.TicketCreado => TicketCreated,
-        TiposDeAviso.TicketActualizado => TicketUpdated,
-        TiposDeAviso.ProyectoActualizado => ProjectUpdated,
-        TiposDeAviso.Mencion => MentionEnabled,
-        TiposDeAviso.ExportacionLista => ExportacionLista,
+        NotificationTypes.TaskAssigned => TaskAssigned,
+        NotificationTypes.TaskCompleted => TaskCompleted,
+        NotificationTypes.TaskDueSoon => TaskDueSoon,
+        NotificationTypes.TicketCreated => TicketCreated,
+        NotificationTypes.TicketUpdated => TicketUpdated,
+        NotificationTypes.ProjectUpdated => ProjectUpdated,
+        NotificationTypes.Mention => MentionEnabled,
+        NotificationTypes.ExportReady => ExportReady,
 
         // Un tipo que nadie ha declarado pasa. Es deliberado: si mañana alguien añade un aviso
         // y se olvida de ponerlo en esta lista, el fallo es que se recibe de más —molesto y
@@ -158,31 +158,8 @@ public sealed class PreferenciasDeNotificacion : AggregateRoot, ITenantEntity
     /// fin», no «y». Escribirlo como un solo `&amp;&amp;` deja el caso habitual sin silenciar
     /// nada y el fallo sólo se ve de madrugada.
     /// </summary>
-    public bool EnSilencio(TimeOnly ahora) =>
+    public bool IsQuietAt(TimeOnly now) =>
         QuietHoursStart <= QuietHoursEnd
-            ? ahora >= QuietHoursStart && ahora < QuietHoursEnd
-            : ahora >= QuietHoursStart || ahora < QuietHoursEnd;
-}
-
-/// <summary>
-/// Los tipos de aviso que se pueden silenciar, en un solo sitio.
-/// </summary>
-public static class TiposDeAviso
-{
-    public const string TareaAsignada = "TaskAssigned";
-    public const string TareaCompletada = "TaskCompleted";
-    /// <summary>
-    /// Una tarea se acerca a su vencimiento.
-    ///
-    /// Lo usan dos cosas distintas: el aviso propio del producto y las automatizaciones por
-    /// tiempo que alguien configure. Comparten preferencia a propósito: para quien lo recibe es
-    /// el mismo aviso —«esto va a llegar tarde»—, y que llegue o no según quién lo originara
-    /// sería una distinción que sólo entiende quien programó esto.
-    /// </summary>
-    public const string TareaPorVencer = "TaskDueSoon";
-    public const string TicketCreado = "TicketCreated";
-    public const string TicketActualizado = "TicketUpdated";
-    public const string ProyectoActualizado = "ProjectUpdated";
-    public const string Mencion = "Mention";
-    public const string ExportacionLista = "ExportReady";
+            ? now >= QuietHoursStart && now < QuietHoursEnd
+            : now >= QuietHoursStart || now < QuietHoursEnd;
 }

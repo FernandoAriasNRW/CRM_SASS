@@ -19,7 +19,7 @@ public sealed record GetEventsQuery(
 /// <b>no la exponía nadie</b>: se podía mandar un evento a la papelera y no había forma de verlo
 /// ni de recuperarlo. Borrar sin poder deshacer es borrar del todo, aunque la fila siga ahí.
 /// </summary>
-public sealed record GetEventosEnPapeleraQuery(
+public sealed record GetTrashedEventsQuery(
     Guid TenantId,
     PaginationRequest Pagination
 ) : IQuery<PagedResult<CalendarEventDto>>;

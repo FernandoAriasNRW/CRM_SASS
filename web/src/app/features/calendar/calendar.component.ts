@@ -126,7 +126,7 @@ export class CalendarComponent implements OnInit {
       return [
         { clave: 'modificar', etiqueta: $localize`Modificar`, icono: 'lucidePencil' },
         { clave: 'enlazar', etiqueta: $localize`Enlazar con tarea, ticket o proyecto`, icono: 'lucideLink' },
-        evento.canceladoEnUtc
+        evento.cancelledAtUtc
           ? { clave: 'reactivar', etiqueta: $localize`Deshacer la anulación`, icono: 'lucideRotateCcw', separadorAntes: true }
           : { clave: 'anular', etiqueta: $localize`Cancelar el evento`, icono: 'lucideBan', separadorAntes: true },
         { clave: 'papelera', etiqueta: $localize`Enviar a la papelera`, icono: 'lucideTrash2', destructiva: true }
@@ -217,7 +217,7 @@ export class CalendarComponent implements OnInit {
     const agenda = this.diaAbierto();
     if (!agenda) return;
 
-    const momento = new Date(`${agenda.dia}T00:00:00`);
+    const momento = new Date(`${agenda.day}T00:00:00`);
     momento.setHours(hora);
     this.abrirFormulario(null, momento);
   }
@@ -230,7 +230,7 @@ export class CalendarComponent implements OnInit {
    * pantalla que mantener y que se quedaría atrás.
    */
   abrirCosa(cosa: CosaDelDia): void {
-    if (cosa.tipo === 'Event') {
+    if (cosa.type === 'Event') {
       const evento = this.eventos().find(e => e.id === cosa.id);
       if (evento) this.abrirFormulario(evento);
       return;
@@ -240,7 +240,7 @@ export class CalendarComponent implements OnInit {
       Task: '/tasks', Ticket: '/tickets', Project: '/projects'
     };
 
-    void this.router.navigate([rutas[cosa.tipo]], { queryParams: { id: cosa.id } });
+    void this.router.navigate([rutas[cosa.type]], { queryParams: { id: cosa.id } });
   }
 
   // ── El menú del botón derecho ─────────────────────────────────────────────
@@ -261,7 +261,7 @@ export class CalendarComponent implements OnInit {
     const agenda = this.diaAbierto();
 
     this.objetoDelMenu.set({
-      dia: agenda ? new Date(`${agenda.dia}T12:00:00`) : new Date(),
+      dia: agenda ? new Date(`${agenda.day}T12:00:00`) : new Date(),
       evento: delCalendario
     });
 
@@ -272,7 +272,7 @@ export class CalendarComponent implements OnInit {
     const agenda = this.diaAbierto();
     if (!agenda) return;
 
-    const momento = new Date(`${agenda.dia}T00:00:00`);
+    const momento = new Date(`${agenda.day}T00:00:00`);
     momento.setHours(hora);
 
     this.objetoDelMenu.set({ dia: momento, evento: null });
@@ -438,7 +438,7 @@ export class CalendarComponent implements OnInit {
 
     const agenda = this.diaAbierto();
     if (agenda) {
-      this.diaAbierto.set(await this.calendario.agenda(new Date(`${agenda.dia}T12:00:00`)));
+      this.diaAbierto.set(await this.calendario.agenda(new Date(`${agenda.day}T12:00:00`)));
     }
   }
 }

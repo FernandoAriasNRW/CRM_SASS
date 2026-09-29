@@ -49,13 +49,13 @@ public sealed class GetEventsHandler(
     }
 }
 
-public sealed class GetEventosEnPapeleraHandler(ICalendarEventQueries queries)
-    : IQueryHandler<GetEventosEnPapeleraQuery, PagedResult<CalendarEventDto>>
+public sealed class GetTrashedEventsHandler(ICalendarEventQueries queries)
+    : IQueryHandler<GetTrashedEventsQuery, PagedResult<CalendarEventDto>>
 {
     public async Task<Result<PagedResult<CalendarEventDto>>> Handle(
-        GetEventosEnPapeleraQuery request, CancellationToken ct)
+        GetTrashedEventsQuery request, CancellationToken ct)
     {
-        var resultado = await queries.GetDeletedByTenantAsync(request.TenantId, request.Pagination, ct);
-        return Result<PagedResult<CalendarEventDto>>.Success(resultado);
+        var result = await queries.GetDeletedByTenantAsync(request.TenantId, request.Pagination, ct);
+        return Result<PagedResult<CalendarEventDto>>.Success(result);
     }
 }

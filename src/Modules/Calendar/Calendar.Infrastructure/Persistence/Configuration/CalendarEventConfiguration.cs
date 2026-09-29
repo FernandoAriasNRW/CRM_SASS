@@ -43,9 +43,9 @@ public class CalendarEventConfiguration : IEntityTypeConfiguration<CalendarEvent
         builder.Property(e => e.CreatedAt).HasColumnName("created_at").IsRequired();
 
         // Anulado: sigue en el calendario, tachado. Distinto de la papelera —ver la entidad—.
-        builder.Property(e => e.CanceladoEnUtc).HasColumnName("cancelado_en_utc");
-        builder.Property(e => e.CanceladoPor).HasColumnName("cancelado_por");
-        builder.Property(e => e.MotivoDeCancelacion).HasColumnName("motivo_de_cancelacion").HasMaxLength(500);
+        builder.Property(e => e.CancelledAtUtc).HasColumnName("cancelled_at_utc");
+        builder.Property(e => e.CancelledBy).HasColumnName("cancelled_by");
+        builder.Property(e => e.CancellationReason).HasColumnName("cancellation_reason").HasMaxLength(500);
 
         // Soft Delete
         builder.Property(e => e.IsDeleted).HasColumnName("is_deleted").HasDefaultValue(false);
@@ -56,8 +56,8 @@ public class CalendarEventConfiguration : IEntityTypeConfiguration<CalendarEvent
         builder.Ignore(e => e.Type);
         builder.Ignore(e => e.Recurrence);
 
-        // `EstaCancelado` se calcula de la fecha: guardarlo sería tener el mismo dato dos veces y
+        // `IsCancelled` se calcula de la fecha: guardarlo sería tener el mismo dato dos veces y
         // poder discrepar consigo mismo.
-        builder.Ignore(e => e.EstaCancelado);
+        builder.Ignore(e => e.IsCancelled);
     }
 }

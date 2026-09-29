@@ -173,9 +173,17 @@ Un concepto, un nombre. Ordenado por área.
 | por defecto | `Default` |
 | carga de trabajo | `Workload` |
 | retraso | `Delay` |
-| evento, anular, anulado | `Event`, `Cancel`, `Cancelled` |
+| evento, anular, anulado | `Event`, `Cancel`, `Cancelled` (`IsCancelled`, `CancelledAtUtc`, `CancelledBy`) |
 | motivo de cancelación | `CancellationReason` |
-| agenda del día | `DailyAgenda` |
+| reactivar (deshacer la anulación) | `Reactivate` |
+| enlazar, enlaces (de un evento) | `Link`, `Links` |
+| enviar a la papelera (un evento), eventos en la papelera | `MoveToTrash`, `Trashed` (`GetTrashedEventsQuery`) |
+| agenda del día, cosa del día | `DailyAgenda` (`DailyAgendaDto`), `AgendaItem` |
+| tareas que vencen, tickets del día, proyectos que terminan | `TasksDue`, `TicketsOpened`, `ProjectsEnding` |
+| aviso (notificación), tipos de aviso | `Notification`, `NotificationTypes` |
+| preferencias de aviso, por defecto | `NotificationPreferences`, `CreateDefault` |
+| dejar pasar un aviso, quiere recibirlo, en horas de silencio | `ShouldDeliver`, `IsEnabled`, `IsQuietAt` |
+| exportación lista (aviso) | `ExportReady` |
 | semana, mes | `Week`, `Month` |
 | fecha límite, sin fecha límite, fecha de inicio | `DueDate`, `WithoutDueDate`, `StartDate` |
 | Gantt: barra, hito, rango, eje, marca del eje | `Bar`, `Milestone`, `Range`, `Axis`, `AxisTick` |
@@ -342,7 +350,8 @@ suites completas en verde, catálogo i18n re-extraído al final.
 | 5a ✅ | **Docs + Comments** (backend) | Plantillas, anotaciones, árbol y menciones; tablas y rutas |
 | 5b ✅ | **Frontend de documentos y comentarios** | Editor y extensiones: más de 200 identificadores, diff aparte |
 | 5c ✅ | **Valores guardados de los tipos de entidad** («Tarea» → «Task»…) | Viven en tablas de cinco módulos y dentro del HTML de las páginas: cambio propio con su migración de datos |
-| 6 | **Calendar + Notifications + Communication** | Agenda |
+| 6a ✅ | **Calendar + Notifications + Communication** (backend) | Anular, enlazar y papelera; preferencias de aviso; agenda del día |
+| 6b | **Frontend del calendario** | 162 identificadores, casi todos del calendario: diff aparte |
 | 7 | **Reporting** (motor, exportaciones, programaciones, paneles) | El bloque más grande del Host |
 | 8 | **CustomFields + Automations + Webhook + Tags** | Fórmulas y reglas |
 | 9 | **Frontend transversal** (`shared/`, `core/`, e2e) | Lo que no arrastraron los PRs anteriores |
@@ -594,6 +603,44 @@ cambiarlo exige migrar ese contenido. Por eso fue un bloque aparte, el 5c.
 - **Sin alias:** no se sigue leyendo el formato viejo. La migración deja la base sin él, y una
   pestaña abierta desde antes del despliegue que guarde después escribiría el formato viejo; se
   acepta, igual que en el resto de cambios de contrato de este plan.
+
+### Hecho en el bloque 6a (backend de Calendar, Notifications y Communication)
+
+- **Un choque de nombres que había que deshacer primero.** El glosario dice «anular» → `Cancel`,
+  pero `CancelEventCommand` y `CalendarCancelledEvent` ya existían y **mandaban a la papelera**.
+  En una primera pasada pasaron a `MoveEventToTrashCommand` y `CalendarEventTrashedEvent`; en la
+  segunda, `AnularEventoCommand` → `CancelEventCommand`, `ReactivarEventoCommand` →
+  `ReactivateEventCommand`, `EnlazarEventoCommand` → `LinkEventCommand`, `EventoCanceladoEvent` →
+  `CalendarEventCancelledEvent` y `GetEventosEnPapeleraQuery` → `GetTrashedEventsQuery`.
+- **Un aviso de webhook que decía lo contrario.** La papelera publicaba `calendar.event.cancelled`
+  y la anulación `calendar.event.anulado`, que ni estaba en `WebhookEventNames`. Ahora la anulación
+  es `calendar.event.cancelled`, la papelera `calendar.event.trashed` y el enlace
+  `calendar.event.linked`, los tres en el catálogo. No hay suscriptores de eventos de calendario
+  (ver §5, compatibilidad).
+- Entidad: `CanceladoEnUtc`/`CanceladoPor`/`MotivoDeCancelacion`/`EstaCancelado` →
+  `CancelledAtUtc`/`CancelledBy`/`CancellationReason`/`IsCancelled`, y `Cancelar`/`Reactivar`/
+  `Enlazar` → `Cancel`/`Reactivate`/`Link`. Columnas `cancelled_at_utc`, `cancelled_by` y
+  `cancellation_reason` (la tabla sigue en snake_case entera).
+- Rutas: `/anular`, `/reactivar`, `/enlaces`, `/papelera`, `/restaurar` → `/cancel`,
+  `/reactivate`, `/links`, `/trash`, `/restore`; el cuerpo de anular manda `reason`.
+- Notifications: `PreferenciasDeNotificacion` → `NotificationPreferences`, `TiposDeAviso` →
+  `NotificationTypes`, el repositorio, la consulta, el comando y el DTO; `DejaPasar`/
+  `QuiereRecibir`/`EnSilencio` → `ShouldDeliver`/`IsEnabled`/`IsQuietAt`. La columna
+  `ExportacionLista` → `ExportReady`, que ya era el campo de la API. `PreferenciasCqrs.cs` y la
+  entidad, divididos en un tipo por fichero.
+- Host: la agenda del día (`AgendaDelDia`, `AgendaDeUnDia`, `CosaDelDia`) → `DailyAgenda`,
+  `DailyAgendaDto`, `AgendaItem`, con sus campos JSON (`tasksDue`, `ticketsOpened`,
+  `projectsEnding`, `time`, `endTime`, `isCancelled`…) y la ruta `/agenda/{day}`.
+- Las migraciones de Calendar y Notifications las propuso bien EF (`RenameColumn`, parejas de tipos
+  distintos) y se comprobaron contra la base de desarrollo con un evento anulado con motivo y una
+  preferencia apagada sembrados antes de migrar.
+- Antes de renombrar tipos de evento de dominio se comprobó que el outbox no tuviera mensajes
+  pendientes: un mensaje sin procesar con el nombre viejo no se podría leer.
+- **La herramienta de Roslyn renombra todas las declaraciones del nombre en el fichero, no la
+  primera.** Dos parámetros `PorQuien` en dos registros del mismo fichero no pueden recibir nombres
+  distintos en la misma pasada: se unificaron en `UserId`.
+- Del frontend va sólo el contrato (campos de la agenda y del evento, rutas y `reason`). Los
+  identificadores, en el 6b.
 
 ---
 

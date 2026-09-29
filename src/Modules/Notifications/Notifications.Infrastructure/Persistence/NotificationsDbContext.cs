@@ -13,7 +13,7 @@ public sealed class NotificationsDbContext(DbContextOptions<NotificationsDbConte
     : TenantDbContext(options, userContext)
 {
   public DbSet<Notification> Notifications => Set<Notification>();
-  public DbSet<PreferenciasDeNotificacion> PreferenciasDeNotificacion => Set<PreferenciasDeNotificacion>();
+  public DbSet<NotificationPreferences> NotificationPreferences => Set<NotificationPreferences>();
 
   protected override void OnModelCreating(ModelBuilder modelBuilder)
   {
@@ -22,7 +22,7 @@ public sealed class NotificationsDbContext(DbContextOptions<NotificationsDbConte
     // Aplicar configuraciones desde el ensamblado
     modelBuilder.ApplyConfigurationsFromAssembly(typeof(NotificationsDbContext).Assembly);
 
-    modelBuilder.Entity<PreferenciasDeNotificacion>(p =>
+    modelBuilder.Entity<NotificationPreferences>(p =>
     {
       p.ToTable("NotificationPreferences");
 
