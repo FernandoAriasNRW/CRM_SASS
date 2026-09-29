@@ -8,10 +8,10 @@ namespace Tags.Application.Commands;
 /// Crea una etiqueta en la organización de quien llama. <c>TenantId</c> lo pone el endpoint desde
 /// <see cref="IUserContext"/>, nunca el cuerpo de la petición.
 ///
-/// <c>ColorHex</c> y <c>Category</c> son opcionales: sin color se usa un gris neutro y sin
-/// categoría, <see cref="Tags.Domain.ValueObjects.TagCategory.General"/>.
+/// <c>Category</c> es obligatoria: una predefinida que no sea automática, o una personalizada de la
+/// organización. <c>ColorHex</c> es opcional: sin él se usa un gris neutro.
 /// </summary>
-public sealed record CreateTagCommand(Guid TenantId, string Name, string? ColorHex, string? Category)
+public sealed record CreateTagCommand(Guid TenantId, string Name, string? ColorHex, string Category)
     : ICommand<TagDto>, IAuthorizeEntity
 {
     // Las etiquetas son de la organización, no de una entidad concreta: se pide escritura sobre

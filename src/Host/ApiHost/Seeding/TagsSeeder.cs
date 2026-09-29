@@ -1,13 +1,25 @@
 using Microsoft.EntityFrameworkCore;
+using Tags.Application.Abstractions;
 using Tags.Domain.Entities;
+using Tags.Domain.ValueObjects;
 using Tags.Infrastructure.Persistence;
 
 namespace ApiHost.Seeding;
 
-public sealed class TagsSeeder(TagsDbContext tagsDb) : IModuleSeeder
+/// <summary>
+/// Las etiquetas de la demostración: las predefinidas del producto y un hito propio, para que la
+/// lista enseñe también una etiqueta creada por la organización.
+///
+/// Las predefinidas se aprovisionan igualmente en cada arranque (<c>DatabaseInitialization</c>);
+/// se llaman también aquí para que el endpoint de siembra deje la organización completa sin
+/// esperar a reiniciar.
+/// </summary>
+public sealed class TagsSeeder(TagsDbContext tagsDb, IBuiltInTagProvisioner builtInTags) : IModuleSeeder
 {
     public string Module => "Tags";
     public int Order => 110;
+
+    private const string DemoMilestone = "🚀 Q3 Release";
 
     public async Task SeedAsync(SeedContext context, CancellationToken cancellationToken)
     {
@@ -16,16 +28,12 @@ public sealed class TagsSeeder(TagsDbContext tagsDb) : IModuleSeeder
         using var _ = tagsDb.AsTenant(tenantId);
         try { await OrphanRows.AdoptAsync(tagsDb, "Tags", "TenantId", tenantId, cancellationToken); } catch { }
 
-        if (await tagsDb.Tags.AnyAsync(t => t.TenantId == tenantId, cancellationToken))
+        await builtInTags.ProvisionAsync(tenantId, cancellationToken);
+
+        if (await tagsDb.Tags.AnyAsync(t => t.TenantId == tenantId && t.Name == DemoMilestone, cancellationToken))
             return;
 
-        tagsDb.Tags.AddRange(
-            Tag.Create(tenantId, "🔥 Crítico", "#EF4444", "Priority"),
-            Tag.Create(tenantId, "⚡ Backend C#", "#8B5CF6", "Tech"),
-            Tag.Create(tenantId, "🎨 Frontend Angular", "#3B82F6", "Tech"),
-            Tag.Create(tenantId, "🔒 Seguridad", "#10B981", "Security"),
-            Tag.Create(tenantId, "⭐ VIP Client", "#F59E0B", "Business"),
-            Tag.Create(tenantId, "🚀 Q3 Release", "#EC4899", "Milestone"));
+        tagsDb.Tags.Add(Tag.Create(tenantId, DemoMilestone, "#EC4899", TagCategory.Milestone));
         await tagsDb.SaveChangesAsync(cancellationToken);
     }
 }

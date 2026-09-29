@@ -13,6 +13,7 @@ public sealed class TagsDbContext(DbContextOptions<TagsDbContext> options, IUser
     : TenantDbContext(options, userContext)
 {
     public DbSet<Tag> Tags => Set<Tag>();
+    public DbSet<CustomTagCategory> CustomTagCategories => Set<CustomTagCategory>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

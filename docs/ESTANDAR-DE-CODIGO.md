@@ -111,6 +111,12 @@ Un concepto, un nombre. Ordenado por área.
 | vocabulario | `Vocabulary` (o `…Options` si es una lista de opciones) |
 | etiqueta (de texto visible) | `Label` |
 | etiqueta (tag) | `Tag` |
+| categoría de etiqueta (predefinida / personalizada) | `TagCategory` / `CustomTagCategory` |
+| nombre visible de una categoría | `Label` |
+| etiqueta predefinida, su clave | `BuiltInTag`, `BuiltInKey` |
+| aprovisionar (las predefinidas) | `Provision` |
+| hito, negocio, seguridad (categorías) | `Milestone`, `Business`, `Security` |
+| tipo de trabajo, fase de desarrollo (categorías) | `WorkType`, `DevelopmentPhase` |
 | almacenamiento, almacén en disco | `Storage`, `DiskStorage` |
 | fichero, adjunto | `File`, `Attachment` |
 | subir | `Upload` |
