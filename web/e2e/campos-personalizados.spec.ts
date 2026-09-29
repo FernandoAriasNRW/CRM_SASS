@@ -122,6 +122,8 @@ async function entrar(page: Page, respuestas: Respuestas = {}) {
     if (/\/checklist/.test(url)) return r.fulfill(json([]));
     if (/\/comments/.test(url)) return r.fulfill(json([]));
     if (/\/dependencies/.test(url)) return r.fulfill(json({ bloqueadaPor: [], bloqueaA: [] }));
+    // El campo de etiquetas de la ficha pide la lista de la organización: un array, no paginado.
+    if (/\/tags(\?|$)/.test(url)) return r.fulfill(json([]));
 
     if (/\/tasks(\?|$)/.test(url)) return r.fulfill(json({ items: [TAREA], totalCount: 1 }));
 

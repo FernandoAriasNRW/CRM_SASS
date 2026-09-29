@@ -58,7 +58,10 @@ export class TagsService {
     this.loading = true;
     this.api.get<TagItem[]>(`/tags?language=${this.language}`).subscribe({
       next: tags => {
-        this.tags.set(tags ?? []);
+        // Sólo una lista. Si llega otra cosa —una API simulada que contesta `{items: []}`, un
+        // proxy que devuelve una página de error—, recorrerla en `groups` revienta la detección
+        // de cambios y deja a medio pintar la ficha entera, no sólo las etiquetas.
+        this.tags.set(Array.isArray(tags) ? tags : []);
         this.loaded.set(true);
         this.loading = false;
       },
