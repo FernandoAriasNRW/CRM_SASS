@@ -47,9 +47,9 @@ public sealed class ConstructorDeInformesFlowTests(CrmApiFactory factory)
     }
 
     private static object Definicion(
-        string origen = "Tareas", string agrupacion = "estado", string medida = "conteo",
-        string forma = "tabla", object[]? filtros = null, string? granularidad = null)
-        => new { origen, agrupacion, medida, forma, filtros = filtros ?? [], granularidad };
+        string origen = "Tasks", string agrupacion = "status", string medida = "count",
+        string forma = "table", object[]? filtros = null, string? granularidad = null)
+        => new { dataSource = origen, groupBy = agrupacion, measure = medida, visualization = forma, filters = filtros ?? [], granularity = granularidad };
 
     #region El catálogo
 
@@ -66,7 +66,7 @@ public sealed class ConstructorDeInformesFlowTests(CrmApiFactory factory)
         catalogo.GetProperty("granularities").EnumerateArray().Should().NotBeEmpty();
 
         var tareas = catalogo.GetProperty("dataSources").EnumerateArray()
-            .Single(o => o.GetProperty("key").GetString() == "Tareas");
+            .Single(o => o.GetProperty("key").GetString() == "Tasks");
 
         tareas.GetProperty("fields").EnumerateArray().Should().NotBeEmpty();
         tareas.GetProperty("measures").EnumerateArray().Should().NotBeEmpty();
@@ -106,7 +106,7 @@ public sealed class ConstructorDeInformesFlowTests(CrmApiFactory factory)
                     var respuesta = await cliente.PostAsJsonAsync("/api/v1/reports/preview", new
                     {
                         definition = Definicion(clave, campoClave, medidaClave,
-                                                granularidad: esFecha ? "mes" : null),
+                                                granularidad: esFecha ? "month" : null),
                         title = "Contrato"
                     });
 
@@ -173,9 +173,9 @@ public sealed class ConstructorDeInformesFlowTests(CrmApiFactory factory)
                     var respuesta = await cliente.PostAsJsonAsync("/api/v1/reports/preview", new
                     {
                         definition = Definicion(
-                            clave, agrupacionClave, "conteo",
-                            filtros: [new { campo = campoClave, operador = opClave, valor }],
-                            granularidad: agrupacionEsFecha ? "mes" : null),
+                            clave, agrupacionClave, "count",
+                            filtros: [new { field = campoClave, @operator = opClave, value = valor }],
+                            granularidad: agrupacionEsFecha ? "month" : null),
                         title = "Contrato de operadores"
                     });
 
@@ -211,7 +211,7 @@ public sealed class ConstructorDeInformesFlowTests(CrmApiFactory factory)
 
         var respuesta = await cliente.PostAsJsonAsync("/api/v1/reports/preview", new
         {
-            definition = Definicion("Tareas", "estado", "conteo"),
+            definition = Definicion("Tasks", "status", "count"),
             title = "Tareas por estado"
         });
 
@@ -238,8 +238,8 @@ public sealed class ConstructorDeInformesFlowTests(CrmApiFactory factory)
 
         var respuesta = await cliente.PostAsJsonAsync("/api/v1/reports/preview", new
         {
-            definition = Definicion("Tickets", "estado", "conteo",
-                filtros: [new { campo = "prioridad", operador = "es", valor = "High" }]),
+            definition = Definicion("Tickets", "status", "count",
+                filtros: [new { field = "priority", @operator = "is", value = "High" }]),
             title = "Tickets urgentes"
         });
 
@@ -254,10 +254,10 @@ public sealed class ConstructorDeInformesFlowTests(CrmApiFactory factory)
     {
         var cliente = await AutenticarAsync();
 
-        var sinFiltro = await Total(cliente, Definicion("Tickets", "estado", "conteo"));
+        var sinFiltro = await Total(cliente, Definicion("Tickets", "status", "count"));
 
-        var conFiltro = await Total(cliente, Definicion("Tickets", "estado", "conteo",
-            filtros: [new { campo = "prioridad", operador = "es", valor = "High" }]));
+        var conFiltro = await Total(cliente, Definicion("Tickets", "status", "count",
+            filtros: [new { field = "priority", @operator = "is", value = "High" }]));
 
         sinFiltro.Should().BeGreaterThan(0);
         conFiltro.Should().BeLessThan(sinFiltro, "filtrar por una prioridad deja fuera las demás");
@@ -296,8 +296,8 @@ public sealed class ConstructorDeInformesFlowTests(CrmApiFactory factory)
         // no hay ninguno que promediar.
         var respuesta = await cliente.PostAsJsonAsync("/api/v1/reports/preview", new
         {
-            definition = Definicion("Tickets", "estado", "media_dias_resolucion",
-                filtros: [new { campo = "resolucion", operador = "vacio", valor = (string?)null }]),
+            definition = Definicion("Tickets", "status", "avg_days_to_resolve",
+                filtros: [new { field = "resolved_at", @operator = "empty", value = (string?)null }]),
             title = "Sin resolver"
         });
 
@@ -335,7 +335,7 @@ public sealed class ConstructorDeInformesFlowTests(CrmApiFactory factory)
         // vencimientos de las tareas sí se reparten en varios días.
         var respuesta = await cliente.PostAsJsonAsync("/api/v1/reports/preview", new
         {
-            definition = Definicion("Tareas", "vencimiento", "conteo", "lineas", granularidad: "dia"),
+            definition = Definicion("Tasks", "due_date", "count", "line", granularidad: "day"),
             title = "Tareas por día de vencimiento"
         });
 
@@ -363,15 +363,15 @@ public sealed class ConstructorDeInformesFlowTests(CrmApiFactory factory)
 
         var respuesta = await cliente.PostAsJsonAsync("/api/v1/reports/preview", new
         {
-            definition = Definicion("Tareas", "agente", "conteo"),
+            definition = Definicion("Tasks", "agent", "count"),
             title = "Imposible"
         });
 
         respuesta.StatusCode.Should().Be(HttpStatusCode.BadRequest);
 
         var mensaje = await respuesta.Content.ReadAsStringAsync();
-        mensaje.Should().Contain("agente", "hay que decir qué se pidió");
-        mensaje.Should().Contain("estado", "y qué se podría haber pedido");
+        mensaje.Should().Contain("agent", "hay que decir qué se pidió");
+        mensaje.Should().Contain("status", "y qué se podría haber pedido");
     }
 
     #endregion
@@ -391,20 +391,20 @@ public sealed class ConstructorDeInformesFlowTests(CrmApiFactory factory)
         var informeId = await CrearInformeAsync(cliente);
 
         var guardado = await cliente.PutAsJsonAsync(
-            $"/api/v1/reports/{informeId}/definition", Definicion("Tickets", "prioridad", "conteo", "barras"));
+            $"/api/v1/reports/{informeId}/definition", Definicion("Tickets", "priority", "count", "bar"));
 
         guardado.StatusCode.Should().Be(HttpStatusCode.NoContent, await guardado.Content.ReadAsStringAsync());
 
         // Se relee en otra petición: es la lección del PATCH que respondía 200 sin guardar.
         var leida = await cliente.GetFromJsonAsync<JsonElement>($"/api/v1/reports/{informeId}/definition");
-        leida.GetProperty("origen").GetString().Should().Be("Tickets");
-        leida.GetProperty("agrupacion").GetString().Should().Be("prioridad");
-        leida.GetProperty("forma").GetString().Should().Be("barras");
+        leida.GetProperty("dataSource").GetString().Should().Be("Tickets");
+        leida.GetProperty("groupBy").GetString().Should().Be("priority");
+        leida.GetProperty("visualization").GetString().Should().Be("bar");
 
         // Lo que se lee es exactamente lo que se guarda: sin propiedades calculadas coladas.
         // `filtrosAplicados` y `gruposEfectivos` son atajos de lectura del dominio y salían en la
         // respuesta, así que reenviar ese JSON mandaba campos que el servidor ignora.
-        leida.TryGetProperty("filtrosAplicados", out _).Should().BeFalse();
+        leida.TryGetProperty("appliedFilters", out _).Should().BeFalse();
         leida.TryGetProperty("gruposEfectivos", out _).Should().BeFalse();
 
         // Y el fichero exportado trae esa agrupación, no otra.
@@ -438,10 +438,10 @@ public sealed class ConstructorDeInformesFlowTests(CrmApiFactory factory)
 
         var respuesta = await cliente.PutAsJsonAsync(
             $"/api/v1/reports/{informeId}/definition",
-            Definicion("Proyectos", "estado", "suma_horas"));
+            Definicion("Projects", "status", "sum_estimated_hours"));
 
         respuesta.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-        (await respuesta.Content.ReadAsStringAsync()).Should().Contain("suma_horas");
+        (await respuesta.Content.ReadAsStringAsync()).Should().Contain("sum_estimated_hours");
     }
 
     /// <summary>

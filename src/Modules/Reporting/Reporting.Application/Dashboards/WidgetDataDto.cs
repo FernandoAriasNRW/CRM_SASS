@@ -21,7 +21,7 @@ public sealed record WidgetDataDto(
     Guid WidgetId,
     Guid ReportId,
     string Title,
-    string Forma,
+    string Visualization,
     string? Subtitle,
     IReadOnlyList<string> Columns,
     IReadOnlyList<IReadOnlyList<string>> Rows,

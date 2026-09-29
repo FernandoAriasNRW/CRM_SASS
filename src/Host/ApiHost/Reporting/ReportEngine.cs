@@ -55,21 +55,21 @@ public sealed class ReportEngine(
     /// </summary>
     public IReadOnlyList<string> ValuesOf(string dataSource, string field) => (dataSource, field) switch
     {
-        ("Tareas", "estado") => WorkItems.Domain.ValueObjects.TaskStatus
+        ("Tasks", "status") => WorkItems.Domain.ValueObjects.TaskStatus
             .All().Select(e => e.Value).ToList(),
 
-        ("Tareas", "prioridad") => WorkItems.Domain.ValueObjects.TaskPriority
+        ("Tasks", "priority") => WorkItems.Domain.ValueObjects.TaskPriority
             .All().Select(p => p.Value).ToList(),
 
-        ("Tickets", "estado") => Ticketing.Domain.ValueObjects.TicketStatus
+        ("Tickets", "status") => Ticketing.Domain.ValueObjects.TicketStatus
             .All().Select(e => e.Name).ToList(),
 
-        ("Tickets", "prioridad") => Ticketing.Domain.ValueObjects.TicketPriority
+        ("Tickets", "priority") => Ticketing.Domain.ValueObjects.TicketPriority
             .All().Select(p => p.Name).ToList(),
 
         // ProjectStatus no expone `All()` propio; se usa el `GetAll` de la enumeración base, que
         // es de donde salen los demás. Así, un estado nuevo aparece aquí solo.
-        ("Proyectos", "estado") => Projects.Domain.ValueObjects.ProjectStatus
+        ("Projects", "status") => Projects.Domain.ValueObjects.ProjectStatus
             .GetAll<Projects.Domain.ValueObjects.ProjectStatus>().Select(e => e.Value).ToList(),
 
         // Lo demás es texto libre, una fecha o un identificador: no hay lista que ofrecer.
@@ -90,13 +90,13 @@ public sealed class ReportEngine(
         using var __ = ticketsDb.AsTenant(tenantId);
         using var ___ = projectsDb.AsTenant(tenantId);
 
-        var dataSource = ReportCatalog.FindDataSource(definition.Origen)!;
+        var dataSource = ReportCatalog.FindDataSource(definition.DataSource)!;
 
         var raw = dataSource.Key switch
         {
-            "Tareas" => await FromTasksAsync(tenantId, definition, ct),
+            "Tasks" => await FromTasksAsync(tenantId, definition, ct),
             "Tickets" => await FromTicketsAsync(tenantId, definition, ct),
-            "Proyectos" => await FromProjectsAsync(tenantId, definition, ct),
+            "Projects" => await FromProjectsAsync(tenantId, definition, ct),
             _ => throw new InvalidOperationException($"El origen «{dataSource.Key}» no tiene motor todavía")
         };
 
@@ -120,16 +120,16 @@ public sealed class ReportEngine(
 
         foreach (var filter in d.AppliedFilters)
         {
-            query = filter.Campo.ToLowerInvariant() switch
+            query = filter.Field.ToLowerInvariant() switch
             {
-                "estado" => ApplyText(query, filter, t => t.Status.Value),
-                "prioridad" => ApplyText(query, filter, t => t.Priority.Value),
-                "responsable" => ApplyGuid(query, filter, t => t.AssigneeId),
-                "proyecto" => ApplyGuid(query, filter, t => t.ProjectId),
-                "vencimiento" => ApplyDate(query, filter, t => t.DueDate.ToDateTime(TimeOnly.MinValue)),
-                "creacion" => ApplyDate(query, filter, t => t.CreatedAtUtc),
-                "horas" => ApplyNumber(query, filter, t => (double)t.EstimatedHours),
-                _ => throw new InvalidOperationException($"No sé filtrar tareas por «{filter.Campo}»")
+                "status" => ApplyText(query, filter, t => t.Status.Value),
+                "priority" => ApplyText(query, filter, t => t.Priority.Value),
+                "assignee" => ApplyGuid(query, filter, t => t.AssigneeId),
+                "project" => ApplyGuid(query, filter, t => t.ProjectId),
+                "due_date" => ApplyDate(query, filter, t => t.DueDate.ToDateTime(TimeOnly.MinValue)),
+                "created_at" => ApplyDate(query, filter, t => t.CreatedAtUtc),
+                "estimated_hours" => ApplyNumber(query, filter, t => (double)t.EstimatedHours),
+                _ => throw new InvalidOperationException($"No sé filtrar tareas por «{filter.Field}»")
             };
         }
 
@@ -137,8 +137,8 @@ public sealed class ReportEngine(
             .Take(ReportData.MaxRows)
             .Select(t => new
             {
-                Estado = t.Status.Value,
-                Prioridad = t.Priority.Value,
+                Status = t.Status.Value,
+                Priority = t.Priority.Value,
                 t.AssigneeId,
                 t.ProjectId,
                 t.DueDate,
@@ -149,29 +149,29 @@ public sealed class ReportEngine(
 
         // Los nombres de proyecto se resuelven de una vez y no fila a fila: agrupar por proyecto
         // sobre mil tareas serían mil consultas.
-        var projectNames = d.Agrupacion.Equals("proyecto", StringComparison.OrdinalIgnoreCase)
+        var projectNames = d.GroupBy.Equals("project", StringComparison.OrdinalIgnoreCase)
             ? await projectsDb.Projects.AsNoTracking()
                 .Where(p => p.TenantId == tenantId)
                 .ToDictionaryAsync(p => p.Id, p => p.Name.Value, ct)
             : [];
 
         return rows.Select(t => new RawRow(
-            Group: d.Agrupacion.ToLowerInvariant() switch
+            Group: d.GroupBy.ToLowerInvariant() switch
             {
-                "estado" => t.Estado,
-                "prioridad" => t.Prioridad,
-                "responsable" => t.AssigneeId == Guid.Empty ? Unassigned : t.AssigneeId.ToString(),
-                "proyecto" => projectNames.GetValueOrDefault(t.ProjectId, Unassigned),
-                "vencimiento" => ByDate(t.DueDate.ToDateTime(TimeOnly.MinValue), d.Granularidad),
-                "creacion" => ByDate(t.CreatedAtUtc, d.Granularidad),
-                "horas" => t.EstimatedHours.ToString("0.##", Spanish),
-                _ => throw new InvalidOperationException($"No sé agrupar tareas por «{d.Agrupacion}»")
+                "status" => t.Status,
+                "priority" => t.Priority,
+                "assignee" => t.AssigneeId == Guid.Empty ? Unassigned : t.AssigneeId.ToString(),
+                "project" => projectNames.GetValueOrDefault(t.ProjectId, Unassigned),
+                "due_date" => ByDate(t.DueDate.ToDateTime(TimeOnly.MinValue), d.Granularity),
+                "created_at" => ByDate(t.CreatedAtUtc, d.Granularity),
+                "estimated_hours" => t.EstimatedHours.ToString("0.##", Spanish),
+                _ => throw new InvalidOperationException($"No sé agrupar tareas por «{d.GroupBy}»")
             },
-            Value: d.Medida.ToLowerInvariant() switch
+            Value: d.Measure.ToLowerInvariant() switch
             {
-                "conteo" => null,
-                "suma_horas" or "media_horas" => (double)t.EstimatedHours,
-                _ => throw new InvalidOperationException($"No sé calcular «{d.Medida}» sobre tareas")
+                "count" => null,
+                "sum_estimated_hours" or "avg_estimated_hours" => (double)t.EstimatedHours,
+                _ => throw new InvalidOperationException($"No sé calcular «{d.Measure}» sobre tareas")
             }))
             .ToList();
     }
@@ -182,19 +182,19 @@ public sealed class ReportEngine(
 
         foreach (var filter in d.AppliedFilters)
         {
-            query = filter.Campo.ToLowerInvariant() switch
+            query = filter.Field.ToLowerInvariant() switch
             {
                 // El estado y la prioridad se guardan como número. **Se traduce el valor que
                 // llega, no la columna**: meter la traducción dentro de la consulta
                 // —`t => EstadoDeTicket(t.StatusValue)`— parece lo natural y EF no sabe traducir
                 // esa llamada a SQL, así que la consulta reventaba en cuanto alguien filtraba por
                 // estado. Comparando contra el número, el filtro se traduce solo.
-                "estado" => ApplyCode(query, filter, t => t.StatusValue, StatusCode),
-                "prioridad" => ApplyCode(query, filter, t => t.PriorityValue, PriorityCode),
-                "agente" => ApplyNullableGuid(query, filter, t => t.AssignedAgentId),
-                "creacion" => ApplyDate(query, filter, t => t.CreatedAt),
-                "resolucion" => ApplyNullableDate(query, filter, t => t.ResolvedAt),
-                _ => throw new InvalidOperationException($"No sé filtrar tickets por «{filter.Campo}»")
+                "status" => ApplyCode(query, filter, t => t.StatusValue, StatusCode),
+                "priority" => ApplyCode(query, filter, t => t.PriorityValue, PriorityCode),
+                "agent" => ApplyNullableGuid(query, filter, t => t.AssignedAgentId),
+                "created_at" => ApplyDate(query, filter, t => t.CreatedAt),
+                "resolved_at" => ApplyNullableDate(query, filter, t => t.ResolvedAt),
+                _ => throw new InvalidOperationException($"No sé filtrar tickets por «{filter.Field}»")
             };
         }
 
@@ -204,34 +204,34 @@ public sealed class ReportEngine(
             .ToListAsync(ct);
 
         return rows.Select(t => new RawRow(
-            Group: d.Agrupacion.ToLowerInvariant() switch
+            Group: d.GroupBy.ToLowerInvariant() switch
             {
-                "estado" => Ticketing.Domain.ValueObjects.TicketStatus
+                "status" => Ticketing.Domain.ValueObjects.TicketStatus
                     .FromValue<Ticketing.Domain.ValueObjects.TicketStatus>(t.StatusValue).Name,
-                "prioridad" => Ticketing.Domain.ValueObjects.TicketPriority
+                "priority" => Ticketing.Domain.ValueObjects.TicketPriority
                     .FromValue<Ticketing.Domain.ValueObjects.TicketPriority>(t.PriorityValue).Name,
                 // Un ticket sin agente y otro con el Guid vacío son lo mismo para quien lee el
                 // informe: nadie lo lleva. Se juntan en un solo grupo en vez de dar dos filas que
                 // significan lo mismo.
-                "agente" => t.AssignedAgentId is null || t.AssignedAgentId == Guid.Empty
+                "agent" => t.AssignedAgentId is null || t.AssignedAgentId == Guid.Empty
                     ? Unassigned
                     : t.AssignedAgentId.Value.ToString(),
-                "creacion" => ByDate(t.CreatedAt, d.Granularidad),
-                "resolucion" => t.ResolvedAt is null ? Unassigned : ByDate(t.ResolvedAt.Value, d.Granularidad),
-                _ => throw new InvalidOperationException($"No sé agrupar tickets por «{d.Agrupacion}»")
+                "created_at" => ByDate(t.CreatedAt, d.Granularity),
+                "resolved_at" => t.ResolvedAt is null ? Unassigned : ByDate(t.ResolvedAt.Value, d.Granularity),
+                _ => throw new InvalidOperationException($"No sé agrupar tickets por «{d.GroupBy}»")
             },
-            Value: d.Medida.ToLowerInvariant() switch
+            Value: d.Measure.ToLowerInvariant() switch
             {
-                "conteo" => null,
+                "count" => null,
 
                 // Sólo cuentan los resueltos. Meter los abiertos con los días que llevan mezclaría
                 // «cuánto se tarda en resolver» con «cuánto lleva esperando esto», que son dos
                 // preguntas distintas y la media de las dos no contesta ninguna.
-                "media_dias_resolucion" => t.ResolvedAt is null
+                "avg_days_to_resolve" => t.ResolvedAt is null
                     ? null
                     : (t.ResolvedAt.Value - t.CreatedAt).TotalDays,
 
-                _ => throw new InvalidOperationException($"No sé calcular «{d.Medida}» sobre tickets")
+                _ => throw new InvalidOperationException($"No sé calcular «{d.Measure}» sobre tickets")
             }))
             .ToList();
     }
@@ -242,33 +242,33 @@ public sealed class ReportEngine(
 
         foreach (var filter in d.AppliedFilters)
         {
-            query = filter.Campo.ToLowerInvariant() switch
+            query = filter.Field.ToLowerInvariant() switch
             {
-                "estado" => ApplyText(query, filter, p => p.Status.Value),
-                "dueno" => ApplyGuid(query, filter, p => p.OwnerId),
+                "status" => ApplyText(query, filter, p => p.Status.Value),
+                "owner" => ApplyGuid(query, filter, p => p.OwnerId),
                 // StartDate es DateOnly; se convierte para poder comparar con la fecha del filtro
                 // en la propia consulta.
-                "inicio" => ApplyDate(query, filter, p => p.StartDate.ToDateTime(TimeOnly.MinValue)),
-                _ => throw new InvalidOperationException($"No sé filtrar proyectos por «{filter.Campo}»")
+                "start_date" => ApplyDate(query, filter, p => p.StartDate.ToDateTime(TimeOnly.MinValue)),
+                _ => throw new InvalidOperationException($"No sé filtrar proyectos por «{filter.Field}»")
             };
         }
 
         var rows = await query
             .Take(ReportData.MaxRows)
-            .Select(p => new { Estado = p.Status.Value, p.OwnerId, p.StartDate })
+            .Select(p => new { Status = p.Status.Value, p.OwnerId, p.StartDate })
             .ToListAsync(ct);
 
         return rows.Select(p => new RawRow(
-            Group: d.Agrupacion.ToLowerInvariant() switch
+            Group: d.GroupBy.ToLowerInvariant() switch
             {
-                "estado" => p.Estado,
-                "dueno" => p.OwnerId == Guid.Empty ? Unassigned : p.OwnerId.ToString(),
-                "inicio" => ByDate(p.StartDate, d.Granularidad),
-                _ => throw new InvalidOperationException($"No sé agrupar proyectos por «{d.Agrupacion}»")
+                "status" => p.Status,
+                "owner" => p.OwnerId == Guid.Empty ? Unassigned : p.OwnerId.ToString(),
+                "start_date" => ByDate(p.StartDate, d.Granularity),
+                _ => throw new InvalidOperationException($"No sé agrupar proyectos por «{d.GroupBy}»")
             },
-            Value: d.Medida.Equals("conteo", StringComparison.OrdinalIgnoreCase)
+            Value: d.Measure.Equals("count", StringComparison.OrdinalIgnoreCase)
                 ? null
-                : throw new InvalidOperationException($"No sé calcular «{d.Medida}» sobre proyectos")))
+                : throw new InvalidOperationException($"No sé calcular «{d.Measure}» sobre proyectos")))
             .ToList();
     }
 
@@ -279,17 +279,17 @@ public sealed class ReportEngine(
     private static ReportTable Compose(
         string title, ReportDefinition d, DataSource dataSource, List<RawRow> raw)
     {
-        var measure = dataSource.Measure(d.Medida)!;
-        var esMedia = d.Medida.StartsWith("media", StringComparison.OrdinalIgnoreCase);
+        var measure = dataSource.Measure(d.Measure)!;
+        var isAverage = d.Measure.StartsWith("avg_", StringComparison.OrdinalIgnoreCase);
 
         var groups = raw
             .GroupBy(f => f.Group)
             .Select(g => new
             {
                 Group = g.Key,
-                Value = d.Medida.Equals("conteo", StringComparison.OrdinalIgnoreCase)
+                Value = d.Measure.Equals("count", StringComparison.OrdinalIgnoreCase)
                     ? (double?)g.Count()
-                    : esMedia
+                    : isAverage
                         // Las filas sin valor se descartan de la media, no se cuentan como cero.
                         // Sin esto, un mes con dos tickets resueltos y treinta abiertos daría una
                         // media de resolución absurdamente baja.
@@ -312,7 +312,7 @@ public sealed class ReportEngine(
         //
         // El orden alfabético vale como orden cronológico porque las claves se escriben con el
         // año delante —«2026-08», «2026-S32»—, que es justo para lo que se eligió ese formato.
-        var groupsByDate = dataSource.Field(d.Agrupacion)?.Type == FieldType.Date;
+        var groupsByDate = dataSource.Field(d.GroupBy)?.Type == FieldType.Date;
 
         groups = groupsByDate
             ? groups.OrderBy(g => g.Group, StringComparer.Ordinal).ToList()
@@ -329,7 +329,7 @@ public sealed class ReportEngine(
             var head = groups.Take(d.EffectiveGroups).ToList();
             var tail = groups.Skip(d.EffectiveGroups).ToList();
 
-            if (!esMedia)
+            if (!isAverage)
                 head.Add(new { Group = Others, Value = (double?)tail.Sum(g => g.Value ?? 0) });
 
             groups = head;
@@ -348,7 +348,7 @@ public sealed class ReportEngine(
         return new ReportTable(
             title,
             Subtitle(d, dataSource, measure, raw.Count, trimmed),
-            [dataSource.Field(d.Agrupacion)!.Name, measure.Name],
+            [dataSource.Field(d.GroupBy)!.Name, measure.Name],
             rows);
     }
 
@@ -377,7 +377,7 @@ public sealed class ReportEngine(
         var parts = new List<string>
         {
             dataSource.Name,
-            $"agrupado por {dataSource.Field(d.Agrupacion)!.Name.ToLowerInvariant()}",
+            $"agrupado por {dataSource.Field(d.GroupBy)!.Name.ToLowerInvariant()}",
             measure.Name.ToLowerInvariant()
         };
 
@@ -385,11 +385,11 @@ public sealed class ReportEngine(
         {
             var filters = d.AppliedFilters.Select(f =>
             {
-                var field = dataSource.Field(f.Campo)?.Name ?? f.Campo;
-                var op = ReportCatalog.Operator(f.Operador);
+                var field = dataSource.Field(f.Field)?.Name ?? f.Field;
+                var op = ReportCatalog.Operator(f.Operator);
                 return op?.NeedsValue == false
                     ? $"{field} {op.Name.ToLowerInvariant()}"
-                    : $"{field} {op?.Name.ToLowerInvariant() ?? f.Operador} {f.Valor}";
+                    : $"{field} {op?.Name.ToLowerInvariant() ?? f.Operator} {f.Value}";
             });
 
             parts.Add("filtrado por " + string.Join(" y ", filters));
@@ -419,12 +419,12 @@ public sealed class ReportEngine(
     private static IQueryable<T> ApplyText<T>(
         IQueryable<T> query, ReportFilter f, System.Linq.Expressions.Expression<Func<T, string>> field)
     {
-        return f.Operador.ToLowerInvariant() switch
+        return f.Operator.ToLowerInvariant() switch
         {
-            "es" => query.Where(Compare(field, f.Valor!, equal: true)),
-            "no_es" => query.Where(Compare(field, f.Valor!, equal: false)),
-            "contiene" => query.Where(ContainsText(field, f.Valor!)),
-            _ => throw new InvalidOperationException($"El operador «{f.Operador}» no vale para texto")
+            "is" => query.Where(Compare(field, f.Value!, equal: true)),
+            "is_not" => query.Where(Compare(field, f.Value!, equal: false)),
+            "contains" => query.Where(ContainsText(field, f.Value!)),
+            _ => throw new InvalidOperationException($"El operador «{f.Operator}» no vale para texto")
         };
     }
 
@@ -463,30 +463,30 @@ public sealed class ReportEngine(
         IQueryable<T> query, ReportFilter f, System.Linq.Expressions.Expression<Func<T, Guid>> field)
     {
         var parametro = field.Parameters[0];
-        var op = f.Operador.ToLowerInvariant();
+        var op = f.Operator.ToLowerInvariant();
 
         // «Vacío» sobre un identificador que no admite nulos es `Guid.Empty`: así se guarda una
         // tarea sin responsable. Sin esto, el operador —que el catálogo ofrece para este tipo—
         // intentaba interpretar la cadena vacía como identificador y fallaba.
-        if (op is "vacio" or "no_vacio")
+        if (op is "empty" or "not_empty")
         {
             var isEmpty = System.Linq.Expressions.Expression.Equal(
                 field.Body, System.Linq.Expressions.Expression.Constant(Guid.Empty));
 
-            System.Linq.Expressions.Expression condition = op == "vacio"
+            System.Linq.Expressions.Expression condition = op == "empty"
                 ? isEmpty
                 : System.Linq.Expressions.Expression.Not(isEmpty);
 
             return query.Where(System.Linq.Expressions.Expression.Lambda<Func<T, bool>>(condition, parametro));
         }
 
-        if (!Guid.TryParse(f.Valor, out var value))
-            throw new InvalidOperationException($"«{f.Valor}» no es un identificador válido para {f.Campo}");
+        if (!Guid.TryParse(f.Value, out var value))
+            throw new InvalidOperationException($"«{f.Value}» no es un identificador válido para {f.Field}");
 
         var comparison = System.Linq.Expressions.Expression.Equal(
             field.Body, System.Linq.Expressions.Expression.Constant(value));
 
-        System.Linq.Expressions.Expression body = op == "no_es"
+        System.Linq.Expressions.Expression body = op == "is_not"
             ? System.Linq.Expressions.Expression.Not(comparison)
             : comparison;
 
@@ -499,25 +499,25 @@ public sealed class ReportEngine(
         var parametro = field.Parameters[0];
         var isNull = System.Linq.Expressions.Expression.Constant(null, typeof(Guid?));
 
-        System.Linq.Expressions.Expression body = f.Operador.ToLowerInvariant() switch
+        System.Linq.Expressions.Expression body = f.Operator.ToLowerInvariant() switch
         {
-            "vacio" => System.Linq.Expressions.Expression.Equal(field.Body, isNull),
-            "no_vacio" => System.Linq.Expressions.Expression.NotEqual(field.Body, isNull),
-            "es" or "no_es" => Equality(field.Body, f),
-            _ => throw new InvalidOperationException($"El operador «{f.Operador}» no vale para {f.Campo}")
+            "empty" => System.Linq.Expressions.Expression.Equal(field.Body, isNull),
+            "not_empty" => System.Linq.Expressions.Expression.NotEqual(field.Body, isNull),
+            "is" or "is_not" => Equality(field.Body, f),
+            _ => throw new InvalidOperationException($"El operador «{f.Operator}» no vale para {f.Field}")
         };
 
         return query.Where(System.Linq.Expressions.Expression.Lambda<Func<T, bool>>(body, parametro));
 
         static System.Linq.Expressions.Expression Equality(System.Linq.Expressions.Expression body, ReportFilter f)
         {
-            if (!Guid.TryParse(f.Valor, out var value))
-                throw new InvalidOperationException($"«{f.Valor}» no es un identificador válido para {f.Campo}");
+            if (!Guid.TryParse(f.Value, out var value))
+                throw new InvalidOperationException($"«{f.Value}» no es un identificador válido para {f.Field}");
 
             var comparison = System.Linq.Expressions.Expression.Equal(
                 body, System.Linq.Expressions.Expression.Constant((Guid?)value, typeof(Guid?)));
 
-            return f.Operador.Equals("no_es", StringComparison.OrdinalIgnoreCase)
+            return f.Operator.Equals("is_not", StringComparison.OrdinalIgnoreCase)
                 ? System.Linq.Expressions.Expression.Not(comparison)
                 : comparison;
         }
@@ -526,22 +526,22 @@ public sealed class ReportEngine(
     private static IQueryable<T> ApplyNumber<T>(
         IQueryable<T> query, ReportFilter f, System.Linq.Expressions.Expression<Func<T, double>> field)
     {
-        if (!double.TryParse(f.Valor, NumberStyles.Any, CultureInfo.InvariantCulture, out var value)
-            && !double.TryParse(f.Valor, NumberStyles.Any, Spanish, out value))
+        if (!double.TryParse(f.Value, NumberStyles.Any, CultureInfo.InvariantCulture, out var value)
+            && !double.TryParse(f.Value, NumberStyles.Any, Spanish, out value))
         {
-            throw new InvalidOperationException($"«{f.Valor}» no es un número");
+            throw new InvalidOperationException($"«{f.Value}» no es un número");
         }
 
         var parametro = field.Parameters[0];
         var constant = System.Linq.Expressions.Expression.Constant(value);
 
-        System.Linq.Expressions.Expression body = f.Operador.ToLowerInvariant() switch
+        System.Linq.Expressions.Expression body = f.Operator.ToLowerInvariant() switch
         {
-            "mayor_que" => System.Linq.Expressions.Expression.GreaterThan(field.Body, constant),
-            "menor_que" => System.Linq.Expressions.Expression.LessThan(field.Body, constant),
-            "es" => System.Linq.Expressions.Expression.Equal(field.Body, constant),
-            "no_es" => System.Linq.Expressions.Expression.NotEqual(field.Body, constant),
-            _ => throw new InvalidOperationException($"El operador «{f.Operador}» no vale para un número")
+            "greater_than" => System.Linq.Expressions.Expression.GreaterThan(field.Body, constant),
+            "less_than" => System.Linq.Expressions.Expression.LessThan(field.Body, constant),
+            "is" => System.Linq.Expressions.Expression.Equal(field.Body, constant),
+            "is_not" => System.Linq.Expressions.Expression.NotEqual(field.Body, constant),
+            _ => throw new InvalidOperationException($"El operador «{f.Operator}» no vale para un número")
         };
 
         return query.Where(System.Linq.Expressions.Expression.Lambda<Func<T, bool>>(body, parametro));
@@ -554,11 +554,11 @@ public sealed class ReportEngine(
         var parametro = field.Parameters[0];
         var constant = System.Linq.Expressions.Expression.Constant(value);
 
-        System.Linq.Expressions.Expression body = f.Operador.ToLowerInvariant() switch
+        System.Linq.Expressions.Expression body = f.Operator.ToLowerInvariant() switch
         {
-            "mayor_que" => System.Linq.Expressions.Expression.GreaterThan(field.Body, constant),
-            "menor_que" => System.Linq.Expressions.Expression.LessThan(field.Body, constant),
-            _ => throw new InvalidOperationException($"El operador «{f.Operador}» no vale para una fecha obligatoria")
+            "greater_than" => System.Linq.Expressions.Expression.GreaterThan(field.Body, constant),
+            "less_than" => System.Linq.Expressions.Expression.LessThan(field.Body, constant),
+            _ => throw new InvalidOperationException($"El operador «{f.Operator}» no vale para una fecha obligatoria")
         };
 
         return query.Where(System.Linq.Expressions.Expression.Lambda<Func<T, bool>>(body, parametro));
@@ -570,15 +570,15 @@ public sealed class ReportEngine(
         var parametro = field.Parameters[0];
         var isNull = System.Linq.Expressions.Expression.Constant(null, typeof(DateTime?));
 
-        System.Linq.Expressions.Expression body = f.Operador.ToLowerInvariant() switch
+        System.Linq.Expressions.Expression body = f.Operator.ToLowerInvariant() switch
         {
-            "vacio" => System.Linq.Expressions.Expression.Equal(field.Body, isNull),
-            "no_vacio" => System.Linq.Expressions.Expression.NotEqual(field.Body, isNull),
-            "mayor_que" => System.Linq.Expressions.Expression.GreaterThan(
+            "empty" => System.Linq.Expressions.Expression.Equal(field.Body, isNull),
+            "not_empty" => System.Linq.Expressions.Expression.NotEqual(field.Body, isNull),
+            "greater_than" => System.Linq.Expressions.Expression.GreaterThan(
                 field.Body, System.Linq.Expressions.Expression.Constant((DateTime?)ParseDate(f), typeof(DateTime?))),
-            "menor_que" => System.Linq.Expressions.Expression.LessThan(
+            "less_than" => System.Linq.Expressions.Expression.LessThan(
                 field.Body, System.Linq.Expressions.Expression.Constant((DateTime?)ParseDate(f), typeof(DateTime?))),
-            _ => throw new InvalidOperationException($"El operador «{f.Operador}» no vale para una fecha")
+            _ => throw new InvalidOperationException($"El operador «{f.Operator}» no vale para una fecha")
         };
 
         return query.Where(System.Linq.Expressions.Expression.Lambda<Func<T, bool>>(body, parametro));
@@ -589,34 +589,34 @@ public sealed class ReportEngine(
         // Se admite ISO y el formato español, porque el valor puede venir del constructor de la
         // pantalla o de una definición escrita a mano. Se fija UTC: sin eso, la misma definición
         // filtraría distinto según la zona horaria del servidor.
-        if (DateTime.TryParse(f.Valor, CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal, out var iso))
+        if (DateTime.TryParse(f.Value, CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal, out var iso))
             return iso;
 
-        if (DateTime.TryParse(f.Valor, Spanish, DateTimeStyles.AdjustToUniversal, out var esp))
+        if (DateTime.TryParse(f.Value, Spanish, DateTimeStyles.AdjustToUniversal, out var esp))
             return esp;
 
-        throw new InvalidOperationException($"«{f.Valor}» no es una fecha");
+        throw new InvalidOperationException($"«{f.Value}» no es una fecha");
     }
 
     #endregion
 
     /// <summary>
-    /// Cómo se escribe una fecha según la granularidad pedida.
+    /// Cómo se escribe una fecha según la granularity pedida.
     ///
     /// El año va delante en todas para que el orden alfabético coincida con el cronológico: con
     /// «03/2026» antes que «12/2025», la gráfica saldría desordenada y nadie lo achacaría a esto.
     /// </summary>
-    private static string ByDate(DateTime date, string? granularidad) => granularidad switch
+    private static string ByDate(DateTime date, string? granularity) => granularity switch
     {
-        "dia" => date.ToString("yyyy-MM-dd", Spanish),
-        "semana" => $"{ISOWeek.GetYear(date)}-S{ISOWeek.GetWeekOfYear(date):00}",
-        "mes" => date.ToString("yyyy-MM", Spanish),
-        "ano" => date.ToString("yyyy", Spanish),
+        "day" => date.ToString("yyyy-MM-dd", Spanish),
+        "week" => $"{ISOWeek.GetYear(date)}-S{ISOWeek.GetWeekOfYear(date):00}",
+        "month" => date.ToString("yyyy-MM", Spanish),
+        "year" => date.ToString("yyyy", Spanish),
         _ => date.ToString("yyyy-MM", Spanish)
     };
 
-    private static string ByDate(DateOnly date, string? granularidad)
-        => ByDate(date.ToDateTime(TimeOnly.MinValue), granularidad);
+    private static string ByDate(DateOnly date, string? granularity)
+        => ByDate(date.ToDateTime(TimeOnly.MinValue), granularity);
 
     /// <summary>
     /// El número con el que se guarda un estado de ticket, a partir de su nombre.
@@ -646,26 +646,26 @@ public sealed class ReportEngine(
         System.Linq.Expressions.Expression<Func<T, int>> field,
         Func<string, int?> toCode)
     {
-        var code = toCode(f.Valor ?? string.Empty);
+        var code = toCode(f.Value ?? string.Empty);
 
         if (code is null)
-            throw new InvalidOperationException($"«{f.Valor}» no es un valor válido para {f.Campo}");
+            throw new InvalidOperationException($"«{f.Value}» no es un valor válido para {f.Field}");
 
         var parametro = field.Parameters[0];
         var constant = System.Linq.Expressions.Expression.Constant(code.Value);
         var comparison = System.Linq.Expressions.Expression.Equal(field.Body, constant);
 
-        System.Linq.Expressions.Expression body = f.Operador.ToLowerInvariant() switch
+        System.Linq.Expressions.Expression body = f.Operator.ToLowerInvariant() switch
         {
-            "es" => comparison,
-            "no_es" => System.Linq.Expressions.Expression.Not(comparison),
+            "is" => comparison,
+            "is_not" => System.Linq.Expressions.Expression.Not(comparison),
 
             // «Contiene» sobre un estado se admite en el catálogo porque el campo es de tipo
             // texto, y aquí se resuelve como igualdad: los estados son una lista cerrada, así que
             // «contiene Open» y «es Open» quieren decir lo mismo para quien lo escribe.
-            "contiene" => comparison,
+            "contains" => comparison,
 
-            _ => throw new InvalidOperationException($"El operador «{f.Operador}» no vale para {f.Campo}")
+            _ => throw new InvalidOperationException($"El operador «{f.Operator}» no vale para {f.Field}")
         };
 
         return query.Where(System.Linq.Expressions.Expression.Lambda<Func<T, bool>>(body, parametro));

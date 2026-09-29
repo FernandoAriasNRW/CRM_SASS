@@ -92,10 +92,10 @@ public sealed class PanelFlowTests(CrmApiFactory factory)
         foreach (var widget in panel.GetProperty("widgets").EnumerateArray())
         {
             var x = widget.GetProperty("x").GetInt32();
-            var ancho = widget.GetProperty("ancho").GetInt32();
+            var ancho = widget.GetProperty("width").GetInt32();
 
             (x + ancho).Should().BeLessThanOrEqualTo(12,
-                $"el recuadro «{widget.GetProperty("titulo")}» se sale de las 12 columnas");
+                $"el recuadro «{widget.GetProperty("title")}» se sale de las 12 columnas");
         }
     }
 
@@ -148,7 +148,7 @@ public sealed class PanelFlowTests(CrmApiFactory factory)
 
         foreach (var recuadro in datos.EnumerateArray())
         {
-            recuadro.GetProperty("forma").GetString().Should().NotBeNullOrWhiteSpace();
+            recuadro.GetProperty("visualization").GetString().Should().NotBeNullOrWhiteSpace();
             recuadro.GetProperty("title").GetString().Should().NotBeNullOrWhiteSpace();
             recuadro.GetProperty("columns").EnumerateArray().Should().NotBeEmpty();
         }
@@ -178,7 +178,7 @@ public sealed class PanelFlowTests(CrmApiFactory factory)
         var informeId = (await informe.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetGuid();
 
         var anadido = await cliente.PostAsJsonAsync($"/api/v1/dashboards/{panelId}/widgets",
-            new { ReportId = informeId, Forma = "barras" });
+            new { ReportId = informeId, Visualization = "bar" });
 
         anadido.StatusCode.Should().Be(HttpStatusCode.OK, await anadido.Content.ReadAsStringAsync());
         var widgetId = (await anadido.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetGuid();
@@ -220,10 +220,10 @@ public sealed class PanelFlowTests(CrmApiFactory factory)
                 reportId = w.GetProperty("reportId").GetGuid(),
                 x = 0,
                 y = w.GetProperty("y").GetInt32(),
-                ancho = 12,
-                alto = 3,
-                forma = w.GetProperty("forma").GetString(),
-                titulo = w.GetProperty("titulo").GetString()
+                width = 12,
+                height = 3,
+                visualization = w.GetProperty("visualization").GetString(),
+                title = w.GetProperty("title").GetString()
             })
             .ToList();
 
@@ -236,7 +236,7 @@ public sealed class PanelFlowTests(CrmApiFactory factory)
         var despues = await MiPanelAsync(cliente);
 
         despues.GetProperty("widgets").EnumerateArray()
-            .Should().OnlyContain(w => w.GetProperty("ancho").GetInt32() == 12);
+            .Should().OnlyContain(w => w.GetProperty("width").GetInt32() == 12);
     }
 
     /// <summary>
@@ -262,8 +262,8 @@ public sealed class PanelFlowTests(CrmApiFactory factory)
                 {
                     id = uno.GetProperty("id").GetGuid(),
                     reportId = uno.GetProperty("reportId").GetGuid(),
-                    x = 10, y = 0, ancho = 6, alto = 4,
-                    forma = "barras", titulo = "Se sale"
+                    x = 10, y = 0, width = 6, height = 4,
+                    visualization = "bar", title = "Se sale"
                 }
             }
         });
@@ -290,7 +290,7 @@ public sealed class PanelFlowTests(CrmApiFactory factory)
         var informeId = (await informe.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetGuid();
 
         var anadido = await cliente.PostAsJsonAsync($"/api/v1/dashboards/{panelId}/widgets",
-            new { ReportId = informeId, Forma = (string?)null });
+            new { ReportId = informeId, Visualization = (string?)null });
 
         var widgetId = (await anadido.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetGuid();
 
@@ -328,7 +328,7 @@ public sealed class PanelFlowTests(CrmApiFactory factory)
 
         // Se devuelve al panel para no dejar el arranque cambiado a las demás pruebas.
         await cliente.PostAsJsonAsync($"/api/v1/dashboards/{panelId}/widgets",
-            new { ReportId = informeId, Forma = uno.GetProperty("forma").GetString() });
+            new { ReportId = informeId, Visualization = uno.GetProperty("visualization").GetString() });
     }
 
     #endregion

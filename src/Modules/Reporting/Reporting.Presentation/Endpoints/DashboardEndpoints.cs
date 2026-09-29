@@ -67,7 +67,7 @@ public static class DashboardEndpoints
             var userId = currentUser.UserId;
 
             var result = await mediator.Send(new AddWidgetCommand(
-                TenantId: tenantId, UserId: userId, PanelId: id, ReportId: body.ReportId, Forma: body.Forma));
+                TenantId: tenantId, UserId: userId, PanelId: id, ReportId: body.ReportId, Visualization: body.Visualization));
             return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
         });
 
@@ -155,4 +155,4 @@ public record CreateDashboardRequest(
 /// <summary>La disposición entera del panel. Ver el endpoint para por qué va entera.</summary>
 public sealed record LayoutRequest(IReadOnlyList<Reporting.Domain.Dashboards.Widget> Widgets);
 
-public sealed record AddWidgetRequest(Guid ReportId, string? Forma);
+public sealed record AddWidgetRequest(Guid ReportId, string? Visualization);

@@ -24,23 +24,23 @@ public static class ReportCatalog
         => DataSources().FirstOrDefault(o => string.Equals(o.Key, key, StringComparison.OrdinalIgnoreCase));
 
     public static readonly DataSource Tasks = new(
-        Key: "Tareas",
+        Key: "Tasks",
         Name: "Tareas",
         Fields:
         [
-            new("estado", "Estado", FieldType.Text),
-            new("prioridad", "Prioridad", FieldType.Text),
-            new("responsable", "Responsable", FieldType.Person, Optional: true),
-            new("proyecto", "Proyecto", FieldType.Reference),
-            new("vencimiento", "Vencimiento", FieldType.Date),
-            new("creacion", "Creación", FieldType.Date),
-            new("horas", "Horas estimadas", FieldType.Number)
+            new("status", "Estado", FieldType.Text),
+            new("priority", "Prioridad", FieldType.Text),
+            new("assignee", "Responsable", FieldType.Person, Optional: true),
+            new("project", "Proyecto", FieldType.Reference),
+            new("due_date", "Vencimiento", FieldType.Date),
+            new("created_at", "Creación", FieldType.Date),
+            new("estimated_hours", "Horas estimadas", FieldType.Number)
         ],
         Measures:
         [
             AvailableMeasure.Count,
-            new("suma_horas", "Suma de horas estimadas", "horas"),
-            new("media_horas", "Media de horas estimadas", "horas")
+            new("sum_estimated_hours", "Suma de horas estimadas", "estimated_hours"),
+            new("avg_estimated_hours", "Media de horas estimadas", "estimated_hours")
         ]);
 
     public static readonly DataSource Tickets = new(
@@ -48,26 +48,26 @@ public static class ReportCatalog
         Name: "Tickets",
         Fields:
         [
-            new("estado", "Estado", FieldType.Text),
-            new("prioridad", "Prioridad", FieldType.Text),
-            new("agente", "Agente asignado", FieldType.Person, Optional: true),
-            new("creacion", "Creación", FieldType.Date),
-            new("resolucion", "Resolución", FieldType.Date, Optional: true)
+            new("status", "Estado", FieldType.Text),
+            new("priority", "Prioridad", FieldType.Text),
+            new("agent", "Agente asignado", FieldType.Person, Optional: true),
+            new("created_at", "Creación", FieldType.Date),
+            new("resolved_at", "Resolución", FieldType.Date, Optional: true)
         ],
         Measures:
         [
             AvailableMeasure.Count,
-            new("media_dias_resolucion", "Días medios hasta resolver", "resolucion")
+            new("avg_days_to_resolve", "Días medios hasta resolver", "resolved_at")
         ]);
 
     public static readonly DataSource Projects = new(
-        Key: "Proyectos",
+        Key: "Projects",
         Name: "Proyectos",
         Fields:
         [
-            new("estado", "Estado", FieldType.Text),
-            new("dueno", "Responsable", FieldType.Person, Optional: true),
-            new("inicio", "Fecha de inicio", FieldType.Date)
+            new("status", "Estado", FieldType.Text),
+            new("owner", "Responsable", FieldType.Person, Optional: true),
+            new("start_date", "Fecha de inicio", FieldType.Date)
         ],
         Measures: [AvailableMeasure.Count]);
 
@@ -79,10 +79,10 @@ public static class ReportCatalog
     /// </summary>
     public static IReadOnlyList<Option> DateGranularities() =>
     [
-        new("dia", "Por día"),
-        new("semana", "Por semana"),
-        new("mes", "Por mes"),
-        new("ano", "Por año")
+        new("day", "Por día"),
+        new("week", "Por semana"),
+        new("month", "Por mes"),
+        new("year", "Por año")
     ];
 
     /// <summary>
@@ -98,11 +98,11 @@ public static class ReportCatalog
     /// </summary>
     public static IReadOnlyList<Option> Visualizations() =>
     [
-        new("tabla", "Tabla"),
-        new("barras", "Barras"),
-        new("barras_apiladas", "Barras apiladas"),
-        new("lineas", "Líneas"),
-        new("tarta", "Tarta")
+        new("table", "Tabla"),
+        new("bar", "Barras"),
+        new("stacked_bar", "Barras apiladas"),
+        new("line", "Líneas"),
+        new("pie", "Tarta")
     ];
 
     /// <summary>
@@ -113,13 +113,13 @@ public static class ReportCatalog
     /// </summary>
     public static IReadOnlyList<AvailableOperator> Operators() =>
     [
-        new("es", "Es", [FieldType.Text, FieldType.Person, FieldType.Reference]),
-        new("no_es", "No es", [FieldType.Text, FieldType.Person, FieldType.Reference]),
-        new("contiene", "Contiene", [FieldType.Text]),
-        new("mayor_que", "Mayor que", [FieldType.Number, FieldType.Date]),
-        new("menor_que", "Menor que", [FieldType.Number, FieldType.Date]),
-        new("vacio", "Está vacío", [FieldType.Date, FieldType.Person, FieldType.Reference]),
-        new("no_vacio", "No está vacío", [FieldType.Date, FieldType.Person, FieldType.Reference])
+        new("is", "Es", [FieldType.Text, FieldType.Person, FieldType.Reference]),
+        new("is_not", "No es", [FieldType.Text, FieldType.Person, FieldType.Reference]),
+        new("contains", "Contiene", [FieldType.Text]),
+        new("greater_than", "Mayor que", [FieldType.Number, FieldType.Date]),
+        new("less_than", "Menor que", [FieldType.Number, FieldType.Date]),
+        new("empty", "Está vacío", [FieldType.Date, FieldType.Person, FieldType.Reference]),
+        new("not_empty", "No está vacío", [FieldType.Date, FieldType.Person, FieldType.Reference])
     ];
 
     public static AvailableOperator? Operator(string? key)
