@@ -5403,6 +5403,14 @@ Pending</target>
           <context context-type="linenumber">141,142</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="8941751789995183466" datatype="html">
+        <source>Con acceso total edita y borra cualquier etiqueta, no sólo las que creó</source>
+        <target state="final">With full access they can edit and delete any tag, not only the ones they created</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/permissions/granular-permissions-modal.component.ts</context>
+          <context context-type="linenumber">40</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="2295568220238618223" datatype="html">
         <source>Tablero</source>
         <target>Board</target>

@@ -895,9 +895,10 @@ datos. Se detalla en la sección 15.
   sin guardar): lista y crea etiquetas y categorías, con categorías predefinidas (equipo, proyecto,
   hito, negocio, seguridad, tipo de trabajo, fase de desarrollo), categorías propias de cada
   organización y etiquetas predefinidas en español e inglés. Pero **el frontend todavía no la usa**:
-  las fichas de tarea y ticket siguen con las listas fijas de `shared/utils/tags.ts`. Tampoco hay
-  aún editar ni borrar. Cuando haya borrar, ojo: las predefinidas se aprovisionan en cada arranque,
-  así que una borrada volvería a aparecer si no se recuerda que se quitó a propósito.
+  las fichas de tarea y ticket siguen con las listas fijas de `shared/utils/tags.ts`. Se pueden
+  editar y borrar (quien la creó, un administrador o quien tenga «Full» sobre etiquetas); el
+  borrado es definitivo porque hoy nada referencia una etiqueta, y **cuando las tareas y los tickets
+  se etiqueten con estas, borrar tendrá que soltarlas**.
 - **Los adjuntos de un ticket no se pueden quitar**, y no hay nada que los borre del almacenamiento
   si algún día se vacía la papelera de tickets.
 - **Espacios, carpetas, anotaciones y subidas no piden autorización por entidad**, y los

@@ -6,7 +6,7 @@ import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import {
   lucideX, lucideShieldCheck, lucideCheck, lucideLock,
   lucideFolderKanban, lucideCheckSquare, lucideFileText,
-  lucideWebhook, lucideUsers, lucideBarChart3, lucideSettings, lucideLoader2
+  lucideWebhook, lucideUsers, lucideBarChart3, lucideSettings, lucideLoader2, lucideTag
 } from '@ng-icons/lucide';
 
 export interface ResourcePermissionItem {
@@ -28,6 +28,20 @@ export interface GranularPermissionDto {
   permissionLevel: string;
 }
 
+/**
+ * Etiquetas, sólo al dar permisos a una persona concreta. Con «Full» puede editar y borrar
+ * cualquier etiqueta, no sólo las que creó; con «Edit», que es lo que tiene un miembro, crea
+ * etiquetas y gestiona las suyas. No se ofrece por rol ni por equipo: se pidió que el permiso lo
+ * diera un administrador a alguien en particular (ver `TagAccess` en el backend).
+ */
+const TAG_RESOURCE: ResourcePermissionItem = {
+  key: 'Tag',
+  name: $localize`Etiquetas`,
+  description: $localize`Con acceso total edita y borra cualquier etiqueta, no sólo las que creó`,
+  icon: 'lucideTag',
+  level: 'Edit'
+};
+
 @Component({
   selector: 'app-granular-permissions-modal',
   standalone: true,
@@ -36,7 +50,7 @@ export interface GranularPermissionDto {
     provideIcons({
       lucideX, lucideShieldCheck, lucideCheck, lucideLock,
       lucideFolderKanban, lucideCheckSquare, lucideFileText,
-      lucideWebhook, lucideUsers, lucideBarChart3, lucideSettings, lucideLoader2
+      lucideWebhook, lucideUsers, lucideBarChart3, lucideSettings, lucideLoader2, lucideTag
     })
   ],
   templateUrl: './granular-permissions-modal.component.html',
@@ -120,6 +134,9 @@ export class GranularPermissionsModalComponent implements OnInit {
   ]);
 
   ngOnInit(): void {
+    if (this.targetType() === 'User') {
+      this.resources.update(list => [...list, TAG_RESOURCE]);
+    }
     this.loadPermissions();
   }
 

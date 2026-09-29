@@ -14,6 +14,7 @@ public sealed class TagsDbContext(DbContextOptions<TagsDbContext> options, IUser
 {
     public DbSet<Tag> Tags => Set<Tag>();
     public DbSet<CustomTagCategory> CustomTagCategories => Set<CustomTagCategory>();
+    public DbSet<ProvisionedBuiltInTag> ProvisionedBuiltInTags => Set<ProvisionedBuiltInTag>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

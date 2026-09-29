@@ -115,6 +115,9 @@ Un concepto, un nombre. Ordenado por área.
 | nombre visible de una categoría | `Label` |
 | etiqueta predefinida, su clave | `BuiltInTag`, `BuiltInKey` |
 | aprovisionar (las predefinidas) | `Provision` |
+| predefinida ya entregada a una organización | `ProvisionedBuiltInTag` |
+| gestionar una etiqueta (editar y borrar), puede gestionar | `Manage`, `CanManage` |
+| autor, creado por | `CreatedBy` |
 | hito, negocio, seguridad (categorías) | `Milestone`, `Business`, `Security` |
 | tipo de trabajo, fase de desarrollo (categorías) | `WorkType`, `DevelopmentPhase` |
 | almacenamiento, almacén en disco | `Storage`, `DiskStorage` |
