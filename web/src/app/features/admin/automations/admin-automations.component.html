@@ -11,13 +11,13 @@
     </div>
 
     <div class="flex items-center gap-2">
-      <button (click)="cargar()"
+      <button (click)="load()"
               class="px-3 py-1.5 border border-border rounded-lg text-xs font-medium text-muted-foreground hover:bg-muted transition-colors flex items-center gap-1.5">
         <ng-icon name="lucideRefreshCw" class="w-3.5 h-3.5"></ng-icon>
         <span i18n>Actualizar</span>
       </button>
 
-      <button (click)="nueva()" [disabled]="esNueva()"
+      <button (click)="startNew()" [disabled]="isNew()"
               class="px-3.5 py-1.5 bg-primary hover:bg-primary text-white rounded-lg text-xs font-semibold shadow-sm transition-colors flex items-center gap-1.5 disabled:opacity-50">
         <ng-icon name="lucidePlus" class="w-3.5 h-3.5"></ng-icon>
         <span i18n>Nueva automatización</span>
@@ -33,13 +33,13 @@
   }
 
   <!-- Formulario -->
-  @if (editando() !== null) {
+  @if (editing() !== null) {
     <div class="border border-border rounded-2xl p-5 bg-white dark:bg-muted shadow-sm space-y-4">
       <div class="flex items-center justify-between">
         <h3 class="text-sm font-bold text-foreground">
-          @if (esNueva()) { <span i18n>Nueva automatización</span> } @else { <span i18n>Editar automatización</span> }
+          @if (isNew()) { <span i18n>Nueva automatización</span> } @else { <span i18n>Editar automatización</span> }
         </h3>
-        <button (click)="cerrarFormulario()" i18n-aria-label aria-label="Cerrar el formulario"
+        <button (click)="closeForm()" i18n-aria-label aria-label="Cerrar el formulario"
                 class="text-muted-foreground hover:text-foreground transition-colors">
           <ng-icon name="lucideX" class="w-4 h-4"></ng-icon>
         </button>
@@ -48,7 +48,7 @@
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <label class="space-y-1 block">
           <span class="text-xs font-medium text-muted-foreground" i18n>Nombre</span>
-          <input type="text" [(ngModel)]="name" [maxlength]="largoMaximoDelNombre"
+          <input type="text" [(ngModel)]="name" [maxlength]="maxNameLength"
                  i18n-placeholder placeholder="Bajar la prioridad al cerrar"
                  class="w-full px-3 py-1.5 text-xs bg-white dark:bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-1 focus:ring-primary" />
         </label>
@@ -57,8 +57,8 @@
           <span class="text-xs font-medium text-muted-foreground" i18n>Cuándo</span>
           <select [(ngModel)]="trigger"
                   class="w-full px-3 py-1.5 text-xs bg-white dark:bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-1 focus:ring-primary">
-            @for (opcion of vocabulario().triggers; track opcion) {
-              <option [value]="opcion">{{ automationLabel(opcion) }}</option>
+            @for (option of vocabulary().triggers; track option) {
+              <option [value]="option">{{ automationLabel(option) }}</option>
             }
           </select>
         </label>
@@ -68,30 +68,30 @@
       <div class="space-y-2">
         <div class="flex items-center justify-between">
           <span class="text-xs font-medium text-muted-foreground" i18n>Si se cumple</span>
-          <button (click)="agregarCondicion()"
+          <button (click)="addCondition()"
                   class="text-xs text-muted-foreground hover:text-primary transition-colors" i18n>
             + Condición
           </button>
         </div>
 
-        @for (condicion of conditions; track $index) {
+        @for (condition of conditions; track $index) {
           <div class="flex items-center gap-2">
-            <select [(ngModel)]="condicion.field" i18n-aria-label aria-label="Campo"
+            <select [(ngModel)]="condition.field" i18n-aria-label aria-label="Campo"
                     class="px-2 py-1.5 text-xs bg-white dark:bg-background border border-border rounded-lg">
-              @for (field of vocabulario().fields; track field) {
+              @for (field of vocabulary().fields; track field) {
                 <option [value]="field">{{ automationLabel(field) }}</option>
               }
             </select>
 
-            <select [(ngModel)]="condicion.operator" i18n-aria-label aria-label="Operador"
+            <select [(ngModel)]="condition.operator" i18n-aria-label aria-label="Operador"
                     class="px-2 py-1.5 text-xs bg-white dark:bg-background border border-border rounded-lg">
-              @for (operator of vocabulario().operators; track operator) {
+              @for (operator of vocabulary().operators; track operator) {
                 <option [value]="operator">{{ automationLabel(operator) }}</option>
               }
             </select>
 
-            @if (necesitaValor(condicion)) {
-              <input type="text" [(ngModel)]="condicion.value" i18n-aria-label aria-label="Valor de la condición"
+            @if (needsValue(condition)) {
+              <input type="text" [(ngModel)]="condition.value" i18n-aria-label aria-label="Valor de la condición"
                      class="flex-1 px-2 py-1.5 text-xs bg-white dark:bg-background border border-border rounded-lg" />
             } @else {
               <!-- «Está vacío» no compara contra nada, así que no se pide un valor que se iba
@@ -99,7 +99,7 @@
               <span class="flex-1 text-xs text-muted-foreground" i18n>sin valor</span>
             }
 
-            <button (click)="quitarCondicion($index)" i18n-aria-label aria-label="Quitar la condición"
+            <button (click)="removeCondition($index)" i18n-aria-label aria-label="Quitar la condición"
                     class="text-muted-foreground hover:text-destructive transition-colors">
               <ng-icon name="lucideX" class="w-3.5 h-3.5"></ng-icon>
             </button>
@@ -115,25 +115,25 @@
       <div class="space-y-2">
         <div class="flex items-center justify-between">
           <span class="text-xs font-medium text-muted-foreground" i18n>Entonces</span>
-          <button (click)="agregarAccion()"
+          <button (click)="addAction()"
                   class="text-xs text-muted-foreground hover:text-primary transition-colors" i18n>
             + Acción
           </button>
         </div>
 
-        @for (accion of actions; track $index) {
+        @for (action of actions; track $index) {
           <div class="flex items-center gap-2">
-            <select [(ngModel)]="accion.type" i18n-aria-label aria-label="Acción"
+            <select [(ngModel)]="action.type" i18n-aria-label aria-label="Acción"
                     class="px-2 py-1.5 text-xs bg-white dark:bg-background border border-border rounded-lg">
-              @for (type of vocabulario().actions; track type) {
+              @for (type of vocabulary().actions; track type) {
                 <option [value]="type">{{ automationLabel(type) }}</option>
               }
             </select>
 
-            <input type="text" [(ngModel)]="accion.value" i18n-aria-label aria-label="Valor de la acción"
+            <input type="text" [(ngModel)]="action.value" i18n-aria-label aria-label="Valor de la acción"
                    class="flex-1 px-2 py-1.5 text-xs bg-white dark:bg-background border border-border rounded-lg" />
 
-            <button (click)="quitarAccion($index)" i18n-aria-label aria-label="Quitar la acción"
+            <button (click)="removeAction($index)" i18n-aria-label aria-label="Quitar la acción"
                     class="text-muted-foreground hover:text-destructive transition-colors">
               <ng-icon name="lucideX" class="w-3.5 h-3.5"></ng-icon>
             </button>
@@ -147,16 +147,16 @@
       </p>
 
       <div class="flex items-center justify-end gap-2">
-        @if (impedimento; as motivo) {
-          <span class="text-xs text-muted-foreground mr-auto">{{ motivo }}</span>
+        @if (blocker; as reason) {
+          <span class="text-xs text-muted-foreground mr-auto">{{ reason }}</span>
         }
-        <button (click)="cerrarFormulario()"
+        <button (click)="closeForm()"
                 class="px-3 py-1.5 border border-border rounded-lg text-xs font-medium text-muted-foreground hover:bg-muted transition-colors" i18n>
           Cancelar
         </button>
-        <button (click)="guardar()" [disabled]="!!impedimento || guardando()"
+        <button (click)="save()" [disabled]="!!blocker || saving()"
                 class="px-3.5 py-1.5 bg-primary text-white rounded-lg text-xs font-semibold shadow-sm transition-colors flex items-center gap-1.5 disabled:opacity-50">
-          @if (guardando()) {
+          @if (saving()) {
             <ng-icon name="lucideLoader2" class="w-3.5 h-3.5 animate-spin"></ng-icon>
           }
           <span i18n>Guardar</span>
@@ -166,9 +166,9 @@
   }
 
   <!-- Las reglas -->
-  @if (cargando()) {
+  @if (loading()) {
     <p class="text-xs text-muted-foreground" i18n>Cargando…</p>
-  } @else if (reglas().length) {
+  } @else if (rules().length) {
     <div class="border border-border rounded-2xl overflow-hidden">
       <table class="w-full text-xs">
         <thead class="bg-muted/50 text-muted-foreground">
@@ -182,21 +182,21 @@
           </tr>
         </thead>
         <tbody>
-          @for (regla of reglas(); track regla.id) {
+          @for (rule of rules(); track rule.id) {
             <tr class="border-t border-border">
-              <td class="px-4 py-2 font-medium text-foreground">{{ regla.name }}</td>
-              <td class="px-4 py-2 text-muted-foreground">{{ automationLabel(regla.trigger) }}</td>
-              <td class="px-4 py-2 text-muted-foreground max-w-md truncate" [title]="resumenDe(regla)">
-                {{ resumenDe(regla) }}
+              <td class="px-4 py-2 font-medium text-foreground">{{ rule.name }}</td>
+              <td class="px-4 py-2 text-muted-foreground">{{ automationLabel(rule.trigger) }}</td>
+              <td class="px-4 py-2 text-muted-foreground max-w-md truncate" [title]="summaryOf(rule)">
+                {{ summaryOf(rule) }}
               </td>
               <!-- Es lo primero que se mira cuando alguien dice que una regla no funciona:
                    separa «no salta» de «salta y hace otra cosa». -->
-              <td class="px-4 py-2 text-right text-muted-foreground tabular-nums">{{ regla.executionCount }}</td>
+              <td class="px-4 py-2 text-right text-muted-foreground tabular-nums">{{ rule.executionCount }}</td>
               <td class="px-4 py-2">
                 <label class="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" [checked]="regla.isActive" (change)="alternarActiva(regla)"
-                         [attr.aria-label]="regla.name" class="rounded border-border" />
-                  @if (regla.isActive) {
+                  <input type="checkbox" [checked]="rule.isActive" (change)="toggleActive(rule)"
+                         [attr.aria-label]="rule.name" class="rounded border-border" />
+                  @if (rule.isActive) {
                     <span class="text-[11px] text-muted-foreground" i18n>Sí</span>
                   } @else {
                     <span class="text-[11px] text-muted-foreground" i18n>No</span>
@@ -204,25 +204,25 @@
                 </label>
               </td>
               <td class="px-4 py-2">
-                @if (borrando() === regla.id) {
+                @if (deleting() === rule.id) {
                   <div class="flex items-center justify-end gap-2">
                     <span class="text-destructive" i18n>¿Borrar la automatización?</span>
-                    <button (click)="borrar(regla)" [disabled]="guardando()"
+                    <button (click)="remove(rule)" [disabled]="saving()"
                             class="px-2 py-1 rounded-lg bg-destructive text-white font-semibold disabled:opacity-50" i18n>
                       Borrar
                     </button>
-                    <button (click)="borrando.set(null)"
+                    <button (click)="deleting.set(null)"
                             class="px-2 py-1 rounded-lg border border-border text-muted-foreground" i18n>
                       Cancelar
                     </button>
                   </div>
                 } @else {
                   <div class="flex items-center justify-end gap-2">
-                    <button (click)="editar(regla)" i18n-aria-label aria-label="Editar la automatización"
+                    <button (click)="edit(rule)" i18n-aria-label aria-label="Editar la automatización"
                             class="text-muted-foreground hover:text-primary transition-colors">
                       <ng-icon name="lucideEdit3" class="w-3.5 h-3.5"></ng-icon>
                     </button>
-                    <button (click)="borrando.set(regla.id)" i18n-aria-label aria-label="Borrar la automatización"
+                    <button (click)="deleting.set(rule.id)" i18n-aria-label aria-label="Borrar la automatización"
                             class="text-muted-foreground hover:text-destructive transition-colors">
                       <ng-icon name="lucideTrash2" class="w-3.5 h-3.5"></ng-icon>
                     </button>

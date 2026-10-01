@@ -1204,7 +1204,7 @@
         </context-group>
       </trans-unit>
       <trans-unit id="8326018324196237073" datatype="html">
-        <source>El nombre no puede pasar de <x id="PH" equiv-text="LARGO_MAXIMO_DEL_NOMBRE"/> caracteres</source>
+        <source>El nombre no puede pasar de <x id="PH" equiv-text="MAX_NAME_LENGTH"/> caracteres</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/admin/automations/admin-automations.component.ts</context>
           <context context-type="linenumber">162</context>
@@ -1469,7 +1469,7 @@ Pendiente</source>
         </context-group>
       </trans-unit>
       <trans-unit id="3788663778868855463" datatype="html">
-        <source>El nombre del campo no puede pasar de <x id="PH" equiv-text="LARGO_MAXIMO_DEL_NOMBRE"/> caracteres</source>
+        <source>El nombre del campo no puede pasar de <x id="PH" equiv-text="MAX_NAME_LENGTH"/> caracteres</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/admin/custom-fields/admin-custom-fields.component.ts</context>
           <context context-type="linenumber">180</context>
@@ -1490,7 +1490,7 @@ Pendiente</source>
         </context-group>
       </trans-unit>
       <trans-unit id="6660759049865551823" datatype="html">
-        <source>Un campo de selección no puede tener más de <x id="PH" equiv-text="MAXIMO_DE_OPCIONES"/> opciones</source>
+        <source>Un campo de selección no puede tener más de <x id="PH" equiv-text="MAX_OPTIONS"/> opciones</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/admin/custom-fields/admin-custom-fields.component.ts</context>
           <context context-type="linenumber">191</context>

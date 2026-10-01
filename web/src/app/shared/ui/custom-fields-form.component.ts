@@ -3,7 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import { lucideLoader2, lucideCircleAlert } from '@ng-icons/lucide';
 import {
-  CustomFieldsService, SEPARADOR_MULTIPLE, type CustomFieldValue,
+  CustomFieldsService, MULTI_SEPARATOR, type CustomFieldValue,
 } from '../../core/custom-fields.service';
 import { mensajeDeError } from '../utils/mensaje-de-error';
 import { UsersService } from '../../core/users.service';
@@ -31,94 +31,94 @@ import { SkeletonComponent } from './skeleton.component';
 })
 export class CustomFieldsFormComponent implements OnInit {
   /** «Tarea» o «Proyecto». */
-  readonly entidad = input.required<string>();
+  readonly entity = input.required<string>();
   readonly entityId = input.required<string>();
 
-  private readonly servicio = inject(CustomFieldsService);
-  private readonly usuarios = inject(UsersService);
+  private readonly service = inject(CustomFieldsService);
+  private readonly users = inject(UsersService);
 
-  readonly campos = signal<CustomFieldValue[]>([]);
-  readonly cargando = signal(false);
-  readonly guardando = signal<string | null>(null);
-  readonly errores = signal<Record<string, string>>({});
+  readonly fields = signal<CustomFieldValue[]>([]);
+  readonly loading = signal(false);
+  readonly saving = signal<string | null>(null);
+  readonly errors = signal<Record<string, string>>({});
 
   /** Copia de lo último guardado, para poder revertir si el servidor rechaza. */
-  private ultimoValido: Record<string, string | null> = {};
+  private lastValid: Record<string, string | null> = {};
 
   ngOnInit(): void {
-    this.cargar();
-    if (!this.usuarios.users().length) this.usuarios.loadTenantUsers().subscribe();
+    this.load();
+    if (!this.users.users().length) this.users.loadTenantUsers().subscribe();
   }
 
-  get personas() { return this.usuarios.users(); }
+  get people() { return this.users.users(); }
 
-  cargar(): void {
-    this.cargando.set(true);
-    this.servicio.valoresDe(this.entidad(), this.entityId()).subscribe({
-      next: campos => {
-        this.campos.set(campos ?? []);
-        this.ultimoValido = Object.fromEntries((campos ?? []).map(c => [c.definitionId, c.value]));
-        this.cargando.set(false);
+  load(): void {
+    this.loading.set(true);
+    this.service.valuesOf(this.entity(), this.entityId()).subscribe({
+      next: fields => {
+        this.fields.set(fields ?? []);
+        this.lastValid = Object.fromEntries((fields ?? []).map(c => [c.definitionId, c.value]));
+        this.loading.set(false);
       },
-      error: () => this.cargando.set(false),
+      error: () => this.loading.set(false),
     });
   }
 
   /** Lo marcado en una selección múltiple. */
-  estaMarcada(campo: CustomFieldValue, opcion: string): boolean {
-    return (campo.value ?? '').split(SEPARADOR_MULTIPLE).includes(opcion);
+  isChecked(field: CustomFieldValue, option: string): boolean {
+    return (field.value ?? '').split(MULTI_SEPARATOR).includes(option);
   }
 
-  alternarOpcion(campo: CustomFieldValue, opcion: string): void {
-    const actuales = (campo.value ?? '').split(SEPARADOR_MULTIPLE).filter(Boolean);
-    const nuevas = actuales.includes(opcion)
-      ? actuales.filter(o => o !== opcion)
-      : [...actuales, opcion];
+  toggleOption(field: CustomFieldValue, option: string): void {
+    const current = (field.value ?? '').split(MULTI_SEPARATOR).filter(Boolean);
+    const updated = current.includes(option)
+      ? current.filter(o => o !== option)
+      : [...current, option];
 
-    this.guardar(campo, nuevas.join(SEPARADOR_MULTIPLE));
+    this.save(field, updated.join(MULTI_SEPARATOR));
   }
 
   /**
    * Guarda un valor y deja el error del servidor junto al campo si lo rechaza.
    */
-  guardar(campo: CustomFieldValue, value: string | null): void {
-    const anterior = this.ultimoValido[campo.definitionId] ?? null;
-    const limpio = value === '' ? null : value;
+  save(field: CustomFieldValue, value: string | null): void {
+    const previous = this.lastValid[field.definitionId] ?? null;
+    const clean = value === '' ? null : value;
 
-    this.aplicarEnPantalla(campo.definitionId, limpio);
-    this.guardando.set(campo.definitionId);
-    this.limpiarError(campo.definitionId);
+    this.applyOnScreen(field.definitionId, clean);
+    this.saving.set(field.definitionId);
+    this.clearError(field.definitionId);
 
-    this.servicio.guardarValor(campo.definitionId, this.entityId(), limpio).subscribe({
+    this.service.saveValue(field.definitionId, this.entityId(), clean).subscribe({
       next: () => {
-        this.ultimoValido[campo.definitionId] = limpio;
-        this.guardando.set(null);
+        this.lastValid[field.definitionId] = clean;
+        this.saving.set(null);
       },
-      error: respuesta => {
-        this.aplicarEnPantalla(campo.definitionId, anterior);
-        this.guardando.set(null);
-        this.errores.update(actuales => ({
-          ...actuales,
-          [campo.definitionId]: mensajeDeError(respuesta, $localize`No se pudo guardar el valor`),
+      error: response => {
+        this.applyOnScreen(field.definitionId, previous);
+        this.saving.set(null);
+        this.errors.update(current => ({
+          ...current,
+          [field.definitionId]: mensajeDeError(response, $localize`No se pudo guardar el valor`),
         }));
       },
     });
   }
 
-  private aplicarEnPantalla(definitionId: string, value: string | null): void {
-    this.campos.update(campos => campos.map(c => c.definitionId === definitionId ? { ...c, value } : c));
+  private applyOnScreen(definitionId: string, value: string | null): void {
+    this.fields.update(fields => fields.map(c => c.definitionId === definitionId ? { ...c, value } : c));
   }
 
-  private limpiarError(definitionId: string): void {
-    this.errores.update(actuales => {
-      const copia = { ...actuales };
-      delete copia[definitionId];
-      return copia;
+  private clearError(definitionId: string): void {
+    this.errors.update(current => {
+      const copy = { ...current };
+      delete copy[definitionId];
+      return copy;
     });
   }
 
-  nombreDeUsuario(id: string | null): string {
+  userName(id: string | null): string {
     if (!id) return '';
-    return this.usuarios.getUser(id)?.name ?? `${id.slice(0, 8)}…`;
+    return this.users.getUser(id)?.name ?? `${id.slice(0, 8)}…`;
   }
 }

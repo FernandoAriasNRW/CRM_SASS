@@ -7,16 +7,16 @@ import {
   lucideLoader2, lucideCircleAlert, lucideX,
 } from '@ng-icons/lucide';
 import {
-  CustomFieldsService, ENTIDADES, seCalcula, TIPOS_DE_CAMPO, type CustomFieldDefinition,
+  CustomFieldsService, TARGET_ENTITIES, isComputed, FIELD_TYPES, type CustomFieldDefinition,
 } from '../../../core/custom-fields.service';
 import { mensajeDeError } from '../../../shared/utils/mensaje-de-error';
 
 /** Lo que el dominio acepta. Repetirlo aquí evita un viaje al servidor para decir lo obvio. */
-const LARGO_MAXIMO_DEL_NOMBRE = 80;
-const MAXIMO_DE_OPCIONES = 50;
+const MAX_NAME_LENGTH = 80;
+const MAX_OPTIONS = 50;
 
 /** Los tipos que se definen con una lista de opciones. Lo decide `TipoDeCampo.UsaOpciones`. */
-const TIPOS_CON_OPCIONES = ['Select', 'MultiSelect'];
+const TYPES_WITH_OPTIONS = ['Select', 'MultiSelect'];
 
 /**
  * Administración de las definiciones de campos personalizados.
@@ -41,24 +41,24 @@ const TIPOS_CON_OPCIONES = ['Select', 'MultiSelect'];
   templateUrl: './admin-custom-fields.component.html',
 })
 export class AdminCustomFieldsComponent implements OnInit {
-  private readonly servicio = inject(CustomFieldsService);
+  private readonly service = inject(CustomFieldsService);
 
-  readonly entidades = ENTIDADES;
-  readonly tipos = TIPOS_DE_CAMPO;
-  readonly largoMaximoDelNombre = LARGO_MAXIMO_DEL_NOMBRE;
+  readonly targetEntities = TARGET_ENTITIES;
+  readonly fieldTypes = FIELD_TYPES;
+  readonly maxNameLength = MAX_NAME_LENGTH;
 
-  readonly entidad = signal<string>(ENTIDADES[0].key);
-  readonly definiciones = signal<CustomFieldDefinition[]>([]);
-  readonly cargando = signal(false);
-  readonly guardando = signal(false);
+  readonly entity = signal<string>(TARGET_ENTITIES[0].key);
+  readonly definitions = signal<CustomFieldDefinition[]>([]);
+  readonly loading = signal(false);
+  readonly saving = signal(false);
   readonly error = signal('');
 
   /** `null` si el formulario está cerrado, `''` si es un campo nuevo, o el id que se edita. */
-  readonly editando = signal<string | null>(null);
-  readonly borrando = signal<string | null>(null);
+  readonly editing = signal<string | null>(null);
+  readonly deleting = signal<string | null>(null);
 
   name = '';
-  type: string = TIPOS_DE_CAMPO[0].key;
+  type: string = FIELD_TYPES[0].key;
   isRequired = false;
   /** Una opción por línea: es lo más rápido de escribir y de reordenar. */
   options = '';
@@ -66,12 +66,12 @@ export class AdminCustomFieldsComponent implements OnInit {
   /** La expresión de un campo calculado. */
   formula = '';
 
-  readonly esNuevo = computed(() => this.editando() === '');
+  readonly isNew = computed(() => this.editing() === '');
 
   // `tipo`, `nombre` y `opciones` son campos normales atados con ngModel, no señales, así que lo
   // que dependa de ellos tiene que ser un getter: un computed() no volvería a calcularse nunca.
-  get usaOpciones(): boolean { return TIPOS_CON_OPCIONES.includes(this.type); }
-  get usaFormula(): boolean { return seCalcula(this.type); }
+  get usesOptions(): boolean { return TYPES_WITH_OPTIONS.includes(this.type); }
+  get usaFormula(): boolean { return isComputed(this.type); }
 
   /**
    * Los campos que una fórmula puede usar: los numéricos y otros calculados. Se ofrecen para
@@ -81,89 +81,89 @@ export class AdminCustomFieldsComponent implements OnInit {
    * Se excluye el que se está editando: ofrecerlo sería invitar a escribir un ciclo que el
    * servidor va a rechazar.
    */
-  get camposUsables(): CustomFieldDefinition[] {
-    const id = this.editando();
-    return this.ordenadas().filter(d => (d.type === 'Number' || seCalcula(d.type)) && d.id !== id);
+  get usableFields(): CustomFieldDefinition[] {
+    const id = this.editing();
+    return this.sorted().filter(d => (d.type === 'Number' || isComputed(d.type)) && d.id !== id);
   }
 
-  insertarReferencia(name: string): void {
+  insertReference(name: string): void {
     this.formula = `${this.formula}[${name}]`;
   }
 
-  readonly ordenadas = computed(() =>
-    [...this.definiciones()].sort((a, b) => a.position - b.position || a.name.localeCompare(b.name))
+  readonly sorted = computed(() =>
+    [...this.definitions()].sort((a, b) => a.position - b.position || a.name.localeCompare(b.name))
   );
 
   ngOnInit(): void {
-    this.cargar();
+    this.load();
   }
 
-  etiquetaDelTipo(type: string): string {
-    return TIPOS_DE_CAMPO.find(t => t.key === type)?.label ?? type;
+  typeLabel(type: string): string {
+    return FIELD_TYPES.find(t => t.key === type)?.label ?? type;
   }
 
-  cambiarEntidad(entidad: string): void {
-    if (entidad === this.entidad()) return;
-    this.entidad.set(entidad);
-    this.cerrarFormulario();
-    this.cargar();
+  changeEntity(entity: string): void {
+    if (entity === this.entity()) return;
+    this.entity.set(entity);
+    this.closeForm();
+    this.load();
   }
 
-  cargar(): void {
-    this.cargando.set(true);
+  load(): void {
+    this.loading.set(true);
     this.error.set('');
 
-    this.servicio.cargarDefiniciones(this.entidad()).subscribe({
-      next: definiciones => {
-        this.definiciones.set(definiciones ?? []);
-        this.cargando.set(false);
+    this.service.loadDefinitions(this.entity()).subscribe({
+      next: definitions => {
+        this.definitions.set(definitions ?? []);
+        this.loading.set(false);
       },
-      error: respuesta => {
-        this.error.set(mensajeDeError(respuesta, $localize`No se pudieron cargar los campos`));
-        this.cargando.set(false);
+      error: response => {
+        this.error.set(mensajeDeError(response, $localize`No se pudieron cargar los campos`));
+        this.loading.set(false);
       },
     });
   }
 
-  nuevo(): void {
-    this.editando.set('');
+  startNew(): void {
+    this.editing.set('');
     this.name = '';
-    this.type = TIPOS_DE_CAMPO[0].key;
+    this.type = FIELD_TYPES[0].key;
     this.isRequired = false;
     this.options = '';
     this.formula = '';
     // Detrás del último, que es donde se espera que aparezca un campo recién creado.
-    this.position = this.ordenadas().length
-      ? Math.max(...this.ordenadas().map(d => d.position)) + 1
+    this.position = this.sorted().length
+      ? Math.max(...this.sorted().map(d => d.position)) + 1
       : 0;
     this.error.set('');
   }
 
-  editar(definicion: CustomFieldDefinition): void {
-    this.editando.set(definicion.id);
-    this.name = definicion.name;
-    this.type = definicion.type;
-    this.isRequired = definicion.isRequired;
-    this.options = (definicion.options ?? []).join('\n');
-    this.position = definicion.position;
+  edit(definition: CustomFieldDefinition): void {
+    this.editing.set(definition.id);
+    this.name = definition.name;
+    this.type = definition.type;
+    this.isRequired = definition.isRequired;
+    this.options = (definition.options ?? []).join('\n');
+    this.position = definition.position;
     this.error.set('');
   }
 
-  cerrarFormulario(): void {
-    this.editando.set(null);
+  closeForm(): void {
+    this.editing.set(null);
     this.error.set('');
   }
 
   /** Lo que se manda al servidor: sin espacios, sin vacías y sin repetidas, igual que el dominio. */
-  private opcionesLimpias(): string[] {
-    if (!this.usaOpciones) return [];
+  private cleanOptions(): string[] {
+    if (!this.usesOptions) return [];
 
-    const lista = this.options
+    const list = this.options
       .split('\n')
       .map(o => o.trim())
       .filter(o => o.length > 0);
 
-    return [...new Set(lista)];
+    return [...new Set(list)];
   }
 
   /**
@@ -172,81 +172,81 @@ export class AdminCustomFieldsComponent implements OnInit {
    * Repite las reglas del dominio a propósito, para no gastar un viaje al servidor en decir que
    * falta el nombre. El servidor sigue siendo el que manda: si las dos discrepan, gana su error.
    */
-  get impedimento(): string {
+  get blocker(): string {
     const name = this.name.trim();
 
     if (!name) return $localize`El campo necesita un nombre`;
-    if (name.length > LARGO_MAXIMO_DEL_NOMBRE) {
-      return $localize`El nombre del campo no puede pasar de ${LARGO_MAXIMO_DEL_NOMBRE} caracteres`;
+    if (name.length > MAX_NAME_LENGTH) {
+      return $localize`El nombre del campo no puede pasar de ${MAX_NAME_LENGTH} caracteres`;
     }
 
     if (this.usaFormula && !this.formula.trim()) {
       return $localize`Un campo calculado necesita una fórmula`;
     }
 
-    if (this.usaOpciones) {
-      const options = this.opcionesLimpias();
+    if (this.usesOptions) {
+      const options = this.cleanOptions();
       if (!options.length) return $localize`Un campo de selección necesita al menos una opción`;
-      if (options.length > MAXIMO_DE_OPCIONES) {
-        return $localize`Un campo de selección no puede tener más de ${MAXIMO_DE_OPCIONES} opciones`;
+      if (options.length > MAX_OPTIONS) {
+        return $localize`Un campo de selección no puede tener más de ${MAX_OPTIONS} opciones`;
       }
     }
 
     return '';
   }
 
-  guardar(): void {
-    if (this.impedimento || this.guardando()) return;
+  save(): void {
+    if (this.blocker || this.saving()) return;
 
-    const id = this.editando();
+    const id = this.editing();
     if (id === null) return;
 
-    const comun = {
+    const common = {
       name: this.name.trim(),
       isRequired: this.isRequired,
-      options: this.opcionesLimpias(),
+      options: this.cleanOptions(),
       position: this.position,
       // Sólo si aplica: mandarla en un campo de texto la guardaría para nada y confundiría a
       // quien leyera la definición después.
       formula: this.usaFormula ? this.formula.trim() : null,
     };
 
-    this.guardando.set(true);
+    this.saving.set(true);
     this.error.set('');
 
     // El alta devuelve la definición creada y la edición no devuelve nada; aquí no se usa ninguna
     // de las dos, así que el tipo común basta y evita que la unión deje de ser invocable.
-    const peticion: Observable<unknown> = id === ''
-      ? this.servicio.definir({ ...comun, type: this.type, targetEntity: this.entidad() })
-      : this.servicio.actualizar(id, this.entidad(), comun);
+    const request: Observable<unknown> = id === ''
+      ? this.service.define({ ...common, type: this.type, targetEntity: this.entity() })
+      : this.service.update(id, this.entity(), common);
 
-    peticion.subscribe({
+    request.subscribe({
       next: () => {
-        this.guardando.set(false);
-        this.cerrarFormulario();
-        this.cargar();
+        this.saving.set(false);
+        this.closeForm();
+        this.load();
       },
-      error: respuesta => {
-        this.guardando.set(false);
-        this.error.set(mensajeDeError(respuesta, $localize`No se pudo guardar el campo`));
+      error: response => {
+        this.saving.set(false);
+        this.error.set(mensajeDeError(response, $localize`No se pudo guardar el campo`));
       },
     });
   }
 
-  borrar(definicion: CustomFieldDefinition): void {
-    this.guardando.set(true);
+  remove(definition: CustomFieldDefinition): void {
+    this.saving.set(true);
     this.error.set('');
 
-    this.servicio.borrar(definicion.id, this.entidad()).subscribe({
+    this.service.remove(definition.id, this.entity()).subscribe({
       next: () => {
-        this.guardando.set(false);
-        this.borrando.set(null);
-        this.cargar();
+        this.saving.set(false);
+        this.deleting.set(null);
+        this.load();
       },
-      error: respuesta => {
-        this.guardando.set(false);
-        this.borrando.set(null);
-        this.error.set(mensajeDeError(respuesta, $localize`No se pudo borrar el campo`));
+      error: response => {
+        this.saving.set(false);
+        this.deleting.set(null);
+        this.error.set(mensajeDeError(response, $localize`No se pudo borrar el campo`));
       },
     });
   }

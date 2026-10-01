@@ -11,13 +11,13 @@
     </div>
 
     <div class="flex items-center gap-2">
-      <button (click)="cargar()"
+      <button (click)="load()"
               class="px-3 py-1.5 border border-border rounded-lg text-xs font-medium text-muted-foreground hover:bg-muted transition-colors flex items-center gap-1.5">
         <ng-icon name="lucideRefreshCw" class="w-3.5 h-3.5"></ng-icon>
         <span i18n>Actualizar</span>
       </button>
 
-      <button (click)="nuevo()" [disabled]="esNuevo()"
+      <button (click)="startNew()" [disabled]="isNew()"
               class="px-3.5 py-1.5 bg-primary hover:bg-primary text-white rounded-lg text-xs font-semibold shadow-sm transition-colors flex items-center gap-1.5 disabled:opacity-50">
         <ng-icon name="lucidePlus" class="w-3.5 h-3.5"></ng-icon>
         <span i18n>Nuevo campo</span>
@@ -27,16 +27,16 @@
 
   <!-- Sobre qué entidad -->
   <div class="flex items-center gap-2">
-    @for (opcion of entidades; track opcion.key) {
-      <button (click)="cambiarEntidad(opcion.key)"
-              [attr.aria-pressed]="entidad() === opcion.key"
-              [class.bg-primary-subtle]="entidad() === opcion.key"
-              [class.text-primary-subtle-fg]="entidad() === opcion.key"
-              [class.border-primary]="entidad() === opcion.key"
-              [class.border-border]="entidad() !== opcion.key"
-              [class.text-muted-foreground]="entidad() !== opcion.key"
+    @for (option of targetEntities; track option.key) {
+      <button (click)="changeEntity(option.key)"
+              [attr.aria-pressed]="entity() === option.key"
+              [class.bg-primary-subtle]="entity() === option.key"
+              [class.text-primary-subtle-fg]="entity() === option.key"
+              [class.border-primary]="entity() === option.key"
+              [class.border-border]="entity() !== option.key"
+              [class.text-muted-foreground]="entity() !== option.key"
               class="px-3 py-1.5 border rounded-lg text-xs font-medium transition-colors">
-        {{ opcion.label }}
+        {{ option.label }}
       </button>
     }
   </div>
@@ -49,13 +49,13 @@
   }
 
   <!-- Formulario de alta o edición -->
-  @if (editando() !== null) {
+  @if (editing() !== null) {
     <div class="border border-border rounded-2xl p-5 bg-white dark:bg-muted shadow-sm space-y-4">
       <div class="flex items-center justify-between">
         <h3 class="text-sm font-bold text-foreground">
-          @if (esNuevo()) { <span i18n>Nuevo campo</span> } @else { <span i18n>Editar campo</span> }
+          @if (isNew()) { <span i18n>Nuevo campo</span> } @else { <span i18n>Editar campo</span> }
         </h3>
-        <button (click)="cerrarFormulario()" i18n-aria-label aria-label="Cerrar el formulario"
+        <button (click)="closeForm()" i18n-aria-label aria-label="Cerrar el formulario"
                 class="text-muted-foreground hover:text-foreground transition-colors">
           <ng-icon name="lucideX" class="w-4 h-4"></ng-icon>
         </button>
@@ -64,20 +64,20 @@
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <label class="space-y-1 block">
           <span class="text-xs font-medium text-muted-foreground" i18n>Nombre</span>
-          <input type="text" [(ngModel)]="name" [maxlength]="largoMaximoDelNombre"
+          <input type="text" [(ngModel)]="name" [maxlength]="maxNameLength"
                  i18n-placeholder placeholder="Cliente facturable"
                  class="w-full px-3 py-1.5 text-xs bg-white dark:bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-1 focus:ring-primary" />
         </label>
 
         <label class="space-y-1 block">
           <span class="text-xs font-medium text-muted-foreground" i18n>Tipo</span>
-          <select [(ngModel)]="type" [disabled]="!esNuevo()"
+          <select [(ngModel)]="type" [disabled]="!isNew()"
                   class="w-full px-3 py-1.5 text-xs bg-white dark:bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-60">
-            @for (opcion of tipos; track opcion.key) {
-              <option [value]="opcion.key">{{ opcion.label }}</option>
+            @for (option of fieldTypes; track option.key) {
+              <option [value]="option.key">{{ option.label }}</option>
             }
           </select>
-          @if (!esNuevo()) {
+          @if (!isNew()) {
             <!-- No es una limitación de la pantalla: cambiar el tipo dejaría sin validez todo lo
                  ya escrito en ese campo, así que el dominio no lo permite. -->
             <span class="text-[11px] text-muted-foreground" i18n>El tipo no se puede cambiar. Para cambiarlo hay que borrar el campo y crear otro, y los valores ya guardados se pierden.</span>
@@ -112,16 +112,16 @@
               Los argumentos se separan con punto y coma, porque la coma es el separador decimal.
             </span>
 
-            @if (camposUsables.length) {
+            @if (usableFields.length) {
               <!-- Insertar con un clic en vez de teclear el nombre entre corchetes, que es
                    donde se cometen las erratas. Sólo salen los campos que una fórmula puede
                    usar: numéricos y otros calculados. -->
               <span class="flex flex-wrap items-center gap-1 pt-1">
                 <span class="text-[11px] text-muted-foreground" i18n>Campos disponibles:</span>
-                @for (campo of camposUsables; track campo.id) {
-                  <button type="button" (click)="insertarReferencia(campo.name)"
+                @for (field of usableFields; track field.id) {
+                  <button type="button" (click)="insertReference(field.name)"
                           class="text-[11px] px-1.5 py-0.5 rounded border border-border text-muted-foreground hover:border-primary hover:text-primary transition-colors">
-                    {{ campo.name }}
+                    {{ field.name }}
                   </button>
                 }
               </span>
@@ -134,7 +134,7 @@
           </label>
         }
 
-        @if (usaOpciones) {
+        @if (usesOptions) {
           <label class="space-y-1 block md:col-span-2">
             <span class="text-xs font-medium text-muted-foreground" i18n>Opciones, una por línea</span>
             <textarea [(ngModel)]="options" rows="5"
@@ -146,16 +146,16 @@
       </div>
 
       <div class="flex items-center justify-end gap-2">
-        @if (impedimento; as motivo) {
-          <span class="text-xs text-muted-foreground mr-auto">{{ motivo }}</span>
+        @if (blocker; as reason) {
+          <span class="text-xs text-muted-foreground mr-auto">{{ reason }}</span>
         }
-        <button (click)="cerrarFormulario()"
+        <button (click)="closeForm()"
                 class="px-3 py-1.5 border border-border rounded-lg text-xs font-medium text-muted-foreground hover:bg-muted transition-colors" i18n>
           Cancelar
         </button>
-        <button (click)="guardar()" [disabled]="!!impedimento || guardando()"
+        <button (click)="save()" [disabled]="!!blocker || saving()"
                 class="px-3.5 py-1.5 bg-primary text-white rounded-lg text-xs font-semibold shadow-sm transition-colors flex items-center gap-1.5 disabled:opacity-50">
-          @if (guardando()) {
+          @if (saving()) {
             <ng-icon name="lucideLoader2" class="w-3.5 h-3.5 animate-spin"></ng-icon>
           }
           <span i18n>Guardar</span>
@@ -165,9 +165,9 @@
   }
 
   <!-- Los campos ya definidos -->
-  @if (cargando()) {
+  @if (loading()) {
     <p class="text-xs text-muted-foreground" i18n>Cargando…</p>
-  } @else if (ordenadas().length) {
+  } @else if (sorted().length) {
     <div class="border border-border rounded-2xl overflow-hidden">
       <table class="w-full text-xs">
         <thead class="bg-muted/50 text-muted-foreground">
@@ -181,37 +181,37 @@
           </tr>
         </thead>
         <tbody>
-          @for (definicion of ordenadas(); track definicion.id) {
+          @for (definition of sorted(); track definition.id) {
             <tr class="border-t border-border">
-              <td class="px-4 py-2 text-muted-foreground">{{ definicion.position }}</td>
-              <td class="px-4 py-2 font-medium text-foreground">{{ definicion.name }}</td>
-              <td class="px-4 py-2 text-muted-foreground">{{ etiquetaDelTipo(definicion.type) }}</td>
+              <td class="px-4 py-2 text-muted-foreground">{{ definition.position }}</td>
+              <td class="px-4 py-2 font-medium text-foreground">{{ definition.name }}</td>
+              <td class="px-4 py-2 text-muted-foreground">{{ typeLabel(definition.type) }}</td>
               <td class="px-4 py-2 text-muted-foreground">
-                @if (definicion.isRequired) { <span i18n>Sí</span> } @else { <span i18n>No</span> }
+                @if (definition.isRequired) { <span i18n>Sí</span> } @else { <span i18n>No</span> }
               </td>
-              <td class="px-4 py-2 text-muted-foreground max-w-xs truncate" [title]="definicion.options.join(', ')">
-                {{ definicion.options.join(', ') }}
+              <td class="px-4 py-2 text-muted-foreground max-w-xs truncate" [title]="definition.options.join(', ')">
+                {{ definition.options.join(', ') }}
               </td>
               <td class="px-4 py-2">
-                @if (borrando() === definicion.id) {
+                @if (deleting() === definition.id) {
                   <div class="flex items-center justify-end gap-2">
                     <span class="text-destructive" i18n>¿Borrar el campo y todos sus valores?</span>
-                    <button (click)="borrar(definicion)" [disabled]="guardando()"
+                    <button (click)="remove(definition)" [disabled]="saving()"
                             class="px-2 py-1 rounded-lg bg-destructive text-white font-semibold disabled:opacity-50" i18n>
                       Borrar
                     </button>
-                    <button (click)="borrando.set(null)"
+                    <button (click)="deleting.set(null)"
                             class="px-2 py-1 rounded-lg border border-border text-muted-foreground" i18n>
                       Cancelar
                     </button>
                   </div>
                 } @else {
                   <div class="flex items-center justify-end gap-2">
-                    <button (click)="editar(definicion)" i18n-aria-label aria-label="Editar el campo"
+                    <button (click)="edit(definition)" i18n-aria-label aria-label="Editar el campo"
                             class="text-muted-foreground hover:text-primary transition-colors">
                       <ng-icon name="lucideEdit3" class="w-3.5 h-3.5"></ng-icon>
                     </button>
-                    <button (click)="borrando.set(definicion.id)" i18n-aria-label aria-label="Borrar el campo"
+                    <button (click)="deleting.set(definition.id)" i18n-aria-label aria-label="Borrar el campo"
                             class="text-muted-foreground hover:text-destructive transition-colors">
                       <ng-icon name="lucideTrash2" class="w-3.5 h-3.5"></ng-icon>
                     </button>
