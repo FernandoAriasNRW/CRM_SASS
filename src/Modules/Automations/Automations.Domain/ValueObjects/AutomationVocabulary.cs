@@ -88,9 +88,14 @@ public static class EventFields
     public static readonly IReadOnlyDictionary<string, IReadOnlyList<string>> ByTrigger =
         new Dictionary<string, IReadOnlyList<string>>
         {
-            [TriggerTypes.TaskCreated] = [ProjectId, AssigneeId],
-            [TriggerTypes.TaskStatusChanged] = [Status, PreviousStatus, ProjectId],
-            [TriggerTypes.TaskPriorityChanged] = [Priority, PreviousPriority, ProjectId],
+            // Los tres disparadores por evento traen cómo queda la tarea (estado, prioridad,
+            // proyecto, responsable y título) y, si es un cambio, el valor anterior. Así una
+            // condición sobre la tarea vale igual en cualquiera de ellos.
+            [TriggerTypes.TaskCreated] = [Status, Priority, ProjectId, AssigneeId, Title],
+            [TriggerTypes.TaskStatusChanged] =
+                [Status, PreviousStatus, Priority, ProjectId, AssigneeId, Title],
+            [TriggerTypes.TaskPriorityChanged] =
+                [Priority, PreviousPriority, Status, ProjectId, AssigneeId, Title],
             [TriggerTypes.TaskDueSoon] = [DaysUntilDue, Status, Priority, ProjectId, AssigneeId, Title],
         };
 

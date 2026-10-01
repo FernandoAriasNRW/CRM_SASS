@@ -250,15 +250,15 @@ public sealed class AutomationRuleTests
     }
 
     /// <summary>
-    /// El caso medido: «se crea una tarea» no trae el título, así que «el título contiene 8b» se
-    /// anotaba como condiciones no cumplidas sin avisar a nadie. Ahora no se deja guardar.
+    /// «Se crea una tarea» no tiene estado anterior: una condición sobre él se anotaría como
+    /// condiciones no cumplidas sin avisar a nadie. No se deja guardar.
     /// </summary>
     [Fact]
     public void A_condition_on_a_field_the_trigger_does_not_carry_is_rejected()
     {
         var accion = () => NuevaRegla(
             disparador: TriggerTypes.TaskCreated,
-            condiciones: [new AutomationCondition(EventFields.Title, ConditionOperators.Contains, "8b")]);
+            condiciones: [new AutomationCondition(EventFields.PreviousStatus, ConditionOperators.EqualTo, "Done")]);
 
         accion.Should().Throw<InvalidOperationException>()
             .WithMessage(AutomationRule.Rules.FieldNotInTrigger);
@@ -268,10 +268,25 @@ public sealed class AutomationRuleTests
     public void The_same_condition_is_accepted_on_a_trigger_that_carries_the_field()
     {
         var regla = NuevaRegla(
-            disparador: TriggerTypes.TaskDueSoon,
-            condiciones: [new AutomationCondition(EventFields.Title, ConditionOperators.Contains, "8b")]);
+            disparador: TriggerTypes.TaskStatusChanged,
+            condiciones: [new AutomationCondition(EventFields.PreviousStatus, ConditionOperators.EqualTo, "Done")]);
 
-        regla.Conditions.Should().ContainSingle().Which.Field.Should().Be(EventFields.Title);
+        regla.Conditions.Should().ContainSingle().Which.Field.Should().Be(EventFields.PreviousStatus);
+    }
+
+    /// <summary>
+    /// Los datos de la tarea —título, estado, prioridad, proyecto y responsable— los traen todos
+    /// los disparadores, para que una condición sobre la tarea valga en cualquiera. Es lo que hace
+    /// posible el caso medido: «se crea una tarea» y «el título contiene 8b».
+    /// </summary>
+    [Fact]
+    public void Every_trigger_carries_the_task_data()
+    {
+        string[] taskData =
+            [EventFields.Title, EventFields.Status, EventFields.Priority, EventFields.ProjectId, EventFields.AssigneeId];
+
+        foreach (var trigger in TriggerTypes.All())
+            EventFields.ForTrigger(trigger).Should().Contain(taskData, trigger);
     }
 
     /// <summary>Cambiar el disparador al editar también se comprueba, no sólo al crear.</summary>
@@ -280,11 +295,11 @@ public sealed class AutomationRuleTests
     {
         var regla = NuevaRegla(
             disparador: TriggerTypes.TaskStatusChanged,
-            condiciones: [new AutomationCondition(EventFields.Status, ConditionOperators.EqualTo, "Done")]);
+            condiciones: [new AutomationCondition(EventFields.PreviousStatus, ConditionOperators.EqualTo, "Done")]);
 
         var accion = () => regla.Update(
             regla.Name, TriggerTypes.TaskCreated,
-            [new AutomationCondition(EventFields.Status, ConditionOperators.EqualTo, "Done")],
+            [new AutomationCondition(EventFields.PreviousStatus, ConditionOperators.EqualTo, "Done")],
             [new AutomationAction(ActionTypes.ChangePriority, "Low")]);
 
         accion.Should().Throw<InvalidOperationException>()

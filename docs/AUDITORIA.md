@@ -889,6 +889,13 @@ Las reglas guardadas antes siguen en la base tal cual —no se borran condicione
 las marca («tiene condiciones que no se cumplirán nunca») y al editarlas no se dejan guardar hasta
 arreglarlas.
 
+Después, los tres eventos de tareas (`TaskCreatedEvent`, `TaskStatusChangedEvent`,
+`TaskPriorityChangedEvent`) pasaron a llevar cómo queda la tarea —título, estado, prioridad y
+responsable—, y los tres disparadores por evento traen ya esos datos además del proyecto. La regla
+del caso medido funciona: una prueba de integración crea dos tareas y comprueba que sólo cambia la
+que lleva «8b» en el título. Lo único que sigue siendo propio de un disparador es el valor anterior
+(`PreviousStatus`, `PreviousPriority`) y los días para vencer.
+
 ---
 
 ## 14. Lo que queda anotado y sin resolver

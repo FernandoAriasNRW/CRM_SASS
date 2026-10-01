@@ -83,6 +83,20 @@ public sealed class PatchTaskCommandHandler(
     if (task is null)
       return Result<bool>.Failure("Tarea no encontrada");
 
+    // El título, la descripción, las horas y la fecha se aplicaban... a ninguna parte: el
+    // handler los ignoraba y devolvía éxito igual, así que la pantalla decía «guardado» y al
+    // recargar volvía el valor viejo. Un cambio que no se guarda tiene que fallar, no callarse.
+    //
+    // Va lo primero, con el responsable: los eventos de estado y de prioridad llevan cómo queda la
+    // tarea, y una automatización que mire el título tiene que ver el nuevo si se cambian a la vez.
+    try
+    {
+      task.UpdateDetails(
+          request.Title, request.Description, request.EstimatedHours, request.DueDate,
+          request.StartDate, request.QuitarFechaInicio);
+    }
+    catch (InvalidOperationException ex) { return Result<bool>.Failure(ex.Message); }
+
     if (request.AssigneeId.HasValue)
       task.Assign(request.AssigneeId.Value);
 
@@ -97,17 +111,6 @@ public sealed class PatchTaskCommandHandler(
       try { task.Reprioritize(request.Priority); }
       catch (InvalidOperationException ex) { return Result<bool>.Failure(ex.Message); }
     }
-
-    // El título, la descripción, las horas y la fecha se aplicaban... a ninguna parte: el
-    // handler los ignoraba y devolvía éxito igual, así que la pantalla decía «guardado» y al
-    // recargar volvía el valor viejo. Un cambio que no se guarda tiene que fallar, no callarse.
-    try
-    {
-      task.UpdateDetails(
-          request.Title, request.Description, request.EstimatedHours, request.DueDate,
-          request.StartDate, request.QuitarFechaInicio);
-    }
-    catch (InvalidOperationException ex) { return Result<bool>.Failure(ex.Message); }
 
     // Las etiquetas. Hasta ahora la ficha mandaba claves en un campo `tags` que este comando no
     // tenía, así que se descartaban sin error y ninguna tarea llegó a guardar una etiqueta.
