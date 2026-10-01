@@ -115,7 +115,7 @@ export class MentionsService {
    * abajo y con otro error encima.
    */
   private request<T>(route: string, empty: T): Promise<T> {
-    return firstValueFrom(this.api.get<T>(route, undefined, { sinAviso: true }))
+    return firstValueFrom(this.api.get<T>(route, undefined, { silent: true }))
       .catch((error) => {
         console.warn(`No se pudo buscar en ${route}`, error);
         return empty;

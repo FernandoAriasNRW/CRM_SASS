@@ -2,15 +2,15 @@ import { Injectable, computed, effect, inject, signal } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
 
 /** Las tres opciones. «Sistema» sigue lo que tenga configurado el ordenador. */
-export type Tema = 'claro' | 'oscuro' | 'sistema';
+export type Theme = 'claro' | 'oscuro' | 'sistema';
 
-export const TEMAS: { valor: Tema; nombre: string }[] = [
-  { valor: 'claro', nombre: $localize`Claro` },
-  { valor: 'oscuro', nombre: $localize`Oscuro` },
-  { valor: 'sistema', nombre: $localize`El del sistema` }
+export const THEMES: { value: Theme; name: string }[] = [
+  { value: 'claro', name: $localize`Claro` },
+  { value: 'oscuro', name: $localize`Oscuro` },
+  { value: 'sistema', name: $localize`El del sistema` }
 ];
 
-const CLAVE = 'crm.tema';
+const STORAGE_KEY = 'crm.tema';
 
 /**
  * El tema claro u oscuro.
@@ -28,54 +28,54 @@ const CLAVE = 'crm.tema';
  * monitor de la oficina, y una preferencia de servidor le impondría la misma en los dos.
  */
 @Injectable({ providedIn: 'root' })
-export class TemaService {
-  private readonly documento = inject(DOCUMENT);
+export class ThemeService {
+  private readonly doc = inject(DOCUMENT);
 
-  private readonly elegido = signal<Tema>(this.leerGuardado());
+  private readonly chosen = signal<Theme>(this.readSaved());
 
   /** Lo que la persona eligió: claro, oscuro o seguir al sistema. */
-  readonly tema = this.elegido.asReadonly();
+  readonly theme = this.chosen.asReadonly();
 
   /** Si el sistema pide oscuro. Se sigue en vivo, para que cambiar de tema en el sistema se note. */
-  private readonly sistemaEnOscuro = signal(this.consultaDelSistema()?.matches ?? false);
+  private readonly systemPrefersDark = signal(this.systemQuery()?.matches ?? false);
 
   /** Si ahora mismo se está pintando en oscuro. */
-  readonly enOscuro = computed(() =>
-    this.elegido() === 'oscuro' || (this.elegido() === 'sistema' && this.sistemaEnOscuro()));
+  readonly isDark = computed(() =>
+    this.chosen() === 'oscuro' || (this.chosen() === 'sistema' && this.systemPrefersDark()));
 
   constructor() {
     // El sistema puede cambiar mientras la aplicación está abierta —el modo nocturno automático
     // de Windows y macOS lo hace—, y con «sistema» elegido eso tiene que verse sin recargar.
-    this.consultaDelSistema()?.addEventListener('change', e => this.sistemaEnOscuro.set(e.matches));
+    this.systemQuery()?.addEventListener('change', e => this.systemPrefersDark.set(e.matches));
 
-    effect(() => this.aplicar(this.enOscuro()));
+    effect(() => this.apply(this.isDark()));
   }
 
-  elegir(tema: Tema): void {
-    this.elegido.set(tema);
+  choose(theme: Theme): void {
+    this.chosen.set(theme);
 
     try {
-      this.documento.defaultView?.localStorage.setItem(CLAVE, tema);
+      this.doc.defaultView?.localStorage.setItem(STORAGE_KEY, theme);
     } catch {
       // Navegación privada o almacenamiento bloqueado: el tema sigue funcionando en esta
       // sesión, sólo que no se recuerda. Peor sería no dejar cambiarlo.
     }
   }
 
-  private aplicar(oscuro: boolean): void {
-    this.documento.documentElement.classList.toggle('dark', oscuro);
+  private apply(dark: boolean): void {
+    this.doc.documentElement.classList.toggle('dark', dark);
   }
 
-  private leerGuardado(): Tema {
+  private readSaved(): Theme {
     try {
-      const guardado = this.documento.defaultView?.localStorage.getItem(CLAVE);
-      return guardado === 'claro' || guardado === 'oscuro' ? guardado : 'sistema';
+      const saved = this.doc.defaultView?.localStorage.getItem(STORAGE_KEY);
+      return saved === 'claro' || saved === 'oscuro' ? saved : 'sistema';
     } catch {
       return 'sistema';
     }
   }
 
-  private consultaDelSistema(): MediaQueryList | null {
-    return this.documento.defaultView?.matchMedia?.('(prefers-color-scheme: dark)') ?? null;
+  private systemQuery(): MediaQueryList | null {
+    return this.doc.defaultView?.matchMedia?.('(prefers-color-scheme: dark)') ?? null;
   }
 }

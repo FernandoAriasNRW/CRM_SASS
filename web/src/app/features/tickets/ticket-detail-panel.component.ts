@@ -9,7 +9,7 @@ import {
   lucideSend, lucideChevronDown, lucideMail, lucidePhone, lucideBuilding
 } from '@ng-icons/lucide';
 import type { TicketAttachment, Ticket } from './ticket-create-modal.component';
-import { mensajeDeError } from '../../shared/utils/mensaje-de-error';
+import { errorMessage } from '../../shared/utils/error-message';
 import { TagFieldComponent } from '../../shared/ui/tag-field.component';
 import {
   TICKET_STATUSES, TICKET_PRIORITIES, statusBadge,
@@ -85,7 +85,7 @@ export class TicketDetailPanelComponent implements OnInit {
 
   /** La dirección con la que se abre: el almacenamiento en disco devuelve rutas relativas a la API. */
   fileUrl(attachment: TicketAttachment): string {
-    return this.api.urlDeFichero(attachment.url);
+    return this.api.fileUrl(attachment.url);
   }
 
   isVideo(attachment: TicketAttachment): boolean {
@@ -108,7 +108,7 @@ export class TicketDetailPanelComponent implements OnInit {
         picker.value = '';
       },
       error: err => {
-        this.attachmentsError.set(mensajeDeError(err, $localize`No se pudieron subir los adjuntos`));
+        this.attachmentsError.set(errorMessage(err, $localize`No se pudieron subir los adjuntos`));
         this.uploading.set(false);
         picker.value = '';
       },

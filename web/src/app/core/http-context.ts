@@ -12,9 +12,9 @@ import { HttpContext, HttpContextToken } from '@angular/common/http';
  * es información de esa llamada concreta, no del servicio entero: la misma pantalla puede querer
  * explicar un error y dejar que el interceptor explique otro.
  */
-export const SIN_AVISO_AUTOMATICO = new HttpContextToken<boolean>(() => false);
+export const SKIP_GLOBAL_ERROR_TOAST = new HttpContextToken<boolean>(() => false);
 
 /** El contexto que se le pasa a una petición que se encarga de contar su propio error. */
-export function sinAvisoAutomatico(): HttpContext {
-  return new HttpContext().set(SIN_AVISO_AUTOMATICO, true);
+export function skipGlobalErrorToast(): HttpContext {
+  return new HttpContext().set(SKIP_GLOBAL_ERROR_TOAST, true);
 }

@@ -138,6 +138,9 @@ Un concepto, un nombre. Ordenado por área.
 | comentario, hilo | `Comment`, `Thread` |
 | entidad comentable | `CommentableEntity` |
 | idioma | `Language` |
+| tema (claro, oscuro, del sistema) | `Theme` |
+| sin aviso (la llamada explica su propio error) | `silent` |
+| mensaje de error | `errorMessage` |
 | sembrador | `Seeder` |
 | mensaje de error | `ErrorMessage` |
 | guardar, guardado, estado de guardado | `Save`, `Saved`, `SaveState` |
@@ -396,7 +399,9 @@ suites completas en verde, catálogo i18n re-extraído al final.
 | 8a ✅ | **CustomFields** (módulo, columnas, tipos de campo guardados y el contrato en el frontend) | 236 identificadores; migración con renombrado y datos |
 | 8b ✅ | **Automations + Webhook + Tags** (backend, con las reglas guardadas) | 380 identificadores; migración con renombrado y datos |
 | 8c ✅ | **Frontend de campos personalizados y automatizaciones** | 130 identificadores |
-| 9 | **Frontend transversal** (`shared/`, `core/`, e2e) | Lo que no arrastraron los PRs anteriores |
+| 9a ✅ | **Frontend transversal: `core/` y utilidades de `shared/`** (errores, avisos, idioma, tema) | Lo que usa toda la aplicación |
+| 9b | **Componentes de `shared/ui`** (panel de navegación, menú contextual…) | El grueso del frontend compartido |
+| 9c | **Lo que quede en pantallas y e2e** | Restos que no arrastraron los PRs anteriores |
 | 10 | **Nombres de las pruebas** | Son frases, no identificadores de producción; traducirlas dentro de cada bloque ensucia el diff de revisión |
 | 11 | **`TimeProvider` en todos los módulos** | Cambiar el reloj módulo a módulo deja dos formas de dar la hora conviviendo; va de una vez, al final |
 
@@ -850,6 +855,18 @@ cambiarlo exige migrar ese contenido. Por eso fue un bloque aparte, el 5c.
 - Lo que cazaron las pruebas: los métodos de `createSpyObj` y la entrada de `setInput` van en
   cadenas y la herramienta no los ve. Queda en la skill.
 - Siguen para el bloque 9 las utilidades compartidas: `mensajeDeError` y la opción `sinAviso`.
+
+### Hecho en el bloque 9a (`core/` y utilidades de `shared/`)
+
+- Los nombres que usa toda la aplicación, con un mapa global: `mensajeDeError` → `errorMessage`,
+  la opción `sinAviso` → `silent` (y `SIN_AVISO_AUTOMATICO` → `SKIP_GLOBAL_ERROR_TOAST`),
+  `descargarFichero` → `downloadFile`, `IdiomaService` → `LanguageService`, `TemaService` →
+  `ThemeService`, `idiomaActual` → `currentLanguage`. Lo interno de esos ficheros, con un mapa
+  aparte. Ficheros: `language.service.ts`, `language.ts`, `theme.service.ts`, `error-message.ts`.
+- **No cambian los valores guardados en el navegador**: el tema sigue guardándose como `'claro'`,
+  `'oscuro'` o `'sistema'` bajo `crm.tema`, y la cookie del idioma igual. Cambiarlos haría que
+  cada persona perdiera su preferencia la próxima vez que entrara.
+- Mismos textos y mismos mensajes i18n que en `main`.
 
 ---
 

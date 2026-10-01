@@ -5,7 +5,7 @@ import { firstValueFrom } from 'rxjs';
 import { ApiService } from '../../core/api.service';
 import { ButtonComponent } from '../../shared/ui/button.component';
 import { ToastService } from '../../shared/services/toast.service';
-import { mensajeDeError } from '../../shared/utils/mensaje-de-error';
+import { errorMessage } from '../../shared/utils/error-message';
 
 /** El catálogo tal como lo sirve el servidor. La pantalla no escribe ninguna de estas listas. */
 export interface ReportCatalog {
@@ -301,13 +301,13 @@ export class ReportBuilderComponent {
       // origen. `sinAviso` porque un informe sin definición todavía es lo normal, no un error
       // que haya que anunciar.
       const stored = await firstValueFrom(
-        this.api.get<ReportDefinition>(`/reports/${this.reportId()}/definition`, undefined, { sinAviso: true })
+        this.api.get<ReportDefinition>(`/reports/${this.reportId()}/definition`, undefined, { silent: true })
       ).catch(() => null);
 
       if (stored) this.apply(stored);
       else this.changeDataSource(catalog.dataSources[0]?.key ?? '');
     } catch (e) {
-      this.error.set(mensajeDeError(e, $localize`No se pudo cargar el catálogo.`));
+      this.error.set(errorMessage(e, $localize`No se pudo cargar el catálogo.`));
     } finally {
       this.loading.set(false);
     }
@@ -430,14 +430,14 @@ export class ReportBuilderComponent {
       const preview = await firstValueFrom(this.api.post<ReportPreview>(
         '/reports/preview',
         { definition: this.definition(), title: this.reportTitle() },
-        { sinAviso: true }));
+        { silent: true }));
 
       this.preview.set(preview);
     } catch (e) {
       // El servidor dice qué pieza no encaja. Se enseña dentro del constructor, junto a los
       // desplegables, en vez de como aviso flotante: aquí es donde hay que corregirlo.
       this.preview.set(null);
-      this.error.set(mensajeDeError(e, $localize`No se pudo calcular el resultado.`));
+      this.error.set(errorMessage(e, $localize`No se pudo calcular el resultado.`));
     } finally {
       this.busy.set(false);
     }
@@ -449,13 +449,13 @@ export class ReportBuilderComponent {
 
     try {
       await firstValueFrom(this.api.put(
-        `/reports/${this.reportId()}/definition`, this.definition(), { sinAviso: true }));
+        `/reports/${this.reportId()}/definition`, this.definition(), { silent: true }));
 
       this.toast.success($localize`Informe guardado.`);
       this.saved.emit();
       this.closed.emit();
     } catch (e) {
-      this.error.set(mensajeDeError(e, $localize`No se pudo guardar el informe.`));
+      this.error.set(errorMessage(e, $localize`No se pudo guardar el informe.`));
     } finally {
       this.busy.set(false);
     }

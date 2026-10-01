@@ -1,5 +1,5 @@
 import { Injectable, signal, computed } from '@angular/core';
-import { mensajeDeError } from '../utils/mensaje-de-error';
+import { errorMessage } from '../utils/error-message';
 
 /**
  * Tipos de toast disponibles
@@ -155,7 +155,7 @@ export class ToastService {
       // que es lo único aprovechable de todo el error. Antes se caía a `error.message`, que es
       // la cadena de Angular «Http failure response for http://localhost:8080/…: 400 Bad
       // Request»: enseñaba la dirección interna de la API y no decía nada útil.
-      message = mensajeDeError(error, 'Ocurrió un error inesperado.');
+      message = errorMessage(error, 'Ocurrió un error inesperado.');
     }
 
     this.error(title, message);

@@ -11,7 +11,7 @@ import { DrawerComponent } from '../../shared/ui/drawer.component';
 import { TagFieldComponent } from '../../shared/ui/tag-field.component';
 import { CommentsComponent } from '../../shared/ui/comments.component';
 import { PROJECT_STATUSES } from './project-vocabulary';
-import { mensajeDeError } from '../../shared/utils/mensaje-de-error';
+import { errorMessage } from '../../shared/utils/error-message';
 
 @Component({
   selector: 'app-project-detail-modal',
@@ -101,12 +101,12 @@ export class ProjectDetailModalComponent implements OnInit {
     const previous = this.tagIds();
     this.tagIds.set(ids);
     this.tagsError.set('');
-    this.api.patch<void>(`/projects/${this.project().id}`, { tagIds: ids }, { sinAviso: true }).subscribe({
+    this.api.patch<void>(`/projects/${this.project().id}`, { tagIds: ids }, { silent: true }).subscribe({
       next: () => this.store.dispatch(projectUpdated({ item: { ...this.project(), tagIds: ids } })),
       error: response => {
         // Lo que se ve tiene que ser lo que el servidor aceptó: si rechaza, se vuelve a lo de antes.
         this.tagIds.set(previous);
-        this.tagsError.set(mensajeDeError(response, $localize`No se pudieron guardar las etiquetas`));
+        this.tagsError.set(errorMessage(response, $localize`No se pudieron guardar las etiquetas`));
       },
     });
   }

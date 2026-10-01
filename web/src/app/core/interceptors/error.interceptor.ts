@@ -5,7 +5,7 @@ import { AuthSignalStore } from '../auth-signal.store';
 import { ApiService } from '../api.service';
 import { Router } from '@angular/router';
 import { ToastService } from '../../shared/services/toast.service';
-import { SIN_AVISO_AUTOMATICO } from '../http-context';
+import { SKIP_GLOBAL_ERROR_TOAST } from '../http-context';
 
 let isRefreshing = false;
 
@@ -64,9 +64,9 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
       // Salvo que quien hizo la petición se haya reservado explicar el fallo. Antes se avisaba
       // siempre, así que una pantalla que pone el mensaje junto al campo que lo provocó
       // levantaba además este aviso con el mismo texto: dos avisos para un solo fallo.
-      const loExplicaQuienLlama = req.context.get(SIN_AVISO_AUTOMATICO);
+      const callerExplains = req.context.get(SKIP_GLOBAL_ERROR_TOAST);
 
-      if (!loExplicaQuienLlama && (error.status !== 0 || error.error?.message)) {
+      if (!callerExplains && (error.status !== 0 || error.error?.message)) {
         toast.handleHttpError(error);
       }
 

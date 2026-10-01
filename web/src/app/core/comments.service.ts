@@ -6,7 +6,7 @@ import { ApiService } from './api.service';
  * Estas llamadas explican su propio error junto al cuadro de escritura, así que el interceptor
  * no debe levantar además el suyo.
  */
-const SIN_AVISO = { sinAviso: true };
+const SILENT = { silent: true };
 
 /**
  * Sobre qué se puede comentar. Lo fija el backend.
@@ -48,14 +48,14 @@ export class CommentsService {
     entityType: CommentableEntity, entityId: string, text: string, replyToId?: string,
   ): Observable<Comment> {
     return this.api.post<Comment>(
-      `/comments/${entityType}/${entityId}`, { text: text, replyToId: replyToId ?? null }, SIN_AVISO);
+      `/comments/${entityType}/${entityId}`, { text: text, replyToId: replyToId ?? null }, SILENT);
   }
 
   edit(id: string, text: string): Observable<void> {
-    return this.api.put<void>(`/comments/${id}`, { text: text }, SIN_AVISO);
+    return this.api.put<void>(`/comments/${id}`, { text: text }, SILENT);
   }
 
   delete(id: string): Observable<void> {
-    return this.api.delete<void>(`/comments/${id}`, SIN_AVISO);
+    return this.api.delete<void>(`/comments/${id}`, SILENT);
   }
 }

@@ -5,7 +5,7 @@ import { lucideLoader2, lucideCircleAlert } from '@ng-icons/lucide';
 import {
   CustomFieldsService, MULTI_SEPARATOR, type CustomFieldValue,
 } from '../../core/custom-fields.service';
-import { mensajeDeError } from '../utils/mensaje-de-error';
+import { errorMessage } from '../utils/error-message';
 import { UsersService } from '../../core/users.service';
 import { SkeletonComponent } from './skeleton.component';
 
@@ -99,7 +99,7 @@ export class CustomFieldsFormComponent implements OnInit {
         this.saving.set(null);
         this.errors.update(current => ({
           ...current,
-          [field.definitionId]: mensajeDeError(response, $localize`No se pudo guardar el valor`),
+          [field.definitionId]: errorMessage(response, $localize`No se pudo guardar el valor`),
         }));
       },
     });

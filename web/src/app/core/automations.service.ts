@@ -7,7 +7,7 @@ import { ApiService } from './api.service';
  * abierto—, así que el interceptor no debe levantar además su aviso: sería el mismo texto dos
  * veces para un solo fallo.
  */
-const SILENT = { sinAviso: true };
+const SILENT = { silent: true };
 
 /**
  * Las reglas de automatización.
