@@ -1,5 +1,4 @@
 import { Component, OnInit, TemplateRef, ViewChild, computed, inject, signal } from '@angular/core';
-import { FormsModule } from '@angular/forms';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import { lucidePlus, lucideRefreshCw, lucideFolderPlus } from '@ng-icons/lucide';
 
@@ -8,9 +7,8 @@ import { UserAvatarComponent } from '../../shared/ui/user-avatar.component';
 import { DataTableComponent, type ColumnDef, type TableState } from '../../shared/ui/data-table/data-table.component';
 import { TableColumnService } from '../../shared/services/table-column.service';
 import { TagsService } from '../../shared/services/tags.service';
-import { ToastService } from '../../shared/services/toast.service';
-import { mensajeDeError } from '../../shared/utils/mensaje-de-error';
 import { TagDrawerComponent } from './tag-drawer.component';
+import { TagCategoriesDrawerComponent } from './tag-categories-drawer.component';
 import { type TagRow, toRows, visibleRows } from './tag-list';
 
 /**
@@ -18,19 +16,18 @@ import { type TagRow, toRows, visibleRows } from './tag-list';
  * un cajón con el detalle, donde se edita o se borra.
  *
  * Todos pueden verlas y crear las suyas; editar y borrar lo decide el servidor por etiqueta
- * (`canManage`). Las categorías propias se crean aquí mismo, porque una etiqueta necesita una.
+ * (`canManage`). Las categorías se gestionan en su propio cajón, desde la cabecera.
  */
 @Component({
   selector: 'app-tags',
   standalone: true,
-  imports: [FormsModule, NgIconComponent, ButtonComponent, UserAvatarComponent, DataTableComponent, TagDrawerComponent],
+  imports: [NgIconComponent, ButtonComponent, UserAvatarComponent, DataTableComponent, TagDrawerComponent, TagCategoriesDrawerComponent],
   viewProviders: [provideIcons({ lucidePlus, lucideRefreshCw, lucideFolderPlus })],
   templateUrl: './tags.component.html',
 })
 export class TagsComponent implements OnInit {
   private readonly tagsService = inject(TagsService);
   private readonly columnService = inject(TableColumnService);
-  private readonly toast = inject(ToastService);
 
   @ViewChild('nameTemplate', { static: true }) nameTemplate!: TemplateRef<unknown>;
   @ViewChild('createdByTemplate', { static: true }) createdByTemplate!: TemplateRef<unknown>;
@@ -53,10 +50,7 @@ export class TagsComponent implements OnInit {
   /** La fila abierta en el cajón; `undefined` si está cerrado, `null` si es el alta. */
   readonly selected = signal<TagRow | null | undefined>(undefined);
 
-  readonly categoryFormOpen = signal(false);
-  readonly savingCategory = signal(false);
-  readonly categoryError = signal('');
-  newCategory = '';
+  readonly categoriesOpen = signal(false);
 
   ngOnInit(): void {
     this.columns.find(c => c.key === 'name')!.template = this.nameTemplate;
@@ -84,30 +78,5 @@ export class TagsComponent implements OnInit {
 
   closeDrawer(): void {
     this.selected.set(undefined);
-  }
-
-  toggleCategoryForm(): void {
-    this.categoryFormOpen.update(open => !open);
-    this.categoryError.set('');
-  }
-
-  saveCategory(): void {
-    const name = this.newCategory.trim();
-    if (!name || this.savingCategory()) return;
-
-    this.savingCategory.set(true);
-    this.categoryError.set('');
-    this.tagsService.createCategory(name).subscribe({
-      next: () => {
-        this.savingCategory.set(false);
-        this.newCategory = '';
-        this.categoryFormOpen.set(false);
-        this.toast.success($localize`Categoría creada`, name);
-      },
-      error: response => {
-        this.savingCategory.set(false);
-        this.categoryError.set(mensajeDeError(response, $localize`No se pudo crear la categoría`));
-      },
-    });
   }
 }

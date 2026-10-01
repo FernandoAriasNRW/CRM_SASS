@@ -32,6 +32,15 @@ public static class TagAccess
         IEntityPermissionService permissions, Guid tenantId, Guid userId, CancellationToken cancellationToken)
         => permissions.HasPermissionAsync(tenantId, userId, EntityType, Guid.Empty, ManagePermission, cancellationToken);
 
+    /// <summary>Como <see cref="CanManageAllAsync"/>, lanzando un 403 si no puede.</summary>
+    public static async Task EnsureCanManageAllAsync(
+        IEntityPermissionService permissions, Guid tenantId, Guid userId, CancellationToken cancellationToken)
+    {
+        if (!await CanManageAllAsync(permissions, tenantId, userId, cancellationToken))
+            throw new UnauthorizedAccessException(
+                "Sólo un administrador o alguien con permiso para gestionar etiquetas puede cambiar las categorías.");
+    }
+
     /// <summary>Lanza <see cref="UnauthorizedAccessException"/> (un 403) si no puede.</summary>
     public static async Task EnsureCanManageAsync(
         IEntityPermissionService permissions, Tag tag, Guid tenantId, Guid userId, CancellationToken cancellationToken)

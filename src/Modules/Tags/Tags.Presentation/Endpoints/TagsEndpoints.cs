@@ -66,7 +66,7 @@ public static class TagsEndpoints
 
         group.MapGet("/categories", async ([FromQuery] string? language, IUserContext user, ISender sender) =>
         {
-            var result = await sender.Send(new GetTagCategoriesQuery(user.TenantId, language));
+            var result = await sender.Send(new GetTagCategoriesQuery(user.TenantId, user.UserId, language));
             return Results.Ok(result.Value);
         })
         .WithName("GetTagCategories")
@@ -81,6 +81,24 @@ public static class TagsEndpoints
                 : Results.Conflict(result.Error);
         })
         .WithName("CreateTagCategory")
+        .WithOpenApi();
+
+        // Renombrar mueve sus etiquetas; borrar sólo si está vacía (409 si no). Las dos piden poder
+        // gestionar todas las etiquetas: 403 si no.
+        group.MapPut("/categories/{id:guid}", async (Guid id, RenameTagCategoryRequest request, IUserContext user, ISender sender) =>
+        {
+            var result = await sender.Send(new RenameTagCategoryCommand(user.TenantId, user.UserId, id, request.Name ?? string.Empty));
+            return result.IsSuccess ? Results.Ok(result.Value) : Results.Conflict(result.Error);
+        })
+        .WithName("RenameTagCategory")
+        .WithOpenApi();
+
+        group.MapDelete("/categories/{id:guid}", async (Guid id, IUserContext user, ISender sender) =>
+        {
+            await sender.Send(new DeleteTagCategoryCommand(user.TenantId, user.UserId, id));
+            return Results.NoContent();
+        })
+        .WithName("DeleteTagCategory")
         .WithOpenApi();
     }
 }

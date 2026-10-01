@@ -31,6 +31,10 @@ export interface TagCategoryItem {
   isCustom: boolean;
   /** Las de equipos y proyectos: las rellena el sistema y no admiten etiquetas a mano. */
   isAutomatic: boolean;
+  /** Cuántas etiquetas tiene. Una con etiquetas no se puede borrar. */
+  tagCount?: number;
+  /** Si quien mira puede renombrarla o borrarla (sólo las propias, y sólo quien gestiona todas). */
+  canManage?: boolean;
 }
 
 /** Lo que se manda al crear o editar una etiqueta. */
@@ -137,6 +141,17 @@ export class TagsService {
 
   createCategory(name: string): Observable<TagCategoryItem> {
     return this.api.post<TagCategoryItem>('/tags/categories', { name }, { sinAviso: true })
+      .pipe(tap(() => this.loadCategories()));
+  }
+
+  /** Renombrar mueve sus etiquetas, así que también se vuelve a pedir la lista de etiquetas. */
+  renameCategory(id: string, name: string): Observable<TagCategoryItem> {
+    return this.api.put<TagCategoryItem>(`/tags/categories/${id}`, { name }, { sinAviso: true })
+      .pipe(tap(() => { this.loadCategories(); this.load(true); }));
+  }
+
+  deleteCategory(id: string): Observable<void> {
+    return this.api.delete<void>(`/tags/categories/${id}`, { sinAviso: true })
       .pipe(tap(() => this.loadCategories()));
   }
 

@@ -5,5 +5,8 @@ namespace Tags.Application.DTOs;
 /// crearla; <c>Label</c>, cómo se muestra. En las predefinidas difieren («WorkType» / «Tipo de
 /// trabajo»); en las personalizadas son el mismo. Sólo las personalizadas tienen <c>Id</c>.
 /// <c>IsAutomatic</c> marca las que rellena el sistema y no admiten etiquetas a mano.
+/// <c>TagCount</c> dice cuántas etiquetas tiene (una con etiquetas no se puede borrar) y
+/// <c>CanManage</c>, si quien pregunta puede renombrarla o borrarla.
 /// </summary>
-public sealed record TagCategoryDto(Guid? Id, string Name, string Label, bool IsCustom, bool IsAutomatic);
+public sealed record TagCategoryDto(
+    Guid? Id, string Name, string Label, bool IsCustom, bool IsAutomatic, int TagCount = 0, bool CanManage = false);

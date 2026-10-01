@@ -126,6 +126,9 @@ Un concepto, un nombre. Ordenado por área.
 | campo de etiquetas (componente) | `TagField` (`app-tag-field`) |
 | tipo de etiqueta: predefinida / automática / propia | `TagKind`: `builtIn` / `automatic` / `custom` |
 | cajón de una etiqueta | `TagDrawer` (`app-tag-drawer`) |
+| cajón de categorías | `TagCategoriesDrawer` (`app-tag-categories-drawer`) |
+| chips de etiquetas (sólo verlas) | `TagChips` (`app-tag-chips`) |
+| cajón para asignar etiquetas | `TagAssignDrawer` (`app-tag-assign-drawer`) |
 | hito, negocio, seguridad (categorías) | `Milestone`, `Business`, `Security` |
 | tipo de trabajo, fase de desarrollo (categorías) | `WorkType`, `DevelopmentPhase` |
 | almacenamiento, almacén en disco | `Storage`, `DiskStorage` |

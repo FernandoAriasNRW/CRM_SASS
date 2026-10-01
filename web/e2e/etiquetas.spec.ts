@@ -42,6 +42,8 @@ const CATEGORIAS = [
   { id: null, name: 'Project', label: 'Proyecto', isCustom: false, isAutomatic: true },
   { id: null, name: 'Business', label: 'Negocio', isCustom: false, isAutomatic: false },
   { id: null, name: 'WorkType', label: 'Tipo de trabajo', isCustom: false, isAutomatic: false },
+  { id: 'cat-vacia', name: 'Clientes', label: 'Clientes', isCustom: true, isAutomatic: false, tagCount: 0, canManage: true },
+  { id: 'cat-llena', name: 'Socios', label: 'Socios', isCustom: true, isAutomatic: false, tagCount: 2, canManage: true },
 ];
 
 const json = (cuerpo: unknown, status = 200) => ({
@@ -66,7 +68,12 @@ async function entrar(page: Page, respuestas: Respuestas = {}) {
     if (/\/users\/tenant/.test(url)) return r.fulfill(json([USUARIO]));
     if (/\/notifications/.test(url)) return r.fulfill(json([]));
 
-    if (/\/tags\/categories/.test(url)) return r.fulfill(json(CATEGORIAS));
+    if (/\/tags\/categories/.test(url)) {
+      if (metodo !== 'GET') escrituras.push(r.request());
+      if (metodo === 'PUT') return r.fulfill(json({ ...CATEGORIAS[3], name: 'Clientes VIP', label: 'Clientes VIP' }));
+      if (metodo === 'DELETE') return r.fulfill({ status: 204, body: '' });
+      return r.fulfill(json(CATEGORIAS));
+    }
 
     if (/\/tags/.test(url)) {
       if (metodo !== 'GET') escrituras.push(r.request());
@@ -175,4 +182,31 @@ test('si el servidor rechaza el alta, el cajón sigue abierto con lo escrito y e
 
   await expect(cajon.getByTestId('tag-error')).toContainText('Ya existe una etiqueta llamada «Socio»');
   await expect(cajon.getByLabel('Nombre')).toHaveValue('Socio');
+});
+
+test('las categorías se renombran, y sólo se borra una vacía', async ({ page }) => {
+  await entrar(page);
+  await irALasEtiquetas(page);
+
+  await page.getByTestId('open-categories').click();
+  const cajon = page.getByRole('dialog');
+  const vacia = cajon.locator('[data-category="Clientes"]');
+  const llena = cajon.locator('[data-category="Socios"]');
+
+  // Con etiquetas dentro no se ofrece borrar: el servidor lo rechazaría.
+  await expect(llena.getByRole('button', { name: 'Borrar' })).toBeDisabled();
+  await expect(llena).toContainText('2 etiquetas');
+
+  await vacia.getByRole('button', { name: 'Renombrar' }).click();
+  await vacia.getByLabel('Nombre nuevo').fill('Clientes VIP');
+  await vacia.getByRole('button', { name: 'Guardar' }).click();
+  await expect.poll(() => escrituras.map(e => e.method())).toContain('PUT');
+  const put = escrituras.find(e => e.method() === 'PUT')!;
+  expect(new URL(put.url()).pathname).toBe('/api/v1/tags/categories/cat-vacia');
+  expect(put.postDataJSON()).toEqual({ name: 'Clientes VIP' });
+
+  await vacia.getByRole('button', { name: 'Borrar' }).click();
+  await vacia.getByRole('button', { name: 'Sí' }).click();
+  await expect.poll(() => escrituras.map(e => `${e.method()} ${new URL(e.url()).pathname}`))
+    .toContain('DELETE /api/v1/tags/categories/cat-vacia');
 });

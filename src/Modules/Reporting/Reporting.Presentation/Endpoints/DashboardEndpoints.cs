@@ -131,6 +131,19 @@ public static class DashboardEndpoints
             return result ? Results.Ok() : Results.Forbid();
         });
 
+        // Sólo las etiquetas, sin reenviar el panel entero. 404 si no existe, 403 si no es quien lo
+        // creó ni administrador, 400 si alguna etiqueta no es de la organización.
+        group.MapPut("/{id:guid}/tags", async (IUserContext currentUser, Guid id, SetTagsRequest request, IMediator mediator) =>
+        {
+            var result = await mediator.Send(new Reporting.Application.Tags.SetDashboardTagsCommand(
+                currentUser.TenantId, currentUser.UserId, currentUser.Role == "Admin", id, request.TagIds ?? []));
+
+            if (result.IsSuccess) return Results.NoContent();
+            return result.Error == Reporting.Application.Tags.SetDashboardTagsHandler.DashboardNotFound
+                ? Results.NotFound(result.Error)
+                : Results.BadRequest(result.Error);
+        });
+
         group.MapDelete("/{id:guid}", async (IUserContext currentUser, Guid id, IMediator mediator) =>
         {
             var tenantId = currentUser.TenantId;

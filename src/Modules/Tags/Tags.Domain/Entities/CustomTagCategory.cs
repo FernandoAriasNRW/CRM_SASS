@@ -29,4 +29,16 @@ public sealed class CustomTagCategory : AggregateRoot, ITenantEntity
             Name = name.Trim()
         };
     }
+
+    /// <summary>
+    /// Cambia el nombre. Las etiquetas la referencian por nombre, así que quien renombra tiene que
+    /// moverlas también (lo hace el repositorio en la misma transacción).
+    /// </summary>
+    public void Rename(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            throw new ArgumentException("Category name is required");
+
+        Name = name.Trim();
+    }
 }

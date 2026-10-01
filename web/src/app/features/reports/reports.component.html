@@ -74,6 +74,11 @@
       </button>
     }
 
+    <button uiButton variant="ghost" size="sm" (click)="reportTagging.set(item)" data-testid="report-tags">
+      <ng-icon name="lucideTag" size="14" class="mr-1" />
+      <span i18n>Etiquetas</span>
+    </button>
+
     <!-- El constructor se abre por informe: es donde se decide qué enseña. -->
     <button uiButton variant="ghost" size="sm" (click)="openBuilder(item)"
             i18n-title title="Configurar qué enseña este informe">
@@ -86,6 +91,19 @@
     }
   </div>
 </ng-template>
+
+<ng-template #tagsTemplate let-item>
+  <app-tag-chips [tagIds]="item.tagIds" />
+</ng-template>
+
+@if (reportTagging(); as report) {
+  <app-tag-assign-drawer
+    [title]="report.name"
+    [tagIds]="report.tagIds"
+    [save]="saveReportTags"
+    (closed)="reportTagging.set(null)"
+    (saved)="load()" />
+}
 
 @if (showCreateModal()) {
   <app-report-create-modal (closed)="closeCreateModal()" (created)="onReportCreated()" />

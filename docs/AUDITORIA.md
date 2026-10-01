@@ -894,10 +894,10 @@ datos. Se detalla en la sección 15.
   `ITagCatalog`, y borrar una etiqueta la suelta de todos (`ITagReferences`). Las claves fijas de la
   pantalla (`TASK_TAGS`, `TICKET_TAGS`) desaparecieron; las de los tickets se convierten al arrancar
   (`LegacyTicketTagsConverter`). La pantalla `/tags` las lista y las crea, edita y borra en un
-  cajón, y crea categorías propias. Queda: proyectos, informes y dashboards se etiquetan por API
-  pero no tienen selector; borrar una categoría propia no existe todavía; la columna `Tickets.Tags` se puede quitar cuando esté vacía en todas las bases; y el
-  filtro «Mi equipo» de tareas y proyectos busca el id **del usuario** dentro de `TagIds`, así que
-  no devuelve nada (ya fallaba antes de este cambio).
+  cajón; las categorías propias se crean, renombran (sus etiquetas las siguen) y borran si están
+  vacías. Proyectos, informes y paneles tienen su selector. Queda: la columna `Tickets.Tags` se
+  puede quitar cuando esté vacía en todas las bases; y el filtro «Mi equipo» de tareas y proyectos
+  busca el id **del usuario** dentro de `TagIds`, así que no devuelve nada (ya fallaba antes de este cambio).
 - **Los adjuntos de un ticket no se pueden quitar**, y no hay nada que los borre del almacenamiento
   si algún día se vacía la papelera de tickets.
 - **Espacios, carpetas, anotaciones y subidas no piden autorización por entidad**, y los

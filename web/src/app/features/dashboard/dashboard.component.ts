@@ -7,8 +7,10 @@ import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import {
   lucideFolderKanban, lucideCheckSquare, lucideTicket, lucideTrendingUp,
   lucideClock, lucideActivity, lucidePieChart, lucideBarChart3,
-  lucidePlus, lucideSettings, lucideLayout, lucideGlobe, lucideLock
+  lucidePlus, lucideSettings, lucideLayout, lucideGlobe, lucideLock, lucideTag
 } from '@ng-icons/lucide';
+import { TagChipsComponent } from '../../shared/ui/tag-chips.component';
+import { TagAssignDrawerComponent } from '../../shared/ui/tag-assign-drawer.component';
 import { LineChartComponent, type BurndownDataPoint } from '../../shared/ui/charts/line-chart.component';
 import { ProgressBarComponent } from '../../shared/ui/progress-bar.component';
 import { DashboardsService, Dashboard } from '../../shared/services/dashboards.service';
@@ -75,12 +77,14 @@ import { DrawerComponent } from '../../shared/ui/drawer.component';
     LineChartComponent,
     ProgressBarComponent,
     DrawerComponent,
-    ReportChartComponent
+    ReportChartComponent,
+    TagChipsComponent,
+    TagAssignDrawerComponent
 ],
   viewProviders: [provideIcons({
     lucideFolderKanban, lucideCheckSquare, lucideTicket, lucideTrendingUp,
     lucideClock, lucideActivity, lucidePieChart, lucideBarChart3,
-    lucidePlus, lucideSettings, lucideLayout, lucideGlobe, lucideLock
+    lucidePlus, lucideSettings, lucideLayout, lucideGlobe, lucideLock, lucideTag
   })],
   templateUrl: './dashboard.component.html',
 })
@@ -206,6 +210,21 @@ export class DashboardComponent implements OnInit {
     this.dashboardsService.deleteDashboard(id).subscribe({
       next: () => this.loadDashboards()
     });
+  }
+
+  /** El panel cuyas etiquetas se están eligiendo, o `null`. */
+  readonly dashboardTagging = signal<Dashboard | null>(null);
+
+  /**
+   * Por su propio endpoint y no con el PUT del panel entero: así no se reenvían los recuadros, que
+   * otra persona puede haber cambiado mientras tanto.
+   */
+  readonly saveDashboardTags = (tagIds: string[]) =>
+    this.api.put<void>(`/dashboards/${this.dashboardTagging()!.id}/tags`, { tagIds }, { sinAviso: true });
+
+  /** Quién puede cambiar sus etiquetas: quien lo creó o un administrador, como para borrarlo. */
+  canEditDashboard(dashboard: Dashboard): boolean {
+    return dashboard.createdById === this.authStore.userInfo()?.id || this.authStore.isAdmin();
   }
 
   selectDashboard(dashboard: Dashboard): void {

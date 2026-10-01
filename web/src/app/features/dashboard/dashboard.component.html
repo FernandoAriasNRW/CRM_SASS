@@ -199,15 +199,22 @@
                 <h3 class="font-semibold text-lg">{{ dashboard.title }}</h3>
               </div>
             </div>
-            <p class="text-sm text-muted-foreground mb-4">
+            <p class="text-sm text-muted-foreground mb-2">
               Creado el @if (dashboard.createdById === authStore.userInfo()?.id) { <span i18n>Por ti</span> } @else { <span i18n>Por otro usuario</span> }
             </p>
+            <div class="mb-2 min-h-5">
+              <app-tag-chips [tagIds]="dashboard.tagIds" />
+            </div>
             <div class="flex items-center justify-between mt-4">
               <button uiButton variant="outline" size="sm" class="w-full">
                 <ng-icon name="lucideLayout" size="14" class="mr-2"></ng-icon>
                 Ver
               </button>
-              @if (dashboard.createdById === authStore.userInfo()?.id || authStore.isAdmin()) {
+              @if (canEditDashboard(dashboard)) {
+                <button uiButton variant="ghost" size="sm" class="ml-2" (click)="$event.stopPropagation(); dashboardTagging.set(dashboard)"
+                        data-testid="dashboard-tags" i18n-aria-label aria-label="Etiquetas del panel">
+                  <ng-icon name="lucideTag" size="14" />
+                </button>
                 <button uiButton variant="ghost" size="sm" class="text-destructive ml-2" (click)="$event.stopPropagation(); deleteDashboard(dashboard.id)" i18n>
                   Eliminar
                 </button>
@@ -226,6 +233,15 @@
     </div>
   }
 </div>
+
+@if (dashboardTagging(); as dashboard) {
+  <app-tag-assign-drawer
+    [title]="dashboard.title"
+    [tagIds]="dashboard.tagIds"
+    [save]="saveDashboardTags"
+    (closed)="dashboardTagging.set(null)"
+    (saved)="loadDashboards()" />
+}
 
 <!-- Drawer para Crear Dashboard Personalizado -->
 <app-drawer

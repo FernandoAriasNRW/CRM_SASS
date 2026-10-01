@@ -10,8 +10,8 @@
         <button uiButton variant="outline" size="sm" (click)="refresh()">
           <ng-icon name="lucideRefreshCw" size="14" class="mr-1.5" /> <span i18n>Actualizar</span>
         </button>
-        <button uiButton variant="outline" size="sm" (click)="toggleCategoryForm()" [attr.aria-expanded]="categoryFormOpen()" data-testid="new-category">
-          <ng-icon name="lucideFolderPlus" size="14" class="mr-1.5" /> <span i18n>Nueva categoría</span>
+        <button uiButton variant="outline" size="sm" (click)="categoriesOpen.set(true)" data-testid="open-categories">
+          <ng-icon name="lucideFolderPlus" size="14" class="mr-1.5" /> <span i18n>Categorías</span>
         </button>
         <button uiButton size="sm" (click)="create()" data-testid="new-tag">
           <ng-icon name="lucidePlus" size="14" class="mr-1.5" /> <span i18n>Nueva etiqueta</span>
@@ -19,21 +19,6 @@
       </div>
     </div>
 
-    @if (categoryFormOpen()) {
-      <form class="flex items-start gap-2 px-4 pb-3 flex-wrap" (ngSubmit)="saveCategory()">
-        <div class="flex flex-col gap-1">
-          <label for="new-category-name" class="sr-only" i18n>Nombre de la categoría</label>
-          <input id="new-category-name" name="newCategory" [(ngModel)]="newCategory" maxlength="50"
-                 i18n-placeholder placeholder="Nombre de la categoría"
-                 class="w-64 px-3 py-1.5 text-sm bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary" />
-          @if (categoryError()) {
-            <p role="alert" class="text-xs text-destructive">{{ categoryError() }}</p>
-          }
-        </div>
-        <button uiButton size="sm" type="submit" [disabled]="!newCategory.trim() || savingCategory()" i18n>Crear categoría</button>
-        <button uiButton variant="ghost" size="sm" type="button" (click)="toggleCategoryForm()" i18n>Cancelar</button>
-      </form>
-    }
   </div>
 
   <div class="flex-1 min-h-0">
@@ -64,6 +49,10 @@
     }
   </ng-template>
 </div>
+
+@if (categoriesOpen()) {
+  <app-tag-categories-drawer (closed)="categoriesOpen.set(false)" />
+}
 
 @if (selected() !== undefined) {
   <app-tag-drawer [tag]="selected() ?? null" (closed)="closeDrawer()" />

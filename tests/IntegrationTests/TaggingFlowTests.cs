@@ -208,6 +208,28 @@ public sealed class TaggingFlowTests(CrmApiFactory factory)
         rejected.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
+    [Fact]
+    public async Task A_dashboards_tags_change_on_their_own_without_touching_the_rest()
+    {
+        var admin = await AdminAsync();
+        var dashboard = await NewDashboardAsync(admin);
+        var tag = await NewTagAsync(admin);
+        var before = await DashboardAsync(admin, dashboard);
+
+        (await admin.Client.PutAsJsonAsync($"/api/v1/dashboards/{dashboard}/tags", new { tagIds = new[] { tag } }))
+            .StatusCode.Should().Be(HttpStatusCode.NoContent);
+
+        var after = await DashboardAsync(admin, dashboard);
+        TagIdsOf(after).Should().Equal(tag);
+        after.GetProperty("title").GetString().Should().Be(before.GetProperty("title").GetString());
+        after.GetProperty("widgetsJson").GetString().Should().Be(before.GetProperty("widgetsJson").GetString());
+
+        (await admin.Client.PutAsJsonAsync($"/api/v1/dashboards/{dashboard}/tags", new { tagIds = new[] { Guid.NewGuid() } }))
+            .StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await admin.Client.PutAsJsonAsync($"/api/v1/dashboards/{Guid.NewGuid()}/tags", new { tagIds = new[] { tag } }))
+            .StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
     // ── Borrar una etiqueta la suelta de todo ───────────────────────────────────────────────
 
     [Fact]

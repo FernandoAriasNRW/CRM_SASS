@@ -1,0 +1,87 @@
+<app-drawer [isOpen]="true" (closed)="close()" i18n-title title="Categorías" i18n-subtitle subtitle="Las predefinidas y las de la organización" size="md">
+  <div class="p-6 space-y-6">
+
+    <form class="space-y-1.5" (ngSubmit)="create()">
+      <label for="new-category-name" class="text-xs font-medium text-foreground" i18n>Nueva categoría</label>
+      <div class="flex items-center gap-2">
+        <input id="new-category-name" name="newName" [(ngModel)]="newName" maxlength="50"
+               i18n-placeholder placeholder="Nombre de la categoría"
+               class="flex-1 px-3 py-2 text-sm bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary" />
+        <button uiButton size="sm" type="submit" [disabled]="!newName.trim() || creating()" data-testid="create-category" i18n>Crear</button>
+      </div>
+      @if (createError()) {
+        <p role="alert" class="text-xs text-destructive">{{ createError() }}</p>
+      }
+    </form>
+
+    <section>
+      <h3 class="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2" i18n>De la organización</h3>
+      <ul class="divide-y divide-border rounded-lg border border-border" data-testid="custom-categories">
+        @for (category of custom(); track category.id) {
+          <li class="px-3 py-2.5 space-y-1.5" [attr.data-category]="category.name">
+            @if (renamingId() === category.id) {
+              <form class="flex items-center gap-2" (ngSubmit)="saveRename(category)">
+                <input name="renameValue" [(ngModel)]="renameValue" maxlength="50" i18n-aria-label aria-label="Nombre nuevo"
+                       class="flex-1 px-2 py-1 text-sm bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary" />
+                <button uiButton size="sm" type="submit" [disabled]="busy() || !renameValue.trim()" i18n>Guardar</button>
+                <button uiButton variant="ghost" size="sm" type="button" (click)="cancelRename()" i18n>Cancelar</button>
+              </form>
+            } @else {
+              <div class="flex items-center justify-between gap-2">
+                <div class="min-w-0">
+                  <p class="text-sm font-medium truncate">{{ category.label }}</p>
+                  <p class="text-xs text-muted-foreground">{{ countLabel(category) }}</p>
+                </div>
+                @if (category.canManage) {
+                  @if (confirmingDeleteId() === category.id) {
+                    <div class="flex items-center gap-1.5 shrink-0">
+                      <span class="text-xs" i18n>¿Borrarla?</span>
+                      <button uiButton variant="destructive" size="sm" (click)="delete(category)" [disabled]="busy()" i18n>Sí</button>
+                      <button uiButton variant="ghost" size="sm" (click)="confirmingDeleteId.set(null)" i18n>No</button>
+                    </div>
+                  } @else {
+                    <div class="flex items-center gap-1 shrink-0">
+                      <button uiButton variant="ghost" size="sm" (click)="startRename(category)" i18n>Renombrar</button>
+                      <!-- Con etiquetas no se ofrece: el servidor lo rechazaría. Se dice por qué. -->
+                      <button uiButton variant="ghost" size="sm" class="text-destructive"
+                              [disabled]="(category.tagCount ?? 0) > 0"
+                              [attr.title]="(category.tagCount ?? 0) > 0 ? notEmptyHint : null"
+                              (click)="askDelete(category)" i18n>Borrar</button>
+                    </div>
+                  }
+                }
+              </div>
+            }
+            @if (errorFor(category)) {
+              <p role="alert" class="text-xs text-destructive">{{ errorFor(category) }}</p>
+            }
+          </li>
+        } @empty {
+          <li class="px-3 py-3 text-xs text-muted-foreground" i18n>Todavía no hay categorías propias.</li>
+        }
+      </ul>
+      @if (custom().length && !custom()[0].canManage) {
+        <p class="mt-2 text-xs text-muted-foreground" i18n>Renombrar y borrar categorías es de un administrador o de quien tenga permiso para gestionar etiquetas.</p>
+      }
+    </section>
+
+    <section>
+      <h3 class="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2" i18n>Predefinidas</h3>
+      <ul class="divide-y divide-border rounded-lg border border-border">
+        @for (category of builtIn(); track category.name) {
+          <li class="px-3 py-2 flex items-center justify-between gap-2">
+            <span class="text-sm">{{ category.label }}</span>
+            <span class="text-xs text-muted-foreground">
+              @if (category.isAutomatic) { <span i18n>Automática</span> · }
+              {{ countLabel(category) }}
+            </span>
+          </li>
+        }
+      </ul>
+    </section>
+  </div>
+
+  <div drawer-footer class="flex justify-end w-full">
+    <button uiButton variant="outline" size="sm" (click)="close()" i18n>Cerrar</button>
+  </div>
+</app-drawer>

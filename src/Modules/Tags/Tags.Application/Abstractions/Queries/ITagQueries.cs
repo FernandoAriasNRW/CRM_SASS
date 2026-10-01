@@ -11,6 +11,9 @@ public interface ITagQueries
     /// <summary>Todas las etiquetas del inquilino, por categoría y nombre.</summary>
     Task<List<TagDto>> GetByTenantAsync(Guid tenantId, CancellationToken cancellationToken = default);
 
+    /// <summary>Cuántas etiquetas hay en cada categoría, por el valor guardado.</summary>
+    Task<Dictionary<string, int>> CountByCategoryAsync(Guid tenantId, CancellationToken cancellationToken = default);
+
     /// <summary>Las categorías que ha creado el inquilino, por nombre.</summary>
     Task<List<TagCategoryDto>> GetCustomCategoriesAsync(Guid tenantId, CancellationToken cancellationToken = default);
 }
