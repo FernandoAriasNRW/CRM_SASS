@@ -11,11 +11,11 @@
  * ningún catálogo en el navegador y los textos no pueden faltar en tiempo de ejecución.
  */
 
-export type Idioma = 'es' | 'en';
+export type Language = 'es' | 'en';
 
-export const IDIOMAS: ReadonlyArray<{ codigo: Idioma; nombre: string }> = [
-  { codigo: 'es', nombre: 'Español' },
-  { codigo: 'en', nombre: 'English' },
+export const LANGUAGES: ReadonlyArray<{ code: Language; name: string }> = [
+  { code: 'es', name: 'Español' },
+  { code: 'en', name: 'English' },
 ];
 
 /**
@@ -24,10 +24,10 @@ export const IDIOMAS: ReadonlyArray<{ codigo: Idioma; nombre: string }> = [
  * No se usa el idioma del navegador: eso dice qué prefiere el usuario, no qué está viendo.
  * En desarrollo no hay prefijo y se asume el idioma de origen.
  */
-export function idiomaActual(documento: Document = document): Idioma {
-  const base = documento.querySelector('base')?.getAttribute('href') ?? '/';
-  const codigo = base.split('/').filter(Boolean)[0];
-  return codigo === 'en' ? 'en' : 'es';
+export function currentLanguage(doc: Document = document): Language {
+  const base = doc.querySelector('base')?.getAttribute('href') ?? '/';
+  const code = base.split('/').filter(Boolean)[0];
+  return code === 'en' ? 'en' : 'es';
 }
 
 /**
@@ -36,13 +36,13 @@ export function idiomaActual(documento: Document = document): Idioma {
  * Se conserva para que cambiar de idioma desde una pantalla concreta no devuelva al
  * inicio, que es lo que hace casi cualquier implementación descuidada.
  */
-export function urlEnIdioma(destino: Idioma, ubicacion: Pick<Location, 'pathname' | 'search'> = location): string {
-  const partes = ubicacion.pathname.split('/').filter(Boolean);
+export function urlInLanguage(target: Language, loc: Pick<Location, 'pathname' | 'search'> = location): string {
+  const parts = loc.pathname.split('/').filter(Boolean);
 
   // Quitar el prefijo de idioma si lo hay; en desarrollo no existe.
-  if (partes[0] === 'es' || partes[0] === 'en') {
-    partes.shift();
+  if (parts[0] === 'es' || parts[0] === 'en') {
+    parts.shift();
   }
 
-  return `/${destino}/${partes.join('/')}${ubicacion.search}`;
+  return `/${target}/${parts.join('/')}${loc.search}`;
 }

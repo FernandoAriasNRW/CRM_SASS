@@ -7,7 +7,7 @@ import { BadgeComponent } from '../../shared/ui/badge.component';
 import { UserAvatarComponent } from '../../shared/ui/user-avatar.component';
 import { ToastService } from '../../shared/services/toast.service';
 import { TagsService, type TagCategoryItem, type TagInput } from '../../shared/services/tags.service';
-import { mensajeDeError } from '../../shared/utils/mensaje-de-error';
+import { errorMessage } from '../../shared/utils/error-message';
 import { type TagRow } from './tag-list';
 
 /** Los colores que se ofrecen de un clic. Cualquier otro se puede escribir o elegir en el selector. */
@@ -117,7 +117,7 @@ export class TagDrawerComponent implements OnInit {
       },
       error: response => {
         this.saving.set(false);
-        this.error.set(mensajeDeError(response, $localize`No se pudo guardar la etiqueta`));
+        this.error.set(errorMessage(response, $localize`No se pudo guardar la etiqueta`));
       },
     });
   }
@@ -137,7 +137,7 @@ export class TagDrawerComponent implements OnInit {
       error: response => {
         this.saving.set(false);
         this.confirmingDelete.set(false);
-        this.error.set(mensajeDeError(response, $localize`No se pudo borrar la etiqueta`));
+        this.error.set(errorMessage(response, $localize`No se pudo borrar la etiqueta`));
       },
     });
   }

@@ -9,7 +9,7 @@ import {
 import { UsersService } from '../../core/users.service';
 import { AuthSignalStore } from '../../core/auth-signal.store';
 import { UserAvatarComponent } from './user-avatar.component';
-import { mensajeDeError } from '../utils/mensaje-de-error';
+import { errorMessage } from '../utils/error-message';
 
 /**
  * El hilo de comentarios de una tarea, un ticket o un proyecto.
@@ -89,7 +89,7 @@ export class CommentsComponent implements OnInit {
         this.loading.set(false);
       },
       error: response => {
-        this.error.set(mensajeDeError(response, $localize`No se pudieron cargar los comentarios`));
+        this.error.set(errorMessage(response, $localize`No se pudieron cargar los comentarios`));
         this.loading.set(false);
       },
     });
@@ -117,7 +117,7 @@ export class CommentsComponent implements OnInit {
       error: response => {
         this.sending.set(false);
         // No se borra lo escrito: es lo único que quien lo redactó no puede recuperar.
-        this.error.set(mensajeDeError(response, $localize`No se pudo publicar el comentario`));
+        this.error.set(errorMessage(response, $localize`No se pudo publicar el comentario`));
       },
     });
   }
@@ -143,7 +143,7 @@ export class CommentsComponent implements OnInit {
         this.editing.set(null);
       },
       error: response => this.error.set(
-        mensajeDeError(response, $localize`No se pudo guardar el comentario`)),
+        errorMessage(response, $localize`No se pudo guardar el comentario`)),
     });
   }
 
@@ -157,7 +157,7 @@ export class CommentsComponent implements OnInit {
       },
       error: response => {
         this.deleting.set(null);
-        this.error.set(mensajeDeError(response, $localize`No se pudo borrar el comentario`));
+        this.error.set(errorMessage(response, $localize`No se pudo borrar el comentario`));
       },
     });
   }

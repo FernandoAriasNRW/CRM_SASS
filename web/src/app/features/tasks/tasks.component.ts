@@ -28,7 +28,7 @@ import { TableColumnService } from '../../shared/services/table-column.service';
 import { HierarchySignalStore } from '../../core/hierarchy-signal.store';
 import { ClickableDirective } from '../../shared/directives/clickable.directive';
 import { ToastService } from '../../shared/services/toast.service';
-import { mensajeDeError } from '../../shared/utils/mensaje-de-error';
+import { errorMessage } from '../../shared/utils/error-message';
 import { SkeletonListComponent } from '../../shared/ui/skeleton.component';
 import { EmptyInlineComponent } from '../../shared/ui/empty-state.component';
 
@@ -569,13 +569,13 @@ export class TasksComponent implements OnInit {
 
     // `sinAviso`: el error se cuenta abajo con el nombre de la tarea que se revirtió, que es lo
     // único que el interceptor no puede saber. Sin esto salían los dos avisos.
-    this.api.patch(`/tasks/${item.id}`, { [key]: updated }, { sinAviso: true }).subscribe({
+    this.api.patch(`/tasks/${item.id}`, { [key]: updated }, { silent: true }).subscribe({
       next: () => this.distributeTasksToColumns(),
       error: response => {
         this.applyInList(item.id, key, previous);
         this.toast.error(
           $localize`«${item.title}» se queda como estaba`,
-          mensajeDeError(response, $localize`No se pudo guardar el cambio.`));
+          errorMessage(response, $localize`No se pudo guardar el cambio.`));
       },
     });
   }

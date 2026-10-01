@@ -2,7 +2,7 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { Observable, tap } from 'rxjs';
 
 import { ApiService } from '../../core/api.service';
-import { IdiomaService } from '../../core/idioma.service';
+import { LanguageService } from '../../core/language.service';
 
 /** Una etiqueta de la organización, tal como la devuelve `GET /tags`. */
 export interface TagItem {
@@ -61,7 +61,7 @@ export interface TagGroup {
 @Injectable({ providedIn: 'root' })
 export class TagsService {
   private readonly api = inject(ApiService);
-  private readonly language = inject(IdiomaService).actual;
+  private readonly language = inject(LanguageService).actual;
 
   readonly tags = signal<TagItem[]>([]);
   readonly loaded = signal(false);
@@ -128,30 +128,30 @@ export class TagsService {
    * ticket comparten esta lista, así que ven el cambio sin recargar.
    */
   create(input: TagInput): Observable<TagItem> {
-    return this.api.post<TagItem>('/tags', input, { sinAviso: true }).pipe(tap(() => this.load(true)));
+    return this.api.post<TagItem>('/tags', input, { silent: true }).pipe(tap(() => this.load(true)));
   }
 
   update(id: string, input: TagInput): Observable<TagItem> {
-    return this.api.put<TagItem>(`/tags/${id}`, input, { sinAviso: true }).pipe(tap(() => this.load(true)));
+    return this.api.put<TagItem>(`/tags/${id}`, input, { silent: true }).pipe(tap(() => this.load(true)));
   }
 
   remove(id: string): Observable<void> {
-    return this.api.delete<void>(`/tags/${id}`, { sinAviso: true }).pipe(tap(() => this.load(true)));
+    return this.api.delete<void>(`/tags/${id}`, { silent: true }).pipe(tap(() => this.load(true)));
   }
 
   createCategory(name: string): Observable<TagCategoryItem> {
-    return this.api.post<TagCategoryItem>('/tags/categories', { name }, { sinAviso: true })
+    return this.api.post<TagCategoryItem>('/tags/categories', { name }, { silent: true })
       .pipe(tap(() => this.loadCategories()));
   }
 
   /** Renombrar mueve sus etiquetas, así que también se vuelve a pedir la lista de etiquetas. */
   renameCategory(id: string, name: string): Observable<TagCategoryItem> {
-    return this.api.put<TagCategoryItem>(`/tags/categories/${id}`, { name }, { sinAviso: true })
+    return this.api.put<TagCategoryItem>(`/tags/categories/${id}`, { name }, { silent: true })
       .pipe(tap(() => { this.loadCategories(); this.load(true); }));
   }
 
   deleteCategory(id: string): Observable<void> {
-    return this.api.delete<void>(`/tags/categories/${id}`, { sinAviso: true })
+    return this.api.delete<void>(`/tags/categories/${id}`, { silent: true })
       .pipe(tap(() => this.loadCategories()));
   }
 

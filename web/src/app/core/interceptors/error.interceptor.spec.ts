@@ -3,7 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { throwError } from 'rxjs';
 import { errorInterceptor } from './error.interceptor';
-import { sinAvisoAutomatico } from '../http-context';
+import { skipGlobalErrorToast } from '../http-context';
 import { ToastService } from '../../shared/services/toast.service';
 import { AuthSignalStore } from '../auth-signal.store';
 import { ApiService } from '../api.service';
@@ -16,16 +16,16 @@ import { ApiService } from '../api.service';
 describe('errorInterceptor — avisos duplicados', () => {
   let toast: jasmine.SpyObj<ToastService>;
 
-  const fallo = (status: number) => new HttpErrorResponse({
+  const failure = (status: number) => new HttpErrorResponse({
     status, error: 'Las horas estimadas no pueden ser negativas',
     url: 'http://localhost:8080/api/v1/tasks/1',
   });
 
-  function interceptar(peticion: HttpRequest<unknown>, status = 400) {
-    const siguiente: HttpHandlerFn = () => throwError(() => fallo(status));
+  function intercept(request: HttpRequest<unknown>, status = 400) {
+    const next: HttpHandlerFn = () => throwError(() => failure(status));
 
     return TestBed.runInInjectionContext(() =>
-      errorInterceptor(peticion, siguiente));
+      errorInterceptor(request, next));
   }
 
   beforeEach(() => {
@@ -42,9 +42,9 @@ describe('errorInterceptor — avisos duplicados', () => {
   });
 
   it('avisa de un fallo que nadie más va a explicar', done => {
-    const peticion = new HttpRequest('GET', '/api/v1/tasks');
+    const request = new HttpRequest('GET', '/api/v1/tasks');
 
-    interceptar(peticion).subscribe({
+    intercept(request).subscribe({
       error: () => {
         expect(toast.handleHttpError).toHaveBeenCalled();
         done();
@@ -53,9 +53,9 @@ describe('errorInterceptor — avisos duplicados', () => {
   });
 
   it('no avisa si quien llamó se reservó explicarlo', done => {
-    const peticion = new HttpRequest('GET', '/api/v1/tasks', { context: sinAvisoAutomatico() });
+    const request = new HttpRequest('GET', '/api/v1/tasks', { context: skipGlobalErrorToast() });
 
-    interceptar(peticion).subscribe({
+    intercept(request).subscribe({
       error: () => {
         expect(toast.handleHttpError).not.toHaveBeenCalled();
         done();
@@ -65,9 +65,9 @@ describe('errorInterceptor — avisos duplicados', () => {
 
   /** El error se sigue propagando: quien llamó tiene que poder contarlo. */
   it('el error llega igualmente a quien hizo la petición', done => {
-    const peticion = new HttpRequest('GET', '/api/v1/tasks', { context: sinAvisoAutomatico() });
+    const request = new HttpRequest('GET', '/api/v1/tasks', { context: skipGlobalErrorToast() });
 
-    interceptar(peticion).subscribe({
+    intercept(request).subscribe({
       error: (e: HttpErrorResponse) => {
         expect(e.status).toBe(400);
         done();

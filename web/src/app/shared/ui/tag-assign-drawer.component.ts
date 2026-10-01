@@ -5,7 +5,7 @@ import { DrawerComponent } from './drawer.component';
 import { ButtonComponent } from './button.component';
 import { TagFieldComponent } from './tag-field.component';
 import { ToastService } from '../services/toast.service';
-import { mensajeDeError } from '../utils/mensaje-de-error';
+import { errorMessage } from '../utils/error-message';
 
 /**
  * Un cajón para elegir las etiquetas de algo que no tiene ficha propia donde ponerlas: un informe
@@ -66,7 +66,7 @@ export class TagAssignDrawerComponent implements OnInit {
       },
       error: response => {
         this.saving.set(false);
-        this.error.set(mensajeDeError(response, $localize`No se pudieron guardar las etiquetas`));
+        this.error.set(errorMessage(response, $localize`No se pudieron guardar las etiquetas`));
       },
     });
   }

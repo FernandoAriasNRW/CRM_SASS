@@ -220,7 +220,7 @@ export class DashboardComponent implements OnInit {
    * otra persona puede haber cambiado mientras tanto.
    */
   readonly saveDashboardTags = (tagIds: string[]) =>
-    this.api.put<void>(`/dashboards/${this.dashboardTagging()!.id}/tags`, { tagIds }, { sinAviso: true });
+    this.api.put<void>(`/dashboards/${this.dashboardTagging()!.id}/tags`, { tagIds }, { silent: true });
 
   /** Quién puede cambiar sus etiquetas: quien lo creó o un administrador, como para borrarlo. */
   canEditDashboard(dashboard: Dashboard): boolean {

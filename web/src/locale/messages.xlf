@@ -642,21 +642,21 @@
       <trans-unit id="3906034958359540712" datatype="html">
         <source>Claro</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/core/tema.service.ts</context>
+          <context context-type="sourcefile">src/app/core/theme.service.ts</context>
           <context context-type="linenumber">8</context>
         </context-group>
       </trans-unit>
       <trans-unit id="4560550641194494267" datatype="html">
         <source>Oscuro</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/core/tema.service.ts</context>
+          <context context-type="sourcefile">src/app/core/theme.service.ts</context>
           <context context-type="linenumber">9</context>
         </context-group>
       </trans-unit>
       <trans-unit id="1835230877853006184" datatype="html">
         <source>El del sistema</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/core/tema.service.ts</context>
+          <context context-type="sourcefile">src/app/core/theme.service.ts</context>
           <context context-type="linenumber">10</context>
         </context-group>
       </trans-unit>
@@ -7284,7 +7284,7 @@ Pendiente</source>
         </context-group>
       </trans-unit>
       <trans-unit id="7337528189751824652" datatype="html">
-        <source>Cambiar idioma a <x id="idioma" equiv-text="i.nombre"/></source>
+        <source>Cambiar idioma a <x id="idioma" equiv-text="i.name"/></source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/ui/command-palette/command-palette.service.ts</context>
           <context context-type="linenumber">135</context>

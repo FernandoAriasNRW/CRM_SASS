@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { ApiService } from '../../core/api.service';
-import { IdiomaService } from '../../core/idioma.service';
+import { LanguageService } from '../../core/language.service';
 import { HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -100,7 +100,7 @@ export interface ImportDocumentRequest {
 })
 export class DocsService {
   private api = inject(ApiService);
-  private language = inject(IdiomaService);
+  private language = inject(LanguageService);
   private endpoint = '/docs';
 
   getDocuments(): Observable<DocumentDto[]> {
@@ -139,7 +139,7 @@ export class DocsService {
    * hacía esto bien para los informes; aquí sólo se reutiliza.
    */
   exportHtml(documentId: string): Observable<HttpResponse<Blob>> {
-    return this.api.descargarFichero(`${this.endpoint}/${documentId}/export`);
+    return this.api.downloadFile(`${this.endpoint}/${documentId}/export`);
   }
 
   deleteDocument(documentId: string): Observable<void> {
@@ -172,7 +172,7 @@ export class DocsService {
     return this.api.post<{ url: string }>(`${this.endpoint}/upload`, body).pipe(
       // La dirección se completa aquí, donde entra el dato, y no en cada sitio que la use: lo que
       // se guarda dentro del documento tiene que poder abrirse desde cualquier parte.
-      map(response => ({ url: this.api.urlDeFichero(response.url) })));
+      map(response => ({ url: this.api.fileUrl(response.url) })));
   }
 
   getPageAnnotations(pageId: string): Observable<AnnotationDto[]> {

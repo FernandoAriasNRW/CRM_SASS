@@ -6,7 +6,7 @@ import {
   lucideKeyRound, lucidePlus, lucideCopy, lucideCheck, lucideLoader2, lucideCircleAlert, lucideBan,
 } from '@ng-icons/lucide';
 import { ApiService } from '../../../core/api.service';
-import { mensajeDeError } from '../../../shared/utils/mensaje-de-error';
+import { errorMessage } from '../../../shared/utils/error-message';
 import {
   REQUIRED_FIELDS, OPTIONAL_FIELDS, SAMPLE_KEY, curlExample, curlWithAttachmentsExample, formExample,
 } from './intake-examples';
@@ -62,7 +62,7 @@ export class AdminTicketIntakeComponent implements OnInit {
   readonly toRevoke = signal<string | null>(null);
   readonly copied = signal<string | null>(null);
 
-  readonly url = this.api.urlDeLaApi(INTAKE_ROUTE);
+  readonly url = this.api.apiUrl(INTAKE_ROUTE);
 
   /** Los ejemplos llevan la clave recién creada si la hay; si no, un marcador evidente. */
   private readonly keyForExamples = computed(() => this.justCreated()?.key ?? SAMPLE_KEY);
@@ -81,7 +81,7 @@ export class AdminTicketIntakeComponent implements OnInit {
     this.api.get<IntakeKey[]>('/tickets/intake-keys').subscribe({
       next: keys => { this.keys.set(keys); this.loading.set(false); },
       error: err => {
-        this.error.set(mensajeDeError(err, $localize`No se pudieron cargar las claves`));
+        this.error.set(errorMessage(err, $localize`No se pudieron cargar las claves`));
         this.loading.set(false);
       },
     });
@@ -101,7 +101,7 @@ export class AdminTicketIntakeComponent implements OnInit {
         this.load();
       },
       error: err => {
-        this.error.set(mensajeDeError(err, $localize`No se pudo crear la clave`));
+        this.error.set(errorMessage(err, $localize`No se pudo crear la clave`));
         this.creating.set(false);
       },
     });
@@ -114,7 +114,7 @@ export class AdminTicketIntakeComponent implements OnInit {
         if (this.justCreated()?.id === id) this.justCreated.set(null);
         this.load();
       },
-      error: err => this.error.set(mensajeDeError(err, $localize`No se pudo revocar la clave`)),
+      error: err => this.error.set(errorMessage(err, $localize`No se pudo revocar la clave`)),
     });
   }
 

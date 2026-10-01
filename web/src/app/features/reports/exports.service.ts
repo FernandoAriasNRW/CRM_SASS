@@ -3,7 +3,7 @@ import { firstValueFrom } from 'rxjs';
 
 import { ApiService } from '../../core/api.service';
 import { ToastService } from '../../shared/services/toast.service';
-import { mensajeDeError } from '../../shared/utils/mensaje-de-error';
+import { errorMessage } from '../../shared/utils/error-message';
 
 /** Los estados que puede tener una exportación. Son los del servidor, sin traducir. */
 export type ExportStatus = 'Pending' | 'Generating' | 'Ready' | 'Failed';
@@ -88,7 +88,7 @@ export class ExportsService {
       this.mark(reportId, 'Ready');
       await this.download(final);
     } catch (error) {
-      this.toast.error(mensajeDeError(error, $localize`No se pudo exportar el informe.`));
+      this.toast.error(errorMessage(error, $localize`No se pudo exportar el informe.`));
       this.forget(reportId);
     }
   }
@@ -127,7 +127,7 @@ export class ExportsService {
    */
   private async download(job: Export): Promise<void> {
     const response = await firstValueFrom(
-      this.api.descargarFichero(`/exports/${job.id}/download`));
+      this.api.downloadFile(`/exports/${job.id}/download`));
 
     const body = response.body;
     if (!body) {

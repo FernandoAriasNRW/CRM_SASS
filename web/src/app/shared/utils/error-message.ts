@@ -16,20 +16,20 @@
  * for http://…: 400 Bad Request», que enseña la dirección interna de la API y no dice nada que
  * quien la lee pueda usar.
  */
-export function mensajeDeError(respuesta: unknown, porDefecto: string): string {
-  const cuerpo = (respuesta as { error?: unknown })?.error;
+export function errorMessage(response: unknown, fallback: string): string {
+  const body = (response as { error?: unknown })?.error;
 
-  if (typeof cuerpo === 'string' && cuerpo.trim()) return cuerpo;
+  if (typeof body === 'string' && body.trim()) return body;
 
-  const objeto = cuerpo as { detail?: string; message?: string; errors?: Record<string, unknown> } | undefined;
+  const obj = body as { detail?: string; message?: string; errors?: Record<string, unknown> } | undefined;
 
-  const primero = Object.values(objeto?.errors ?? {})
-    .flatMap(mensajes => (Array.isArray(mensajes) ? mensajes : []))
+  const first = Object.values(obj?.errors ?? {})
+    .flatMap(messages => (Array.isArray(messages) ? messages : []))
     .find((m): m is string => typeof m === 'string' && m.trim().length > 0);
-  if (primero) return primero;
+  if (first) return first;
 
-  if (objeto?.detail?.trim()) return objeto.detail;
-  if (objeto?.message?.trim()) return objeto.message;
+  if (obj?.detail?.trim()) return obj.detail;
+  if (obj?.message?.trim()) return obj.message;
 
-  return porDefecto;
+  return fallback;
 }

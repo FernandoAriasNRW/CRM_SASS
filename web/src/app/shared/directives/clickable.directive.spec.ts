@@ -11,58 +11,58 @@ import { ClickableDirective } from './clickable.directive';
 @Component({
   standalone: true,
   imports: [ClickableDirective],
-  template: `<div appClickable (click)="veces = veces + 1">Fila</div>`,
+  template: `<div appClickable (click)="times = times + 1">Fila</div>`,
 })
 class AnfitrionComponent {
-  veces = 0;
+  times = 0;
 }
 
 describe('ClickableDirective', () => {
   let fixture: ComponentFixture<AnfitrionComponent>;
-  let elemento: HTMLElement;
+  let element: HTMLElement;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({ imports: [AnfitrionComponent] }).compileComponents();
     fixture = TestBed.createComponent(AnfitrionComponent);
     fixture.detectChanges();
-    elemento = fixture.nativeElement.querySelector('div');
+    element = fixture.nativeElement.querySelector('div');
   });
 
   it('se anuncia como botón', () => {
-    expect(elemento.getAttribute('role')).toBe('button');
+    expect(element.getAttribute('role')).toBe('button');
   });
 
   it('es alcanzable con el tabulador', () => {
-    expect(elemento.getAttribute('tabindex')).toBe('0');
+    expect(element.getAttribute('tabindex')).toBe('0');
   });
 
   it('Enter activa el mismo manejador que el ratón', () => {
-    elemento.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    element.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
     fixture.detectChanges();
 
-    expect(fixture.componentInstance.veces).toBe(1);
+    expect(fixture.componentInstance.times).toBe(1);
   });
 
   it('Espacio activa el mismo manejador que el ratón', () => {
-    elemento.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', bubbles: true }));
+    element.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', bubbles: true }));
     fixture.detectChanges();
 
-    expect(fixture.componentInstance.veces).toBe(1);
+    expect(fixture.componentInstance.times).toBe(1);
   });
 
   it('Espacio no desplaza la página', () => {
-    const evento = new KeyboardEvent('keydown', { key: ' ', bubbles: true, cancelable: true });
+    const event = new KeyboardEvent('keydown', { key: ' ', bubbles: true, cancelable: true });
 
-    elemento.dispatchEvent(evento);
+    element.dispatchEvent(event);
 
-    expect(evento.defaultPrevented).toBeTrue();
+    expect(event.defaultPrevented).toBeTrue();
   });
 
   it('el clic del ratón sigue funcionando una sola vez', () => {
     // Reenviar la pulsación como click no debe provocar recursión ni doble disparo.
-    elemento.click();
+    element.click();
     fixture.detectChanges();
 
-    expect(fixture.componentInstance.veces).toBe(1);
+    expect(fixture.componentInstance.times).toBe(1);
   });
 });

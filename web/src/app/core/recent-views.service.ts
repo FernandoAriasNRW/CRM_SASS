@@ -43,9 +43,9 @@ export class RecentViewsService {
    * antigua y no tiene `id`, se cae al texto que se guardó: es lo único que hay, y enseñarlo en
    * el idioma equivocado es mejor que dejar el hueco en blanco.
    */
-  nombreDe(vista: RecentView): string {
-    const item = vista.id ? this.navStore.allItems().find(i => i.id === vista.id) : undefined;
-    return item?.label ?? vista.label;
+  nameOf(view: RecentView): string {
+    const item = view.id ? this.navStore.allItems().find(i => i.id === view.id) : undefined;
+    return item?.label ?? view.label;
   }
   private readonly saveSubject = new Subject<RecentView[]>();
   private initialized = false;

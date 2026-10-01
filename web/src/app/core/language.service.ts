@@ -2,15 +2,15 @@ import { Injectable, inject, LOCALE_ID } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
 
 /** Los idiomas que la aplicación compila. Ver `angular.json` → `i18n`. */
-export const IDIOMAS = [
-  { codigo: 'es', nombre: 'Español' },
-  { codigo: 'en', nombre: 'English' }
+export const LANGUAGES = [
+  { code: 'es', name: 'Español' },
+  { code: 'en', name: 'English' }
 ] as const;
 
-export type CodigoDeIdioma = (typeof IDIOMAS)[number]['codigo'];
+export type LanguageCode = (typeof LANGUAGES)[number]['code'];
 
 /** Cuánto dura la elección de idioma: un año, como cualquier preferencia de interfaz. */
-const UN_ANO_EN_SEGUNDOS = 60 * 60 * 24 * 365;
+const ONE_YEAR_IN_SECONDS = 60 * 60 * 24 * 365;
 
 /**
  * En qué idioma se está y cómo cambiarlo.
@@ -29,8 +29,8 @@ const UN_ANO_EN_SEGUNDOS = 60 * 60 * 24 * 365;
  * nginx**, y el servidor no ve `localStorage`.
  */
 @Injectable({ providedIn: 'root' })
-export class IdiomaService {
-  private readonly documento = inject(DOCUMENT);
+export class LanguageService {
+  private readonly doc = inject(DOCUMENT);
 
   /**
    * El idioma en el que se está.
@@ -39,9 +39,9 @@ export class IdiomaService {
    * Es la única fuente que no puede mentir: la URL se puede manipular y la cookie puede ir por
    * detrás de la navegación.
    */
-  readonly actual = (inject(LOCALE_ID) as string).split('-')[0] as CodigoDeIdioma;
+  readonly actual = (inject(LOCALE_ID) as string).split('-')[0] as LanguageCode;
 
-  readonly disponibles = IDIOMAS;
+  readonly available = LANGUAGES;
 
   /**
    * Cambia de idioma recargando la aplicación en el otro prefijo.
@@ -49,15 +49,15 @@ export class IdiomaService {
    * Se conserva la ruta y la consulta: quien cambia de idioma mirando un ticket filtrado espera
    * seguir mirando ese ticket filtrado, no volver al inicio.
    */
-  cambiarA(codigo: CodigoDeIdioma): void {
-    if (codigo === this.actual) return;
+  switchTo(code: LanguageCode): void {
+    if (code === this.actual) return;
 
-    this.recordar(codigo);
+    this.remember(code);
 
-    const ventana = this.documento.defaultView;
-    if (!ventana) return;
+    const win = this.doc.defaultView;
+    if (!win) return;
 
-    ventana.location.href = `/${codigo}${this.rutaSinPrefijo()}`;
+    win.location.href = `/${code}${this.pathWithoutPrefix()}`;
   }
 
   /**
@@ -67,10 +67,10 @@ export class IdiomaService {
    * se devuelve tal cual y el cambio no lleva a ninguna parte útil. Es esperado: los dos idiomas
    * sólo existen en el artefacto compilado.
    */
-  private rutaSinPrefijo(): string {
-    const { pathname, search, hash } = this.documento.location;
-    const sinPrefijo = pathname.replace(/^\/(es|en)(?=\/|$)/, '') || '/';
-    return sinPrefijo + search + hash;
+  private pathWithoutPrefix(): string {
+    const { pathname, search, hash } = this.doc.location;
+    const withoutPrefix = pathname.replace(/^\/(es|en)(?=\/|$)/, '') || '/';
+    return withoutPrefix + search + hash;
   }
 
   /**
@@ -80,8 +80,8 @@ export class IdiomaService {
    * externo, que es justo cuando más importa acertar el idioma. No lleva datos de nadie, así que
    * no necesita `HttpOnly` —de hecho la escribe el propio navegador—.
    */
-  private recordar(codigo: CodigoDeIdioma): void {
-    this.documento.cookie =
-      `idioma=${codigo}; path=/; max-age=${UN_ANO_EN_SEGUNDOS}; SameSite=Lax`;
+  private remember(code: LanguageCode): void {
+    this.doc.cookie =
+      `idioma=${code}; path=/; max-age=${ONE_YEAR_IN_SECONDS}; SameSite=Lax`;
   }
 }
