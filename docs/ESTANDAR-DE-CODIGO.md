@@ -140,7 +140,6 @@ Un concepto, un nombre. Ordenado por área.
 | idioma | `Language` |
 | tema (claro, oscuro, del sistema) | `Theme` |
 | sin aviso (la llamada explica su propio error) | `silent` |
-| mensaje de error | `errorMessage` |
 | sembrador | `Seeder` |
 | mensaje de error | `ErrorMessage` |
 | guardar, guardado, estado de guardado | `Save`, `Saved`, `SaveState` |
