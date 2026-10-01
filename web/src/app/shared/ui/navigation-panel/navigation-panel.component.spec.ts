@@ -2,40 +2,40 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { BehaviorSubject } from 'rxjs';
 
-import { PanelDeNavegacionComponent } from './panel-de-navegacion.component';
-import { ENTRADAS_TRANSVERSALES, FILTROS, VOCABULARIO } from './vocabulario-del-menu';
+import { NavigationPanelComponent } from './navigation-panel.component';
+import { SHARED_ENTRIES, FILTERS, MENU_VOCABULARY } from './menu-vocabulary';
 
 describe('PanelDeNavegacionComponent', () => {
-  let fixture: ComponentFixture<PanelDeNavegacionComponent>;
-  let componente: PanelDeNavegacionComponent;
-  let parametros: BehaviorSubject<Record<string, string>>;
+  let fixture: ComponentFixture<NavigationPanelComponent>;
+  let component: NavigationPanelComponent;
+  let params: BehaviorSubject<Record<string, string>>;
   let router: jasmine.SpyObj<Router>;
 
   beforeEach(async () => {
-    parametros = new BehaviorSubject<Record<string, string>>({});
+    params = new BehaviorSubject<Record<string, string>>({});
     router = jasmine.createSpyObj<Router>('Router', ['navigate']);
 
     await TestBed.configureTestingModule({
-      imports: [PanelDeNavegacionComponent],
+      imports: [NavigationPanelComponent],
       providers: [
         { provide: Router, useValue: router },
-        { provide: ActivatedRoute, useValue: { queryParams: parametros.asObservable() } }
+        { provide: ActivatedRoute, useValue: { queryParams: params.asObservable() } }
       ]
     }).compileComponents();
 
-    fixture = TestBed.createComponent(PanelDeNavegacionComponent);
-    componente = fixture.componentInstance;
-    fixture.componentRef.setInput('modulo', 'tickets');
+    fixture = TestBed.createComponent(NavigationPanelComponent);
+    component = fixture.componentInstance;
+    fixture.componentRef.setInput('moduleKey', 'tickets');
     // El módulo de la pantalla se le dice desde fuera. Antes el componente lo sacaba de
     // `router.url`, que no reacciona a los cambios de ruta y además obligaba a que el doble del
     // router fingiera una URL para algo que no es asunto suyo.
-    fixture.componentRef.setInput('moduloActual', 'tickets');
+    fixture.componentRef.setInput('currentModule', 'tickets');
     fixture.detectChanges();
   });
 
   it('pinta el vocabulario del módulo que se le pide', () => {
-    expect(componente.vocabulario().titulo).toBe(VOCABULARIO['tickets'].titulo);
-    expect(componente.vocabulario().entradas.length).toBe(ENTRADAS_TRANSVERSALES.length);
+    expect(component.vocabulary().title).toBe(MENU_VOCABULARY['tickets'].title);
+    expect(component.vocabulary().entries.length).toBe(SHARED_ENTRIES.length);
   });
 
   /**
@@ -46,21 +46,21 @@ describe('PanelDeNavegacionComponent', () => {
    * si está viendo todo o el resultado de un filtro que no reconoce.
    */
   it('«ver todo» quita el parámetro de la URL', () => {
-    const verTodo = componente.vocabulario().entradas.find(e => e.filtro === null)!;
+    const seeAll = component.vocabulary().entries.find(e => e.filter === null)!;
 
-    componente.ir(verTodo);
+    component.go(seeAll);
 
-    const [, opciones] = router.navigate.calls.mostRecent().args as [unknown[], { queryParams: Record<string, unknown> }];
-    expect(opciones.queryParams['filter']).toBeNull();
+    const [, options] = router.navigate.calls.mostRecent().args as [unknown[], { queryParams: Record<string, unknown> }];
+    expect(options.queryParams['filter']).toBeNull();
   });
 
   it('cada entrada navega con su filtro', () => {
-    const favoritos = componente.vocabulario().entradas.find(e => e.filtro === FILTROS.favoritos)!;
+    const favorites = component.vocabulary().entries.find(e => e.filter === FILTERS.favorites)!;
 
-    componente.ir(favoritos);
+    component.go(favorites);
 
-    const [, opciones] = router.navigate.calls.mostRecent().args as [unknown[], { queryParams: Record<string, unknown> }];
-    expect(opciones.queryParams['filter']).toBe('favorites');
+    const [, options] = router.navigate.calls.mostRecent().args as [unknown[], { queryParams: Record<string, unknown> }];
+    expect(options.queryParams['filter']).toBe('favorites');
   });
 
   /**
@@ -71,13 +71,13 @@ describe('PanelDeNavegacionComponent', () => {
    * las tareas favoritas, que es la pantalla equivocada con el filtro correcto.
    */
   it('navega al módulo del panel aunque se esté en otro', () => {
-    fixture.componentRef.setInput('moduloActual', 'tasks');
+    fixture.componentRef.setInput('currentModule', 'tasks');
     fixture.detectChanges();
 
-    componente.ir(componente.vocabulario().entradas.find(e => e.filtro === FILTROS.favoritos)!);
+    component.go(component.vocabulary().entries.find(e => e.filter === FILTERS.favorites)!);
 
-    const [ruta] = router.navigate.calls.mostRecent().args as [unknown[]];
-    expect(ruta).toEqual(['/tickets']);
+    const [route] = router.navigate.calls.mostRecent().args as [unknown[]];
+    expect(route).toEqual(['/tickets']);
   });
 
   /**
@@ -85,12 +85,12 @@ describe('PanelDeNavegacionComponent', () => {
    * el que se está, y marcarlo aquí haría creer que los tickets ya están filtrados así.
    */
   it('asomado sobre otro módulo no marca ninguna entrada', () => {
-    fixture.componentRef.setInput('moduloActual', 'tasks');
-    parametros.next({ filter: 'archived' });
+    fixture.componentRef.setInput('currentModule', 'tasks');
+    params.next({ filter: 'archived' });
     fixture.detectChanges();
 
-    const archivado = componente.vocabulario().entradas.find(e => e.filtro === 'archived')!;
-    expect(componente.esLaActiva(archivado)).toBeFalse();
+    const archivedEntry = component.vocabulary().entries.find(e => e.filter === 'archived')!;
+    expect(component.isActive(archivedEntry)).toBeFalse();
   });
 
   /**
@@ -98,28 +98,28 @@ describe('PanelDeNavegacionComponent', () => {
    * filtrado marca la entrada correcta, y el botón de atrás también.
    */
   it('marca como activa la entrada que dice la URL', () => {
-    parametros.next({ filter: 'archived' });
+    params.next({ filter: 'archived' });
     fixture.detectChanges();
 
-    const archivado = componente.vocabulario().entradas.find(e => e.filtro === 'archived')!;
-    const mios = componente.vocabulario().entradas.find(e => e.filtro === 'mine')!;
+    const archivedEntry = component.vocabulary().entries.find(e => e.filter === 'archived')!;
+    const mine = component.vocabulary().entries.find(e => e.filter === 'mine')!;
 
-    expect(componente.esLaActiva(archivado)).toBeTrue();
-    expect(componente.esLaActiva(mios)).toBeFalse();
+    expect(component.isActive(archivedEntry)).toBeTrue();
+    expect(component.isActive(mine)).toBeFalse();
   });
 
   it('sin filtro en la URL, la activa es «ver todo»', () => {
-    const verTodo = componente.vocabulario().entradas.find(e => e.filtro === null)!;
+    const seeAll = component.vocabulary().entries.find(e => e.filter === null)!;
 
-    expect(componente.esLaActiva(verTodo)).toBeTrue();
+    expect(component.isActive(seeAll)).toBeTrue();
   });
 
   it('el anclaje se puede alternar', () => {
-    expect(componente.anclado()).toBeTrue();
+    expect(component.pinned()).toBeTrue();
 
-    componente.alternarAnclado(new MouseEvent('click'));
+    component.togglePinned(new MouseEvent('click'));
 
-    expect(componente.anclado()).toBeFalse();
+    expect(component.pinned()).toBeFalse();
   });
 
   /**
@@ -131,13 +131,13 @@ describe('PanelDeNavegacionComponent', () => {
    * quitó —ofrecer filtros que el servidor no aplica—.
    */
   it('un módulo nuevo recibe panel, con la única entrada que es cierta', () => {
-    fixture.componentRef.setInput('modulo', 'facturas');
-    fixture.componentRef.setInput('moduloActual', 'facturas');
-    fixture.componentRef.setInput('nombreDelModulo', 'Facturas');
+    fixture.componentRef.setInput('moduleKey', 'facturas');
+    fixture.componentRef.setInput('currentModule', 'facturas');
+    fixture.componentRef.setInput('moduleName', 'Facturas');
     fixture.detectChanges();
 
-    expect(componente.vocabulario().titulo).toBe('Facturas');
-    expect(componente.vocabulario().entradas.map(e => e.filtro)).toEqual([null]);
+    expect(component.vocabulary().title).toBe('Facturas');
+    expect(component.vocabulary().entries.map(e => e.filter)).toEqual([null]);
   });
 
   /**
@@ -145,10 +145,10 @@ describe('PanelDeNavegacionComponent', () => {
    * siempre, todos los módulos tendrían una sola entrada y nadie lo notaría hasta usarlos.
    */
   it('un módulo conocido usa su propio vocabulario', () => {
-    fixture.componentRef.setInput('modulo', 'docs');
+    fixture.componentRef.setInput('moduleKey', 'docs');
     fixture.detectChanges();
 
-    expect(componente.vocabulario().entradas.length).toBeGreaterThan(1);
+    expect(component.vocabulary().entries.length).toBeGreaterThan(1);
   });
 });
 
@@ -160,17 +160,17 @@ describe('vocabulario del menú', () => {
    * nadie añada una entrada con un filtro inventado sobre la marcha.
    */
   it('todas las entradas usan un filtro conocido, o ninguno', () => {
-    const conocidos = Object.values(FILTROS) as string[];
+    const known = Object.values(FILTERS) as string[];
 
-    for (const entrada of ENTRADAS_TRANSVERSALES) {
-      if (entrada.filtro === null) continue;
-      expect(conocidos).toContain(entrada.filtro);
+    for (const entry of SHARED_ENTRIES) {
+      if (entry.filter === null) continue;
+      expect(known).toContain(entry.filter);
     }
   });
 
   it('los tres módulos con lista comparten el vocabulario transversal', () => {
-    for (const modulo of ['tasks', 'tickets', 'projects']) {
-      expect(VOCABULARIO[modulo].entradas).toBe(ENTRADAS_TRANSVERSALES);
+    for (const moduleKey of ['tasks', 'tickets', 'projects']) {
+      expect(MENU_VOCABULARY[moduleKey].entries).toBe(SHARED_ENTRIES);
     }
   });
 });

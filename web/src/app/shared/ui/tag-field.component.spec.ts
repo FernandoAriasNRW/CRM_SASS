@@ -11,7 +11,7 @@ import { type TagItem } from '../services/tags.service';
  */
 describe('TagFieldComponent', () => {
   const BUG: TagItem = { id: 'bug', name: 'Bug', colorHex: '#EF4444', category: 'WorkType', categoryLabel: 'Tipo de trabajo' };
-  const MEJORA: TagItem = { id: 'mejora', name: 'Mejora', colorHex: '#4F46E5', category: 'WorkType', categoryLabel: 'Tipo de trabajo' };
+  const IMPROVEMENT: TagItem = { id: 'mejora', name: 'Mejora', colorHex: '#4F46E5', category: 'WorkType', categoryLabel: 'Tipo de trabajo' };
   const VIP: TagItem = { id: 'vip', name: 'Cliente VIP', colorHex: '#F59E0B', category: 'Business', categoryLabel: 'Negocio' };
 
   let fixture: ComponentFixture<TagFieldComponent>;
@@ -30,7 +30,7 @@ describe('TagFieldComponent', () => {
 
   beforeEach(async () => {
     api = jasmine.createSpyObj<ApiService>('ApiService', ['get']);
-    api.get.and.returnValue(of([BUG, MEJORA, VIP]) as never);
+    api.get.and.returnValue(of([BUG, IMPROVEMENT, VIP]) as never);
 
     await TestBed.configureTestingModule({
       imports: [TagFieldComponent],

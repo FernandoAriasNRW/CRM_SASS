@@ -136,6 +136,10 @@ del DOM): cambia cada `(salida)` y `[entrada]` en los padres. Límites en `tools
 Tampoco ve los nombres que van **en cadenas** en las pruebas: `jasmine.createSpyObj('X', ['metodo'])`
 y `setInput('entrada', …)` siguen con el nombre viejo y Karma falla al cargar o al montar; ni
 `ng build` ni el lint lo ven. Búscalos después de cada pasada.
+Lo mismo con las referencias de plantilla: renombra `#campo` → `#field` pero no el
+`viewChild('campo')` que la busca. No falla nada al compilar: el elemento sencillamente no se
+encuentra (en la 9b, la paleta de comandos dejó de recibir lo que se tecleaba y sólo lo vieron
+las e2e).
 
 Para ver qué queda en español: `python tools/scripts/spanish-identifiers.py <rutas>`
 (necesita `pip install wordfreq`).

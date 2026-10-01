@@ -17,66 +17,66 @@ describe('CommandPaletteService', () => {
   });
 
   it('sin consulta ofrece todas las secciones y acciones', () => {
-    expect(svc.resultados().length).toBeGreaterThan(5);
-    expect(svc.resultados().some(c => c.group === 'Ir a')).toBeTrue();
-    expect(svc.resultados().some(c => c.group === 'Acciones')).toBeTrue();
+    expect(svc.results().length).toBeGreaterThan(5);
+    expect(svc.results().some(c => c.group === 'Ir a')).toBeTrue();
+    expect(svc.results().some(c => c.group === 'Acciones')).toBeTrue();
   });
 
   it('filtra por etiqueta', () => {
-    svc.consulta.set('tareas');
+    svc.query.set('tareas');
 
-    expect(svc.resultados().length).toBeGreaterThan(0);
-    expect(svc.resultados().every(c => /tarea/i.test(c.label))).toBeTrue();
+    expect(svc.results().length).toBeGreaterThan(0);
+    expect(svc.results().every(c => /tarea/i.test(c.label))).toBeTrue();
   });
 
   it('encuentra sin escribir los acentos', () => {
     // Obligar a teclear el acento exacto rompe el flujo que justifica el paletón.
-    svc.consulta.set('calendario');
-    const conAcento = svc.resultados().length;
+    svc.query.set('calendario');
+    const accented = svc.results().length;
 
-    svc.consulta.set('CALENDARIO');
+    svc.query.set('CALENDARIO');
 
-    expect(svc.resultados().length).toBe(conAcento);
+    expect(svc.results().length).toBe(accented);
   });
 
   it('encuentra por palabra clave aunque no esté en la etiqueta', () => {
-    svc.consulta.set('oscuro');
+    svc.query.set('oscuro');
 
-    expect(svc.resultados().some(c => c.id === 'accion-tema')).toBeTrue();
+    expect(svc.results().some(c => c.id === 'accion-tema')).toBeTrue();
   });
 
   it('agrupa conservando el orden de aparición', () => {
-    const grupos = svc.agrupados().map(g => g.nombre);
+    const groups = svc.grouped().map(g => g.name);
 
-    expect(grupos[0]).toBe('Ir a');
-    expect(new Set(grupos).size).toBe(grupos.length);
+    expect(groups[0]).toBe('Ir a');
+    expect(new Set(groups).size).toBe(groups.length);
   });
 
   it('no va al servidor con menos de dos caracteres', () => {
-    svc.buscarEnServidor('a');
+    svc.searchServer('a');
 
     http.expectNone(() => true);
-    expect(svc.buscando()).toBeFalse();
+    expect(svc.searching()).toBeFalse();
   });
 
   it('busca en proyectos, tareas y tickets a la vez', () => {
-    svc.consulta.set('crm');
-    svc.buscarEnServidor('crm');
+    svc.query.set('crm');
+    svc.searchServer('crm');
 
-    for (const ruta of ['/projects', '/tasks', '/tickets']) {
-      const req = http.expectOne(r => r.url.includes(ruta));
+    for (const route of ['/projects', '/tasks', '/tickets']) {
+      const req = http.expectOne(r => r.url.includes(route));
       req.flush({ items: [{ id: '1', name: 'CRM Suite', title: 'CRM Suite' }] });
     }
 
-    expect(svc.resultados().some(c => c.group === 'Proyectos')).toBeTrue();
-    expect(svc.resultados().some(c => c.group === 'Tareas')).toBeTrue();
-    expect(svc.resultados().some(c => c.group === 'Tickets')).toBeTrue();
-    expect(svc.buscando()).toBeFalse();
+    expect(svc.results().some(c => c.group === 'Proyectos')).toBeTrue();
+    expect(svc.results().some(c => c.group === 'Tareas')).toBeTrue();
+    expect(svc.results().some(c => c.group === 'Tickets')).toBeTrue();
+    expect(svc.searching()).toBeFalse();
   });
 
   it('si un módulo falla, los demás siguen dando resultados', () => {
-    svc.consulta.set('crm');
-    svc.buscarEnServidor('crm');
+    svc.query.set('crm');
+    svc.searchServer('crm');
 
     http.expectOne(r => r.url.includes('/projects'))
       .flush({ items: [{ id: '1', name: 'CRM Suite' }] });
@@ -86,32 +86,32 @@ describe('CommandPaletteService', () => {
     http.expectOne(r => r.url.includes('/tickets'))
       .flush({ items: [] });
 
-    expect(svc.resultados().some(c => c.group === 'Proyectos')).toBeTrue();
+    expect(svc.results().some(c => c.group === 'Proyectos')).toBeTrue();
   });
 
   it('descarta una respuesta que llega tarde', () => {
-    svc.consulta.set('crm');
-    svc.buscarEnServidor('crm');
+    svc.query.set('crm');
+    svc.searchServer('crm');
 
     // El usuario sigue escribiendo antes de que conteste el servidor.
-    svc.consulta.set('otra cosa');
+    svc.query.set('otra cosa');
 
-    for (const ruta of ['/projects', '/tasks', '/tickets']) {
-      http.expectOne(r => r.url.includes(ruta))
+    for (const route of ['/projects', '/tasks', '/tickets']) {
+      http.expectOne(r => r.url.includes(route))
         .flush({ items: [{ id: '1', name: 'CRM Suite', title: 'CRM Suite' }] });
     }
 
     // Los resultados obsoletos no deben pisar lo que se está escribiendo ahora.
-    expect(svc.resultados().some(c => c.group === 'Proyectos')).toBeFalse();
+    expect(svc.results().some(c => c.group === 'Proyectos')).toBeFalse();
   });
 
   it('abrir limpia la consulta anterior', () => {
-    svc.consulta.set('algo');
+    svc.query.set('algo');
 
-    svc.abrir();
+    svc.open();
 
-    expect(svc.consulta()).toBe('');
-    expect(svc.abierto()).toBeTrue();
+    expect(svc.query()).toBe('');
+    expect(svc.isOpen()).toBeTrue();
   });
 
   afterEach(() => http.verify());

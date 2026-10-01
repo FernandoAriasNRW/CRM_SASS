@@ -26,15 +26,15 @@
     <!-- Las pestañas: las de fábrica siempre, y detrás las guardadas. Antes vivían dentro de un
          @if (savedViews().length === 0) y desaparecían en cuanto había una vista guardada, así
          que guardar una se llevaba por delante el Gantt y la carga de trabajo. -->
-    <app-barra-de-vistas
-      [integradas]="BUILT_IN_VIEWS"
-      [modo]="viewMode()"
-      [guardadas]="savedViews()"
-      [vistaActivaId]="activeViewId()"
-      (cambiarModo)="viewAs($event)"
-      (aplicar)="applySavedView($event)"
-      (crear)="createView($event)"
-      (borrar)="deleteView($event)" />
+    <app-view-tabs
+      [builtIn]="BUILT_IN_VIEWS"
+      [mode]="viewMode()"
+      [saved]="savedViews()"
+      [activeViewId]="activeViewId()"
+      (changeMode)="viewAs($event)"
+      (apply)="applySavedView($event)"
+      (create)="createView($event)"
+      (remove)="deleteView($event)" />
   </div>
   <!-- VISTA BOARD -->
   @if (viewMode() === 'board') {
@@ -179,7 +179,7 @@
   }
 
   <!-- VISTA CARGA DE TRABAJO -->
-  @if (viewMode() === 'carga') {
+  @if (viewMode() === 'workload') {
     <app-workload [tasks]="allTasks()" />
   }
 

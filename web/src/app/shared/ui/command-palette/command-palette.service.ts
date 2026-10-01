@@ -9,8 +9,8 @@ import { LANGUAGES, currentLanguage, urlInLanguage } from '../../../core/languag
 export type CommandGroup = 'Ir a' | 'Acciones' | 'Proyectos' | 'Tareas' | 'Tickets';
 
 /** Cómo se lee cada grupo. La clave se queda como está: es con lo que se agrupa. */
-export function nombreDelGrupo(grupo: CommandGroup): string {
-  switch (grupo) {
+export function groupName(group: CommandGroup): string {
+  switch (group) {
     case 'Ir a': return $localize`Ir a`;
     case 'Acciones': return $localize`Acciones`;
     case 'Proyectos': return $localize`Proyectos`;
@@ -48,26 +48,26 @@ export class CommandPaletteService {
   private readonly router = inject(Router);
   private readonly api = inject(ApiService);
 
-  readonly abierto = signal(false);
-  readonly consulta = signal('');
-  readonly buscando = signal(false);
-  private readonly remotos = signal<Command[]>([]);
+  readonly isOpen = signal(false);
+  readonly query = signal('');
+  readonly searching = signal(false);
+  private readonly remote = signal<Command[]>([]);
 
-  abrir(): void {
-    this.consulta.set('');
-    this.remotos.set([]);
-    this.abierto.set(true);
+  open(): void {
+    this.query.set('');
+    this.remote.set([]);
+    this.isOpen.set(true);
   }
 
-  cerrar(): void {
-    this.abierto.set(false);
+  close(): void {
+    this.isOpen.set(false);
   }
 
-  alternar(): void {
-    if (this.abierto()) {
-      this.cerrar();
+  toggle(): void {
+    if (this.isOpen()) {
+      this.close();
     } else {
-      this.abrir();
+      this.open();
     }
   }
 
@@ -157,29 +157,29 @@ export class CommandPaletteService {
    * El filtrado ignora acentos y mayúsculas —escribir "diseno" debe encontrar "Diseño"—
    * porque obligar a teclear el acento exacto rompe el flujo que justifica el paletón.
    */
-  readonly resultados = computed<Command[]>(() => {
-    const q = normalizar(this.consulta());
+  readonly results = computed<Command[]>(() => {
+    const q = normalize(this.query());
     const estaticos = q
-      ? this.estaticos().filter(c => normalizar(`${c.label} ${c.keywords ?? ''}`).includes(q))
+      ? this.estaticos().filter(c => normalize(`${c.label} ${c.keywords ?? ''}`).includes(q))
       : this.estaticos();
 
-    return [...estaticos, ...this.remotos()];
+    return [...estaticos, ...this.remote()];
   });
 
-  readonly agrupados = computed(() => {
-    const grupos = new Map<CommandGroup, Command[]>();
-    for (const c of this.resultados()) {
-      (grupos.get(c.group) ?? grupos.set(c.group, []).get(c.group)!).push(c);
+  readonly grouped = computed(() => {
+    const groups = new Map<CommandGroup, Command[]>();
+    for (const c of this.results()) {
+      (groups.get(c.group) ?? groups.set(c.group, []).get(c.group)!).push(c);
     }
     // El nombre que se lee se traduce; la clave del grupo no.
     //
     // `CommandGroup` es a la vez la clave con la que se agrupa y lo que se pintaba en pantalla,
     // así que en la versión inglesa salían «Proyectos» y «Tareas» en medio de todo lo demás.
     // Traducir la clave habría roto el agrupado; por eso van separados.
-    return [...grupos.entries()].map(([clave, comandos]) => ({
-      clave,
-      nombre: nombreDelGrupo(clave),
-      comandos
+    return [...groups.entries()].map(([key, commands]) => ({
+      key,
+      name: groupName(key),
+      commands
     }));
   });
 
@@ -190,51 +190,51 @@ export class CommandPaletteService {
    * los otros dos siguen dando resultados. Sin eso, un error en cualquiera dejaría el
    * paletón vacío y parecería que no hay nada que encontrar.
    */
-  buscarEnServidor(termino: string): void {
-    if (termino.trim().length < 2) {
-      this.remotos.set([]);
+  searchServer(term: string): void {
+    if (term.trim().length < 2) {
+      this.remote.set([]);
       return;
     }
 
-    this.buscando.set(true);
-    const params = { search: termino, page: 1, pageSize: 5 };
+    this.searching.set(true);
+    const params = { search: term, page: 1, pageSize: 5 };
 
     forkJoin({
-      proyectos: this.consulta$<{ id: string; name: string; status?: string }>('/projects', params),
-      tareas: this.consulta$<{ id: string; title: string; status?: string }>('/tasks', params),
+      projects: this.consulta$<{ id: string; name: string; status?: string }>('/projects', params),
+      tasks: this.consulta$<{ id: string; title: string; status?: string }>('/tasks', params),
       tickets: this.consulta$<{ id: string; title: string; status?: string }>('/tickets', params),
     }).subscribe({
-      next: ({ proyectos, tareas, tickets }) => {
+      next: ({ projects, tasks, tickets }) => {
         // Puede haber llegado tarde: si el término cambió mientras tanto, descartar.
-        if (normalizar(this.consulta()) !== normalizar(termino)) return;
+        if (normalize(this.query()) !== normalize(term)) return;
 
-        this.remotos.set([
-          ...proyectos.map(p => this.comando('Proyectos', 'lucideFolderKanban', p.id, p.name, p.status, '/projects')),
-          ...tareas.map(t => this.comando('Tareas', 'lucideCheckSquare', t.id, t.title, t.status, '/tasks')),
-          ...tickets.map(t => this.comando('Tickets', 'lucideTicket', t.id, t.title, t.status, '/tickets')),
+        this.remote.set([
+          ...projects.map(p => this.command('Proyectos', 'lucideFolderKanban', p.id, p.name, p.status, '/projects')),
+          ...tasks.map(t => this.command('Tareas', 'lucideCheckSquare', t.id, t.title, t.status, '/tasks')),
+          ...tickets.map(t => this.command('Tickets', 'lucideTicket', t.id, t.title, t.status, '/tickets')),
         ]);
-        this.buscando.set(false);
+        this.searching.set(false);
       },
-      error: () => this.buscando.set(false),
+      error: () => this.searching.set(false),
     });
   }
 
-  private comando(
+  private command(
     group: CommandGroup, icon: string, id: string,
-    label: string, estado: string | undefined, ruta: string,
+    label: string, state: string | undefined, route: string,
   ): Command {
     return {
       id: `${group}-${id}`,
       label,
       group,
       icon,
-      hint: estado,
-      run: () => void this.router.navigate([ruta], { queryParams: { id } }),
+      hint: state,
+      run: () => void this.router.navigate([route], { queryParams: { id } }),
     };
   }
 
-  private consulta$<T>(ruta: string, params: Record<string, string | number>): Observable<T[]> {
-    return this.api.get<{ items: T[] }>(ruta, params).pipe(
+  private consulta$<T>(route: string, params: Record<string, string | number>): Observable<T[]> {
+    return this.api.get<{ items: T[] }>(route, params).pipe(
       map(r => r.items ?? []),
       catchError(() => of([])),
     );
@@ -248,6 +248,6 @@ export class CommandPaletteService {
  * elimina esas marcas. Se escribe con escapes y no con los caracteres literales porque
  * son invisibles en el editor y cualquiera podría borrarlos sin darse cuenta.
  */
-function normalizar(texto: string): string {
-  return texto.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+function normalize(text: string): string {
+  return text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
 }

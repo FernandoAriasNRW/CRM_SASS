@@ -30,7 +30,7 @@ import { lucideX, lucideMaximize2, lucideMinimize2 } from '@ng-icons/lucide';
         <div 
           role="dialog"
           aria-modal="true"
-          [attr.aria-labelledby]="tituloId"
+          [attr.aria-labelledby]="titleId"
           class="relative flex flex-col h-full bg-card text-card-foreground border-l border-border shadow-2xl z-10 transition-all duration-300 transform animate-in slide-in-from-right"
           [ngClass]="sizeClasses"
         >
@@ -40,7 +40,7 @@ import { lucideX, lucideMaximize2, lucideMinimize2 } from '@ng-icons/lucide';
               <ng-content select="[drawer-icon]"></ng-content>
               <div class="min-w-0">
                 <div class="flex items-center gap-2">
-                  <h2 [id]="tituloId" class="text-base font-bold tracking-tight text-foreground truncate">{{ title }}</h2>
+                  <h2 [id]="titleId" class="text-base font-bold tracking-tight text-foreground truncate">{{ title }}</h2>
                   <ng-content select="[drawer-badge]"></ng-content>
                 </div>
                 @if (subtitle) {
@@ -120,8 +120,8 @@ export class DrawerComponent {
   isExpanded = false;
 
   /** Identificador propio de cada cajón: puede haber más de uno montado a la vez. */
-  protected readonly tituloId = `titulo-del-cajon-${DrawerComponent.siguiente++}`;
-  private static siguiente = 0;
+  protected readonly titleId = `titulo-del-cajon-${DrawerComponent.next++}`;
+  private static next = 0;
 
   get sizeClasses(): string {
     if (this.isExpanded) return 'w-full max-w-full';

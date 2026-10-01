@@ -14,12 +14,12 @@
  * en cada componente por la misma razón: dos copias acaban divergiendo en una letra y el fallo
  * no da error, sólo devuelve la lista entera.
  */
-export interface EntradaDeMenu {
+export interface MenuEntry {
   /** Lo que se lee en pantalla. */
-  readonly etiqueta: string;
+  readonly label: string;
 
   /** El icono de lucide. */
-  readonly icono: string;
+  readonly icon: string;
 
   /**
    * El valor de `?filter=`, o `null` para «ver todo», que es la ausencia de filtro.
@@ -27,7 +27,7 @@ export interface EntradaDeMenu {
    * Se distingue `null` de la cadena vacía a propósito: la vista quita el parámetro de la URL
    * en lugar de mandarlo vacío, y así la URL de «ver todo» es la limpia de siempre.
    */
-  readonly filtro: string | null;
+  readonly filter: string | null;
 
   /**
    * A dónde lleva, si no es a la lista del propio módulo.
@@ -37,24 +37,24 @@ export interface EntradaDeMenu {
    * esto habría que mantener dos mecanismos —el panel para unos módulos y el desplegable viejo
    * para otros—, que es justo lo que se acaba de quitar.
    */
-  readonly ruta?: string;
+  readonly route?: string;
 
   /** Parámetros extra de la URL, para los submenús que no filtran con `?filter=`. */
   readonly params?: Readonly<Record<string, string>>;
 
   /** Separador visual antes de esta entrada. */
-  readonly separadorAntes?: boolean;
+  readonly separatorBefore?: boolean;
 }
 
 /** Los nombres tal cual los entiende el servidor. Ver `FiltrosDeVista` en BuildingBlocks. */
-export const FILTROS = {
-  mios: 'mine',
-  creadosPorMi: 'created',
-  favoritos: 'favorites',
-  compartidosConmigo: 'shared',
-  privados: 'private',
-  archivados: 'archived',
-  papelera: 'trash'
+export const FILTERS = {
+  mine: 'mine',
+  createdByMe: 'created',
+  favorites: 'favorites',
+  sharedWithMe: 'shared',
+  privateOnly: 'private',
+  archived: 'archived',
+  trash: 'trash'
 } as const;
 
 /**
@@ -63,20 +63,20 @@ export const FILTROS = {
  * Cada módulo interpreta «mío» a su manera —responsable de la tarea, dueño del proyecto, agente
  * del ticket— y eso es correcto: el nombre es común, el significado lo pone el dominio.
  */
-export const ENTRADAS_TRANSVERSALES: readonly EntradaDeMenu[] = [
-  { etiqueta: $localize`Ver todo`, icono: 'lucideList', filtro: null },
-  { etiqueta: $localize`Asignado a mí`, icono: 'lucideUser', filtro: FILTROS.mios },
-  { etiqueta: $localize`Creado por mí`, icono: 'lucidePenLine', filtro: FILTROS.creadosPorMi },
-  { etiqueta: $localize`Favoritos`, icono: 'lucideStar', filtro: FILTROS.favoritos },
+export const SHARED_ENTRIES: readonly MenuEntry[] = [
+  { label: $localize`Ver todo`, icon: 'lucideList', filter: null },
+  { label: $localize`Asignado a mí`, icon: 'lucideUser', filter: FILTERS.mine },
+  { label: $localize`Creado por mí`, icon: 'lucidePenLine', filter: FILTERS.createdByMe },
+  { label: $localize`Favoritos`, icon: 'lucideStar', filter: FILTERS.favorites },
 
-  { etiqueta: $localize`Compartido conmigo`, icono: 'lucideShare2', filtro: FILTROS.compartidosConmigo, separadorAntes: true },
-  { etiqueta: $localize`Privado`, icono: 'lucideLock', filtro: FILTROS.privados },
+  { label: $localize`Compartido conmigo`, icon: 'lucideShare2', filter: FILTERS.sharedWithMe, separatorBefore: true },
+  { label: $localize`Privado`, icon: 'lucideLock', filter: FILTERS.privateOnly },
 
   // Archivo y papelera van al final y separados: son las dos entradas que enseñan cosas que el
   // resto de la aplicación esconde, y conviene que se note que se está saliendo de la vista
   // normal.
-  { etiqueta: $localize`Archivado`, icono: 'lucideArchive', filtro: FILTROS.archivados, separadorAntes: true },
-  { etiqueta: $localize`Papelera`, icono: 'lucideTrash2', filtro: FILTROS.papelera }
+  { label: $localize`Archivado`, icon: 'lucideArchive', filter: FILTERS.archived, separatorBefore: true },
+  { label: $localize`Papelera`, icon: 'lucideTrash2', filter: FILTERS.trash }
 ];
 
 /**
@@ -87,10 +87,10 @@ export const ENTRADAS_TRANSVERSALES: readonly EntradaDeMenu[] = [
  * las sabe filtrar.** Cuando existan, se añaden; hasta entonces serían justo lo que esta fase
  * viene a quitar.
  */
-export interface VocabularioDeModulo {
-  readonly titulo: string;
-  readonly inicial: string;
-  readonly entradas: readonly EntradaDeMenu[];
+export interface ModuleVocabulary {
+  readonly title: string;
+  readonly initial: string;
+  readonly entries: readonly MenuEntry[];
 }
 
 /**
@@ -102,14 +102,14 @@ export interface VocabularioDeModulo {
  * según dónde estuvieras— y porque el estado en la URL se puede compartir por enlace y responde al
  * botón de atrás.
  */
-export const ENTRADAS_DE_DOCUMENTOS: readonly EntradaDeMenu[] = [
-  { etiqueta: $localize`Todos los documentos`, icono: 'lucideFileText', filtro: null },
-  { etiqueta: $localize`Mis documentos`, icono: 'lucideUser', filtro: null, params: { tab: 'my' } },
-  { etiqueta: $localize`Compartidos conmigo`, icono: 'lucideShare2', filtro: null, params: { tab: 'shared' } },
-  { etiqueta: $localize`Privados`, icono: 'lucideLock', filtro: null, params: { tab: 'private' } },
-  { etiqueta: $localize`Actas de reunión`, icono: 'lucideCalendarDays', filtro: null, params: { tab: 'meeting-notes' } },
-  { etiqueta: $localize`Mis plantillas`, icono: 'lucideLayoutTemplate', filtro: null, params: { tab: 'templates' } },
-  { etiqueta: $localize`Archivados`, icono: 'lucideArchive', filtro: null, params: { tab: 'archived' }, separadorAntes: true }
+export const DOCUMENT_ENTRIES: readonly MenuEntry[] = [
+  { label: $localize`Todos los documentos`, icon: 'lucideFileText', filter: null },
+  { label: $localize`Mis documentos`, icon: 'lucideUser', filter: null, params: { tab: 'my' } },
+  { label: $localize`Compartidos conmigo`, icon: 'lucideShare2', filter: null, params: { tab: 'shared' } },
+  { label: $localize`Privados`, icon: 'lucideLock', filter: null, params: { tab: 'private' } },
+  { label: $localize`Actas de reunión`, icon: 'lucideCalendarDays', filter: null, params: { tab: 'meeting-notes' } },
+  { label: $localize`Mis plantillas`, icon: 'lucideLayoutTemplate', filter: null, params: { tab: 'templates' } },
+  { label: $localize`Archivados`, icon: 'lucideArchive', filter: null, params: { tab: 'archived' }, separatorBefore: true }
 ];
 
 /**
@@ -118,20 +118,20 @@ export const ENTRADAS_DE_DOCUMENTOS: readonly EntradaDeMenu[] = [
  * No filtra nada propio —Inicio no es una lista— así que cada entrada lleva a otro sitio. Son las
  * tres que ya ofrecía el desplegable viejo y que **sí** funcionaban.
  */
-export const ENTRADAS_DE_INICIO: readonly EntradaDeMenu[] = [
-  { etiqueta: $localize`Mis proyectos`, icono: 'lucideFolderKanban', filtro: FILTROS.mios, ruta: '/projects' },
-  { etiqueta: $localize`Mis tareas`, icono: 'lucideSquareCheck', filtro: FILTROS.mios, ruta: '/tasks' },
-  { etiqueta: $localize`Mis tickets`, icono: 'lucideTicket', filtro: FILTROS.mios, ruta: '/tickets' }
+export const HOME_ENTRIES: readonly MenuEntry[] = [
+  { label: $localize`Mis proyectos`, icon: 'lucideFolderKanban', filter: FILTERS.mine, route: '/projects' },
+  { label: $localize`Mis tareas`, icon: 'lucideSquareCheck', filter: FILTERS.mine, route: '/tasks' },
+  { label: $localize`Mis tickets`, icon: 'lucideTicket', filter: FILTERS.mine, route: '/tickets' }
 ];
 
 /**
  * El del panel de control. `type` no es `filter`: son paneles, no listas filtradas, y el
  * parámetro que la pantalla lee se llama así.
  */
-export const ENTRADAS_DE_PANEL: readonly EntradaDeMenu[] = [
-  { etiqueta: $localize`Todos`, icono: 'lucideList', filtro: null, params: { type: 'all' } },
-  { etiqueta: $localize`Mis paneles`, icono: 'lucideUser', filtro: null, params: { type: 'private' } },
-  { etiqueta: $localize`Del equipo`, icono: 'lucideUsers', filtro: null, params: { type: 'public' } }
+export const DASHBOARD_ENTRIES: readonly MenuEntry[] = [
+  { label: $localize`Todos`, icon: 'lucideList', filter: null, params: { type: 'all' } },
+  { label: $localize`Mis paneles`, icon: 'lucideUser', filter: null, params: { type: 'private' } },
+  { label: $localize`Del equipo`, icon: 'lucideUsers', filter: null, params: { type: 'public' } }
 ];
 
 /**
@@ -144,13 +144,13 @@ export const ENTRADAS_DE_PANEL: readonly EntradaDeMenu[] = [
  * Un módulo que no aparezca aquí —uno nuevo— recibe igualmente su panel, con la entrada «Ver todo»
  * hacia su ruta: ver <c>vocabularioDe</c>. Es poco, pero es cierto, y se amplía añadiéndolo aquí.
  */
-export const VOCABULARIO: Readonly<Record<string, VocabularioDeModulo>> = {
-  home: { titulo: $localize`Inicio`, inicial: 'I', entradas: ENTRADAS_DE_INICIO },
-  dashboard: { titulo: $localize`Panel`, inicial: 'P', entradas: ENTRADAS_DE_PANEL },
-  docs: { titulo: $localize`Documentos`, inicial: 'D', entradas: ENTRADAS_DE_DOCUMENTOS },
-  projects: { titulo: $localize`Proyectos`, inicial: 'P', entradas: ENTRADAS_TRANSVERSALES },
-  tasks: { titulo: $localize`Tareas`, inicial: 'T', entradas: ENTRADAS_TRANSVERSALES },
-  tickets: { titulo: $localize`Tickets`, inicial: 'S', entradas: ENTRADAS_TRANSVERSALES }
+export const MENU_VOCABULARY: Readonly<Record<string, ModuleVocabulary>> = {
+  home: { title: $localize`Inicio`, initial: 'I', entries: HOME_ENTRIES },
+  dashboard: { title: $localize`Panel`, initial: 'P', entries: DASHBOARD_ENTRIES },
+  docs: { title: $localize`Documentos`, initial: 'D', entries: DOCUMENT_ENTRIES },
+  projects: { title: $localize`Proyectos`, initial: 'P', entries: SHARED_ENTRIES },
+  tasks: { title: $localize`Tareas`, initial: 'T', entries: SHARED_ENTRIES },
+  tickets: { title: $localize`Tickets`, initial: 'S', entries: SHARED_ENTRIES }
 };
 
 /**
@@ -160,15 +160,15 @@ export const VOCABULARIO: Readonly<Record<string, VocabularioDeModulo>> = {
  * que es lo único que se puede afirmar sin conocerlo. Inventarle «Mis X» o «X del equipo» sería
  * repetir el fallo que quitamos: ofrecer filtros que el servidor no aplica.
  */
-export function vocabularioDe(modulo: string, titulo?: string): VocabularioDeModulo {
-  const conocido = VOCABULARIO[modulo];
-  if (conocido) return conocido;
+export function vocabularyOf(moduleKey: string, title?: string): ModuleVocabulary {
+  const known = MENU_VOCABULARY[moduleKey];
+  if (known) return known;
 
-  const nombre = titulo ?? modulo;
+  const name = title ?? moduleKey;
 
   return {
-    titulo: nombre,
-    inicial: (nombre[0] ?? '·').toUpperCase(),
-    entradas: [{ etiqueta: $localize`Ver todo`, icono: 'lucideList', filtro: null }]
+    title: name,
+    initial: (name[0] ?? '·').toUpperCase(),
+    entries: [{ label: $localize`Ver todo`, icon: 'lucideList', filter: null }]
   };
 }

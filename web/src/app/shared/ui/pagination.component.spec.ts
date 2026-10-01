@@ -14,49 +14,49 @@ import { PaginationComponent, type PaginationState } from './pagination.componen
  */
 describe('PaginationComponent', () => {
   let fixture: ComponentFixture<PaginationComponent>;
-  let componente: PaginationComponent;
+  let component: PaginationComponent;
 
-  const estado = (parcial: Partial<PaginationState> = {}): PaginationState => ({
+  const state = (partial: Partial<PaginationState> = {}): PaginationState => ({
     page: 2,
     pageSize: 25,
     totalCount: 46,
     totalPages: 2,
     hasPreviousPage: true,
     hasNextPage: false,
-    ...parcial
+    ...partial
   });
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({ imports: [PaginationComponent] }).compileComponents();
 
     fixture = TestBed.createComponent(PaginationComponent);
-    componente = fixture.componentInstance;
-    fixture.componentRef.setInput('state', estado());
+    component = fixture.componentInstance;
+    fixture.componentRef.setInput('state', state());
     fixture.detectChanges();
   });
 
   it('dibuja los cuatro iconos de navegación', () => {
-    const iconos = fixture.nativeElement.querySelectorAll('ng-icon svg');
+    const icons = fixture.nativeElement.querySelectorAll('ng-icon svg');
 
-    expect(iconos.length).withContext(
+    expect(icons.length).withContext(
       'primera, anterior, siguiente y última. Sin declararlos, `ng-icon` deja el hueco y salen ' +
       'cuatro cuadros en blanco'
     ).toBe(4);
   });
 
   it('no se pinta con una sola página', () => {
-    fixture.componentRef.setInput('state', estado({ totalPages: 1 }));
+    fixture.componentRef.setInput('state', state({ totalPages: 1 }));
     fixture.detectChanges();
 
     expect(fixture.nativeElement.querySelectorAll('button').length).toBe(0);
   });
 
   it('desactiva lo que no lleva a ninguna parte', () => {
-    const botones = Array.from(
+    const buttons = Array.from(
       fixture.nativeElement.querySelectorAll('button') as NodeListOf<HTMLButtonElement>
     );
 
     // En la última página, «siguiente» y «última» no pueden pulsarse.
-    expect(botones.filter(b => b.disabled).length).toBeGreaterThan(0);
+    expect(buttons.filter(b => b.disabled).length).toBeGreaterThan(0);
   });
 });

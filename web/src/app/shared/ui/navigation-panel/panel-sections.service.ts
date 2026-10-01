@@ -1,19 +1,19 @@
 import { Injectable, signal } from '@angular/core';
 
 /** Un elemento de una sección propia del módulo: un documento favorito, una página reciente. */
-export interface ElementoDeSeccion {
+export interface SectionItem {
   readonly id: string;
-  readonly etiqueta: string;
-  readonly icono?: string;
-  readonly alPulsar: () => void;
+  readonly label: string;
+  readonly icon?: string;
+  readonly onSelect: () => void;
 }
 
 /** Una sección que un módulo añade a su panel, debajo de las entradas de navegación. */
-export interface SeccionDelPanel {
-  readonly titulo: string;
-  readonly elementos: readonly ElementoDeSeccion[];
+export interface PanelSection {
+  readonly title: string;
+  readonly items: readonly SectionItem[];
   /** Qué decir cuando la sección está vacía. Sin esto, la sección no se pinta. */
-  readonly siNoHayNada?: string;
+  readonly fallback?: string;
 }
 
 /**
@@ -32,24 +32,24 @@ export interface SeccionDelPanel {
  * de Documentos el panel de Tareas seguiría enseñando documentos favoritos.
  */
 @Injectable({ providedIn: 'root' })
-export class SeccionesDelPanelService {
-  private readonly porModulo = signal<Record<string, readonly SeccionDelPanel[]>>({});
+export class PanelSectionsService {
+  private readonly byModule = signal<Record<string, readonly PanelSection[]>>({});
 
   /** Las secciones de un módulo, o vacío si no ha registrado ninguna. */
-  readonly de = (modulo: string): readonly SeccionDelPanel[] => this.porModulo()[modulo] ?? [];
+  readonly forModule = (moduleKey: string): readonly PanelSection[] => this.byModule()[moduleKey] ?? [];
 
   /** Señal para que el panel se entere de los cambios. */
-  readonly todas = this.porModulo.asReadonly();
+  readonly all = this.byModule.asReadonly();
 
-  registrar(modulo: string, secciones: readonly SeccionDelPanel[]): void {
-    this.porModulo.update(actuales => ({ ...actuales, [modulo]: secciones }));
+  register(moduleKey: string, sections: readonly PanelSection[]): void {
+    this.byModule.update(current => ({ ...current, [moduleKey]: sections }));
   }
 
-  limpiar(modulo: string): void {
-    this.porModulo.update(actuales => {
-      const copia = { ...actuales };
-      delete copia[modulo];
-      return copia;
+  clear(moduleKey: string): void {
+    this.byModule.update(current => {
+      const copy = { ...current };
+      delete copy[moduleKey];
+      return copy;
     });
   }
 }

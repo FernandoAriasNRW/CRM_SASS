@@ -24,36 +24,36 @@ import { CommandPaletteService, type Command } from './command-palette.service';
   imports: [NgIcon],
   providers: [provideIcons(lucide as unknown as Record<string, string>)],
   template: `
-    @if (svc.abierto()) {
+    @if (svc.isOpen()) {
       <!-- El fondo cierra al pulsar. Es decorativo: la vía accesible para cerrar es
            Escape, que se atiende en el diálogo. Hacerlo enfocable añadiría un punto de
            tabulación sin significado, así que aquí la regla se salta a conciencia. -->
       <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
       <div class="fixed inset-0 z-50 bg-foreground/40 backdrop-blur-sm animate-fade-in"
-           (click)="svc.cerrar()"></div>
+           (click)="svc.close()"></div>
 
       <div class="fixed inset-0 z-50 flex items-start justify-center pt-[12vh] px-4 pointer-events-none">
         <div role="dialog"
              aria-modal="true"
              aria-label="Paleta de comandos"
-             (keydown)="alPulsar($event)"
+             (keydown)="onKeydown($event)"
              class="pointer-events-auto w-full max-w-xl overflow-hidden rounded-xl border border-border
                     bg-card shadow-2xl animate-fade-in">
 
           <div class="flex items-center gap-3 border-b border-border px-4">
             <ng-icon name="lucideSearch" class="text-muted-foreground shrink-0" aria-hidden="true" />
-            <input #campo
+            <input #field
                    type="text"
                    role="combobox"
                    aria-expanded="true"
                    aria-controls="paleta-opciones"
-                   [attr.aria-activedescendant]="idActivo()"
+                   [attr.aria-activedescendant]="activeId()"
                    aria-label="Buscar comandos, proyectos, tareas y tickets"
-                   [value]="svc.consulta()"
-                   (input)="alEscribir($event)"
+                   [value]="svc.query()"
+                   (input)="onInput($event)"
                    placeholder="Buscar o ejecutar una acción…"
                    class="w-full bg-transparent py-4 text-sm outline-none placeholder:text-muted-foreground" />
-            @if (svc.buscando()) {
+            @if (svc.searching()) {
               <span class="text-xs text-muted-foreground shrink-0">Buscando…</span>
             }
             <kbd class="shrink-0 rounded border border-border px-1.5 py-0.5 text-[10px] text-muted-foreground">ESC</kbd>
@@ -61,10 +61,10 @@ import { CommandPaletteService, type Command } from './command-palette.service';
 
           <div id="paleta-opciones" role="listbox" aria-label="Resultados"
                class="max-h-[22rem] overflow-y-auto p-2">
-            @for (grupo of svc.agrupados(); track grupo.clave) {
+            @for (group of svc.grouped(); track group.key) {
               <div class="px-2 pb-1 pt-3 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground"
-                   aria-hidden="true">{{ grupo.nombre }}</div>
-              @for (cmd of grupo.comandos; track cmd.id) {
+                   aria-hidden="true">{{ group.name }}</div>
+              @for (cmd of group.commands; track cmd.id) {
                 <!-- En el patrón combobox + listbox las opciones NO deben ser enfocables:
                      el foco permanece en el campo y aria-activedescendant señala cuál
                      está activa. El teclado se atiende en el diálogo. Hacer enfocable
@@ -72,10 +72,10 @@ import { CommandPaletteService, type Command } from './command-palette.service';
                 <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
                 <div [id]="'cmd-' + cmd.id"
                      role="option"
-                     [attr.aria-selected]="cmd.id === activo()?.id"
-                     (click)="ejecutar(cmd)"
-                     (mouseenter)="resaltar(cmd)"
-                     [class]="clasesFila(cmd)">
+                     [attr.aria-selected]="cmd.id === active()?.id"
+                     (click)="run(cmd)"
+                     (mouseenter)="highlight(cmd)"
+                     [class]="rowClasses(cmd)">
                   <ng-icon [name]="cmd.icon" class="shrink-0 text-muted-foreground" aria-hidden="true" />
                   <span class="flex-1 truncate">{{ cmd.label }}</span>
                   @if (cmd.hint) {
@@ -85,7 +85,7 @@ import { CommandPaletteService, type Command } from './command-palette.service';
               }
             } @empty {
               <p class="px-3 py-8 text-center text-sm text-muted-foreground">
-                Nada coincide con «{{ svc.consulta() }}».
+                Nada coincide con «{{ svc.query() }}».
               </p>
             }
           </div>
@@ -102,16 +102,16 @@ import { CommandPaletteService, type Command } from './command-palette.service';
 })
 export class CommandPaletteComponent {
   protected readonly svc = inject(CommandPaletteService);
-  private readonly campo = viewChild<ElementRef<HTMLInputElement>>('campo');
+  private readonly field = viewChild<ElementRef<HTMLInputElement>>('field');
 
-  private readonly indice = signal(0);
-  private temporizador?: ReturnType<typeof setTimeout>;
+  private readonly index = signal(0);
+  private timer?: ReturnType<typeof setTimeout>;
 
-  protected readonly activo = computed<Command | undefined>(
-    () => this.svc.resultados()[this.indice()]);
+  protected readonly active = computed<Command | undefined>(
+    () => this.svc.results()[this.index()]);
 
-  protected readonly idActivo = computed(() => {
-    const a = this.activo();
+  protected readonly activeId = computed(() => {
+    const a = this.active();
     return a ? `cmd-${a.id}` : null;
   });
 
@@ -119,77 +119,77 @@ export class CommandPaletteComponent {
     // Al abrirse, el foco va al campo. Sin esto habría que hacer clic para escribir, que
     // es justo lo que el paletón evita.
     effect(() => {
-      if (this.svc.abierto()) {
-        this.indice.set(0);
-        queueMicrotask(() => this.campo()?.nativeElement.focus());
+      if (this.svc.isOpen()) {
+        this.index.set(0);
+        queueMicrotask(() => this.field()?.nativeElement.focus());
       }
     });
   }
 
-  protected alEscribir(evento: Event): void {
-    const valor = (evento.target as HTMLInputElement).value;
-    this.svc.consulta.set(valor);
-    this.indice.set(0);
+  protected onInput(event: Event): void {
+    const value = (event.target as HTMLInputElement).value;
+    this.svc.query.set(value);
+    this.index.set(0);
 
     // Los estáticos ya se filtraron en memoria al cambiar la señal. Sólo la ida al
     // servidor se retrasa, para no lanzar una petición por tecla.
-    clearTimeout(this.temporizador);
-    this.temporizador = setTimeout(() => this.svc.buscarEnServidor(valor), 200);
+    clearTimeout(this.timer);
+    this.timer = setTimeout(() => this.svc.searchServer(value), 200);
   }
 
-  protected alPulsar(evento: KeyboardEvent): void {
-    const total = this.svc.resultados().length;
+  protected onKeydown(event: KeyboardEvent): void {
+    const total = this.svc.results().length;
 
-    switch (evento.key) {
+    switch (event.key) {
       case 'ArrowDown':
-        evento.preventDefault();
+        event.preventDefault();
         // Circular: desde el último se vuelve al primero, que es lo que se espera al
         // recorrer una lista corta sin mirar dónde termina.
-        this.indice.set(total ? (this.indice() + 1) % total : 0);
-        this.desplazarAlActivo();
+        this.index.set(total ? (this.index() + 1) % total : 0);
+        this.scrollToActive();
         break;
 
       case 'ArrowUp':
-        evento.preventDefault();
-        this.indice.set(total ? (this.indice() - 1 + total) % total : 0);
-        this.desplazarAlActivo();
+        event.preventDefault();
+        this.index.set(total ? (this.index() - 1 + total) % total : 0);
+        this.scrollToActive();
         break;
 
       case 'Enter': {
-        evento.preventDefault();
-        const cmd = this.activo();
-        if (cmd) this.ejecutar(cmd);
+        event.preventDefault();
+        const cmd = this.active();
+        if (cmd) this.run(cmd);
         break;
       }
 
       case 'Escape':
-        evento.preventDefault();
-        this.svc.cerrar();
+        event.preventDefault();
+        this.svc.close();
         break;
     }
   }
 
-  protected ejecutar(cmd: Command): void {
-    this.svc.cerrar();
+  protected run(cmd: Command): void {
+    this.svc.close();
     cmd.run();
   }
 
-  protected resaltar(cmd: Command): void {
-    const i = this.svc.resultados().findIndex(c => c.id === cmd.id);
-    if (i >= 0) this.indice.set(i);
+  protected highlight(cmd: Command): void {
+    const i = this.svc.results().findIndex(c => c.id === cmd.id);
+    if (i >= 0) this.index.set(i);
   }
 
-  protected clasesFila(cmd: Command): string {
+  protected rowClasses(cmd: Command): string {
     const base = 'flex cursor-pointer items-center gap-3 rounded-md px-3 py-2 text-sm';
-    return cmd.id === this.activo()?.id
+    return cmd.id === this.active()?.id
       ? `${base} bg-accent text-accent-foreground`
       : `${base} text-foreground`;
   }
 
   /** Mantiene visible la opción resaltada al recorrer con el teclado. */
-  private desplazarAlActivo(): void {
+  private scrollToActive(): void {
     queueMicrotask(() => {
-      const id = this.idActivo();
+      const id = this.activeId();
       if (id) document.getElementById(id)?.scrollIntoView({ block: 'nearest' });
     });
   }

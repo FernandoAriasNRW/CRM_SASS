@@ -9,7 +9,7 @@ import {
 } from '@ng-icons/lucide';
 
 import { ToastService } from '../../shared/services/toast.service';
-import { MenuContextualComponent, type OpcionDelMenu } from '../../shared/ui/menu-contextual.component';
+import { ContextMenuComponent, type MenuOption } from '../../shared/ui/context-menu.component';
 import { ExpandedDayComponent } from './expanded-day.component';
 import { EventDrawerComponent } from './event-drawer.component';
 import {
@@ -40,7 +40,7 @@ interface MonthDay {
 @Component({
   selector: 'app-calendar',
   standalone: true,
-  imports: [DatePipe, NgIcon, MenuContextualComponent, ExpandedDayComponent, EventDrawerComponent],
+  imports: [DatePipe, NgIcon, ContextMenuComponent, ExpandedDayComponent, EventDrawerComponent],
   viewProviders: [provideIcons({
     lucideBan, lucideCalendarDays, lucideCalendarPlus, lucideCalendarRange, lucideChevronLeft,
     lucideChevronRight, lucideClipboardList, lucideEye, lucideFolderCheck, lucideLink,
@@ -53,7 +53,7 @@ export class CalendarComponent implements OnInit {
   private readonly toast = inject(ToastService);
   private readonly router = inject(Router);
 
-  private readonly menu = viewChild.required(MenuContextualComponent);
+  private readonly menu = viewChild.required(ContextMenuComponent);
 
   readonly events = signal<CalendarEvent[]>([]);
   readonly currentMonth = signal(new Date());
@@ -118,31 +118,31 @@ export class CalendarComponent implements OnInit {
   });
 
   /** Lo que ofrece el menú del botón derecho. Depende de si se pulsó sobre un evento. */
-  readonly menuOptions = computed<OpcionDelMenu[]>(() => {
+  readonly menuOptions = computed<MenuOption[]>(() => {
     const target = this.menuTarget();
     const calendarEvent = target?.calendarEvent ?? null;
 
     if (calendarEvent) {
       return [
-        { clave: 'edit', etiqueta: $localize`Modificar`, icono: 'lucidePencil' },
-        { clave: 'link', etiqueta: $localize`Enlazar con tarea, ticket o proyecto`, icono: 'lucideLink' },
+        { key: 'edit', label: $localize`Modificar`, icon: 'lucidePencil' },
+        { key: 'link', label: $localize`Enlazar con tarea, ticket o proyecto`, icon: 'lucideLink' },
         calendarEvent.cancelledAtUtc
-          ? { clave: 'reactivate', etiqueta: $localize`Deshacer la anulación`, icono: 'lucideRotateCcw', separadorAntes: true }
-          : { clave: 'cancel', etiqueta: $localize`Cancelar el evento`, icono: 'lucideBan', separadorAntes: true },
-        { clave: 'trash', etiqueta: $localize`Enviar a la papelera`, icono: 'lucideTrash2', destructiva: true }
+          ? { key: 'reactivate', label: $localize`Deshacer la anulación`, icon: 'lucideRotateCcw', separatorBefore: true }
+          : { key: 'cancel', label: $localize`Cancelar el evento`, icon: 'lucideBan', separatorBefore: true },
+        { key: 'trash', label: $localize`Enviar a la papelera`, icon: 'lucideTrash2', destructive: true }
       ];
     }
 
     // Las del día. Es la lista que se pidió, en el orden en que se pidió.
     return [
-      { clave: 'create', etiqueta: $localize`Crear nuevo evento`, icono: 'lucideCalendarPlus' },
-      { clave: 'view-events', etiqueta: $localize`Ver eventos`, icono: 'lucideEye' },
-      { clave: 'agenda', etiqueta: $localize`Ver agenda del día`, icono: 'lucideCalendarRange' },
-      { clave: 'tasks', etiqueta: $localize`Tareas para entregar hoy`, icono: 'lucideSquareCheck', separadorAntes: true },
-      { clave: 'tickets', etiqueta: $localize`Tickets del día`, icono: 'lucideTicket' },
-      { clave: 'projects', etiqueta: $localize`Proyectos a finalizar hoy`, icono: 'lucideFolderCheck' },
-      { clave: 'settings', etiqueta: $localize`Ajustes`, icono: 'lucideSettings', separadorAntes: true },
-      { clave: 'trash-day', etiqueta: $localize`Enviar a la papelera los eventos`, icono: 'lucideTrash2', destructiva: true }
+      { key: 'create', label: $localize`Crear nuevo evento`, icon: 'lucideCalendarPlus' },
+      { key: 'view-events', label: $localize`Ver eventos`, icon: 'lucideEye' },
+      { key: 'agenda', label: $localize`Ver agenda del día`, icon: 'lucideCalendarRange' },
+      { key: 'tasks', label: $localize`Tareas para entregar hoy`, icon: 'lucideSquareCheck', separatorBefore: true },
+      { key: 'tickets', label: $localize`Tickets del día`, icon: 'lucideTicket' },
+      { key: 'projects', label: $localize`Proyectos a finalizar hoy`, icon: 'lucideFolderCheck' },
+      { key: 'settings', label: $localize`Ajustes`, icon: 'lucideSettings', separatorBefore: true },
+      { key: 'trash-day', label: $localize`Enviar a la papelera los eventos`, icon: 'lucideTrash2', destructive: true }
     ];
   });
 
@@ -247,13 +247,13 @@ export class CalendarComponent implements OnInit {
 
   onDayContextMenu(mouseEvent: MouseEvent, day: Date): void {
     this.menuTarget.set({ day, calendarEvent: null });
-    this.menu().abrirEn(mouseEvent);
+    this.menu().openAt(mouseEvent);
   }
 
   onEventContextMenu(mouseEvent: MouseEvent, calendarEvent: CalendarEvent, day: Date): void {
     mouseEvent.stopPropagation();
     this.menuTarget.set({ day, calendarEvent });
-    this.menu().abrirEn(mouseEvent);
+    this.menu().openAt(mouseEvent);
   }
 
   onItemContextMenu({ mouseEvent, item }: { mouseEvent: MouseEvent; item: AgendaItem }): void {
@@ -265,7 +265,7 @@ export class CalendarComponent implements OnInit {
       calendarEvent: matchingEvent
     });
 
-    this.menu().abrirEn(mouseEvent);
+    this.menu().openAt(mouseEvent);
   }
 
   onHourContextMenu({ mouseEvent, hour }: { mouseEvent: MouseEvent; hour: number }): void {
@@ -276,7 +276,7 @@ export class CalendarComponent implements OnInit {
     moment.setHours(hour);
 
     this.menuTarget.set({ day: moment, calendarEvent: null });
-    this.menu().abrirEn(mouseEvent);
+    this.menu().openAt(mouseEvent);
   }
 
   async onMenuChoice(key: string): Promise<void> {

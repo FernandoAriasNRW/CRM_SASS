@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { BarraDeVistasComponent, type VistaIntegrada } from './barra-de-vistas.component';
+import { ViewTabsComponent, type BuiltInView } from './view-tabs.component';
 import type { SavedView } from '../../services/views.service';
 
 /**
@@ -10,22 +10,22 @@ import type { SavedView } from '../../services/views.service';
  * carga. Y como nadie llamaba a borrar vistas, no había vuelta atrás.
  */
 describe('BarraDeVistasComponent', () => {
-  let fixture: ComponentFixture<BarraDeVistasComponent>;
-  let componente: BarraDeVistasComponent;
+  let fixture: ComponentFixture<ViewTabsComponent>;
+  let component: ViewTabsComponent;
 
-  const INTEGRADAS: VistaIntegrada[] = [
-    { clave: 'board', etiqueta: 'Tablero', icono: 'lucideLayoutDashboard' },
-    { clave: 'list', etiqueta: 'Lista', icono: 'lucideList' },
-    { clave: 'gantt', etiqueta: 'Gantt', icono: 'lucideChartGantt' }
+  const BUILT_IN: BuiltInView[] = [
+    { key: 'board', label: 'Tablero', icon: 'lucideLayoutDashboard' },
+    { key: 'list', label: 'Lista', icon: 'lucideList' },
+    { key: 'gantt', label: 'Gantt', icon: 'lucideChartGantt' }
   ];
 
-  const vista = (id: string, nombre: string, tipo = 'list'): SavedView => ({
+  const view = (id: string, name: string, type = 'list'): SavedView => ({
     id,
     userId: 'u1',
     tenantId: 't1',
     moduleName: 'Tickets',
-    viewName: nombre,
-    stateJson: JSON.stringify({ viewType: tipo }),
+    viewName: name,
+    stateJson: JSON.stringify({ viewType: type }),
     isDefault: false
   });
 
@@ -36,13 +36,13 @@ describe('BarraDeVistasComponent', () => {
       .filter(t => t.length > 0);
 
   beforeEach(async () => {
-    await TestBed.configureTestingModule({ imports: [BarraDeVistasComponent] }).compileComponents();
+    await TestBed.configureTestingModule({ imports: [ViewTabsComponent] }).compileComponents();
 
-    fixture = TestBed.createComponent(BarraDeVistasComponent);
-    componente = fixture.componentInstance;
-    fixture.componentRef.setInput('integradas', INTEGRADAS);
-    fixture.componentRef.setInput('modo', 'board');
-    fixture.componentRef.setInput('guardadas', []);
+    fixture = TestBed.createComponent(ViewTabsComponent);
+    component = fixture.componentInstance;
+    fixture.componentRef.setInput('builtIn', BUILT_IN);
+    fixture.componentRef.setInput('mode', 'board');
+    fixture.componentRef.setInput('saved', []);
     fixture.detectChanges();
   });
 
@@ -55,7 +55,7 @@ describe('BarraDeVistasComponent', () => {
    * «enseñaba las pestañas» —mientras no hubiera vistas guardadas—.
    */
   it('sigue enseñándolas cuando hay vistas guardadas', () => {
-    fixture.componentRef.setInput('guardadas', [vista('v1', 'Urgentes')]);
+    fixture.componentRef.setInput('saved', [view('v1', 'Urgentes')]);
     fixture.detectChanges();
 
     expect(pestanas()).toContain('Tablero');
@@ -65,77 +65,77 @@ describe('BarraDeVistasComponent', () => {
   });
 
   it('marca la de fábrica activa sólo si no hay una guardada puesta', () => {
-    fixture.componentRef.setInput('guardadas', [vista('v1', 'Urgentes')]);
-    fixture.componentRef.setInput('vistaActivaId', 'v1');
+    fixture.componentRef.setInput('saved', [view('v1', 'Urgentes')]);
+    fixture.componentRef.setInput('activeViewId', 'v1');
     fixture.detectChanges();
 
-    const tablero = Array.from(
+    const board = Array.from(
       fixture.nativeElement.querySelectorAll('button') as NodeListOf<HTMLElement>
     ).find(b => b.textContent?.trim() === 'Tablero')!;
 
-    expect(tablero.className).withContext(
+    expect(board.className).withContext(
       'con una vista guardada puesta, la pestaña de fábrica no puede seguir marcada: serían dos ' +
       'pestañas activas a la vez diciendo cosas distintas'
     ).toContain('border-transparent');
   });
 
   it('el icono de una guardada sale de su estado, no de su nombre', () => {
-    expect(componente.iconoDe(vista('v1', 'Lo que sea', 'gantt'))).toBe('lucideChartGantt');
-    expect(componente.iconoDe(vista('v2', 'Tablero de Ana', 'list'))).toBe('lucideList');
+    expect(component.iconOf(view('v1', 'Lo que sea', 'gantt'))).toBe('lucideChartGantt');
+    expect(component.iconOf(view('v2', 'Tablero de Ana', 'list'))).toBe('lucideList');
   });
 
   /** Un estado ilegible no puede tumbar la barra: si no, no se podría ni borrar la vista mala. */
   it('aguanta una vista con el estado corrupto', () => {
-    const rota = { ...vista('v3', 'Rota'), stateJson: 'esto no es json' };
-    expect(() => componente.iconoDe(rota)).not.toThrow();
-    expect(componente.iconoDe(rota)).toBe('lucideList');
+    const broken = { ...view('v3', 'Rota'), stateJson: 'esto no es json' };
+    expect(() => component.iconOf(broken)).not.toThrow();
+    expect(component.iconOf(broken)).toBe('lucideList');
   });
 
   it('propone guardar la forma que se está viendo', () => {
-    fixture.componentRef.setInput('modo', 'gantt');
+    fixture.componentRef.setInput('mode', 'gantt');
     fixture.detectChanges();
 
-    componente.empezarCreacion();
-    expect(componente.tipoNuevo).withContext(
+    component.startCreate();
+    expect(component.newType).withContext(
       'quien pulsa «Vista» estando en el Gantt casi siempre quiere guardar ese Gantt'
     ).toBe('gantt');
   });
 
   it('no crea una vista sin nombre', () => {
-    const creadas: unknown[] = [];
-    componente.crear.subscribe(v => creadas.push(v));
+    const created: unknown[] = [];
+    component.create.subscribe(v => created.push(v));
 
-    componente.empezarCreacion();
-    componente.nombreNuevo = '   ';
-    componente.confirmarCreacion();
+    component.startCreate();
+    component.newName = '   ';
+    component.confirmCreate();
 
-    expect(creadas).toEqual([]);
-    expect(componente.creando()).withContext('el campo sigue abierto para poder escribir').toBeTrue();
+    expect(created).toEqual([]);
+    expect(component.creating()).withContext('el campo sigue abierto para poder escribir').toBeTrue();
   });
 
   it('crea la vista con el nombre recortado', () => {
-    const creadas: { nombre: string; tipo: string }[] = [];
-    componente.crear.subscribe(v => creadas.push(v));
+    const created: { name: string; type: string }[] = [];
+    component.create.subscribe(v => created.push(v));
 
-    componente.empezarCreacion();
-    componente.nombreNuevo = '  Urgentes de hoy  ';
-    componente.tipoNuevo = 'list';
-    componente.confirmarCreacion();
+    component.startCreate();
+    component.newName = '  Urgentes de hoy  ';
+    component.newType = 'list';
+    component.confirmCreate();
 
-    expect(creadas).toEqual([{ nombre: 'Urgentes de hoy', tipo: 'list' }]);
-    expect(componente.creando()).toBeFalse();
+    expect(created).toEqual([{ name: 'Urgentes de hoy', type: 'list' }]);
+    expect(component.creating()).toBeFalse();
   });
 
   it('pide confirmación antes de borrar, y no borra si se dice que no', () => {
-    const borradas: SavedView[] = [];
-    componente.borrar.subscribe(v => borradas.push(v));
+    const deleted: SavedView[] = [];
+    component.remove.subscribe(v => deleted.push(v));
 
     spyOn(window, 'confirm').and.returnValue(false);
-    componente.pedirBorrado(vista('v1', 'Urgentes'));
-    expect(borradas).toEqual([]);
+    component.requestDelete(view('v1', 'Urgentes'));
+    expect(deleted).toEqual([]);
 
     (window.confirm as jasmine.Spy).and.returnValue(true);
-    componente.pedirBorrado(vista('v1', 'Urgentes'));
-    expect(borradas.length).toBe(1);
+    component.requestDelete(view('v1', 'Urgentes'));
+    expect(deleted.length).toBe(1);
   });
 });

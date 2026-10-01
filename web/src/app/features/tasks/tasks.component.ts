@@ -23,7 +23,7 @@ import type { DependencyEdge } from './gantt';
 import { DataTableComponent, ColumnDef, TableState, type CellEdit } from '../../shared/ui/data-table/data-table.component';
 import { FilterField } from '../../shared/ui/data-table/advanced-filters.component';
 import { ViewsService, SavedView } from '../../shared/services/views.service';
-import { BarraDeVistasComponent, type VistaIntegrada } from '../../shared/ui/barra-de-vistas/barra-de-vistas.component';
+import { ViewTabsComponent, type BuiltInView } from '../../shared/ui/view-tabs/view-tabs.component';
 import { TableColumnService } from '../../shared/services/table-column.service';
 import { HierarchySignalStore } from '../../core/hierarchy-signal.store';
 import { ClickableDirective } from '../../shared/directives/clickable.directive';
@@ -77,7 +77,7 @@ const STATUS_KEYS = COLUMN_DEFS.map(c => c.key);
 @Component({
   selector: 'app-tasks',
   standalone: true,
-  imports: [ClickableDirective, FormsModule, BadgeComponent, ButtonComponent, NgIconComponent, DragDropModule, TaskCreateModalComponent, TaskDetailPanelComponent, DataTableComponent, SkeletonListComponent, EmptyInlineComponent, GanttComponent, WorkloadComponent, BarraDeVistasComponent],
+  imports: [ClickableDirective, FormsModule, BadgeComponent, ButtonComponent, NgIconComponent, DragDropModule, TaskCreateModalComponent, TaskDetailPanelComponent, DataTableComponent, SkeletonListComponent, EmptyInlineComponent, GanttComponent, WorkloadComponent, ViewTabsComponent],
   viewProviders: [provideIcons({
     lucideRefreshCw, lucidePlus, lucideClock,
     lucideList, lucideLayoutDashboard, lucideFilter, lucideSave,
@@ -98,18 +98,18 @@ export class TasksComponent implements OnInit {
 
   readonly showModal = signal(false);
   readonly selectedTask = signal<TaskItem | null>(null);
-  readonly viewMode = signal<'board' | 'list' | 'gantt' | 'carga'>('board');
+  readonly viewMode = signal<'board' | 'list' | 'gantt' | 'workload'>('board');
 
   /**
    * Las cuatro formas de ver que este módulo sabe pintar. Es la lista que dibuja las pestañas y
    * también la que valida qué modo puede ponerse: si estuviera escrita dos veces, guardar una
    * vista de Gantt acabaría abriendo un tablero.
    */
-  readonly BUILT_IN_VIEWS: VistaIntegrada[] = [
-    { clave: 'board', etiqueta: $localize`Tablero`, icono: 'lucideLayoutDashboard' },
-    { clave: 'list', etiqueta: $localize`Lista`, icono: 'lucideList' },
-    { clave: 'gantt', etiqueta: $localize`Gantt`, icono: 'lucideChartGantt' },
-    { clave: 'carga', etiqueta: $localize`Carga`, icono: 'lucideChartColumn' }
+  readonly BUILT_IN_VIEWS: BuiltInView[] = [
+    { key: 'board', label: $localize`Tablero`, icon: 'lucideLayoutDashboard' },
+    { key: 'list', label: $localize`Lista`, icon: 'lucideList' },
+    { key: 'gantt', label: $localize`Gantt`, icon: 'lucideChartGantt' },
+    { key: 'workload', label: $localize`Carga`, icon: 'lucideChartColumn' }
   ];
 
   /**
@@ -300,7 +300,7 @@ export class TasksComponent implements OnInit {
     this.activeViewId.set(null);
   }
 
-  createView({ nombre, tipo }: { nombre: string; tipo: string }): void {
+  createView({ name: nombre, type: tipo }: { name: string; type: string }): void {
     this.applyMode(tipo);
 
     const status = { ...this.tableState(), viewType: tipo };
@@ -358,7 +358,7 @@ export class TasksComponent implements OnInit {
    * desincronicen.
    */
   private applyMode(mode: string): void {
-    if (!this.BUILT_IN_VIEWS.some(v => v.clave === mode)) return;
+    if (!this.BUILT_IN_VIEWS.some(v => v.key === mode)) return;
 
     // El Gantt no es sólo un modo: la primera vez tiene que pedir el grafo de dependencias, o
     // sale sin flechas. Se pasa por `showGantt` en lugar de poner la señal a mano, que es lo que
@@ -368,7 +368,7 @@ export class TasksComponent implements OnInit {
       return;
     }
 
-    this.viewMode.set(mode as 'board' | 'list' | 'carga');
+    this.viewMode.set(mode as 'board' | 'list' | 'workload');
   }
 
   onTableStateChange(state: TableState): void {
@@ -554,7 +554,7 @@ export class TasksComponent implements OnInit {
    * El aviso de error dice qué tarea y a qué valor ha vuelto. Un «no se pudo guardar» a secas
    * obliga a adivinar cuál de las veinticinco filas es.
    */
-  onCellEdit({ item, key, valor: value }: CellEdit<TaskItem>): void {
+  onCellEdit({ item, key, value }: CellEdit<TaskItem>): void {
     const previous = (item as unknown as Record<string, unknown>)[key];
     const updated = key === 'estimatedHours' ? Number(value) : value;
 

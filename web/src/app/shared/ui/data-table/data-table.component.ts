@@ -27,7 +27,7 @@ export interface ColumnDef {
 export interface CellEdit<T> {
   item: T;
   key: string;
-  valor: string;
+  value: string;
 }
 
 export interface TableState {
@@ -166,7 +166,7 @@ export interface TableState {
                   <tr (click)="rowClick.emit(item)" class="hover:bg-muted/80 dark:hover:bg-muted/50 transition-colors group cursor-pointer">
                     @for (col of visibleColumns(); track col) {
                       <td class="px-4 py-2 whitespace-nowrap border-b border-border dark:border-border/50">
-                        @if (editandoEsta(item, col)) {
+                        @if (isEditingThis(item, col)) {
                           <!-- El clic se para en el propio control, y no en un envoltorio: si
                                subiera a la fila abriría el panel de detalle encima de lo que se
                                está escribiendo. Un div con (click) sería un elemento interactivo
@@ -174,24 +174,24 @@ export interface TableState {
                                Ojo: esta plantilla es una cadena con acentos graves, así que no se
                                pueden usar aquí ni para citar código. -->
                           @if (col.editor === 'select') {
-                            <select [ngModel]="valorTexto(item, col)"
-                                    (ngModelChange)="confirmarEdicion(item, col, $event)"
+                            <select [ngModel]="textValue(item, col)"
+                                    (ngModelChange)="confirmEdit(item, col, $event)"
                                     (click)="$event.stopPropagation()"
-                                    (keydown.escape)="cancelarEdicion()"
+                                    (keydown.escape)="cancelEdit()"
                                     [attr.aria-label]="col.label"
                                     class="w-full bg-transparent border border-border rounded-md px-2 py-1 text-[13px] outline-none focus:ring-1 focus:ring-ring">
-                              @for (opcion of col.options ?? []; track opcion.value) {
-                                <option [value]="opcion.value">{{ opcion.label }}</option>
+                              @for (option of col.options ?? []; track option.value) {
+                                <option [value]="option.value">{{ option.label }}</option>
                               }
                             </select>
                           } @else {
                             <input [type]="col.editor === 'date' ? 'date' : 'text'"
                                    [inputMode]="col.editor === 'number' ? 'decimal' : 'text'"
-                                   [ngModel]="valorTexto(item, col)"
-                                   (blur)="confirmarEdicion(item, col, $any($event.target).value)"
+                                   [ngModel]="textValue(item, col)"
+                                   (blur)="confirmEdit(item, col, $any($event.target).value)"
                                    (click)="$event.stopPropagation()"
                                    (keydown.enter)="$any($event.target).blur()"
-                                   (keydown.escape)="cancelarEdicion()"
+                                   (keydown.escape)="cancelEdit()"
                                    [attr.aria-label]="col.label"
                                    class="w-full bg-transparent border border-border rounded-md px-2 py-1 text-[13px] outline-none focus:ring-1 focus:ring-ring" />
                           }
@@ -199,7 +199,7 @@ export interface TableState {
                           <ng-container *ngTemplateOutlet="col.template; context: { $implicit: item, column: col }"></ng-container>
                         } @else {
                           @if (col.type === 'user') {
-                            <app-user-avatar [userId]="valorTexto(item, col)"></app-user-avatar>
+                            <app-user-avatar [userId]="textValue(item, col)"></app-user-avatar>
                           } @else {
                             <span class="text-[13px] text-muted-foreground">
                               {{ formatValue(item, col) }}
@@ -207,13 +207,13 @@ export interface TableState {
                           }
                         }
 
-                        @if (sePuedeEditar(col) && !editandoEsta(item, col)) {
+                        @if (canEdit(col) && !isEditingThis(item, col)) {
                           <!-- El disparador de la edición va aparte del contenido, y no envolviéndolo,
                                porque las columnas con plantilla propia ya traen sus propios controles
                                dentro y anidar botones no es válido. -->
                           <button type="button"
-                                  (click)="$event.stopPropagation(); empezarEdicion(item, col)"
-                                  [attr.aria-label]="etiquetaDeEdicion(col)"
+                                  (click)="$event.stopPropagation(); startEdit(item, col)"
+                                  [attr.aria-label]="editLabel(col)"
                                   class="ml-1 align-middle opacity-0 group-hover:opacity-100 focus:opacity-100 text-muted-foreground hover:text-primary transition-opacity">
                             <ng-icon name="lucidePencil" class="w-3 h-3"></ng-icon>
                           </button>
@@ -302,7 +302,7 @@ export class DataTableComponent<T extends object = Record<string, unknown>> impl
   @Output() cellEdit = new EventEmitter<CellEdit<T>>();
 
   /** La celda que se está editando, o `null`. Sólo puede haber una. */
-  readonly editando = signal<{ fila: T; key: string } | null>(null);
+  readonly editing = signal<{ row: T; key: string } | null>(null);
 
   state = signal<TableState>({
     page: 1,
@@ -479,44 +479,44 @@ export class DataTableComponent<T extends object = Record<string, unknown>> impl
   }
 
   /** Valor de una columna como cadena, para plantillas que esperan texto. */
-  valorTexto(item: T, col: ColumnDef): string {
+  textValue(item: T, col: ColumnDef): string {
     const val = (item as Record<string, unknown>)[col.key];
     if (val == null) return '';
 
-    const texto = String(val);
+    const text = String(val);
 
     // `input type="date"` sólo entiende `aaaa-mm-dd`. Con la marca de tiempo entera se queda
     // vacío, sin decir por qué, y parece que la tarea no tiene fecha.
-    if (col.editor === 'date') return texto.slice(0, 10);
+    if (col.editor === 'date') return text.slice(0, 10);
 
-    return texto;
+    return text;
   }
 
   /**
    * Una columna se puede editar si lo pide y, cuando es un desplegable, si trae opciones.
    * Un `select` vacío sería un control que no deja elegir nada.
    */
-  sePuedeEditar(col: ColumnDef): boolean {
+  canEdit(col: ColumnDef): boolean {
     if (!col.editable) return false;
     return col.editor !== 'select' || (col.options?.length ?? 0) > 0;
   }
 
-  editandoEsta(item: T, col: ColumnDef): boolean {
-    const actual = this.editando();
-    return !!actual && actual.fila === item && actual.key === col.key;
+  isEditingThis(item: T, col: ColumnDef): boolean {
+    const actual = this.editing();
+    return !!actual && actual.row === item && actual.key === col.key;
   }
 
-  etiquetaDeEdicion(col: ColumnDef): string {
+  editLabel(col: ColumnDef): string {
     return $localize`Editar ${col.label}`;
   }
 
-  empezarEdicion(item: T, col: ColumnDef): void {
-    if (!this.sePuedeEditar(col)) return;
-    this.editando.set({ fila: item, key: col.key });
+  startEdit(item: T, col: ColumnDef): void {
+    if (!this.canEdit(col)) return;
+    this.editing.set({ row: item, key: col.key });
   }
 
-  cancelarEdicion(): void {
-    this.editando.set(null);
+  cancelEdit(): void {
+    this.editing.set(null);
   }
 
   /**
@@ -529,15 +529,15 @@ export class DataTableComponent<T extends object = Record<string, unknown>> impl
    * Un valor idéntico tampoco se emite: guardar lo mismo gasta una petición y, si el servidor
    * responde tarde, hace parpadear una celda que nadie tocó.
    */
-  confirmarEdicion(item: T, col: ColumnDef, valor: string): void {
-    if (!this.editandoEsta(item, col)) return;
+  confirmEdit(item: T, col: ColumnDef, value: string): void {
+    if (!this.isEditingThis(item, col)) return;
 
-    this.editando.set(null);
+    this.editing.set(null);
 
-    const anterior = this.valorTexto(item, col);
-    if (valor === anterior) return;
+    const previous = this.textValue(item, col);
+    if (value === previous) return;
 
-    this.cellEdit.emit({ item, key: col.key, valor });
+    this.cellEdit.emit({ item, key: col.key, value });
   }
 
   formatValue(item: T, col: ColumnDef): string {

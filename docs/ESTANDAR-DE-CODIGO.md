@@ -399,7 +399,7 @@ suites completas en verde, catálogo i18n re-extraído al final.
 | 8b ✅ | **Automations + Webhook + Tags** (backend, con las reglas guardadas) | 380 identificadores; migración con renombrado y datos |
 | 8c ✅ | **Frontend de campos personalizados y automatizaciones** | 130 identificadores |
 | 9a ✅ | **Frontend transversal: `core/` y utilidades de `shared/`** (errores, avisos, idioma, tema) | Lo que usa toda la aplicación |
-| 9b | **Componentes de `shared/ui`** (panel de navegación, menú contextual…) | El grueso del frontend compartido |
+| 9b ✅ | **Componentes de `shared/ui`** (panel de navegación, menú contextual…) | 180 identificadores y seis ficheros |
 | 9c | **Lo que quede en pantallas y e2e** | Restos que no arrastraron los PRs anteriores |
 | 10 | **Nombres de las pruebas** | Son frases, no identificadores de producción; traducirlas dentro de cada bloque ensucia el diff de revisión |
 | 11 | **`TimeProvider` en todos los módulos** | Cambiar el reloj módulo a módulo deja dos formas de dar la hora conviviendo; va de una vez, al final |
@@ -866,6 +866,25 @@ cambiarlo exige migrar ese contenido. Por eso fue un bloque aparte, el 5c.
   `'oscuro'` o `'sistema'` bajo `crm.tema`, y la cookie del idioma igual. Cambiarlos haría que
   cada persona perdiera su preferencia la próxima vez que entrara.
 - Mismos textos y mismos mensajes i18n que en `main`.
+
+### Hecho en el bloque 9b (componentes de `shared/ui`)
+
+- Tres componentes compartidos con su API: `MenuContextualComponent` → `ContextMenuComponent`
+  (`app-context-menu`, opciones `MenuOption` con `key`, `label`, `icon`, `destructive`,
+  `disabled`…), `BarraDeVistasComponent` → `ViewTabsComponent` (`app-view-tabs`) y
+  `PanelDeNavegacionComponent` → `NavigationPanelComponent` (`app-navigation-panel`), con
+  `PanelSectionsService` y el vocabulario del menú (`menu-vocabulary.ts`). Además, la paleta de
+  comandos, la tabla de datos, los comentarios y el componente raíz.
+- Entradas y salidas renombradas a mano en los padres (calendario, tareas, tickets, raíz), y
+  comprobadas con un script: cada `[entrada]` y `(salida)` que usa un padre existe en el hijo.
+- **La vista de carga de trabajo pasa de `'carga'` a `'workload'`.** Las vistas guardadas lo
+  recuerdan en su `StateJson`, así que va con la migración `WorkloadViewTypeToEnglish` (Identity),
+  que sólo cambia el valor detrás de `"viewType"`. Probada ida y vuelta.
+- **Lo que cazaron las e2e:** la herramienta renombró las referencias de plantilla (`#campo`) pero
+  no los `viewChild('campo')` que las buscan; la paleta de comandos dejaba de recibir lo que se
+  tecleaba. Queda en la skill.
+- Siguen en español, para la 9c, el parámetro de URL `?nuevo=1` (lo leen tres pantallas) y los
+  `id` de HTML del personalizador del menú.
 
 ---
 

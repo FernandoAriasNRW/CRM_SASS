@@ -14,10 +14,10 @@ import type { SavedView } from '../../services/views.service';
  * Se declaran con clave e icono en cada módulo porque no todos tienen las mismas: tickets tiene
  * dos y tareas cuatro.
  */
-export interface VistaIntegrada {
-  clave: string;
-  etiqueta: string;
-  icono: string;
+export interface BuiltInView {
+  key: string;
+  label: string;
+  icon: string;
 }
 
 /**
@@ -39,7 +39,7 @@ export interface VistaIntegrada {
  * una vista no hace nada y tampoco avisa.
  */
 @Component({
-  selector: 'app-barra-de-vistas',
+  selector: 'app-view-tabs',
   standalone: true,
   imports: [FormsModule, NgIcon],
   viewProviders: [provideIcons({
@@ -49,35 +49,35 @@ export interface VistaIntegrada {
   template: `
     <div class="flex items-center px-2 overflow-x-auto">
       <!-- Las de fábrica: siempre, tenga o no vistas guardadas. -->
-      @for (vista of integradas(); track vista.clave) {
+      @for (view of builtIn(); track view.key) {
         <button
           type="button"
-          (click)="cambiarModo.emit(vista.clave)"
-          [class.border-primary]="!vistaActivaId() && modo() === vista.clave"
-          [class.text-primary]="!vistaActivaId() && modo() === vista.clave"
-          [class.border-transparent]="vistaActivaId() || modo() !== vista.clave"
+          (click)="changeMode.emit(view.key)"
+          [class.border-primary]="!activeViewId() && mode() === view.key"
+          [class.text-primary]="!activeViewId() && mode() === view.key"
+          [class.border-transparent]="activeViewId() || mode() !== view.key"
           class="flex items-center gap-2 px-4 py-2.5 border-b-2 font-medium text-sm whitespace-nowrap
                  cursor-pointer transition-colors hover:text-foreground">
-          <ng-icon [name]="vista.icono" size="14" /> {{ vista.etiqueta }}
+          <ng-icon [name]="view.icon" size="14" /> {{ view.label }}
         </button>
       }
 
-      @if (guardadas().length > 0) {
+      @if (saved().length > 0) {
         <span class="mx-2 h-5 w-px bg-border shrink-0"></span>
       }
 
-      @for (vista of guardadas(); track vista.id) {
+      @for (view of saved(); track view.id) {
         <div class="group relative flex items-center">
           <button
             type="button"
-            (click)="aplicar.emit(vista)"
-            [class.border-primary]="vistaActivaId() === vista.id"
-            [class.text-primary]="vistaActivaId() === vista.id"
-            [class.border-transparent]="vistaActivaId() !== vista.id"
+            (click)="apply.emit(view)"
+            [class.border-primary]="activeViewId() === view.id"
+            [class.text-primary]="activeViewId() === view.id"
+            [class.border-transparent]="activeViewId() !== view.id"
             class="flex items-center gap-2 pl-4 pr-7 py-2.5 border-b-2 font-medium text-sm whitespace-nowrap
                    cursor-pointer transition-colors hover:text-foreground">
-            <ng-icon [name]="iconoDe(vista)" size="14" />
-            {{ vista.viewName }}
+            <ng-icon [name]="iconOf(view)" size="14" />
+            {{ view.viewName }}
           </button>
 
           <!--
@@ -87,47 +87,47 @@ export interface VistaIntegrada {
           -->
           <button
             type="button"
-            (click)="pedirBorrado(vista)"
+            (click)="requestDelete(view)"
             class="absolute right-1 p-1 rounded text-muted-foreground opacity-0 transition-opacity
                    group-hover:opacity-100 focus:opacity-100 hover:text-destructive
                    focus:outline-none focus:ring-2 focus:ring-ring"
-            i18n-title [title]="'Borrar la vista ' + vista.viewName">
+            i18n-title [title]="'Borrar la vista ' + view.viewName">
             <ng-icon name="lucideTrash2" size="12" />
           </button>
         </div>
       }
 
       <!-- Crear una nueva -->
-      @if (creando()) {
+      @if (creating()) {
         <div class="flex items-center gap-1.5 px-3 py-1.5">
           <input
-            #campo
-            [(ngModel)]="nombreNuevo"
-            (keydown.enter)="confirmarCreacion()"
-            (keydown.escape)="cancelarCreacion()"
+            #field
+            [(ngModel)]="newName"
+            (keydown.enter)="confirmCreate()"
+            (keydown.escape)="cancelCreate()"
             i18n-placeholder placeholder="Nombre de la vista"
             class="h-8 w-44 rounded-md border border-border bg-background px-2 text-sm
                    focus:outline-none focus:ring-2 focus:ring-ring" />
 
           <select
-            [(ngModel)]="tipoNuevo"
+            [(ngModel)]="newType"
             i18n-aria-label aria-label="Cómo se verá"
             class="h-8 rounded-md border border-border bg-background px-1.5 text-sm
                    focus:outline-none focus:ring-2 focus:ring-ring">
-            @for (vista of integradas(); track vista.clave) {
-              <option [value]="vista.clave">{{ vista.etiqueta }}</option>
+            @for (view of builtIn(); track view.key) {
+              <option [value]="view.key">{{ view.label }}</option>
             }
           </select>
 
-          <button type="button" (click)="confirmarCreacion()"
-            [disabled]="!nombreNuevo.trim()"
+          <button type="button" (click)="confirmCreate()"
+            [disabled]="!newName.trim()"
             class="p-1.5 rounded-md text-primary hover:bg-accent disabled:opacity-40
                    disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-ring"
             i18n-title title="Guardar la vista">
             <ng-icon name="lucideCheck" size="14" />
           </button>
 
-          <button type="button" (click)="cancelarCreacion()"
+          <button type="button" (click)="cancelCreate()"
             class="p-1.5 rounded-md text-muted-foreground hover:bg-accent
                    focus:outline-none focus:ring-2 focus:ring-ring"
             i18n-title title="Cancelar">
@@ -135,7 +135,7 @@ export interface VistaIntegrada {
           </button>
         </div>
       } @else {
-        <button type="button" (click)="empezarCreacion()"
+        <button type="button" (click)="startCreate()"
           class="flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium text-muted-foreground
                  hover:text-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-ring rounded-md">
           <ng-icon name="lucidePlus" size="14" /> <span i18n>Vista</span>
@@ -144,28 +144,28 @@ export interface VistaIntegrada {
     </div>
   `
 })
-export class BarraDeVistasComponent {
+export class ViewTabsComponent {
   /** Las formas de ver que el módulo sabe pintar, en el orden en que se enseñan. */
-  readonly integradas = input.required<VistaIntegrada[]>();
+  readonly builtIn = input.required<BuiltInView[]>();
 
   /** Cuál de las de fábrica está puesta. */
-  readonly modo = input.required<string>();
+  readonly mode = input.required<string>();
 
-  readonly guardadas = input.required<SavedView[]>();
+  readonly saved = input.required<SavedView[]>();
 
   /** La vista guardada activa, o nulo si se está en una de fábrica. */
-  readonly vistaActivaId = input<string | null>(null);
+  readonly activeViewId = input<string | null>(null);
 
-  readonly cambiarModo = output<string>();
-  readonly aplicar = output<SavedView>();
-  readonly crear = output<{ nombre: string; tipo: string }>();
-  readonly borrar = output<SavedView>();
+  readonly changeMode = output<string>();
+  readonly apply = output<SavedView>();
+  readonly create = output<{ name: string; type: string }>();
+  readonly remove = output<SavedView>();
 
-  readonly creando = signal(false);
-  nombreNuevo = '';
-  tipoNuevo = '';
+  readonly creating = signal(false);
+  newName = '';
+  newType = '';
 
-  private readonly campo = viewChild<ElementRef<HTMLInputElement>>('campo');
+  private readonly field = viewChild<ElementRef<HTMLInputElement>>('field');
 
   constructor() {
     /*
@@ -177,7 +177,7 @@ export class BarraDeVistasComponent {
      * cursor allí es exactamente lo que esperas.
      */
     effect(() => {
-      if (this.creando()) this.campo()?.nativeElement.focus();
+      if (this.creating()) this.field()?.nativeElement.focus();
     });
   }
 
@@ -185,10 +185,10 @@ export class BarraDeVistasComponent {
    * El icono sale del estado guardado, no del nombre: una vista llamada «Urgentes» puede ser un
    * tablero, y adivinarlo por el texto acertaría unas veces sí y otras no.
    */
-  iconoDe(vista: SavedView): string {
+  iconOf(view: SavedView): string {
     try {
-      const estado = JSON.parse(vista.stateJson) as { viewType?: string };
-      return this.integradas().find(v => v.clave === estado.viewType)?.icono ?? 'lucideList';
+      const state = JSON.parse(view.stateJson) as { viewType?: string };
+      return this.builtIn().find(v => v.key === state.viewType)?.icon ?? 'lucideList';
     } catch {
       // Un estado ilegible no debe romper la barra: se pinta como lista y la vista sigue ahí para
       // poder borrarla, que es lo único sensato que se puede hacer con ella.
@@ -196,33 +196,33 @@ export class BarraDeVistasComponent {
     }
   }
 
-  empezarCreacion(): void {
-    this.nombreNuevo = '';
+  startCreate(): void {
+    this.newName = '';
     // Se propone la forma que se está viendo: quien pulsa «Vista» estando en el tablero casi
     // siempre quiere guardar ese tablero.
-    this.tipoNuevo = this.modo();
-    this.creando.set(true);
+    this.newType = this.mode();
+    this.creating.set(true);
   }
 
-  confirmarCreacion(): void {
-    const nombre = this.nombreNuevo.trim();
-    if (!nombre) return;
+  confirmCreate(): void {
+    const name = this.newName.trim();
+    if (!name) return;
 
-    this.crear.emit({ nombre, tipo: this.tipoNuevo });
-    this.creando.set(false);
+    this.create.emit({ name, type: this.newType });
+    this.creating.set(false);
   }
 
-  cancelarCreacion(): void {
-    this.creando.set(false);
+  cancelCreate(): void {
+    this.creating.set(false);
   }
 
   /**
    * Se confirma antes de borrar. Es la única acción de la barra que destruye algo, y las
    * pestañas están pegadas: un aspa a un centímetro de la vista que quieres abrir se pulsa sola.
    */
-  pedirBorrado(vista: SavedView): void {
-    if (confirm(`¿Borrar la vista «${vista.viewName}»?`)) {
-      this.borrar.emit(vista);
+  requestDelete(view: SavedView): void {
+    if (confirm(`¿Borrar la vista «${view.viewName}»?`)) {
+      this.remove.emit(view);
     }
   }
 }

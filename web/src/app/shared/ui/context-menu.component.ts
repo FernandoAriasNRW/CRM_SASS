@@ -6,14 +6,14 @@ import {
 } from '@ng-icons/lucide';
 
 /** Una entrada del menú. Un separador es una entrada sin acción ni etiqueta. */
-export interface OpcionDelMenu {
-  clave: string;
-  etiqueta: string;
-  icono?: string;
+export interface MenuOption {
+  key: string;
+  label: string;
+  icon?: string;
   /** Si la entrada destruye algo. Se pinta en rojo y va al final. */
-  destructiva?: boolean;
-  separadorAntes?: boolean;
-  deshabilitada?: boolean;
+  destructive?: boolean;
+  separatorBefore?: boolean;
+  disabled?: boolean;
 }
 
 /**
@@ -27,7 +27,7 @@ export interface OpcionDelMenu {
  * la página se mueve acaba señalando a una celda que ya no es la que se eligió.
  */
 @Component({
-  selector: 'app-menu-contextual',
+  selector: 'app-context-menu',
   standalone: true,
   imports: [NgIcon],
   viewProviders: [provideIcons({
@@ -35,60 +35,60 @@ export interface OpcionDelMenu {
     lucideFolderCheck, lucideSettings, lucideSquareCheck, lucideTicket, lucideTrash2
   })],
   template: `
-    @if (abierto()) {
+    @if (isOpen()) {
       <!--
         La capa de debajo captura el clic de fuera. Se usa un elemento y no un listener global
         para que ese clic **no** llegue además a lo que haya detrás: sin ella, cerrar el menú
         pulsando en otra celda abría el día de esa celda a la vez.
       -->
-      <div class="fixed inset-0 z-40" (click)="cerrar()" (contextmenu)="$event.preventDefault(); cerrar()"></div>
+      <div class="fixed inset-0 z-40" (click)="close()" (contextmenu)="$event.preventDefault(); close()"></div>
 
       <div
         role="menu"
         class="fixed z-50 min-w-56 rounded-lg border border-border bg-card py-1 shadow-xl"
-        [style.left.px]="posicion().x"
-        [style.top.px]="posicion().y">
+        [style.left.px]="position().x"
+        [style.top.px]="position().y">
 
-        @if (titulo()) {
+        @if (title()) {
           <p class="px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            {{ titulo() }}
+            {{ title() }}
           </p>
         }
 
-        @for (opcion of opciones(); track opcion.clave) {
-          @if (opcion.separadorAntes) {
+        @for (option of options(); track option.key) {
+          @if (option.separatorBefore) {
             <div class="my-1 h-px bg-border"></div>
           }
 
           <button
             type="button"
             role="menuitem"
-            [disabled]="opcion.deshabilitada"
-            (click)="elegir(opcion)"
+            [disabled]="option.disabled"
+            (click)="choose(option)"
             class="flex w-full items-center gap-2.5 px-3 py-1.5 text-left text-sm transition-colors
                    hover:bg-accent disabled:cursor-not-allowed disabled:opacity-40
                    focus:outline-none focus:bg-accent"
-            [class.text-destructive]="opcion.destructiva">
-            @if (opcion.icono) {
-              <ng-icon [name]="opcion.icono" size="14" />
+            [class.text-destructive]="option.destructive">
+            @if (option.icon) {
+              <ng-icon [name]="option.icon" size="14" />
             }
-            {{ opcion.etiqueta }}
+            {{ option.label }}
           </button>
         }
       </div>
     }
   `
 })
-export class MenuContextualComponent {
+export class ContextMenuComponent {
   private readonly host = inject(ElementRef<HTMLElement>);
 
-  readonly opciones = input.required<OpcionDelMenu[]>();
-  readonly titulo = input<string | null>(null);
+  readonly options = input.required<MenuOption[]>();
+  readonly title = input<string | null>(null);
 
-  readonly elegida = output<string>();
+  readonly chosen = output<string>();
 
-  readonly abierto = signal(false);
-  private readonly punto = signal({ x: 0, y: 0 });
+  readonly isOpen = signal(false);
+  private readonly point = signal({ x: 0, y: 0 });
 
   /**
    * Dónde se pinta: donde se pulsó, corregido para que quepa.
@@ -97,43 +97,43 @@ export class MenuContextualComponent {
    * decidir. Estimar de más es lo seguro: como mucho el menú sale un poco más arriba de lo
    * necesario, mientras que quedarse corto lo deja medio fuera.
    */
-  readonly posicion = computed(() => {
-    const { x, y } = this.punto();
-    const alto = 44 + this.opciones().length * 32;
-    const ancho = 224;
+  readonly position = computed(() => {
+    const { x, y } = this.point();
+    const height = 44 + this.options().length * 32;
+    const width = 224;
 
     return {
-      x: Math.min(x, window.innerWidth - ancho - 8),
-      y: Math.min(y, window.innerHeight - alto - 8)
+      x: Math.min(x, window.innerWidth - width - 8),
+      y: Math.min(y, window.innerHeight - height - 8)
     };
   });
 
-  abrirEn(evento: MouseEvent): void {
-    evento.preventDefault();
-    this.punto.set({ x: evento.clientX, y: evento.clientY });
-    this.abierto.set(true);
+  openAt(event: MouseEvent): void {
+    event.preventDefault();
+    this.point.set({ x: event.clientX, y: event.clientY });
+    this.isOpen.set(true);
   }
 
-  cerrar(): void {
-    this.abierto.set(false);
+  close(): void {
+    this.isOpen.set(false);
   }
 
-  elegir(opcion: OpcionDelMenu): void {
-    if (opcion.deshabilitada) return;
+  choose(option: MenuOption): void {
+    if (option.disabled) return;
 
-    this.cerrar();
-    this.elegida.emit(opcion.clave);
+    this.close();
+    this.chosen.emit(option.key);
   }
 
   @HostListener('document:keydown.escape')
-  alPulsarEscape(): void {
-    this.cerrar();
+  onEscape(): void {
+    this.close();
   }
 
   @HostListener('window:scroll')
   @HostListener('window:resize')
-  alMoverse(): void {
+  onMove(): void {
     // Si la página se mueve, el menú dejaría de señalar a lo que se eligió.
-    this.cerrar();
+    this.close();
   }
 }
