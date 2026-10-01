@@ -5,7 +5,7 @@ import { DrawerComponent } from '../../shared/ui/drawer.component';
 import { ButtonComponent } from '../../shared/ui/button.component';
 import { ToastService } from '../../shared/services/toast.service';
 import { TagsService, type TagCategoryItem } from '../../shared/services/tags.service';
-import { mensajeDeError } from '../../shared/utils/mensaje-de-error';
+import { errorMessage } from '../../shared/utils/error-message';
 
 /**
  * Las categorías de etiquetas: las predefinidas, que sólo se ven, y las propias de la
@@ -61,7 +61,7 @@ export class TagCategoriesDrawerComponent implements OnInit {
       },
       error: response => {
         this.creating.set(false);
-        this.createError.set(mensajeDeError(response, $localize`No se pudo crear la categoría`));
+        this.createError.set(errorMessage(response, $localize`No se pudo crear la categoría`));
       },
     });
   }
@@ -94,7 +94,7 @@ export class TagCategoriesDrawerComponent implements OnInit {
       },
       error: response => {
         this.busy.set(false);
-        this.rowError.set({ id: category.id!, message: mensajeDeError(response, $localize`No se pudo renombrar la categoría`) });
+        this.rowError.set({ id: category.id!, message: errorMessage(response, $localize`No se pudo renombrar la categoría`) });
       },
     });
   }
@@ -118,7 +118,7 @@ export class TagCategoriesDrawerComponent implements OnInit {
       error: response => {
         this.busy.set(false);
         this.confirmingDeleteId.set(null);
-        this.rowError.set({ id: category.id!, message: mensajeDeError(response, $localize`No se pudo borrar la categoría`) });
+        this.rowError.set({ id: category.id!, message: errorMessage(response, $localize`No se pudo borrar la categoría`) });
       },
     });
   }

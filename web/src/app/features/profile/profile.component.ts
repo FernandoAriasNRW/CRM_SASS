@@ -9,8 +9,8 @@ import {
 
 import { AuthSignalStore } from '../../core/auth-signal.store';
 import { ApiService } from '../../core/api.service';
-import { IdiomaService, type CodigoDeIdioma } from '../../core/idioma.service';
-import { TemaService, TEMAS, type Tema } from '../../core/tema.service';
+import { LanguageService, type LanguageCode } from '../../core/language.service';
+import { ThemeService, THEMES, type Theme } from '../../core/theme.service';
 import { ToastService } from '../../shared/services/toast.service';
 import { NotificationPreferencesComponent } from '../../shared/ui/notification-preferences.component';
 
@@ -46,9 +46,9 @@ export class ProfileComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly avisos = inject(ToastService);
 
-  readonly idiomas = inject(IdiomaService);
-  readonly temas = inject(TemaService);
-  readonly OPCIONES_DE_TEMA = TEMAS;
+  readonly idiomas = inject(LanguageService);
+  readonly temas = inject(ThemeService);
+  readonly OPCIONES_DE_TEMA = THEMES;
 
   readonly user = this.authStore.userInfo;
 
@@ -117,12 +117,12 @@ export class ProfileComponent implements OnInit {
 
   // ── Apariencia ────────────────────────────────────────────────────────────
 
-  elegirTema(tema: Tema): void {
-    this.temas.elegir(tema);
+  elegirTema(tema: Theme): void {
+    this.temas.choose(tema);
   }
 
   cambiarIdioma(codigo: string): void {
-    this.idiomas.cambiarA(codigo as CodigoDeIdioma);
+    this.idiomas.switchTo(codigo as LanguageCode);
   }
 
   // ── Seguridad ─────────────────────────────────────────────────────────────

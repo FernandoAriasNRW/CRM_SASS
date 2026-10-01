@@ -11,7 +11,7 @@ import {
   type RuleAction, type RuleCondition, type AutomationRule,
   type AutomationVocabulary,
 } from '../../../core/automations.service';
-import { mensajeDeError } from '../../../shared/utils/mensaje-de-error';
+import { errorMessage } from '../../../shared/utils/error-message';
 
 /** Lo que el dominio acepta. Repetirlo evita un viaje al servidor para decir lo obvio. */
 const MAX_NAME_LENGTH = 100;
@@ -77,7 +77,7 @@ export class AdminAutomationsComponent implements OnInit {
     this.service.vocabulary().subscribe({
       next: v => this.vocabulary.set(v),
       error: response => this.error.set(
-        mensajeDeError(response, $localize`No se pudo cargar el vocabulario de automatizaciones`)),
+        errorMessage(response, $localize`No se pudo cargar el vocabulario de automatizaciones`)),
     });
 
     this.load();
@@ -93,7 +93,7 @@ export class AdminAutomationsComponent implements OnInit {
         this.loading.set(false);
       },
       error: response => {
-        this.error.set(mensajeDeError(response, $localize`No se pudieron cargar las automatizaciones`));
+        this.error.set(errorMessage(response, $localize`No se pudieron cargar las automatizaciones`));
         this.loading.set(false);
       },
     });
@@ -268,7 +268,7 @@ export class AdminAutomationsComponent implements OnInit {
       },
       error: response => {
         this.saving.set(false);
-        this.error.set(mensajeDeError(response, $localize`No se pudo guardar la automatización`));
+        this.error.set(errorMessage(response, $localize`No se pudo guardar la automatización`));
       },
     });
   }
@@ -287,7 +287,7 @@ export class AdminAutomationsComponent implements OnInit {
     this.service.setActive(rule.id, !previous).subscribe({
       error: response => {
         this.applyToList(rule.id, previous);
-        this.error.set(mensajeDeError(response, $localize`No se pudo cambiar el estado de la automatización`));
+        this.error.set(errorMessage(response, $localize`No se pudo cambiar el estado de la automatización`));
       },
     });
   }
@@ -308,7 +308,7 @@ export class AdminAutomationsComponent implements OnInit {
       error: response => {
         this.saving.set(false);
         this.deleting.set(null);
-        this.error.set(mensajeDeError(response, $localize`No se pudo borrar la automatización`));
+        this.error.set(errorMessage(response, $localize`No se pudo borrar la automatización`));
       },
     });
   }

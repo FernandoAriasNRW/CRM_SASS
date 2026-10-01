@@ -195,7 +195,7 @@ export class ReportsComponent implements OnInit {
 
   /** Cómo se guardan las etiquetas de un informe: su propio endpoint, el informe no tiene edición general. */
   readonly saveReportTags = (tagIds: string[]) =>
-    this.api.put<void>(`/reports/${this.reportTagging()!.id}/tags`, { tagIds }, { sinAviso: true });
+    this.api.put<void>(`/reports/${this.reportTagging()!.id}/tags`, { tagIds }, { silent: true });
   closeBuilder(): void { this.reportInBuilder.set(null); }
 
   /** Si este informe tiene una exportación en marcha, para desactivar el botón. */

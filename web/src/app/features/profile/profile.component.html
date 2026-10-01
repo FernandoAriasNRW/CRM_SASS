@@ -108,14 +108,14 @@
             </div>
 
             <div class="flex flex-wrap gap-2">
-              @for (t of OPCIONES_DE_TEMA; track t.valor) {
-                <button type="button" (click)="elegirTema(t.valor)"
-                  [class.border-primary]="temas.tema() === t.valor"
-                  [class.bg-primary-subtle]="temas.tema() === t.valor"
-                  [class.text-primary-subtle-fg]="temas.tema() === t.valor"
+              @for (t of OPCIONES_DE_TEMA; track t.value) {
+                <button type="button" (click)="elegirTema(t.value)"
+                  [class.border-primary]="temas.theme() === t.value"
+                  [class.bg-primary-subtle]="temas.theme() === t.value"
+                  [class.text-primary-subtle-fg]="temas.theme() === t.value"
                   class="rounded-md border border-border px-4 py-2 text-sm font-medium
                          transition-colors hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring">
-                  {{ t.nombre }}
+                  {{ t.name }}
                 </button>
               }
             </div>
@@ -130,15 +130,15 @@
             </div>
 
             <div class="flex flex-wrap gap-2">
-              @for (i of idiomas.disponibles; track i.codigo) {
-                <button type="button" (click)="cambiarIdioma(i.codigo)"
-                  [class.border-primary]="idiomas.actual === i.codigo"
-                  [class.bg-primary-subtle]="idiomas.actual === i.codigo"
-                  [class.text-primary-subtle-fg]="idiomas.actual === i.codigo"
+              @for (i of idiomas.available; track i.code) {
+                <button type="button" (click)="cambiarIdioma(i.code)"
+                  [class.border-primary]="idiomas.actual === i.code"
+                  [class.bg-primary-subtle]="idiomas.actual === i.code"
+                  [class.text-primary-subtle-fg]="idiomas.actual === i.code"
                   class="inline-flex items-center gap-2 rounded-md border border-border px-4 py-2
                          text-sm font-medium transition-colors hover:bg-accent
                          focus:outline-none focus:ring-2 focus:ring-ring">
-                  <ng-icon name="lucideGlobe" size="14" /> {{ i.nombre }}
+                  <ng-icon name="lucideGlobe" size="14" /> {{ i.name }}
                 </button>
               }
             </div>

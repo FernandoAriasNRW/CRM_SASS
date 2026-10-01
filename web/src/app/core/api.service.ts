@@ -2,7 +2,7 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { AuthSignalStore } from './auth-signal.store';
-import { sinAvisoAutomatico } from './http-context';
+import { skipGlobalErrorToast } from './http-context';
 
 /**
  * Opciones de una llamada suelta.
@@ -11,8 +11,8 @@ import { sinAvisoAutomatico } from './http-context';
  * o con el nombre de lo que se revirtió—. Sin ella, el interceptor levanta además su propio
  * aviso y el mismo fallo se cuenta dos veces.
  */
-export interface OpcionesDeLlamada {
-  sinAviso?: boolean;
+export interface CallOptions {
+  silent?: boolean;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -40,11 +40,11 @@ export class ApiService {
   }
 
   /** Lo que se añade a una petición que se encarga de contar su propio error. */
-  private contexto(opciones?: OpcionesDeLlamada) {
-    return opciones?.sinAviso ? { context: sinAvisoAutomatico() } : {};
+  private context(options?: CallOptions) {
+    return options?.silent ? { context: skipGlobalErrorToast() } : {};
   }
 
-  get<T>(path: string, params?: Record<string, string | number | boolean | Date | null | undefined>, opciones?: OpcionesDeLlamada): Observable<T> {
+  get<T>(path: string, params?: Record<string, string | number | boolean | Date | null | undefined>, options?: CallOptions): Observable<T> {
     const httpParams: Record<string, any> = {};
     if (params) {
       Object.keys(params).forEach(key => {
@@ -58,7 +58,7 @@ export class ApiService {
     return this.http.get<T>(`${this.baseUrl}${path}`, {
       params: httpParams,
       withCredentials: true, // Important: sends cookies automatically
-      ...this.contexto(opciones)
+      ...this.context(options)
     });
   }
 
@@ -70,7 +70,7 @@ export class ApiService {
    * para poder leer el nombre del fichero de la cabecera `Content-Disposition`: sin él, el
    * navegador guarda el fichero con el identificador de la exportación por nombre.
    */
-  descargarFichero(path: string): Observable<HttpResponse<Blob>> {
+  downloadFile(path: string): Observable<HttpResponse<Blob>> {
     return this.http.get(`${this.baseUrl}${path}`, {
       responseType: 'blob',
       observe: 'response',
@@ -93,42 +93,42 @@ export class ApiService {
    * ejemplos de la entrada de tickets tienen que llevar la URL real, no una ruta relativa que en
    * la web del cliente apuntaría a su propio dominio.
    */
-  urlDeLaApi(ruta: string): string {
-    return `${this.baseUrl}${ruta}`;
+  apiUrl(path: string): string {
+    return `${this.baseUrl}${path}`;
   }
 
-  urlDeFichero(ruta: string): string {
-    if (/^https?:\/\//i.test(ruta)) return ruta;
+  fileUrl(path: string): string {
+    if (/^https?:\/\//i.test(path)) return path;
 
-    const origen = new URL(this.baseUrl).origin;
-    return `${origen}${ruta.startsWith('/') ? '' : '/'}${ruta}`;
+    const origin = new URL(this.baseUrl).origin;
+    return `${origin}${path.startsWith('/') ? '' : '/'}${path}`;
   }
 
-  post<T>(path: string, payload: unknown, opciones?: OpcionesDeLlamada): Observable<T> {
+  post<T>(path: string, payload: unknown, options?: CallOptions): Observable<T> {
     return this.http.post<T>(`${this.baseUrl}${path}`, payload, {
       withCredentials: true, // Important: sends cookies automatically
-      ...this.contexto(opciones)
+      ...this.context(options)
     });
   }
 
-  put<T>(path: string, payload: unknown, opciones?: OpcionesDeLlamada): Observable<T> {
+  put<T>(path: string, payload: unknown, options?: CallOptions): Observable<T> {
     return this.http.put<T>(`${this.baseUrl}${path}`, payload, {
       withCredentials: true, // Important: sends cookies automatically
-      ...this.contexto(opciones)
+      ...this.context(options)
     });
   }
 
-  patch<T>(path: string, payload: unknown, opciones?: OpcionesDeLlamada): Observable<T> {
+  patch<T>(path: string, payload: unknown, options?: CallOptions): Observable<T> {
     return this.http.patch<T>(`${this.baseUrl}${path}`, payload, {
       withCredentials: true, // Important: sends cookies automatically
-      ...this.contexto(opciones)
+      ...this.context(options)
     });
   }
 
-  delete<T>(path: string, opciones?: OpcionesDeLlamada): Observable<T> {
+  delete<T>(path: string, options?: CallOptions): Observable<T> {
     return this.http.delete<T>(`${this.baseUrl}${path}`, {
       withCredentials: true, // Important: sends cookies automatically
-      ...this.contexto(opciones)
+      ...this.context(options)
     });
   }
 }

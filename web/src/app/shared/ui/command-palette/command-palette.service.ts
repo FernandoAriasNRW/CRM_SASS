@@ -4,7 +4,7 @@ import { Observable, of, forkJoin } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { ApiService } from '../../../core/api.service';
 import { DEFAULT_NAV_ITEMS, type NavItem } from '../../../core/navigation-signal.store';
-import { IDIOMAS, idiomaActual, urlEnIdioma } from '../../../core/idioma';
+import { LANGUAGES, currentLanguage, urlInLanguage } from '../../../core/language';
 
 export type CommandGroup = 'Ir a' | 'Acciones' | 'Proyectos' | 'Tareas' | 'Tickets';
 
@@ -130,15 +130,15 @@ export class CommandPaletteService {
       run: () => void this.router.navigateByUrl('/design-system'),
     },
     // Un comando por idioma disponible, salvo el que ya se está usando.
-    ...IDIOMAS.filter(i => i.codigo !== idiomaActual()).map(i => ({
-      id: `accion-idioma-${i.codigo}`,
-      label: $localize`Cambiar idioma a ${i.nombre}:idioma:`,
+    ...LANGUAGES.filter(i => i.code !== currentLanguage()).map(i => ({
+      id: `accion-idioma-${i.code}`,
+      label: $localize`Cambiar idioma a ${i.name}:idioma:`,
       group: 'Acciones' as const,
       icon: 'lucideLanguages',
-      keywords: `language idioma ${i.codigo} ${i.nombre}`,
+      keywords: `language idioma ${i.code} ${i.name}`,
       // Navegación del navegador, no del router: cada idioma es una aplicación distinta
       // servida bajo su propio prefijo, así que hay que salir de esta.
-      run: () => { window.location.href = urlEnIdioma(i.codigo); },
+      run: () => { window.location.href = urlInLanguage(i.code); },
     })),
     {
       id: 'accion-tema',

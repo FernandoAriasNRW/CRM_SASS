@@ -9,7 +9,7 @@ import {
 import {
   CustomFieldsService, TARGET_ENTITIES, isComputed, FIELD_TYPES, type CustomFieldDefinition,
 } from '../../../core/custom-fields.service';
-import { mensajeDeError } from '../../../shared/utils/mensaje-de-error';
+import { errorMessage } from '../../../shared/utils/error-message';
 
 /** Lo que el dominio acepta. Repetirlo aquí evita un viaje al servidor para decir lo obvio. */
 const MAX_NAME_LENGTH = 80;
@@ -119,7 +119,7 @@ export class AdminCustomFieldsComponent implements OnInit {
         this.loading.set(false);
       },
       error: response => {
-        this.error.set(mensajeDeError(response, $localize`No se pudieron cargar los campos`));
+        this.error.set(errorMessage(response, $localize`No se pudieron cargar los campos`));
         this.loading.set(false);
       },
     });
@@ -228,7 +228,7 @@ export class AdminCustomFieldsComponent implements OnInit {
       },
       error: response => {
         this.saving.set(false);
-        this.error.set(mensajeDeError(response, $localize`No se pudo guardar el campo`));
+        this.error.set(errorMessage(response, $localize`No se pudo guardar el campo`));
       },
     });
   }
@@ -246,7 +246,7 @@ export class AdminCustomFieldsComponent implements OnInit {
       error: response => {
         this.saving.set(false);
         this.deleting.set(null);
-        this.error.set(mensajeDeError(response, $localize`No se pudo borrar el campo`));
+        this.error.set(errorMessage(response, $localize`No se pudo borrar el campo`));
       },
     });
   }
