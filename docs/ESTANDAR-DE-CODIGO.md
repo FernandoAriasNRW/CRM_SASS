@@ -395,7 +395,7 @@ suites completas en verde, catálogo i18n re-extraído al final.
 | 7d ✅ | **El JSON guardado de informes y paneles** (claves de la definición y del recuadro, y valores del catálogo) | Como el 5c: datos guardados, con su migración |
 | 8a ✅ | **CustomFields** (módulo, columnas, tipos de campo guardados y el contrato en el frontend) | 236 identificadores; migración con renombrado y datos |
 | 8b ✅ | **Automations + Webhook + Tags** (backend, con las reglas guardadas) | 380 identificadores; migración con renombrado y datos |
-| 8c | **Frontend de campos personalizados y automatizaciones** | Lo que no arrastró el contrato |
+| 8c ✅ | **Frontend de campos personalizados y automatizaciones** | 130 identificadores |
 | 9 | **Frontend transversal** (`shared/`, `core/`, e2e) | Lo que no arrastraron los PRs anteriores |
 | 10 | **Nombres de las pruebas** | Son frases, no identificadores de producción; traducirlas dentro de cada bloque ensucia el diff de revisión |
 | 11 | **`TimeProvider` en todos los módulos** | Cambiar el reloj módulo a módulo deja dos formas de dar la hora conviviendo; va de una vez, al final |
@@ -837,6 +837,19 @@ cambiarlo exige migrar ese contenido. Por eso fue un bloque aparte, el 5c.
 - Visto de paso, sin cambiar: el vocabulario ofrece todos los campos para cualquier disparador,
   pero «se crea una tarea» sólo manda proyecto y responsable, así que una condición sobre el título
   nunca se cumple. Queda como tarea aparte.
+
+### Hecho en el bloque 8c (frontend de campos personalizados y automatizaciones)
+
+- 130 identificadores con `rename-frontend.py` en los dos servicios, las dos pantallas de
+  administración y el formulario de campos: `ReglaDeAutomatizacion` → `AutomationRule`,
+  `VocabularioDeAutomatizacion` → `AutomationVocabulary`, `TIPOS_DE_CAMPO` → `FIELD_TYPES`,
+  `cargarDefiniciones` → `loadDefinitions`, `guardarValor` → `saveValue`…
+- La entrada del formulario de campos pasa de `entidad` a `entity`, y la ficha de tarea con ella.
+- **Sin cambios en la interfaz:** los atributos estáticos y los identificadores del catálogo i18n
+  son los mismos que en `main`.
+- Lo que cazaron las pruebas: los métodos de `createSpyObj` y la entrada de `setInput` van en
+  cadenas y la herramienta no los ve. Queda en la skill.
+- Siguen para el bloque 9 las utilidades compartidas: `mensajeDeError` y la opción `sinAviso`.
 
 ---
 

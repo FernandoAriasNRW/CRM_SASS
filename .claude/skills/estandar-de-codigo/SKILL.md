@@ -133,6 +133,9 @@ dos columnas, viejo y nuevo). Trabaja por tokens, así que después, además del
 interfaz y ni el build ni las pruebas lo notaron. Los nombres de inputs, outputs y selectores van a
 mano. **Una salida renombrada sólo en el hijo no da ningún error** (Angular la trata como evento
 del DOM): cambia cada `(salida)` y `[entrada]` en los padres. Límites en `tools/README.md`.
+Tampoco ve los nombres que van **en cadenas** en las pruebas: `jasmine.createSpyObj('X', ['metodo'])`
+y `setInput('entrada', …)` siguen con el nombre viejo y Karma falla al cargar o al montar; ni
+`ng build` ni el lint lo ven. Búscalos después de cada pasada.
 
 Para ver qué queda en español: `python tools/scripts/spanish-identifiers.py <rutas>`
 (necesita `pip install wordfreq`).

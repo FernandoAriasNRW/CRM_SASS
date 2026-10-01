@@ -7,7 +7,7 @@ import { ApiService } from './api.service';
  * abierto—, así que el interceptor no debe levantar además su aviso: sería el mismo texto dos
  * veces para un solo fallo.
  */
-const SIN_AVISO = { sinAviso: true };
+const SILENT = { sinAviso: true };
 
 /**
  * Las reglas de automatización.
@@ -17,48 +17,48 @@ const SIN_AVISO = { sinAviso: true };
  * y entonces esta pantalla dejaría configurar algo que el servidor no entiende, o escondería algo
  * que sí admite.
  */
-export interface VocabularioDeAutomatizacion {
+export interface AutomationVocabulary {
   triggers: string[];
   fields: string[];
   operators: string[];
   actions: string[];
 }
 
-export interface CondicionDeRegla {
+export interface RuleCondition {
   field: string;
   operator: string;
   value: string | null;
 }
 
-export interface AccionDeRegla {
+export interface RuleAction {
   type: string;
   value: string;
 }
 
-export interface ReglaDeAutomatizacion {
+export interface AutomationRule {
   id: string;
   name: string;
   trigger: string;
   isActive: boolean;
-  conditions: CondicionDeRegla[];
-  actions: AccionDeRegla[];
+  conditions: RuleCondition[];
+  actions: RuleAction[];
   executionCount: number;
   lastExecutedAtUtc: string | null;
 }
 
 /** Lo que hace falta para crear o actualizar una regla. */
-export interface ReglaEditable {
+export interface EditableRule {
   name: string;
   trigger: string;
-  conditions: CondicionDeRegla[];
-  actions: AccionDeRegla[];
+  conditions: RuleCondition[];
+  actions: RuleAction[];
 }
 
 /**
  * El único operador que no compara contra nada. Lo decide el dominio; aquí se repite para no
  * pedir un valor que el servidor va a ignorar.
  */
-export const OPERADOR_SIN_VALOR = 'IsEmpty';
+export const VALUELESS_OPERATOR = 'IsEmpty';
 
 /**
  * Cómo se lee cada código del vocabulario.
@@ -104,28 +104,28 @@ export function automationLabel(code: string): string {
 export class AutomationsService {
   private readonly api = inject(ApiService);
 
-  vocabulario(): Observable<VocabularioDeAutomatizacion> {
-    return this.api.get<VocabularioDeAutomatizacion>('/automations/vocabulary');
+  vocabulary(): Observable<AutomationVocabulary> {
+    return this.api.get<AutomationVocabulary>('/automations/vocabulary');
   }
 
-  reglas(): Observable<ReglaDeAutomatizacion[]> {
-    return this.api.get<ReglaDeAutomatizacion[]>('/automations');
+  rules(): Observable<AutomationRule[]> {
+    return this.api.get<AutomationRule[]>('/automations');
   }
 
-  crear(regla: ReglaEditable): Observable<ReglaDeAutomatizacion> {
-    return this.api.post<ReglaDeAutomatizacion>('/automations', regla, SIN_AVISO);
+  create(rule: EditableRule): Observable<AutomationRule> {
+    return this.api.post<AutomationRule>('/automations', rule, SILENT);
   }
 
-  actualizar(id: string, regla: ReglaEditable): Observable<void> {
-    return this.api.put<void>(`/automations/${id}`, regla, SIN_AVISO);
+  update(id: string, rule: EditableRule): Observable<void> {
+    return this.api.put<void>(`/automations/${id}`, rule, SILENT);
   }
 
   /** Apagar y encender tiene su propia llamada: es lo que se hace con prisa. */
-  activar(id: string, isActive: boolean): Observable<void> {
-    return this.api.put<void>(`/automations/${id}/active`, { isActive }, SIN_AVISO);
+  setActive(id: string, isActive: boolean): Observable<void> {
+    return this.api.put<void>(`/automations/${id}/active`, { isActive }, SILENT);
   }
 
-  borrar(id: string): Observable<void> {
-    return this.api.delete<void>(`/automations/${id}`, SIN_AVISO);
+  remove(id: string): Observable<void> {
+    return this.api.delete<void>(`/automations/${id}`, SILENT);
   }
 }
