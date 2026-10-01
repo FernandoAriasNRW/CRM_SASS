@@ -149,15 +149,15 @@
               <ng-icon name="lucideUser" size="13" /> <span i18n>Responsables</span>
             </span>
             <div class="flex flex-wrap items-center gap-1.5 flex-1">
-              @for (responsable of assignees(); track responsable) {
+              @for (assignee of assignees(); track assignee) {
                 <span class="flex items-center gap-1.5 rounded-full border border-border pl-1 pr-2 py-0.5 text-xs"
-                      [class.border-primary]="esPrincipal(responsable)">
-                  <ui-avatar [src]="avatarOf(responsable)" [name]="nameOf(responsable)" class="h-5 w-5" />
-                  {{ nameOf(responsable) }}
-                  @if (esPrincipal(responsable)) {
+                      [class.border-primary]="esPrincipal(assignee)">
+                  <ui-avatar [src]="avatarOf(assignee)" [name]="nameOf(assignee)" class="h-5 w-5" />
+                  {{ nameOf(assignee) }}
+                  @if (esPrincipal(assignee)) {
                     <span class="text-[10px] text-primary" i18n>principal</span>
                   }
-                  <button (click)="removeAssignee(responsable)"
+                  <button (click)="removeAssignee(assignee)"
                           i18n-aria-label aria-label="Quitar responsable"
                           class="text-muted-foreground hover:text-destructive transition-colors">
                     <ng-icon name="lucideX" size="11" />
@@ -172,8 +172,8 @@
                         i18n-aria-label aria-label="Añadir responsable"
                         class="bg-transparent border border-dashed border-border rounded-full px-2 py-0.5 text-xs outline-none hover:border-primary transition-colors">
                   <option value="" i18n>+ Responsable</option>
-                  @for (candidato of assigneeCandidates(); track candidato.id) {
-                    <option [value]="candidato.id">{{ candidato.name }}</option>
+                  @for (candidate of assigneeCandidates(); track candidate.id) {
+                    <option [value]="candidate.id">{{ candidate.name }}</option>
                   }
                 </select>
               }
@@ -318,8 +318,8 @@
                         i18n-aria-label aria-label="Tarea que bloquea"
                         class="flex-1 bg-transparent border border-border rounded-md px-2 py-1.5 text-sm outline-none focus:ring-1 focus:ring-ring">
                   <option value="" i18n>Añadir una tarea que la bloquee…</option>
-                  @for (candidata of blockerCandidates(); track candidata.id) {
-                    <option [value]="candidata.id">{{ candidata.title }}</option>
+                  @for (candidate of blockerCandidates(); track candidate.id) {
+                    <option [value]="candidate.id">{{ candidate.title }}</option>
                   }
                 </select>
                 <button (click)="addBlocker()" [disabled]="!chosenBlocker"

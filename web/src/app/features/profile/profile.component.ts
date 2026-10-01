@@ -15,7 +15,7 @@ import { ToastService } from '../../shared/services/toast.service';
 import { NotificationPreferencesComponent } from '../../shared/ui/notification-preferences.component';
 
 /** Las secciones del perfil, en el orden en que se leen. */
-type Seccion = 'cuenta' | 'apariencia' | 'seguridad' | 'notificaciones';
+type Section = 'cuenta' | 'apariencia' | 'seguridad' | 'notificaciones';
 
 /**
  * El perfil: los datos de la persona y sus preferencias, todo en un sitio.
@@ -44,21 +44,21 @@ export class ProfileComponent implements OnInit {
   readonly authStore = inject(AuthSignalStore);
   private readonly api = inject(ApiService);
   private readonly router = inject(Router);
-  private readonly avisos = inject(ToastService);
+  private readonly toast = inject(ToastService);
 
-  readonly idiomas = inject(LanguageService);
-  readonly temas = inject(ThemeService);
-  readonly OPCIONES_DE_TEMA = THEMES;
+  readonly languages = inject(LanguageService);
+  readonly themes = inject(ThemeService);
+  readonly THEME_OPTIONS = THEMES;
 
   readonly user = this.authStore.userInfo;
 
-  readonly seccion = signal<Seccion>('cuenta');
+  readonly section = signal<Section>('cuenta');
 
-  readonly SECCIONES: { clave: Seccion; nombre: string; icono: string }[] = [
-    { clave: 'cuenta', nombre: $localize`Cuenta`, icono: 'lucideUser' },
-    { clave: 'apariencia', nombre: $localize`Apariencia e idioma`, icono: 'lucidePalette' },
-    { clave: 'seguridad', nombre: $localize`Seguridad`, icono: 'lucideLock' },
-    { clave: 'notificaciones', nombre: $localize`Avisos`, icono: 'lucideBell' }
+  readonly SECTIONS: { key: Section; name: string; icon: string }[] = [
+    { key: 'cuenta', name: $localize`Cuenta`, icon: 'lucideUser' },
+    { key: 'apariencia', name: $localize`Apariencia e idioma`, icon: 'lucidePalette' },
+    { key: 'seguridad', name: $localize`Seguridad`, icon: 'lucideLock' },
+    { key: 'notificaciones', name: $localize`Avisos`, icon: 'lucideBell' }
   ];
 
   // ── Cuenta ────────────────────────────────────────────────────────────────
@@ -66,7 +66,7 @@ export class ProfileComponent implements OnInit {
   profilePhone = '';
   profileBio = '';
   readonly savingProfile = signal(false);
-  readonly cargando = signal(true);
+  readonly loading = signal(true);
 
   // ── Seguridad ─────────────────────────────────────────────────────────────
   currentPassword = '';
@@ -87,18 +87,18 @@ export class ProfileComponent implements OnInit {
     // interceptor lo convertía en el aviso rojo que aparecía al abrir el perfil, con el
     // formulario en blanco detrás.
     this.api.get<{ name?: string; phoneNumber?: string; bio?: string }>('/auth/users/me').subscribe({
-      next: (datos) => {
-        this.authStore.updateUserInfo(datos);
-        this.profileName = datos.name ?? '';
-        this.profilePhone = datos.phoneNumber ?? '';
-        this.profileBio = datos.bio ?? '';
-        this.cargando.set(false);
+      next: (data) => {
+        this.authStore.updateUserInfo(data);
+        this.profileName = data.name ?? '';
+        this.profilePhone = data.phoneNumber ?? '';
+        this.profileBio = data.bio ?? '';
+        this.loading.set(false);
       },
-      error: () => this.cargando.set(false)
+      error: () => this.loading.set(false)
     });
   }
 
-  guardarCuenta(): void {
+  saveAccount(): void {
     this.savingProfile.set(true);
 
     this.api.put<Record<string, unknown>>('/users/me/profile', {
@@ -106,9 +106,9 @@ export class ProfileComponent implements OnInit {
       phoneNumber: this.profilePhone,
       bio: this.profileBio
     }).subscribe({
-      next: (datos) => {
-        this.authStore.updateUserInfo(datos);
-        this.avisos.success($localize`Perfil actualizado`);
+      next: (data) => {
+        this.authStore.updateUserInfo(data);
+        this.toast.success($localize`Perfil actualizado`);
         this.savingProfile.set(false);
       },
       error: () => this.savingProfile.set(false)
@@ -117,12 +117,12 @@ export class ProfileComponent implements OnInit {
 
   // ── Apariencia ────────────────────────────────────────────────────────────
 
-  elegirTema(tema: Theme): void {
-    this.temas.choose(tema);
+  chooseTheme(theme: Theme): void {
+    this.themes.choose(theme);
   }
 
-  cambiarIdioma(codigo: string): void {
-    this.idiomas.switchTo(codigo as LanguageCode);
+  changeLanguage(code: string): void {
+    this.languages.switchTo(code as LanguageCode);
   }
 
   // ── Seguridad ─────────────────────────────────────────────────────────────
@@ -133,7 +133,7 @@ export class ProfileComponent implements OnInit {
    * Aquí para decirlo antes de mandar —quien escribe una contraseña de cuatro letras se entera al
    * momento— y allí porque es lo único que de verdad protege: el navegador se puede saltar.
    */
-  cambiarContrasena(): void {
+  changePassword(): void {
     this.passwordError.set('');
 
     if (!this.currentPassword || !this.newPassword || !this.confirmPassword) {
@@ -159,7 +159,7 @@ export class ProfileComponent implements OnInit {
       newPassword: this.newPassword
     }).subscribe({
       next: () => {
-        this.avisos.success($localize`Contraseña cambiada`);
+        this.toast.success($localize`Contraseña cambiada`);
         this.currentPassword = '';
         this.newPassword = '';
         this.confirmPassword = '';
@@ -172,13 +172,13 @@ export class ProfileComponent implements OnInit {
         // Llega de dos formas según el endpoint: unos devuelven la cadena suelta y otros la
         // envuelven en `{ error }`. Leer sólo una dejaba el motivo dentro de la respuesta y en
         // pantalla el mensaje de repuesto, que no dice nada.
-        this.passwordError.set(motivoDelError(err) ?? $localize`No se pudo cambiar la contraseña.`);
+        this.passwordError.set(errorReason(err) ?? $localize`No se pudo cambiar la contraseña.`);
         this.savingPassword.set(false);
       }
     });
   }
 
-  cerrarSesion(): void {
+  signOut(): void {
     this.api.post('/auth/logout', {}).subscribe({
       next: () => this.authStore.logout(),
       error: () => this.authStore.logout()
@@ -192,11 +192,11 @@ export class ProfileComponent implements OnInit {
  * `Results.BadRequest("texto")` serializa una cadena JSON suelta y `BadRequest(new { error })` un
  * objeto. Los dos conviven en esta API, así que se miran los dos antes de rendirse.
  */
-function motivoDelError(err: unknown): string | null {
-  const cuerpo = (err as { error?: unknown })?.error;
+function errorReason(err: unknown): string | null {
+  const body = (err as { error?: unknown })?.error;
 
-  if (typeof cuerpo === 'string' && cuerpo.trim()) return cuerpo;
-  if (typeof (cuerpo as { error?: unknown })?.error === 'string') return (cuerpo as { error: string }).error;
+  if (typeof body === 'string' && body.trim()) return body;
+  if (typeof (body as { error?: unknown })?.error === 'string') return (body as { error: string }).error;
 
   return null;
 }

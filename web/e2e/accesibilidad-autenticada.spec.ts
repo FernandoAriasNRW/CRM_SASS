@@ -13,7 +13,7 @@ import AxeBuilder from '@axe-core/playwright';
  * regresiones, no como certificado de conformidad.
  */
 
-const SESION = {
+const SESSION = {
   accessToken: 'token-de-prueba',
   refreshToken: 'refresco-de-prueba',
   refreshTokenExpiresAtUtc: new Date(Date.now() + 7 * 864e5).toISOString(),
@@ -25,16 +25,16 @@ const SESION = {
 };
 
 /** Datos mínimos para que las vistas pinten contenido y no sólo estados vacíos. */
-const ELEMENTOS = [
+const ELEMENTS = [
   { id: 'aaaaaaaa-0000-0000-0000-000000000001', name: 'Proyecto de ejemplo', title: 'Elemento de ejemplo',
     description: 'Descripción', status: 'To Do', priority: 'High', projectId: 'p1',
     assigneeId: null, estimatedHours: 4, dueDate: new Date().toISOString(),
     createdAt: new Date().toISOString(), tagIds: [] },
 ];
 
-async function entrar(page: Page) {
+async function signIn(page: Page) {
   await page.route(/\/api\/v1\/auth\/login/, r =>
-    r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(SESION) }));
+    r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(SESSION) }));
 
   await page.route(/\/api\/v1\//, r => {
     const url = r.request().url();
@@ -45,7 +45,7 @@ async function entrar(page: Page) {
     }
     return r.fulfill({
       status: 200, contentType: 'application/json',
-      body: JSON.stringify({ items: ELEMENTOS, totalCount: ELEMENTOS.length }),
+      body: JSON.stringify({ items: ELEMENTS, totalCount: ELEMENTS.length }),
     });
   });
 
@@ -60,32 +60,32 @@ async function entrar(page: Page) {
  * Navega con la paleta de comandos. Un `page.goto` recargaría la página y perdería el
  * token, que vive en memoria y no en localStorage por decisión de seguridad.
  */
-async function irA(page: Page, termino: string, urlEsperada: RegExp) {
+async function goTo(page: Page, term: string, expectedUrl: RegExp) {
   await page.keyboard.press('Control+k');
-  await page.keyboard.type(termino);
+  await page.keyboard.type(term);
   await page.keyboard.press('Enter');
-  await expect(page).toHaveURL(urlEsperada, { timeout: 15_000 });
+  await expect(page).toHaveURL(expectedUrl, { timeout: 15_000 });
 }
 
-const VISTAS = [
-  { nombre: 'tareas',     termino: 'tareas',     url: /\/tasks/ },
-  { nombre: 'tickets',    termino: 'tickets',    url: /\/tickets/ },
-  { nombre: 'proyectos',  termino: 'proyectos',  url: /\/projects/ },
-  { nombre: 'panel',      termino: 'dashboard',  url: /\/dashboard/ },
-  { nombre: 'calendario', termino: 'calendario', url: /\/calendar/ },
-  { nombre: 'informes',   termino: 'informes',   url: /\/reports/ },
+const VIEWS = [
+  { name: 'tareas',     term: 'tareas',     url: /\/tasks/ },
+  { name: 'tickets',    term: 'tickets',    url: /\/tickets/ },
+  { name: 'proyectos',  term: 'proyectos',  url: /\/projects/ },
+  { name: 'panel',      term: 'dashboard',  url: /\/dashboard/ },
+  { name: 'calendario', term: 'calendario', url: /\/calendar/ },
+  { name: 'informes',   term: 'informes',   url: /\/reports/ },
 ];
 
-for (const vista of VISTAS) {
-  test(`${vista.nombre} no tiene violaciones graves de accesibilidad`, async ({ page }) => {
-    await entrar(page);
-    await irA(page, vista.termino, vista.url);
+for (const view of VIEWS) {
+  test(`${view.name} no tiene violaciones graves de accesibilidad`, async ({ page }) => {
+    await signIn(page);
+    await goTo(page, view.term, view.url);
 
-    const resultado = await new AxeBuilder({ page })
+    const result = await new AxeBuilder({ page })
       .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
       .analyze();
 
-    const graves = resultado.violations.filter(
+    const graves = result.violations.filter(
       v => v.impact === 'critical' || v.impact === 'serious');
 
     // El mensaje enumera qué falla y dónde: un fallo que sólo diga «esperaba 0, hubo 3»
@@ -95,15 +95,15 @@ for (const vista of VISTAS) {
 }
 
 test('la paleta de comandos no tiene violaciones graves', async ({ page }) => {
-  await entrar(page);
+  await signIn(page);
   await page.keyboard.press('Control+k');
   await expect(page.getByRole('dialog', { name: 'Paleta de comandos' })).toBeVisible();
 
-  const resultado = await new AxeBuilder({ page })
+  const result = await new AxeBuilder({ page })
     .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
     .analyze();
 
-  const graves = resultado.violations.filter(
+  const graves = result.violations.filter(
     v => v.impact === 'critical' || v.impact === 'serious');
 
   expect(graves.map(v => `${v.id} (${v.impact}) ×${v.nodes.length}: ${v.help}`)).toEqual([]);

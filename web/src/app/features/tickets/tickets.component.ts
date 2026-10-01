@@ -216,14 +216,14 @@ export class TicketsComponent implements OnInit {
     this.activeViewId.set(null);
   }
 
-  createView({ name: nombre, type: tipo }: { name: string; type: string }): void {
-    this.viewMode.set(tipo as 'board' | 'list');
+  createView({ name, type }: { name: string; type: string }): void {
+    this.viewMode.set(type as 'board' | 'list');
 
-    const state = { ...this.tableState(), viewType: tipo };
+    const state = { ...this.tableState(), viewType: type };
 
     this.viewsService.saveView({
       moduleName: 'Tickets',
-      viewName: nombre,
+      viewName: name,
       stateJson: JSON.stringify(state),
       isDefault: false
     }).subscribe({

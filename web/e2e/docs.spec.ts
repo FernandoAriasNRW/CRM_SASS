@@ -12,14 +12,14 @@ import { test, expect, type Page } from '@playwright/test';
  * perder una tarde.
  */
 
-const SESION = {
+const SESSION = {
   accessToken: 't', refreshToken: 'r',
   refreshTokenExpiresAtUtc: new Date(Date.now() + 864e5).toISOString(),
   user: { id: '1', name: 'Admin', email: 'admin@acme.com', role: 'Admin', tenantId: 'ff' },
 };
 
 /** Ajustado a `DocumentDto`: `type` es numérico (1 List, 2 Wiki, 3 MeetingNote, 4 Template). */
-const DOCUMENTOS = [
+const DOCUMENTS = [
   {
     id: '00000000-0000-0000-0000-0000000000d1',
     title: 'Manual de arquitectura',
@@ -31,9 +31,9 @@ const DOCUMENTOS = [
   },
 ];
 
-async function entrarADocs(page: Page) {
+async function openDocs(page: Page) {
   await page.route(/\/api\/v1\/auth\/login/, r =>
-    r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(SESION) }));
+    r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(SESSION) }));
 
   await page.route(/\/api\/v1\//, r => {
     const u = r.request().url();
@@ -50,7 +50,7 @@ async function entrarADocs(page: Page) {
     if (/\/docs(\?|$)/.test(u)) {
       return r.fulfill({
         status: 200, contentType: 'application/json',
-        body: JSON.stringify(DOCUMENTOS),
+        body: JSON.stringify(DOCUMENTS),
       });
     }
     return r.fulfill({ status: 200, contentType: 'application/json', body: '{"items":[],"totalCount":0}' });
@@ -69,25 +69,25 @@ async function entrarADocs(page: Page) {
 }
 
 test('la sección de documentos carga sin errores de consola', async ({ page }) => {
-  const errores: string[] = [];
-  page.on('pageerror', e => errores.push(e.message));
+  const errors: string[] = [];
+  page.on('pageerror', e => errors.push(e.message));
 
-  await entrarADocs(page);
+  await openDocs(page);
 
   // Un fallo al construir cualquiera de sus piezas aparecería aquí antes que en pantalla.
-  expect(errores).toEqual([]);
+  expect(errors).toEqual([]);
 });
 
 
 
 test('muestra los documentos que devuelve la API', async ({ page }) => {
-  await entrarADocs(page);
+  await openDocs(page);
 
   await expect(page.getByText('Manual de arquitectura').first()).toBeVisible({ timeout: 15_000 });
 });
 
 test('el modal de importar se abre, valida y se cierra', async ({ page }) => {
-  await entrarADocs(page);
+  await openDocs(page);
 
   await page.getByRole('button', { name: /^importar$/i }).first().click();
   const modal = page.getByRole('dialog', { name: /importar documento/i });
@@ -104,7 +104,7 @@ test('el modal de importar se abre, valida y se cierra', async ({ page }) => {
 });
 
 test('el cajón de plantillas las ofrece todas, se filtran y se recorren con teclado', async ({ page }) => {
-  await entrarADocs(page);
+  await openDocs(page);
 
   await page.getByRole('button', { name: /más opciones de documento nuevo/i }).click();
   await page.getByRole('button', { name: /ver todas las plantillas/i }).first().click();
@@ -117,9 +117,9 @@ test('el cajón de plantillas las ofrece todas, se filtran y se recorren con tec
   await expect(cajon.getByRole('heading', { name: /del sistema/i })).toBeVisible();
 
   // Son <button> nativos, así que reciben foco sin ayuda añadida.
-  const primera = cajon.getByRole('button', { name: /resumen de proyecto/i });
-  await primera.focus();
-  await expect(primera).toBeFocused();
+  const first = cajon.getByRole('button', { name: /resumen de proyecto/i });
+  await first.focus();
+  await expect(first).toBeFocused();
 
   // Filtrar deja sólo la que coincide. Sin esto, el buscador podría no estar conectado a nada y
   // el cajón seguiría pareciendo correcto.
@@ -137,26 +137,26 @@ test('el cajón de plantillas las ofrece todas, se filtran y se recorren con tec
  * también la versión rota.
  */
 test('si el guardado falla, la cabecera lo dice y ofrece reintentar', async ({ page }) => {
-  const PAGINA = {
+  const PAGE = {
     id: '00000000-0000-0000-0000-0000000000a1',
-    documentId: DOCUMENTOS[0].id,
+    documentId: DOCUMENTS[0].id,
     parentPageId: null,
     title: 'Página de prueba',
     content: '<p>Contenido</p>',
     order: 0,
   };
 
-  let guardadosPedidos = 0;
+  let saveRequests = 0;
 
-  await entrarADocs(page);
+  await openDocs(page);
 
   // Después de `entrarADocs` a propósito: en Playwright gana la ruta registrada más tarde, y la
   // de dentro es un comodín sobre `/api/v1/` que si no se tragaría éstas.
   await page.route(/\/api\/v1\/docs\/[^/]+\/pages/, r =>
-    r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([PAGINA]) }));
+    r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([PAGE]) }));
 
   await page.route(/\/api\/v1\/docs\/pages\//, r => {
-    guardadosPedidos++;
+    saveRequests++;
     // Falla siempre: lo que se comprueba es que el fallo llega a la pantalla, no que se recupere.
     return r.fulfill({ status: 500, contentType: 'application/json', body: '"Error del servidor"' });
   });
@@ -173,9 +173,9 @@ test('si el guardado falla, la cabecera lo dice y ofrece reintentar', async ({ p
   // Y el texto sigue en pantalla: perderlo al fallar sería el mismo desastre con otro cartel.
   await expect(page.locator('.ProseMirror')).toContainText('esto no se va a poder guardar');
 
-  const antes = guardadosPedidos;
+  const before = saveRequests;
   await reintentar.click();
-  await expect.poll(() => guardadosPedidos).toBeGreaterThan(antes);
+  await expect.poll(() => saveRequests).toBeGreaterThan(before);
 });
 
 /**
@@ -184,45 +184,45 @@ test('si el guardado falla, la cabecera lo dice y ofrece reintentar', async ({ p
  * plantilla y no había forma de organizarlo.
  */
 test('el árbol permite crear una página nueva', async ({ page }) => {
-  const PAGINA = {
+  const PAGE = {
     id: '00000000-0000-0000-0000-0000000000a1',
-    documentId: DOCUMENTOS[0].id,
+    documentId: DOCUMENTS[0].id,
     parentPageId: null,
     title: 'Primera página',
     content: '<p>Contenido</p>',
     order: 0,
   };
 
-  let creaciones = 0;
+  let creations = 0;
 
-  await entrarADocs(page);
+  await openDocs(page);
 
   await page.route(/\/api\/v1\/docs\/[^/]+\/pages/, r => {
     if (r.request().method() === 'POST') {
-      creaciones++;
+      creations++;
       return r.fulfill({ status: 200, contentType: 'application/json', body: '"00000000-0000-0000-0000-0000000000a2"' });
     }
-    return r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([PAGINA]) });
+    return r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([PAGE]) });
   });
 
   await page.getByText('Manual de arquitectura').first().click();
 
-  const arbol = page.getByRole('button', { name: /^nueva página$/i });
-  await expect(arbol).toBeVisible({ timeout: 15_000 });
-  await arbol.click();
+  const tree = page.getByRole('button', { name: /^nueva página$/i });
+  await expect(tree).toBeVisible({ timeout: 15_000 });
+  await tree.click();
 
-  await expect.poll(() => creaciones).toBe(1);
+  await expect.poll(() => creations).toBe(1);
 });
 
 test('no tiene violaciones graves de accesibilidad', async ({ page }) => {
   const { default: AxeBuilder } = await import('@axe-core/playwright');
-  await entrarADocs(page);
+  await openDocs(page);
 
-  const resultado = await new AxeBuilder({ page })
+  const result = await new AxeBuilder({ page })
     .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
     .analyze();
 
-  const graves = resultado.violations.filter(
+  const graves = result.violations.filter(
     v => v.impact === 'critical' || v.impact === 'serious');
 
   expect(graves.map(v => `${v.id} (${v.impact}) ×${v.nodes.length}: ${v.help}`)).toEqual([]);

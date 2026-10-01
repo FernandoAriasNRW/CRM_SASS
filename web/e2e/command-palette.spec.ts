@@ -6,7 +6,7 @@ import { test, expect, type Page } from '@playwright/test';
  * que ya cubren los tests de integración.
  */
 
-const SESION = {
+const SESSION = {
   accessToken: 'token-de-prueba',
   refreshToken: 'refresco-de-prueba',
   refreshTokenExpiresAtUtc: new Date(Date.now() + 7 * 864e5).toISOString(),
@@ -19,9 +19,9 @@ const SESION = {
   },
 };
 
-async function entrar(page: Page) {
+async function signIn(page: Page) {
   await page.route('**/api/v1/auth/login', route =>
-    route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(SESION) }));
+    route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(SESSION) }));
   await page.route('**/api/v1/**', route =>
     route.request().url().includes('/auth/login')
       ? route.fallback()
@@ -34,58 +34,58 @@ async function entrar(page: Page) {
   await expect(page).not.toHaveURL(/\/login/, { timeout: 30_000 });
 }
 
-const paleta = (page: Page) => page.getByRole('dialog', { name: 'Paleta de comandos' });
+const palette = (page: Page) => page.getByRole('dialog', { name: 'Paleta de comandos' });
 
 test('Ctrl+K abre la paleta con el foco puesto en el buscador', async ({ page }) => {
-  await entrar(page);
+  await signIn(page);
 
   await page.keyboard.press('Control+k');
 
-  await expect(paleta(page)).toBeVisible();
+  await expect(palette(page)).toBeVisible();
   // Sin foco automático habría que hacer clic para escribir, que es justo lo que la
   // paleta existe para evitar.
   await expect(page.getByRole('combobox')).toBeFocused();
 });
 
 test('Escape la cierra', async ({ page }) => {
-  await entrar(page);
+  await signIn(page);
   await page.keyboard.press('Control+k');
-  await expect(paleta(page)).toBeVisible();
+  await expect(palette(page)).toBeVisible();
 
   await page.keyboard.press('Escape');
 
-  await expect(paleta(page)).toBeHidden();
+  await expect(palette(page)).toBeHidden();
 });
 
 test('escribir filtra y Enter navega a la sección elegida', async ({ page }) => {
-  await entrar(page);
+  await signIn(page);
   await page.keyboard.press('Control+k');
 
   await page.keyboard.type('tickets');
   await page.keyboard.press('Enter');
 
   await expect(page).toHaveURL(/\/tickets/);
-  await expect(paleta(page)).toBeHidden();
+  await expect(palette(page)).toBeHidden();
 });
 
 test('las flechas recorren la lista y marcan una sola opción', async ({ page }) => {
-  await entrar(page);
+  await signIn(page);
   await page.keyboard.press('Control+k');
 
   await page.keyboard.press('ArrowDown');
 
-  const seleccionadas = page.locator('[role="option"][aria-selected="true"]');
-  await expect(seleccionadas).toHaveCount(1);
+  const selected = page.locator('[role="option"][aria-selected="true"]');
+  await expect(selected).toHaveCount(1);
 
   // El foco no se mueve a la opción: sigue en el campo para poder escribir, y es
   // aria-activedescendant quien le dice al lector de pantalla cuál está resaltada.
   await expect(page.getByRole('combobox')).toBeFocused();
-  const activo = await page.getByRole('combobox').getAttribute('aria-activedescendant');
-  expect(activo).toBeTruthy();
+  const active = await page.getByRole('combobox').getAttribute('aria-activedescendant');
+  expect(active).toBeTruthy();
 });
 
 test('avisa cuando nada coincide, en lugar de quedarse vacía', async ({ page }) => {
-  await entrar(page);
+  await signIn(page);
   await page.keyboard.press('Control+k');
 
   await page.keyboard.type('xyzzy-no-existe');

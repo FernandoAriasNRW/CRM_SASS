@@ -13,21 +13,21 @@ import { test, expect, type Page } from '@playwright/test';
  * lugar de depender de qué haya sembrado en la base.
  */
 
-const USUARIO = {
+const USER = {
   id: '00000000-0000-0000-0000-000000000001',
   name: 'Admin Administrator', email: 'admin@acme.com', role: 'Admin',
   tenantId: '00000000-0000-0000-0000-0000000000ff',
 };
 
-const SESION = {
+const SESSION = {
   accessToken: 'token-de-prueba',
   accessTokenExpiresAtUtc: new Date(Date.now() + 864e5).toISOString(),
   refreshToken: 'refresco-de-prueba',
   refreshTokenExpiresAtUtc: new Date(Date.now() + 7 * 864e5).toISOString(),
-  user: USUARIO,
+  user: USER,
 };
 
-const DEFINICIONES = [
+const DEFINITIONS = [
   {
     id: 'dddddddd-0000-0000-0000-000000000002', name: 'Canal de entrada', type: 'Select',
     targetEntity: 'Task', isRequired: true, options: ['Web', 'Teléfono'], position: 5,
@@ -38,78 +38,78 @@ const DEFINICIONES = [
   },
 ];
 
-const TAREA = {
+const TASK = {
   id: 'aaaaaaaa-0000-0000-0000-000000000001',
   title: 'Tarea con campos', description: '', status: 'To Do', priority: 'Normal',
   projectId: 'p1', assigneeId: null, estimatedHours: 4,
   dueDate: new Date().toISOString(), tagIds: [],
 };
 
-const VALORES = [
+const VALUES = [
   {
-    definitionId: DEFINICIONES[1].id, name: 'Cliente facturable', type: 'Text',
+    definitionId: DEFINITIONS[1].id, name: 'Cliente facturable', type: 'Text',
     isRequired: false, options: [], position: 0, value: 'Acme',
   },
   {
-    definitionId: DEFINICIONES[0].id, name: 'Canal de entrada', type: 'Select',
+    definitionId: DEFINITIONS[0].id, name: 'Canal de entrada', type: 'Select',
     isRequired: true, options: ['Web', 'Teléfono'], position: 5, value: null,
   },
 ];
 
-const json = (cuerpo: unknown, status = 200) => ({
-  status, contentType: 'application/json', body: JSON.stringify(cuerpo),
+const json = (body: unknown, status = 200) => ({
+  status, contentType: 'application/json', body: JSON.stringify(body),
 });
 
 /**
  * Lo que el backend devuelve al rechazar es una cadena suelta —`BadRequest(result.Error)`—, no un
  * ProblemDetails. Las simulaciones lo imitan porque de ahí sale el mensaje que se enseña.
  */
-type Respuestas = {
-  definiciones?: unknown;
-  valores?: unknown;
-  alta?: { status: number; cuerpo: unknown };
-  guardadoDeValor?: { status: number; cuerpo: unknown };
+type Responses = {
+  definitions?: unknown;
+  values?: unknown;
+  created?: { status: number; body: unknown };
+  savedValue?: { status: number; body: unknown };
 };
 
-async function entrar(page: Page, respuestas: Respuestas = {}) {
-  await page.route(/\/api\/v1\/auth\/login/, r => r.fulfill(json(SESION)));
+async function signIn(page: Page, responses: Responses = {}) {
+  await page.route(/\/api\/v1\/auth\/login/, r => r.fulfill(json(SESSION)));
 
   await page.route(/\/api\/v1\//, async r => {
     const url = r.request().url();
-    const metodo = r.request().method();
+    const method = r.request().method();
 
     if (/\/auth\/login/.test(url)) return r.fallback();
 
     // El rol sale de aquí, no del token: sin esto `isAdmin()` es falso, no hay enlace a
     // administración y el guard la deja fuera.
-    if (/\/auth\/users\/me/.test(url)) return r.fulfill(json(USUARIO));
+    if (/\/auth\/users\/me/.test(url)) return r.fulfill(json(USER));
 
     // Estos dos devuelven un array, no un objeto paginado. Contestarles con `{items: []}` deja a
     // `UsersService` guardando un objeto donde espera una lista, y el `computed` que lo recorre
     // revienta en cada render: la aplicación entera se queda en blanco y el fallo no señala aquí.
-    if (/\/users\/tenant/.test(url)) return r.fulfill(json([USUARIO]));
+    if (/\/users\/tenant/.test(url)) return r.fulfill(json([USER]));
     if (/\/notifications/.test(url)) return r.fulfill(json([]));
 
     if (/\/custom-fields\/values\//.test(url)) {
-      if (metodo === 'PUT') {
-        const respuesta = respuestas.guardadoDeValor;
-        return r.fulfill(respuesta
-          ? { status: respuesta.status, contentType: 'application/json', body: JSON.stringify(respuesta.cuerpo) }
+      if (method === 'PUT') {
+        const response = responses.savedValue;
+        return r.fulfill(response
+          ? { status: response.status, contentType: 'application/json', body: JSON.stringify(response.body) }
           : json({}));
       }
-      return r.fulfill(json(respuestas.valores ?? VALORES));
+      return r.fulfill(json(responses.values ?? VALUES));
     }
 
     if (/\/custom-fields/.test(url)) {
-      if (metodo === 'POST') {
-        const respuesta = respuestas.alta;
-        return r.fulfill(respuesta
-          ? { status: respuesta.status, contentType: 'application/json', body: JSON.stringify(respuesta.cuerpo) }
-          : json(DEFINICIONES[1], 201));
+      if (method === 'POST') {
+        const response = responses.created;
+        return r.fulfill(response
+          ? { status: response.status, contentType: 'application/json', body: JSON.stringify(response.body) }
+          : json(DEFINITIONS[1], 201));
       }
-      if (metodo === 'DELETE') return r.fulfill({ status: 204, body: '' });
-      if (metodo === 'PUT') return r.fulfill(json({}));
-      return r.fulfill(json(respuestas.definiciones ?? DEFINICIONES));
+      if (method === 'DELETE') return r.fulfill({ status: 204, body: '' });
+      if (method === 'PUT') return r.fulfill(json({}));
+      return r.fulfill(json(responses.definitions ?? DEFINITIONS));
     }
 
     if (/\/views\//.test(url)) return r.fulfill(json([]));
@@ -121,11 +121,11 @@ async function entrar(page: Page, respuestas: Respuestas = {}) {
     if (/\/subtasks/.test(url)) return r.fulfill(json([]));
     if (/\/checklist/.test(url)) return r.fulfill(json([]));
     if (/\/comments/.test(url)) return r.fulfill(json([]));
-    if (/\/dependencies/.test(url)) return r.fulfill(json({ bloqueadaPor: [], bloqueaA: [] }));
+    if (/\/dependencies/.test(url)) return r.fulfill(json({ blockedBy: [], blocks: [] }));
     // El campo de etiquetas de la ficha pide la lista de la organización: un array, no paginado.
     if (/\/tags(\?|$)/.test(url)) return r.fulfill(json([]));
 
-    if (/\/tasks(\?|$)/.test(url)) return r.fulfill(json({ items: [TAREA], totalCount: 1 }));
+    if (/\/tasks(\?|$)/.test(url)) return r.fulfill(json({ items: [TASK], totalCount: 1 }));
 
     return r.fulfill(json({ items: [], totalCount: 0 }));
   });
@@ -144,13 +144,13 @@ async function entrar(page: Page, respuestas: Respuestas = {}) {
  * así que una recarga devuelve al login y la prueba falla por un motivo que no tiene nada que ver
  * con lo que quiere comprobar.
  */
-async function irALaPestanaDeCampos(page: Page) {
+async function goToFieldsTab(page: Page) {
   await page.getByRole('link', { name: 'Admin' }).click();
   await expect(page).toHaveURL(/\/admin/, { timeout: 15_000 });
   await page.getByRole('button', { name: 'Campos Personalizados' }).click();
 }
 
-async function irALasTareas(page: Page) {
+async function goToTasks(page: Page) {
   await page.keyboard.press('Control+k');
   await page.keyboard.type('tareas');
   await page.keyboard.press('Enter');
@@ -159,23 +159,23 @@ async function irALasTareas(page: Page) {
 
 test.describe('la pestaña que define los campos', () => {
   test('los ordena por posición, no por el orden en que lleguen', async ({ page }) => {
-    await entrar(page);
-    await irALaPestanaDeCampos(page);
+    await signIn(page);
+    await goToFieldsTab(page);
 
-    const nombres = page.locator('tbody tr td:nth-child(2)');
-    await expect(nombres).toHaveText(['Cliente facturable', 'Canal de entrada']);
+    const names = page.locator('tbody tr td:nth-child(2)');
+    await expect(names).toHaveText(['Cliente facturable', 'Canal de entrada']);
   });
 
   test('sin campos definidos lo dice en lugar de enseñar una tabla vacía', async ({ page }) => {
-    await entrar(page, { definiciones: [] });
-    await irALaPestanaDeCampos(page);
+    await signIn(page, { definitions: [] });
+    await goToFieldsTab(page);
 
     await expect(page.getByText(/todavía no hay campos definidos/i)).toBeVisible();
   });
 
   test('no deja guardar un campo sin nombre, y dice por qué', async ({ page }) => {
-    await entrar(page);
-    await irALaPestanaDeCampos(page);
+    await signIn(page);
+    await goToFieldsTab(page);
     await page.getByRole('button', { name: 'Nuevo campo', exact: true }).click();
 
     await expect(page.getByText('El campo necesita un nombre')).toBeVisible();
@@ -183,8 +183,8 @@ test.describe('la pestaña que define los campos', () => {
   });
 
   test('un tipo de selección pide sus opciones', async ({ page }) => {
-    await entrar(page);
-    await irALaPestanaDeCampos(page);
+    await signIn(page);
+    await goToFieldsTab(page);
     await page.getByRole('button', { name: 'Nuevo campo', exact: true }).click();
 
     await expect(page.getByLabel(/opciones, una por línea/i)).toBeHidden();
@@ -195,10 +195,10 @@ test.describe('la pestaña que define los campos', () => {
   });
 
   test('si el servidor rechaza el alta, el formulario sigue abierto con lo escrito', async ({ page }) => {
-    await entrar(page, {
-      alta: { status: 400, cuerpo: 'Ya hay un campo con ese nombre para esa entidad' },
+    await signIn(page, {
+      created: { status: 400, body: 'Ya hay un campo con ese nombre para esa entidad' },
     });
-    await irALaPestanaDeCampos(page);
+    await goToFieldsTab(page);
     await page.getByRole('button', { name: 'Nuevo campo', exact: true }).click();
     await page.getByLabel('Nombre').fill('Cliente facturable');
 
@@ -211,8 +211,8 @@ test.describe('la pestaña que define los campos', () => {
   });
 
   test('al editar no se puede cambiar el tipo, y se explica', async ({ page }) => {
-    await entrar(page);
-    await irALaPestanaDeCampos(page);
+    await signIn(page);
+    await goToFieldsTab(page);
 
     await page.getByRole('button', { name: 'Editar el campo' }).first().click();
 
@@ -221,8 +221,8 @@ test.describe('la pestaña que define los campos', () => {
   });
 
   test('borrar pide confirmación en la propia fila', async ({ page }) => {
-    await entrar(page);
-    await irALaPestanaDeCampos(page);
+    await signIn(page);
+    await goToFieldsTab(page);
 
     await page.getByRole('button', { name: 'Borrar el campo' }).first().click();
 
@@ -231,25 +231,25 @@ test.describe('la pestaña que define los campos', () => {
 });
 
 test.describe('el formulario del detalle de tarea', () => {
-  async function abrirLaTarea(page: Page) {
-    await irALasTareas(page);
+  async function openTask(page: Page) {
+    await goToTasks(page);
     await page.getByText('Tarea con campos').first().click();
     await expect(page.getByText('Campos personalizados')).toBeVisible({ timeout: 15_000 });
   }
 
   test('pinta cada campo con su valor', async ({ page }) => {
-    await entrar(page);
-    await abrirLaTarea(page);
+    await signIn(page);
+    await openTask(page);
 
     await expect(page.getByLabel('Cliente facturable')).toHaveValue('Acme');
     await expect(page.getByLabel('Canal de entrada')).toBeVisible();
   });
 
   test('un valor rechazado se revierte y el motivo sale junto al campo', async ({ page }) => {
-    await entrar(page, {
-      guardadoDeValor: { status: 400, cuerpo: '«Paloma mensajera» no está entre las opciones del campo' },
+    await signIn(page, {
+      savedValue: { status: 400, body: '«Paloma mensajera» no está entre las opciones del campo' },
     });
-    await abrirLaTarea(page);
+    await openTask(page);
 
     await page.getByLabel('Cliente facturable').fill('Globex');
     await page.getByLabel('Cliente facturable').blur();
@@ -260,9 +260,9 @@ test.describe('el formulario del detalle de tarea', () => {
   });
 
   test('un inquilino sin campos definidos no ve ni el encabezado', async ({ page }) => {
-    await entrar(page, { valores: [] });
+    await signIn(page, { values: [] });
 
-    await irALasTareas(page);
+    await goToTasks(page);
     await page.getByText('Tarea con campos').first().click();
     // Se espera a que el panel esté pintado antes de comprobar una ausencia: si no, la prueba
     // pasaría simplemente porque todavía no había llegado nada.

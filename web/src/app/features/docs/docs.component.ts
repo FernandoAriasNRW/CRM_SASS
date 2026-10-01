@@ -377,7 +377,7 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
    * como el resto de los módulos, y de paso una pestaña se puede compartir por enlace y el botón
    * de atrás funciona.
    */
-  private readonly seccionesDelPanel = inject(PanelSectionsService);
+  private readonly panelSections = inject(PanelSectionsService);
 
   /** `effect` fuera del constructor necesita inyector explícito. */
   private readonly injector = inject(Injector);
@@ -635,7 +635,7 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
     // Va en un `effect` porque las dos listas cambian —al marcar una estrella, al abrir un
     // documento— y una entrega única dejaría el panel enseñando lo de hace un rato.
     effect(() => {
-      this.seccionesDelPanel.register('docs', [
+      this.panelSections.register('docs', [
         {
           title: $localize`Favoritos`,
           fallback: $localize`Marca un documento con la estrella para verlo aquí.`,
@@ -675,7 +675,7 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
 
     // Si no se limpian, al salir de Documentos el panel de Tareas seguiría enseñando documentos
     // favoritos: las secciones viven en un servicio global.
-    this.seccionesDelPanel.clear('docs');
+    this.panelSections.clear('docs');
   }
 
   onGlobalClick(event: Event) {

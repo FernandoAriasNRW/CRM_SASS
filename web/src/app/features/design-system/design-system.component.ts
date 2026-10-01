@@ -10,13 +10,13 @@ import { EmptyStateComponent, EmptyInlineComponent } from '../../shared/ui/empty
 import { ClickableDirective } from '../../shared/directives/clickable.directive';
 
 /** Un color semántico con sus cuatro tokens. */
-interface Familia {
-  nombre: string;
-  solido: string;
-  textoSolido: string;
-  tenue: string;
-  textoTenue: string;
-  uso: string;
+interface Family {
+  name: string;
+  solid: string;
+  solidText: string;
+  muted: string;
+  mutedText: string;
+  usage: string;
 }
 
 /**
@@ -59,16 +59,16 @@ interface Familia {
         </p>
 
         <div class="grid gap-4 sm:grid-cols-2">
-          @for (f of familias; track f.nombre) {
+          @for (f of families; track f.name) {
             <div class="rounded-lg border border-border p-4 space-y-3">
               <div class="flex items-center justify-between">
-                <h3 class="font-medium">{{ f.nombre }}</h3>
-                <span class="text-xs text-muted-foreground">{{ f.uso }}</span>
+                <h3 class="font-medium">{{ f.name }}</h3>
+                <span class="text-xs text-muted-foreground">{{ f.usage }}</span>
               </div>
-              <div [class]="'rounded-md px-3 py-2 text-sm ' + f.solido + ' ' + f.textoSolido">
+              <div [class]="'rounded-md px-3 py-2 text-sm ' + f.solid + ' ' + f.solidText">
                 Relleno sólido — botones, barras
               </div>
-              <div [class]="'rounded-md px-3 py-2 text-sm ' + f.tenue + ' ' + f.textoTenue">
+              <div [class]="'rounded-md px-3 py-2 text-sm ' + f.muted + ' ' + f.mutedText">
                 Fondo tenue — etiquetas, avisos
               </div>
             </div>
@@ -79,12 +79,12 @@ interface Familia {
       <section class="space-y-4" aria-labelledby="s-botones">
         <h2 id="s-botones" class="text-xl font-semibold">Botones</h2>
         <div class="flex flex-wrap gap-3">
-          @for (v of variantesBoton; track v) {
+          @for (v of buttonVariants; track v) {
             <button uiButton [variant]="v">{{ v }}</button>
           }
         </div>
         <div class="flex flex-wrap items-center gap-3">
-          @for (t of tamanosBoton; track t) {
+          @for (t of buttonSizes; track t) {
             <button uiButton variant="outline" [size]="t"
                     [attr.aria-label]="t === 'icon' ? 'Ejemplo de botón de icono' : null">
               {{ t === 'icon' ? '★' : t }}
@@ -96,7 +96,7 @@ interface Familia {
       <section class="space-y-4" aria-labelledby="s-badges">
         <h2 id="s-badges" class="text-xl font-semibold">Etiquetas</h2>
         <div class="flex flex-wrap gap-2">
-          @for (v of variantesBadge; track v) {
+          @for (v of badgeVariants; track v) {
             <ui-badge [variant]="v">{{ v }}</ui-badge>
           }
         </div>
@@ -142,33 +142,33 @@ interface Familia {
           <code>(click)</code>. Prefiere <code>&lt;button&gt;</code> cuando el elemento sea
           de verdad un botón; esto es para filas, tarjetas y etiquetas.
         </p>
-        <div appClickable (click)="pulsaciones.set(pulsaciones() + 1)"
+        <div appClickable (click)="clicks.set(clicks() + 1)"
              class="cursor-pointer rounded-lg border border-border p-4 text-sm
                     hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring">
-          Actívame con el ratón, con Enter o con Espacio — {{ pulsaciones() }}
+          Actívame con el ratón, con Enter o con Espacio — {{ clicks() }}
         </div>
       </section>
     </div>
   `,
 })
 export class DesignSystemComponent {
-  protected readonly pulsaciones = signal(0);
+  protected readonly clicks = signal(0);
 
-  protected readonly variantesBoton = [
+  protected readonly buttonVariants = [
     'default', 'secondary', 'outline', 'ghost', 'destructive', 'link',
   ] as const;
 
-  protected readonly tamanosBoton = ['sm', 'default', 'lg', 'icon'] as const;
+  protected readonly buttonSizes = ['sm', 'default', 'lg', 'icon'] as const;
 
-  protected readonly variantesBadge: BadgeVariant[] = [
+  protected readonly badgeVariants: BadgeVariant[] = [
     'default', 'secondary', 'outline', 'destructive', 'success', 'warning',
   ];
 
-  protected readonly familias: Familia[] = [
-    { nombre: 'primary', uso: 'acción principal', solido: 'bg-primary', textoSolido: 'text-primary-foreground', tenue: 'bg-primary-subtle', textoTenue: 'text-primary-subtle-fg' },
-    { nombre: 'destructive', uso: 'error, borrado', solido: 'bg-destructive', textoSolido: 'text-destructive-foreground', tenue: 'bg-destructive-subtle', textoTenue: 'text-destructive-subtle-fg' },
-    { nombre: 'success', uso: 'confirmación', solido: 'bg-success', textoSolido: 'text-success-foreground', tenue: 'bg-success-subtle', textoTenue: 'text-success-subtle-fg' },
-    { nombre: 'warning', uso: 'aviso', solido: 'bg-warning', textoSolido: 'text-warning-foreground', tenue: 'bg-warning-subtle', textoTenue: 'text-warning-subtle-fg' },
-    { nombre: 'info', uso: 'informativo', solido: 'bg-info', textoSolido: 'text-info-foreground', tenue: 'bg-info-subtle', textoTenue: 'text-info-subtle-fg' },
+  protected readonly families: Family[] = [
+    { name: 'primary', usage: 'acción principal', solid: 'bg-primary', solidText: 'text-primary-foreground', muted: 'bg-primary-subtle', mutedText: 'text-primary-subtle-fg' },
+    { name: 'destructive', usage: 'error, borrado', solid: 'bg-destructive', solidText: 'text-destructive-foreground', muted: 'bg-destructive-subtle', mutedText: 'text-destructive-subtle-fg' },
+    { name: 'success', usage: 'confirmación', solid: 'bg-success', solidText: 'text-success-foreground', muted: 'bg-success-subtle', mutedText: 'text-success-subtle-fg' },
+    { name: 'warning', usage: 'aviso', solid: 'bg-warning', solidText: 'text-warning-foreground', muted: 'bg-warning-subtle', mutedText: 'text-warning-subtle-fg' },
+    { name: 'info', usage: 'informativo', solid: 'bg-info', solidText: 'text-info-foreground', muted: 'bg-info-subtle', mutedText: 'text-info-subtle-fg' },
   ];
 }

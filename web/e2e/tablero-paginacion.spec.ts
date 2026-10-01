@@ -12,7 +12,7 @@ import { test, expect, type Page } from '@playwright/test';
  * tarjetas en posiciones equivocadas.
  */
 
-const SESION = {
+const SESSION = {
   accessToken: 'token-de-prueba',
   refreshToken: 'refresco-de-prueba',
   refreshTokenExpiresAtUtc: new Date(Date.now() + 7 * 864e5).toISOString(),
@@ -24,7 +24,7 @@ const SESION = {
 };
 
 /** 60 tareas en una sola columna: más de dos tandas. */
-const TAREAS = Array.from({ length: 60 }, (_, i) => ({
+const TASKS = Array.from({ length: 60 }, (_, i) => ({
   id: `00000000-0000-0000-0000-${String(i).padStart(12, '0')}`,
   title: `Tarea ${i + 1}`,
   description: '',
@@ -36,9 +36,9 @@ const TAREAS = Array.from({ length: 60 }, (_, i) => ({
   tagIds: [],
 }));
 
-async function entrarAlTablero(page: Page) {
+async function openBoard(page: Page) {
   await page.route(/\/api\/v1\/auth\/login/, r =>
-    r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(SESION) }));
+    r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(SESSION) }));
 
   await page.route(/\/api\/v1\//, r => {
     const url = r.request().url();
@@ -49,7 +49,7 @@ async function entrarAlTablero(page: Page) {
     if (/\/tasks(\?|$)/.test(url)) {
       return r.fulfill({
         status: 200, contentType: 'application/json',
-        body: JSON.stringify({ items: TAREAS, totalCount: TAREAS.length }),
+        body: JSON.stringify({ items: TASKS, totalCount: TASKS.length }),
       });
     }
     return r.fulfill({ status: 200, contentType: 'application/json', body: '{"items":[],"totalCount":0}' });
@@ -68,10 +68,10 @@ async function entrarAlTablero(page: Page) {
   await expect(page.getByText('Tarea 1', { exact: true })).toBeVisible({ timeout: 15_000 });
 }
 
-const tarjetas = (page: Page) => page.locator('[cdkdroplist] [cdkdrag], [cdkDropList] [cdkDrag]');
+const cards = (page: Page) => page.locator('[cdkdroplist] [cdkdrag], [cdkDropList] [cdkDrag]');
 
 test('pinta sólo la primera tanda, no las 60 tareas', async ({ page }) => {
-  await entrarAlTablero(page);
+  await openBoard(page);
 
   // Lo que se pinta es lo que cuesta: 60 tarjetas arrastrables se notan al desplazarse.
   await expect(page.getByText('Tarea 25', { exact: true })).toBeVisible();
@@ -79,14 +79,14 @@ test('pinta sólo la primera tanda, no las 60 tareas', async ({ page }) => {
 });
 
 test('el contador de la columna muestra el total, no lo pintado', async ({ page }) => {
-  await entrarAlTablero(page);
+  await openBoard(page);
 
   // Si el contador dijera 25, el tablero estaría ocultando trabajo sin avisar.
   await expect(page.getByText('60', { exact: true }).first()).toBeVisible();
 });
 
 test('«mostrar más» revela la siguiente tanda', async ({ page }) => {
-  await entrarAlTablero(page);
+  await openBoard(page);
 
   await page.getByRole('button', { name: /mostrar 25 más/i }).click();
 
@@ -95,7 +95,7 @@ test('«mostrar más» revela la siguiente tanda', async ({ page }) => {
 });
 
 test('el botón desaparece al no quedar nada por mostrar', async ({ page }) => {
-  await entrarAlTablero(page);
+  await openBoard(page);
 
   await page.getByRole('button', { name: /mostrar .* más/i }).click();
   await page.getByRole('button', { name: /mostrar .* más/i }).click();
@@ -105,12 +105,12 @@ test('el botón desaparece al no quedar nada por mostrar', async ({ page }) => {
 });
 
 test('el botón es alcanzable con el teclado', async ({ page }) => {
-  await entrarAlTablero(page);
+  await openBoard(page);
 
   // Es un <button> nativo, no un div con (click): recibe foco y se activa con Enter sin
   // necesidad de nada añadido.
-  const boton = page.getByRole('button', { name: /mostrar .* más/i }).first();
-  await boton.focus();
+  const button = page.getByRole('button', { name: /mostrar .* más/i }).first();
+  await button.focus();
   await page.keyboard.press('Enter');
 
   await expect(page.getByText('Tarea 50', { exact: true })).toBeVisible();

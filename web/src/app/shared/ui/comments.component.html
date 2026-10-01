@@ -8,11 +8,11 @@
     }
 
     @for (comment of thread(); track comment.id) {
-      <ng-container *ngTemplateOutlet="linea; context: { $implicit: comment, isReply: false }" />
+      <ng-container *ngTemplateOutlet="commentLine; context: { $implicit: comment, isReply: false }" />
 
       @for (response of repliesOf(comment.id); track response.id) {
         <div class="ml-8">
-          <ng-container *ngTemplateOutlet="linea; context: { $implicit: response, isReply: true }" />
+          <ng-container *ngTemplateOutlet="commentLine; context: { $implicit: response, isReply: true }" />
         </div>
       }
     }
@@ -56,7 +56,7 @@
   </div>
 </div>
 
-<ng-template #linea let-comment let-isReply="isReply">
+<ng-template #commentLine let-comment let-isReply="isReply">
   <div class="flex items-start gap-2">
     <app-user-avatar [userId]="comment.authorId" class="h-7 w-7 shrink-0" />
 

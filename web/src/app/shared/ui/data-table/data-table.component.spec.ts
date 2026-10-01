@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DataTableComponent, type CellEdit, type ColumnDef } from './data-table.component';
 
-interface Fila extends Record<string, unknown> {
+interface Row extends Record<string, unknown> {
   id: string;
   title: string;
   status: string;
@@ -17,7 +17,7 @@ interface Fila extends Record<string, unknown> {
  * que guarda es quien revierte si el servidor rechaza, y esa lógica ya vive en quien usa la tabla—.
  */
 describe('DataTableComponent — edición en línea', () => {
-  const ROW: Fila = {
+  const ROW: Row = {
     id: 't1', title: 'Configurar alertas', status: 'To Do',
     dueDate: '2026-08-15T00:00:00', assigneeId: 'u1',
   };
@@ -32,16 +32,16 @@ describe('DataTableComponent — edición en línea', () => {
     { key: 'assigneeId', label: 'Asignado', type: 'user' },
   ];
 
-  let fixture: ComponentFixture<DataTableComponent<Fila>>;
-  let table: DataTableComponent<Fila>;
-  let emitted: CellEdit<Fila>[];
+  let fixture: ComponentFixture<DataTableComponent<Row>>;
+  let table: DataTableComponent<Row>;
+  let emitted: CellEdit<Row>[];
 
   const column = (key: string) => COLUMNS.find(c => c.key === key)!;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({ imports: [DataTableComponent] }).compileComponents();
 
-    fixture = TestBed.createComponent<DataTableComponent<Fila>>(DataTableComponent);
+    fixture = TestBed.createComponent<DataTableComponent<Row>>(DataTableComponent);
     table = fixture.componentInstance;
     table.columns = COLUMNS;
     table.data = [ROW];

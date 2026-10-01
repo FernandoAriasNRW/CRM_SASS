@@ -9,7 +9,7 @@ import { test, expect, type Page } from '@playwright/test';
  * comprobar.
  */
 
-const SESION = {
+const SESSION = {
   accessToken: 'token-de-prueba',
   refreshToken: 'refresco-de-prueba',
   refreshTokenExpiresAtUtc: new Date(Date.now() + 7 * 864e5).toISOString(),
@@ -24,9 +24,9 @@ const SESION = {
  * @param retrasoTareas milisegundos antes de responder al listado, para poder observar
  *        el estado de carga. Con respuesta inmediata el esqueleto no llega a verse.
  */
-async function entrar(page: Page, retrasoTareas = 0) {
+async function signIn(page: Page, taskDelay = 0) {
   await page.route(/\/api\/v1\/auth\/login/, r =>
-    r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(SESION) }));
+    r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(SESSION) }));
 
   await page.route(/\/api\/v1\//, async r => {
     const url = r.request().url();
@@ -38,8 +38,8 @@ async function entrar(page: Page, retrasoTareas = 0) {
       return r.fulfill({ status: 200, contentType: 'application/json', body: '[]' });
     }
 
-    if (/\/tasks(\?|$)/.test(url) && retrasoTareas) {
-      await new Promise(res => setTimeout(res, retrasoTareas));
+    if (/\/tasks(\?|$)/.test(url) && taskDelay) {
+      await new Promise(res => setTimeout(res, taskDelay));
     }
     return r.fulfill({
       status: 200, contentType: 'application/json',
@@ -62,14 +62,14 @@ async function entrar(page: Page, retrasoTareas = 0) {
 }
 
 test('un tablero sin tareas explica que está vacío en cada columna', async ({ page }) => {
-  await entrar(page);
+  await signIn(page);
 
   // Una columna vacía sin ningún texto se lee como que algo falló al cargar.
   await expect(page.getByText('Sin tareas').first()).toBeVisible({ timeout: 15_000 });
 });
 
 test('mientras carga muestra esqueletos, no una pantalla en blanco', async ({ page }) => {
-  await entrar(page, 2500);
+  await signIn(page, 2500);
 
   // El esqueleto ocupa el sitio de las tarjetas para que el diseño no salte al llegar
   // los datos. Se localiza por el atributo de accesibilidad, no por clase CSS, que

@@ -7,7 +7,7 @@
       <p class="text-sm text-muted-foreground" i18n>Tus datos y tus preferencias.</p>
     </div>
 
-    <button type="button" (click)="cerrarSesion()"
+    <button type="button" (click)="signOut()"
       class="inline-flex items-center gap-2 rounded-md border border-border px-3 py-2 text-sm
              font-medium text-muted-foreground hover:bg-destructive-subtle hover:text-destructive-subtle-fg
              transition-colors focus:outline-none focus:ring-2 focus:ring-ring">
@@ -20,15 +20,15 @@
     <!-- Las secciones. En columna a la izquierda para que se vean todas de un vistazo: dentro de
          un desplegable, la gente no descubre que el tema se puede cambiar. -->
     <nav class="flex shrink-0 gap-1 overflow-x-auto md:w-52 md:flex-col">
-      @for (s of SECCIONES; track s.clave) {
-        <button type="button" (click)="seccion.set(s.clave)"
-          [class.bg-secondary]="seccion() === s.clave"
-          [class.font-semibold]="seccion() === s.clave"
-          [class.text-foreground]="seccion() === s.clave"
+      @for (s of SECTIONS; track s.key) {
+        <button type="button" (click)="section.set(s.key)"
+          [class.bg-secondary]="section() === s.key"
+          [class.font-semibold]="section() === s.key"
+          [class.text-foreground]="section() === s.key"
           class="flex items-center gap-2 whitespace-nowrap rounded-md px-3 py-2 text-left text-sm
                  text-muted-foreground transition-colors hover:bg-secondary/70
                  focus:outline-none focus:ring-2 focus:ring-ring">
-          <ng-icon [name]="s.icono" size="15" /> {{ s.nombre }}
+          <ng-icon [name]="s.icon" size="15" /> {{ s.name }}
         </button>
       }
     </nav>
@@ -36,11 +36,11 @@
     <div class="min-w-0 flex-1">
 
       <!-- ── Cuenta ────────────────────────────────────────────────────── -->
-      @if (seccion() === 'cuenta') {
+      @if (section() === 'cuenta') {
         <section class="space-y-5 rounded-lg border border-border bg-card p-6">
           <h2 class="text-base font-semibold" i18n>Información personal</h2>
 
-          @if (cargando()) {
+          @if (loading()) {
             <p class="text-sm text-muted-foreground" i18n>Cargando…</p>
           } @else {
             <div class="grid gap-4 sm:grid-cols-2">
@@ -80,7 +80,7 @@
             </div>
 
             <div class="flex justify-end">
-              <button type="button" (click)="guardarCuenta()" [disabled]="savingProfile()"
+              <button type="button" (click)="saveAccount()" [disabled]="savingProfile()"
                 class="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm
                        font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50
                        focus:outline-none focus:ring-2 focus:ring-ring">
@@ -97,7 +97,7 @@
       }
 
       <!-- ── Apariencia e idioma ───────────────────────────────────────── -->
-      @if (seccion() === 'apariencia') {
+      @if (section() === 'apariencia') {
         <section class="space-y-6 rounded-lg border border-border bg-card p-6">
           <div class="space-y-3">
             <div>
@@ -108,11 +108,11 @@
             </div>
 
             <div class="flex flex-wrap gap-2">
-              @for (t of OPCIONES_DE_TEMA; track t.value) {
-                <button type="button" (click)="elegirTema(t.value)"
-                  [class.border-primary]="temas.theme() === t.value"
-                  [class.bg-primary-subtle]="temas.theme() === t.value"
-                  [class.text-primary-subtle-fg]="temas.theme() === t.value"
+              @for (t of THEME_OPTIONS; track t.value) {
+                <button type="button" (click)="chooseTheme(t.value)"
+                  [class.border-primary]="themes.theme() === t.value"
+                  [class.bg-primary-subtle]="themes.theme() === t.value"
+                  [class.text-primary-subtle-fg]="themes.theme() === t.value"
                   class="rounded-md border border-border px-4 py-2 text-sm font-medium
                          transition-colors hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring">
                   {{ t.name }}
@@ -130,11 +130,11 @@
             </div>
 
             <div class="flex flex-wrap gap-2">
-              @for (i of idiomas.available; track i.code) {
-                <button type="button" (click)="cambiarIdioma(i.code)"
-                  [class.border-primary]="idiomas.actual === i.code"
-                  [class.bg-primary-subtle]="idiomas.actual === i.code"
-                  [class.text-primary-subtle-fg]="idiomas.actual === i.code"
+              @for (i of languages.available; track i.code) {
+                <button type="button" (click)="changeLanguage(i.code)"
+                  [class.border-primary]="languages.actual === i.code"
+                  [class.bg-primary-subtle]="languages.actual === i.code"
+                  [class.text-primary-subtle-fg]="languages.actual === i.code"
                   class="inline-flex items-center gap-2 rounded-md border border-border px-4 py-2
                          text-sm font-medium transition-colors hover:bg-accent
                          focus:outline-none focus:ring-2 focus:ring-ring">
@@ -147,7 +147,7 @@
       }
 
       <!-- ── Seguridad ─────────────────────────────────────────────────── -->
-      @if (seccion() === 'seguridad') {
+      @if (section() === 'seguridad') {
         <section class="space-y-5 rounded-lg border border-border bg-card p-6">
           <div>
             <h2 class="text-base font-semibold" i18n>Cambiar la contraseña</h2>
@@ -184,7 +184,7 @@
             }
 
             <div>
-              <button type="button" (click)="cambiarContrasena()" [disabled]="savingPassword()"
+              <button type="button" (click)="changePassword()" [disabled]="savingPassword()"
                 class="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm
                        font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50
                        focus:outline-none focus:ring-2 focus:ring-ring">
@@ -201,7 +201,7 @@
       }
 
       <!-- ── Avisos ────────────────────────────────────────────────────── -->
-      @if (seccion() === 'notificaciones') {
+      @if (section() === 'notificaciones') {
         <section class="rounded-lg border border-border bg-card p-6">
           <!-- Las preferencias de aviso ya existían como componente propio; aquí sólo se le da
                sitio, que es donde la gente las busca. -->

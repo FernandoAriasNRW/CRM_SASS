@@ -14,9 +14,9 @@ import { AdminAutomationsComponent } from './automations/admin-automations.compo
 import { WebhooksComponent } from '../webhooks/webhooks.component';
 import { AdminTicketIntakeComponent } from './ticket-intake/admin-ticket-intake.component';
 
-type PestanaDeAdmin = 'users' | 'teams' | 'permissions' | 'custom-fields' | 'automations' | 'webhooks' | 'ticket-intake';
+type AdminTab = 'users' | 'teams' | 'permissions' | 'custom-fields' | 'automations' | 'webhooks' | 'ticket-intake';
 
-const PESTANAS: PestanaDeAdmin[] = ['users', 'teams', 'permissions', 'custom-fields', 'automations', 'webhooks', 'ticket-intake'];
+const PESTANAS: AdminTab[] = ['users', 'teams', 'permissions', 'custom-fields', 'automations', 'webhooks', 'ticket-intake'];
 
 @Component({
   selector: 'app-admin',
@@ -44,16 +44,16 @@ export class AdminComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
 
-  activeTab = signal<PestanaDeAdmin>('users');
+  activeTab = signal<AdminTab>('users');
 
   ngOnInit(): void {
     const tabParam = this.route.snapshot.queryParams['tab'];
     if (tabParam && PESTANAS.includes(tabParam)) {
-      this.activeTab.set(tabParam as PestanaDeAdmin);
+      this.activeTab.set(tabParam as AdminTab);
     }
   }
 
-  setTab(tab: PestanaDeAdmin): void {
+  setTab(tab: AdminTab): void {
     this.activeTab.set(tab);
     this.router.navigate([], {
       relativeTo: this.route,

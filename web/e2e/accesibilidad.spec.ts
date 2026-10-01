@@ -14,21 +14,21 @@ import AxeBuilder from '@axe-core/playwright';
  * sembrados; queda pendiente de cubrir cuando los E2E autenticados existan.
  */
 
-const RUTAS_PUBLICAS = [
-  { nombre: 'login', url: '/login' },
+const PUBLIC_ROUTES = [
+  { name: 'login', url: '/login' },
   // «/support» se quitó: pedía un token de invitado que nunca funcionó. Los tickets de fuera
   // entran ahora desde la web de cada cliente con una clave de entrada.
 ];
 
-for (const ruta of RUTAS_PUBLICAS) {
-  test(`${ruta.nombre} no tiene violaciones graves de accesibilidad`, async ({ page }) => {
-    await page.goto(ruta.url);
+for (const route of PUBLIC_ROUTES) {
+  test(`${route.name} no tiene violaciones graves de accesibilidad`, async ({ page }) => {
+    await page.goto(route.url);
 
-    const resultado = await new AxeBuilder({ page })
+    const result = await new AxeBuilder({ page })
       .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
       .analyze();
 
-    const graves = resultado.violations.filter(
+    const graves = result.violations.filter(
       v => v.impact === 'critical' || v.impact === 'serious');
 
     // El mensaje enumera qué falla y dónde: un fallo que sólo diga "esperaba 0, hubo 3"
@@ -70,14 +70,14 @@ test('el foco es visible al navegar con el teclado', async ({ page }) => {
   // Varias pantallas usan `focus:outline-none` confiando en un anillo propio. Si alguien
   // retira el anillo y deja el outline anulado, el foco desaparece y la navegación por
   // teclado se vuelve imposible de seguir sin que nada falle.
-  const estilo = await page.locator(':focus').evaluate(el => {
+  const style = await page.locator(':focus').evaluate(el => {
     const s = getComputedStyle(el);
-    return { outline: s.outlineStyle, ancho: s.outlineWidth, sombra: s.boxShadow };
+    return { outline: s.outlineStyle, width: s.outlineWidth, shadow: s.boxShadow };
   });
 
-  const tieneIndicador =
-    (estilo.outline !== 'none' && estilo.ancho !== '0px') ||
-    (estilo.sombra !== 'none' && estilo.sombra !== '');
+  const hasIndicator =
+    (style.outline !== 'none' && style.width !== '0px') ||
+    (style.shadow !== 'none' && style.shadow !== '');
 
-  expect(tieneIndicador, `el elemento enfocado no muestra indicador: ${JSON.stringify(estilo)}`).toBe(true);
+  expect(hasIndicator, `el elemento enfocado no muestra indicador: ${JSON.stringify(style)}`).toBe(true);
 });
