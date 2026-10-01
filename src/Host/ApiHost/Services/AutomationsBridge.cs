@@ -63,6 +63,10 @@ public sealed class TaskActionExecutor(IMediator mediator, AutomationNotifier no
 /// Los tres disparadores que hoy existen se corresponden con tres eventos que WorkItems ya
 /// emitía desde la 4A. No se ha añadido ninguno: un disparador que no esté conectado a un evento
 /// real dejaría configurar automatizaciones que no se ejecutan nunca.
+///
+/// Cada disparo rellena exactamente los campos que declara <see cref="EventFields.ByTrigger"/>
+/// para su disparador; si aquí se añade o se quita uno, hay que cambiarlo allí también. Lo vigila
+/// una prueba.
 /// </summary>
 public sealed class AutomationsBridge(IAutomationEngine motor) :
     INotificationHandler<DomainEventNotification<TaskCreatedEvent>>,

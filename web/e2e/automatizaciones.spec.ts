@@ -27,6 +27,10 @@ const VOCABULARIO = {
   fields: ['Status', 'AssigneeId'],
   operators: ['EqualTo', 'IsEmpty'],
   actions: ['ChangeStatus', 'ChangePriority'],
+  fieldsByTrigger: {
+    TaskCreated: ['AssigneeId'],
+    TaskStatusChanged: ['Status', 'AssigneeId'],
+  },
 };
 
 const REGLA = {

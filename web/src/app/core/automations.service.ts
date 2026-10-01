@@ -20,6 +20,11 @@ const SILENT = { sinAviso: true };
 export interface AutomationVocabulary {
   triggers: string[];
   fields: string[];
+  /**
+   * Qué campos trae cada disparador. Una condición sobre un campo que el disparador no trae no se
+   * cumpliría nunca, así que el formulario sólo ofrece éstos y el servidor rechaza los demás.
+   */
+  fieldsByTrigger: Record<string, string[]>;
   operators: string[];
   actions: string[];
 }

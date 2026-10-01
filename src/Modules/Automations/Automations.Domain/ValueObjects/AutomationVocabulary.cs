@@ -43,6 +43,7 @@ public static class TriggerTypes
 /// <summary>
 /// Los datos que una condición puede mirar. Se nombran igual en todos los disparadores que los
 /// tengan, para que cambiar el disparador de una regla no obligue a reescribir sus condiciones.
+/// Qué disparador trae cuáles está en <see cref="ByTrigger"/>.
 /// </summary>
 public static class EventFields
 {
@@ -70,6 +71,34 @@ public static class EventFields
          DaysUntilDue, Title];
 
     public static bool Exists(string field) => All().Contains(field);
+
+    /// <summary>
+    /// Qué campos trae cada disparador. Es la fuente única: el puente de eventos y el vigilante de
+    /// vencimientos rellenan exactamente éstos, el vocabulario los sirve para que la interfaz sólo
+    /// ofrezca los del disparador elegido, y la regla rechaza condiciones sobre los demás.
+    ///
+    /// Antes se ofrecían todos para cualquier disparador, y una condición sobre un campo que el
+    /// evento no trae no da ningún error: se evalúa contra nada, no se cumple nunca y la ejecución
+    /// queda anotada como «condiciones no cumplidas», que parece un resultado legítimo. Así pasó
+    /// con «se crea una tarea» y «el título contiene…».
+    ///
+    /// Añadir un campo a un disparador es tocar esta tabla **y** quien lo rellena; la prueba que
+    /// compara los dos impide que vuelvan a separarse.
+    /// </summary>
+    public static readonly IReadOnlyDictionary<string, IReadOnlyList<string>> ByTrigger =
+        new Dictionary<string, IReadOnlyList<string>>
+        {
+            [TriggerTypes.TaskCreated] = [ProjectId, AssigneeId],
+            [TriggerTypes.TaskStatusChanged] = [Status, PreviousStatus, ProjectId],
+            [TriggerTypes.TaskPriorityChanged] = [Priority, PreviousPriority, ProjectId],
+            [TriggerTypes.TaskDueSoon] = [DaysUntilDue, Status, Priority, ProjectId, AssigneeId, Title],
+        };
+
+    /// <summary>Los campos que trae un disparador, o ninguno si el disparador no existe.</summary>
+    public static IReadOnlyList<string> ForTrigger(string trigger) =>
+        ByTrigger.TryGetValue(trigger, out var fields) ? fields : [];
+
+    public static bool IsCarriedBy(string trigger, string field) => ForTrigger(trigger).Contains(field);
 
     /// <summary>
     /// Los que se comparan como número y no como texto.

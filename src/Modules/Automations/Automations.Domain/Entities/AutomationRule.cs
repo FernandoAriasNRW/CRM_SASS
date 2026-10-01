@@ -170,6 +170,12 @@ public sealed class AutomationRule : AggregateRoot, ITenantEntity
         if (conditionList.Count > MaxConditions)
             throw new InvalidOperationException(Rules.TooManyConditions);
 
+        // Una condición sobre un campo que el disparador no trae no se cumpliría nunca, y la
+        // ejecución quedaría anotada como «condiciones no cumplidas» sin que nadie supiera por
+        // qué. Se rechaza al guardar, que es cuando quien la configura todavía está mirando.
+        if (conditionList.Any(c => !EventFields.IsCarriedBy(trigger, c.Field)))
+            throw new InvalidOperationException(Rules.FieldNotInTrigger);
+
         Name = cleanName;
         Trigger = trigger;
 
@@ -210,6 +216,8 @@ public sealed class AutomationRule : AggregateRoot, ITenantEntity
         public const string DuplicateName = "Ya hay una automatización con ese nombre";
         public const string NumericOperatorOnText =
             "«Menor o igual» y «mayor o igual» sólo valen sobre campos numéricos";
+        public const string FieldNotInTrigger =
+            "Una condición usa un campo que ese disparador no trae, así que no se cumpliría nunca";
         public const string NonNumericValue =
             "Ese campo es numérico, así que hay que compararlo con un número entero";
     }

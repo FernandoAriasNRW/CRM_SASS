@@ -41,6 +41,10 @@ public static class AutomationsEndpoints
     {
       triggers = TriggerTypes.All(),
       fields = EventFields.All(),
+
+      // Qué campos trae cada disparador, para que la interfaz sólo ofrezca ésos. Ofrecerlos todos
+      // dejaba configurar condiciones que no se cumplen nunca: el evento no trae el dato.
+      fieldsByTrigger = EventFields.ByTrigger,
       operators = ConditionOperators.All(),
       actions = ActionTypes.All(),
 

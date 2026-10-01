@@ -8923,6 +8923,38 @@ Pending</target>
           <context context-type="linenumber">24,25</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="6200267195062718741" datatype="html">
+        <source><x id="INTERPOLATION" equiv-text="{{ automationLabel(condition.field) }}"/> (este disparador no lo trae)</source>
+        <target state="final"><x id="INTERPOLATION" equiv-text="{{ automationLabel(condition.field) }}"/> (this trigger does not carry it)</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/automations/admin-automations.component.html</context>
+          <context context-type="linenumber">91,92</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="783930572567405873" datatype="html">
+        <source> Tiene condiciones que no se cumplirán nunca: su disparador no trae ese dato </source>
+        <target state="final"> Has conditions that will never be met: its trigger does not carry that data </target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/automations/admin-automations.component.html</context>
+          <context context-type="linenumber">204</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2492896644000516490" datatype="html">
+        <source>Se quitaron las condiciones sobre <x id="PH" equiv-text="labels"/>, porque este disparador no trae ese dato.</source>
+        <target state="final">Removed the conditions on <x id="PH" equiv-text="labels"/>, because this trigger does not carry that data.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/automations/admin-automations.component.ts</context>
+          <context context-type="linenumber">168</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3807383583970559664" datatype="html">
+        <source>Hay condiciones sobre datos que este disparador no trae: cámbialas o quítalas</source>
+        <target state="final">Some conditions use data this trigger does not carry: change or remove them</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/automations/admin-automations.component.ts</context>
+          <context context-type="linenumber">228</context>
+        </context-group>
+      </trans-unit>
     </body>
   </file>
 </xliff>

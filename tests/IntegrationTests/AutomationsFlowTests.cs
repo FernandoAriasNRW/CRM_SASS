@@ -1,6 +1,8 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
+using Automations.Domain.Entities;
+using Automations.Domain.ValueObjects;
 using FluentAssertions;
 using Xunit;
 
@@ -239,6 +241,66 @@ public sealed class AutomationsFlowTests(CrmApiFactory factory)
         vocabulario.GetProperty("triggers").GetArrayLength().Should().BeGreaterThan(0);
         vocabulario.GetProperty("operators").GetArrayLength().Should().BeGreaterThan(0);
         vocabulario.GetProperty("actions").GetArrayLength().Should().BeGreaterThan(0);
+    }
+
+    /// <summary>
+    /// El vocabulario dice qué campos trae cada disparador, y la interfaz sólo ofrece ésos. Las
+    /// claves son los códigos de disparador tal cual: la serialización no las pasa a camelCase.
+    /// </summary>
+    [Fact]
+    public async Task The_vocabulary_serves_the_fields_each_trigger_carries()
+    {
+        var (cliente, _) = await AutenticarAsync();
+
+        var vocabulario = await cliente.GetFromJsonAsync<JsonElement>("/api/v1/automations/vocabulary");
+        var porDisparador = vocabulario.GetProperty("fieldsByTrigger");
+
+        porDisparador.EnumerateObject().Select(p => p.Name)
+            .Should().BeEquivalentTo(TriggerTypes.All());
+
+        foreach (var trigger in TriggerTypes.All())
+        {
+            porDisparador.GetProperty(trigger).EnumerateArray().Select(f => f.GetString())
+                .Should().Equal(EventFields.ForTrigger(trigger), trigger);
+        }
+
+        porDisparador.GetProperty(TriggerTypes.TaskCreated).EnumerateArray()
+            .Select(f => f.GetString()).Should().NotContain(EventFields.Title);
+    }
+
+    /// <summary>
+    /// El caso medido: una regla «se crea una tarea» con «el título contiene 8b» se guardaba y
+    /// luego se anotaba como condiciones no cumplidas sin avisar. Ahora se rechaza al guardar, y
+    /// también al editar una regla existente para ponerle esa condición.
+    /// </summary>
+    [Fact]
+    public async Task A_condition_on_a_field_the_trigger_does_not_carry_is_rejected()
+    {
+        var (cliente, _) = await AutenticarAsync();
+        await LimpiarReglasAsync(cliente);
+
+        object Regla(string nombre) => new
+        {
+            name = nombre,
+            trigger = TriggerTypes.TaskCreated,
+            conditions = new[] { new { field = EventFields.Title, @operator = "Contains", value = "8b" } },
+            actions = new[] { new { type = "ChangePriority", value = "Low" } },
+        };
+
+        var alCrear = await cliente.PostAsJsonAsync("/api/v1/automations", Regla($"Título {Guid.NewGuid()}"));
+
+        alCrear.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await alCrear.Content.ReadFromJsonAsync<string>()).Should().Contain(AutomationRule.Rules.FieldNotInTrigger);
+
+        var nombre = $"Editada {Guid.NewGuid()}";
+        var id = await CrearReglaAsync(cliente, ReglaQueBajaLaPrioridadAlCerrar(nombre));
+
+        var alEditar = await cliente.PutAsJsonAsync($"/api/v1/automations/{id}", Regla(nombre));
+
+        alEditar.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await alEditar.Content.ReadFromJsonAsync<string>()).Should().Contain(AutomationRule.Rules.FieldNotInTrigger);
+        (await ReglaAsync(cliente, id)).GetProperty("trigger").GetString()
+            .Should().Be(TriggerTypes.TaskStatusChanged, "el rechazo no deja la regla a medias");
     }
 
     [Fact]
