@@ -872,6 +872,23 @@ pequeñas y se degradaba en silencio en las grandes.
 Ahora hay un parámetro `search` en tareas, tickets, proyectos y personas, y filtra la base de
 datos. Se detalla en la sección 15.
 
+### 13.4 Condiciones de automatización que no se podían cumplir — resuelto
+
+El vocabulario ofrecía todos los campos para cualquier disparador, pero cada disparo sólo trae
+algunos: «se crea una tarea» manda proyecto y responsable, no el título. Medido: una regla «se crea
+una tarea» con «el título contiene 8b» anotaba `ConditionsNotMet` aunque el título lo contuviera,
+**sin avisar a quien la configuró**. Parecía un resultado legítimo.
+
+Ahora el dominio declara qué campos trae cada disparador (`EventFields.ByTrigger`), y esa tabla es
+la fuente única: el vocabulario la sirve como `fieldsByTrigger`, la pantalla sólo ofrece esos
+campos y quita —diciéndolo— las condiciones que el nuevo disparador no trae, y `AutomationRule`
+rechaza al guardar una condición sobre un campo ajeno. Una prueba compara lo que rellenan el puente
+y el vigilante de vencimientos con la tabla, para que no vuelvan a separarse.
+
+Las reglas guardadas antes siguen en la base tal cual —no se borran condiciones de nadie—; la lista
+las marca («tiene condiciones que no se cumplirán nunca») y al editarlas no se dejan guardar hasta
+arreglarlas.
+
 ---
 
 ## 14. Lo que queda anotado y sin resolver

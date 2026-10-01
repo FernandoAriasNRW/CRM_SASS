@@ -327,6 +327,8 @@ Un concepto, un nombre. Ordenado por área.
 | tipos de campo: texto, número, fecha, selección, selección múltiple, usuario | `Text`, `Number`, `Date`, `Select`, `MultiSelect`, `User` |
 | motor de automatizaciones, ejecutor de acciones, evaluador de condiciones | `AutomationEngine`, `ActionExecutor`, `ConditionEvaluator` |
 | disparo (un evento que llega al motor), vigilante de vencimientos | `AutomationTriggerEvent`, `DueDateWatcher` |
+| campos que trae cada disparador, los de un disparador, lo trae | `EventFields.ByTrigger` (en JSON `fieldsByTrigger`), `ForTrigger`, `IsCarriedBy` |
+| datos de un disparo | `TriggerData` |
 | resultado de una ejecución: aplicada, no cumplió las condiciones, fallida | `ExecutionOutcomes`: `Applied`, `ConditionsNotMet`, `Failed` |
 
 ---
@@ -840,7 +842,8 @@ cambiarlo exige migrar ese contenido. Por eso fue un bloque aparte, el 5c.
   servidor manda uno que no conoce, lo enseña tal cual en vez de dejar la opción en blanco.
 - Visto de paso, sin cambiar: el vocabulario ofrece todos los campos para cualquier disparador,
   pero «se crea una tarea» sólo manda proyecto y responsable, así que una condición sobre el título
-  nunca se cumple. Queda como tarea aparte.
+  nunca se cumple. Queda como tarea aparte. *Resuelto después: `EventFields.ByTrigger`, ver
+  `AUDITORIA.md` §13.4.*
 
 ### Hecho en el bloque 8c (frontend de campos personalizados y automatizaciones)
 

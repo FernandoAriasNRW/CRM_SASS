@@ -19,6 +19,10 @@ describe('AdminAutomationsComponent', () => {
     fields: ['Status', 'AssigneeId'],
     operators: ['EqualTo', 'IsEmpty'],
     actions: ['ChangeStatus', 'ChangePriority'],
+    fieldsByTrigger: {
+      TaskCreated: ['AssigneeId'],
+      TaskStatusChanged: ['Status', 'AssigneeId'],
+    },
   };
 
   const RULE: AutomationRule = {
@@ -81,6 +85,101 @@ describe('AdminAutomationsComponent', () => {
     component.startNew();
 
     expect(component.actions.length).toBe(1);
+  });
+
+  /**
+   * Una condición sobre un campo que el disparador no trae no se cumple nunca, y se anotaba como
+   * «condiciones no cumplidas» sin avisar a nadie. El formulario sólo ofrece los campos que trae.
+   */
+  describe('campos por disparador', () => {
+    function fieldOptions(): string[] {
+      const select = fixture.nativeElement.querySelector('select[aria-label="Campo"]') as HTMLSelectElement;
+      return Array.from(select.options).map(o => o.value);
+    }
+
+    it('el desplegable de campo sólo ofrece los del disparador elegido', async () => {
+      await mount();
+      component.startNew();
+      component.addCondition();
+      fixture.detectChanges();
+
+      expect(component.trigger).toBe('TaskCreated');
+      expect(fieldOptions()).toEqual(['AssigneeId']);
+
+      component.changeTrigger('TaskStatusChanged');
+      fixture.detectChanges();
+
+      expect(fieldOptions()).toEqual(['Status', 'AssigneeId']);
+    });
+
+    it('una condición nueva empieza con un campo del disparador', async () => {
+      await mount();
+      component.startNew();
+
+      component.addCondition();
+
+      expect(component.conditions[0].field).toBe('AssigneeId');
+    });
+
+    it('cambiar de disparador quita las condiciones que el nuevo no trae, y lo dice', async () => {
+      await mount();
+      component.startNew();
+      component.changeTrigger('TaskStatusChanged');
+      component.conditions = [
+        { field: 'Status', operator: 'EqualTo', value: 'Done' },
+        { field: 'AssigneeId', operator: 'IsEmpty', value: null },
+      ];
+
+      component.changeTrigger('TaskCreated');
+      fixture.detectChanges();
+
+      expect(component.trigger).toBe('TaskCreated');
+      expect(component.conditions).toEqual([{ field: 'AssigneeId', operator: 'IsEmpty', value: null }]);
+      const notice = fixture.nativeElement.querySelector('[data-testid="dropped-conditions"]');
+      expect(notice?.textContent).toContain('Estado');
+    });
+
+    it('si no se quita ninguna, no avisa de nada', async () => {
+      await mount();
+      component.startNew();
+      component.conditions = [{ field: 'AssigneeId', operator: 'IsEmpty', value: null }];
+
+      component.changeTrigger('TaskStatusChanged');
+
+      expect(component.conditions.length).toBe(1);
+      expect(component.droppedNotice()).toBe('');
+    });
+
+    /** Reglas guardadas antes de que el servidor lo comprobara. */
+    describe('una regla antigua con una condición que su disparador no trae', () => {
+      const LEGACY: AutomationRule = {
+        ...RULE, id: 'r2', name: 'Título con 8b', trigger: 'TaskCreated',
+        conditions: [{ field: 'Title', operator: 'Contains', value: '8b' }],
+      };
+
+      it('se marca en la lista', async () => {
+        await mount([RULE, LEGACY]);
+
+        const marks = fixture.nativeElement.querySelectorAll('[data-testid="unreachable-condition"]');
+        expect(marks.length).toBe(1);
+        expect(component.hasUnreachableCondition(LEGACY)).toBeTrue();
+        expect(component.hasUnreachableCondition(RULE)).toBeFalse();
+      });
+
+      it('al editarla se enseña la condición y no deja guardar hasta arreglarla', async () => {
+        await mount([LEGACY]);
+
+        component.edit(LEGACY);
+        fixture.detectChanges();
+
+        expect(component.conditions[0].field).toBe('Title');
+        expect(fieldOptions()).toEqual(['AssigneeId', 'Title']);
+        expect(component.blocker).toContain('no trae');
+
+        component.save();
+        expect(service.update).not.toHaveBeenCalled();
+      });
+    });
   });
 
   describe('lo que impide guardar', () => {

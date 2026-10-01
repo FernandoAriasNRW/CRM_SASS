@@ -55,7 +55,7 @@
 
         <label class="space-y-1 block">
           <span class="text-xs font-medium text-muted-foreground" i18n>Cuándo</span>
-          <select [(ngModel)]="trigger"
+          <select [ngModel]="trigger" (ngModelChange)="changeTrigger($event)"
                   class="w-full px-3 py-1.5 text-xs bg-white dark:bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-1 focus:ring-primary">
             @for (option of vocabulary().triggers; track option) {
               <option [value]="option">{{ automationLabel(option) }}</option>
@@ -68,18 +68,27 @@
       <div class="space-y-2">
         <div class="flex items-center justify-between">
           <span class="text-xs font-medium text-muted-foreground" i18n>Si se cumple</span>
-          <button (click)="addCondition()"
-                  class="text-xs text-muted-foreground hover:text-primary transition-colors" i18n>
+          <button (click)="addCondition()" [disabled]="!availableFields.length"
+                  class="text-xs text-muted-foreground hover:text-primary transition-colors disabled:opacity-50" i18n>
             + Condición
           </button>
         </div>
+
+        @if (droppedNotice(); as notice) {
+          <p class="text-[11px] text-muted-foreground" role="status" data-testid="dropped-conditions">{{ notice }}</p>
+        }
 
         @for (condition of conditions; track $index) {
           <div class="flex items-center gap-2">
             <select [(ngModel)]="condition.field" i18n-aria-label aria-label="Campo"
                     class="px-2 py-1.5 text-xs bg-white dark:bg-background border border-border rounded-lg">
-              @for (field of vocabulary().fields; track field) {
+              <!-- Sólo los campos que trae el disparador elegido: sobre los demás la condición no se
+                   cumpliría nunca. -->
+              @for (field of availableFields; track field) {
                 <option [value]="field">{{ automationLabel(field) }}</option>
+              }
+              @if (!isCarried(condition)) {
+                <option [value]="condition.field" disabled i18n>{{ automationLabel(condition.field) }} (este disparador no lo trae)</option>
               }
             </select>
 
@@ -188,6 +197,13 @@
               <td class="px-4 py-2 text-muted-foreground">{{ automationLabel(rule.trigger) }}</td>
               <td class="px-4 py-2 text-muted-foreground max-w-md truncate" [title]="summaryOf(rule)">
                 {{ summaryOf(rule) }}
+                <!-- Reglas guardadas antes de que se comprobara: avisarlas aquí es lo que faltaba,
+                     porque se anotaban como «condiciones no cumplidas» sin más. -->
+                @if (hasUnreachableCondition(rule)) {
+                  <span class="block text-[11px] text-destructive" data-testid="unreachable-condition" i18n>
+                    Tiene condiciones que no se cumplirán nunca: su disparador no trae ese dato
+                  </span>
+                }
               </td>
               <!-- Es lo primero que se mira cuando alguien dice que una regla no funciona:
                    separa «no salta» de «salta y hace otra cosa». -->

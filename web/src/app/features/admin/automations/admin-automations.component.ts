@@ -48,7 +48,7 @@ export class AdminAutomationsComponent implements OnInit {
   readonly automationLabel = automationLabel;
 
   readonly vocabulary = signal<AutomationVocabulary>({
-    triggers: [], fields: [], operators: [], actions: [],
+    triggers: [], fields: [], operators: [], actions: [], fieldsByTrigger: {},
   });
 
   readonly rules = signal<AutomationRule[]>([]);
@@ -59,6 +59,12 @@ export class AdminAutomationsComponent implements OnInit {
   /** `null` si el formulario está cerrado, `''` si es una regla nueva, o el id que se edita. */
   readonly editing = signal<string | null>(null);
   readonly deleting = signal<string | null>(null);
+
+  /**
+   * Qué condiciones se quitaron al cambiar de disparador, para decirlo en vez de hacerlo en
+   * silencio. Vacío si no se quitó ninguna.
+   */
+  readonly droppedNotice = signal('');
 
   name = '';
   trigger = '';
@@ -100,6 +106,7 @@ export class AdminAutomationsComponent implements OnInit {
     this.conditions = [];
     // Una regla sin acciones no hace nada, así que el formulario empieza con una.
     this.actions = [this.blankAction()];
+    this.droppedNotice.set('');
     this.error.set('');
   }
 
@@ -109,12 +116,57 @@ export class AdminAutomationsComponent implements OnInit {
     this.trigger = rule.trigger;
     this.conditions = rule.conditions.map(c => ({ ...c }));
     this.actions = rule.actions.map(a => ({ ...a }));
+    this.droppedNotice.set('');
     this.error.set('');
   }
 
   closeForm(): void {
     this.editing.set(null);
+    this.droppedNotice.set('');
     this.error.set('');
+  }
+
+  /** Los campos que trae un disparador, según el servidor. */
+  fieldsFor(trigger: string): string[] {
+    return this.vocabulary().fieldsByTrigger?.[trigger] ?? [];
+  }
+
+  /** Los que se pueden usar con el disparador elegido ahora mismo en el formulario. */
+  get availableFields(): string[] {
+    return this.fieldsFor(this.trigger);
+  }
+
+  /**
+   * Si el disparador elegido trae el campo de la condición. Una regla guardada antes de que se
+   * comprobara puede tener condiciones que no; se enseñan marcadas en vez de esconderlas.
+   */
+  isCarried(condition: RuleCondition): boolean {
+    return this.availableFields.includes(condition.field);
+  }
+
+  /** Lo mismo sobre una regla de la lista, con su propio disparador. */
+  hasUnreachableCondition(rule: AutomationRule): boolean {
+    const fields = this.fieldsFor(rule.trigger);
+    return rule.conditions.some(c => !fields.includes(c.field));
+  }
+
+  /**
+   * Cambiar de disparador quita las condiciones sobre campos que el nuevo no trae: no se
+   * cumplirían nunca y el servidor no las aceptaría. Se avisa de cuáles, porque desaparecer en
+   * silencio sería la misma sorpresa que se está arreglando.
+   */
+  changeTrigger(trigger: string): void {
+    this.trigger = trigger;
+
+    const fields = this.fieldsFor(trigger);
+    const dropped = this.conditions.filter(c => !fields.includes(c.field));
+
+    this.conditions = this.conditions.filter(c => fields.includes(c.field));
+
+    const labels = [...new Set(dropped.map(c => automationLabel(c.field)))].join(', ');
+    this.droppedNotice.set(dropped.length
+      ? $localize`Se quitaron las condiciones sobre ${labels}, porque este disparador no trae ese dato.`
+      : '');
   }
 
   private blankAction(): RuleAction {
@@ -122,10 +174,11 @@ export class AdminAutomationsComponent implements OnInit {
   }
 
   addCondition(): void {
-    if (this.conditions.length >= MAX_CONDITIONS) return;
+    const field = this.availableFields[0];
+    if (this.conditions.length >= MAX_CONDITIONS || !field) return;
 
     this.conditions = [...this.conditions, {
-      field: this.vocabulary().fields[0] ?? '',
+      field,
       operator: this.vocabulary().operators[0] ?? '',
       value: '',
     }];
@@ -168,6 +221,11 @@ export class AdminAutomationsComponent implements OnInit {
     if (!this.actions.length) return $localize`La automatización necesita al menos una acción`;
     if (this.actions.some(a => !a.type || !a.value.trim())) {
       return $localize`Cada acción necesita un valor`;
+    }
+
+    // Una regla guardada antes de que se comprobara puede traerlas: el servidor la rechazaría.
+    if (this.conditions.some(c => !this.isCarried(c))) {
+      return $localize`Hay condiciones sobre datos que este disparador no trae: cámbialas o quítalas`;
     }
 
     if (this.conditions.some(c => this.needsValue(c) && !(c.value ?? '').trim())) {

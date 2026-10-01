@@ -118,18 +118,9 @@ public sealed class DueDateWatcher(
             // traduce a SQL.
             if (TaskStatus.IsFinal(task.Status)) continue;
 
-            var data = new Dictionary<string, string?>
-            {
-                // Negativo si ya venció, 0 si vence hoy. Es lo que compara la condición.
-                [EventFields.DaysUntilDue] =
-                    (task.DueDate.DayNumber - today.DayNumber).ToString(),
-                [EventFields.Status] = task.Status,
-                [EventFields.Priority] = task.Priority,
-                [EventFields.ProjectId] = task.ProjectId.ToString(),
-                [EventFields.AssigneeId] =
-                    task.AssigneeId == Guid.Empty ? null : task.AssigneeId.ToString(),
-                [EventFields.Title] = task.Title,
-            };
+            var data = TriggerData(
+                today, task.DueDate, task.Status, task.Priority,
+                task.ProjectId, task.AssigneeId, task.Title);
 
             triggerEvents += await motor.RunAsync(new AutomationTriggerEvent(
                 task.TenantId, TriggerTypes.TaskDueSoon, task.Id, data), ct);
@@ -140,4 +131,22 @@ public sealed class DueDateWatcher(
                 "Vencimientos: {Disparos} automatizaciones aplicadas sobre {Candidatas} tareas",
                 triggerEvents, candidates.Count);
     }
+
+    /// <summary>
+    /// Los datos del disparo. Son exactamente los que declara
+    /// <see cref="EventFields.ByTrigger"/> para <see cref="TriggerTypes.TaskDueSoon"/>, y está
+    /// aparte para que una prueba lo compruebe sin base de datos.
+    /// </summary>
+    public static Dictionary<string, string?> TriggerData(
+        DateOnly today, DateOnly dueDate, string status, string priority,
+        Guid projectId, Guid assigneeId, string title) => new()
+    {
+        // Negativo si ya venció, 0 si vence hoy. Es lo que compara la condición.
+        [EventFields.DaysUntilDue] = (dueDate.DayNumber - today.DayNumber).ToString(),
+        [EventFields.Status] = status,
+        [EventFields.Priority] = priority,
+        [EventFields.ProjectId] = projectId.ToString(),
+        [EventFields.AssigneeId] = assigneeId == Guid.Empty ? null : assigneeId.ToString(),
+        [EventFields.Title] = title,
+    };
 }

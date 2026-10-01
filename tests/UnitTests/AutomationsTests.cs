@@ -232,6 +232,66 @@ public sealed class AutomationRuleTests
         regla.IsActive.Should().BeTrue();
     }
 
+    /// <summary>
+    /// La tabla de campos por disparador cubre todos los disparadores y sólo nombra campos que
+    /// existen. Un disparador sin entrada no admitiría ninguna condición, y nadie sabría por qué.
+    /// </summary>
+    [Fact]
+    public void Every_trigger_declares_which_existing_fields_it_carries()
+    {
+        EventFields.ByTrigger.Keys.Should().BeEquivalentTo(TriggerTypes.All());
+
+        foreach (var (trigger, fields) in EventFields.ByTrigger)
+        {
+            fields.Should().NotBeEmpty(trigger);
+            fields.Should().OnlyContain(f => EventFields.Exists(f), trigger);
+            fields.Should().OnlyHaveUniqueItems(trigger);
+        }
+    }
+
+    /// <summary>
+    /// El caso medido: «se crea una tarea» no trae el título, así que «el título contiene 8b» se
+    /// anotaba como condiciones no cumplidas sin avisar a nadie. Ahora no se deja guardar.
+    /// </summary>
+    [Fact]
+    public void A_condition_on_a_field_the_trigger_does_not_carry_is_rejected()
+    {
+        var accion = () => NuevaRegla(
+            disparador: TriggerTypes.TaskCreated,
+            condiciones: [new AutomationCondition(EventFields.Title, ConditionOperators.Contains, "8b")]);
+
+        accion.Should().Throw<InvalidOperationException>()
+            .WithMessage(AutomationRule.Rules.FieldNotInTrigger);
+    }
+
+    [Fact]
+    public void The_same_condition_is_accepted_on_a_trigger_that_carries_the_field()
+    {
+        var regla = NuevaRegla(
+            disparador: TriggerTypes.TaskDueSoon,
+            condiciones: [new AutomationCondition(EventFields.Title, ConditionOperators.Contains, "8b")]);
+
+        regla.Conditions.Should().ContainSingle().Which.Field.Should().Be(EventFields.Title);
+    }
+
+    /// <summary>Cambiar el disparador al editar también se comprueba, no sólo al crear.</summary>
+    [Fact]
+    public void Changing_the_trigger_to_one_without_the_field_is_rejected()
+    {
+        var regla = NuevaRegla(
+            disparador: TriggerTypes.TaskStatusChanged,
+            condiciones: [new AutomationCondition(EventFields.Status, ConditionOperators.EqualTo, "Done")]);
+
+        var accion = () => regla.Update(
+            regla.Name, TriggerTypes.TaskCreated,
+            [new AutomationCondition(EventFields.Status, ConditionOperators.EqualTo, "Done")],
+            [new AutomationAction(ActionTypes.ChangePriority, "Low")]);
+
+        accion.Should().Throw<InvalidOperationException>()
+            .WithMessage(AutomationRule.Rules.FieldNotInTrigger);
+        regla.Trigger.Should().Be(TriggerTypes.TaskStatusChanged);
+    }
+
     [Fact]
     public void Actualizar_reemplaza_condiciones_y_acciones()
     {
