@@ -75,7 +75,7 @@ promete y devuelve la misma lista es peor que un menú corto.
 
 ### Orden sugerido — y cómo quedó
 
-1. ✅ Componente `app-panel-de-navegacion` compartido, en Tareas, Tickets y Proyectos. El
+1. ✅ Componente `app-navigation-panel` compartido, en Tareas, Tickets y Proyectos. El
    vocabulario vive en `vocabulario-del-menu.ts` y **sólo admite filtros que el servidor sabe
    aplicar**. El filtro activo vive en la URL, así que una vista filtrada se comparte por enlace
    y el botón de atrás funciona.

@@ -8,7 +8,7 @@ import type { TaskItem } from './task-create-modal.component';
  * Se prueba a fondo porque una suma mal repartida **no da error**: sale un número plausible, y
  * con él alguien decide si contrata, si aplaza o si le pide más a quien ya no puede.
  */
-describe('carga', () => {
+describe('workload', () => {
   const task = (overrides: Partial<TaskItem>): TaskItem => ({
     id: 't', title: 'Tarea', description: '', status: 'To Do', priority: 'Normal',
     estimatedHours: 0, dueDate: '', projectId: 'p', assigneeId: '',

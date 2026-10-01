@@ -9,8 +9,8 @@ import {
   lucideStar, lucideTicket, lucideTrash2, lucideUser, lucideUsers
 } from '@ng-icons/lucide';
 
-import { EntradaDeMenu, VocabularioDeModulo, vocabularioDe } from './vocabulario-del-menu';
-import { SeccionesDelPanelService } from './secciones-del-panel.service';
+import { MenuEntry, ModuleVocabulary, vocabularyOf } from './menu-vocabulary';
+import { PanelSectionsService } from './panel-sections.service';
 
 /**
  * El panel lateral de navegación: <b>el único submenú de la aplicación</b>.
@@ -33,7 +33,7 @@ import { SeccionesDelPanelService } from './secciones-del-panel.service';
  * por enlace, el botón de atrás funciona y recargar no devuelve a «ver todo».
  */
 @Component({
-  selector: 'app-panel-de-navegacion',
+  selector: 'app-navigation-panel',
   standalone: true,
   imports: [CommonModule, NgIcon],
   viewProviders: [provideIcons({
@@ -44,42 +44,42 @@ import { SeccionesDelPanelService } from './secciones-del-panel.service';
   template: `
     <div
       class="h-full w-64 flex-shrink-0 bg-muted border-r border-border flex flex-col shadow-xl"
-      [class.shadow-none]="anclado()">
+      [class.shadow-none]="pinned()">
 
       <div class="h-14 flex items-center justify-between px-4 border-b border-border shrink-0">
         <div class="flex items-center gap-2 font-medium text-sm text-foreground">
           <div class="w-6 h-6 rounded-md bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white text-xs font-bold shadow-sm">
-            {{ vocabulario().inicial }}
+            {{ vocabulary().initial }}
           </div>
-          <span class="font-semibold tracking-tight">{{ vocabulario().titulo }}</span>
+          <span class="font-semibold tracking-tight">{{ vocabulary().title }}</span>
         </div>
 
         <button
           type="button"
-          (click)="alternarAnclado($event)"
+          (click)="togglePinned($event)"
           class="text-muted-foreground hover:text-foreground p-1.5 rounded-md hover:bg-secondary transition-colors"
-          [attr.aria-pressed]="anclado()"
+          [attr.aria-pressed]="pinned()"
           i18n-aria-label aria-label="Fijar el panel de navegación">
-          <ng-icon [name]="anclado() ? 'lucidePinOff' : 'lucidePin'" class="w-3.5 h-3.5" />
+          <ng-icon [name]="pinned() ? 'lucidePinOff' : 'lucidePin'" class="w-3.5 h-3.5" />
         </button>
       </div>
 
       <nav class="px-2 py-3 space-y-0.5 overflow-y-auto flex-1" i18n-aria-label aria-label="Vistas">
-        @for (entrada of vocabulario().entradas; track entrada.etiqueta) {
-          @if (entrada.separadorAntes) {
+        @for (entry of vocabulary().entries; track entry.label) {
+          @if (entry.separatorBefore) {
             <div class="my-2 border-t border-border/80"></div>
           }
 
           <button
             type="button"
-            (click)="ir(entrada)"
-            [attr.aria-current]="esLaActiva(entrada) ? 'page' : null"
-            [class.bg-secondary]="esLaActiva(entrada)"
-            [class.font-semibold]="esLaActiva(entrada)"
-            [class.text-foreground]="esLaActiva(entrada)"
+            (click)="go(entry)"
+            [attr.aria-current]="isActive(entry) ? 'page' : null"
+            [class.bg-secondary]="isActive(entry)"
+            [class.font-semibold]="isActive(entry)"
+            [class.text-foreground]="isActive(entry)"
             class="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-muted-foreground hover:bg-secondary/70 rounded-md transition-colors text-left">
-            <ng-icon [name]="entrada.icono" class="w-4 h-4 flex-shrink-0" />
-            <span class="truncate">{{ entrada.etiqueta }}</span>
+            <ng-icon [name]="entry.icon" class="w-4 h-4 flex-shrink-0" />
+            <span class="truncate">{{ entry.label }}</span>
           </button>
         }
       </nav>
@@ -88,32 +88,32 @@ import { SeccionesDelPanelService } from './secciones-del-panel.service';
         Lo que aporta el propio módulo: los favoritos y las páginas recientes de Documentos, por
         ejemplo. Va debajo de la navegación y separado, porque son datos y no destinos fijos.
       -->
-      @if (secciones().length > 0) {
+      @if (sections().length > 0) {
         <div class="px-2 pb-3 space-y-4 overflow-y-auto border-t border-border/80 pt-3">
-          @for (seccion of secciones(); track seccion.titulo) {
+          @for (section of sections(); track section.title) {
             <div>
               <span class="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5 px-1">
-                {{ seccion.titulo }}
+                {{ section.title }}
               </span>
 
-              @if (seccion.elementos.length > 0) {
+              @if (section.items.length > 0) {
                 <div class="space-y-0.5">
-                  @for (elemento of seccion.elementos; track elemento.id) {
+                  @for (item of section.items; track item.id) {
                     <button
                       type="button"
-                      (click)="elemento.alPulsar()"
+                      (click)="item.onSelect()"
                       class="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-muted-foreground
                              hover:bg-secondary/70 rounded-md transition-colors text-left
                              focus:outline-none focus:ring-2 focus:ring-ring">
-                      @if (elemento.icono) {
-                        <ng-icon [name]="elemento.icono" class="w-3.5 h-3.5 flex-shrink-0" />
+                      @if (item.icon) {
+                        <ng-icon [name]="item.icon" class="w-3.5 h-3.5 flex-shrink-0" />
                       }
-                      <span class="truncate">{{ elemento.etiqueta }}</span>
+                      <span class="truncate">{{ item.label }}</span>
                     </button>
                   }
                 </div>
-              } @else if (seccion.siNoHayNada) {
-                <p class="px-1 text-[11px] text-muted-foreground">{{ seccion.siNoHayNada }}</p>
+              } @else if (section.fallback) {
+                <p class="px-1 text-[11px] text-muted-foreground">{{ section.fallback }}</p>
               }
             </div>
           }
@@ -122,13 +122,13 @@ import { SeccionesDelPanelService } from './secciones-del-panel.service';
     </div>
   `
 })
-export class PanelDeNavegacionComponent {
+export class NavigationPanelComponent {
   private readonly router = inject(Router);
-  private readonly ruta = inject(ActivatedRoute);
-  private readonly seccionesDeLosModulos = inject(SeccionesDelPanelService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly moduleSections = inject(PanelSectionsService);
 
   /** El módulo cuyo vocabulario se pinta. Cualquiera de los del menú lateral. */
-  readonly modulo = input.required<string>();
+  readonly moduleKey = input.required<string>();
 
   /**
    * El nombre del módulo según el menú lateral.
@@ -136,14 +136,14 @@ export class PanelDeNavegacionComponent {
    * Sólo se usa para los módulos que aún no tienen vocabulario escrito: así uno nuevo enseña su
    * nombre de verdad en la cabecera del panel en vez de la clave de la ruta.
    */
-  readonly nombreDelModulo = input<string | undefined>(undefined);
+  readonly moduleName = input<string | undefined>(undefined);
 
   /**
    * La ruta del módulo, cuando no coincide con su identificador.
    *
    * Inicio es `home` y su ruta es `/`. Suponer `/${modulo}` llevaría a `/home`, que no existe.
    */
-  readonly rutaDelModulo = input<string | undefined>(undefined);
+  readonly moduleRoute = input<string | undefined>(undefined);
 
   /**
    * Anclado: se queda abierto y el contenido se corre a la derecha. Sin anclar, se asoma al pasar
@@ -152,7 +152,7 @@ export class PanelDeNavegacionComponent {
    * Es una preferencia por persona y todavía no se guarda, así que arranca abierto: un panel que
    * empieza escondido en una pantalla nueva es un panel que nadie descubre.
    */
-  readonly anclado = model(true);
+  readonly pinned = model(true);
 
   /**
    * El módulo de la pantalla en la que se está.
@@ -161,18 +161,18 @@ export class PanelDeNavegacionComponent {
    * no reacciona a los cambios de ruta —haría falta suscribirse—, y quien pinta el panel ya lo
    * sabe. Vale nulo cuando la pantalla actual no tiene panel.
    */
-  readonly moduloActual = input<string | null>(null);
+  readonly currentModule = input<string | null>(null);
 
-  private readonly parametros = toSignal(this.ruta.queryParams, { initialValue: {} as Record<string, string> });
+  private readonly params = toSignal(this.route.queryParams, { initialValue: {} as Record<string, string> });
 
   /** El filtro que está puesto ahora mismo, leído de la URL. */
-  readonly filtroActivo = computed(() => this.parametros()['filter'] ?? null);
+  readonly activeFilter = computed(() => this.params()['filter'] ?? null);
 
-  readonly vocabulario = computed<VocabularioDeModulo>(
-    () => vocabularioDe(this.modulo(), this.nombreDelModulo()));
+  readonly vocabulary = computed<ModuleVocabulary>(
+    () => vocabularyOf(this.moduleKey(), this.moduleName()));
 
   /** Las secciones que el módulo haya registrado. Vacío para casi todos. */
-  readonly secciones = computed(() => this.seccionesDeLosModulos.todas()[this.modulo()] ?? []);
+  readonly sections = computed(() => this.moduleSections.all()[this.moduleKey()] ?? []);
 
   /**
    * Si una entrada está puesta.
@@ -181,28 +181,28 @@ export class PanelDeNavegacionComponent {
    * la pantalla de Tareas, el filtro de la URL es de Tareas y marcar la entrada haría creer que
    * los tickets ya están filtrados así.
    */
-  esLaActiva(entrada: EntradaDeMenu): boolean {
-    if (!this.esElModuloActual()) return false;
+  isActive(entry: MenuEntry): boolean {
+    if (!this.isCurrentModule()) return false;
 
     // Una entrada con ruta propia —«Mis tareas» desde Inicio— nunca es «la activa» del panel de
     // Inicio: lleva a otra pantalla, así que si estuviera marcada diría que estás en ella.
-    if (entrada.ruta) return false;
+    if (entry.route) return false;
 
     // Los parámetros que la entrada fija tienen que coincidir todos. Es lo que distingue las
     // pestañas de Documentos entre sí, que no usan `?filter=`.
-    for (const [clave, valor] of Object.entries(entrada.params ?? {})) {
-      if (this.parametros()[clave] !== valor) return false;
+    for (const [key, value] of Object.entries(entry.params ?? {})) {
+      if (this.params()[key] !== value) return false;
     }
 
     // Y los que no fija no pueden estar puestos, o «Todos los documentos» saldría marcado
     // estando en «Privados».
-    if (!entrada.params && this.parametros()['tab']) return false;
+    if (!entry.params && this.params()['tab']) return false;
 
-    return (entrada.filtro ?? null) === this.filtroActivo();
+    return (entry.filter ?? null) === this.activeFilter();
   }
 
-  private esElModuloActual(): boolean {
-    return this.moduloActual() === this.modulo();
+  private isCurrentModule(): boolean {
+    return this.currentModule() === this.moduleKey();
   }
 
   /**
@@ -215,16 +215,16 @@ export class PanelDeNavegacionComponent {
    * «Ver todo» quita el parámetro en vez de mandarlo vacío, para que la URL de la lista completa
    * siga siendo la de siempre y no una variante que parezca filtrada.
    */
-  ir(entrada: EntradaDeMenu): void {
-    const destino = entrada.ruta ?? this.rutaDelModulo() ?? '/' + this.modulo();
+  go(entry: MenuEntry): void {
+    const target = entry.route ?? this.moduleRoute() ?? '/' + this.moduleKey();
 
-    this.router.navigate([destino], {
-      queryParams: { filter: entrada.filtro, tab: null, type: null, ...entrada.params }
+    this.router.navigate([target], {
+      queryParams: { filter: entry.filter, tab: null, type: null, ...entry.params }
     });
   }
 
-  alternarAnclado(evento: Event): void {
-    evento.stopPropagation();
-    this.anclado.update(v => !v);
+  togglePinned(event: Event): void {
+    event.stopPropagation();
+    this.pinned.update(v => !v);
   }
 }

@@ -13,7 +13,7 @@ import { ToastService } from './shared/services/toast.service';
 import { UserAvatarComponent } from './shared/ui/user-avatar.component';
 import { SidebarCustomizerComponent } from './shared/ui/sidebar-customizer.component';
 import { SubmenuCustomizerComponent } from './shared/ui/submenu-customizer.component';
-import { PanelDeNavegacionComponent } from './shared/ui/panel-de-navegacion/panel-de-navegacion.component';
+import { NavigationPanelComponent } from './shared/ui/navigation-panel/navigation-panel.component';
 import {
   lucideLayoutDashboard, lucideFolderKanban, lucideCheckSquare,
   lucideTicket, lucideLogOut, lucideMenu, lucideX,
@@ -42,7 +42,7 @@ import { CommandPaletteService } from './shared/ui/command-palette/command-palet
     SidebarCustomizerComponent,
     SubmenuCustomizerComponent,
     UpperCasePipe,
-    CommandPaletteComponent, PanelDeNavegacionComponent
+    CommandPaletteComponent, NavigationPanelComponent
   ],
   viewProviders: [provideIcons({
     lucideLayoutDashboard, lucideFolderKanban, lucideCheckSquare,
@@ -59,7 +59,7 @@ import { CommandPaletteService } from './shared/ui/command-palette/command-palet
   styleUrl: './app.component.scss',
 })
 export class AppComponent implements OnInit {
-  protected readonly paleta = inject(CommandPaletteService);
+  protected readonly palette = inject(CommandPaletteService);
 
   /**
    * Atajo global del paletón. Se escucha en el documento y no en un elemento concreto
@@ -70,10 +70,10 @@ export class AppComponent implements OnInit {
    * navegador se quede con la pulsación, que en Chrome enfoca la barra de direcciones.
    */
   @HostListener('document:keydown', ['$event'])
-  protected alPulsarGlobal(evento: KeyboardEvent): void {
-    if ((evento.metaKey || evento.ctrlKey) && evento.key.toLowerCase() === 'k') {
-      evento.preventDefault();
-      this.paleta.alternar();
+  protected onGlobalKeydown(event: KeyboardEvent): void {
+    if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+      event.preventDefault();
+      this.palette.toggle();
     }
   }
 
@@ -140,17 +140,17 @@ export class AppComponent implements OnInit {
    * Arranca anclado para el módulo en el que se entra: un panel que empieza escondido en una
    * pantalla nueva es un panel que nadie descubre.
    */
-  private readonly anclados = signal<Record<string, boolean>>({});
+  private readonly pinnedIds = signal<Record<string, boolean>>({});
 
   /** El módulo de la ruta actual. Todos los del menú tienen panel. */
-  protected readonly moduloDeLaRuta = computed(() => {
+  protected readonly routeModule = computed(() => {
     const url = (this.currentRouteUrl() ?? '').split('?')[0];
-    const segmento = url.split('/')[1] ?? '';
+    const segment = url.split('/')[1] ?? '';
 
     // La raíz es Inicio, que en el menú se llama `home` y no tiene segmento.
-    if (!segmento) return 'home';
+    if (!segment) return 'home';
 
-    return this.navStore.allItems().some(i => i.id === segmento) ? segmento : null;
+    return this.navStore.allItems().some(i => i.id === segment) ? segment : null;
   });
 
   /**
@@ -159,19 +159,19 @@ export class AppComponent implements OnInit {
    * Se prefiere el señalado porque es una intención explícita —alguien acaba de llevar el ratón
    * ahí— mientras que la ruta es sólo dónde se está.
    */
-  protected readonly moduloDelPanel = computed(
-    () => this.moduloSenalado() ?? this.moduloDeLaRuta());
+  protected readonly panelModule = computed(
+    () => this.moduloSenalado() ?? this.routeModule());
 
   /** La entrada del menú del panel que se está enseñando, para su nombre y su ruta. */
-  protected readonly itemDelPanel = computed(() => {
-    const modulo = this.moduloDelPanel();
-    return modulo ? this.navStore.allItems().find(i => i.id === modulo) ?? null : null;
+  protected readonly panelItem = computed(() => {
+    const moduleKey = this.panelModule();
+    return moduleKey ? this.navStore.allItems().find(i => i.id === moduleKey) ?? null : null;
   });
 
   /** Si el panel del módulo que se está enseñando está anclado. */
-  protected readonly panelAnclado = computed(() => {
-    const modulo = this.moduloDelPanel();
-    return modulo ? this.anclados()[modulo] ?? true : false;
+  protected readonly panelPinned = computed(() => {
+    const moduleKey = this.panelModule();
+    return moduleKey ? this.pinnedIds()[moduleKey] ?? true : false;
   });
 
   /**
@@ -185,10 +185,10 @@ export class AppComponent implements OnInit {
    * falta o el panel se cerraría al mover el ratón hacia él.
    */
   protected readonly panelVisible = computed(() => {
-    const deLaRuta = this.moduloDeLaRuta();
-    const ancladoAqui = deLaRuta ? this.anclados()[deLaRuta] ?? true : false;
+    const fromRoute = this.routeModule();
+    const pinnedHere = fromRoute ? this.pinnedIds()[fromRoute] ?? true : false;
 
-    return ancladoAqui || this.moduloSenalado() !== null || this.raton();
+    return pinnedHere || this.moduloSenalado() !== null || this.raton();
   });
 
   /**
@@ -197,25 +197,25 @@ export class AppComponent implements OnInit {
    * Asomándose por encima no empuja: si lo hiciera, la página entera se movería cada vez que el
    * ratón roza la barra lateral.
    */
-  protected readonly panelEmpuja = computed(() => {
-    const deLaRuta = this.moduloDeLaRuta();
-    return !!deLaRuta && (this.anclados()[deLaRuta] ?? true);
+  protected readonly panelPushes = computed(() => {
+    const fromRoute = this.routeModule();
+    return !!fromRoute && (this.pinnedIds()[fromRoute] ?? true);
   });
 
-  protected alEntrarEnModulo(id: string): void {
+  protected onModuleEnter(id: string): void {
     this.moduloSenalado.set(id);
   }
 
   /** Al salir de la barra lateral, el panel vuelve a ser el de la pantalla en la que se está. */
-  protected alSalirDeLaBarra(): void {
+  protected onBarLeave(): void {
     this.moduloSenalado.set(null);
   }
 
-  protected alternarAnclado(anclado: boolean): void {
-    const modulo = this.moduloDelPanel();
-    if (!modulo) return;
+  protected togglePinned(pinned: boolean): void {
+    const moduleKey = this.panelModule();
+    if (!moduleKey) return;
 
-    this.anclados.update(actuales => ({ ...actuales, [modulo]: anclado }));
+    this.pinnedIds.update(current => ({ ...current, [moduleKey]: pinned }));
   }
 
   // Drawer state for sidebar customizer

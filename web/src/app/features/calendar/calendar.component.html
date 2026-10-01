@@ -164,10 +164,10 @@
 </div>
 
 <!-- El menú del botón derecho, uno solo para toda la pantalla -->
-<app-menu-contextual
-  [opciones]="menuOptions()"
-  [titulo]="menuTitle()"
-  (elegida)="onMenuChoice($event)" />
+<app-context-menu
+  [options]="menuOptions()"
+  [title]="menuTitle()"
+  (chosen)="onMenuChoice($event)" />
 
 <app-event-drawer
   [isOpen]="drawerOpen()"

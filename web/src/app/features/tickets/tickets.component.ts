@@ -23,7 +23,7 @@ import { TableColumnService } from '../../shared/services/table-column.service';
 import { ClickableDirective } from '../../shared/directives/clickable.directive';
 import { ToastService } from '../../shared/services/toast.service';
 import { EmptyInlineComponent } from '../../shared/ui/empty-state.component';
-import { BarraDeVistasComponent, type VistaIntegrada } from '../../shared/ui/barra-de-vistas/barra-de-vistas.component';
+import { ViewTabsComponent, type BuiltInView } from '../../shared/ui/view-tabs/view-tabs.component';
 
 interface Column {
   key: string;
@@ -59,7 +59,7 @@ const COLUMN_DEFS: Omit<Column, 'tickets' | 'pending'>[] = TICKET_STATUSES.map(s
   imports: [ClickableDirective, 
     CommonModule, FormsModule, BadgeComponent, ButtonComponent,
     NgIconComponent, DragDropModule, TicketCreateModalComponent, TicketDetailPanelComponent,
-    DataTableComponent, EmptyInlineComponent, BarraDeVistasComponent
+    DataTableComponent, EmptyInlineComponent, ViewTabsComponent
   ],
   viewProviders: [provideIcons({
     lucideRefreshCw, lucidePlus, lucideList,
@@ -88,9 +88,9 @@ export class TicketsComponent implements OnInit {
    * Gantt y carga de trabajo, y una barra que las supiese todas ofrecería en tickets pestañas que
    * no llevan a ninguna parte.
    */
-  readonly BUILT_IN_VIEWS: VistaIntegrada[] = [
-    { clave: 'board', etiqueta: $localize`Tablero`, icono: 'lucideLayoutDashboard' },
-    { clave: 'list',  etiqueta: $localize`Lista`,   icono: 'lucideList' }
+  readonly BUILT_IN_VIEWS: BuiltInView[] = [
+    { key: 'board', label: $localize`Tablero`, icon: 'lucideLayoutDashboard' },
+    { key: 'list',  label: $localize`Lista`,   icon: 'lucideList' }
   ];
   readonly isLoading = signal(false);
 
@@ -216,7 +216,7 @@ export class TicketsComponent implements OnInit {
     this.activeViewId.set(null);
   }
 
-  createView({ nombre, tipo }: { nombre: string; tipo: string }): void {
+  createView({ name: nombre, type: tipo }: { name: string; type: string }): void {
     this.viewMode.set(tipo as 'board' | 'list');
 
     const state = { ...this.tableState(), viewType: tipo };

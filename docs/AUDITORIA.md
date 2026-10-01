@@ -1062,7 +1062,7 @@ tickets eso dejaba sin ninguna forma de ver la lista; en tareas se llevaba adem�
 carga. Y como nadie llamaba nunca al endpoint de borrar vistas, que existía desde el principio, no
 había vuelta atrás.
 
-Las dos pantallas tenían el enredo copiado. Se extrae a `app-barra-de-vistas`, y con él se caen
+Las dos pantallas tenían el enredo copiado. Se extrae a `app-view-tabs`, y con él se caen
 tres cosas más: el `prompt()` que el navegador bloquea dentro de un marco —crear una vista no hacía
 nada y no avisaba—, la aplicación de vistas que sólo entendía «board» y «list» —una vista de Gantt
 se abría como tablero— y el desajuste `Tasks`/`WorkItems`, que tenía la vista sembrada guardada y

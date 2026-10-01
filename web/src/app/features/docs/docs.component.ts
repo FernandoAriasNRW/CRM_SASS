@@ -16,7 +16,7 @@ import {
   lucideMessageSquare
 } from '@ng-icons/lucide';
 import { AnnotationDto, DocsService, DocumentDto, PageDto } from './docs.service';
-import { SeccionesDelPanelService } from '../../shared/ui/panel-de-navegacion/secciones-del-panel.service';
+import { PanelSectionsService } from '../../shared/ui/navigation-panel/panel-sections.service';
 
 /** Las pestañas que el panel de Documentos sabe abrir. Cualquier otra cosa en `?tab=` cae en «all». */
 const DOCS_TABS = ['all', 'my', 'shared', 'private', 'meeting-notes', 'templates', 'archived'] as const;
@@ -377,7 +377,7 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
    * como el resto de los módulos, y de paso una pestaña se puede compartir por enlace y el botón
    * de atrás funciona.
    */
-  private readonly seccionesDelPanel = inject(SeccionesDelPanelService);
+  private readonly seccionesDelPanel = inject(PanelSectionsService);
 
   /** `effect` fuera del constructor necesita inyector explícito. */
   private readonly injector = inject(Injector);
@@ -635,24 +635,24 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
     // Va en un `effect` porque las dos listas cambian —al marcar una estrella, al abrir un
     // documento— y una entrega única dejaría el panel enseñando lo de hace un rato.
     effect(() => {
-      this.seccionesDelPanel.registrar('docs', [
+      this.seccionesDelPanel.register('docs', [
         {
-          titulo: $localize`Favoritos`,
-          siNoHayNada: $localize`Marca un documento con la estrella para verlo aquí.`,
-          elementos: this.starredDocuments().map(doc => ({
+          title: $localize`Favoritos`,
+          fallback: $localize`Marca un documento con la estrella para verlo aquí.`,
+          items: this.starredDocuments().map(doc => ({
             id: doc.id,
-            etiqueta: doc.title,
-            icono: 'lucideStar',
-            alPulsar: () => this.selectDocument(doc)
+            label: doc.title,
+            icon: 'lucideStar',
+            onSelect: () => this.selectDocument(doc)
           }))
         },
         {
-          titulo: $localize`Páginas recientes`,
-          elementos: this.documents().slice(0, 5).map(doc => ({
+          title: $localize`Páginas recientes`,
+          items: this.documents().slice(0, 5).map(doc => ({
             id: 'reciente-' + doc.id,
-            etiqueta: doc.title,
-            icono: 'lucideBookOpen',
-            alPulsar: () => this.selectDocument(doc)
+            label: doc.title,
+            icon: 'lucideBookOpen',
+            onSelect: () => this.selectDocument(doc)
           }))
         }
       ]);
@@ -675,7 +675,7 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
 
     // Si no se limpian, al salir de Documentos el panel de Tareas seguiría enseñando documentos
     // favoritos: las secciones viven en un servicio global.
-    this.seccionesDelPanel.limpiar('docs');
+    this.seccionesDelPanel.clear('docs');
   }
 
   onGlobalClick(event: Event) {

@@ -371,7 +371,7 @@
           <context context-type="linenumber">17</context>
         </context-group>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/shared/ui/panel-de-navegacion/vocabulario-del-menu.ts</context>
+          <context context-type="sourcefile">src/app/shared/ui/navigation-panel/menu-vocabulary.ts</context>
           <context context-type="linenumber">152</context>
         </context-group>
       </trans-unit>
@@ -398,7 +398,7 @@
           <context context-type="linenumber">16</context>
         </context-group>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/shared/ui/panel-de-navegacion/vocabulario-del-menu.ts</context>
+          <context context-type="sourcefile">src/app/shared/ui/navigation-panel/menu-vocabulary.ts</context>
           <context context-type="linenumber">151</context>
         </context-group>
       </trans-unit>
@@ -427,7 +427,7 @@
           <context context-type="linenumber">67</context>
         </context-group>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/shared/ui/panel-de-navegacion/vocabulario-del-menu.ts</context>
+          <context context-type="sourcefile">src/app/shared/ui/navigation-panel/menu-vocabulary.ts</context>
           <context context-type="linenumber">148</context>
         </context-group>
       </trans-unit>
@@ -438,7 +438,7 @@
           <context context-type="linenumber">45</context>
         </context-group>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/shared/ui/panel-de-navegacion/vocabulario-del-menu.ts</context>
+          <context context-type="sourcefile">src/app/shared/ui/navigation-panel/menu-vocabulary.ts</context>
           <context context-type="linenumber">149</context>
         </context-group>
       </trans-unit>
@@ -453,7 +453,7 @@
           <context context-type="linenumber">26,27</context>
         </context-group>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/shared/ui/panel-de-navegacion/vocabulario-del-menu.ts</context>
+          <context context-type="sourcefile">src/app/shared/ui/navigation-panel/menu-vocabulary.ts</context>
           <context context-type="linenumber">150</context>
         </context-group>
       </trans-unit>
@@ -472,7 +472,7 @@
           <context context-type="linenumber">18</context>
         </context-group>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/shared/ui/panel-de-navegacion/vocabulario-del-menu.ts</context>
+          <context context-type="sourcefile">src/app/shared/ui/navigation-panel/menu-vocabulary.ts</context>
           <context context-type="linenumber">153</context>
         </context-group>
       </trans-unit>
@@ -554,7 +554,7 @@
           <context context-type="linenumber">61</context>
         </context-group>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/shared/ui/panel-de-navegacion/vocabulario-del-menu.ts</context>
+          <context context-type="sourcefile">src/app/shared/ui/navigation-panel/menu-vocabulary.ts</context>
           <context context-type="linenumber">122</context>
         </context-group>
       </trans-unit>
@@ -565,7 +565,7 @@
           <context context-type="linenumber">62</context>
         </context-group>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/shared/ui/panel-de-navegacion/vocabulario-del-menu.ts</context>
+          <context context-type="sourcefile">src/app/shared/ui/navigation-panel/menu-vocabulary.ts</context>
           <context context-type="linenumber">123</context>
         </context-group>
       </trans-unit>
@@ -576,7 +576,7 @@
           <context context-type="linenumber">63</context>
         </context-group>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/shared/ui/panel-de-navegacion/vocabulario-del-menu.ts</context>
+          <context context-type="sourcefile">src/app/shared/ui/navigation-panel/menu-vocabulary.ts</context>
           <context context-type="linenumber">124</context>
         </context-group>
       </trans-unit>
@@ -587,7 +587,7 @@
           <context context-type="linenumber">68</context>
         </context-group>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/shared/ui/panel-de-navegacion/vocabulario-del-menu.ts</context>
+          <context context-type="sourcefile">src/app/shared/ui/navigation-panel/menu-vocabulary.ts</context>
           <context context-type="linenumber">132</context>
         </context-group>
       </trans-unit>
@@ -598,7 +598,7 @@
           <context context-type="linenumber">69</context>
         </context-group>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/shared/ui/panel-de-navegacion/vocabulario-del-menu.ts</context>
+          <context context-type="sourcefile">src/app/shared/ui/navigation-panel/menu-vocabulary.ts</context>
           <context context-type="linenumber">133</context>
         </context-group>
       </trans-unit>
@@ -609,7 +609,7 @@
           <context context-type="linenumber">70</context>
         </context-group>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/shared/ui/panel-de-navegacion/vocabulario-del-menu.ts</context>
+          <context context-type="sourcefile">src/app/shared/ui/navigation-panel/menu-vocabulary.ts</context>
           <context context-type="linenumber">134</context>
         </context-group>
       </trans-unit>
@@ -620,11 +620,11 @@
           <context context-type="linenumber">96</context>
         </context-group>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/shared/ui/panel-de-navegacion/vocabulario-del-menu.ts</context>
+          <context context-type="sourcefile">src/app/shared/ui/navigation-panel/menu-vocabulary.ts</context>
           <context context-type="linenumber">67</context>
         </context-group>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/shared/ui/panel-de-navegacion/vocabulario-del-menu.ts</context>
+          <context context-type="sourcefile">src/app/shared/ui/navigation-panel/menu-vocabulary.ts</context>
           <context context-type="linenumber">172</context>
         </context-group>
       </trans-unit>
@@ -635,7 +635,7 @@
           <context context-type="linenumber">97</context>
         </context-group>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/shared/ui/panel-de-navegacion/vocabulario-del-menu.ts</context>
+          <context context-type="sourcefile">src/app/shared/ui/navigation-panel/menu-vocabulary.ts</context>
           <context context-type="linenumber">68</context>
         </context-group>
       </trans-unit>
@@ -2092,10 +2092,6 @@ Pendiente</source>
           <context context-type="linenumber">32,33</context>
         </context-group>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/shared/ui/barra-de-vistas/barra-de-vistas.component.ts</context>
-          <context context-type="linenumber">133,134</context>
-        </context-group>
-        <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/ui/comments.component.html</context>
           <context context-type="linenumber">80,81</context>
         </context-group>
@@ -2106,6 +2102,10 @@ Pendiente</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/ui/tag-assign-drawer.component.ts</context>
           <context context-type="linenumber">31,32</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/view-tabs/view-tabs.component.ts</context>
+          <context context-type="linenumber">133,134</context>
         </context-group>
       </trans-unit>
       <trans-unit id="7941115229034217505" datatype="html">
@@ -2375,7 +2375,7 @@ Pendiente</source>
           <context context-type="linenumber">32,33</context>
         </context-group>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/shared/ui/panel-de-navegacion/vocabulario-del-menu.ts</context>
+          <context context-type="sourcefile">src/app/shared/ui/navigation-panel/menu-vocabulary.ts</context>
           <context context-type="linenumber">79</context>
         </context-group>
       </trans-unit>
@@ -3179,7 +3179,7 @@ Pendiente</source>
           <context context-type="linenumber">209,210</context>
         </context-group>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/shared/ui/panel-de-navegacion/vocabulario-del-menu.ts</context>
+          <context context-type="sourcefile">src/app/shared/ui/navigation-panel/menu-vocabulary.ts</context>
           <context context-type="linenumber">106</context>
         </context-group>
       </trans-unit>
@@ -3190,7 +3190,7 @@ Pendiente</source>
           <context context-type="linenumber">210,211</context>
         </context-group>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/shared/ui/panel-de-navegacion/vocabulario-del-menu.ts</context>
+          <context context-type="sourcefile">src/app/shared/ui/navigation-panel/menu-vocabulary.ts</context>
           <context context-type="linenumber">107</context>
         </context-group>
       </trans-unit>
@@ -3201,7 +3201,7 @@ Pendiente</source>
           <context context-type="linenumber">211,212</context>
         </context-group>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/shared/ui/panel-de-navegacion/vocabulario-del-menu.ts</context>
+          <context context-type="sourcefile">src/app/shared/ui/navigation-panel/menu-vocabulary.ts</context>
           <context context-type="linenumber">108</context>
         </context-group>
       </trans-unit>
@@ -3212,7 +3212,7 @@ Pendiente</source>
           <context context-type="linenumber">212,213</context>
         </context-group>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/shared/ui/panel-de-navegacion/vocabulario-del-menu.ts</context>
+          <context context-type="sourcefile">src/app/shared/ui/navigation-panel/menu-vocabulary.ts</context>
           <context context-type="linenumber">109</context>
         </context-group>
       </trans-unit>
@@ -3223,7 +3223,7 @@ Pendiente</source>
           <context context-type="linenumber">213,214</context>
         </context-group>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/shared/ui/panel-de-navegacion/vocabulario-del-menu.ts</context>
+          <context context-type="sourcefile">src/app/shared/ui/navigation-panel/menu-vocabulary.ts</context>
           <context context-type="linenumber">110</context>
         </context-group>
       </trans-unit>
@@ -3238,7 +3238,7 @@ Pendiente</source>
           <context context-type="linenumber">114</context>
         </context-group>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/shared/ui/panel-de-navegacion/vocabulario-del-menu.ts</context>
+          <context context-type="sourcefile">src/app/shared/ui/navigation-panel/menu-vocabulary.ts</context>
           <context context-type="linenumber">111</context>
         </context-group>
       </trans-unit>
@@ -3249,7 +3249,7 @@ Pendiente</source>
           <context context-type="linenumber">215,216</context>
         </context-group>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/shared/ui/panel-de-navegacion/vocabulario-del-menu.ts</context>
+          <context context-type="sourcefile">src/app/shared/ui/navigation-panel/menu-vocabulary.ts</context>
           <context context-type="linenumber">112</context>
         </context-group>
       </trans-unit>
@@ -3659,7 +3659,7 @@ Pendiente</source>
           <context context-type="linenumber">640</context>
         </context-group>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/shared/ui/panel-de-navegacion/vocabulario-del-menu.ts</context>
+          <context context-type="sourcefile">src/app/shared/ui/navigation-panel/menu-vocabulary.ts</context>
           <context context-type="linenumber">70</context>
         </context-group>
       </trans-unit>
@@ -7241,34 +7241,6 @@ Pendiente</source>
           <context context-type="linenumber">293,294</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="4199506752830523171" datatype="html">
-        <source>Nombre de la vista</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/shared/ui/barra-de-vistas/barra-de-vistas.component.ts</context>
-          <context context-type="linenumber">108,109</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="6151922057201998410" datatype="html">
-        <source>Cómo se verá</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/shared/ui/barra-de-vistas/barra-de-vistas.component.ts</context>
-          <context context-type="linenumber">114,115</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="1224564890882671342" datatype="html">
-        <source>Guardar la vista</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/shared/ui/barra-de-vistas/barra-de-vistas.component.ts</context>
-          <context context-type="linenumber">126,127</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="1831668866980053360" datatype="html">
-        <source>Vista</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/shared/ui/barra-de-vistas/barra-de-vistas.component.ts</context>
-          <context context-type="linenumber">141,142</context>
-        </context-group>
-      </trans-unit>
       <trans-unit id="3024677306715062969" datatype="html">
         <source>Sin datos para este informe.</source>
         <context-group purpose="location">
@@ -7483,6 +7455,48 @@ Pendiente</source>
           <context context-type="linenumber">33,34</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="6686527627555450047" datatype="html">
+        <source>Creado por mí</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/navigation-panel/menu-vocabulary.ts</context>
+          <context context-type="linenumber">69</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5297831694845247371" datatype="html">
+        <source>Compartido conmigo</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/navigation-panel/menu-vocabulary.ts</context>
+          <context context-type="linenumber">72</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4760056198413288553" datatype="html">
+        <source>Privado</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/navigation-panel/menu-vocabulary.ts</context>
+          <context context-type="linenumber">73</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2352471522276607242" datatype="html">
+        <source>Archivado</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/navigation-panel/menu-vocabulary.ts</context>
+          <context context-type="linenumber">78</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="204224406769681528" datatype="html">
+        <source>Fijar el panel de navegación</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/navigation-panel/navigation-panel.component.ts</context>
+          <context context-type="linenumber">62,63</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8125674636147739761" datatype="html">
+        <source>Vistas</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/navigation-panel/navigation-panel.component.ts</context>
+          <context context-type="linenumber">68</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="8253475360221692409" datatype="html">
         <source>Preferencias guardadas</source>
         <context-group purpose="location">
@@ -7502,48 +7516,6 @@ Pendiente</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/ui/pagination.component.ts</context>
           <context context-type="linenumber">36,43</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="204224406769681528" datatype="html">
-        <source>Fijar el panel de navegación</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/shared/ui/panel-de-navegacion/panel-de-navegacion.component.ts</context>
-          <context context-type="linenumber">62,63</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="8125674636147739761" datatype="html">
-        <source>Vistas</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/shared/ui/panel-de-navegacion/panel-de-navegacion.component.ts</context>
-          <context context-type="linenumber">68</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="6686527627555450047" datatype="html">
-        <source>Creado por mí</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/shared/ui/panel-de-navegacion/vocabulario-del-menu.ts</context>
-          <context context-type="linenumber">69</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="5297831694845247371" datatype="html">
-        <source>Compartido conmigo</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/shared/ui/panel-de-navegacion/vocabulario-del-menu.ts</context>
-          <context context-type="linenumber">72</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="4760056198413288553" datatype="html">
-        <source>Privado</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/shared/ui/panel-de-navegacion/vocabulario-del-menu.ts</context>
-          <context context-type="linenumber">73</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="2352471522276607242" datatype="html">
-        <source>Archivado</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/shared/ui/panel-de-navegacion/vocabulario-del-menu.ts</context>
-          <context context-type="linenumber">78</context>
         </context-group>
       </trans-unit>
       <trans-unit id="3341002993832944373" datatype="html">
@@ -7698,6 +7670,34 @@ Pendiente</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/ui/tag-field.component.ts</context>
           <context context-type="linenumber">51</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4199506752830523171" datatype="html">
+        <source>Nombre de la vista</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/view-tabs/view-tabs.component.ts</context>
+          <context context-type="linenumber">108,109</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6151922057201998410" datatype="html">
+        <source>Cómo se verá</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/view-tabs/view-tabs.component.ts</context>
+          <context context-type="linenumber">114,115</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1224564890882671342" datatype="html">
+        <source>Guardar la vista</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/view-tabs/view-tabs.component.ts</context>
+          <context context-type="linenumber">126,127</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1831668866980053360" datatype="html">
+        <source>Vista</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/view-tabs/view-tabs.component.ts</context>
+          <context context-type="linenumber">141,142</context>
         </context-group>
       </trans-unit>
     </body>

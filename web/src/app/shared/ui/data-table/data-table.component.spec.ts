@@ -17,12 +17,12 @@ interface Fila extends Record<string, unknown> {
  * que guarda es quien revierte si el servidor rechaza, y esa lógica ya vive en quien usa la tabla—.
  */
 describe('DataTableComponent — edición en línea', () => {
-  const FILA: Fila = {
+  const ROW: Fila = {
     id: 't1', title: 'Configurar alertas', status: 'To Do',
     dueDate: '2026-08-15T00:00:00', assigneeId: 'u1',
   };
 
-  const COLUMNAS: ColumnDef[] = [
+  const COLUMNS: ColumnDef[] = [
     { key: 'title', label: 'Título', editable: true },
     {
       key: 'status', label: 'Estado', editable: true, editor: 'select',
@@ -33,78 +33,78 @@ describe('DataTableComponent — edición en línea', () => {
   ];
 
   let fixture: ComponentFixture<DataTableComponent<Fila>>;
-  let tabla: DataTableComponent<Fila>;
-  let emitidos: CellEdit<Fila>[];
+  let table: DataTableComponent<Fila>;
+  let emitted: CellEdit<Fila>[];
 
-  const columna = (key: string) => COLUMNAS.find(c => c.key === key)!;
+  const column = (key: string) => COLUMNS.find(c => c.key === key)!;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({ imports: [DataTableComponent] }).compileComponents();
 
     fixture = TestBed.createComponent<DataTableComponent<Fila>>(DataTableComponent);
-    tabla = fixture.componentInstance;
-    tabla.columns = COLUMNAS;
-    tabla.data = [FILA];
+    table = fixture.componentInstance;
+    table.columns = COLUMNS;
+    table.data = [ROW];
     fixture.detectChanges();
 
-    emitidos = [];
-    tabla.cellEdit.subscribe(cambio => emitidos.push(cambio));
+    emitted = [];
+    table.cellEdit.subscribe(change => emitted.push(change));
   });
 
   describe('qué columnas se pueden editar', () => {
     it('las que lo piden', () => {
-      expect(tabla.sePuedeEditar(columna('title'))).toBeTrue();
+      expect(table.canEdit(column('title'))).toBeTrue();
     });
 
     it('y no las que no', () => {
-      expect(tabla.sePuedeEditar(columna('assigneeId'))).toBeFalse();
+      expect(table.canEdit(column('assigneeId'))).toBeFalse();
     });
 
     it('un desplegable sin opciones no se edita: sería un control que no deja elegir', () => {
-      expect(tabla.sePuedeEditar({ key: 'x', label: 'X', editable: true, editor: 'select' })).toBeFalse();
-      expect(tabla.sePuedeEditar({ key: 'x', label: 'X', editable: true, editor: 'select', options: [] })).toBeFalse();
+      expect(table.canEdit({ key: 'x', label: 'X', editable: true, editor: 'select' })).toBeFalse();
+      expect(table.canEdit({ key: 'x', label: 'X', editable: true, editor: 'select', options: [] })).toBeFalse();
     });
   });
 
   it('sólo se edita una celda a la vez', () => {
-    tabla.empezarEdicion(FILA, columna('title'));
-    tabla.empezarEdicion(FILA, columna('status'));
+    table.startEdit(ROW, column('title'));
+    table.startEdit(ROW, column('status'));
 
-    expect(tabla.editandoEsta(FILA, columna('title'))).toBeFalse();
-    expect(tabla.editandoEsta(FILA, columna('status'))).toBeTrue();
+    expect(table.isEditingThis(ROW, column('title'))).toBeFalse();
+    expect(table.isEditingThis(ROW, column('status'))).toBeTrue();
   });
 
   it('una columna que no se puede editar no abre editor', () => {
-    tabla.empezarEdicion(FILA, columna('assigneeId'));
+    table.startEdit(ROW, column('assigneeId'));
 
-    expect(tabla.editando()).toBeNull();
+    expect(table.editing()).toBeNull();
   });
 
   it('confirmar emite el cambio y cierra el editor', () => {
-    tabla.empezarEdicion(FILA, columna('title'));
+    table.startEdit(ROW, column('title'));
 
-    tabla.confirmarEdicion(FILA, columna('title'), 'Otro título');
+    table.confirmEdit(ROW, column('title'), 'Otro título');
 
-    expect(emitidos).toEqual([{ item: FILA, key: 'title', valor: 'Otro título' }]);
-    expect(tabla.editando()).toBeNull();
+    expect(emitted).toEqual([{ item: ROW, key: 'title', value: 'Otro título' }]);
+    expect(table.editing()).toBeNull();
   });
 
   it('confirmar el mismo valor no gasta una petición', () => {
-    tabla.empezarEdicion(FILA, columna('title'));
+    table.startEdit(ROW, column('title'));
 
-    tabla.confirmarEdicion(FILA, columna('title'), 'Configurar alertas');
+    table.confirmEdit(ROW, column('title'), 'Configurar alertas');
 
-    expect(emitidos).toEqual([]);
-    expect(tabla.editando()).toBeNull();
+    expect(emitted).toEqual([]);
+    expect(table.editing()).toBeNull();
   });
 
   it('escapar cierra sin emitir nada', () => {
-    tabla.empezarEdicion(FILA, columna('title'));
+    table.startEdit(ROW, column('title'));
 
-    tabla.cancelarEdicion();
+    table.cancelEdit();
 
-    expect(emitidos).toEqual([]);
-    expect(tabla.editando()).toBeNull();
+    expect(emitted).toEqual([]);
+    expect(table.editing()).toBeNull();
   });
 
   /**
@@ -113,20 +113,20 @@ describe('DataTableComponent — edición en línea', () => {
    * Escape no cancelaba nada.
    */
   it('el blur que llega después de cancelar no guarda lo descartado', () => {
-    tabla.empezarEdicion(FILA, columna('title'));
-    tabla.cancelarEdicion();
+    table.startEdit(ROW, column('title'));
+    table.cancelEdit();
 
-    tabla.confirmarEdicion(FILA, columna('title'), 'lo que se descartó');
+    table.confirmEdit(ROW, column('title'), 'lo que se descartó');
 
-    expect(emitidos).toEqual([]);
+    expect(emitted).toEqual([]);
   });
 
   it('un blur sobre una celda que no se está editando tampoco guarda', () => {
-    tabla.empezarEdicion(FILA, columna('title'));
+    table.startEdit(ROW, column('title'));
 
-    tabla.confirmarEdicion(FILA, columna('status'), 'Done');
+    table.confirmEdit(ROW, column('status'), 'Done');
 
-    expect(emitidos).toEqual([]);
+    expect(emitted).toEqual([]);
   });
 
   /**
@@ -134,18 +134,18 @@ describe('DataTableComponent — edición en línea', () => {
    * sin decir por qué, y parece que la tarea no tiene fecha.
    */
   it('una fecha se recorta al formato que entiende el editor', () => {
-    expect(tabla.valorTexto(FILA, columna('dueDate'))).toBe('2026-08-15');
+    expect(table.textValue(ROW, column('dueDate'))).toBe('2026-08-15');
   });
 
   it('y ese recorte hace que una fecha sin cambios tampoco se emita', () => {
-    tabla.confirmarEdicion(FILA, columna('dueDate'), '2026-08-15');
+    table.confirmEdit(ROW, column('dueDate'), '2026-08-15');
 
-    expect(emitidos).toEqual([]);
+    expect(emitted).toEqual([]);
   });
 
   it('un valor nulo se edita como cadena vacía, no como «null»', () => {
-    const sinFecha = { ...FILA, dueDate: null as unknown as string };
+    const noDate = { ...ROW, dueDate: null as unknown as string };
 
-    expect(tabla.valorTexto(sinFecha, columna('dueDate'))).toBe('');
+    expect(table.textValue(noDate, column('dueDate'))).toBe('');
   });
 });
