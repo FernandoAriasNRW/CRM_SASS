@@ -1,6 +1,6 @@
 import { Component, inject, OnInit, signal, computed, ViewChild, TemplateRef, effect } from '@angular/core';
 import { AsyncPipe, CommonModule } from '@angular/common';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { ApiService } from '../../core/api.service';
 import { ProjectCreateModalComponent } from './project-create-modal.component';
@@ -40,6 +40,7 @@ export class ProjectsComponent implements OnInit {
   private readonly columnService = inject(TableColumnService);
   private readonly hierarchyStore = inject(HierarchySignalStore);
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
 
   readonly projects$ = this.store.select(selectProjects);
   readonly loaded$ = this.store.select(selectProjectsLoaded);
@@ -122,6 +123,19 @@ export class ProjectsComponent implements OnInit {
     this.loadViews();
 
     this.route.queryParams.subscribe(params => {
+      // «Nuevo …» de la paleta de comandos llega con ?create=1: abre el formulario y quita el
+      // parámetro para que recargar no lo vuelva a abrir. Quitarlo vuelve a emitir sin él, y
+      // esa emisión es la que aplica el filtro y carga la lista.
+      if (params['create']) {
+        this.openCreateModal();
+        void this.router.navigate([], {
+          relativeTo: this.route,
+          queryParams: { create: null },
+          queryParamsHandling: 'merge',
+          replaceUrl: true,
+        });
+        return;
+      }
       if (params['filter']) {
         this.tableState.update(s => ({ ...s, filters: { ...s.filters, filter: params['filter'] } }));
       } else {

@@ -92,3 +92,25 @@ test('avisa cuando nada coincide, en lugar de quedarse vacía', async ({ page })
 
   await expect(page.getByText(/nada coincide/i)).toBeVisible();
 });
+
+// Antes ninguna de las tres pantallas leía el parámetro y el comando sólo llevaba a la lista.
+const CREATE_COMMANDS = [
+  { command: 'Nueva tarea', form: 'Nueva Tarea', url: /\/tasks$/ },
+  { command: 'Nuevo proyecto', form: 'Nuevo Proyecto', url: /\/projects$/ },
+  { command: 'Nuevo ticket', form: 'Nuevo Ticket', url: /\/tickets$/ },
+];
+
+for (const { command, form, url } of CREATE_COMMANDS) {
+  test(`«${command}» abre el formulario de creación y deja la URL limpia`, async ({ page }) => {
+    await signIn(page);
+    await page.keyboard.press('Control+k');
+
+    await page.keyboard.type(command.toLowerCase());
+    await page.keyboard.press('Enter');
+
+    await expect(page.getByRole('dialog', { name: form })).toBeVisible();
+    // Sin el parámetro en la URL, recargar o volver atrás no reabre el formulario. Recargar aquí
+    // no sirve para comprobarlo: con la API simulada la sesión no sobrevive a la recarga.
+    await expect(page).toHaveURL(url);
+  });
+}
