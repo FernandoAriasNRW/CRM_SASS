@@ -403,7 +403,9 @@ suites completas en verde, catálogo i18n re-extraído al final.
 | 9a ✅ | **Frontend transversal: `core/` y utilidades de `shared/`** (errores, avisos, idioma, tema) | Lo que usa toda la aplicación |
 | 9b ✅ | **Componentes de `shared/ui`** (panel de navegación, menú contextual…) | 180 identificadores y seis ficheros |
 | 9c ✅ | **Lo que quede en pantallas y e2e** | 124 identificadores; el frontend queda sin código en español |
-| 10 | **Nombres de las pruebas** | Son frases, no identificadores de producción; traducirlas dentro de cada bloque ensucia el diff de revisión |
+| 10a ✅ | **Nombres de las pruebas unitarias** (C#) | ~350 pruebas, sus clases, ficheros y variables |
+| 10b | **Nombres de las pruebas de integración** (C#) | Como la 10a |
+| 10c | **Títulos de las pruebas del frontend y de las e2e** | Los `it`/`describe` y los nombres de fichero |
 | 11 | **`TimeProvider` en todos los módulos** | Cambiar el reloj módulo a módulo deja dos formas de dar la hora conviviendo; va de una vez, al final |
 
 ### Migraciones de renombrado
@@ -643,7 +645,7 @@ cambiarlo exige migrar ese contenido. Por eso fue un bloque aparte, el 5c.
   subida.
 - **Dos pruebas nuevas que fijan el contrato con los datos:** `stored-markup.spec.ts` abre en el
   editor el HTML **tal como lo deja la migración** y comprueba que reconoce cada bloque y lo vuelve
-  a escribir igual; `PlantillasPredefinidasTests` comprueba que las plantillas del servidor sólo
+  a escribir igual; `BuiltInTemplatesTests` comprueba que las plantillas del servidor sólo
   usan tonos que el editor conoce.
 - **Un texto de la interfaz que se habría colado:** el cajón de eventos del calendario enseñaba el
   tipo del enlace tal cual (`{{ e.tipo }} ·`), así que habría pasado de «Tarea ·» a «Task ·». Ahora
@@ -902,6 +904,15 @@ cambiarlo exige migrar ese contenido. Por eso fue un bloque aparte, el 5c.
   `tsc`.
 - Lo que el detector sigue marcando son abreviaturas (`el`, `seg`, `canvasEl`) y nombres propios
   de los datos de prueba. Los nombres de las pruebas y de sus ficheros van en el bloque 10.
+
+### Hecho en el bloque 10a (nombres de las pruebas unitarias)
+
+- Las pruebas son frases, así que **cada nombre se tradujo entero**, no palabra a palabra:
+  `Una_regla_sin_acciones_se_rechaza` → `A_rule_without_actions_is_rejected`. Con Roslyn, igual que el
+  código de producción, junto con las clases de prueba, sus auxiliares y las variables locales.
+- Ficheros renombrados para coincidir con sus clases (`ValueValidatorTests.cs`,
+  `ReportBuilderTests.cs`, `CycleDetectorTests.cs`…).
+- Los `#region` siguen en español: son encabezados de sección, como los comentarios.
 
 ---
 

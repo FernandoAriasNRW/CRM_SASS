@@ -8,7 +8,7 @@ namespace UnitTests;
 /// <summary>
 /// El vocabulario de la tabla de permisos es uno, en singular, y lo mande quien lo mande.
 /// </summary>
-public sealed class TiposDePermisoTests
+public sealed class PermissionTypesTests
 {
     [Theory]
     [InlineData("Tasks", "Task")]
@@ -22,22 +22,22 @@ public sealed class TiposDePermisoTests
     [InlineData("Tags", "Tag")]
     [InlineData("Task", "Task")]
     [InlineData("Settings", "Settings")]
-    public void El_plural_se_guarda_en_singular(string recibido, string guardado)
-        => PermissionTypes.Normalize(recibido).Should().Be(guardado);
+    public void The_plural_is_stored_as_singular(string received, string stored)
+        => PermissionTypes.Normalize(received).Should().Be(stored);
 
     /// <summary>
     /// Se normaliza en la entidad, no en un handler: cualquier camino que cree un permiso —la
     /// pantalla, la compartición, el sembrador— pasa por aquí.
     /// </summary>
     [Fact]
-    public void Crear_un_permiso_con_el_plural_lo_guarda_en_singular()
+    public void Creating_a_permission_with_the_plural_stores_the_singular()
     {
-        var porRol = EntityPermission.CreateForRole(Guid.NewGuid(), "Member", "Tasks", Guid.Empty, "View");
-        var porPersona = EntityPermission.CreateForUser(Guid.NewGuid(), Guid.NewGuid(), "Docs", Guid.NewGuid(), "Edit");
-        var porEquipo = EntityPermission.CreateForTeam(Guid.NewGuid(), Guid.NewGuid(), "Projects", Guid.Empty, "Full");
+        var byRole = EntityPermission.CreateForRole(Guid.NewGuid(), "Member", "Tasks", Guid.Empty, "View");
+        var byPerson = EntityPermission.CreateForUser(Guid.NewGuid(), Guid.NewGuid(), "Docs", Guid.NewGuid(), "Edit");
+        var byTeam = EntityPermission.CreateForTeam(Guid.NewGuid(), Guid.NewGuid(), "Projects", Guid.Empty, "Full");
 
-        porRol.EntityType.Should().Be("Task");
-        porPersona.EntityType.Should().Be("Document");
-        porEquipo.EntityType.Should().Be("Project");
+        byRole.EntityType.Should().Be("Task");
+        byPerson.EntityType.Should().Be("Document");
+        byTeam.EntityType.Should().Be("Project");
     }
 }

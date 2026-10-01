@@ -398,7 +398,7 @@ referenciaba `Teams.Domain` y `Projects.Domain`** para que dos manejadores crear
 al nacer un equipo o un proyecto. Esos manejadores están ahora en
 `ApiHost/Tags/EtiquetasAutomaticas.cs`.
 
-`AislamientoEntreModulosTests` recorre los `.csproj` en disco —no los ensamblados cargados, para
+`ModuleIsolationTests` recorre los `.csproj` en disco —no los ensamblados cargados, para
 ver también los módulos que el proyecto de pruebas no referencia, que es donde nadie mira— y
 falla si un módulo referencia a otro o al host. **Hoy: cero infracciones en toda la solución.**
 

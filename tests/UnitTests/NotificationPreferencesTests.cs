@@ -11,9 +11,9 @@ namespace UnitTests;
 /// medianoche sin esperar a que sean las doce. Es la misma disciplina que en el Gantt y en el
 /// reparto de carga.
 /// </summary>
-public sealed class PreferenciasDeNotificacionTests
+public sealed class NotificationPreferencesTests
 {
-    private static NotificationPreferences PorDefecto() =>
+    private static NotificationPreferences Defaults() =>
         NotificationPreferences.CreateDefault(Guid.NewGuid(), Guid.NewGuid());
 
     #region Valores de partida
@@ -30,9 +30,9 @@ public sealed class PreferenciasDeNotificacionTests
     [InlineData(NotificationTypes.ExportReady, true)]
     [InlineData(NotificationTypes.TaskCompleted, false)]
     [InlineData(NotificationTypes.TicketUpdated, false)]
-    public void Los_valores_de_partida_distinguen_lo_propio_de_lo_ajeno(string tipo, bool esperado)
+    public void Defaults_tell_own_from_others(string type, bool expected)
     {
-        PorDefecto().IsEnabled(tipo).Should().Be(esperado);
+        Defaults().IsEnabled(type).Should().Be(expected);
     }
 
     /// <summary>
@@ -40,9 +40,9 @@ public sealed class PreferenciasDeNotificacionTests
     /// encargo, y es la respuesta a algo que la persona pidió.
     /// </summary>
     [Fact]
-    public void El_aviso_de_exportacion_llega_encendido_y_se_puede_apagar()
+    public void The_export_notification_starts_on_and_can_be_turned_off()
     {
-        var p = PorDefecto();
+        var p = Defaults();
         p.ExportReady.Should().BeTrue();
 
         p.Update(
@@ -61,23 +61,23 @@ public sealed class PreferenciasDeNotificacionTests
     /// pierde en silencio, que es el fallo que nadie detecta.
     /// </summary>
     [Fact]
-    public void Un_tipo_desconocido_pasa_en_vez_de_perderse()
+    public void An_unknown_type_passes_instead_of_being_lost()
     {
-        PorDefecto().IsEnabled("UnAvisoQueNadieDeclaro").Should().BeTrue();
+        Defaults().IsEnabled("UnAvisoQueNadieDeclaro").Should().BeTrue();
     }
 
     #endregion
 
     #region Horas de silencio
 
-    private static NotificationPreferences ConSilencio(TimeOnly desde, TimeOnly hasta)
+    private static NotificationPreferences WithQuietHours(TimeOnly from, TimeOnly to)
     {
-        var p = PorDefecto();
+        var p = Defaults();
         p.Update(
             emailEnabled: true, pushEnabled: false,
             taskAssigned: true, taskDueSoon: true, mentionEnabled: true, exportReady: true,
             taskCompleted: false, ticketCreated: true, ticketUpdated: false, projectUpdated: true,
-            quietHoursEnabled: true, quietHoursStart: desde, quietHoursEnd: hasta);
+            quietHoursEnabled: true, quietHoursStart: from, quietHoursEnd: to);
         return p;
     }
 
@@ -94,11 +94,11 @@ public sealed class PreferenciasDeNotificacionTests
     [InlineData(8, 0, false)]   // el fin no entra: a las 08:00 ya se recibe
     [InlineData(12, 0, false)]  // mediodía
     [InlineData(21, 59, false)] // justo antes de empezar
-    public void El_silencio_nocturno_cruza_la_medianoche(int hora, int minuto, bool silenciado)
+    public void Night_quiet_hours_cross_midnight(int hour, int minute, bool silenced)
     {
-        var p = ConSilencio(new TimeOnly(22, 0), new TimeOnly(8, 0));
+        var p = WithQuietHours(new TimeOnly(22, 0), new TimeOnly(8, 0));
 
-        p.IsQuietAt(new TimeOnly(hora, minuto)).Should().Be(silenciado);
+        p.IsQuietAt(new TimeOnly(hour, minute)).Should().Be(silenced);
     }
 
     /// <summary>Un tramo que no cruza la medianoche se comporta como uno espera.</summary>
@@ -108,17 +108,17 @@ public sealed class PreferenciasDeNotificacionTests
     [InlineData(14, 0, false)]
     [InlineData(9, 59, false)]
     [InlineData(2, 0, false)]
-    public void Un_silencio_dentro_del_mismo_dia_no_se_invierte(int hora, int minuto, bool silenciado)
+    public void Same_day_quiet_hours_are_not_inverted(int hour, int minute, bool silenced)
     {
-        var p = ConSilencio(new TimeOnly(10, 0), new TimeOnly(14, 0));
+        var p = WithQuietHours(new TimeOnly(10, 0), new TimeOnly(14, 0));
 
-        p.IsQuietAt(new TimeOnly(hora, minuto)).Should().Be(silenciado);
+        p.IsQuietAt(new TimeOnly(hour, minute)).Should().Be(silenced);
     }
 
     [Fact]
-    public void Con_el_silencio_apagado_no_se_silencia_ninguna_hora()
+    public void With_quiet_hours_off_no_hour_is_silenced()
     {
-        var p = PorDefecto();   // nace con el silencio desactivado
+        var p = Defaults();   // nace con el silencio desactivado
 
         p.ShouldDeliver(NotificationTypes.TaskAssigned, new TimeOnly(3, 0)).Should().BeTrue();
     }
@@ -128,9 +128,9 @@ public sealed class PreferenciasDeNotificacionTests
     /// no resucita uno que apagó.
     /// </summary>
     [Fact]
-    public void El_silencio_detiene_lo_que_se_queria_recibir()
+    public void Quiet_hours_stop_what_would_be_received()
     {
-        var p = ConSilencio(new TimeOnly(22, 0), new TimeOnly(8, 0));
+        var p = WithQuietHours(new TimeOnly(22, 0), new TimeOnly(8, 0));
 
         p.ShouldDeliver(NotificationTypes.TaskAssigned, new TimeOnly(23, 30)).Should().BeFalse("es de noche");
         p.ShouldDeliver(NotificationTypes.TaskAssigned, new TimeOnly(10, 0)).Should().BeTrue("ya es de día");

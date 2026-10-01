@@ -8,53 +8,53 @@ namespace UnitTests;
 public sealed class IntakeKeyTests
 {
     [Fact]
-    public void Se_guarda_el_hash_y_no_la_clave()
+    public void The_hash_is_stored_not_the_key()
     {
-        var (clave, enClaro) = IntakeKey.Generate(Guid.NewGuid(), " Web de soporte ", Guid.NewGuid(), DateTime.UtcNow);
+        var (key, plainText) = IntakeKey.Generate(Guid.NewGuid(), " Web de soporte ", Guid.NewGuid(), DateTime.UtcNow);
 
-        enClaro.Should().StartWith(IntakeKey.KeyPrefix);
-        clave.Hash.Should().Be(IntakeKey.HashOf(enClaro));
-        clave.Hash.Should().NotContain(enClaro);
-        enClaro.Should().StartWith(clave.Prefix);
-        clave.Prefix.Length.Should().BeLessThan(enClaro.Length);
-        clave.Name.Should().Be("Web de soporte");
+        plainText.Should().StartWith(IntakeKey.KeyPrefix);
+        key.Hash.Should().Be(IntakeKey.HashOf(plainText));
+        key.Hash.Should().NotContain(plainText);
+        plainText.Should().StartWith(key.Prefix);
+        key.Prefix.Length.Should().BeLessThan(plainText.Length);
+        key.Name.Should().Be("Web de soporte");
     }
 
     [Fact]
-    public void Dos_claves_nunca_coinciden()
+    public void Two_keys_never_match()
     {
-        var una = IntakeKey.Generate(Guid.NewGuid(), "a", Guid.NewGuid(), DateTime.UtcNow).PlainText;
-        var otra = IntakeKey.Generate(Guid.NewGuid(), "a", Guid.NewGuid(), DateTime.UtcNow).PlainText;
+        var oneKey = IntakeKey.Generate(Guid.NewGuid(), "a", Guid.NewGuid(), DateTime.UtcNow).PlainText;
+        var other = IntakeKey.Generate(Guid.NewGuid(), "a", Guid.NewGuid(), DateTime.UtcNow).PlainText;
 
-        una.Should().NotBe(otra);
+        oneKey.Should().NotBe(other);
     }
 
     /// <summary>Revocar dos veces no cambia cuándo se revocó.</summary>
     [Fact]
-    public void Revocar_es_idempotente()
+    public void Revoking_is_idempotent()
     {
-        var (clave, _) = IntakeKey.Generate(Guid.NewGuid(), "a", Guid.NewGuid(), DateTime.UtcNow);
-        var primera = new DateTime(2026, 9, 1, 0, 0, 0, DateTimeKind.Utc);
+        var (key, _) = IntakeKey.Generate(Guid.NewGuid(), "a", Guid.NewGuid(), DateTime.UtcNow);
+        var first = new DateTime(2026, 9, 1, 0, 0, 0, DateTimeKind.Utc);
 
-        clave.Revoke(primera);
-        clave.Revoke(primera.AddDays(1));
+        key.Revoke(first);
+        key.Revoke(first.AddDays(1));
 
-        clave.RevokedAtUtc.Should().Be(primera);
-        clave.IsActive.Should().BeFalse();
+        key.RevokedAtUtc.Should().Be(first);
+        key.IsActive.Should().BeFalse();
     }
 
     [Fact]
-    public void Un_ticket_de_fuera_cae_en_la_organizacion_de_la_clave()
+    public void An_external_ticket_lands_in_the_key_organisation()
     {
         var tenant = Guid.NewGuid();
-        var (clave, _) = IntakeKey.Generate(tenant, "a", Guid.NewGuid(), DateTime.UtcNow);
+        var (key, _) = IntakeKey.Generate(tenant, "a", Guid.NewGuid(), DateTime.UtcNow);
 
-        var ticket = Ticket.CreateFromExternal(clave, new ExternalTicketRequest(
+        var ticket = Ticket.CreateFromExternal(key, new ExternalTicketRequest(
             "Título suficiente", "Descripción", "  Ana  ", "ana@cliente.com", " ", "Cliente S.L.")).Value!;
 
         ticket.TenantId.Should().Be(tenant);
         ticket.Source.Should().Be(Ticket.SourceExternal);
-        ticket.IntakeKeyId.Should().Be(clave.Id);
+        ticket.IntakeKeyId.Should().Be(key.Id);
         ticket.RequesterName.Should().Be("Ana");
         ticket.RequesterPhone.Should().BeNull("un espacio no es un teléfono");
         // Lo demás lo decide quien lo atiende, no quien lo manda.
@@ -72,6 +72,6 @@ public sealed class IntakeKeyTests
     [InlineData("informe.pdf", "application/pdf", 1024, false)]
     [InlineData("vacia.png", "image/png", 0, false)]
     [InlineData("enorme.mov", "video/quicktime", AttachmentRules.MaxBytesPerFile + 1, false)]
-    public void Solo_se_admiten_imagenes_y_videos_de_tamano_razonable(string nombre, string tipo, long tamano, bool admitido)
-        => (AttachmentRules.RejectionReason(nombre, tipo, tamano) is null).Should().Be(admitido);
+    public void Only_reasonably_sized_images_and_videos_are_accepted(string name, string type, long tamano, bool accepted)
+        => (AttachmentRules.RejectionReason(name, type, tamano) is null).Should().Be(accepted);
 }

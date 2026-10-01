@@ -58,43 +58,43 @@ public sealed class TenantIsolationTests : IDisposable
             ownerId: Guid.NewGuid());
 
     [Fact]
-    public void Un_tenant_solo_ve_sus_propios_registros()
+    public void A_tenant_only_sees_its_own_records()
     {
         using var context = CreateContext(TenantA);
 
-        var visibles = context.Projects.ToList();
+        var visible = context.Projects.ToList();
 
-        visibles.Should().HaveCount(1);
-        visibles.Single().TenantId.Should().Be(TenantA);
+        visible.Should().HaveCount(1);
+        visible.Single().TenantId.Should().Be(TenantA);
     }
 
     [Fact]
-    public void Un_tenant_no_ve_los_registros_de_otro()
+    public void A_tenant_does_not_see_another_tenant_records()
     {
         using var context = CreateContext(TenantB);
 
-        var deOtroTenant = context.Projects.Where(p => p.TenantId == TenantA).ToList();
+        var fromOtherTenant = context.Projects.Where(p => p.TenantId == TenantA).ToList();
 
-        deOtroTenant.Should().BeEmpty();
+        fromOtherTenant.Should().BeEmpty();
     }
 
     [Fact]
-    public void Buscar_por_id_ajeno_no_devuelve_nada()
+    public void Finding_another_tenant_id_returns_nothing()
     {
-        Guid idDeB;
+        Guid idOfB;
         using (var contextB = CreateContext(TenantB))
         {
-            idDeB = contextB.Projects.Single().Id;
+            idOfB = contextB.Projects.Single().Id;
         }
 
         using var contextA = CreateContext(TenantA);
 
         // Conocer el identificador no basta: el filtro se aplica igualmente.
-        contextA.Projects.FirstOrDefault(p => p.Id == idDeB).Should().BeNull();
+        contextA.Projects.FirstOrDefault(p => p.Id == idOfB).Should().BeNull();
     }
 
     [Fact]
-    public void Sin_contexto_de_usuario_no_se_ve_nada()
+    public void Without_user_context_nothing_is_visible()
     {
         // Guid.Empty no casa con ninguna fila. El filtro cierra por defecto: un fallo
         // al resolver el tenant deja sin datos, no da acceso a todos.
@@ -104,22 +104,22 @@ public sealed class TenantIsolationTests : IDisposable
     }
 
     [Fact]
-    public void El_soft_delete_sigue_activo_junto_al_filtro_de_tenant()
+    public void Soft_delete_still_applies_with_the_tenant_filter()
     {
         using (var context = CreateContext(TenantA))
         {
-            var proyecto = context.Projects.Single();
-            proyecto.Delete(Guid.NewGuid());
+            var project = context.Projects.Single();
+            project.Delete(Guid.NewGuid());
             context.SaveChanges();
         }
 
-        using var despues = CreateContext(TenantA);
-        despues.Projects.ToList().Should().BeEmpty(
+        using var after = CreateContext(TenantA);
+        after.Projects.ToList().Should().BeEmpty(
             "los dos filtros se componen; aplicar el de tenant no debe anular el de soft delete");
     }
 
     [Fact]
-    public void El_modelo_no_deja_ninguna_entidad_sin_aislar()
+    public void The_model_leaves_no_entity_unisolated()
     {
         using var context = CreateContext(TenantA);
 

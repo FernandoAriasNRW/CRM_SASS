@@ -12,19 +12,19 @@ namespace UnitTests;
 
 public sealed class TicketIntakeHandlerTests
 {
-    private readonly IIntakeKeyRepository _claves = Substitute.For<IIntakeKeyRepository>();
+    private readonly IIntakeKeyRepository _keys = Substitute.For<IIntakeKeyRepository>();
     private readonly ITicketRepository _tickets = Substitute.For<ITicketRepository>();
-    private readonly ITicketAttachmentRepository _adjuntos = Substitute.For<ITicketAttachmentRepository>();
-    private readonly IStorageService _almacen = Substitute.For<IStorageService>();
-    private readonly ITicketingUnitOfWork _unidad = Substitute.For<ITicketingUnitOfWork>();
+    private readonly ITicketAttachmentRepository _attachments = Substitute.For<ITicketAttachmentRepository>();
+    private readonly IStorageService _storage = Substitute.For<IStorageService>();
+    private readonly ITicketingUnitOfWork _unitOfWork = Substitute.For<ITicketingUnitOfWork>();
 
-    private CreateExternalTicketHandler Handler() => new(_claves, _tickets, _adjuntos, _almacen, _unidad);
+    private CreateExternalTicketHandler Handler() => new(_keys, _tickets, _attachments, _storage, _unitOfWork);
 
-    private static IncomingFile Fichero(string nombre, string tipo)
-        => new(nombre, tipo, 128, () => new MemoryStream(new byte[128]));
+    private static IncomingFile File(string name, string type)
+        => new(name, type, 128, () => new MemoryStream(new byte[128]));
 
-    private CreateExternalTicketCommand Peticion(string clave, params IncomingFile[] adjuntos)
-        => new(clave, "Asunto suficiente", "Mensaje", "Marta", "marta@cliente.com", "600000000", "Cliente S.L.", adjuntos);
+    private CreateExternalTicketCommand Request(string key, params IncomingFile[] attachments)
+        => new(key, "Asunto suficiente", "Mensaje", "Marta", "marta@cliente.com", "600000000", "Cliente S.L.", attachments);
 
     /// <summary>
     /// Una integración de antes puede seguir mandando prioridad o etiquetas. Se rechaza nombrando
@@ -33,15 +33,15 @@ public sealed class TicketIntakeHandlerTests
     [Fact]
     public async Task Retired_fields_are_rejected_by_name_and_nothing_is_created()
     {
-        var (clave, enClaro) = IntakeKey.Generate(Guid.NewGuid(), "Web", Guid.NewGuid(), DateTime.UtcNow);
-        _claves.FindActiveByHashAsync(IntakeKey.HashOf(enClaro), Arg.Any<CancellationToken>()).Returns(clave);
+        var (key, plainText) = IntakeKey.Generate(Guid.NewGuid(), "Web", Guid.NewGuid(), DateTime.UtcNow);
+        _keys.FindActiveByHashAsync(IntakeKey.HashOf(plainText), Arg.Any<CancellationToken>()).Returns(key);
 
-        var resultado = await Handler().Handle(
-            Peticion(enClaro) with { RetiredFields = RetiredIntakeFields.In(["Tags", "priority", "title"]) },
+        var result = await Handler().Handle(
+            Request(plainText) with { RetiredFields = RetiredIntakeFields.In(["Tags", "priority", "title"]) },
             CancellationToken.None);
 
-        resultado.IsFailure.Should().BeTrue();
-        resultado.Error.Should().Contain("priority").And.Contain("tags").And.NotContain("title");
+        result.IsFailure.Should().BeTrue();
+        result.Error.Should().Contain("priority").And.Contain("tags").And.NotContain("title");
         await _tickets.DidNotReceiveWithAnyArgs().AddAsync(default!, default);
     }
 
@@ -50,35 +50,35 @@ public sealed class TicketIntakeHandlerTests
     /// borra lo que ya se subió y no se crea el ticket. Probando desde el navegador respondía 500.
     /// </summary>
     [Fact]
-    public async Task Si_el_almacenamiento_rechaza_un_adjunto_no_se_crea_nada_y_se_dice_cual()
+    public async Task If_storage_rejects_an_attachment_nothing_is_created_and_it_says_which()
     {
-        var (clave, enClaro) = IntakeKey.Generate(Guid.NewGuid(), "Web", Guid.NewGuid(), DateTime.UtcNow);
-        _claves.FindActiveByHashAsync(IntakeKey.HashOf(enClaro), Arg.Any<CancellationToken>()).Returns(clave);
+        var (key, plainText) = IntakeKey.Generate(Guid.NewGuid(), "Web", Guid.NewGuid(), DateTime.UtcNow);
+        _keys.FindActiveByHashAsync(IntakeKey.HashOf(plainText), Arg.Any<CancellationToken>()).Returns(key);
 
-        _almacen.UploadFileAsync(Arg.Any<Stream>(), "captura.png", Arg.Any<string>(), Arg.Any<CancellationToken>())
+        _storage.UploadFileAsync(Arg.Any<Stream>(), "captura.png", Arg.Any<string>(), Arg.Any<CancellationToken>())
             .Returns("https://almacen/captura.png");
-        _almacen.UploadFileAsync(Arg.Any<Stream>(), "roto.mp4", Arg.Any<string>(), Arg.Any<CancellationToken>())
+        _storage.UploadFileAsync(Arg.Any<Stream>(), "roto.mp4", Arg.Any<string>(), Arg.Any<CancellationToken>())
             .ThrowsAsync(new Exception("Unsupported video format or file"));
 
-        var resultado = await Handler().Handle(
-            Peticion(enClaro, Fichero("captura.png", "image/png"), Fichero("roto.mp4", "video/mp4")), CancellationToken.None);
+        var result = await Handler().Handle(
+            Request(plainText, File("captura.png", "image/png"), File("roto.mp4", "video/mp4")), CancellationToken.None);
 
-        resultado.IsFailure.Should().BeTrue();
-        resultado.Error.Should().Contain("roto.mp4").And.NotContain("Unsupported", "el detalle interno no se enseña fuera");
-        await _almacen.Received(1).DeleteFileAsync("https://almacen/captura.png");
+        result.IsFailure.Should().BeTrue();
+        result.Error.Should().Contain("roto.mp4").And.NotContain("Unsupported", "el detalle interno no se enseña fuera");
+        await _storage.Received(1).DeleteFileAsync("https://almacen/captura.png");
         await _tickets.DidNotReceiveWithAnyArgs().AddAsync(default!, default);
-        await _unidad.DidNotReceiveWithAnyArgs().SaveChangesAsync(default);
+        await _unitOfWork.DidNotReceiveWithAnyArgs().SaveChangesAsync(default);
     }
 
     /// <summary>Con una clave que no existe no se mira nada más, ni se dice qué falta.</summary>
     [Fact]
-    public async Task Con_una_clave_desconocida_no_se_valida_ni_se_sube_nada()
+    public async Task With_an_unknown_key_nothing_is_validated_or_uploaded()
     {
-        var resultado = await Handler().Handle(
-            Peticion("tke_desconocida", Fichero("captura.png", "image/png")) with { RequesterPhone = null },
+        var result = await Handler().Handle(
+            Request("tke_desconocida", File("captura.png", "image/png")) with { RequesterPhone = null },
             CancellationToken.None);
 
-        resultado.Error.Should().Be(IntakeErrors.InvalidKey);
-        await _almacen.DidNotReceiveWithAnyArgs().UploadFileAsync(default!, default!, default!, default);
+        result.Error.Should().Be(IntakeErrors.InvalidKey);
+        await _storage.DidNotReceiveWithAnyArgs().UploadFileAsync(default!, default!, default!, default);
     }
 }

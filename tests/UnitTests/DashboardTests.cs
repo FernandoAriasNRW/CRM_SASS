@@ -13,15 +13,15 @@ namespace UnitTests;
 /// que es donde de otro modo se descubrirían —viendo un recuadro cortado y sin saber si la culpa
 /// es del CSS, del navegador o de los datos—.
 /// </summary>
-public class DisposicionDelPanelTests
+public class DashboardLayoutTests
 {
-    private static Widget Uno(int x = 0, int y = 0, int ancho = 6, int alto = 4)
-        => new(Guid.NewGuid(), Guid.NewGuid(), x, y, ancho, alto);
+    private static Widget One(int x = 0, int y = 0, int width = 6, int height = 4)
+        => new(Guid.NewGuid(), Guid.NewGuid(), x, y, width, height);
 
     [Fact]
-    public void Un_widget_normal_vale()
+    public void A_normal_widget_is_valid()
     {
-        Uno().Validate().IsSuccess.Should().BeTrue();
+        One().Validate().IsSuccess.Should().BeTrue();
     }
 
     /// <summary>
@@ -31,29 +31,29 @@ public class DisposicionDelPanelTests
     /// se rechaza aquí en vez de dejar que cada uno lo dibuje a su manera.
     /// </summary>
     [Fact]
-    public void Un_widget_que_se_sale_de_las_doce_columnas_se_rechaza()
+    public void A_widget_beyond_twelve_columns_is_rejected()
     {
-        var resultado = Uno(x: 10, ancho: 6).Validate();
+        var result = One(x: 10, width: 6).Validate();
 
-        resultado.IsFailure.Should().BeTrue();
-        resultado.Error.Should().Contain("12 columnas");
+        result.IsFailure.Should().BeTrue();
+        result.Error.Should().Contain("12 columnas");
     }
 
     [Fact]
-    public void Justo_en_el_borde_cabe()
+    public void Right_on_the_edge_fits()
     {
         // Columna 6 con ancho 6 termina exactamente en la 12: cabe.
-        Uno(x: 6, ancho: 6).Validate().IsSuccess.Should().BeTrue();
+        One(x: 6, width: 6).Validate().IsSuccess.Should().BeTrue();
     }
 
     [Fact]
-    public void Un_widget_demasiado_estrecho_se_rechaza()
+    public void A_too_narrow_widget_is_rejected()
     {
-        Uno(ancho: 1).Validate().Error.Should().Contain("ancho");
+        One(width: 1).Validate().Error.Should().Contain("ancho");
     }
 
     [Fact]
-    public void Un_widget_sin_informe_se_rechaza()
+    public void A_widget_without_report_is_rejected()
     {
         var huerfano = new Widget(Guid.NewGuid(), Guid.Empty, 0, 0, 6, 4);
 
@@ -61,9 +61,9 @@ public class DisposicionDelPanelTests
     }
 
     [Fact]
-    public void Una_posicion_negativa_se_rechaza()
+    public void A_negative_position_is_rejected()
     {
-        Uno(y: -1).Validate().Error.Should().Be(Widget.Rules.NegativePosition);
+        One(y: -1).Validate().Error.Should().Be(Widget.Rules.NegativePosition);
     }
 
     /// <summary>
@@ -73,37 +73,37 @@ public class DisposicionDelPanelTests
     /// achaca al navegador y se pasa media tarde buscando en el sitio equivocado.
     /// </summary>
     [Fact]
-    public void Dos_widgets_con_el_mismo_identificador_se_rechazan()
+    public void Two_widgets_with_the_same_id_are_rejected()
     {
-        var uno = Uno();
-        var clon = uno with { X = 6 };
+        var one = One();
+        var clone = one with { X = 6 };
 
-        var resultado = new DashboardLayout([uno, clon]).Validate();
+        var result = new DashboardLayout([one, clone]).Validate();
 
-        resultado.IsFailure.Should().BeTrue();
-        resultado.Error.Should().Contain("repetidos");
+        result.IsFailure.Should().BeTrue();
+        result.Error.Should().Contain("repetidos");
     }
 
     [Fact]
-    public void Un_panel_con_demasiados_recuadros_se_rechaza()
+    public void A_dashboard_with_too_many_widgets_is_rejected()
     {
-        var muchos = Enumerable.Range(0, DashboardLayout.MaxWidgets + 1)
-            .Select(_ => Uno())
+        var many = Enumerable.Range(0, DashboardLayout.MaxWidgets + 1)
+            .Select(_ => One())
             .ToList();
 
-        new DashboardLayout(muchos).Validate().Error.Should().Contain("como mucho");
+        new DashboardLayout(many).Validate().Error.Should().Contain("como mucho");
     }
 
     [Fact]
-    public void Una_disposicion_sobrevive_a_guardarse_y_leerse()
+    public void A_layout_survives_saving_and_reading()
     {
-        var original = new DashboardLayout([Uno(x: 3, y: 2, ancho: 6, alto: 5)]);
+        var original = new DashboardLayout([One(x: 3, y: 2, width: 6, height: 5)]);
 
-        var leida = DashboardLayout.Read(original.Serialize());
+        var read = DashboardLayout.Read(original.Serialize());
 
-        leida.Placed.Should().HaveCount(1);
-        leida.Placed[0].X.Should().Be(3);
-        leida.Placed[0].Height.Should().Be(5);
+        read.Placed.Should().HaveCount(1);
+        read.Placed[0].X.Should().Be(3);
+        read.Placed[0].Height.Should().Be(5);
     }
 
     /// <summary>
@@ -112,7 +112,7 @@ public class DisposicionDelPanelTests
     /// Un panel con datos viejos se puede volver a montar; una pantalla que no abre, no.
     /// </summary>
     [Fact]
-    public void Un_json_que_no_es_una_disposicion_deja_el_panel_vacio()
+    public void A_json_that_is_not_a_layout_leaves_the_dashboard_empty()
     {
         DashboardLayout.Read("{roto").Placed.Should().BeEmpty();
         DashboardLayout.Read(null).Placed.Should().BeEmpty();
@@ -126,23 +126,23 @@ public class DisposicionDelPanelTests
     /// no movería nada, sin dar ningún error.
     /// </summary>
     [Fact]
-    public void Modificar_una_disposicion_con_with_ve_los_widgets_nuevos()
+    public void Changing_a_layout_with_with_sees_the_new_widgets()
     {
-        var vacia = new DashboardLayout();
+        var empty = new DashboardLayout();
 
-        var conUno = vacia with { Widgets = [Uno()] };
+        var withOne = empty with { Widgets = [One()] };
 
-        conUno.Placed.Should().HaveCount(1);
+        withOne.Placed.Should().HaveCount(1);
     }
 }
 
 /// <summary>
 /// El panel personal y los informes con los que arranca.
 /// </summary>
-public class PanelDeInicioTests
+public class StarterDashboardTests
 {
     [Fact]
-    public void El_panel_personal_nace_privado_y_de_su_dueno()
+    public void The_personal_dashboard_starts_private_and_owned()
     {
         var userId = Guid.NewGuid();
 
@@ -161,31 +161,31 @@ public class PanelDeInicioTests
     /// por primera vez tendría cinco recuadros en vez de seis y nadie sabría que falta uno.
     /// </summary>
     [Fact]
-    public void Todos_los_informes_de_partida_son_validos()
+    public void All_starter_reports_are_valid()
     {
-        foreach (var sugerido in StarterDashboard.Reports())
+        foreach (var suggested in StarterDashboard.Reports())
         {
-            var resultado = sugerido.Definition.Validate();
+            var result = suggested.Definition.Validate();
 
-            resultado.IsSuccess.Should().BeTrue(
-                $"«{sugerido.Name}» es un informe de partida y tiene que poder generarse: {resultado.Error}");
+            result.IsSuccess.Should().BeTrue(
+                $"«{suggested.Name}» es un informe de partida y tiene que poder generarse: {result.Error}");
         }
     }
 
     /// <summary>Y todos caben en la rejilla una vez colocados.</summary>
     [Fact]
-    public void Los_informes_de_partida_caben_en_la_rejilla()
+    public void Starter_reports_fit_the_grid()
     {
-        var informes = StarterDashboard.Reports()
+        var reports = StarterDashboard.Reports()
             .Select(s => (Guid.NewGuid(), s))
             .ToList();
 
-        var widgets = StarterDashboard.Place(informes);
+        var widgets = StarterDashboard.Place(reports);
 
-        widgets.Should().HaveCount(informes.Count);
+        widgets.Should().HaveCount(reports.Count);
 
-        var resultado = new DashboardLayout(widgets).Validate();
-        resultado.IsSuccess.Should().BeTrue(resultado.Error);
+        var result = new DashboardLayout(widgets).Validate();
+        result.IsSuccess.Should().BeTrue(result.Error);
     }
 
     /// <summary>
@@ -195,20 +195,20 @@ public class PanelDeInicioTests
     /// que produce el recuadro montado encima de otro.
     /// </summary>
     [Fact]
-    public void Los_recuadros_de_una_misma_fila_no_se_pisan()
+    public void Widgets_in_the_same_row_do_not_overlap()
     {
         var widgets = StarterDashboard.Place(
             StarterDashboard.Reports().Select(s => (Guid.NewGuid(), s)).ToList());
 
-        foreach (var fila in widgets.GroupBy(w => w.Y))
+        foreach (var row in widgets.GroupBy(w => w.Y))
         {
-            var ordenados = fila.OrderBy(w => w.X).ToList();
+            var sorted = row.OrderBy(w => w.X).ToList();
 
-            for (var i = 1; i < ordenados.Count; i++)
+            for (var i = 1; i < sorted.Count; i++)
             {
-                ordenados[i].X.Should().BeGreaterThanOrEqualTo(
-                    ordenados[i - 1].X + ordenados[i - 1].Width,
-                    $"«{ordenados[i].Title}» se monta encima de «{ordenados[i - 1].Title}»");
+                sorted[i].X.Should().BeGreaterThanOrEqualTo(
+                    sorted[i - 1].X + sorted[i - 1].Width,
+                    $"«{sorted[i].Title}» se monta encima de «{sorted[i - 1].Title}»");
             }
         }
     }
@@ -220,15 +220,15 @@ public class PanelDeInicioTests
     /// quien lo movió ya ha cerrado.
     /// </summary>
     [Fact]
-    public void Un_panel_no_se_queda_con_una_disposicion_invalida()
+    public void A_dashboard_does_not_keep_an_invalid_layout()
     {
         var panel = Dashboard.CreatePersonal(Guid.NewGuid(), Guid.NewGuid());
-        var antes = panel.WidgetsJson;
+        var before = panel.WidgetsJson;
 
-        var invalida = new DashboardLayout(
+        var invalid = new DashboardLayout(
             [new Widget(Guid.NewGuid(), Guid.NewGuid(), X: 10, Y: 0, Width: 6, Height: 4)]);
 
-        panel.Place(invalida).IsFailure.Should().BeTrue();
-        panel.WidgetsJson.Should().Be(antes, "una disposición rechazada no puede haberse guardado a medias");
+        panel.Place(invalid).IsFailure.Should().BeTrue();
+        panel.WidgetsJson.Should().Be(before, "una disposición rechazada no puede haberse guardado a medias");
     }
 }
