@@ -8603,6 +8603,182 @@ Pending</target>
           <context context-type="linenumber">109</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="4579233051956221295" datatype="html">
+        <source>Etiquetas del panel</source>
+        <target state="final">Dashboard tags</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/dashboard/dashboard.component.html</context>
+          <context context-type="linenumber">215,216</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1171082043266849836" datatype="html">
+        <source>No se pudieron guardar las etiquetas</source>
+        <target state="final">The tags could not be saved</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/projects/project-detail-modal.component.ts</context>
+          <context context-type="linenumber">109</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/tag-assign-drawer.component.ts</context>
+          <context context-type="linenumber">69</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3349907894327926697" datatype="html">
+        <source>Categorías</source>
+        <target state="final">Categories</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tags/tag-categories-drawer.component.html</context>
+          <context context-type="linenumber">1</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tags/tags.component.html</context>
+          <context context-type="linenumber">14,15</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3457272931154795496" datatype="html">
+        <source>Las predefinidas y las de la organización</source>
+        <target state="final">Built-in ones and the organization's own</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tags/tag-categories-drawer.component.html</context>
+          <context context-type="linenumber">1</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8284705088749866157" datatype="html">
+        <source>Crear</source>
+        <target state="final">Create</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tags/tag-categories-drawer.component.html</context>
+          <context context-type="linenumber">10,11</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="525244585414758536" datatype="html">
+        <source>De la organización</source>
+        <target state="final">The organization's</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tags/tag-categories-drawer.component.html</context>
+          <context context-type="linenumber">18,19</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3264324816695225931" datatype="html">
+        <source>Nombre nuevo</source>
+        <target state="final">New name</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tags/tag-categories-drawer.component.html</context>
+          <context context-type="linenumber">24,25</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8978221653799705438" datatype="html">
+        <source>¿Borrarla?</source>
+        <target state="final">Delete it?</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tags/tag-categories-drawer.component.html</context>
+          <context context-type="linenumber">38,39</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7883868744074242410" datatype="html">
+        <source>Renombrar</source>
+        <target state="final">Rename</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tags/tag-categories-drawer.component.html</context>
+          <context context-type="linenumber">44,45</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7614254709208218793" datatype="html">
+        <source>Todavía no hay categorías propias.</source>
+        <target state="final">There are no custom categories yet.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tags/tag-categories-drawer.component.html</context>
+          <context context-type="linenumber">60,61</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7762194455096899836" datatype="html">
+        <source>Renombrar y borrar categorías es de un administrador o de quien tenga permiso para gestionar etiquetas.</source>
+        <target state="final">Renaming and deleting categories is for an administrator or someone allowed to manage tags.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tags/tag-categories-drawer.component.html</context>
+          <context context-type="linenumber">64,65</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7964113564838187638" datatype="html">
+        <source>Predefinidas</source>
+        <target state="final">Built-in</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tags/tag-categories-drawer.component.html</context>
+          <context context-type="linenumber">69,70</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7581200385705547618" datatype="html">
+        <source>Tiene etiquetas: muévelas a otra categoría o bórralas antes</source>
+        <target state="final">It has tags: move them to another category or delete them first</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tags/tag-categories-drawer.component.ts</context>
+          <context context-type="linenumber">30</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7610940247630269047" datatype="html">
+        <source>Categoría renombrada</source>
+        <target state="final">Category renamed</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tags/tag-categories-drawer.component.ts</context>
+          <context context-type="linenumber">93</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8510759761660040781" datatype="html">
+        <source>No se pudo renombrar la categoría</source>
+        <target state="final">The category could not be renamed</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tags/tag-categories-drawer.component.ts</context>
+          <context context-type="linenumber">97</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7790826634816881479" datatype="html">
+        <source>Categoría borrada</source>
+        <target state="final">Category deleted</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tags/tag-categories-drawer.component.ts</context>
+          <context context-type="linenumber">116</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2774214406509009870" datatype="html">
+        <source>No se pudo borrar la categoría</source>
+        <target state="final">The category could not be deleted</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tags/tag-categories-drawer.component.ts</context>
+          <context context-type="linenumber">121</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1113137710269479216" datatype="html">
+        <source>1 etiqueta</source>
+        <target state="final">1 tag</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tags/tag-categories-drawer.component.ts</context>
+          <context context-type="linenumber">133</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7766546160434798528" datatype="html">
+        <source><x id="count" equiv-text="count"/> etiquetas</source>
+        <target state="final"><x id="count" equiv-text="count"/> tags</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tags/tag-categories-drawer.component.ts</context>
+          <context context-type="linenumber">133</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5678523154495111101" datatype="html">
+        <source>Etiquetas guardadas</source>
+        <target state="final">Tags saved</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/tag-assign-drawer.component.ts</context>
+          <context context-type="linenumber">63</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2811261347504517682" datatype="html">
+        <source>Sin etiquetas</source>
+        <target state="final">No tags</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/tag-chips.component.ts</context>
+          <context context-type="linenumber">24,25</context>
+        </context-group>
+      </trans-unit>
     </body>
   </file>
 </xliff>
