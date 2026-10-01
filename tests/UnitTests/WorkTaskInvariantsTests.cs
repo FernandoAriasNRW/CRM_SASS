@@ -13,7 +13,7 @@ namespace UnitTests;
 /// </summary>
 public sealed class WorkTaskInvariantsTests
 {
-    private static WorkTask NuevaTarea() => WorkTask.Create(
+    private static WorkTask NewTask() => WorkTask.Create(
         tenantId: Guid.NewGuid(),
         projectId: Guid.NewGuid(),
         title: "Tarea de prueba",
@@ -24,12 +24,12 @@ public sealed class WorkTaskInvariantsTests
         dueDate: DateOnly.FromDateTime(DateTime.UtcNow.AddDays(7)));
 
     [Fact]
-    public void Una_tarea_nace_en_To_Do_y_emite_evento_de_creacion()
+    public void A_task_starts_in_To_Do_and_raises_a_creation_event()
     {
-        var tarea = NuevaTarea();
+        var task = NewTask();
 
-        tarea.Status.Value.ToString().Should().Be("To Do");
-        tarea.DomainEvents.Should().ContainSingle().Which.Should().BeOfType<TaskCreatedEvent>();
+        task.Status.Value.ToString().Should().Be("To Do");
+        task.DomainEvents.Should().ContainSingle().Which.Should().BeOfType<TaskCreatedEvent>();
     }
 
     /// <summary>
@@ -44,110 +44,110 @@ public sealed class WorkTaskInvariantsTests
     /// una restricción, este test la detecta sea cual sea.
     /// </summary>
     [Theory]
-    [MemberData(nameof(TodasLasCombinaciones))]
-    public void Cualquier_estado_es_alcanzable_desde_cualquier_otro(string desde, string hasta)
+    [MemberData(nameof(AllCombinations))]
+    public void Any_status_is_reachable_from_any_other(string from, string to)
     {
-        var tarea = NuevaTarea();
-        tarea.Move(desde);
+        var task = NewTask();
+        task.Move(from);
 
-        tarea.Move(hasta);
+        task.Move(to);
 
-        tarea.Status.Value.ToString().Should().Be(hasta);
+        task.Status.Value.ToString().Should().Be(to);
     }
 
-    public static TheoryData<string, string> TodasLasCombinaciones()
+    public static TheoryData<string, string> AllCombinations()
     {
-        var estados = new[] { "To Do", "In Progress", "In Review", "Done", "On Hold" };
-        var datos = new TheoryData<string, string>();
-        foreach (var desde in estados)
-            foreach (var hasta in estados)
-                datos.Add(desde, hasta);
-        return datos;
+        var statuses = new[] { "To Do", "In Progress", "In Review", "Done", "On Hold" };
+        var data = new TheoryData<string, string>();
+        foreach (var from in statuses)
+            foreach (var to in statuses)
+                data.Add(from, to);
+        return data;
     }
 
     [Fact]
-    public void Un_estado_inexistente_no_se_acepta()
+    public void An_unknown_status_is_not_accepted()
     {
         // Lo único que sigue rechazándose. No es política de flujo: un estado que no
         // existe es un dato corrupto, y aceptarlo dejaría la tarea en un limbo que
         // ninguna vista sabría representar.
-        var tarea = NuevaTarea();
+        var task = NewTask();
 
-        var mover = () => tarea.Move("Archivada");
+        var move = () => task.Move("Archivada");
 
-        mover.Should().Throw<InvalidOperationException>()
+        move.Should().Throw<InvalidOperationException>()
             .WithMessage("*no existe*");
     }
 
     [Fact]
-    public void Mover_emite_el_evento_con_el_estado_anterior_y_el_nuevo()
+    public void Moving_raises_the_event_with_old_and_new_status()
     {
-        var tarea = NuevaTarea();
-        tarea.ClearDomainEvents();
+        var task = NewTask();
+        task.ClearDomainEvents();
 
-        tarea.Move("In Progress");
+        task.Move("In Progress");
 
-        var evento = tarea.DomainEvents.Should().ContainSingle()
+        var domainEvent = task.DomainEvents.Should().ContainSingle()
             .Which.Should().BeOfType<TaskStatusChangedEvent>().Subject;
-        evento.OldStatus.Should().Be("To Do");
-        evento.NewStatus.Should().Be("In Progress");
+        domainEvent.OldStatus.Should().Be("To Do");
+        domainEvent.NewStatus.Should().Be("In Progress");
     }
 
     [Fact]
-    public void Reasignar_emite_evento_de_asignacion()
+    public void Reassigning_raises_an_assignment_event()
     {
-        var tarea = NuevaTarea();
-        tarea.ClearDomainEvents();
-        var nuevoResponsable = Guid.NewGuid();
+        var task = NewTask();
+        task.ClearDomainEvents();
+        var newAssignee = Guid.NewGuid();
 
-        tarea.Assign(nuevoResponsable);
+        task.Assign(newAssignee);
 
-        tarea.AssigneeId.Should().Be(nuevoResponsable);
-        tarea.DomainEvents.Should().ContainSingle().Which.Should().BeOfType<TaskAssignedEvent>();
+        task.AssigneeId.Should().Be(newAssignee);
+        task.DomainEvents.Should().ContainSingle().Which.Should().BeOfType<TaskAssignedEvent>();
     }
 
     [Fact]
-    public void Añadir_la_misma_etiqueta_dos_veces_no_la_duplica()
+    public void Adding_the_same_tag_twice_does_not_duplicate_it()
     {
-        var tarea = NuevaTarea();
-        var etiqueta = Guid.NewGuid();
+        var task = NewTask();
+        var tag = Guid.NewGuid();
 
-        tarea.AddTag(etiqueta);
-        tarea.AddTag(etiqueta);
+        task.AddTag(tag);
+        task.AddTag(tag);
 
-        tarea.TagIds.Should().ContainSingle().Which.Should().Be(etiqueta);
+        task.TagIds.Should().ContainSingle().Which.Should().Be(tag);
     }
 
     [Fact]
-    public void Quitar_una_etiqueta_que_no_esta_no_falla()
+    public void Removing_a_missing_tag_does_not_fail()
     {
-        var tarea = NuevaTarea();
+        var task = NewTask();
 
-        var quitar = () => tarea.RemoveTag(Guid.NewGuid());
+        var remove = () => task.RemoveTag(Guid.NewGuid());
 
-        quitar.Should().NotThrow();
-        tarea.TagIds.Should().BeEmpty();
+        remove.Should().NotThrow();
+        task.TagIds.Should().BeEmpty();
     }
 
     #region Prioridad
 
     [Fact]
-    public void Una_tarea_sin_prioridad_explicita_nace_en_Normal()
+    public void A_task_without_explicit_priority_starts_Normal()
     {
-        var tarea = NuevaTarea();
+        var task = NewTask();
 
-        tarea.Priority.Value.Should().Be("Normal");
+        task.Priority.Value.Should().Be("Normal");
     }
 
     [Fact]
-    public void Una_tarea_puede_nacer_con_la_prioridad_que_se_le_indique()
+    public void A_task_can_start_with_the_given_priority()
     {
-        var tarea = WorkTask.Create(
+        var task = WorkTask.Create(
             Guid.NewGuid(), Guid.NewGuid(), "Urgente", "descripción",
             Guid.NewGuid(), Guid.NewGuid(), 4m,
             DateOnly.FromDateTime(DateTime.UtcNow), "Urgent");
 
-        tarea.Priority.Value.Should().Be("Urgent");
+        task.Priority.Value.Should().Be("Urgent");
     }
 
     /// <summary>
@@ -156,87 +156,87 @@ public sealed class WorkTaskInvariantsTests
     /// si alguien introduce una regla de «no se puede bajar de Urgente», este test la caza.
     /// </summary>
     [Theory]
-    [MemberData(nameof(TodasLasCombinacionesDePrioridad))]
-    public void Cualquier_prioridad_es_alcanzable_desde_cualquier_otra(string desde, string hasta)
+    [MemberData(nameof(AllPriorityCombinations))]
+    public void Any_priority_is_reachable_from_any_other(string from, string to)
     {
-        var tarea = NuevaTarea();
-        tarea.Reprioritize(desde);
+        var task = NewTask();
+        task.Reprioritize(from);
 
-        tarea.Reprioritize(hasta);
+        task.Reprioritize(to);
 
-        tarea.Priority.Value.Should().Be(hasta);
+        task.Priority.Value.Should().Be(to);
     }
 
-    public static TheoryData<string, string> TodasLasCombinacionesDePrioridad()
+    public static TheoryData<string, string> AllPriorityCombinations()
     {
-        var prioridades = TaskPriority.All().Select(p => p.Value).ToArray();
-        var datos = new TheoryData<string, string>();
-        foreach (var desde in prioridades)
-            foreach (var hasta in prioridades)
-                datos.Add(desde, hasta);
-        return datos;
+        var priorities = TaskPriority.All().Select(p => p.Value).ToArray();
+        var data = new TheoryData<string, string>();
+        foreach (var from in priorities)
+            foreach (var to in priorities)
+                data.Add(from, to);
+        return data;
     }
 
     [Fact]
-    public void Una_prioridad_inexistente_no_se_acepta_al_repriorizar()
+    public void An_unknown_priority_is_not_accepted_on_reprioritize()
     {
-        var tarea = NuevaTarea();
+        var task = NewTask();
 
-        var repriorizar = () => tarea.Reprioritize("Crítica");
+        var repriorizar = () => task.Reprioritize("Crítica");
 
         repriorizar.Should().Throw<InvalidOperationException>().WithMessage("*no existe*");
-        tarea.Priority.Value.Should().Be("Normal", "una prioridad inválida no debe dejar la tarea a medias");
+        task.Priority.Value.Should().Be("Normal", "una prioridad inválida no debe dejar la tarea a medias");
     }
 
     [Fact]
-    public void Una_prioridad_inexistente_no_se_acepta_al_crear()
+    public void An_unknown_priority_is_not_accepted_on_create()
     {
-        var crear = () => WorkTask.Create(
+        var create = () => WorkTask.Create(
             Guid.NewGuid(), Guid.NewGuid(), "Tarea", "descripción",
             Guid.NewGuid(), Guid.NewGuid(), 1m,
             DateOnly.FromDateTime(DateTime.UtcNow), "Altísima");
 
-        crear.Should().Throw<InvalidOperationException>().WithMessage("*no existe*");
+        create.Should().Throw<InvalidOperationException>().WithMessage("*no existe*");
     }
 
     [Fact]
-    public void Repriorizar_emite_el_evento_con_la_anterior_y_la_nueva()
+    public void Reprioritizing_raises_the_event_with_old_and_new()
     {
-        var tarea = NuevaTarea();
-        tarea.ClearDomainEvents();
+        var task = NewTask();
+        task.ClearDomainEvents();
 
-        tarea.Reprioritize("Urgent");
+        task.Reprioritize("Urgent");
 
-        var evento = tarea.DomainEvents.Should().ContainSingle()
+        var domainEvent = task.DomainEvents.Should().ContainSingle()
             .Which.Should().BeOfType<TaskPriorityChangedEvent>().Subject;
-        evento.OldPriority.Should().Be("Normal");
-        evento.NewPriority.Should().Be("Urgent");
+        domainEvent.OldPriority.Should().Be("Normal");
+        domainEvent.NewPriority.Should().Be("Urgent");
     }
 
     [Fact]
-    public void Repriorizar_a_la_que_ya_tiene_no_emite_evento()
+    public void Reprioritizing_to_the_same_priority_raises_no_event()
     {
         // Sin cambio real no hay nada que contar. Un evento vacío haría trabajar de más a
         // las automatizaciones que se apoyarán en él.
-        var tarea = NuevaTarea();
-        tarea.ClearDomainEvents();
+        var task = NewTask();
+        task.ClearDomainEvents();
 
-        tarea.Reprioritize("Normal");
+        task.Reprioritize("Normal");
 
-        tarea.DomainEvents.Should().BeEmpty();
+        task.DomainEvents.Should().BeEmpty();
     }
 
     [Fact]
-    public void La_prioridad_conserva_su_nombre_en_español()
+    public void The_priority_keeps_its_stored_name()
     {
         // TaskStatus construye el estado desde su valor al mover, y deja el nombre igual que
         // el valor: una tarea movida a «Done» acaba con nombre «Done» en lugar de
         // «Completado». La prioridad usa la instancia canónica para no repetirlo.
-        var tarea = NuevaTarea();
+        var task = NewTask();
 
-        tarea.Reprioritize("Urgent");
+        task.Reprioritize("Urgent");
 
-        tarea.Priority.Name.Should().Be("Urgente");
+        task.Priority.Name.Should().Be("Urgente");
     }
 
     /// <summary>
@@ -248,7 +248,7 @@ public sealed class WorkTaskInvariantsTests
     /// reordena o añade una prioridad, aquí se ve.
     /// </summary>
     [Fact]
-    public void El_orden_de_las_prioridades_es_de_negocio()
+    public void Priority_order_is_a_business_order()
     {
         TaskPriority.All().Select(p => p.Value)
             .Should().ContainInOrder("Urgent", "High", "Normal", "Low")
@@ -258,7 +258,7 @@ public sealed class WorkTaskInvariantsTests
     }
 
     [Fact]
-    public void Una_prioridad_desconocida_se_ordena_al_final()
+    public void An_unknown_priority_sorts_last()
     {
         // Cubre las filas antiguas que pudieran tener la columna vacía: deben caer al fondo,
         // no colarse en la cabecera como si fueran lo más urgente.
@@ -270,99 +270,99 @@ public sealed class WorkTaskInvariantsTests
     #region Subtareas
 
     [Fact]
-    public void Una_tarea_nace_de_primer_nivel()
+    public void A_task_starts_top_level()
     {
-        var tarea = NuevaTarea();
+        var task = NewTask();
 
-        tarea.ParentTaskId.Should().BeNull();
-        tarea.IsSubtask.Should().BeFalse();
+        task.ParentTaskId.Should().BeNull();
+        task.IsSubtask.Should().BeFalse();
     }
 
     [Fact]
-    public void Una_tarea_puede_nacer_como_subtarea()
+    public void A_task_can_start_as_a_subtask()
     {
-        var padre = Guid.NewGuid();
+        var parent = Guid.NewGuid();
 
-        var tarea = WorkTask.Create(
+        var task = WorkTask.Create(
             Guid.NewGuid(), Guid.NewGuid(), "Subtarea", "descripción",
             Guid.NewGuid(), Guid.NewGuid(), 1m,
-            DateOnly.FromDateTime(DateTime.UtcNow), null, padre);
+            DateOnly.FromDateTime(DateTime.UtcNow), null, parent);
 
-        tarea.ParentTaskId.Should().Be(padre);
-        tarea.IsSubtask.Should().BeTrue();
+        task.ParentTaskId.Should().Be(parent);
+        task.IsSubtask.Should().BeTrue();
     }
 
     [Fact]
-    public void Una_tarea_no_puede_ser_subtarea_de_si_misma()
+    public void A_task_cannot_be_its_own_subtask()
     {
         // La única de las tres reglas de anidamiento que el agregado puede comprobar solo.
-        var tarea = NuevaTarea();
+        var task = NewTask();
 
-        var colgar = () => tarea.Reparent(tarea.Id);
+        var reparent = () => task.Reparent(task.Id);
 
-        colgar.Should().Throw<InvalidOperationException>().WithMessage("*de sí misma*");
-        tarea.ParentTaskId.Should().BeNull();
+        reparent.Should().Throw<InvalidOperationException>().WithMessage("*de sí misma*");
+        task.ParentTaskId.Should().BeNull();
     }
 
     [Fact]
-    public void Colgar_de_otra_emite_el_evento_con_el_padre_anterior_y_el_nuevo()
+    public void Reparenting_raises_the_event_with_old_and_new_parent()
     {
-        var tarea = NuevaTarea();
-        var primerPadre = Guid.NewGuid();
-        var segundoPadre = Guid.NewGuid();
-        tarea.Reparent(primerPadre);
-        tarea.ClearDomainEvents();
+        var task = NewTask();
+        var firstParent = Guid.NewGuid();
+        var secondParent = Guid.NewGuid();
+        task.Reparent(firstParent);
+        task.ClearDomainEvents();
 
-        tarea.Reparent(segundoPadre);
+        task.Reparent(secondParent);
 
-        var evento = tarea.DomainEvents.Should().ContainSingle()
+        var domainEvent = task.DomainEvents.Should().ContainSingle()
             .Which.Should().BeOfType<TaskParentChangedEvent>().Subject;
-        evento.OldParentTaskId.Should().Be(primerPadre);
-        evento.NewParentTaskId.Should().Be(segundoPadre);
+        domainEvent.OldParentTaskId.Should().Be(firstParent);
+        domainEvent.NewParentTaskId.Should().Be(secondParent);
     }
 
     [Fact]
-    public void Desligar_deja_la_tarea_de_primer_nivel_y_lo_cuenta()
+    public void Detaching_makes_the_task_top_level_and_says_so()
     {
-        var tarea = NuevaTarea();
-        tarea.Reparent(Guid.NewGuid());
-        tarea.ClearDomainEvents();
+        var task = NewTask();
+        task.Reparent(Guid.NewGuid());
+        task.ClearDomainEvents();
 
-        tarea.Reparent(null);
+        task.Reparent(null);
 
-        tarea.IsSubtask.Should().BeFalse();
-        tarea.DomainEvents.Should().ContainSingle()
+        task.IsSubtask.Should().BeFalse();
+        task.DomainEvents.Should().ContainSingle()
             .Which.Should().BeOfType<TaskParentChangedEvent>()
             .Which.NewParentTaskId.Should().BeNull();
     }
 
     [Fact]
-    public void Colgar_del_padre_que_ya_tiene_no_emite_evento()
+    public void Reparenting_to_the_current_parent_raises_no_event()
     {
-        var tarea = NuevaTarea();
-        var padre = Guid.NewGuid();
-        tarea.Reparent(padre);
-        tarea.ClearDomainEvents();
+        var task = NewTask();
+        var parent = Guid.NewGuid();
+        task.Reparent(parent);
+        task.ClearDomainEvents();
 
-        tarea.Reparent(padre);
+        task.Reparent(parent);
 
-        tarea.DomainEvents.Should().BeEmpty();
+        task.DomainEvents.Should().BeEmpty();
     }
 
     [Fact]
-    public void Un_identificador_de_padre_vacio_no_se_acepta()
+    public void An_empty_parent_id_is_not_accepted()
     {
         // Guid.Empty no es «sin padre», es un dato mal formado: sin padre es null. Aceptarlo
         // dejaría una subtarea colgando de una tarea que no existe.
-        var tarea = NuevaTarea();
+        var task = NewTask();
 
-        var colgar = () => tarea.Reparent(Guid.Empty);
+        var reparent = () => task.Reparent(Guid.Empty);
 
-        colgar.Should().Throw<InvalidOperationException>().WithMessage("*no es válido*");
+        reparent.Should().Throw<InvalidOperationException>().WithMessage("*no es válido*");
     }
 
     [Fact]
-    public void El_anidamiento_se_limita_a_un_nivel()
+    public void Nesting_is_limited_to_one_level()
     {
         // Las reglas viven en un solo sitio para que el handler que las aplica no las
         // reinvente con otros mensajes.
@@ -375,159 +375,159 @@ public sealed class WorkTaskInvariantsTests
     #region Responsables
 
     [Fact]
-    public void Una_tarea_creada_con_responsable_lo_tiene_tambien_en_la_coleccion()
+    public void A_task_created_with_an_assignee_also_has_it_in_the_collection()
     {
         // La invariante que sostiene todo lo demás: el principal siempre figura entre los
         // responsables. Si no, ninguna vista de las nuevas encontraría la tarea.
-        var responsable = Guid.NewGuid();
+        var assignee = Guid.NewGuid();
 
-        var tarea = WorkTask.Create(
+        var task = WorkTask.Create(
             Guid.NewGuid(), Guid.NewGuid(), "Con responsable", "x",
-            responsable, Guid.NewGuid(), 1m, DateOnly.FromDateTime(DateTime.UtcNow));
+            assignee, Guid.NewGuid(), 1m, DateOnly.FromDateTime(DateTime.UtcNow));
 
-        tarea.AssigneeId.Should().Be(responsable);
-        tarea.Assignees.Select(a => a.UserId).Should().ContainSingle().Which.Should().Be(responsable);
-        tarea.IsAssignee(responsable).Should().BeTrue();
+        task.AssigneeId.Should().Be(assignee);
+        task.Assignees.Select(a => a.UserId).Should().ContainSingle().Which.Should().Be(assignee);
+        task.IsAssignee(assignee).Should().BeTrue();
     }
 
     [Fact]
-    public void Una_tarea_sin_asignar_no_tiene_responsables()
+    public void An_unassigned_task_has_no_assignees()
     {
-        var tarea = WorkTask.Create(
+        var task = WorkTask.Create(
             Guid.NewGuid(), Guid.NewGuid(), "Sin asignar", "x",
             Guid.Empty, Guid.NewGuid(), 1m, DateOnly.FromDateTime(DateTime.UtcNow));
 
-        tarea.AssigneeId.Should().Be(Guid.Empty);
-        tarea.Assignees.Should().BeEmpty("el Guid vacío significa «sin asignar», no una persona");
+        task.AssigneeId.Should().Be(Guid.Empty);
+        task.Assignees.Should().BeEmpty("el Guid vacío significa «sin asignar», no una persona");
     }
 
     [Fact]
-    public void Añadir_responsables_no_cambia_quien_es_el_principal()
+    public void Adding_assignees_does_not_change_the_primary()
     {
-        var tarea = NuevaTarea();
-        var principal = tarea.AssigneeId;
-        var otro = Guid.NewGuid();
+        var task = NewTask();
+        var principal = task.AssigneeId;
+        var other = Guid.NewGuid();
 
-        tarea.AddAssignee(otro);
+        task.AddAssignee(other);
 
-        tarea.AssigneeId.Should().Be(principal);
-        tarea.Assignees.Select(a => a.UserId).Should().BeEquivalentTo([principal, otro]);
+        task.AssigneeId.Should().Be(principal);
+        task.Assignees.Select(a => a.UserId).Should().BeEquivalentTo([principal, other]);
     }
 
     [Fact]
-    public void La_primera_persona_de_una_tarea_sin_asignar_pasa_a_ser_la_principal()
+    public void The_first_person_on_an_unassigned_task_becomes_primary()
     {
         // Lo contrario dejaría el campo del principal vacío con responsables dentro, que es
         // exactamente la incoherencia que la colección viene a evitar.
-        var tarea = WorkTask.Create(
+        var task = WorkTask.Create(
             Guid.NewGuid(), Guid.NewGuid(), "Sin asignar", "x",
             Guid.Empty, Guid.NewGuid(), 1m, DateOnly.FromDateTime(DateTime.UtcNow));
-        var alguien = Guid.NewGuid();
+        var someone = Guid.NewGuid();
 
-        tarea.AddAssignee(alguien);
+        task.AddAssignee(someone);
 
-        tarea.AssigneeId.Should().Be(alguien);
+        task.AssigneeId.Should().Be(someone);
     }
 
     [Fact]
-    public void La_misma_persona_no_se_puede_añadir_dos_veces()
+    public void The_same_person_cannot_be_added_twice()
     {
-        var tarea = NuevaTarea();
+        var task = NewTask();
 
-        var repetir = () => tarea.AddAssignee(tarea.AssigneeId);
+        var repeat = () => task.AddAssignee(task.AssigneeId);
 
-        repetir.Should().Throw<InvalidOperationException>().WithMessage("*ya es responsable*");
-        tarea.Assignees.Should().HaveCount(1);
+        repeat.Should().Throw<InvalidOperationException>().WithMessage("*ya es responsable*");
+        task.Assignees.Should().HaveCount(1);
     }
 
     [Fact]
-    public void Quitar_al_principal_promueve_al_siguiente()
+    public void Removing_the_primary_promotes_the_next()
     {
         // Sin promoción, la tarea quedaría con un principal que ya no es responsable.
-        var tarea = NuevaTarea();
-        var principal = tarea.AssigneeId;
-        var segundo = Guid.NewGuid();
-        tarea.AddAssignee(segundo);
+        var task = NewTask();
+        var principal = task.AssigneeId;
+        var second = Guid.NewGuid();
+        task.AddAssignee(second);
 
-        tarea.RemoveAssignee(principal);
+        task.RemoveAssignee(principal);
 
-        tarea.AssigneeId.Should().Be(segundo);
-        tarea.Assignees.Select(a => a.UserId).Should().ContainSingle().Which.Should().Be(segundo);
+        task.AssigneeId.Should().Be(second);
+        task.Assignees.Select(a => a.UserId).Should().ContainSingle().Which.Should().Be(second);
     }
 
     [Fact]
-    public void Quitar_al_ultimo_responsable_deja_la_tarea_sin_asignar()
+    public void Removing_the_last_assignee_leaves_the_task_unassigned()
     {
-        var tarea = NuevaTarea();
+        var task = NewTask();
 
-        tarea.RemoveAssignee(tarea.AssigneeId);
+        task.RemoveAssignee(task.AssigneeId);
 
-        tarea.AssigneeId.Should().Be(Guid.Empty);
-        tarea.Assignees.Should().BeEmpty();
+        task.AssigneeId.Should().Be(Guid.Empty);
+        task.Assignees.Should().BeEmpty();
     }
 
     [Fact]
-    public void Quitar_a_quien_no_es_responsable_se_rechaza()
+    public void Removing_a_non_assignee_is_rejected()
     {
-        var tarea = NuevaTarea();
+        var task = NewTask();
 
-        var quitar = () => tarea.RemoveAssignee(Guid.NewGuid());
+        var remove = () => task.RemoveAssignee(Guid.NewGuid());
 
-        quitar.Should().Throw<InvalidOperationException>().WithMessage("*no es responsable*");
-        tarea.Assignees.Should().HaveCount(1);
+        remove.Should().Throw<InvalidOperationException>().WithMessage("*no es responsable*");
+        task.Assignees.Should().HaveCount(1);
     }
 
     [Fact]
-    public void Cambiar_el_principal_lo_mete_en_la_coleccion_y_lo_pone_primero()
+    public void Changing_the_primary_adds_it_to_the_collection_first()
     {
-        var tarea = NuevaTarea();
-        var nuevo = Guid.NewGuid();
+        var task = NewTask();
+        var newValue = Guid.NewGuid();
 
-        tarea.Assign(nuevo);
+        task.Assign(newValue);
 
-        tarea.AssigneeId.Should().Be(nuevo);
-        tarea.IsAssignee(nuevo).Should().BeTrue("el principal figura siempre entre los responsables");
-        tarea.Assignees.Should().HaveCount(2, "el anterior sigue siendo responsable, sólo deja de ser el principal");
+        task.AssigneeId.Should().Be(newValue);
+        task.IsAssignee(newValue).Should().BeTrue("el principal figura siempre entre los responsables");
+        task.Assignees.Should().HaveCount(2, "el anterior sigue siendo responsable, sólo deja de ser el principal");
     }
 
     [Fact]
-    public void Ascender_a_un_responsable_que_ya_estaba_no_lo_duplica()
+    public void Promoting_an_existing_assignee_does_not_duplicate_it()
     {
-        var tarea = NuevaTarea();
-        var segundo = Guid.NewGuid();
-        tarea.AddAssignee(segundo);
+        var task = NewTask();
+        var second = Guid.NewGuid();
+        task.AddAssignee(second);
 
-        tarea.Assign(segundo);
+        task.Assign(second);
 
-        tarea.Assignees.Select(a => a.UserId).Should().HaveCount(2).And.OnlyHaveUniqueItems();
-        tarea.AssigneeId.Should().Be(segundo);
+        task.Assignees.Select(a => a.UserId).Should().HaveCount(2).And.OnlyHaveUniqueItems();
+        task.AssigneeId.Should().Be(second);
     }
 
     [Fact]
-    public void Desasignar_del_todo_vacia_la_coleccion()
+    public void Unassigning_completely_empties_the_collection()
     {
-        var tarea = NuevaTarea();
-        tarea.AddAssignee(Guid.NewGuid());
+        var task = NewTask();
+        task.AddAssignee(Guid.NewGuid());
 
-        tarea.Assign(Guid.Empty);
+        task.Assign(Guid.Empty);
 
-        tarea.AssigneeId.Should().Be(Guid.Empty);
-        tarea.Assignees.Should().BeEmpty("«sin asignar» no puede convivir con responsables dentro");
+        task.AssigneeId.Should().Be(Guid.Empty);
+        task.Assignees.Should().BeEmpty("«sin asignar» no puede convivir con responsables dentro");
     }
 
     [Fact]
-    public void Añadir_y_quitar_responsables_emite_sus_eventos()
+    public void Adding_and_removing_assignees_raises_their_events()
     {
-        var tarea = NuevaTarea();
-        var alguien = Guid.NewGuid();
-        tarea.ClearDomainEvents();
+        var task = NewTask();
+        var someone = Guid.NewGuid();
+        task.ClearDomainEvents();
 
-        tarea.AddAssignee(alguien);
-        tarea.RemoveAssignee(alguien);
+        task.AddAssignee(someone);
+        task.RemoveAssignee(someone);
 
-        tarea.DomainEvents.Should().HaveCount(2);
-        tarea.DomainEvents.First().Should().BeOfType<TaskAssigneeAddedEvent>();
-        tarea.DomainEvents.Last().Should().BeOfType<TaskAssigneeRemovedEvent>();
+        task.DomainEvents.Should().HaveCount(2);
+        task.DomainEvents.First().Should().BeOfType<TaskAssigneeAddedEvent>();
+        task.DomainEvents.Last().Should().BeOfType<TaskAssigneeRemovedEvent>();
     }
 
     #endregion
@@ -535,239 +535,239 @@ public sealed class WorkTaskInvariantsTests
     #region Checklist
 
     [Fact]
-    public void Una_tarea_nace_sin_checklist()
+    public void A_task_starts_without_checklist()
     {
-        NuevaTarea().Checklist.Should().BeEmpty();
+        NewTask().Checklist.Should().BeEmpty();
     }
 
     [Fact]
-    public void Los_puntos_se_añaden_al_final_con_posiciones_crecientes()
+    public void Items_are_appended_with_increasing_positions()
     {
-        var tarea = NuevaTarea();
+        var task = NewTask();
 
-        tarea.AddChecklistItem("Primero");
-        tarea.AddChecklistItem("Segundo");
-        tarea.AddChecklistItem("Tercero");
+        task.AddChecklistItem("Primero");
+        task.AddChecklistItem("Segundo");
+        task.AddChecklistItem("Tercero");
 
-        tarea.Checklist.OrderBy(i => i.Position).Select(i => i.Text)
+        task.Checklist.OrderBy(i => i.Position).Select(i => i.Text)
             .Should().ContainInOrder("Primero", "Segundo", "Tercero");
-        tarea.Checklist.Select(i => i.Position).Should().OnlyHaveUniqueItems();
+        task.Checklist.Select(i => i.Position).Should().OnlyHaveUniqueItems();
     }
 
     [Fact]
-    public void Borrar_del_medio_no_hace_que_dos_puntos_empaten_en_el_orden()
+    public void Deleting_from_the_middle_does_not_tie_two_items_in_order()
     {
         // La posición se calcula sobre la mayor existente, no contando puntos: contarlos daría
         // una posición repetida en cuanto se borrara alguno del medio, y el orden dejaría de
         // estar definido.
-        var tarea = NuevaTarea();
-        tarea.AddChecklistItem("Primero");
-        var delMedio = tarea.AddChecklistItem("Segundo");
-        tarea.AddChecklistItem("Tercero");
+        var task = NewTask();
+        task.AddChecklistItem("Primero");
+        var middle = task.AddChecklistItem("Segundo");
+        task.AddChecklistItem("Tercero");
 
-        tarea.RemoveChecklistItem(delMedio.Id);
-        tarea.AddChecklistItem("Cuarto");
+        task.RemoveChecklistItem(middle.Id);
+        task.AddChecklistItem("Cuarto");
 
-        tarea.Checklist.Select(i => i.Position).Should().OnlyHaveUniqueItems();
-        tarea.Checklist.OrderBy(i => i.Position).Last().Text.Should().Be("Cuarto");
+        task.Checklist.Select(i => i.Position).Should().OnlyHaveUniqueItems();
+        task.Checklist.OrderBy(i => i.Position).Last().Text.Should().Be("Cuarto");
     }
 
     [Fact]
-    public void Un_punto_sin_texto_no_se_acepta()
+    public void An_item_without_text_is_not_accepted()
     {
-        var tarea = NuevaTarea();
+        var task = NewTask();
 
-        var vacio = () => tarea.AddChecklistItem("   ");
+        var empty = () => task.AddChecklistItem("   ");
 
-        vacio.Should().Throw<InvalidOperationException>().WithMessage("*necesita un texto*");
-        tarea.Checklist.Should().BeEmpty();
+        empty.Should().Throw<InvalidOperationException>().WithMessage("*necesita un texto*");
+        task.Checklist.Should().BeEmpty();
     }
 
     [Fact]
-    public void Un_texto_demasiado_largo_no_se_acepta()
+    public void A_too_long_text_is_not_accepted()
     {
-        var tarea = NuevaTarea();
+        var task = NewTask();
 
-        var largo = () => tarea.AddChecklistItem(new string('x', ChecklistItem.MaxLength + 1));
+        var tooLong = () => task.AddChecklistItem(new string('x', ChecklistItem.MaxLength + 1));
 
-        largo.Should().Throw<InvalidOperationException>().WithMessage("*no puede pasar de*");
+        tooLong.Should().Throw<InvalidOperationException>().WithMessage("*no puede pasar de*");
     }
 
     [Fact]
-    public void El_texto_se_recorta_al_guardarlo()
+    public void The_text_is_trimmed_when_saved()
     {
-        var tarea = NuevaTarea();
+        var task = NewTask();
 
-        var punto = tarea.AddChecklistItem("  con espacios  ");
+        var item = task.AddChecklistItem("  con espacios  ");
 
-        punto.Text.Should().Be("con espacios");
+        item.Text.Should().Be("con espacios");
     }
 
     [Fact]
-    public void Marcar_un_punto_cuenta_en_el_progreso_y_emite_evento()
+    public void Checking_an_item_counts_in_progress_and_raises_an_event()
     {
-        var tarea = NuevaTarea();
-        var uno = tarea.AddChecklistItem("Uno");
-        tarea.AddChecklistItem("Dos");
-        tarea.ClearDomainEvents();
+        var task = NewTask();
+        var one = task.AddChecklistItem("Uno");
+        task.AddChecklistItem("Dos");
+        task.ClearDomainEvents();
 
-        tarea.UpdateChecklistItem(uno.Id, done: true, text: null);
+        task.UpdateChecklistItem(one.Id, done: true, text: null);
 
-        tarea.ChecklistProgress().Should().Be((2, 1));
-        tarea.DomainEvents.Should().ContainSingle()
+        task.ChecklistProgress().Should().Be((2, 1));
+        task.DomainEvents.Should().ContainSingle()
             .Which.Should().BeOfType<TaskChecklistItemToggledEvent>()
             .Which.IsDone.Should().BeTrue();
     }
 
     [Fact]
-    public void Marcar_lo_que_ya_estaba_marcado_no_emite_evento()
+    public void Checking_what_is_already_checked_raises_no_event()
     {
-        var tarea = NuevaTarea();
-        var uno = tarea.AddChecklistItem("Uno");
-        tarea.UpdateChecklistItem(uno.Id, done: true, text: null);
-        tarea.ClearDomainEvents();
+        var task = NewTask();
+        var one = task.AddChecklistItem("Uno");
+        task.UpdateChecklistItem(one.Id, done: true, text: null);
+        task.ClearDomainEvents();
 
-        tarea.UpdateChecklistItem(uno.Id, done: true, text: null);
+        task.UpdateChecklistItem(one.Id, done: true, text: null);
 
-        tarea.DomainEvents.Should().BeEmpty("sin cambio real no hay nada que contar");
+        task.DomainEvents.Should().BeEmpty("sin cambio real no hay nada que contar");
     }
 
     [Fact]
-    public void Renombrar_un_punto_no_lo_desmarca()
+    public void Renaming_an_item_does_not_uncheck_it()
     {
-        var tarea = NuevaTarea();
-        var uno = tarea.AddChecklistItem("Con typo");
-        tarea.UpdateChecklistItem(uno.Id, done: true, text: null);
+        var task = NewTask();
+        var one = task.AddChecklistItem("Con typo");
+        task.UpdateChecklistItem(one.Id, done: true, text: null);
 
-        tarea.UpdateChecklistItem(uno.Id, done: null, text: "Sin typo");
+        task.UpdateChecklistItem(one.Id, done: null, text: "Sin typo");
 
-        var punto = tarea.Checklist.Single();
-        punto.Text.Should().Be("Sin typo");
-        punto.IsDone.Should().BeTrue();
+        var item = task.Checklist.Single();
+        item.Text.Should().Be("Sin typo");
+        item.IsDone.Should().BeTrue();
     }
 
     [Fact]
-    public void Tocar_un_punto_que_no_existe_se_rechaza()
+    public void Touching_a_missing_item_is_rejected()
     {
-        var tarea = NuevaTarea();
+        var task = NewTask();
 
-        var marcar = () => tarea.UpdateChecklistItem(Guid.NewGuid(), true, null);
-        var borrar = () => tarea.RemoveChecklistItem(Guid.NewGuid());
+        var check = () => task.UpdateChecklistItem(Guid.NewGuid(), true, null);
+        var remove = () => task.RemoveChecklistItem(Guid.NewGuid());
 
-        marcar.Should().Throw<InvalidOperationException>().WithMessage("*no existe*");
-        borrar.Should().Throw<InvalidOperationException>().WithMessage("*no existe*");
+        check.Should().Throw<InvalidOperationException>().WithMessage("*no existe*");
+        remove.Should().Throw<InvalidOperationException>().WithMessage("*no existe*");
     }
 
     #endregion
 
     #region Recurrencia
 
-    private static WorkTask TareaQueSeRepite(string frecuencia, int intervalo, DateOnly desde, DateOnly? fin = null)
+    private static WorkTask RepeatingTask(string frequency, int interval, DateOnly from, DateOnly? end = null)
     {
-        var tarea = NuevaTarea();
-        tarea.SetRecurrence(frecuencia, intervalo, desde, fin);
-        return tarea;
+        var task = NewTask();
+        task.SetRecurrence(frequency, interval, from, end);
+        return task;
     }
 
     [Fact]
-    public void Una_tarea_no_se_repite_por_defecto()
+    public void A_task_does_not_repeat_by_default()
     {
-        NuevaTarea().Recurrence.Should().BeNull();
+        NewTask().Recurrence.Should().BeNull();
     }
 
     [Fact]
-    public void Sin_llegar_la_fecha_no_se_genera_nada()
+    public void Before_the_date_nothing_is_generated()
     {
-        var tarea = TareaQueSeRepite(RecurrencePattern.Frequencies.Daily, 1, new DateOnly(2026, 8, 20));
+        var task = RepeatingTask(RecurrencePattern.Frequencies.Daily, 1, new DateOnly(2026, 8, 20));
 
-        tarea.GenerateOccurrencesUntil(new DateOnly(2026, 8, 19)).Should().BeEmpty();
+        task.GenerateOccurrencesUntil(new DateOnly(2026, 8, 19)).Should().BeEmpty();
     }
 
     [Fact]
-    public void Se_generan_todas_las_atrasadas_de_una_vez()
+    public void All_overdue_occurrences_are_generated_at_once()
     {
         // Si la aplicación estuvo parada, saltarse las atrasadas dejaría huecos que nadie va a
         // reclamar pero que falsean cualquier informe.
-        var tarea = TareaQueSeRepite(RecurrencePattern.Frequencies.Daily, 1, new DateOnly(2026, 8, 10));
+        var task = RepeatingTask(RecurrencePattern.Frequencies.Daily, 1, new DateOnly(2026, 8, 10));
 
-        var generadas = tarea.GenerateOccurrencesUntil(new DateOnly(2026, 8, 13));
+        var generated = task.GenerateOccurrencesUntil(new DateOnly(2026, 8, 13));
 
-        generadas.Should().HaveCount(4);
-        generadas.Select(t => t.DueDate).Should().ContainInOrder(
+        generated.Should().HaveCount(4);
+        generated.Select(t => t.DueDate).Should().ContainInOrder(
             new DateOnly(2026, 8, 10), new DateOnly(2026, 8, 11),
             new DateOnly(2026, 8, 12), new DateOnly(2026, 8, 13));
-        tarea.Recurrence!.NextOccurrence.Should().Be(new DateOnly(2026, 8, 14));
+        task.Recurrence!.NextOccurrence.Should().Be(new DateOnly(2026, 8, 14));
     }
 
     [Fact]
-    public void Las_ocurrencias_no_heredan_la_recurrencia()
+    public void Occurrences_do_not_inherit_the_recurrence()
     {
         // Si la heredaran, cada ocurrencia empezaría a generar las suyas y la serie se
         // multiplicaría sola hasta llenar el tablero.
-        var tarea = TareaQueSeRepite(RecurrencePattern.Frequencies.Daily, 1, new DateOnly(2026, 8, 12));
+        var task = RepeatingTask(RecurrencePattern.Frequencies.Daily, 1, new DateOnly(2026, 8, 12));
 
-        var generadas = tarea.GenerateOccurrencesUntil(new DateOnly(2026, 8, 12));
+        var generated = task.GenerateOccurrencesUntil(new DateOnly(2026, 8, 12));
 
-        generadas.Should().ContainSingle().Which.Recurrence.Should().BeNull();
+        generated.Should().ContainSingle().Which.Recurrence.Should().BeNull();
     }
 
     [Fact]
-    public void La_fecha_de_fin_corta_la_serie()
+    public void The_end_date_cuts_the_series()
     {
-        var tarea = TareaQueSeRepite(
+        var task = RepeatingTask(
             RecurrencePattern.Frequencies.Daily, 1,
-            new DateOnly(2026, 8, 10), fin: new DateOnly(2026, 8, 11));
+            new DateOnly(2026, 8, 10), end: new DateOnly(2026, 8, 11));
 
-        var generadas = tarea.GenerateOccurrencesUntil(new DateOnly(2026, 8, 31));
+        var generated = task.GenerateOccurrencesUntil(new DateOnly(2026, 8, 31));
 
-        generadas.Should().HaveCount(2);
-        tarea.Recurrence!.IsExhausted.Should().BeTrue();
-        tarea.GenerateOccurrencesUntil(new DateOnly(2026, 9, 30)).Should().BeEmpty();
+        generated.Should().HaveCount(2);
+        task.Recurrence!.IsExhausted.Should().BeTrue();
+        task.GenerateOccurrencesUntil(new DateOnly(2026, 9, 30)).Should().BeEmpty();
     }
 
     [Fact]
-    public void Cada_ocurrencia_copia_el_trabajo_de_la_plantilla()
+    public void Each_occurrence_copies_the_template_work()
     {
-        var tarea = NuevaTarea();
+        var task = NewTask();
         var companero = Guid.NewGuid();
-        tarea.AddAssignee(companero);
-        tarea.AddChecklistItem("Preparar sala");
-        var punto = tarea.AddChecklistItem("Enviar acta");
-        tarea.UpdateChecklistItem(punto.Id, done: true, text: null);
-        tarea.Reprioritize("High");
-        tarea.SetRecurrence(RecurrencePattern.Frequencies.Weekly, 1, new DateOnly(2026, 8, 12), null);
+        task.AddAssignee(companero);
+        task.AddChecklistItem("Preparar sala");
+        var item = task.AddChecklistItem("Enviar acta");
+        task.UpdateChecklistItem(item.Id, done: true, text: null);
+        task.Reprioritize("High");
+        task.SetRecurrence(RecurrencePattern.Frequencies.Weekly, 1, new DateOnly(2026, 8, 12), null);
 
-        var ocurrencia = tarea.GenerateOccurrencesUntil(new DateOnly(2026, 8, 12)).Single();
+        var occurrence = task.GenerateOccurrencesUntil(new DateOnly(2026, 8, 12)).Single();
 
-        ocurrencia.Title.Value.Should().Be(tarea.Title.Value);
-        ocurrencia.Priority.Value.Should().Be("High");
-        ocurrencia.Assignees.Select(a => a.UserId).Should().BeEquivalentTo(tarea.Assignees.Select(a => a.UserId));
-        ocurrencia.Checklist.Select(p => p.Text).Should().BeEquivalentTo(["Preparar sala", "Enviar acta"]);
-        ocurrencia.Checklist.Should().OnlyContain(p => !p.IsDone,
+        occurrence.Title.Value.Should().Be(task.Title.Value);
+        occurrence.Priority.Value.Should().Be("High");
+        occurrence.Assignees.Select(a => a.UserId).Should().BeEquivalentTo(task.Assignees.Select(a => a.UserId));
+        occurrence.Checklist.Select(p => p.Text).Should().BeEquivalentTo(["Preparar sala", "Enviar acta"]);
+        occurrence.Checklist.Should().OnlyContain(p => !p.IsDone,
             "la copia empieza sin marcar; heredar lo hecho daría por completado trabajo que no se ha tocado");
     }
 
     [Fact]
-    public void Las_ocurrencias_no_copian_el_padre_ni_quedan_colgadas()
+    public void Occurrences_do_not_copy_the_parent_nor_hang_from_it()
     {
-        var tarea = NuevaTarea();
-        tarea.Reparent(Guid.NewGuid());
-        tarea.SetRecurrence(RecurrencePattern.Frequencies.Daily, 1, new DateOnly(2026, 8, 12), null);
+        var task = NewTask();
+        task.Reparent(Guid.NewGuid());
+        task.SetRecurrence(RecurrencePattern.Frequencies.Daily, 1, new DateOnly(2026, 8, 12), null);
 
-        var ocurrencia = tarea.GenerateOccurrencesUntil(new DateOnly(2026, 8, 12)).Single();
+        var occurrence = task.GenerateOccurrencesUntil(new DateOnly(2026, 8, 12)).Single();
 
-        ocurrencia.ParentTaskId.Should().BeNull();
+        occurrence.ParentTaskId.Should().BeNull();
     }
 
     [Fact]
-    public void Dejar_de_repetir_para_la_serie()
+    public void Stopping_the_repeat_ends_the_series()
     {
-        var tarea = TareaQueSeRepite(RecurrencePattern.Frequencies.Daily, 1, new DateOnly(2026, 8, 10));
+        var task = RepeatingTask(RecurrencePattern.Frequencies.Daily, 1, new DateOnly(2026, 8, 10));
 
-        tarea.ClearRecurrence();
+        task.ClearRecurrence();
 
-        tarea.Recurrence.Should().BeNull();
-        tarea.GenerateOccurrencesUntil(new DateOnly(2026, 12, 31)).Should().BeEmpty();
+        task.Recurrence.Should().BeNull();
+        task.GenerateOccurrencesUntil(new DateOnly(2026, 12, 31)).Should().BeEmpty();
     }
 
     #endregion
@@ -781,50 +781,50 @@ public sealed class WorkTaskInvariantsTests
     /// viene se interpretase como «ponlo a vacío», cambiar la fecha borraría el título.
     /// </summary>
     [Fact]
-    public void Actualizar_un_solo_campo_deja_los_demas_como_estaban()
+    public void Updating_one_field_leaves_the_others_untouched()
     {
-        var tarea = NuevaTarea();
+        var task = NewTask();
 
-        tarea.UpdateDetails(estimatedHours: 13m);
+        task.UpdateDetails(estimatedHours: 13m);
 
-        tarea.EstimatedHours.Should().Be(13m);
-        tarea.Title.Value.Should().Be("Tarea de prueba");
-        tarea.Description.Should().Be("descripción");
+        task.EstimatedHours.Should().Be(13m);
+        task.Title.Value.Should().Be("Tarea de prueba");
+        task.Description.Should().Be("descripción");
     }
 
     [Fact]
-    public void Actualizar_cambia_titulo_descripcion_horas_y_fecha()
+    public void Update_changes_title_description_hours_and_date()
     {
-        var tarea = NuevaTarea();
-        var fecha = new DateOnly(2027, 1, 15);
+        var task = NewTask();
+        var date = new DateOnly(2027, 1, 15);
 
-        tarea.UpdateDetails("Otro título", "otra descripción", 3.5m, fecha);
+        task.UpdateDetails("Otro título", "otra descripción", 3.5m, date);
 
-        tarea.Title.Value.Should().Be("Otro título");
-        tarea.Description.Should().Be("otra descripción");
-        tarea.EstimatedHours.Should().Be(3.5m);
-        tarea.DueDate.Should().Be(fecha);
+        task.Title.Value.Should().Be("Otro título");
+        task.Description.Should().Be("otra descripción");
+        task.EstimatedHours.Should().Be(3.5m);
+        task.DueDate.Should().Be(date);
     }
 
     [Fact]
-    public void Un_titulo_vacio_se_rechaza_en_lugar_de_dejar_la_tarea_sin_nombre()
+    public void An_empty_title_is_rejected_instead_of_leaving_the_task_unnamed()
     {
-        var tarea = NuevaTarea();
+        var task = NewTask();
 
-        var accion = () => tarea.UpdateDetails(title: "   ");
+        var act = () => task.UpdateDetails(title: "   ");
 
-        accion.Should().Throw<InvalidOperationException>();
-        tarea.Title.Value.Should().Be("Tarea de prueba");
+        act.Should().Throw<InvalidOperationException>();
+        task.Title.Value.Should().Be("Tarea de prueba");
     }
 
     [Fact]
-    public void Un_titulo_demasiado_largo_se_rechaza()
+    public void A_too_long_title_is_rejected()
     {
-        var tarea = NuevaTarea();
+        var task = NewTask();
 
-        var accion = () => tarea.UpdateDetails(title: new string('x', 201));
+        var act = () => task.UpdateDetails(title: new string('x', 201));
 
-        accion.Should().Throw<InvalidOperationException>();
+        act.Should().Throw<InvalidOperationException>();
     }
 
     /// <summary>
@@ -832,25 +832,25 @@ public sealed class WorkTaskInvariantsTests
     /// en el 4C— sin que nadie lo notase hasta que el total saliera mal.
     /// </summary>
     [Fact]
-    public void Las_horas_negativas_se_rechazan()
+    public void Negative_hours_are_rejected()
     {
-        var tarea = NuevaTarea();
+        var task = NewTask();
 
-        var accion = () => tarea.UpdateDetails(estimatedHours: -1m);
+        var act = () => task.UpdateDetails(estimatedHours: -1m);
 
-        accion.Should().Throw<InvalidOperationException>()
+        act.Should().Throw<InvalidOperationException>()
             .WithMessage(WorkTask.DetailRules.NegativeHours);
-        tarea.EstimatedHours.Should().Be(8m);
+        task.EstimatedHours.Should().Be(8m);
     }
 
     [Fact]
-    public void Cero_horas_es_valido()
+    public void Zero_hours_is_valid()
     {
-        var tarea = NuevaTarea();
+        var task = NewTask();
 
-        tarea.UpdateDetails(estimatedHours: 0m);
+        task.UpdateDetails(estimatedHours: 0m);
 
-        tarea.EstimatedHours.Should().Be(0m);
+        task.EstimatedHours.Should().Be(0m);
     }
 
     /// <summary>
@@ -858,13 +858,13 @@ public sealed class WorkTaskInvariantsTests
     /// es justo lo que hace que el parámetro sea `null` y no cadena vacía.
     /// </summary>
     [Fact]
-    public void La_descripcion_se_puede_vaciar()
+    public void The_description_can_be_cleared()
     {
-        var tarea = NuevaTarea();
+        var task = NewTask();
 
-        tarea.UpdateDetails(description: string.Empty);
+        task.UpdateDetails(description: string.Empty);
 
-        tarea.Description.Should().BeEmpty();
+        task.Description.Should().BeEmpty();
     }
 
     /// <summary>
@@ -872,21 +872,21 @@ public sealed class WorkTaskInvariantsTests
     /// pensada para «alguien corrigió una errata», y emitirlos las haría trabajar de balde.
     /// </summary>
     [Fact]
-    public void Actualizar_detalles_no_emite_eventos_de_dominio()
+    public void Updating_details_raises_no_domain_events()
     {
-        var tarea = NuevaTarea();
-        tarea.ClearDomainEvents();
+        var task = NewTask();
+        task.ClearDomainEvents();
 
-        tarea.UpdateDetails("Otro título", "otra", 1m, new DateOnly(2027, 3, 1));
+        task.UpdateDetails("Otro título", "otra", 1m, new DateOnly(2027, 3, 1));
 
-        tarea.DomainEvents.Should().BeEmpty();
+        task.DomainEvents.Should().BeEmpty();
     }
 
     #endregion
 
     #region Fecha de inicio
 
-    private static WorkTask TareaQueVence(DateOnly vencimiento, DateOnly? inicio = null) => WorkTask.Create(
+    private static WorkTask DueTask(DateOnly dueDate, DateOnly? start = null) => WorkTask.Create(
         tenantId: Guid.NewGuid(),
         projectId: Guid.NewGuid(),
         title: "Tarea con calendario",
@@ -894,53 +894,53 @@ public sealed class WorkTaskInvariantsTests
         assigneeId: Guid.NewGuid(),
         createdById: Guid.NewGuid(),
         estimatedHours: 8m,
-        dueDate: vencimiento,
-        startDate: inicio);
+        dueDate: dueDate,
+        startDate: start);
 
     /// <summary>
     /// Una tarea sin fecha de inicio no se la inventa. Deducirla de la creación, o restando las
     /// horas al vencimiento, dibujaría en el Gantt una barra que nadie ha decidido.
     /// </summary>
     [Fact]
-    public void Una_tarea_nace_sin_fecha_de_inicio_si_no_se_le_da_una()
+    public void A_task_starts_without_start_date_unless_given()
     {
-        NuevaTarea().StartDate.Should().BeNull();
+        NewTask().StartDate.Should().BeNull();
     }
 
     [Fact]
-    public void La_fecha_de_inicio_se_conserva_al_crear()
+    public void The_start_date_is_kept_on_create()
     {
-        var tarea = TareaQueVence(new DateOnly(2026, 9, 10), new DateOnly(2026, 9, 1));
+        var task = DueTask(new DateOnly(2026, 9, 10), new DateOnly(2026, 9, 1));
 
-        tarea.StartDate.Should().Be(new DateOnly(2026, 9, 1));
+        task.StartDate.Should().Be(new DateOnly(2026, 9, 1));
     }
 
     [Fact]
-    public void El_mismo_dia_de_inicio_y_vencimiento_vale()
+    public void The_same_start_and_due_day_is_valid()
     {
-        var dia = new DateOnly(2026, 9, 1);
+        var day = new DateOnly(2026, 9, 1);
 
-        TareaQueVence(dia, dia).StartDate.Should().Be(dia);
+        DueTask(day, day).StartDate.Should().Be(day);
     }
 
     [Fact]
-    public void No_se_puede_crear_una_tarea_que_empiece_despues_de_vencer()
+    public void A_task_cannot_start_after_its_due_date()
     {
-        var accion = () => TareaQueVence(new DateOnly(2026, 9, 1), new DateOnly(2026, 9, 10));
+        var act = () => DueTask(new DateOnly(2026, 9, 1), new DateOnly(2026, 9, 10));
 
-        accion.Should().Throw<InvalidOperationException>()
+        act.Should().Throw<InvalidOperationException>()
             .WithMessage(WorkTask.DetailRules.StartAfterDueDate);
     }
 
     [Fact]
-    public void Poner_un_inicio_posterior_al_vencimiento_se_rechaza()
+    public void Setting_a_start_after_the_due_date_is_rejected()
     {
-        var tarea = TareaQueVence(new DateOnly(2026, 9, 1));
+        var task = DueTask(new DateOnly(2026, 9, 1));
 
-        var accion = () => tarea.UpdateDetails(startDate: new DateOnly(2026, 9, 10));
+        var act = () => task.UpdateDetails(startDate: new DateOnly(2026, 9, 10));
 
-        accion.Should().Throw<InvalidOperationException>();
-        tarea.StartDate.Should().BeNull();
+        act.Should().Throw<InvalidOperationException>();
+        task.StartDate.Should().BeNull();
     }
 
     /// <summary>
@@ -949,13 +949,13 @@ public sealed class WorkTaskInvariantsTests
     /// planificación de alguien sin decírselo es peor que no dejarle hacer el cambio.
     /// </summary>
     [Fact]
-    public void Adelantar_el_vencimiento_por_detras_del_inicio_se_rechaza()
+    public void Moving_the_due_date_before_the_start_is_rejected()
     {
-        var tarea = TareaQueVence(new DateOnly(2026, 9, 10), new DateOnly(2026, 9, 5));
+        var task = DueTask(new DateOnly(2026, 9, 10), new DateOnly(2026, 9, 5));
 
-        var accion = () => tarea.UpdateDetails(dueDate: new DateOnly(2026, 9, 1));
+        var act = () => task.UpdateDetails(dueDate: new DateOnly(2026, 9, 1));
 
-        accion.Should().Throw<InvalidOperationException>()
+        act.Should().Throw<InvalidOperationException>()
             .WithMessage(WorkTask.DetailRules.DueDateBeforeStart);
     }
 
@@ -964,36 +964,36 @@ public sealed class WorkTaskInvariantsTests
     /// mover la tarea entera hacia adelante es legítimo y no puede fallar por el orden.
     /// </summary>
     [Fact]
-    public void Mover_las_dos_fechas_a_la_vez_hacia_adelante_vale()
+    public void Moving_both_dates_forward_together_is_valid()
     {
-        var tarea = TareaQueVence(new DateOnly(2026, 9, 10), new DateOnly(2026, 9, 5));
+        var task = DueTask(new DateOnly(2026, 9, 10), new DateOnly(2026, 9, 5));
 
-        tarea.UpdateDetails(
+        task.UpdateDetails(
             dueDate: new DateOnly(2026, 10, 10),
             startDate: new DateOnly(2026, 10, 5));
 
-        tarea.StartDate.Should().Be(new DateOnly(2026, 10, 5));
-        tarea.DueDate.Should().Be(new DateOnly(2026, 10, 10));
+        task.StartDate.Should().Be(new DateOnly(2026, 10, 5));
+        task.DueDate.Should().Be(new DateOnly(2026, 10, 10));
     }
 
     [Fact]
-    public void La_fecha_de_inicio_se_puede_quitar()
+    public void The_start_date_can_be_removed()
     {
-        var tarea = TareaQueVence(new DateOnly(2026, 9, 10), new DateOnly(2026, 9, 5));
+        var task = DueTask(new DateOnly(2026, 9, 10), new DateOnly(2026, 9, 5));
 
-        tarea.UpdateDetails(clearStartDate: true);
+        task.UpdateDetails(clearStartDate: true);
 
-        tarea.StartDate.Should().BeNull();
+        task.StartDate.Should().BeNull();
     }
 
     [Fact]
-    public void Editar_otro_campo_no_toca_la_fecha_de_inicio()
+    public void Editing_another_field_keeps_the_start_date()
     {
-        var tarea = TareaQueVence(new DateOnly(2026, 9, 10), new DateOnly(2026, 9, 5));
+        var task = DueTask(new DateOnly(2026, 9, 10), new DateOnly(2026, 9, 5));
 
-        tarea.UpdateDetails(title: "Otro título");
+        task.UpdateDetails(title: "Otro título");
 
-        tarea.StartDate.Should().Be(new DateOnly(2026, 9, 5));
+        task.StartDate.Should().Be(new DateOnly(2026, 9, 5));
     }
 
     /// <summary>
@@ -1002,30 +1002,30 @@ public sealed class WorkTaskInvariantsTests
     /// dejaría ocurrencias que empiezan meses antes de vencer.
     /// </summary>
     [Fact]
-    public void Una_ocurrencia_hereda_la_duracion_y_no_la_fecha_de_inicio()
+    public void An_occurrence_inherits_the_duration_not_the_start_date()
     {
-        var tarea = WorkTask.Create(
+        var task = WorkTask.Create(
             Guid.NewGuid(), Guid.NewGuid(), "Repetitiva", "descripción",
             Guid.NewGuid(), Guid.NewGuid(), 4m,
             dueDate: new DateOnly(2026, 8, 10), priority: null, parentTaskId: null,
             startDate: new DateOnly(2026, 8, 7));
 
-        tarea.SetRecurrence(RecurrencePattern.Frequencies.Monthly, 1, new DateOnly(2026, 9, 10), null);
+        task.SetRecurrence(RecurrencePattern.Frequencies.Monthly, 1, new DateOnly(2026, 9, 10), null);
 
-        var ocurrencia = tarea.GenerateOccurrencesUntil(new DateOnly(2026, 9, 10)).Single();
+        var occurrence = task.GenerateOccurrencesUntil(new DateOnly(2026, 9, 10)).Single();
 
-        ocurrencia.DueDate.Should().Be(new DateOnly(2026, 9, 10));
-        ocurrencia.StartDate.Should().Be(new DateOnly(2026, 9, 7), "dura los mismos tres días");
+        occurrence.DueDate.Should().Be(new DateOnly(2026, 9, 10));
+        occurrence.StartDate.Should().Be(new DateOnly(2026, 9, 7), "dura los mismos tres días");
     }
 
     [Fact]
-    public void Una_ocurrencia_de_una_tarea_sin_inicio_tampoco_lo_tiene()
+    public void An_occurrence_of_a_task_without_start_has_none_either()
     {
-        var tarea = TareaQueSeRepite(RecurrencePattern.Frequencies.Daily, 1, new DateOnly(2026, 8, 10));
+        var task = RepeatingTask(RecurrencePattern.Frequencies.Daily, 1, new DateOnly(2026, 8, 10));
 
-        var ocurrencia = tarea.GenerateOccurrencesUntil(new DateOnly(2026, 8, 10)).First();
+        var occurrence = task.GenerateOccurrencesUntil(new DateOnly(2026, 8, 10)).First();
 
-        ocurrencia.StartDate.Should().BeNull();
+        occurrence.StartDate.Should().BeNull();
     }
 
     #endregion
@@ -1036,31 +1036,31 @@ public sealed class WorkTaskInvariantsTests
     // existían, y el panel devolvía 2,5 y 1,4 días escritos a mano porque no había con qué
     // calcularlos.
 
-    private static WorkTask TareaNueva() => WorkTask.Create(
+    private static WorkTask FreshTask() => WorkTask.Create(
         Guid.NewGuid(), Guid.NewGuid(), "Una tarea", "descripción",
         Guid.NewGuid(), Guid.NewGuid(), 3m, new DateOnly(2026, 12, 31));
 
     [Fact]
-    public void Una_tarea_nace_con_fecha_de_creacion_y_sin_fecha_de_cierre()
+    public void A_task_starts_with_creation_date_and_no_completion_date()
     {
-        var antes = DateTime.UtcNow;
+        var before = DateTime.UtcNow;
 
-        var tarea = TareaNueva();
+        var task = FreshTask();
 
-        tarea.CreatedAtUtc.Should().BeOnOrAfter(antes).And.BeOnOrBefore(DateTime.UtcNow);
-        tarea.CompletedAtUtc.Should().BeNull("acaba de crearse, no está terminada");
+        task.CreatedAtUtc.Should().BeOnOrAfter(before).And.BeOnOrBefore(DateTime.UtcNow);
+        task.CompletedAtUtc.Should().BeNull("acaba de crearse, no está terminada");
     }
 
     [Fact]
-    public void Terminar_una_tarea_deja_constancia_de_cuando()
+    public void Finishing_a_task_records_when()
     {
-        var tarea = TareaNueva();
-        var antes = DateTime.UtcNow;
+        var task = FreshTask();
+        var before = DateTime.UtcNow;
 
-        tarea.Move("Done");
+        task.Move("Done");
 
-        tarea.CompletedAtUtc.Should().NotBeNull();
-        tarea.CompletedAtUtc!.Value.Should().BeOnOrAfter(antes).And.BeOnOrBefore(DateTime.UtcNow);
+        task.CompletedAtUtc.Should().NotBeNull();
+        task.CompletedAtUtc!.Value.Should().BeOnOrAfter(before).And.BeOnOrBefore(DateTime.UtcNow);
     }
 
     /// <summary>
@@ -1069,15 +1069,15 @@ public sealed class WorkTaskInvariantsTests
     /// cierre mediría un trabajo que luego hubo que rehacer.
     /// </summary>
     [Fact]
-    public void Reabrir_una_tarea_borra_la_fecha_de_cierre()
+    public void Reopening_a_task_clears_the_completion_date()
     {
-        var tarea = TareaNueva();
-        tarea.Move("Done");
-        tarea.CompletedAtUtc.Should().NotBeNull();
+        var task = FreshTask();
+        task.Move("Done");
+        task.CompletedAtUtc.Should().NotBeNull();
 
-        tarea.Move("In Progress");
+        task.Move("In Progress");
 
-        tarea.CompletedAtUtc.Should().BeNull("una tarea reabierta no está completada");
+        task.CompletedAtUtc.Should().BeNull("una tarea reabierta no está completada");
     }
 
     /// <summary>
@@ -1089,13 +1089,13 @@ public sealed class WorkTaskInvariantsTests
     [InlineData("In Progress")]
     [InlineData("In Review")]
     [InlineData("On Hold")]
-    public void Ningun_otro_estado_marca_la_tarea_como_terminada(string estado)
+    public void No_other_status_marks_the_task_as_done(string status)
     {
-        var tarea = TareaNueva();
+        var task = FreshTask();
 
-        tarea.Move(estado);
+        task.Move(status);
 
-        tarea.CompletedAtUtc.Should().BeNull();
+        task.CompletedAtUtc.Should().BeNull();
     }
 
     #endregion

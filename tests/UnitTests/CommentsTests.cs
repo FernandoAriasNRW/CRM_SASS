@@ -14,71 +14,71 @@ namespace UnitTests;
 /// </summary>
 public sealed class CommentTests
 {
-    private static readonly Guid Autor = Guid.NewGuid();
-    private static readonly Guid Otro = Guid.NewGuid();
+    private static readonly Guid Author = Guid.NewGuid();
+    private static readonly Guid Other = Guid.NewGuid();
 
-    private static Comment Nuevo(string texto = "Un comentario", Guid? autor = null, Guid? respondeA = null)
+    private static Comment New(string text = "Un comentario", Guid? author = null, Guid? repliesTo = null)
         => Comment.Create(
             Guid.NewGuid(), CommentableEntityTypes.Task, Guid.NewGuid(),
-            autor ?? Autor, texto, respondeA);
+            author ?? Author, text, repliesTo);
 
     [Fact]
-    public void Un_comentario_guarda_quien_y_cuando_y_emite_evento()
+    public void A_comment_records_who_and_when_and_raises_an_event()
     {
-        var antes = DateTime.UtcNow.AddSeconds(-1);
+        var before = DateTime.UtcNow.AddSeconds(-1);
 
-        var comentario = Nuevo();
+        var comment = New();
 
-        comentario.AuthorId.Should().Be(Autor);
-        comentario.CreatedAtUtc.Should().BeAfter(antes);
-        comentario.EditedAtUtc.Should().BeNull();
-        comentario.DomainEvents.Should().ContainSingle().Which.Should().BeOfType<CommentAddedEvent>();
+        comment.AuthorId.Should().Be(Author);
+        comment.CreatedAtUtc.Should().BeAfter(before);
+        comment.EditedAtUtc.Should().BeNull();
+        comment.DomainEvents.Should().ContainSingle().Which.Should().BeOfType<CommentAddedEvent>();
     }
 
     [Fact]
-    public void Un_comentario_vacio_se_rechaza()
+    public void An_empty_comment_is_rejected()
     {
-        var accion = () => Nuevo("   ");
+        var act = () => New("   ");
 
-        accion.Should().Throw<InvalidOperationException>()
+        act.Should().Throw<InvalidOperationException>()
             .WithMessage(Comment.Rules.TextRequired);
     }
 
     [Fact]
-    public void Un_comentario_demasiado_largo_se_rechaza()
+    public void A_too_long_comment_is_rejected()
     {
-        var accion = () => Nuevo(new string('x', Comment.MaxLength + 1));
+        var act = () => New(new string('x', Comment.MaxLength + 1));
 
-        accion.Should().Throw<InvalidOperationException>();
+        act.Should().Throw<InvalidOperationException>();
     }
 
     [Fact]
-    public void El_texto_se_guarda_sin_espacios_sobrantes()
+    public void The_text_is_saved_without_extra_whitespace()
     {
-        Nuevo("  con espacios  ").Text.Should().Be("con espacios");
+        New("  con espacios  ").Text.Should().Be("con espacios");
     }
 
     [Fact]
-    public void Solo_se_puede_comentar_sobre_lo_que_alguien_pinta()
+    public void Only_entities_someone_renders_can_be_commented()
     {
-        var accion = () => Comment.Create(
-            Guid.NewGuid(), "Factura", Guid.NewGuid(), Autor, "Hola");
+        var act = () => Comment.Create(
+            Guid.NewGuid(), "Factura", Guid.NewGuid(), Author, "Hola");
 
-        accion.Should().Throw<InvalidOperationException>()
+        act.Should().Throw<InvalidOperationException>()
             .WithMessage(Comment.Rules.UnknownEntity);
     }
 
     /// <summary>Un comentario es de quien lo firma. Ni el administrador puede reescribirlo.</summary>
     [Fact]
-    public void Solo_el_autor_puede_editar()
+    public void Only_the_author_can_edit()
     {
-        var comentario = Nuevo();
+        var comment = New();
 
-        var accion = () => comentario.Edit(Otro, "Otra cosa");
+        var act = () => comment.Edit(Other, "Otra cosa");
 
-        accion.Should().Throw<InvalidOperationException>()
+        act.Should().Throw<InvalidOperationException>()
             .WithMessage(Comment.Rules.OnlyAuthorEdits);
-        comentario.Text.Should().Be("Un comentario");
+        comment.Text.Should().Be("Un comentario");
     }
 
     /// <summary>
@@ -86,27 +86,27 @@ public sealed class CommentTests
     /// leer con confianza.
     /// </summary>
     [Fact]
-    public void Editar_deja_constancia_de_que_se_edito()
+    public void Editing_records_that_it_was_edited()
     {
-        var comentario = Nuevo();
+        var comment = New();
 
-        comentario.Edit(Autor, "Corregido");
+        comment.Edit(Author, "Corregido");
 
-        comentario.Text.Should().Be("Corregido");
-        comentario.EditedAtUtc.Should().NotBeNull();
-        comentario.DomainEvents.Should().Contain(e => e is CommentEditedEvent);
+        comment.Text.Should().Be("Corregido");
+        comment.EditedAtUtc.Should().NotBeNull();
+        comment.DomainEvents.Should().Contain(e => e is CommentEditedEvent);
     }
 
     [Fact]
-    public void Editar_con_texto_vacio_se_rechaza_y_no_toca_el_original()
+    public void Editing_with_empty_text_is_rejected_and_keeps_the_original()
     {
-        var comentario = Nuevo();
+        var comment = New();
 
-        var accion = () => comentario.Edit(Autor, "  ");
+        var act = () => comment.Edit(Author, "  ");
 
-        accion.Should().Throw<InvalidOperationException>();
-        comentario.Text.Should().Be("Un comentario");
-        comentario.EditedAtUtc.Should().BeNull();
+        act.Should().Throw<InvalidOperationException>();
+        comment.Text.Should().Be("Un comentario");
+        comment.EditedAtUtc.Should().BeNull();
     }
 
     /// <summary>
@@ -114,34 +114,34 @@ public sealed class CommentTests
     /// pone palabras en boca de nadie.
     /// </summary>
     [Fact]
-    public void Lo_borra_su_autor_o_quien_administra()
+    public void Its_author_or_an_admin_can_delete_it()
     {
-        var comentario = Nuevo();
+        var comment = New();
 
-        comentario.CanDelete(Autor, "Member").Should().BeTrue();
-        comentario.CanDelete(Otro, "Admin").Should().BeTrue();
-        comentario.CanDelete(Otro, "Member").Should().BeFalse();
+        comment.CanDelete(Author, "Member").Should().BeTrue();
+        comment.CanDelete(Other, "Admin").Should().BeTrue();
+        comment.CanDelete(Other, "Member").Should().BeFalse();
     }
 
     [Fact]
-    public void Una_respuesta_recuerda_a_quien_responde()
+    public void A_reply_remembers_what_it_replies_to()
     {
-        var padre = Guid.NewGuid();
+        var parent = Guid.NewGuid();
 
-        Nuevo(respondeA: padre).ReplyToId.Should().Be(padre);
+        New(repliesTo: parent).ReplyToId.Should().Be(parent);
     }
 
     [Fact]
-    public void Un_comentario_sin_autor_o_sin_entidad_se_rechaza()
+    public void A_comment_without_author_or_entity_is_rejected()
     {
-        var sinAutor = () => Comment.Create(
+        var withoutAuthor = () => Comment.Create(
             Guid.NewGuid(), CommentableEntityTypes.Ticket, Guid.NewGuid(), Guid.Empty, "Hola");
-        sinAutor.Should().Throw<InvalidOperationException>()
+        withoutAuthor.Should().Throw<InvalidOperationException>()
             .WithMessage(Comment.Rules.MissingAuthor);
 
-        var sinEntidad = () => Comment.Create(
-            Guid.NewGuid(), CommentableEntityTypes.Ticket, Guid.Empty, Autor, "Hola");
-        sinEntidad.Should().Throw<InvalidOperationException>()
+        var withoutEntity = () => Comment.Create(
+            Guid.NewGuid(), CommentableEntityTypes.Ticket, Guid.Empty, Author, "Hola");
+        withoutEntity.Should().Throw<InvalidOperationException>()
             .WithMessage(Comment.Rules.MissingEntity);
     }
 }

@@ -22,14 +22,14 @@ namespace UnitTests;
 /// **todos** los módulos, incluidos los que este proyecto de pruebas no referencia, que son
 /// justo donde nadie está mirando.
 /// </summary>
-public sealed class AislamientoEntreModulosTests
+public sealed class ModuleIsolationTests
 {
     /// <summary>
     /// Sube desde el directorio de ejecución hasta encontrar la solución. El proyecto de
     /// pruebas se ejecuta desde bin/Release/net9.0, y la profundidad cambia según cómo se
     /// lance, así que buscar el ancla es más fiable que contar carpetas hacia arriba.
     /// </summary>
-    private static DirectoryInfo RaizDelRepositorio()
+    private static DirectoryInfo RepositoryRoot()
     {
         var dir = new DirectoryInfo(AppContext.BaseDirectory);
 
@@ -40,52 +40,52 @@ public sealed class AislamientoEntreModulosTests
         return dir!;
     }
 
-    private static string? ModuloDe(string rutaAbsoluta)
+    private static string? ModuleOf(string absolutePath)
     {
-        var partes = rutaAbsoluta.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
-        var i = Array.FindIndex(partes, p => p.Equals("Modules", StringComparison.OrdinalIgnoreCase));
+        var parts = absolutePath.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+        var i = Array.FindIndex(parts, p => p.Equals("Modules", StringComparison.OrdinalIgnoreCase));
 
-        return i >= 0 && i + 1 < partes.Length ? partes[i + 1] : null;
+        return i >= 0 && i + 1 < parts.Length ? parts[i + 1] : null;
     }
 
     [Fact]
-    public void Ningun_modulo_referencia_a_otro()
+    public void No_module_references_another()
     {
-        var raiz = RaizDelRepositorio();
-        var modulos = Path.Combine(raiz.FullName, "src", "Modules");
+        var root = RepositoryRoot();
+        var modules = Path.Combine(root.FullName, "src", "Modules");
 
-        Directory.Exists(modulos).Should().BeTrue();
+        Directory.Exists(modules).Should().BeTrue();
 
-        var infracciones = new List<string>();
+        var violations = new List<string>();
 
-        foreach (var csproj in Directory.EnumerateFiles(modulos, "*.csproj", SearchOption.AllDirectories))
+        foreach (var csproj in Directory.EnumerateFiles(modules, "*.csproj", SearchOption.AllDirectories))
         {
-            var moduloPropio = ModuloDe(csproj);
-            if (moduloPropio is null) continue;
+            var ownModule = ModuleOf(csproj);
+            if (ownModule is null) continue;
 
-            var carpeta = Path.GetDirectoryName(csproj)!;
+            var folder = Path.GetDirectoryName(csproj)!;
 
-            foreach (var referencia in XDocument.Load(csproj).Descendants("ProjectReference"))
+            foreach (var reference in XDocument.Load(csproj).Descendants("ProjectReference"))
             {
-                var incluye = referencia.Attribute("Include")?.Value;
-                if (string.IsNullOrWhiteSpace(incluye)) continue;
+                var include = reference.Attribute("Include")?.Value;
+                if (string.IsNullOrWhiteSpace(include)) continue;
 
                 // Los .csproj usan barras invertidas; en Linux hay que normalizarlas o la ruta
                 // se toma como un solo nombre de archivo y ningún módulo se detecta jamás.
-                var destino = Path.GetFullPath(
-                    Path.Combine(carpeta, incluye.Replace('\\', Path.DirectorySeparatorChar)));
+                var target = Path.GetFullPath(
+                    Path.Combine(folder, include.Replace('\\', Path.DirectorySeparatorChar)));
 
-                var moduloDestino = ModuloDe(destino);
+                var targetModule = ModuleOf(target);
 
-                if (moduloDestino is not null && !moduloDestino.Equals(moduloPropio, StringComparison.OrdinalIgnoreCase))
-                    infracciones.Add($"{moduloPropio} → {moduloDestino}  ({Path.GetFileName(csproj)} referencia {Path.GetFileName(destino)})");
+                if (targetModule is not null && !targetModule.Equals(ownModule, StringComparison.OrdinalIgnoreCase))
+                    violations.Add($"{ownModule} → {targetModule}  ({Path.GetFileName(csproj)} referencia {Path.GetFileName(target)})");
             }
         }
 
-        infracciones.Should().BeEmpty(
+        violations.Should().BeEmpty(
             "ningún módulo puede referenciar a otro; lo que cruza módulos se compone en el host, " +
             "como ApiHost/Reporting/DashboardQueries.cs o PuenteDeAutomatizaciones. Infracciones:\n" +
-            string.Join("\n", infracciones));
+            string.Join("\n", violations));
     }
 
     /// <summary>
@@ -93,24 +93,24 @@ public sealed class AislamientoEntreModulosTests
     /// independencia, en la otra dirección y más difícil de deshacer.
     /// </summary>
     [Fact]
-    public void Ningun_modulo_referencia_al_host()
+    public void No_module_references_the_host()
     {
-        var raiz = RaizDelRepositorio();
-        var modulos = Path.Combine(raiz.FullName, "src", "Modules");
+        var root = RepositoryRoot();
+        var modules = Path.Combine(root.FullName, "src", "Modules");
 
-        var infracciones = new List<string>();
+        var violations = new List<string>();
 
-        foreach (var csproj in Directory.EnumerateFiles(modulos, "*.csproj", SearchOption.AllDirectories))
+        foreach (var csproj in Directory.EnumerateFiles(modules, "*.csproj", SearchOption.AllDirectories))
         {
-            foreach (var referencia in XDocument.Load(csproj).Descendants("ProjectReference"))
+            foreach (var reference in XDocument.Load(csproj).Descendants("ProjectReference"))
             {
-                var incluye = referencia.Attribute("Include")?.Value ?? string.Empty;
+                var include = reference.Attribute("Include")?.Value ?? string.Empty;
 
-                if (incluye.Contains("ApiHost", StringComparison.OrdinalIgnoreCase))
-                    infracciones.Add($"{Path.GetFileName(csproj)} → {incluye}");
+                if (include.Contains("ApiHost", StringComparison.OrdinalIgnoreCase))
+                    violations.Add($"{Path.GetFileName(csproj)} → {include}");
             }
         }
 
-        infracciones.Should().BeEmpty("el host conoce a los módulos, no al revés:\n" + string.Join("\n", infracciones));
+        violations.Should().BeEmpty("el host conoce a los módulos, no al revés:\n" + string.Join("\n", violations));
     }
 }

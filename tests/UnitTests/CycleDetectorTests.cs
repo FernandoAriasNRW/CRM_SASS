@@ -15,7 +15,7 @@ namespace UnitTests;
 ///
 /// La arista se lee «Tarea está bloqueada por DependeDe».
 /// </summary>
-public sealed class DetectorDeCiclosTests
+public sealed class CycleDetectorTests
 {
     private static readonly Guid A = Guid.Parse("aaaaaaaa-0000-0000-0000-000000000001");
     private static readonly Guid B = Guid.Parse("bbbbbbbb-0000-0000-0000-000000000002");
@@ -23,74 +23,74 @@ public sealed class DetectorDeCiclosTests
     private static readonly Guid D = Guid.Parse("dddddddd-0000-0000-0000-000000000004");
 
     [Fact]
-    public void Sin_dependencias_previas_no_hay_ciclo()
+    public void Without_previous_dependencies_there_is_no_cycle()
     {
         CycleDetector.WouldCloseCycle([], A, B).Should().BeFalse();
     }
 
     [Fact]
-    public void Una_tarea_no_puede_depender_de_si_misma()
+    public void A_task_cannot_depend_on_itself()
     {
         CycleDetector.WouldCloseCycle([], A, A).Should().BeTrue();
     }
 
     [Fact]
-    public void El_ciclo_directo_se_detecta()
+    public void A_direct_cycle_is_detected()
     {
         // A ya está bloqueada por B; que B dependa de A cerraría el ciclo.
         CycleDetector.WouldCloseCycle([new Edge(A, B)], B, A).Should().BeTrue();
     }
 
     [Fact]
-    public void El_ciclo_largo_se_detecta()
+    public void A_long_cycle_is_detected()
     {
         // A←B, B←C: añadir C←A cierra A→B→C→A.
-        Edge[] aristas = [new(A, B), new(B, C)];
+        Edge[] edges = [new(A, B), new(B, C)];
 
-        CycleDetector.WouldCloseCycle(aristas, C, A).Should().BeTrue();
+        CycleDetector.WouldCloseCycle(edges, C, A).Should().BeTrue();
     }
 
     [Fact]
-    public void Una_cadena_larga_sin_cerrar_no_es_ciclo()
+    public void A_long_open_chain_is_not_a_cycle()
     {
-        Edge[] aristas = [new(A, B), new(B, C)];
+        Edge[] edges = [new(A, B), new(B, C)];
 
         // D no participa en la cadena: colgarla de A es legítimo.
-        CycleDetector.WouldCloseCycle(aristas, D, A).Should().BeFalse();
+        CycleDetector.WouldCloseCycle(edges, D, A).Should().BeFalse();
     }
 
     [Fact]
-    public void Un_diamante_no_es_un_ciclo()
+    public void A_diamond_is_not_a_cycle()
     {
         // A depende de B y de C, las dos dependen de D. Es un grafo dirigido acíclico
         // perfectamente válido, y un detector que sólo mirase «ya lo visité» sin dirección lo
         // rechazaría.
-        Edge[] aristas = [new(A, B), new(A, C), new(B, D), new(C, D)];
+        Edge[] edges = [new(A, B), new(A, C), new(B, D), new(C, D)];
 
-        CycleDetector.WouldCloseCycle(aristas, D, Guid.NewGuid()).Should().BeFalse();
+        CycleDetector.WouldCloseCycle(edges, D, Guid.NewGuid()).Should().BeFalse();
     }
 
     [Fact]
-    public void Repetir_una_dependencia_que_ya_existe_no_se_considera_ciclo()
+    public void Repeating_an_existing_dependency_is_not_a_cycle()
     {
         // Que ya exista es otro rechazo distinto, y lo comprueba el handler: aquí sólo importa
         // que no se confunda con un ciclo, porque el mensaje al usuario no es el mismo.
-        Edge[] aristas = [new(A, B)];
+        Edge[] edges = [new(A, B)];
 
-        CycleDetector.WouldCloseCycle(aristas, A, B).Should().BeFalse();
+        CycleDetector.WouldCloseCycle(edges, A, B).Should().BeFalse();
     }
 
     [Fact]
-    public void Un_grafo_que_ya_tuviera_un_ciclo_no_hace_girar_al_detector()
+    public void A_graph_that_already_has_a_cycle_does_not_loop_the_detector()
     {
         // Datos corruptos o una escritura concurrente podrían dejar un ciclo ya guardado. Un
         // recorrido recursivo ingenuo se colgaría aquí dentro de una petición.
-        Edge[] aristas = [new(A, B), new(B, A)];
+        Edge[] edges = [new(A, B), new(B, A)];
 
-        var comprobar = () => CycleDetector.WouldCloseCycle(aristas, C, A);
+        var check = () => CycleDetector.WouldCloseCycle(edges, C, A);
 
-        comprobar.Should().NotThrow();
-        comprobar().Should().BeFalse("C no está en el ciclo, así que colgarla de A es legítimo");
+        check.Should().NotThrow();
+        check().Should().BeFalse("C no está en el ciclo, así que colgarla de A es legítimo");
     }
 
     /// <summary>
@@ -98,18 +98,18 @@ public sealed class DetectorDeCiclosTests
     /// cadena completa x←y←z←w ya guardada, sólo cerrar el círculo debe dar ciclo.
     /// </summary>
     [Fact]
-    public void En_una_cadena_completa_solo_el_cierre_es_ciclo()
+    public void In_a_full_chain_only_the_closing_link_is_a_cycle()
     {
-        Edge[] cadena = [new(A, B), new(B, C), new(C, D)];
+        Edge[] chain = [new(A, B), new(B, C), new(C, D)];
 
         // Cerrar por cualquiera de los extremos hacia atrás es ciclo.
-        CycleDetector.WouldCloseCycle(cadena, D, A).Should().BeTrue();
-        CycleDetector.WouldCloseCycle(cadena, D, B).Should().BeTrue();
-        CycleDetector.WouldCloseCycle(cadena, C, A).Should().BeTrue();
+        CycleDetector.WouldCloseCycle(chain, D, A).Should().BeTrue();
+        CycleDetector.WouldCloseCycle(chain, D, B).Should().BeTrue();
+        CycleDetector.WouldCloseCycle(chain, C, A).Should().BeTrue();
 
         // Y hacia delante no lo es: son atajos dentro del mismo orden.
-        CycleDetector.WouldCloseCycle(cadena, A, D).Should().BeFalse();
-        CycleDetector.WouldCloseCycle(cadena, B, D).Should().BeFalse();
-        CycleDetector.WouldCloseCycle(cadena, A, C).Should().BeFalse();
+        CycleDetector.WouldCloseCycle(chain, A, D).Should().BeFalse();
+        CycleDetector.WouldCloseCycle(chain, B, D).Should().BeFalse();
+        CycleDetector.WouldCloseCycle(chain, A, C).Should().BeFalse();
     }
 }

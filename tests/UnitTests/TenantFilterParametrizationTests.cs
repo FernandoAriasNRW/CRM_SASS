@@ -33,7 +33,7 @@ public sealed class TenantFilterParametrizationTests : IDisposable
     private static readonly Guid TenantB = Guid.Parse("22222222-2222-2222-2222-222222222222");
 
     private readonly SqliteConnection _connection;
-    private readonly DbContextOptions<ProjectsDbContext> _opciones;
+    private readonly DbContextOptions<ProjectsDbContext> _options;
 
     public TenantFilterParametrizationTests()
     {
@@ -41,63 +41,63 @@ public sealed class TenantFilterParametrizationTests : IDisposable
         _connection.Open();
 
         // Unas mismas opciones para todos los contextos: un solo modelo, como en producción.
-        _opciones = new DbContextOptionsBuilder<ProjectsDbContext>()
+        _options = new DbContextOptionsBuilder<ProjectsDbContext>()
             .UseSqlite(_connection)
             .Options;
 
         // Este contexto es el que construye el modelo, y lo hace SIN tenant, igual que el
         // arranque de la aplicación cuando migra y siembra.
-        using var arranque = Contexto(Guid.Empty);
-        arranque.Database.EnsureCreated();
-        arranque.Projects.Add(Proyecto(TenantA, "Proyecto de A"));
-        arranque.Projects.Add(Proyecto(TenantB, "Proyecto de B"));
-        arranque.SaveChanges();
+        using var bootstrap = SampleContext(Guid.Empty);
+        bootstrap.Database.EnsureCreated();
+        bootstrap.Projects.Add(SampleProject(TenantA, "Proyecto de A"));
+        bootstrap.Projects.Add(SampleProject(TenantB, "Proyecto de B"));
+        bootstrap.SaveChanges();
     }
 
-    private ProjectsDbContext Contexto(Guid tenantId) =>
-        new(_opciones, new StubUserContext(tenantId));
+    private ProjectsDbContext SampleContext(Guid tenantId) =>
+        new(_options, new StubUserContext(tenantId));
 
-    private static Project Proyecto(Guid tenantId, string nombre) =>
+    private static Project SampleProject(Guid tenantId, string name) =>
         Project.Create(
             tenantId,
             spaceId: Guid.NewGuid(),
             folderId: null,
-            name: nombre,
+            name: name,
             description: "creado por el test",
             estimatedEndDate: DateOnly.FromDateTime(DateTime.UtcNow.AddDays(30)),
             ownerId: Guid.NewGuid());
 
     [Fact]
-    public void Un_tenant_ve_sus_filas_aunque_el_modelo_lo_construyera_otro_contexto_sin_tenant()
+    public void A_tenant_sees_its_rows_even_if_the_model_was_built_without_tenant()
     {
-        using var contexto = Contexto(TenantA);
+        using var context = SampleContext(TenantA);
 
-        var visibles = contexto.Projects.ToList();
+        var visible = context.Projects.ToList();
 
-        visibles.Should().HaveCount(1, "el tenant debe leerse en cada consulta, no al construir el modelo");
-        visibles.Single().TenantId.Should().Be(TenantA);
+        visible.Should().HaveCount(1, "el tenant debe leerse en cada consulta, no al construir el modelo");
+        visible.Single().TenantId.Should().Be(TenantA);
     }
 
     [Fact]
-    public void Dos_contextos_con_tenants_distintos_ven_cada_uno_lo_suyo()
+    public void Two_contexts_with_different_tenants_each_see_their_own()
     {
         // Con el tenant horneado, los dos verían lo mismo —nada— y el aislamiento parecería
         // correcto por el motivo equivocado.
-        using var contextoA = Contexto(TenantA);
-        using var contextoB = Contexto(TenantB);
+        using var contextA = SampleContext(TenantA);
+        using var contextB = SampleContext(TenantB);
 
-        contextoA.Projects.Single().Name.Value.Should().Be("Proyecto de A");
-        contextoB.Projects.Single().Name.Value.Should().Be("Proyecto de B");
+        contextA.Projects.Single().Name.Value.Should().Be("Proyecto de A");
+        contextB.Projects.Single().Name.Value.Should().Be("Proyecto de B");
     }
 
     [Fact]
-    public void El_tenant_no_aparece_como_literal_en_el_SQL()
+    public void The_tenant_does_not_appear_as_a_literal_in_the_SQL()
     {
         // La comprobación directa de la causa: si el filtro se traduce a un literal, el
         // modelo cacheado sirve el tenant de quien lo construyó a todos los demás.
-        using var contexto = Contexto(TenantA);
+        using var context = SampleContext(TenantA);
 
-        var sql = contexto.Projects.ToQueryString();
+        var sql = context.Projects.ToQueryString();
 
         sql.Should().NotContain("00000000-0000-0000-0000-000000000000",
             "el filtro de tenant se horneó como constante en lugar de parametrizarse");

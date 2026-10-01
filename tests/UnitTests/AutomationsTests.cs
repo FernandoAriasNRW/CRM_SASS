@@ -15,72 +15,72 @@ namespace UnitTests;
 /// pregunta por qué no pasó nada. Como es una función pura se puede recorrer la combinatoria
 /// entera sin base de datos.
 /// </summary>
-public sealed class EvaluadorDeCondicionesTests
+public sealed class ConditionEvaluatorTests
 {
-    private static readonly Dictionary<string, string?> UnCambioDeEstado = new()
+    private static readonly Dictionary<string, string?> AStatusChange = new()
     {
         [EventFields.Status] = "Done",
         [EventFields.PreviousStatus] = "In Progress",
         [EventFields.ProjectId] = "11111111-1111-1111-1111-111111111111",
     };
 
-    private static AutomationCondition Condicion(string campo, string operador, string? valor = null)
-        => new(campo, operador, valor);
+    private static AutomationCondition Condition(string field, string op, string? value = null)
+        => new(field, op, value);
 
     /// <summary>Sin condiciones, la regla se aplica siempre que salte su disparador.</summary>
     [Fact]
-    public void Sin_condiciones_siempre_se_cumple()
+    public void Without_conditions_it_always_matches()
     {
-        ConditionEvaluator.Matches([], UnCambioDeEstado).Should().BeTrue();
+        ConditionEvaluator.Matches([], AStatusChange).Should().BeTrue();
     }
 
     [Fact]
-    public void Igual_compara_sin_distinguir_mayusculas()
+    public void EqualTo_ignores_case()
     {
-        var condicion = Condicion(EventFields.Status, ConditionOperators.EqualTo, "done");
+        var condition = Condition(EventFields.Status, ConditionOperators.EqualTo, "done");
 
-        ConditionEvaluator.Matches([condicion], UnCambioDeEstado).Should().BeTrue();
+        ConditionEvaluator.Matches([condition], AStatusChange).Should().BeTrue();
     }
 
     [Fact]
-    public void Igual_no_se_cumple_con_otro_valor()
+    public void EqualTo_does_not_match_another_value()
     {
-        var condicion = Condicion(EventFields.Status, ConditionOperators.EqualTo, "To Do");
+        var condition = Condition(EventFields.Status, ConditionOperators.EqualTo, "To Do");
 
-        ConditionEvaluator.Matches([condicion], UnCambioDeEstado).Should().BeFalse();
+        ConditionEvaluator.Matches([condition], AStatusChange).Should().BeFalse();
     }
 
     [Fact]
-    public void Distinto_es_lo_contrario_de_igual()
+    public void NotEqualTo_is_the_opposite_of_EqualTo()
     {
         ConditionEvaluator.Matches(
-            [Condicion(EventFields.Status, ConditionOperators.NotEqualTo, "To Do")], UnCambioDeEstado)
+            [Condition(EventFields.Status, ConditionOperators.NotEqualTo, "To Do")], AStatusChange)
             .Should().BeTrue();
 
         ConditionEvaluator.Matches(
-            [Condicion(EventFields.Status, ConditionOperators.NotEqualTo, "Done")], UnCambioDeEstado)
+            [Condition(EventFields.Status, ConditionOperators.NotEqualTo, "Done")], AStatusChange)
             .Should().BeFalse();
     }
 
     [Fact]
-    public void Contiene_busca_dentro_del_valor()
+    public void Contains_searches_inside_the_value()
     {
         ConditionEvaluator.Matches(
-            [Condicion(EventFields.PreviousStatus, ConditionOperators.Contains, "progress")], UnCambioDeEstado)
+            [Condition(EventFields.PreviousStatus, ConditionOperators.Contains, "progress")], AStatusChange)
             .Should().BeTrue();
     }
 
     [Fact]
-    public void EstaVacio_se_cumple_con_nulo_y_con_espacios()
+    public void IsEmpty_matches_null_and_blank()
     {
-        var datos = new Dictionary<string, string?> { [EventFields.AssigneeId] = null };
+        var data = new Dictionary<string, string?> { [EventFields.AssigneeId] = null };
 
         ConditionEvaluator.Matches(
-            [Condicion(EventFields.AssigneeId, ConditionOperators.IsEmpty)], datos)
+            [Condition(EventFields.AssigneeId, ConditionOperators.IsEmpty)], data)
             .Should().BeTrue();
 
         ConditionEvaluator.Matches(
-            [Condicion(EventFields.AssigneeId, ConditionOperators.IsEmpty)],
+            [Condition(EventFields.AssigneeId, ConditionOperators.IsEmpty)],
             new Dictionary<string, string?> { [EventFields.AssigneeId] = "   " })
             .Should().BeTrue();
     }
@@ -90,58 +90,58 @@ public sealed class EvaluadorDeCondicionesTests
     /// haría que una regla escrita para otro disparador se ejecutara por accidente.
     /// </summary>
     [Fact]
-    public void Un_campo_que_el_evento_no_trae_no_cuenta_como_vacio()
+    public void A_field_missing_from_the_event_does_not_count_as_empty()
     {
         ConditionEvaluator.Matches(
-            [Condicion(EventFields.Priority, ConditionOperators.IsEmpty)], UnCambioDeEstado)
+            [Condition(EventFields.Priority, ConditionOperators.IsEmpty)], AStatusChange)
             .Should().BeFalse();
     }
 
     /// <summary>Las condiciones se combinan con Y: quien necesite un «o» crea dos reglas.</summary>
     [Fact]
-    public void Todas_las_condiciones_tienen_que_cumplirse()
+    public void All_conditions_must_match()
     {
-        var todas = new[]
+        var all = new[]
         {
-            Condicion(EventFields.Status, ConditionOperators.EqualTo, "Done"),
-            Condicion(EventFields.PreviousStatus, ConditionOperators.EqualTo, "In Progress"),
+            Condition(EventFields.Status, ConditionOperators.EqualTo, "Done"),
+            Condition(EventFields.PreviousStatus, ConditionOperators.EqualTo, "In Progress"),
         };
 
-        ConditionEvaluator.Matches(todas, UnCambioDeEstado).Should().BeTrue();
+        ConditionEvaluator.Matches(all, AStatusChange).Should().BeTrue();
 
-        var unaFalla = new[]
+        var oneFails = new[]
         {
-            Condicion(EventFields.Status, ConditionOperators.EqualTo, "Done"),
-            Condicion(EventFields.PreviousStatus, ConditionOperators.EqualTo, "To Do"),
+            Condition(EventFields.Status, ConditionOperators.EqualTo, "Done"),
+            Condition(EventFields.PreviousStatus, ConditionOperators.EqualTo, "To Do"),
         };
 
-        ConditionEvaluator.Matches(unaFalla, UnCambioDeEstado).Should().BeFalse();
+        ConditionEvaluator.Matches(oneFails, AStatusChange).Should().BeFalse();
     }
 }
 
 /// <summary>Invariantes de la regla de automatización.</summary>
 public sealed class AutomationRuleTests
 {
-    private static AutomationRule NuevaRegla(
-        string? nombre = null,
-        string? disparador = null,
-        IEnumerable<AutomationCondition>? condiciones = null,
-        IEnumerable<AutomationAction>? acciones = null)
+    private static AutomationRule NewRule(
+        string? name = null,
+        string? trigger = null,
+        IEnumerable<AutomationCondition>? conditions = null,
+        IEnumerable<AutomationAction>? actions = null)
         => AutomationRule.Create(
             Guid.NewGuid(),
-            nombre ?? "Cerrar al revisar",
-            disparador ?? TriggerTypes.TaskStatusChanged,
-            condiciones,
-            acciones ?? [new AutomationAction(ActionTypes.ChangePriority, "Low")]);
+            name ?? "Cerrar al revisar",
+            trigger ?? TriggerTypes.TaskStatusChanged,
+            conditions,
+            actions ?? [new AutomationAction(ActionTypes.ChangePriority, "Low")]);
 
     [Fact]
-    public void Una_regla_nace_activa_y_emite_evento()
+    public void A_rule_starts_active_and_raises_an_event()
     {
-        var regla = NuevaRegla();
+        var rule = NewRule();
 
-        regla.IsActive.Should().BeTrue();
-        regla.ExecutionCount.Should().Be(0);
-        regla.DomainEvents.Should().ContainSingle();
+        rule.IsActive.Should().BeTrue();
+        rule.ExecutionCount.Should().Be(0);
+        rule.DomainEvents.Should().ContainSingle();
     }
 
     /// <summary>
@@ -149,69 +149,69 @@ public sealed class AutomationRuleTests
     /// que no da ninguna señal.
     /// </summary>
     [Fact]
-    public void Una_regla_sin_acciones_se_rechaza()
+    public void A_rule_without_actions_is_rejected()
     {
-        var accion = () => NuevaRegla(acciones: []);
+        var act = () => NewRule(actions: []);
 
-        accion.Should().Throw<InvalidOperationException>()
+        act.Should().Throw<InvalidOperationException>()
             .WithMessage(AutomationRule.Rules.MissingActions);
     }
 
     [Fact]
-    public void Un_disparador_que_no_existe_se_rechaza()
+    public void An_unknown_trigger_is_rejected()
     {
-        var accion = () => NuevaRegla(disparador: "CuandoLlueva");
+        var act = () => NewRule(trigger: "CuandoLlueva");
 
-        accion.Should().Throw<InvalidOperationException>()
+        act.Should().Throw<InvalidOperationException>()
             .WithMessage(AutomationRule.Rules.UnknownTrigger);
     }
 
     [Fact]
-    public void Una_regla_sin_nombre_se_rechaza()
+    public void A_rule_without_name_is_rejected()
     {
-        var accion = () => NuevaRegla(nombre: "   ");
+        var act = () => NewRule(name: "   ");
 
-        accion.Should().Throw<InvalidOperationException>();
+        act.Should().Throw<InvalidOperationException>();
     }
 
     [Fact]
-    public void Un_campo_o_un_operador_que_no_existen_se_rechazan()
+    public void An_unknown_field_or_operator_is_rejected()
     {
-        var campoMalo = () => new AutomationCondition("Temperatura", ConditionOperators.EqualTo, "alta");
-        campoMalo.Should().Throw<InvalidOperationException>()
+        var badField = () => new AutomationCondition("Temperatura", ConditionOperators.EqualTo, "alta");
+        badField.Should().Throw<InvalidOperationException>()
             .WithMessage(AutomationRule.Rules.UnknownField);
 
-        var operadorMalo = () => new AutomationCondition(EventFields.Status, "SeParece", "Done");
-        operadorMalo.Should().Throw<InvalidOperationException>()
+        var badOperator = () => new AutomationCondition(EventFields.Status, "SeParece", "Done");
+        badOperator.Should().Throw<InvalidOperationException>()
             .WithMessage(AutomationRule.Rules.UnknownOperator);
     }
 
     [Fact]
-    public void Una_condicion_que_compara_necesita_con_que_comparar()
+    public void A_comparing_condition_needs_something_to_compare_with()
     {
-        var accion = () => new AutomationCondition(EventFields.Status, ConditionOperators.EqualTo, "  ");
+        var act = () => new AutomationCondition(EventFields.Status, ConditionOperators.EqualTo, "  ");
 
-        accion.Should().Throw<InvalidOperationException>()
+        act.Should().Throw<InvalidOperationException>()
             .WithMessage(AutomationRule.Rules.ConditionWithoutValue);
     }
 
     /// <summary>«Está vacío» es el único operador que no compara contra nada.</summary>
     [Fact]
-    public void EstaVacio_no_necesita_valor()
+    public void IsEmpty_needs_no_value()
     {
-        var accion = () => new AutomationCondition(EventFields.AssigneeId, ConditionOperators.IsEmpty, null);
+        var act = () => new AutomationCondition(EventFields.AssigneeId, ConditionOperators.IsEmpty, null);
 
-        accion.Should().NotThrow();
+        act.Should().NotThrow();
     }
 
     [Fact]
-    public void Una_accion_que_no_existe_o_sin_valor_se_rechaza()
+    public void An_unknown_action_or_one_without_value_is_rejected()
     {
-        var tipoMalo = () => new AutomationAction("MandarUnaPaloma", "sí");
-        tipoMalo.Should().Throw<InvalidOperationException>();
+        var badType = () => new AutomationAction("MandarUnaPaloma", "sí");
+        badType.Should().Throw<InvalidOperationException>();
 
-        var sinValor = () => new AutomationAction(ActionTypes.ChangeStatus, " ");
-        sinValor.Should().Throw<InvalidOperationException>()
+        var withoutValue = () => new AutomationAction(ActionTypes.ChangeStatus, " ");
+        withoutValue.Should().Throw<InvalidOperationException>()
             .WithMessage(AutomationRule.Rules.ActionWithoutValue);
     }
 
@@ -220,16 +220,16 @@ public sealed class AutomationRuleTests
     /// está haciendo daño sin perder cómo estaba montada.
     /// </summary>
     [Fact]
-    public void Desactivar_y_activar_no_tocan_lo_configurado()
+    public void Deactivating_and_activating_leave_the_configuration_alone()
     {
-        var regla = NuevaRegla();
+        var rule = NewRule();
 
-        regla.Deactivate();
-        regla.IsActive.Should().BeFalse();
-        regla.Actions.Should().HaveCount(1);
+        rule.Deactivate();
+        rule.IsActive.Should().BeFalse();
+        rule.Actions.Should().HaveCount(1);
 
-        regla.Activate();
-        regla.IsActive.Should().BeTrue();
+        rule.Activate();
+        rule.IsActive.Should().BeTrue();
     }
 
     /// <summary>
@@ -256,22 +256,22 @@ public sealed class AutomationRuleTests
     [Fact]
     public void A_condition_on_a_field_the_trigger_does_not_carry_is_rejected()
     {
-        var accion = () => NuevaRegla(
-            disparador: TriggerTypes.TaskCreated,
-            condiciones: [new AutomationCondition(EventFields.PreviousStatus, ConditionOperators.EqualTo, "Done")]);
+        var act = () => NewRule(
+            trigger: TriggerTypes.TaskCreated,
+            conditions: [new AutomationCondition(EventFields.PreviousStatus, ConditionOperators.EqualTo, "Done")]);
 
-        accion.Should().Throw<InvalidOperationException>()
+        act.Should().Throw<InvalidOperationException>()
             .WithMessage(AutomationRule.Rules.FieldNotInTrigger);
     }
 
     [Fact]
     public void The_same_condition_is_accepted_on_a_trigger_that_carries_the_field()
     {
-        var regla = NuevaRegla(
-            disparador: TriggerTypes.TaskStatusChanged,
-            condiciones: [new AutomationCondition(EventFields.PreviousStatus, ConditionOperators.EqualTo, "Done")]);
+        var rule = NewRule(
+            trigger: TriggerTypes.TaskStatusChanged,
+            conditions: [new AutomationCondition(EventFields.PreviousStatus, ConditionOperators.EqualTo, "Done")]);
 
-        regla.Conditions.Should().ContainSingle().Which.Field.Should().Be(EventFields.PreviousStatus);
+        rule.Conditions.Should().ContainSingle().Which.Field.Should().Be(EventFields.PreviousStatus);
     }
 
     /// <summary>
@@ -293,57 +293,57 @@ public sealed class AutomationRuleTests
     [Fact]
     public void Changing_the_trigger_to_one_without_the_field_is_rejected()
     {
-        var regla = NuevaRegla(
-            disparador: TriggerTypes.TaskStatusChanged,
-            condiciones: [new AutomationCondition(EventFields.PreviousStatus, ConditionOperators.EqualTo, "Done")]);
+        var rule = NewRule(
+            trigger: TriggerTypes.TaskStatusChanged,
+            conditions: [new AutomationCondition(EventFields.PreviousStatus, ConditionOperators.EqualTo, "Done")]);
 
-        var accion = () => regla.Update(
-            regla.Name, TriggerTypes.TaskCreated,
+        var act = () => rule.Update(
+            rule.Name, TriggerTypes.TaskCreated,
             [new AutomationCondition(EventFields.PreviousStatus, ConditionOperators.EqualTo, "Done")],
             [new AutomationAction(ActionTypes.ChangePriority, "Low")]);
 
-        accion.Should().Throw<InvalidOperationException>()
+        act.Should().Throw<InvalidOperationException>()
             .WithMessage(AutomationRule.Rules.FieldNotInTrigger);
-        regla.Trigger.Should().Be(TriggerTypes.TaskStatusChanged);
+        rule.Trigger.Should().Be(TriggerTypes.TaskStatusChanged);
     }
 
     [Fact]
-    public void Actualizar_reemplaza_condiciones_y_acciones()
+    public void Update_replaces_conditions_and_actions()
     {
-        var regla = NuevaRegla();
+        var rule = NewRule();
 
-        regla.Update(
+        rule.Update(
             "Otro nombre", TriggerTypes.TaskCreated,
             [new AutomationCondition(EventFields.AssigneeId, ConditionOperators.IsEmpty, null)],
             [new AutomationAction(ActionTypes.ChangeStatus, "In Progress")]);
 
-        regla.Name.Should().Be("Otro nombre");
-        regla.Trigger.Should().Be(TriggerTypes.TaskCreated);
-        regla.Conditions.Should().HaveCount(1);
-        regla.Actions.Should().ContainSingle().Which.Type.Should().Be(ActionTypes.ChangeStatus);
+        rule.Name.Should().Be("Otro nombre");
+        rule.Trigger.Should().Be(TriggerTypes.TaskCreated);
+        rule.Conditions.Should().HaveCount(1);
+        rule.Actions.Should().ContainSingle().Which.Type.Should().Be(ActionTypes.ChangeStatus);
     }
 
     [Fact]
-    public void Anotar_una_ejecucion_deja_rastro()
+    public void Recording_an_execution_leaves_a_trace()
     {
-        var regla = NuevaRegla();
-        var cuando = new DateTime(2026, 8, 14, 10, 30, 0, DateTimeKind.Utc);
+        var rule = NewRule();
+        var atUtc = new DateTime(2026, 8, 14, 10, 30, 0, DateTimeKind.Utc);
 
-        regla.RecordExecution(cuando);
+        rule.RecordExecution(atUtc);
 
-        regla.ExecutionCount.Should().Be(1);
-        regla.LastExecutedAtUtc.Should().Be(cuando);
+        rule.ExecutionCount.Should().Be(1);
+        rule.LastExecutedAtUtc.Should().Be(atUtc);
     }
 
     [Fact]
-    public void No_se_admiten_mas_acciones_de_las_permitidas()
+    public void No_more_actions_than_allowed_are_accepted()
     {
-        var demasiadas = Enumerable.Range(0, AutomationRule.MaxActions + 1)
+        var tooMany = Enumerable.Range(0, AutomationRule.MaxActions + 1)
             .Select(_ => new AutomationAction(ActionTypes.ChangePriority, "Low"));
 
-        var accion = () => NuevaRegla(acciones: demasiadas);
+        var act = () => NewRule(actions: tooMany);
 
-        accion.Should().Throw<InvalidOperationException>()
+        act.Should().Throw<InvalidOperationException>()
             .WithMessage(AutomationRule.Rules.TooManyActions);
     }
 
@@ -360,14 +360,14 @@ public sealed class AutomationRuleTests
     [InlineData(ConditionOperators.LessOrEqual, "-5", "2", true)]     // vencida hace cinco días
     [InlineData(ConditionOperators.GreaterOrEqual, "10", "10", true)]
     [InlineData(ConditionOperators.GreaterOrEqual, "9", "10", false)]
-    public void Los_dias_para_vencer_se_comparan_como_numero(
-        string operador, string valorDelEvento, string esperado, bool cumple)
+    public void Days_until_due_are_compared_as_numbers(
+        string op, string eventValue, string expected, bool matches)
     {
-        var condicion = new AutomationCondition(EventFields.DaysUntilDue, operador, esperado);
+        var condition = new AutomationCondition(EventFields.DaysUntilDue, op, expected);
 
-        var datos = new Dictionary<string, string?> { [EventFields.DaysUntilDue] = valorDelEvento };
+        var data = new Dictionary<string, string?> { [EventFields.DaysUntilDue] = eventValue };
 
-        ConditionEvaluator.Matches([condicion], datos).Should().Be(cumple);
+        ConditionEvaluator.Matches([condition], data).Should().Be(matches);
     }
 
     /// <summary>
@@ -376,39 +376,39 @@ public sealed class AutomationRuleTests
     /// saltaría nunca sin dar ningún error.
     /// </summary>
     [Fact]
-    public void Una_tarea_muy_vencida_no_cuenta_como_muy_adelantada()
+    public void A_long_overdue_task_does_not_count_as_far_ahead()
     {
-        var condicion = new AutomationCondition(
+        var condition = new AutomationCondition(
             EventFields.DaysUntilDue, ConditionOperators.GreaterOrEqual, "10");
 
-        var datos = new Dictionary<string, string?> { [EventFields.DaysUntilDue] = "-30" };
+        var data = new Dictionary<string, string?> { [EventFields.DaysUntilDue] = "-30" };
 
-        ConditionEvaluator.Matches([condicion], datos).Should().BeFalse(
+        ConditionEvaluator.Matches([condition], data).Should().BeFalse(
             "faltan menos treinta días, o sea que venció hace un mes: no es «diez o más»");
     }
 
     [Fact]
-    public void Un_operador_numerico_sobre_un_campo_de_texto_no_se_puede_guardar()
+    public void A_numeric_operator_on_a_text_field_cannot_be_saved()
     {
-        var accion = () => new AutomationCondition(
+        var act = () => new AutomationCondition(
             EventFields.Status, ConditionOperators.LessOrEqual, "Done");
 
-        accion.Should().Throw<InvalidOperationException>()
+        act.Should().Throw<InvalidOperationException>()
             .WithMessage(AutomationRule.Rules.NumericOperatorOnText);
     }
 
     [Fact]
-    public void Un_campo_numerico_no_se_compara_con_texto()
+    public void A_numeric_field_is_not_compared_as_text()
     {
-        var accion = () => new AutomationCondition(
+        var act = () => new AutomationCondition(
             EventFields.DaysUntilDue, ConditionOperators.EqualTo, "pronto");
 
-        accion.Should().Throw<InvalidOperationException>()
+        act.Should().Throw<InvalidOperationException>()
             .WithMessage(AutomationRule.Rules.NonNumericValue);
     }
 
     [Fact]
-    public void El_disparador_por_vencimiento_se_reconoce_como_de_tiempo()
+    public void The_due_date_trigger_is_recognised_as_time_based()
     {
         TriggerTypes.IsTimeBased(TriggerTypes.TaskDueSoon).Should().BeTrue();
 
@@ -417,13 +417,13 @@ public sealed class AutomationRuleTests
     }
 
     [Fact]
-    public void Se_puede_configurar_avisar_al_responsable()
+    public void Notifying_the_assignee_can_be_configured()
     {
-        var regla = NuevaRegla(
-            disparador: TriggerTypes.TaskDueSoon,
-            acciones: [new AutomationAction(ActionTypes.Notify, ActionTypes.AssigneeRecipient)]);
+        var rule = NewRule(
+            trigger: TriggerTypes.TaskDueSoon,
+            actions: [new AutomationAction(ActionTypes.Notify, ActionTypes.AssigneeRecipient)]);
 
-        regla.Actions.Should().ContainSingle()
+        rule.Actions.Should().ContainSingle()
             .Which.Value.Should().Be(ActionTypes.AssigneeRecipient);
     }
 
@@ -435,26 +435,26 @@ public sealed class AutomationRuleTests
     [InlineData(ExecutionOutcomes.Applied)]
     [InlineData(ExecutionOutcomes.ConditionsNotMet)]
     [InlineData(ExecutionOutcomes.Failed)]
-    public void Una_ejecucion_se_anota_con_su_resultado(string resultado)
+    public void An_execution_is_recorded_with_its_outcome(string result)
     {
-        var cuando = new DateTime(2026, 8, 14, 10, 30, 0, DateTimeKind.Utc);
+        var atUtc = new DateTime(2026, 8, 14, 10, 30, 0, DateTimeKind.Utc);
 
-        var ejecucion = AutomationExecution.Record(
-            Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), resultado, null, cuando);
+        var execution = AutomationExecution.Record(
+            Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), result, null, atUtc);
 
-        ejecucion.Outcome.Should().Be(resultado);
-        ejecucion.AtUtc.Should().Be(cuando);
-        ejecucion.Day.Should().Be(new DateOnly(2026, 8, 14),
+        execution.Outcome.Should().Be(result);
+        execution.AtUtc.Should().Be(atUtc);
+        execution.Day.Should().Be(new DateOnly(2026, 8, 14),
             "el día se guarda aparte para poder preguntar «¿ya se ejecutó hoy?» con una igualdad");
     }
 
     [Fact]
-    public void Un_resultado_inventado_no_se_admite()
+    public void A_made_up_outcome_is_not_accepted()
     {
-        var accion = () => AutomationExecution.Record(
+        var act = () => AutomationExecution.Record(
             Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), "MasOMenos", null, DateTime.UtcNow);
 
-        accion.Should().Throw<InvalidOperationException>();
+        act.Should().Throw<InvalidOperationException>();
     }
 
     /// <summary>
@@ -462,15 +462,15 @@ public sealed class AutomationRuleTests
     /// configurada no llene la tabla con la misma pila de llamadas repetida cada hora.
     /// </summary>
     [Fact]
-    public void El_detalle_se_recorta_en_vez_de_crecer_sin_limite()
+    public void The_detail_is_trimmed_instead_of_growing_without_limit()
     {
         var larguisimo = new string('x', AutomationExecution.MaxDetailLength + 500);
 
-        var ejecucion = AutomationExecution.Record(
+        var execution = AutomationExecution.Record(
             Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(),
             ExecutionOutcomes.Failed, larguisimo, DateTime.UtcNow);
 
-        ejecucion.Detail!.Length.Should().Be(AutomationExecution.MaxDetailLength);
+        execution.Detail!.Length.Should().Be(AutomationExecution.MaxDetailLength);
     }
 
     #endregion

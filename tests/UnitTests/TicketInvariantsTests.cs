@@ -13,7 +13,7 @@ namespace UnitTests;
 /// </summary>
 public sealed class TicketInvariantsTests
 {
-    private static Ticket NuevoTicket() => Ticket.Create(
+    private static Ticket NewTicket() => Ticket.Create(
         tenantId: Guid.NewGuid(),
         customerId: Guid.NewGuid(),
         title: "No puedo iniciar sesión",
@@ -21,9 +21,9 @@ public sealed class TicketInvariantsTests
         priority: TicketPriority.High).Value!;
 
     [Fact]
-    public void Un_ticket_nace_abierto_y_sin_resolver()
+    public void A_ticket_starts_open_and_unresolved()
     {
-        var ticket = NuevoTicket();
+        var ticket = NewTicket();
 
         ticket.StatusValue.Should().Be(TicketStatus.Open.Value);
         ticket.ResolvedAt.Should().BeNull();
@@ -31,18 +31,18 @@ public sealed class TicketInvariantsTests
     }
 
     [Fact]
-    public void Un_titulo_vacio_no_produce_ticket()
+    public void An_empty_title_produces_no_ticket()
     {
-        var resultado = Ticket.Create(Guid.NewGuid(), Guid.NewGuid(), "", "descripción", TicketPriority.Low);
+        var result = Ticket.Create(Guid.NewGuid(), Guid.NewGuid(), "", "descripción", TicketPriority.Low);
 
-        resultado.IsSuccess.Should().BeFalse();
-        resultado.Error.Should().NotBeNullOrWhiteSpace();
+        result.IsSuccess.Should().BeFalse();
+        result.Error.Should().NotBeNullOrWhiteSpace();
     }
 
     [Fact]
-    public void Resolver_deja_marca_de_tiempo()
+    public void Resolving_leaves_a_timestamp()
     {
-        var ticket = NuevoTicket();
+        var ticket = NewTicket();
 
         ticket.ChangeStatus(TicketStatus.Resolved).Should().BeTrue();
 
@@ -51,9 +51,9 @@ public sealed class TicketInvariantsTests
     }
 
     [Fact]
-    public void Un_ticket_cerrado_puede_reabrirse()
+    public void A_closed_ticket_can_be_reopened()
     {
-        var ticket = NuevoTicket();
+        var ticket = NewTicket();
         ticket.ChangeStatus(TicketStatus.Closed).Should().BeTrue();
 
         // Closed fue terminal y dejó de serlo con la retirada de la máquina de estados:
@@ -66,32 +66,32 @@ public sealed class TicketInvariantsTests
     }
 
     [Theory]
-    [MemberData(nameof(TodasLasCombinaciones))]
-    public void Cualquier_estado_es_alcanzable_desde_cualquier_otro(int desde, int hasta)
+    [MemberData(nameof(AllCombinations))]
+    public void Any_status_is_reachable_from_any_other(int from, int to)
     {
-        var origen = TicketStatus.All().Single(s => s.Value == desde);
-        var destino = TicketStatus.All().Single(s => s.Value == hasta);
-        var ticket = NuevoTicket();
-        ticket.ChangeStatus(origen);
+        var source = TicketStatus.All().Single(s => s.Value == from);
+        var target = TicketStatus.All().Single(s => s.Value == to);
+        var ticket = NewTicket();
+        ticket.ChangeStatus(source);
 
-        ticket.ChangeStatus(destino).Should().BeTrue();
+        ticket.ChangeStatus(target).Should().BeTrue();
 
-        ticket.StatusValue.Should().Be(destino.Value);
+        ticket.StatusValue.Should().Be(target.Value);
     }
 
-    public static TheoryData<int, int> TodasLasCombinaciones()
+    public static TheoryData<int, int> AllCombinations()
     {
-        var datos = new TheoryData<int, int>();
-        foreach (var desde in TicketStatus.All())
-            foreach (var hasta in TicketStatus.All())
-                datos.Add(desde.Value, hasta.Value);
-        return datos;
+        var data = new TheoryData<int, int>();
+        foreach (var from in TicketStatus.All())
+            foreach (var to in TicketStatus.All())
+                data.Add(from.Value, to.Value);
+        return data;
     }
 
     [Fact]
-    public void Un_ticket_resuelto_puede_reabrirse_a_en_curso()
+    public void A_resolved_ticket_can_be_reopened_to_in_progress()
     {
-        var ticket = NuevoTicket();
+        var ticket = NewTicket();
         ticket.ChangeStatus(TicketStatus.Resolved);
 
         ticket.ChangeStatus(TicketStatus.InProgress).Should().BeTrue();
@@ -100,40 +100,40 @@ public sealed class TicketInvariantsTests
     }
 
     [Fact]
-    public void Asignar_y_desasignar_un_agente()
+    public void Assign_and_unassign_an_agent()
     {
-        var ticket = NuevoTicket();
-        var agente = Guid.NewGuid();
+        var ticket = NewTicket();
+        var agent = Guid.NewGuid();
 
-        ticket.AssignTo(agente);
-        ticket.AssignedAgentId.Should().Be(agente);
+        ticket.AssignTo(agent);
+        ticket.AssignedAgentId.Should().Be(agent);
 
         ticket.Unassign();
         ticket.AssignedAgentId.Should().BeNull();
     }
 
     [Fact]
-    public void Cambiar_de_estado_emite_evento_con_el_anterior_y_el_nuevo()
+    public void Changing_status_raises_an_event_with_old_and_new()
     {
-        var ticket = NuevoTicket();
+        var ticket = NewTicket();
         ticket.ClearDomainEvents();
 
         ticket.ChangeStatus(TicketStatus.InProgress);
 
-        var evento = ticket.DomainEvents.Should().ContainSingle()
+        var domainEvent = ticket.DomainEvents.Should().ContainSingle()
             .Which.Should().BeOfType<TicketStatusChangedEvent>().Subject;
-        evento.PreviousStatus.Should().Be(TicketStatus.Open.Value);
-        evento.NewStatus.Should().Be(TicketStatus.InProgress.Value);
+        domainEvent.PreviousStatus.Should().Be(TicketStatus.Open.Value);
+        domainEvent.NewStatus.Should().Be(TicketStatus.InProgress.Value);
     }
 
     [Fact]
-    public void Añadir_la_misma_etiqueta_dos_veces_no_la_duplica()
+    public void Adding_the_same_tag_twice_does_not_duplicate_it()
     {
-        var ticket = NuevoTicket();
-        var etiqueta = Guid.NewGuid();
+        var ticket = NewTicket();
+        var tag = Guid.NewGuid();
 
-        ticket.AddTag(etiqueta);
-        ticket.AddTag(etiqueta);
+        ticket.AddTag(tag);
+        ticket.AddTag(tag);
 
         ticket.TagIds.Should().ContainSingle();
     }

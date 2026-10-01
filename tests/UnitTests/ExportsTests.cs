@@ -15,66 +15,66 @@ namespace UnitTests;
 /// las dos cosas que el plan señalaba como las que pudren estos sistemas: que nada se quede en
 /// «generando» para siempre, y que un fallo diga por qué.
 /// </summary>
-public class ExportacionTests
+public class ExportTests
 {
-    private static Export Nueva()
+    private static Export New()
         => Export.Request(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), ReportFormat.Csv).Value!;
 
     [Fact]
-    public void Nace_pendiente()
+    public void Starts_pending()
     {
-        var exportacion = Nueva();
+        var export = New();
 
-        exportacion.Status.Should().Be(ExportStatus.Pending);
-        exportacion.Attempts.Should().Be(0);
-        exportacion.FileName.Should().BeNull();
+        export.Status.Should().Be(ExportStatus.Pending);
+        export.Attempts.Should().Be(0);
+        export.FileName.Should().BeNull();
     }
 
     [Fact]
-    public void Sin_solicitante_no_se_puede_pedir()
+    public void It_cannot_be_requested_without_a_requester()
     {
-        var resultado = Export.Request(Guid.NewGuid(), Guid.NewGuid(), Guid.Empty, ReportFormat.Pdf);
+        var result = Export.Request(Guid.NewGuid(), Guid.NewGuid(), Guid.Empty, ReportFormat.Pdf);
 
-        resultado.IsFailure.Should().BeTrue();
-        resultado.Error.Should().Be(Export.Rules.MissingRequester);
+        result.IsFailure.Should().BeTrue();
+        result.Error.Should().Be(Export.Rules.MissingRequester);
     }
 
     /// <summary>Dos trabajadores compitiendo: el segundo se va con las manos vacías, sin error.</summary>
     [Fact]
-    public void Solo_un_trabajador_se_la_lleva()
+    public void Only_one_worker_takes_it()
     {
-        var exportacion = Nueva();
+        var export = New();
 
-        exportacion.Start().Should().BeTrue();
-        exportacion.Start().Should().BeFalse("otro ya la cogió; no es un error, es una carrera perdida");
+        export.Start().Should().BeTrue();
+        export.Start().Should().BeFalse("otro ya la cogió; no es un error, es una carrera perdida");
 
-        exportacion.Attempts.Should().Be(1, "el que pierde no cuenta como intento");
+        export.Attempts.Should().Be(1, "el que pierde no cuenta como intento");
     }
 
     [Fact]
-    public void Al_terminar_queda_lista_con_su_fichero()
+    public void Finishing_leaves_it_ready_with_its_file()
     {
-        var exportacion = Nueva();
-        exportacion.Start();
+        var export = New();
+        export.Start();
 
-        exportacion.Finish("informe.csv", 1234);
+        export.Finish("informe.csv", 1234);
 
-        exportacion.Status.Should().Be(ExportStatus.Ready);
-        exportacion.FileName.Should().Be("informe.csv");
-        exportacion.SizeBytes.Should().Be(1234);
-        exportacion.Error.Should().BeNull();
+        export.Status.Should().Be(ExportStatus.Ready);
+        export.FileName.Should().Be("informe.csv");
+        export.SizeBytes.Should().Be(1234);
+        export.Error.Should().BeNull();
     }
 
     [Fact]
-    public void Al_fallar_queda_el_motivo()
+    public void Failing_keeps_the_reason()
     {
-        var exportacion = Nueva();
-        exportacion.Start();
+        var export = New();
+        export.Start();
 
-        exportacion.Fail("La base de datos no responde");
+        export.Fail("La base de datos no responde");
 
-        exportacion.Status.Should().Be(ExportStatus.Failed);
-        exportacion.Error.Should().Be("La base de datos no responde");
+        export.Status.Should().Be(ExportStatus.Failed);
+        export.Error.Should().Be("La base de datos no responde");
     }
 
     /// <summary>
@@ -84,69 +84,69 @@ public class ExportacionTests
     /// «Fallida:» y nada más, que es lo mismo que no decir nada.
     /// </summary>
     [Fact]
-    public void Un_fallo_sin_mensaje_igualmente_explica_algo()
+    public void A_failure_without_message_still_explains_something()
     {
-        var exportacion = Nueva();
-        exportacion.Start();
+        var export = New();
+        export.Start();
 
-        exportacion.Fail("   ");
+        export.Fail("   ");
 
-        exportacion.Error.Should().Be(Export.Rules.FailureWithoutReason);
+        export.Error.Should().Be(Export.Rules.FailureWithoutReason);
     }
 
     [Fact]
-    public void Terminar_levanta_el_evento_que_dispara_el_aviso()
+    public void Finishing_raises_the_event_that_triggers_the_notification()
     {
-        var exportacion = Nueva();
-        exportacion.Start();
+        var export = New();
+        export.Start();
 
-        exportacion.Finish("informe.pdf", 10);
+        export.Finish("informe.pdf", 10);
 
-        exportacion.DomainEvents.Should().ContainSingle(e => e is Reporting.Domain.Events.ExportReadyEvent);
+        export.DomainEvents.Should().ContainSingle(e => e is Reporting.Domain.Events.ExportReadyEvent);
     }
 
     [Fact]
-    public void Fallar_tambien_levanta_evento_porque_del_fallo_tambien_se_avisa()
+    public void Failing_also_raises_an_event_because_failures_are_notified_too()
     {
-        var exportacion = Nueva();
-        exportacion.Start();
+        var export = New();
+        export.Start();
 
-        exportacion.Fail("se rompió");
+        export.Fail("se rompió");
 
-        exportacion.DomainEvents.Should().ContainSingle(e => e is Reporting.Domain.Events.ExportFailedEvent);
+        export.DomainEvents.Should().ContainSingle(e => e is Reporting.Domain.Events.ExportFailedEvent);
     }
 
     [Fact]
-    public void Una_recien_empezada_no_se_vuelve_a_coger()
+    public void A_just_started_one_is_not_taken_again()
     {
-        var exportacion = Nueva();
-        exportacion.Start();
+        var export = New();
+        export.Start();
 
-        exportacion.CanStart().Should().BeFalse(
+        export.CanStart().Should().BeFalse(
             "acaba de empezar; recogerla ahora sería generarla dos veces a la vez");
     }
 
     [Fact]
-    public void Una_lista_no_se_vuelve_a_generar()
+    public void A_ready_one_is_not_generated_again()
     {
-        var exportacion = Nueva();
-        exportacion.Start();
-        exportacion.Finish("x.csv", 1);
+        var export = New();
+        export.Start();
+        export.Finish("x.csv", 1);
 
-        exportacion.CanStart().Should().BeFalse();
+        export.CanStart().Should().BeFalse();
     }
 
     [Fact]
-    public void Reencolar_la_devuelve_a_la_cola()
+    public void Requeue_puts_it_back_in_the_queue()
     {
-        var exportacion = Nueva();
-        exportacion.Start();
-        exportacion.Fail("un fallo pasajero");
+        var export = New();
+        export.Start();
+        export.Fail("un fallo pasajero");
 
-        exportacion.Requeue();
+        export.Requeue();
 
-        exportacion.Status.Should().Be(ExportStatus.Pending);
-        exportacion.CanStart().Should().BeTrue();
+        export.Status.Should().Be(ExportStatus.Pending);
+        export.CanStart().Should().BeTrue();
     }
 
     /// <summary>
@@ -157,18 +157,18 @@ public class ExportacionTests
     /// y consumiendo el trabajador que otros necesitan.
     /// </summary>
     [Fact]
-    public void Los_intentos_se_acaban()
+    public void Attempts_run_out()
     {
-        var exportacion = Nueva();
+        var export = New();
 
         for (var i = 0; i < Export.MaxAttempts; i++)
         {
-            exportacion.Requeue();
-            exportacion.Start().Should().BeTrue();
+            export.Requeue();
+            export.Start().Should().BeTrue();
         }
 
-        exportacion.Attempts.Should().Be(Export.MaxAttempts);
-        exportacion.HasAttemptsLeft().Should().BeFalse();
+        export.Attempts.Should().Be(Export.MaxAttempts);
+        export.HasAttemptsLeft().Should().BeFalse();
     }
 }
 
@@ -179,12 +179,12 @@ public class ExportacionTests
 /// comprueba es lo que rompe un fichero en manos de quien lo abre: el escapado, el BOM y la
 /// coherencia entre columnas y filas.
 /// </summary>
-public class EscritoresDeInformeTests
+public class ReportWriterTests
 {
-    private static ReportTable Tabla(params string[][] filas)
+    private static ReportTable Table(params string[][] rows)
         => new("Informe de prueba", "Un subtítulo",
                ["Nombre", "Cantidad"],
-               filas.Select(f => (IReadOnlyList<string>)f).ToList());
+               rows.Select(f => (IReadOnlyList<string>)f).ToList());
 
     #region CSV
 
@@ -195,9 +195,9 @@ public class EscritoresDeInformeTests
     /// primer motivo por el que alguien dice que «la exportación no funciona».
     /// </summary>
     [Fact]
-    public void El_csv_lleva_bom_para_que_los_acentos_no_se_rompan()
+    public void Csv_has_a_bom_so_accents_survive()
     {
-        var bytes = new CsvWriter().Write(Tabla(["Diseño", "3"]));
+        var bytes = new CsvWriter().Write(Table(["Diseño", "3"]));
 
         bytes.Take(3).Should().Equal((byte)0xEF, (byte)0xBB, (byte)0xBF);
         Encoding.UTF8.GetString(bytes).Should().Contain("Diseño");
@@ -209,18 +209,18 @@ public class EscritoresDeInformeTests
     /// Con comas, «1,5» acabaría partido en dos columnas.
     /// </summary>
     [Fact]
-    public void El_csv_separa_por_punto_y_coma()
+    public void Csv_is_semicolon_separated()
     {
-        var bytes = new CsvWriter().Write(Tabla(["Tarea", "1,5"]));
-        var texto = Encoding.UTF8.GetString(bytes);
+        var bytes = new CsvWriter().Write(Table(["Tarea", "1,5"]));
+        var text = Encoding.UTF8.GetString(bytes);
 
-        texto.Should().Contain("Nombre;Cantidad");
+        text.Should().Contain("Nombre;Cantidad");
 
         // «1,5» va **sin comillas**, y eso es exactamente lo que se busca: con la coma como
         // separador habría que entrecomillar cada número decimal del informe, y cualquier
         // herramienta que se saltara el entrecomillado partiría la fila. Con punto y coma, un
         // decimal español es un valor normal.
-        texto.Should().Contain("Tarea;1,5");
+        text.Should().Contain("Tarea;1,5");
     }
 
     /// <summary>
@@ -230,26 +230,26 @@ public class EscritoresDeInformeTests
     /// de ahí**, así que el síntoma aparece en filas que no tienen nada que ver.
     /// </summary>
     [Fact]
-    public void El_csv_entrecomilla_lo_que_llevaria_a_partir_la_fila()
+    public void Csv_quotes_what_would_split_the_row()
     {
-        var bytes = new CsvWriter().Write(Tabla(["Revisar; luego cerrar", "2"]));
-        var texto = Encoding.UTF8.GetString(bytes);
+        var bytes = new CsvWriter().Write(Table(["Revisar; luego cerrar", "2"]));
+        var text = Encoding.UTF8.GetString(bytes);
 
-        texto.Should().Contain("\"Revisar; luego cerrar\";2");
+        text.Should().Contain("\"Revisar; luego cerrar\";2");
     }
 
     [Fact]
-    public void El_csv_duplica_las_comillas_de_dentro()
+    public void Csv_doubles_inner_quotes()
     {
-        var bytes = new CsvWriter().Write(Tabla(["Dijo \"vale\"", "1"]));
+        var bytes = new CsvWriter().Write(Table(["Dijo \"vale\"", "1"]));
 
         Encoding.UTF8.GetString(bytes).Should().Contain("\"Dijo \"\"vale\"\"\"");
     }
 
     [Fact]
-    public void El_csv_entrecomilla_los_saltos_de_linea()
+    public void Csv_quotes_line_breaks()
     {
-        var bytes = new CsvWriter().Write(Tabla(["Primera\nSegunda", "1"]));
+        var bytes = new CsvWriter().Write(Table(["Primera\nSegunda", "1"]));
 
         Encoding.UTF8.GetString(bytes).Should().Contain("\"Primera\nSegunda\"");
     }
@@ -261,12 +261,12 @@ public class EscritoresDeInformeTests
     /// que lo abra tomará el título como el nombre de la primera columna.
     /// </summary>
     [Fact]
-    public void El_csv_empieza_por_los_encabezados_y_no_por_el_titulo()
+    public void Csv_starts_with_headers_not_the_title()
     {
-        var bytes = new CsvWriter().Write(Tabla(["Algo", "1"]));
-        var primera = Encoding.UTF8.GetString(bytes).Split('\n')[0].TrimStart('﻿');
+        var bytes = new CsvWriter().Write(Table(["Algo", "1"]));
+        var first = Encoding.UTF8.GetString(bytes).Split('\n')[0].TrimStart('﻿');
 
-        primera.Should().StartWith("Nombre;Cantidad");
+        first.Should().StartWith("Nombre;Cantidad");
     }
 
     #endregion
@@ -281,24 +281,24 @@ public class EscritoresDeInformeTests
     /// lanzaría y el PDF pintaría una celda vacía. Tres síntomas para una sola causa.
     /// </summary>
     [Fact]
-    public void Una_fila_descuadrada_se_detecta_antes_de_escribir()
+    public void A_misaligned_row_is_detected_before_writing()
     {
-        var tabla = new ReportTable("X", null, ["A", "B"], [["solo una"]]);
+        var table = new ReportTable("X", null, ["A", "B"], [["solo una"]]);
 
-        var accion = () => new CsvWriter().Write(tabla);
+        var act = () => new CsvWriter().Write(table);
 
-        accion.Should().Throw<InvalidOperationException>()
+        act.Should().Throw<InvalidOperationException>()
             .WithMessage("*1 celdas*2 columnas*");
     }
 
     [Fact]
-    public void Una_tabla_sin_columnas_no_se_escribe()
+    public void A_table_without_columns_is_not_written()
     {
-        var tabla = new ReportTable("X", null, [], []);
+        var table = new ReportTable("X", null, [], []);
 
-        var accion = () => new CsvWriter().Write(tabla);
+        var act = () => new CsvWriter().Write(table);
 
-        accion.Should().Throw<InvalidOperationException>();
+        act.Should().Throw<InvalidOperationException>();
     }
 
     #endregion
@@ -313,9 +313,9 @@ public class EscritoresDeInformeTests
     /// cosa.
     /// </summary>
     [Fact]
-    public void El_excel_es_un_xlsx_valido()
+    public void Excel_is_a_valid_xlsx()
     {
-        var bytes = new ExcelWriter().Write(Tabla(["Algo", "1"], ["Otra cosa", "2"]));
+        var bytes = new ExcelWriter().Write(Table(["Algo", "1"], ["Otra cosa", "2"]));
 
         bytes.Length.Should().BeGreaterThan(0);
         // Un .xlsx es un zip: empieza por «PK».
@@ -323,11 +323,11 @@ public class EscritoresDeInformeTests
     }
 
     [Fact]
-    public void El_pdf_es_un_pdf_valido()
+    public void Pdf_is_a_valid_pdf()
     {
         QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
 
-        var bytes = new PdfWriter().Write(Tabla(["Algo", "1"]));
+        var bytes = new PdfWriter().Write(Table(["Algo", "1"]));
 
         Encoding.ASCII.GetString(bytes.Take(5).ToArray()).Should().Be("%PDF-");
     }
@@ -339,14 +339,14 @@ public class EscritoresDeInformeTests
     /// pidió a preguntarse si se rompió algo.
     /// </summary>
     [Fact]
-    public void Un_informe_vacio_tambien_produce_fichero()
+    public void An_empty_report_still_produces_a_file()
     {
         QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
-        var vacia = new ReportTable("Sin datos", null, ["A"], []);
+        var empty = new ReportTable("Sin datos", null, ["A"], []);
 
-        new CsvWriter().Write(vacia).Length.Should().BeGreaterThan(0);
-        new ExcelWriter().Write(vacia).Length.Should().BeGreaterThan(0);
-        new PdfWriter().Write(vacia).Length.Should().BeGreaterThan(0);
+        new CsvWriter().Write(empty).Length.Should().BeGreaterThan(0);
+        new ExcelWriter().Write(empty).Length.Should().BeGreaterThan(0);
+        new PdfWriter().Write(empty).Length.Should().BeGreaterThan(0);
     }
 
     #endregion
@@ -354,7 +354,7 @@ public class EscritoresDeInformeTests
     #region El selector
 
     [Fact]
-    public void El_selector_devuelve_el_escritor_de_cada_formato()
+    public void The_selector_returns_each_format_writer()
     {
         var selector = new ReportWriters([new CsvWriter(), new ExcelWriter(), new PdfWriter()]);
 
@@ -370,13 +370,13 @@ public class EscritoresDeInformeTests
     /// explicación: justo lo que la pantalla de informes ya hizo una vez con los tipos.
     /// </summary>
     [Fact]
-    public void Un_formato_sin_escritor_lo_dice_y_enumera_los_que_hay()
+    public void A_format_without_writer_says_so_and_lists_the_available_ones()
     {
         var selector = new ReportWriters([new CsvWriter()]);
 
-        var accion = () => selector.For("Word");
+        var act = () => selector.For("Word");
 
-        accion.Should().Throw<InvalidOperationException>().WithMessage("*Word*Csv*");
+        act.Should().Throw<InvalidOperationException>().WithMessage("*Word*Csv*");
     }
 
     #endregion
