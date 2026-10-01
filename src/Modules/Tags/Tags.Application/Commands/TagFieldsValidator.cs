@@ -27,7 +27,7 @@ public sealed class TagFieldsValidator : AbstractValidator<ITagFields>
             .Must(c => !TagCategory.IsAutomatic(c))
                 .WithMessage("Las etiquetas de equipos y proyectos se crean solas al crear el equipo o el proyecto")
             .MustAsync(async (fields, category, ct) =>
-                    TagCategory.IsBuiltIn(category) || await categories.ExistsAsync(fields.TenantId, category.Trim(), ct))
+                    TagCategory.IsBuiltIn(category) || await categories.ExistsAsync(fields.TenantId, category.Trim(), cancellationToken: ct))
                 .WithMessage(fields => $"No existe la categoría «{fields.Category}»");
     }
 }

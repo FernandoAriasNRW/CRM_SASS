@@ -10,6 +10,8 @@ export interface Project {
   ownerId: string;
   spaceId: string;
   folderId?: string;
+  /** Las etiquetas: ids del módulo de etiquetas (`GET /tags`). */
+  tagIds?: string[];
 }
 
 export interface ProjectsState {

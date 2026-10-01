@@ -19,11 +19,19 @@ internal sealed class TagQueries(TagsDbContext dbContext) : ITagQueries
             .Select(t => new TagDto(t.Id, t.Name, t.ColorHex, t.Category, t.Category, t.ExternalReferenceId, t.BuiltInKey, t.CreatedBy, false))
             .ToListAsync(cancellationToken);
 
+    public Task<Dictionary<string, int>> CountByCategoryAsync(Guid tenantId, CancellationToken cancellationToken = default)
+        => dbContext.Tags
+            .AsNoTracking()
+            .Where(t => t.TenantId == tenantId)
+            .GroupBy(t => t.Category)
+            .Select(g => new { Category = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.Category, x => x.Count, cancellationToken);
+
     public Task<List<TagCategoryDto>> GetCustomCategoriesAsync(Guid tenantId, CancellationToken cancellationToken = default)
         => dbContext.CustomTagCategories
             .AsNoTracking()
             .Where(c => c.TenantId == tenantId)
             .OrderBy(c => c.Name)
-            .Select(c => new TagCategoryDto(c.Id, c.Name, c.Name, true, false))
+            .Select(c => new TagCategoryDto(c.Id, c.Name, c.Name, true, false, 0, false))
             .ToListAsync(cancellationToken);
 }

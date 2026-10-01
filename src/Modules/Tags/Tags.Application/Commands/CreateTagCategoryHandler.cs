@@ -14,13 +14,13 @@ public sealed class CreateTagCategoryHandler(ITagCategoryRepository categories)
     {
         var name = request.Name.Trim();
 
-        if (await categories.ExistsAsync(request.TenantId, name, cancellationToken))
+        if (await categories.ExistsAsync(request.TenantId, name, cancellationToken: cancellationToken))
             return Result<TagCategoryDto>.Failure($"Ya existe una categoría llamada «{name}»");
 
         var category = CustomTagCategory.Create(request.TenantId, name);
         await categories.AddAsync(category, cancellationToken);
 
         return Result<TagCategoryDto>.Success(
-            new TagCategoryDto(category.Id, category.Name, category.Name, IsCustom: true, IsAutomatic: false));
+            new TagCategoryDto(category.Id, category.Name, category.Name, IsCustom: true, IsAutomatic: false, TagCount: 0, CanManage: true));
     }
 }

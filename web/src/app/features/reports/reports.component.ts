@@ -5,13 +5,15 @@ import { BadgeComponent, type BadgeVariant } from '../../shared/ui/badge.compone
 import { ButtonComponent } from '../../shared/ui/button.component';
 import { ReportCreateModalComponent } from './report-create-modal.component';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import { lucideRefreshCw, lucidePlus, lucideDownload, lucideFileText, lucideFilter, lucideSave } from '@ng-icons/lucide';
+import { lucideRefreshCw, lucidePlus, lucideDownload, lucideFileText, lucideFilter, lucideSave, lucideTag } from '@ng-icons/lucide';
 import { DataTableComponent, ColumnDef, TableState } from '../../shared/ui/data-table/data-table.component';
 import { AdvancedFiltersComponent, FilterField } from '../../shared/ui/data-table/advanced-filters.component';
 import { ViewsService, SavedView } from '../../shared/services/views.service';
 import { TableColumnService } from '../../shared/services/table-column.service';
 import { ExportsService } from './exports.service';
 import { ReportBuilderComponent } from './report-builder.component';
+import { TagChipsComponent } from '../../shared/ui/tag-chips.component';
+import { TagAssignDrawerComponent } from '../../shared/ui/tag-assign-drawer.component';
 
 interface ReportDto {
   id: string;
@@ -19,13 +21,15 @@ interface ReportDto {
   type: string;
   format: string;
   parameters: string;
+  /** Las etiquetas: ids del módulo de etiquetas. */
+  tagIds?: string[];
 }
 
 @Component({
   selector: 'app-reports',
   standalone: true,
-  imports: [ReportBuilderComponent, BadgeComponent, ButtonComponent, NgIconComponent, ReportCreateModalComponent, DataTableComponent, AdvancedFiltersComponent],
-  viewProviders: [provideIcons({ lucideRefreshCw, lucidePlus, lucideDownload, lucideFileText, lucideFilter, lucideSave })],
+  imports: [ReportBuilderComponent, BadgeComponent, ButtonComponent, NgIconComponent, ReportCreateModalComponent, DataTableComponent, AdvancedFiltersComponent, TagChipsComponent, TagAssignDrawerComponent],
+  viewProviders: [provideIcons({ lucideRefreshCw, lucidePlus, lucideDownload, lucideFileText, lucideFilter, lucideSave, lucideTag })],
   templateUrl: './reports.component.html',
 })
 export class ReportsComponent implements OnInit {
@@ -61,7 +65,8 @@ export class ReportsComponent implements OnInit {
     name: { label: 'Nombre' },
     type: { label: 'Tipo' },
     format: { label: 'Formato', type: 'custom' },
-    parameters: { label: 'Parámetros', sortable: false }
+    parameters: { label: 'Parámetros', sortable: false },
+    tagIds: { label: $localize`Etiquetas`, type: 'custom', sortable: false }
   }, [
     { key: 'actions', label: 'Acciones', sortable: false, type: 'custom' }
   ]);
@@ -76,10 +81,12 @@ export class ReportsComponent implements OnInit {
 
   @ViewChild('formatTemplate', { static: true }) formatTemplate!: TemplateRef<any>;
   @ViewChild('actionsTemplate', { static: true }) actionsTemplate!: TemplateRef<any>;
+  @ViewChild('tagsTemplate', { static: true }) tagsTemplate!: TemplateRef<unknown>;
 
   ngOnInit(): void {
     this.tableColumns.find(c => c.key === 'format')!.template = this.formatTemplate;
     this.tableColumns.find(c => c.key === 'actions')!.template = this.actionsTemplate;
+    this.tableColumns.find(c => c.key === 'tagIds')!.template = this.tagsTemplate;
     this.loadViews();
     this.load();
   }
@@ -182,6 +189,13 @@ export class ReportsComponent implements OnInit {
   }
 
   openBuilder(report: ReportDto): void { this.reportInBuilder.set(report); }
+
+  /** El informe cuyas etiquetas se están eligiendo, o `null`. */
+  readonly reportTagging = signal<ReportDto | null>(null);
+
+  /** Cómo se guardan las etiquetas de un informe: su propio endpoint, el informe no tiene edición general. */
+  readonly saveReportTags = (tagIds: string[]) =>
+    this.api.put<void>(`/reports/${this.reportTagging()!.id}/tags`, { tagIds }, { sinAviso: true });
   closeBuilder(): void { this.reportInBuilder.set(null); }
 
   /** Si este informe tiene una exportación en marcha, para desactivar el botón. */
