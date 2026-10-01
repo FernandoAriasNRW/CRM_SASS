@@ -3,10 +3,10 @@ using BuildingBlocks.Domain.Primitives;
 namespace Automations.Domain.Events;
 
 public sealed record AutomationRuleDefinedEvent(
-    Guid RuleId, Guid TenantId, string Nombre, string Disparador) : DomainEvent;
+    Guid RuleId, Guid TenantId, string Name, string Trigger) : DomainEvent;
 
 public sealed record AutomationRuleUpdatedEvent(
-    Guid RuleId, Guid TenantId, string Nombre) : DomainEvent;
+    Guid RuleId, Guid TenantId, string Name) : DomainEvent;
 
 /// <summary>
 /// Una regla se ejecutó sobre una entidad.
@@ -16,4 +16,4 @@ public sealed record AutomationRuleUpdatedEvent(
 /// <see cref="Entities.AutomationRule"/>.
 /// </summary>
 public sealed record AutomationRuleExecutedEvent(
-    Guid RuleId, Guid TenantId, Guid EntityId, int Acciones) : DomainEvent;
+    Guid RuleId, Guid TenantId, Guid EntityId, int Actions) : DomainEvent;

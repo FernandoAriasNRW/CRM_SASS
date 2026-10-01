@@ -64,10 +64,10 @@ public sealed class AutomationsFlowTests(CrmApiFactory factory)
 
     private static object ReglaQueBajaLaPrioridadAlCerrar(string nombre) => new
     {
-        nombre,
-        disparador = "TareaCambiaDeEstado",
-        condiciones = new[] { new { campo = "Estado", operador = "Igual", valor = "Done" } },
-        acciones = new[] { new { tipo = "CambiarPrioridad", valor = "Low" } },
+        name = nombre,
+        trigger = "TaskStatusChanged",
+        conditions = new[] { new { field = "Status", @operator = "EqualTo", value = "Done" } },
+        actions = new[] { new { type = "ChangePriority", value = "Low" } },
     };
 
     /// <summary>
@@ -113,8 +113,8 @@ public sealed class AutomationsFlowTests(CrmApiFactory factory)
             "la automatización tenía que haber bajado la prioridad al pasar la tarea a Done");
 
         var regla = await ReglaAsync(cliente, reglaId);
-        regla.GetProperty("vecesEjecutada").GetInt32().Should().Be(1);
-        regla.GetProperty("ultimaEjecucionUtc").ValueKind.Should().NotBe(JsonValueKind.Null);
+        regla.GetProperty("executionCount").GetInt32().Should().Be(1);
+        regla.GetProperty("lastExecutedAtUtc").ValueKind.Should().NotBe(JsonValueKind.Null);
     }
 
     /// <summary>
@@ -134,7 +134,7 @@ public sealed class AutomationsFlowTests(CrmApiFactory factory)
         var tarea = await cliente.GetFromJsonAsync<JsonElement>($"/api/v1/tasks/{tareaId}");
         tarea.GetProperty("priority").GetString().Should().Be("Normal");
 
-        (await ReglaAsync(cliente, reglaId)).GetProperty("vecesEjecutada").GetInt32().Should().Be(0);
+        (await ReglaAsync(cliente, reglaId)).GetProperty("executionCount").GetInt32().Should().Be(0);
     }
 
     /// <summary>
@@ -148,7 +148,7 @@ public sealed class AutomationsFlowTests(CrmApiFactory factory)
         await LimpiarReglasAsync(cliente);
         var reglaId = await CrearReglaAsync(cliente, ReglaQueBajaLaPrioridadAlCerrar($"Desactivada {Guid.NewGuid()}"));
 
-        var apagar = await cliente.PutAsJsonAsync($"/api/v1/automations/{reglaId}/active", new { activa = false });
+        var apagar = await cliente.PutAsJsonAsync($"/api/v1/automations/{reglaId}/active", new { isActive = false });
         apagar.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var tareaId = await CrearTareaAsync(cliente, tenantId, "Tarea con la regla apagada");
@@ -173,18 +173,18 @@ public sealed class AutomationsFlowTests(CrmApiFactory factory)
         // prioridad. Si las cadenas existieran, la prioridad acabaría en Low.
         await CrearReglaAsync(cliente, new
         {
-            nombre = $"Cerrar al revisar {Guid.NewGuid()}",
-            disparador = "TareaCambiaDeEstado",
-            condiciones = new[] { new { campo = "Estado", operador = "Igual", valor = "In Review" } },
-            acciones = new[] { new { tipo = "CambiarEstado", valor = "Done" } },
+            name = $"Cerrar al revisar {Guid.NewGuid()}",
+            trigger = "TaskStatusChanged",
+            conditions = new[] { new { field = "Status", @operator = "EqualTo", value = "In Review" } },
+            actions = new[] { new { type = "ChangeStatus", value = "Done" } },
         });
 
         await CrearReglaAsync(cliente, new
         {
-            nombre = $"Bajar al cerrar {Guid.NewGuid()}",
-            disparador = "TareaCambiaDeEstado",
-            condiciones = new[] { new { campo = "Estado", operador = "Igual", valor = "Done" } },
-            acciones = new[] { new { tipo = "CambiarPrioridad", valor = "Low" } },
+            name = $"Bajar al cerrar {Guid.NewGuid()}",
+            trigger = "TaskStatusChanged",
+            conditions = new[] { new { field = "Status", @operator = "EqualTo", value = "Done" } },
+            actions = new[] { new { type = "ChangePriority", value = "Low" } },
         });
 
         var tareaId = await CrearTareaAsync(cliente, tenantId, "Tarea que pasa por revisión");
@@ -204,10 +204,10 @@ public sealed class AutomationsFlowTests(CrmApiFactory factory)
 
         var respuesta = await cliente.PostAsJsonAsync("/api/v1/automations", new
         {
-            nombre = $"Sin acciones {Guid.NewGuid()}",
-            disparador = "TareaCambiaDeEstado",
-            condiciones = Array.Empty<object>(),
-            acciones = Array.Empty<object>(),
+            name = $"Sin acciones {Guid.NewGuid()}",
+            trigger = "TaskStatusChanged",
+            conditions = Array.Empty<object>(),
+            actions = Array.Empty<object>(),
         });
 
         respuesta.StatusCode.Should().Be(HttpStatusCode.BadRequest);
@@ -232,13 +232,13 @@ public sealed class AutomationsFlowTests(CrmApiFactory factory)
         var (cliente, _) = await AutenticarAsync();
         await LimpiarReglasAsync(cliente);
 
-        var vocabulario = await cliente.GetFromJsonAsync<JsonElement>("/api/v1/automations/vocabulario");
+        var vocabulario = await cliente.GetFromJsonAsync<JsonElement>("/api/v1/automations/vocabulary");
 
         // La interfaz construye el formulario con esto. Repetir la lista en el cliente la dejaría
         // desincronizada el día que se añada un disparador.
-        vocabulario.GetProperty("disparadores").GetArrayLength().Should().BeGreaterThan(0);
-        vocabulario.GetProperty("operadores").GetArrayLength().Should().BeGreaterThan(0);
-        vocabulario.GetProperty("acciones").GetArrayLength().Should().BeGreaterThan(0);
+        vocabulario.GetProperty("triggers").GetArrayLength().Should().BeGreaterThan(0);
+        vocabulario.GetProperty("operators").GetArrayLength().Should().BeGreaterThan(0);
+        vocabulario.GetProperty("actions").GetArrayLength().Should().BeGreaterThan(0);
     }
 
     [Fact]

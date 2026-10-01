@@ -1,7 +1,7 @@
 using Automations.Domain.Entities;
 using Automations.Domain.ValueObjects;
 
-namespace Automations.Domain.Servicios;
+namespace Automations.Domain.Services;
 
 /// <summary>
 /// Decide si un evento cumple las condiciones de una regla.
@@ -15,49 +15,49 @@ namespace Automations.Domain.Servicios;
 /// lenguaje de expresiones; quien necesite un «o» crea dos reglas, que además se leen mejor en
 /// una lista. Sin condiciones, la regla se aplica siempre que salte su disparador.
 /// </summary>
-public static class EvaluadorDeCondiciones
+public static class ConditionEvaluator
 {
-    public static bool Cumple(
-        IReadOnlyCollection<CondicionDeAutomatizacion> condiciones,
-        IReadOnlyDictionary<string, string?> datosDelEvento)
+    public static bool Matches(
+        IReadOnlyCollection<AutomationCondition> conditions,
+        IReadOnlyDictionary<string, string?> eventData)
     {
-        return condiciones.All(condicion => CumpleUna(condicion, datosDelEvento));
+        return conditions.All(condition => MatchesOne(condition, eventData));
     }
 
-    private static bool CumpleUna(
-        CondicionDeAutomatizacion condicion,
-        IReadOnlyDictionary<string, string?> datosDelEvento)
+    private static bool MatchesOne(
+        AutomationCondition condition,
+        IReadOnlyDictionary<string, string?> eventData)
     {
         // Un campo que el disparador no trae no es «vacío»: es «no aplica». Tratarlo como vacío
         // haría que una regla pensada para otro disparador se ejecutara por accidente.
-        if (!datosDelEvento.TryGetValue(condicion.Campo, out var valorDelEvento))
+        if (!eventData.TryGetValue(condition.Field, out var eventValue))
             return false;
 
-        var esperado = condicion.Valor ?? string.Empty;
+        var expected = condition.Value ?? string.Empty;
 
-        return condicion.Operador switch
+        return condition.Operator switch
         {
-            ValueObjects.Operador.Igual =>
-                string.Equals(valorDelEvento, esperado, StringComparison.OrdinalIgnoreCase),
+            ValueObjects.ConditionOperators.EqualTo =>
+                string.Equals(eventValue, expected, StringComparison.OrdinalIgnoreCase),
 
-            ValueObjects.Operador.Distinto =>
-                !string.Equals(valorDelEvento, esperado, StringComparison.OrdinalIgnoreCase),
+            ValueObjects.ConditionOperators.NotEqualTo =>
+                !string.Equals(eventValue, expected, StringComparison.OrdinalIgnoreCase),
 
-            ValueObjects.Operador.Contiene =>
-                valorDelEvento is not null
-                && valorDelEvento.Contains(esperado, StringComparison.OrdinalIgnoreCase),
+            ValueObjects.ConditionOperators.Contains =>
+                eventValue is not null
+                && eventValue.Contains(expected, StringComparison.OrdinalIgnoreCase),
 
-            ValueObjects.Operador.EstaVacio => string.IsNullOrWhiteSpace(valorDelEvento),
+            ValueObjects.ConditionOperators.IsEmpty => string.IsNullOrWhiteSpace(eventValue),
 
             // Comparación numérica de verdad, no alfabética. El dominio ya impide guardar estos
             // operadores sobre un campo de texto, así que aquí basta con que los dos lados sean
             // números; si alguno no lo es —un dato corrupto—, la condición no se cumple, que es
             // el lado seguro: no tocar datos de nadie ante la duda.
-            ValueObjects.Operador.MenorOIgual =>
-                SonNumeros(valorDelEvento, esperado, out var a, out var b) && a <= b,
+            ValueObjects.ConditionOperators.LessOrEqual =>
+                AreNumbers(eventValue, expected, out var a, out var b) && a <= b,
 
-            ValueObjects.Operador.MayorOIgual =>
-                SonNumeros(valorDelEvento, esperado, out var c, out var d) && c >= d,
+            ValueObjects.ConditionOperators.GreaterOrEqual =>
+                AreNumbers(eventValue, expected, out var c, out var d) && c >= d,
 
             // Un operador que esta versión no conoce no se cumple. Ejecutar la acción ante la
             // duda sería tocar datos de alguien por un dato que no se entiende.
@@ -70,12 +70,12 @@ public static class EvaluadorDeCondiciones
     /// esperado lo escribió una persona, y si cada uno se leyera con su cultura una regla
     /// funcionaría o no según el idioma del servidor.
     /// </summary>
-    private static bool SonNumeros(string? izquierda, string derecha, out int a, out int b)
+    private static bool AreNumbers(string? left, string right, out int a, out int b)
     {
         b = 0;
-        return int.TryParse(izquierda, System.Globalization.NumberStyles.Integer,
+        return int.TryParse(left, System.Globalization.NumberStyles.Integer,
                    System.Globalization.CultureInfo.InvariantCulture, out a)
-            && int.TryParse(derecha, System.Globalization.NumberStyles.Integer,
+            && int.TryParse(right, System.Globalization.NumberStyles.Integer,
                    System.Globalization.CultureInfo.InvariantCulture, out b);
     }
 }

@@ -13,7 +13,7 @@ namespace Automations.Presentation.Endpoints;
 
 public static class AutomationsEndpoints
 {
-  private const string NoEncontrada = "Automatización no encontrada";
+  private const string NotFound = "Automatización no encontrada";
 
   public static IServiceCollection AddAutomationsPresentation(this IServiceCollection services, IConfiguration configuration)
   {
@@ -25,24 +25,24 @@ public static class AutomationsEndpoints
   {
     var group = app.MapGroup("/api/v1/automations").WithTags("Automations").RequireAuthorization();
 
-    static IResult Responder(bool exito, string? error)
+    static IResult Respond(bool success, string? error)
     {
-      if (exito) return Results.Ok();
+      if (success) return Results.Ok();
 
       // Un valor que el dominio rechaza no es una regla que no existe: devolver 404 mandaría a
       // buscar el fallo donde no está.
-      return error == NoEncontrada ? Results.NotFound(error) : Results.BadRequest(error);
+      return error == NotFound ? Results.NotFound(error) : Results.BadRequest(error);
     }
 
     /// El vocabulario que la interfaz necesita para construir el formulario. Va servido y no
     /// repetido en el cliente: una lista duplicada se desincroniza el día que se añada un
     /// disparador, y entonces se puede configurar algo que el servidor no entiende.
-    group.MapGet("/vocabulario", () => Results.Ok(new
+    group.MapGet("/vocabulary", () => Results.Ok(new
     {
-      disparadores = TipoDeDisparador.Todos(),
-      campos = CampoDelEvento.Todos(),
-      operadores = Operador.Todos(),
-      acciones = TipoDeAccion.Todos(),
+      triggers = TriggerTypes.All(),
+      fields = EventFields.All(),
+      operators = ConditionOperators.All(),
+      actions = ActionTypes.All(),
 
       // Qué es numérico, servido en vez de deducido en el cliente.
       //
@@ -51,13 +51,13 @@ public static class AutomationsEndpoints
       // una copia que se desincroniza el día que se añada un campo numérico, que es justo lo que
       // acaba de pasar con los tipos de informe: el desplegable ofrecía dos que el servidor no
       // conocía y la mitad del formulario no funcionaba.
-      camposNumericos = CampoDelEvento.Todos().Where(CampoDelEvento.EsNumerico),
-      operadoresNumericos = Operador.Todos().Where(Operador.EsNumerico),
-      operadoresSinValor = Operador.Todos().Where(o => !Operador.NecesitaValor(o)),
-      disparadoresPorTiempo = TipoDeDisparador.Todos().Where(TipoDeDisparador.EsPorTiempo),
+      numericFields = EventFields.All().Where(EventFields.IsNumeric),
+      numericOperators = ConditionOperators.All().Where(ConditionOperators.IsNumeric),
+      valuelessOperators = ConditionOperators.All().Where(o => !ConditionOperators.NeedsValue(o)),
+      timeTriggers = TriggerTypes.All().Where(TriggerTypes.IsTimeBased),
 
       // El valor especial de «Notificar» para avisar a quien tenga la tarea.
-      destinatarioResponsable = TipoDeAccion.DestinatarioResponsable,
+      assigneeRecipient = ActionTypes.AssigneeRecipient,
     }));
 
     group.MapGet("", async (IUserContext currentUser, IMediator mediator) =>
@@ -78,7 +78,7 @@ public static class AutomationsEndpoints
     group.MapPut("/{id:guid}", async (IUserContext currentUser, Guid id, UpdateAutomationRuleCommand command, IMediator mediator) =>
     {
       var result = await mediator.Send(command with { TenantId = currentUser.TenantId, Id = id });
-      return Responder(result.IsSuccess, result.Error);
+      return Respond(result.IsSuccess, result.Error);
     });
 
     // Activar y desactivar tiene endpoint propio porque es la operación que se hace con prisa,
@@ -87,13 +87,13 @@ public static class AutomationsEndpoints
     group.MapPut("/{id:guid}/active", async (IUserContext currentUser, Guid id, SetAutomationRuleActiveCommand command, IMediator mediator) =>
     {
       var result = await mediator.Send(command with { TenantId = currentUser.TenantId, Id = id });
-      return Responder(result.IsSuccess, result.Error);
+      return Respond(result.IsSuccess, result.Error);
     });
 
     group.MapDelete("/{id:guid}", async (IUserContext currentUser, Guid id, IMediator mediator) =>
     {
       var result = await mediator.Send(new RemoveAutomationRuleCommand(currentUser.TenantId, id));
-      return result.IsSuccess ? Results.NoContent() : Responder(false, result.Error);
+      return result.IsSuccess ? Results.NoContent() : Respond(false, result.Error);
     });
 
     // El historial de una regla: qué hizo, cuándo y sobre qué.
@@ -101,10 +101,10 @@ public static class AutomationsEndpoints
     // Es lo que se mira cuando alguien dice «mi automatización no funciona», y responde la
     // pregunta que el contador de la regla no sabía contestar: si no salta, o si salta y las
     // condiciones no se cumplen.
-    group.MapGet("/{id:guid}/ejecuciones", async (
-        IUserContext currentUser, Guid id, IMediator mediator, int cuantas = 20) =>
+    group.MapGet("/{id:guid}/executions", async (
+        IUserContext currentUser, Guid id, IMediator mediator, int count = 20) =>
     {
-      var result = await mediator.Send(new GetEjecucionesQuery(currentUser.TenantId, id, cuantas));
+      var result = await mediator.Send(new GetExecutionsQuery(currentUser.TenantId, id, count));
       return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
     });
 
