@@ -87,7 +87,7 @@ export class CommandPaletteService {
       group: 'Acciones',
       icon: 'lucideFolderPlus',
       keywords: 'crear añadir project',
-      run: () => void this.router.navigate(['/projects'], { queryParams: { nuevo: 1 } }),
+      run: () => void this.router.navigate(['/projects'], { queryParams: { create: 1 } }),
     },
     {
       id: 'accion-nueva-tarea',
@@ -95,7 +95,7 @@ export class CommandPaletteService {
       group: 'Acciones',
       icon: 'lucidePlus',
       keywords: 'crear añadir task',
-      run: () => void this.router.navigate(['/tasks'], { queryParams: { nuevo: 1 } }),
+      run: () => void this.router.navigate(['/tasks'], { queryParams: { create: 1 } }),
     },
     {
       id: 'accion-nuevo-ticket',
@@ -103,7 +103,7 @@ export class CommandPaletteService {
       group: 'Acciones',
       icon: 'lucideTicket',
       keywords: 'crear añadir incidencia soporte',
-      run: () => void this.router.navigate(['/tickets'], { queryParams: { nuevo: 1 } }),
+      run: () => void this.router.navigate(['/tickets'], { queryParams: { create: 1 } }),
     },
     {
       id: 'accion-mis-tareas',

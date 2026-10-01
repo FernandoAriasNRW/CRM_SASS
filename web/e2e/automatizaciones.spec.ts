@@ -8,21 +8,21 @@ import { test, expect, type Page } from '@playwright/test';
  * que se añada uno y dejaría configurar algo que el servidor no entiende.
  */
 
-const USUARIO = {
+const USER = {
   id: '00000000-0000-0000-0000-000000000001',
   name: 'Admin Administrator', email: 'admin@acme.com', role: 'Admin',
   tenantId: '00000000-0000-0000-0000-0000000000ff',
 };
 
-const SESION = {
+const SESSION = {
   accessToken: 'token-de-prueba',
   accessTokenExpiresAtUtc: new Date(Date.now() + 864e5).toISOString(),
   refreshToken: 'refresco-de-prueba',
   refreshTokenExpiresAtUtc: new Date(Date.now() + 7 * 864e5).toISOString(),
-  user: USUARIO,
+  user: USER,
 };
 
-const VOCABULARIO = {
+const VOCABULARY = {
   triggers: ['TaskCreated', 'TaskStatusChanged'],
   fields: ['Status', 'AssigneeId'],
   operators: ['EqualTo', 'IsEmpty'],
@@ -33,52 +33,52 @@ const VOCABULARIO = {
   },
 };
 
-const REGLA = {
+const RULE = {
   id: 'r1', name: 'Bajar al cerrar', trigger: 'TaskStatusChanged', isActive: true,
   conditions: [{ field: 'Status', operator: 'EqualTo', value: 'Done' }],
   actions: [{ type: 'ChangePriority', value: 'Low' }],
   executionCount: 3, lastExecutedAtUtc: '2026-08-14T10:00:00Z',
 };
 
-const json = (cuerpo: unknown, status = 200) => ({
-  status, contentType: 'application/json', body: JSON.stringify(cuerpo),
+const json = (body: unknown, status = 200) => ({
+  status, contentType: 'application/json', body: JSON.stringify(body),
 });
 
-type Enviado = { metodo: string; url: string; cuerpo: Record<string, unknown> };
+type SentRequest = { method: string; url: string; body: Record<string, unknown> };
 
-async function entrar(
+async function signIn(
   page: Page,
-  reglas: unknown[] = [],
-  respuestaAlCrear?: { status: number; cuerpo: unknown },
-): Promise<Enviado[]> {
-  const enviados: Enviado[] = [];
+  rules: unknown[] = [],
+  createResponse?: { status: number; body: unknown },
+): Promise<SentRequest[]> {
+  const sent: SentRequest[] = [];
 
-  await page.route(/\/api\/v1\/auth\/login/, r => r.fulfill(json(SESION)));
+  await page.route(/\/api\/v1\/auth\/login/, r => r.fulfill(json(SESSION)));
 
   await page.route(/\/api\/v1\//, r => {
     const url = r.request().url();
-    const metodo = r.request().method();
+    const method = r.request().method();
 
     if (/\/auth\/login/.test(url)) return r.fallback();
-    if (/\/auth\/users\/me/.test(url)) return r.fulfill(json(USUARIO));
-    if (/\/users\/tenant/.test(url)) return r.fulfill(json([USUARIO]));
+    if (/\/auth\/users\/me/.test(url)) return r.fulfill(json(USER));
+    if (/\/users\/tenant/.test(url)) return r.fulfill(json([USER]));
     if (/\/notifications/.test(url)) return r.fulfill(json([]));
     if (/\/views\//.test(url)) return r.fulfill(json([]));
     if (/\/custom-fields/.test(url)) return r.fulfill(json([]));
 
-    if (/\/automations\/vocabulary/.test(url)) return r.fulfill(json(VOCABULARIO));
+    if (/\/automations\/vocabulary/.test(url)) return r.fulfill(json(VOCABULARY));
 
     if (/\/automations/.test(url)) {
-      if (metodo === 'GET') return r.fulfill(json(reglas));
+      if (method === 'GET') return r.fulfill(json(rules));
 
-      enviados.push({ metodo, url, cuerpo: JSON.parse(r.request().postData() ?? '{}') });
+      sent.push({ method, url, body: JSON.parse(r.request().postData() ?? '{}') });
 
-      if (metodo === 'POST') {
-        return r.fulfill(respuestaAlCrear
-          ? { status: respuestaAlCrear.status, contentType: 'application/json', body: JSON.stringify(respuestaAlCrear.cuerpo) }
-          : json(REGLA, 201));
+      if (method === 'POST') {
+        return r.fulfill(createResponse
+          ? { status: createResponse.status, contentType: 'application/json', body: JSON.stringify(createResponse.body) }
+          : json(RULE, 201));
       }
-      if (metodo === 'DELETE') return r.fulfill({ status: 204, body: '' });
+      if (method === 'DELETE') return r.fulfill({ status: 204, body: '' });
       return r.fulfill(json({}));
     }
 
@@ -96,11 +96,11 @@ async function entrar(
   await expect(page).toHaveURL(/\/admin/, { timeout: 15_000 });
   await page.getByRole('button', { name: 'Automatizaciones' }).click();
 
-  return enviados;
+  return sent;
 }
 
 test('la lista dice qué hace cada regla y cuántas veces se ha ejecutado', async ({ page }) => {
-  await entrar(page, [REGLA]);
+  await signIn(page, [RULE]);
 
   await expect(page.getByRole('cell', { name: 'Bajar al cerrar', exact: true })).toBeVisible();
   await expect(page.getByRole('cell', { name: /Estado es igual a Done/ })).toBeVisible();
@@ -108,7 +108,7 @@ test('la lista dice qué hace cada regla y cuántas veces se ha ejecutado', asyn
 });
 
 test('sin automatizaciones lo dice, en lugar de enseñar una tabla vacía', async ({ page }) => {
-  await entrar(page, []);
+  await signIn(page, []);
 
   await expect(page.getByText('Todavía no hay automatizaciones.')).toBeVisible();
 });
@@ -118,15 +118,15 @@ test('sin automatizaciones lo dice, en lugar de enseñar una tabla vacía', asyn
  * y dejaría configurar algo que el servidor no entiende.
  */
 test('los desplegables se llenan con el vocabulario del servidor', async ({ page }) => {
-  await entrar(page, []);
+  await signIn(page, []);
   await page.getByRole('button', { name: 'Nueva automatización' }).click();
 
-  const cuando = page.getByLabel('Cuándo');
-  await expect(cuando.locator('option')).toHaveText(['Se crea una tarea', 'Cambia el estado de una tarea']);
+  const when = page.getByLabel('Cuándo');
+  await expect(when.locator('option')).toHaveText(['Se crea una tarea', 'Cambia el estado de una tarea']);
 });
 
 test('no deja guardar una automatización sin nombre, y dice por qué', async ({ page }) => {
-  await entrar(page, []);
+  await signIn(page, []);
   await page.getByRole('button', { name: 'Nueva automatización' }).click();
 
   await expect(page.getByText('La automatización necesita un nombre')).toBeVisible();
@@ -134,7 +134,7 @@ test('no deja guardar una automatización sin nombre, y dice por qué', async ({
 });
 
 test('crear manda la regla tal y como se configuró', async ({ page }) => {
-  const enviados = await entrar(page, []);
+  const sent = await signIn(page, []);
   await page.getByRole('button', { name: 'Nueva automatización' }).click();
 
   await page.getByLabel('Nombre', { exact: true }).fill('Bajar al cerrar');
@@ -148,8 +148,8 @@ test('crear manda la regla tal y como se configuró', async ({ page }) => {
 
   await page.getByRole('button', { name: 'Guardar' }).click();
 
-  await expect.poll(() => enviados.length).toBe(1);
-  expect(enviados[0].cuerpo).toEqual({
+  await expect.poll(() => sent.length).toBe(1);
+  expect(sent[0].body).toEqual({
     name: 'Bajar al cerrar',
     trigger: 'TaskStatusChanged',
     conditions: [{ field: 'Status', operator: 'EqualTo', value: 'Done' }],
@@ -159,7 +159,7 @@ test('crear manda la regla tal y como se configuró', async ({ page }) => {
 
 /** «Está vacío» no compara contra nada: pedir un valor sería pedir algo que se va a descartar. */
 test('un operador que no compara no pide valor', async ({ page }) => {
-  await entrar(page, []);
+  await signIn(page, []);
   await page.getByRole('button', { name: 'Nueva automatización' }).click();
   await page.getByRole('button', { name: '+ Condición' }).click();
 
@@ -170,7 +170,7 @@ test('un operador que no compara no pide valor', async ({ page }) => {
 });
 
 test('si el servidor rechaza el alta, el formulario sigue abierto con lo escrito', async ({ page }) => {
-  await entrar(page, [], { status: 400, cuerpo: 'Ya hay una automatización con ese nombre' });
+  await signIn(page, [], { status: 400, body: 'Ya hay una automatización con ese nombre' });
   await page.getByRole('button', { name: 'Nueva automatización' }).click();
   await page.getByLabel('Nombre', { exact: true }).fill('Repetida');
   await page.getByLabel('Valor de la acción').fill('Low');
@@ -182,16 +182,16 @@ test('si el servidor rechaza el alta, el formulario sigue abierto con lo escrito
 });
 
 test('apagar una regla avisa al servidor', async ({ page }) => {
-  const enviados = await entrar(page, [REGLA]);
+  const sent = await signIn(page, [RULE]);
 
   await page.getByRole('checkbox', { name: 'Bajar al cerrar' }).uncheck();
 
-  await expect.poll(() => enviados.length).toBe(1);
-  expect(enviados[0].cuerpo).toEqual({ isActive: false });
+  await expect.poll(() => sent.length).toBe(1);
+  expect(sent[0].body).toEqual({ isActive: false });
 });
 
 test('borrar pide confirmación en la propia fila', async ({ page }) => {
-  await entrar(page, [REGLA]);
+  await signIn(page, [RULE]);
 
   await page.getByRole('button', { name: 'Borrar la automatización' }).click();
 

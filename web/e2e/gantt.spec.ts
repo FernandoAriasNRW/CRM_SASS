@@ -8,18 +8,18 @@ import { test, expect, type Page } from '@playwright/test';
  * barra de duración inventada, y una tarea sin vencimiento no sale, porque no hay dónde ponerla.
  */
 
-const USUARIO = {
+const USER = {
   id: '00000000-0000-0000-0000-000000000001',
   name: 'Admin Administrator', email: 'admin@acme.com', role: 'Admin',
   tenantId: '00000000-0000-0000-0000-0000000000ff',
 };
 
-const SESION = {
+const SESSION = {
   accessToken: 'token-de-prueba',
   accessTokenExpiresAtUtc: new Date(Date.now() + 864e5).toISOString(),
   refreshToken: 'refresco-de-prueba',
   refreshTokenExpiresAtUtc: new Date(Date.now() + 7 * 864e5).toISOString(),
-  user: USUARIO,
+  user: USER,
 };
 
 const base = {
@@ -28,30 +28,30 @@ const base = {
 };
 
 /** Fechas fijas: un Gantt con fechas relativas a hoy se rompería solo el mes que viene. */
-const CON_BARRA = { ...base, id: 'aaaaaaaa-0000-0000-0000-000000000001', title: 'Tarea planificada', startDate: '2026-08-18', dueDate: '2026-08-20' };
-const HITO = { ...base, id: 'aaaaaaaa-0000-0000-0000-000000000002', title: 'Tarea sin inicio', startDate: null, dueDate: '2026-08-25' };
-const BLOQUEADA = { ...base, id: 'aaaaaaaa-0000-0000-0000-000000000003', title: 'Tarea bloqueada', startDate: '2026-08-19', dueDate: '2026-08-21', blockedByCount: 1 };
-const SIN_FECHAS = { ...base, id: 'aaaaaaaa-0000-0000-0000-000000000004', title: 'Tarea sin fechas', startDate: null, dueDate: null };
+const WITH_BAR = { ...base, id: 'aaaaaaaa-0000-0000-0000-000000000001', title: 'Tarea planificada', startDate: '2026-08-18', dueDate: '2026-08-20' };
+const MILESTONE = { ...base, id: 'aaaaaaaa-0000-0000-0000-000000000002', title: 'Tarea sin inicio', startDate: null, dueDate: '2026-08-25' };
+const BLOCKED = { ...base, id: 'aaaaaaaa-0000-0000-0000-000000000003', title: 'Tarea bloqueada', startDate: '2026-08-19', dueDate: '2026-08-21', blockedByCount: 1 };
+const NO_DATES = { ...base, id: 'aaaaaaaa-0000-0000-0000-000000000004', title: 'Tarea sin fechas', startDate: null, dueDate: null };
 
-const json = (cuerpo: unknown, status = 200) => ({
-  status, contentType: 'application/json', body: JSON.stringify(cuerpo),
+const json = (body: unknown, status = 200) => ({
+  status, contentType: 'application/json', body: JSON.stringify(body),
 });
 
-async function entrar(page: Page, tareas: unknown[], dependencias: unknown[] = []) {
-  await page.route(/\/api\/v1\/auth\/login/, r => r.fulfill(json(SESION)));
+async function signIn(page: Page, tasks: unknown[], dependencies: unknown[] = []) {
+  await page.route(/\/api\/v1\/auth\/login/, r => r.fulfill(json(SESSION)));
 
   await page.route(/\/api\/v1\//, r => {
     const url = r.request().url();
     if (/\/auth\/login/.test(url)) return r.fallback();
-    if (/\/auth\/users\/me/.test(url)) return r.fulfill(json(USUARIO));
-    if (/\/users\/tenant/.test(url)) return r.fulfill(json([USUARIO]));
+    if (/\/auth\/users\/me/.test(url)) return r.fulfill(json(USER));
+    if (/\/users\/tenant/.test(url)) return r.fulfill(json([USER]));
     if (/\/notifications/.test(url)) return r.fulfill(json([]));
     if (/\/views\//.test(url)) return r.fulfill(json([]));
     if (/\/custom-fields/.test(url)) return r.fulfill(json([]));
     // El grafo entero, que es lo que pide el Gantt. Va antes que el listado porque la ruta
     // `/tasks/dependencies` también casa con el patrón de tareas.
-    if (/\/tasks\/dependencies/.test(url)) return r.fulfill(json(dependencias));
-    if (/\/tasks(\?|$)/.test(url)) return r.fulfill(json({ items: tareas, totalCount: tareas.length }));
+    if (/\/tasks\/dependencies/.test(url)) return r.fulfill(json(dependencies));
+    if (/\/tasks(\?|$)/.test(url)) return r.fulfill(json({ items: tasks, totalCount: tasks.length }));
     return r.fulfill(json({ items: [], totalCount: 0 }));
   });
 
@@ -71,14 +71,14 @@ async function entrar(page: Page, tareas: unknown[], dependencias: unknown[] = [
 }
 
 test('una tarea con inicio sale como barra y una sin inicio como hito', async ({ page }) => {
-  await entrar(page, [CON_BARRA, HITO]);
+  await signIn(page, [WITH_BAR, MILESTONE]);
 
   await expect(page.getByRole('button', { name: /Tarea planificada, del .* al / })).toBeVisible();
   await expect(page.getByRole('button', { name: /Tarea sin inicio, vence el / })).toBeVisible();
 });
 
 test('una tarea sin fecha límite no se pinta: no hay dónde ponerla', async ({ page }) => {
-  await entrar(page, [CON_BARRA, SIN_FECHAS]);
+  await signIn(page, [WITH_BAR, NO_DATES]);
 
   // Aparece en la columna de nombres sólo lo que tiene sitio en el calendario.
   // `exact`: sin él, «Tarea planificada» también casa con la etiqueta de su barra, que empieza
@@ -88,20 +88,20 @@ test('una tarea sin fecha límite no se pinta: no hay dónde ponerla', async ({ 
 });
 
 test('sin ninguna tarea con fechas lo dice, en lugar de enseñar un eje vacío', async ({ page }) => {
-  await entrar(page, [SIN_FECHAS]);
+  await signIn(page, [NO_DATES]);
 
   await expect(page.getByText('Nada que planificar todavía')).toBeVisible();
 });
 
 test('una tarea bloqueada se marca', async ({ page }) => {
-  await entrar(page, [BLOQUEADA]);
+  await signIn(page, [BLOCKED]);
 
   await expect(page.getByTitle('La bloquea otra tarea')).toBeVisible();
 });
 
 test('una dependencia entre dos tareas visibles se dibuja', async ({ page }) => {
-  await entrar(page, [CON_BARRA, BLOQUEADA], [
-    { taskId: BLOQUEADA.id, dependsOnTaskId: CON_BARRA.id },
+  await signIn(page, [WITH_BAR, BLOCKED], [
+    { taskId: BLOCKED.id, dependsOnTaskId: WITH_BAR.id },
   ]);
 
   await expect(page.locator('app-gantt svg path[marker-end]')).toHaveCount(1);
@@ -113,8 +113,8 @@ test('una dependencia entre dos tareas visibles se dibuja', async ({ page }) => 
  * que gritar, no callar.
  */
 test('una dependencia que el calendario no respeta se marca y se explica', async ({ page }) => {
-  await entrar(page, [CON_BARRA, BLOQUEADA], [
-    { taskId: BLOQUEADA.id, dependsOnTaskId: CON_BARRA.id },
+  await signIn(page, [WITH_BAR, BLOCKED], [
+    { taskId: BLOCKED.id, dependsOnTaskId: WITH_BAR.id },
   ]);
 
   await expect(page.locator('app-gantt svg path[stroke-dasharray]')).toHaveCount(1);
@@ -122,7 +122,7 @@ test('una dependencia que el calendario no respeta se marca y se explica', async
 });
 
 test('sin dependencias no se dibuja ninguna flecha ni se avisa de nada', async ({ page }) => {
-  await entrar(page, [CON_BARRA, HITO], []);
+  await signIn(page, [WITH_BAR, MILESTONE], []);
 
   // Se cuentan las flechas por su punta y no los `svg` sueltos: los iconos de los rombos
   // también son `svg`, así que contarlos daría siempre más de cero.
@@ -131,7 +131,7 @@ test('sin dependencias no se dibuja ninguna flecha ni se avisa de nada', async (
 });
 
 test('pulsar una tarea abre su detalle', async ({ page }) => {
-  await entrar(page, [CON_BARRA]);
+  await signIn(page, [WITH_BAR]);
 
   await page.getByRole('button', { name: /Tarea planificada, del / }).click();
 

@@ -402,7 +402,7 @@ suites completas en verde, catálogo i18n re-extraído al final.
 | 8c ✅ | **Frontend de campos personalizados y automatizaciones** | 130 identificadores |
 | 9a ✅ | **Frontend transversal: `core/` y utilidades de `shared/`** (errores, avisos, idioma, tema) | Lo que usa toda la aplicación |
 | 9b ✅ | **Componentes de `shared/ui`** (panel de navegación, menú contextual…) | 180 identificadores y seis ficheros |
-| 9c | **Lo que quede en pantallas y e2e** | Restos que no arrastraron los PRs anteriores |
+| 9c ✅ | **Lo que quede en pantallas y e2e** | 124 identificadores; el frontend queda sin código en español |
 | 10 | **Nombres de las pruebas** | Son frases, no identificadores de producción; traducirlas dentro de cada bloque ensucia el diff de revisión |
 | 11 | **`TimeProvider` en todos los módulos** | Cambiar el reloj módulo a módulo deja dos formas de dar la hora conviviendo; va de una vez, al final |
 
@@ -886,8 +886,21 @@ cambiarlo exige migrar ese contenido. Por eso fue un bloque aparte, el 5c.
 - **Lo que cazaron las e2e:** la herramienta renombró las referencias de plantilla (`#campo`) pero
   no los `viewChild('campo')` que las buscan; la paleta de comandos dejaba de recibir lo que se
   tecleaba. Queda en la skill.
-- Siguen en español, para la 9c, el parámetro de URL `?nuevo=1` (lo leen tres pantallas) y los
-  `id` de HTML del personalizador del menú.
+- Siguen en español, para la 9c, el parámetro de URL `?nuevo=1` y los `id` de HTML del
+  personalizador del menú.
+
+### Hecho en el bloque 9c (restos en pantallas y e2e)
+
+- 124 identificadores que el detector marcaba **como código** —no como texto—, separados con el
+  propio analizador de `rename-frontend.py`: las constantes y funciones auxiliares de las e2e
+  (`SESION` → `SESSION`, `entrar` → `signIn`…), el perfil (`SECCIONES`, `elegirTema`,
+  `cambiarIdioma`…), el sistema de diseño y algunos sueltos.
+- La paleta de comandos pasa `?nuevo=1` a `?create=1`. **Ninguna pantalla lo leía**: «Nueva tarea»
+  sólo llevaba a la lista. Queda como tarea aparte.
+- Las e2e no las compila `ng build`, así que además de ejecutarlas se comprueban sus tipos con
+  `tsc`.
+- Lo que el detector sigue marcando son abreviaturas (`el`, `seg`, `canvasEl`) y nombres propios
+  de los datos de prueba. Los nombres de las pruebas y de sus ficheros van en el bloque 10.
 
 ---
 

@@ -9,21 +9,21 @@ import { test, expect, type Page, type Request } from '@playwright/test';
  * perder lo escrito.
  */
 
-const USUARIO = {
+const USER = {
   id: '00000000-0000-0000-0000-000000000001',
   name: 'Admin Administrator', email: 'admin@acme.com', role: 'Admin',
   tenantId: '00000000-0000-0000-0000-0000000000ff',
 };
 
-const SESION = {
+const SESSION = {
   accessToken: 'token-de-prueba',
   accessTokenExpiresAtUtc: new Date(Date.now() + 864e5).toISOString(),
   refreshToken: 'refresco-de-prueba',
   refreshTokenExpiresAtUtc: new Date(Date.now() + 7 * 864e5).toISOString(),
-  user: USUARIO,
+  user: USER,
 };
 
-const ETIQUETAS = [
+const TAGS = [
   {
     id: 'tag-socio', name: 'Socio', colorHex: '#14B8A6', category: 'Business', categoryLabel: 'Negocio',
     builtInKey: 'partner', createdBy: null, canManage: true,
@@ -34,11 +34,11 @@ const ETIQUETAS = [
   },
   {
     id: 'tag-propia', name: 'Clientes grandes', colorHex: '#3B82F6', category: 'Business', categoryLabel: 'Negocio',
-    builtInKey: null, createdBy: USUARIO.id, canManage: true,
+    builtInKey: null, createdBy: USER.id, canManage: true,
   },
 ];
 
-const CATEGORIAS = [
+const CATEGORIES = [
   { id: null, name: 'Project', label: 'Proyecto', isCustom: false, isAutomatic: true },
   { id: null, name: 'Business', label: 'Negocio', isCustom: false, isAutomatic: false },
   { id: null, name: 'WorkType', label: 'Tipo de trabajo', isCustom: false, isAutomatic: false },
@@ -46,46 +46,46 @@ const CATEGORIAS = [
   { id: 'cat-llena', name: 'Socios', label: 'Socios', isCustom: true, isAutomatic: false, tagCount: 2, canManage: true },
 ];
 
-const json = (cuerpo: unknown, status = 200) => ({
-  status, contentType: 'application/json', body: JSON.stringify(cuerpo),
+const json = (body: unknown, status = 200) => ({
+  status, contentType: 'application/json', body: JSON.stringify(body),
 });
 
-type Respuestas = { alta?: { status: number; cuerpo: unknown } };
+type Responses = { created?: { status: number; body: unknown } };
 
 /** Las escrituras que llegaron al servidor, para comprobar qué mandó la pantalla. */
-const escrituras: Request[] = [];
+const writes: Request[] = [];
 
-async function entrar(page: Page, respuestas: Respuestas = {}) {
-  escrituras.length = 0;
-  await page.route(/\/api\/v1\/auth\/login/, r => r.fulfill(json(SESION)));
+async function signIn(page: Page, responses: Responses = {}) {
+  writes.length = 0;
+  await page.route(/\/api\/v1\/auth\/login/, r => r.fulfill(json(SESSION)));
 
   await page.route(/\/api\/v1\//, async r => {
     const url = r.request().url();
-    const metodo = r.request().method();
+    const method = r.request().method();
 
     if (/\/auth\/login/.test(url)) return r.fallback();
-    if (/\/auth\/users\/me/.test(url)) return r.fulfill(json(USUARIO));
-    if (/\/users\/tenant/.test(url)) return r.fulfill(json([USUARIO]));
+    if (/\/auth\/users\/me/.test(url)) return r.fulfill(json(USER));
+    if (/\/users\/tenant/.test(url)) return r.fulfill(json([USER]));
     if (/\/notifications/.test(url)) return r.fulfill(json([]));
 
     if (/\/tags\/categories/.test(url)) {
-      if (metodo !== 'GET') escrituras.push(r.request());
-      if (metodo === 'PUT') return r.fulfill(json({ ...CATEGORIAS[3], name: 'Clientes VIP', label: 'Clientes VIP' }));
-      if (metodo === 'DELETE') return r.fulfill({ status: 204, body: '' });
-      return r.fulfill(json(CATEGORIAS));
+      if (method !== 'GET') writes.push(r.request());
+      if (method === 'PUT') return r.fulfill(json({ ...CATEGORIES[3], name: 'Clientes VIP', label: 'Clientes VIP' }));
+      if (method === 'DELETE') return r.fulfill({ status: 204, body: '' });
+      return r.fulfill(json(CATEGORIES));
     }
 
     if (/\/tags/.test(url)) {
-      if (metodo !== 'GET') escrituras.push(r.request());
-      if (metodo === 'POST') {
-        const alta = respuestas.alta;
-        return r.fulfill(alta
-          ? { status: alta.status, contentType: 'application/json', body: JSON.stringify(alta.cuerpo) }
-          : json({ ...ETIQUETAS[2], id: 'tag-nueva' }, 201));
+      if (method !== 'GET') writes.push(r.request());
+      if (method === 'POST') {
+        const created = responses.created;
+        return r.fulfill(created
+          ? { status: created.status, contentType: 'application/json', body: JSON.stringify(created.body) }
+          : json({ ...TAGS[2], id: 'tag-nueva' }, 201));
       }
-      if (metodo === 'PUT') return r.fulfill(json(ETIQUETAS[2]));
-      if (metodo === 'DELETE') return r.fulfill({ status: 204, body: '' });
-      return r.fulfill(json(ETIQUETAS));
+      if (method === 'PUT') return r.fulfill(json(TAGS[2]));
+      if (method === 'DELETE') return r.fulfill({ status: 204, body: '' });
+      return r.fulfill(json(TAGS));
     }
 
     return r.fulfill(json({ items: [], totalCount: 0 }));
@@ -99,7 +99,7 @@ async function entrar(page: Page, respuestas: Respuestas = {}) {
 }
 
 /** Por la paleta, nunca con `page.goto`: el token vive en memoria y una recarga vuelve al login. */
-async function irALasEtiquetas(page: Page) {
+async function goToTags(page: Page) {
   await page.keyboard.press('Control+k');
   await page.keyboard.type('etiquetas');
   await page.keyboard.press('Enter');
@@ -108,19 +108,19 @@ async function irALasEtiquetas(page: Page) {
 }
 
 test('la lista enseña cada etiqueta con su categoría y su tipo', async ({ page }) => {
-  await entrar(page);
-  await irALasEtiquetas(page);
+  await signIn(page);
+  await goToTags(page);
 
-  const fila = page.getByRole('row').filter({ hasText: 'Socio' });
-  await expect(fila).toContainText('Negocio');
-  await expect(fila).toContainText('Predefinida');
+  const row = page.getByRole('row').filter({ hasText: 'Socio' });
+  await expect(row).toContainText('Negocio');
+  await expect(row).toContainText('Predefinida');
   await expect(page.getByRole('row').filter({ hasText: 'Portal web' })).toContainText('Automática');
   await expect(page.getByRole('row').filter({ hasText: 'Clientes grandes' })).toContainText('Propia');
 });
 
 test('pulsar una fila abre el cajón, y guardar manda la etiqueta editada', async ({ page }) => {
-  await entrar(page);
-  await irALasEtiquetas(page);
+  await signIn(page);
+  await goToTags(page);
 
   await page.getByText('Clientes grandes').click();
   const cajon = page.getByRole('dialog');
@@ -131,14 +131,14 @@ test('pulsar una fila abre el cajón, y guardar manda la etiqueta editada', asyn
   await cajon.getByTestId('tag-save').click();
 
   await expect(cajon).toBeHidden();
-  const put = escrituras.find(e => e.method() === 'PUT')!;
+  const put = writes.find(e => e.method() === 'PUT')!;
   expect(put.url()).toContain('/tags/tag-propia');
   expect(put.postDataJSON()).toEqual({ name: 'Clientes estratégicos', colorHex: '#3B82F6', category: 'Business' });
 });
 
 test('una etiqueta de proyecto se ve pero no se edita, y se explica por qué', async ({ page }) => {
-  await entrar(page);
-  await irALasEtiquetas(page);
+  await signIn(page);
+  await goToTags(page);
 
   await page.getByText('Portal web').click();
   const cajon = page.getByRole('dialog');
@@ -150,24 +150,24 @@ test('una etiqueta de proyecto se ve pero no se edita, y se explica por qué', a
 });
 
 test('borrar pide confirmación y después manda el DELETE', async ({ page }) => {
-  await entrar(page);
-  await irALasEtiquetas(page);
+  await signIn(page);
+  await goToTags(page);
 
   await page.getByText('Clientes grandes').click();
   const cajon = page.getByRole('dialog');
 
   await cajon.getByTestId('tag-delete').click();
   await expect(cajon.getByText(/¿Borrarla\?/)).toBeVisible();
-  expect(escrituras).toHaveLength(0);
+  expect(writes).toHaveLength(0);
 
   await cajon.getByTestId('tag-confirm-delete').click();
   await expect(cajon).toBeHidden();
-  expect(escrituras.map(e => `${e.method()} ${new URL(e.url()).pathname}`)).toEqual(['DELETE /api/v1/tags/tag-propia']);
+  expect(writes.map(e => `${e.method()} ${new URL(e.url()).pathname}`)).toEqual(['DELETE /api/v1/tags/tag-propia']);
 });
 
 test('si el servidor rechaza el alta, el cajón sigue abierto con lo escrito y el motivo', async ({ page }) => {
-  await entrar(page, { alta: { status: 409, cuerpo: 'Ya existe una etiqueta llamada «Socio» en esa categoría' } });
-  await irALasEtiquetas(page);
+  await signIn(page, { created: { status: 409, body: 'Ya existe una etiqueta llamada «Socio» en esa categoría' } });
+  await goToTags(page);
 
   await page.getByTestId('new-tag').click();
   const cajon = page.getByRole('dialog');
@@ -185,28 +185,28 @@ test('si el servidor rechaza el alta, el cajón sigue abierto con lo escrito y e
 });
 
 test('las categorías se renombran, y sólo se borra una vacía', async ({ page }) => {
-  await entrar(page);
-  await irALasEtiquetas(page);
+  await signIn(page);
+  await goToTags(page);
 
   await page.getByTestId('open-categories').click();
   const cajon = page.getByRole('dialog');
-  const vacia = cajon.locator('[data-category="Clientes"]');
-  const llena = cajon.locator('[data-category="Socios"]');
+  const empty = cajon.locator('[data-category="Clientes"]');
+  const filled = cajon.locator('[data-category="Socios"]');
 
   // Con etiquetas dentro no se ofrece borrar: el servidor lo rechazaría.
-  await expect(llena.getByRole('button', { name: 'Borrar' })).toBeDisabled();
-  await expect(llena).toContainText('2 etiquetas');
+  await expect(filled.getByRole('button', { name: 'Borrar' })).toBeDisabled();
+  await expect(filled).toContainText('2 etiquetas');
 
-  await vacia.getByRole('button', { name: 'Renombrar' }).click();
-  await vacia.getByLabel('Nombre nuevo').fill('Clientes VIP');
-  await vacia.getByRole('button', { name: 'Guardar' }).click();
-  await expect.poll(() => escrituras.map(e => e.method())).toContain('PUT');
-  const put = escrituras.find(e => e.method() === 'PUT')!;
+  await empty.getByRole('button', { name: 'Renombrar' }).click();
+  await empty.getByLabel('Nombre nuevo').fill('Clientes VIP');
+  await empty.getByRole('button', { name: 'Guardar' }).click();
+  await expect.poll(() => writes.map(e => e.method())).toContain('PUT');
+  const put = writes.find(e => e.method() === 'PUT')!;
   expect(new URL(put.url()).pathname).toBe('/api/v1/tags/categories/cat-vacia');
   expect(put.postDataJSON()).toEqual({ name: 'Clientes VIP' });
 
-  await vacia.getByRole('button', { name: 'Borrar' }).click();
-  await vacia.getByRole('button', { name: 'Sí' }).click();
-  await expect.poll(() => escrituras.map(e => `${e.method()} ${new URL(e.url()).pathname}`))
+  await empty.getByRole('button', { name: 'Borrar' }).click();
+  await empty.getByRole('button', { name: 'Sí' }).click();
+  await expect.poll(() => writes.map(e => `${e.method()} ${new URL(e.url()).pathname}`))
     .toContain('DELETE /api/v1/tags/categories/cat-vacia');
 });

@@ -300,14 +300,14 @@ export class TasksComponent implements OnInit {
     this.activeViewId.set(null);
   }
 
-  createView({ name: nombre, type: tipo }: { name: string; type: string }): void {
-    this.applyMode(tipo);
+  createView({ name, type }: { name: string; type: string }): void {
+    this.applyMode(type);
 
-    const status = { ...this.tableState(), viewType: tipo };
+    const status = { ...this.tableState(), viewType: type };
 
     this.viewsService.saveView({
       moduleName: 'Tasks',
-      viewName: nombre,
+      viewName: name,
       stateJson: JSON.stringify(status),
       isDefault: false
     }).subscribe({

@@ -7,7 +7,7 @@ import { test, expect } from '@playwright/test';
  * no la autenticación en sí, que ya cubren los tests de integración.
  */
 
-const SESION_VALIDA = {
+const VALID_SESSION = {
   accessToken: 'token-de-prueba',
   refreshToken: 'refresco-de-prueba',
   refreshTokenExpiresAtUtc: new Date(Date.now() + 7 * 864e5).toISOString(),
@@ -54,7 +54,7 @@ test('con credenciales válidas se entra a la aplicación', async ({ page }) => 
     route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify(SESION_VALIDA),
+      body: JSON.stringify(VALID_SESSION),
     }));
 
   // El resto de llamadas de la pantalla inicial se responden vacías: la prueba mide
