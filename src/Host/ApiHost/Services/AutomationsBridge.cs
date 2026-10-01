@@ -81,8 +81,11 @@ public sealed class AutomationsBridge(IAutomationEngine motor) :
         e.TenantId, TriggerTypes.TaskCreated, e.TaskId,
         new Dictionary<string, string?>
         {
+          [EventFields.Status] = e.Status,
+          [EventFields.Priority] = e.Priority,
           [EventFields.ProjectId] = e.ProjectId.ToString(),
-          [EventFields.AssigneeId] = e.AssigneeId == Guid.Empty ? null : e.AssigneeId.ToString(),
+          [EventFields.AssigneeId] = Assignee(e.AssigneeId),
+          [EventFields.Title] = e.Title,
         }), ct);
   }
 
@@ -96,7 +99,10 @@ public sealed class AutomationsBridge(IAutomationEngine motor) :
         {
           [EventFields.Status] = e.NewStatus,
           [EventFields.PreviousStatus] = e.OldStatus,
+          [EventFields.Priority] = e.Priority,
           [EventFields.ProjectId] = e.ProjectId.ToString(),
+          [EventFields.AssigneeId] = Assignee(e.AssigneeId),
+          [EventFields.Title] = e.Title,
         }), ct);
   }
 
@@ -110,7 +116,14 @@ public sealed class AutomationsBridge(IAutomationEngine motor) :
         {
           [EventFields.Priority] = e.NewPriority,
           [EventFields.PreviousPriority] = e.OldPriority,
+          [EventFields.Status] = e.Status,
           [EventFields.ProjectId] = e.ProjectId.ToString(),
+          [EventFields.AssigneeId] = Assignee(e.AssigneeId),
+          [EventFields.Title] = e.Title,
         }), ct);
   }
+
+  /// <summary>Sin responsable se manda vacío, que es lo que mira «está vacío».</summary>
+  private static string? Assignee(Guid assigneeId) =>
+      assigneeId == Guid.Empty ? null : assigneeId.ToString();
 }

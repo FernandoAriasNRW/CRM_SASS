@@ -265,13 +265,13 @@ public sealed class AutomationsFlowTests(CrmApiFactory factory)
         }
 
         porDisparador.GetProperty(TriggerTypes.TaskCreated).EnumerateArray()
-            .Select(f => f.GetString()).Should().NotContain(EventFields.Title);
+            .Select(f => f.GetString()).Should().Contain(EventFields.Title)
+            .And.NotContain(EventFields.PreviousStatus);
     }
 
     /// <summary>
-    /// El caso medido: una regla «se crea una tarea» con «el título contiene 8b» se guardaba y
-    /// luego se anotaba como condiciones no cumplidas sin avisar. Ahora se rechaza al guardar, y
-    /// también al editar una regla existente para ponerle esa condición.
+    /// Una condición sobre un campo que el disparador no trae —el estado anterior al crear una
+    /// tarea— se rechaza al guardar, y también al editar una regla existente para ponérsela.
     /// </summary>
     [Fact]
     public async Task A_condition_on_a_field_the_trigger_does_not_carry_is_rejected()
@@ -283,11 +283,11 @@ public sealed class AutomationsFlowTests(CrmApiFactory factory)
         {
             name = nombre,
             trigger = TriggerTypes.TaskCreated,
-            conditions = new[] { new { field = EventFields.Title, @operator = "Contains", value = "8b" } },
+            conditions = new[] { new { field = EventFields.PreviousStatus, @operator = "EqualTo", value = "Done" } },
             actions = new[] { new { type = "ChangePriority", value = "Low" } },
         };
 
-        var alCrear = await cliente.PostAsJsonAsync("/api/v1/automations", Regla($"Título {Guid.NewGuid()}"));
+        var alCrear = await cliente.PostAsJsonAsync("/api/v1/automations", Regla($"Anterior {Guid.NewGuid()}"));
 
         alCrear.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         (await alCrear.Content.ReadFromJsonAsync<string>()).Should().Contain(AutomationRule.Rules.FieldNotInTrigger);
@@ -301,6 +301,60 @@ public sealed class AutomationsFlowTests(CrmApiFactory factory)
         (await alEditar.Content.ReadFromJsonAsync<string>()).Should().Contain(AutomationRule.Rules.FieldNotInTrigger);
         (await ReglaAsync(cliente, id)).GetProperty("trigger").GetString()
             .Should().Be(TriggerTypes.TaskStatusChanged, "el rechazo no deja la regla a medias");
+    }
+
+    /// <summary>
+    /// El caso medido, de punta a punta: «se crea una tarea» con «el título contiene 8b» antes se
+    /// anotaba como condiciones no cumplidas porque el evento no traía el título. Ahora lo trae, y
+    /// la regla se aplica sólo a la tarea cuyo título lo contiene.
+    /// </summary>
+    [Fact]
+    public async Task A_task_created_rule_can_look_at_the_title()
+    {
+        var (cliente, tenantId) = await AutenticarAsync();
+        await LimpiarReglasAsync(cliente);
+        var reglaId = await CrearReglaAsync(cliente, new
+        {
+            name = $"Título con 8b {Guid.NewGuid()}",
+            trigger = TriggerTypes.TaskCreated,
+            conditions = new[] { new { field = EventFields.Title, @operator = "Contains", value = "8b" } },
+            actions = new[] { new { type = "ChangePriority", value = "Low" } },
+        });
+
+        var conTitulo = await CrearTareaAsync(cliente, tenantId, "Revisar el bloque 8b");
+        var sinTitulo = await CrearTareaAsync(cliente, tenantId, "Revisar otra cosa");
+
+        (await cliente.GetFromJsonAsync<JsonElement>($"/api/v1/tasks/{conTitulo}"))
+            .GetProperty("priority").GetString().Should().Be("Low");
+        (await cliente.GetFromJsonAsync<JsonElement>($"/api/v1/tasks/{sinTitulo}"))
+            .GetProperty("priority").GetString().Should().Be("Normal");
+        (await ReglaAsync(cliente, reglaId)).GetProperty("executionCount").GetInt32().Should().Be(1);
+    }
+
+    /// <summary>
+    /// Un mismo cambio que renombra la tarea y la mueve: el evento de estado tiene que llevar el
+    /// título nuevo. Antes el comando aplicaba el estado antes que el título, y la regla habría
+    /// mirado el viejo.
+    /// </summary>
+    [Fact]
+    public async Task A_status_rule_sees_the_title_changed_in_the_same_patch()
+    {
+        var (cliente, tenantId) = await AutenticarAsync();
+        await LimpiarReglasAsync(cliente);
+        var reglaId = await CrearReglaAsync(cliente, new
+        {
+            name = $"Cerrar con 8b {Guid.NewGuid()}",
+            trigger = TriggerTypes.TaskStatusChanged,
+            conditions = new[] { new { field = EventFields.Title, @operator = "Contains", value = "8b" } },
+            actions = new[] { new { type = "ChangePriority", value = "Low" } },
+        });
+        var tareaId = await CrearTareaAsync(cliente, tenantId, "Revisar el bloque");
+
+        await cliente.PatchAsJsonAsync($"/api/v1/tasks/{tareaId}", new { title = "Revisar el bloque 8b", status = "Done" });
+
+        (await cliente.GetFromJsonAsync<JsonElement>($"/api/v1/tasks/{tareaId}"))
+            .GetProperty("priority").GetString().Should().Be("Low");
+        (await ReglaAsync(cliente, reglaId)).GetProperty("executionCount").GetInt32().Should().Be(1);
     }
 
     [Fact]

@@ -842,8 +842,8 @@ cambiarlo exige migrar ese contenido. Por eso fue un bloque aparte, el 5c.
   servidor manda uno que no conoce, lo enseña tal cual en vez de dejar la opción en blanco.
 - Visto de paso, sin cambiar: el vocabulario ofrece todos los campos para cualquier disparador,
   pero «se crea una tarea» sólo manda proyecto y responsable, así que una condición sobre el título
-  nunca se cumple. Queda como tarea aparte. *Resuelto después: `EventFields.ByTrigger`, ver
-  `AUDITORIA.md` §13.4.*
+  nunca se cumple. Queda como tarea aparte. *Resuelto después: `EventFields.ByTrigger`, y los eventos de
+  tareas traen ya título, estado, prioridad y responsable; ver `AUDITORIA.md` §13.4.*
 
 ### Hecho en el bloque 8c (frontend de campos personalizados y automatizaciones)
 

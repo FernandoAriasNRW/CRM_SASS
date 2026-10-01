@@ -56,16 +56,17 @@ public sealed class TriggerDataMatchesVocabularyTests
     [Fact]
     public async Task TaskCreated_carries_exactly_the_declared_fields()
     {
-        var fired = await TranslateAsync(new TaskCreatedEvent(TaskId, Tenant, Project, Guid.NewGuid()));
+        var fired = await TranslateAsync(new TaskCreatedEvent(TaskId, Tenant, Project, Guid.NewGuid(), "Revisar el 8b", "To Do", "Normal"));
 
         fired.Trigger.Should().Be(TriggerTypes.TaskCreated);
         fired.Data.Keys.Should().BeEquivalentTo(EventFields.ForTrigger(TriggerTypes.TaskCreated));
+        fired.Data[EventFields.Title].Should().Be("Revisar el 8b");
     }
 
     [Fact]
     public async Task TaskStatusChanged_carries_exactly_the_declared_fields()
     {
-        var fired = await TranslateAsync(new TaskStatusChangedEvent(TaskId, Tenant, Project, "To Do", "Done"));
+        var fired = await TranslateAsync(new TaskStatusChangedEvent(TaskId, Tenant, Project, "To Do", "Done", "Revisar el 8b", "Normal", Guid.NewGuid()));
 
         fired.Trigger.Should().Be(TriggerTypes.TaskStatusChanged);
         fired.Data.Keys.Should().BeEquivalentTo(EventFields.ForTrigger(TriggerTypes.TaskStatusChanged));
@@ -74,7 +75,7 @@ public sealed class TriggerDataMatchesVocabularyTests
     [Fact]
     public async Task TaskPriorityChanged_carries_exactly_the_declared_fields()
     {
-        var fired = await TranslateAsync(new TaskPriorityChangedEvent(TaskId, Tenant, Project, "Normal", "High"));
+        var fired = await TranslateAsync(new TaskPriorityChangedEvent(TaskId, Tenant, Project, "Normal", "High", "Revisar el 8b", "To Do", Guid.NewGuid()));
 
         fired.Trigger.Should().Be(TriggerTypes.TaskPriorityChanged);
         fired.Data.Keys.Should().BeEquivalentTo(EventFields.ForTrigger(TriggerTypes.TaskPriorityChanged));

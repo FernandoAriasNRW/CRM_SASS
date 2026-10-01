@@ -147,7 +147,9 @@ public sealed class WorkTask : AggregateRoot, ITenantEntity, ISoftDeletable, IAr
         if (assigneeId != Guid.Empty)
             task._assignees.Add(new TaskAssignee(assigneeId));
 
-        task.RaiseDomainEvent(new TaskCreatedEvent(task.Id, tenantId, projectId, assigneeId));
+        task.RaiseDomainEvent(new TaskCreatedEvent(
+            task.Id, tenantId, projectId, assigneeId,
+            task.Title.Value, task.Status.Value, task.Priority.Value));
 
         return task;
     }
@@ -172,7 +174,9 @@ public sealed class WorkTask : AggregateRoot, ITenantEntity, ISoftDeletable, IAr
         // primer cierre daría un tiempo de ciclo que mide un trabajo que luego se deshizo.
         CompletedAtUtc = TaskStatus.IsFinal(newStatus) ? DateTime.UtcNow : null;
 
-        RaiseDomainEvent(new TaskStatusChangedEvent(Id, TenantId, ProjectId, oldStatus.Value.ToString(), newStatus));
+        RaiseDomainEvent(new TaskStatusChangedEvent(
+            Id, TenantId, ProjectId, oldStatus.Value.ToString(), newStatus,
+            Title.Value, Priority.Value, AssigneeId));
     }
 
     /// <summary>
@@ -196,7 +200,9 @@ public sealed class WorkTask : AggregateRoot, ITenantEntity, ISoftDeletable, IAr
         var oldPriority = Priority;
         Priority = TaskPriority.From(newPriority);
 
-        RaiseDomainEvent(new TaskPriorityChangedEvent(Id, TenantId, ProjectId, oldPriority.Value, newPriority));
+        RaiseDomainEvent(new TaskPriorityChangedEvent(
+            Id, TenantId, ProjectId, oldPriority.Value, newPriority,
+            Title.Value, Status.Value, AssigneeId));
     }
 
     /// <summary>
