@@ -2,7 +2,7 @@ import { Component, OnInit, TemplateRef, ViewChild, computed, inject, signal } f
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CdkDragDrop, DragDropModule, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ApiService } from '../../core/api.service';
 import { RealtimeService } from '../../core/realtime.service';
 import { AuthSignalStore } from '../../core/auth-signal.store';
@@ -76,6 +76,7 @@ export class TicketsComponent implements OnInit {
   private readonly viewsService = inject(ViewsService);
   private readonly columnService = inject(TableColumnService);
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
 
   readonly showModal = signal(false);
   readonly selectedTicket = signal<Ticket | null>(null);
@@ -150,6 +151,19 @@ export class TicketsComponent implements OnInit {
     this.loadViews();
 
     this.route.queryParams.subscribe(params => {
+      // «Nuevo …» de la paleta de comandos llega con ?create=1: abre el formulario y quita el
+      // parámetro para que recargar no lo vuelva a abrir. Quitarlo vuelve a emitir sin él, y
+      // esa emisión es la que aplica el filtro y carga la lista.
+      if (params['create']) {
+        this.showModal.set(true);
+        void this.router.navigate([], {
+          relativeTo: this.route,
+          queryParams: { create: null },
+          queryParamsHandling: 'merge',
+          replaceUrl: true,
+        });
+        return;
+      }
       if (params['filter']) {
         this.tableState.update(s => ({ ...s, filters: { ...s.filters, filter: params['filter'] } }));
       } else {
