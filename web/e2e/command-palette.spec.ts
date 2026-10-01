@@ -102,7 +102,7 @@ const CREATE_COMMANDS = [
 
 for (const { command, form, url } of CREATE_COMMANDS) {
   test(`«${command}» abre el formulario de creación y deja la URL limpia`, async ({ page }) => {
-    await entrar(page);
+    await signIn(page);
     await page.keyboard.press('Control+k');
 
     await page.keyboard.type(command.toLowerCase());

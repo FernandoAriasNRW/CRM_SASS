@@ -896,7 +896,8 @@ cambiarlo exige migrar ese contenido. Por eso fue un bloque aparte, el 5c.
   (`SESION` → `SESSION`, `entrar` → `signIn`…), el perfil (`SECCIONES`, `elegirTema`,
   `cambiarIdioma`…), el sistema de diseño y algunos sueltos.
 - La paleta de comandos pasa `?nuevo=1` a `?create=1`. **Ninguna pantalla lo leía**: «Nueva tarea»
-  sólo llevaba a la lista. Queda como tarea aparte.
+  sólo llevaba a la lista. Queda como tarea aparte. *Resuelto después: las tres pantallas
+  abren su formulario y quitan el parámetro de la URL; lo cubre `e2e/command-palette.spec.ts`.*
 - Las e2e no las compila `ng build`, así que además de ejecutarlas se comprueban sus tipos con
   `tsc`.
 - Lo que el detector sigue marcando son abreviaturas (`el`, `seg`, `canvasEl`) y nombres propios
