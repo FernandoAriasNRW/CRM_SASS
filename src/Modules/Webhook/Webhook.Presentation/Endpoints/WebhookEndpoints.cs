@@ -46,9 +46,9 @@ public static class WebhookEndpoints
         // POST /api/v1/webhooks — crear suscripción
         // Inquilino del token. Ver ProjectsEndpoints: misma grieta, y aquí más cara —una
         // suscripción plantada en otra organización recibiría sus eventos en una URL ajena.
-        group.MapPost("", async (CreateWebhookCommand command, IUserContext usuario, IMediator mediator) =>
+        group.MapPost("", async (CreateWebhookCommand command, IUserContext currentUser, IMediator mediator) =>
         {
-            var result = await mediator.Send(command with { TenantId = usuario.TenantId });
+            var result = await mediator.Send(command with { TenantId = currentUser.TenantId });
             return result.IsSuccess
                 ? Results.Created($"/api/v1/webhooks/{result.Value!.Id}", result.Value)
                 : Results.BadRequest(result.Error);
@@ -81,9 +81,9 @@ public static class WebhookEndpoints
         // POST /api/v1/webhooks/dispatch — dispatch interno (solo admin / internal calls)
         // Aunque exija ser administrador, un administrador lo es *de su organización*: sin esto
         // podría lanzar eventos en el inquilino de otra.
-        group.MapPost("/dispatch", async (DispatchWebhookEventCommand command, IUserContext usuario, IMediator mediator) =>
+        group.MapPost("/dispatch", async (DispatchWebhookEventCommand command, IUserContext currentUser, IMediator mediator) =>
         {
-            var result = await mediator.Send(command with { TenantId = usuario.TenantId });
+            var result = await mediator.Send(command with { TenantId = currentUser.TenantId });
             return result.IsSuccess ? Results.Accepted() : Results.BadRequest(result.Error);
         }).RequireAuthorization("AdminOnly");
 

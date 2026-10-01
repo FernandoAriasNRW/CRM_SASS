@@ -27,44 +27,44 @@ namespace ApiHost.Services;
 /// el registro de ejecuciones: es exactamente lo que hay que poder leer cuando alguien pregunta
 /// por qué no le llegó nada.
 /// </summary>
-public sealed class AvisoDeAutomatizacion(
+public sealed class AutomationNotifier(
     IMediator mediator,
-    WorkItemsDbContext tareas,
-    INotificationPreferencesRepository preferencias)
+    WorkItemsDbContext tasks,
+    INotificationPreferencesRepository preferences)
 {
-    public async Task AvisarAsync(Guid tenantId, Guid tareaId, string destinatario, CancellationToken ct)
+    public async Task NotifyAsync(Guid tenantId, Guid taskId, string recipient, CancellationToken ct)
     {
-        var tarea = await tareas.Tasks
+        var task = await tasks.Tasks
             .IgnoreQueryFilters()
             .AsNoTracking()
-            .Where(t => t.TenantId == tenantId && t.Id == tareaId)
-            .Select(t => new { t.AssigneeId, Titulo = t.Title.Value })
+            .Where(t => t.TenantId == tenantId && t.Id == taskId)
+            .Select(t => new { t.AssigneeId, Title = t.Title.Value })
             .FirstOrDefaultAsync(ct);
 
-        if (tarea is null)
+        if (task is null)
             throw new InvalidOperationException("La tarea ya no existe");
 
-        var quien = destinatario == TipoDeAccion.DestinatarioResponsable
-            ? tarea.AssigneeId
-            : Guid.TryParse(destinatario, out var id) ? id : Guid.Empty;
+        var recipientId = recipient == ActionTypes.AssigneeRecipient
+            ? task.AssigneeId
+            : Guid.TryParse(recipient, out var id) ? id : Guid.Empty;
 
-        if (quien == Guid.Empty)
+        if (recipientId == Guid.Empty)
         {
             throw new InvalidOperationException(
-                destinatario == TipoDeAccion.DestinatarioResponsable
+                recipient == ActionTypes.AssigneeRecipient
                     ? "La tarea no tiene responsable a quien avisar"
-                    : $"«{destinatario}» no es un destinatario válido");
+                    : $"«{recipient}» no es un destinatario válido");
         }
 
         // Las preferencias mandan. Se usa la propia función del dominio de Notifications en vez
         // de repetir la lógica aquí: son las mismas reglas, incluidas las horas de silencio y su
         // cruce de medianoche.
-        var suyas = await preferencias.GetForUserAsync(tenantId, quien, ct)
-                    ?? NotificationPreferences.CreateDefault(tenantId, quien);
+        var theirs = await preferences.GetForUserAsync(tenantId, recipientId, ct)
+                    ?? NotificationPreferences.CreateDefault(tenantId, recipientId);
 
-        var ahora = TimeOnly.FromDateTime(DateTime.UtcNow);
+        var now = TimeOnly.FromDateTime(DateTime.UtcNow);
 
-        if (!suyas.ShouldDeliver(NotificationTypes.TaskDueSoon, ahora))
+        if (!theirs.ShouldDeliver(NotificationTypes.TaskDueSoon, now))
         {
             // No es un fallo: es la persona ejerciendo su preferencia. Se devuelve sin más para
             // que el motor lo cuente como aplicado —la regla hizo lo que tenía que hacer— en vez
@@ -72,17 +72,17 @@ public sealed class AvisoDeAutomatizacion(
             return;
         }
 
-        var resultado = await mediator.Send(new CreateNotificationCommand(
+        var result = await mediator.Send(new CreateNotificationCommand(
             TenantId: tenantId,
-            RecipientUserId: quien,
+            RecipientUserId: recipientId,
             Type: "InApp",
             Subject: "Una tarea necesita tu atención",
-            Body: $"«{tarea.Titulo}» se acerca a su fecha de vencimiento.",
+            Body: $"«{task.Title}» se acerca a su fecha de vencimiento.",
             // Sin remitente: no lo manda una persona, lo manda una regla que alguien configuró
             // antes. Poner aquí a quien tocó la tarea le atribuiría un aviso que no escribió.
             SenderUserId: null), ct);
 
-        if (!resultado.IsSuccess)
-            throw new InvalidOperationException(resultado.Error);
+        if (!result.IsSuccess)
+            throw new InvalidOperationException(result.Error);
     }
 }

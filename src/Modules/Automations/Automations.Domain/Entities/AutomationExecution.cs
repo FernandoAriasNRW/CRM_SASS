@@ -3,17 +3,17 @@ using BuildingBlocks.Domain.Primitives;
 namespace Automations.Domain.Entities;
 
 /// <summary>Cómo acabó una ejecución.</summary>
-public static class ResultadoDeEjecucion
+public static class ExecutionOutcomes
 {
-    public const string Aplicada = "Aplicada";
+    public const string Applied = "Applied";
 
     /// <summary>Saltó el disparador, pero las condiciones no se cumplieron.</summary>
-    public const string NoCumplioCondiciones = "NoCumplioCondiciones";
+    public const string ConditionsNotMet = "ConditionsNotMet";
 
     /// <summary>Las condiciones se cumplieron y alguna acción falló.</summary>
-    public const string Fallida = "Fallida";
+    public const string Failed = "Failed";
 
-    public static IReadOnlyList<string> Todos() => [Aplicada, NoCumplioCondiciones, Fallida];
+    public static IReadOnlyList<string> All() => [Applied, ConditionsNotMet, Failed];
 }
 
 /// <summary>
@@ -40,10 +40,10 @@ public static class ResultadoDeEjecucion
 /// son precisamente las que hay que poder consultar cuando alguien pregunta por qué no pasó
 /// nada, y guardarlas cuesta una fila.
 /// </summary>
-public sealed class EjecucionDeAutomatizacion : AggregateRoot, ITenantEntity
+public sealed class AutomationExecution : AggregateRoot, ITenantEntity
 {
     /// <summary>Lo que cabe de un mensaje de error. Un volcado entero no aporta y ocupa.</summary>
-    public const int LargoMaximoDelDetalle = 500;
+    public const int MaxDetailLength = 500;
 
     public Guid TenantId { get; private set; }
     public Guid RuleId { get; private set; }
@@ -51,15 +51,15 @@ public sealed class EjecucionDeAutomatizacion : AggregateRoot, ITenantEntity
     /// <summary>La tarea sobre la que se ejecutó.</summary>
     public Guid EntityId { get; private set; }
 
-    /// <summary>Uno de <see cref="ResultadoDeEjecucion"/>.</summary>
-    public string Resultado { get; private set; } = string.Empty;
+    /// <summary>Uno de <see cref="ExecutionOutcomes"/>.</summary>
+    public string Outcome { get; private set; } = string.Empty;
 
     /// <summary>
     /// El porqué, cuando lo hay: el error de la acción que falló, o qué condición no se cumplió.
     /// </summary>
-    public string? Detalle { get; private set; }
+    public string? Detail { get; private set; }
 
-    public DateTime CuandoUtc { get; private set; }
+    public DateTime AtUtc { get; private set; }
 
     /// <summary>
     /// El día, aparte de la marca de tiempo, y no es redundante.
@@ -69,30 +69,30 @@ public sealed class EjecucionDeAutomatizacion : AggregateRoot, ITenantEntity
     /// acertar con la zona horaria. Una columna de fecha se compara con una igualdad y se indexa
     /// bien.
     /// </summary>
-    public DateOnly Dia { get; private set; }
+    public DateOnly Day { get; private set; }
 
-    private EjecucionDeAutomatizacion() { }
+    private AutomationExecution() { }
 
-    public static EjecucionDeAutomatizacion Anotar(
-        Guid tenantId, Guid ruleId, Guid entityId, string resultado, string? detalle, DateTime cuandoUtc)
+    public static AutomationExecution Record(
+        Guid tenantId, Guid ruleId, Guid entityId, string result, string? detail, DateTime atUtc)
     {
-        if (!ResultadoDeEjecucion.Todos().Contains(resultado))
-            throw new InvalidOperationException($"El resultado «{resultado}» no existe");
+        if (!ExecutionOutcomes.All().Contains(result))
+            throw new InvalidOperationException($"El resultado «{result}» no existe");
 
-        var recortado = detalle is null || detalle.Length <= LargoMaximoDelDetalle
-            ? detalle
-            : detalle[..LargoMaximoDelDetalle];
+        var trimmed = detail is null || detail.Length <= MaxDetailLength
+            ? detail
+            : detail[..MaxDetailLength];
 
-        return new EjecucionDeAutomatizacion
+        return new AutomationExecution
         {
             Id = Guid.NewGuid(),
             TenantId = tenantId,
             RuleId = ruleId,
             EntityId = entityId,
-            Resultado = resultado,
-            Detalle = recortado,
-            CuandoUtc = cuandoUtc,
-            Dia = DateOnly.FromDateTime(cuandoUtc),
+            Outcome = result,
+            Detail = trimmed,
+            AtUtc = atUtc,
+            Day = DateOnly.FromDateTime(atUtc),
         };
     }
 }

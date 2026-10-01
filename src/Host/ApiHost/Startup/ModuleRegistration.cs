@@ -148,16 +148,16 @@ public static class ModuleRegistration
 
         // El puente entre las tareas y las automatizaciones vive aquí porque es el unico sitio que
         // conoce a los dos modulos. Ver PuenteDeAutomatizaciones.
-        services.AddScoped<global::Automations.Application.Abstractions.IEjecutorDeAcciones, Services.EjecutorDeAccionesDeTareas>();
+        services.AddScoped<global::Automations.Application.Abstractions.IActionExecutor, Services.TaskActionExecutor>();
 
         // Avisar cruza tres módulos: Automations decide, WorkItems sabe quién tiene la tarea y
         // Notifications entrega. Por eso vive aquí y no dentro de ninguno de los tres.
-        services.AddScoped<Services.AvisoDeAutomatizacion>();
+        services.AddScoped<Services.AutomationNotifier>();
 
         // El disparador por vencimiento no lo levanta un evento —nadie toca la tarea— sino este
         // trabajo, que revisa cada hora qué se acerca a su fecha. Es el que reacciona a que NO ha
         // pasado nada, que es justo lo que no se nota solo.
-        services.AddHostedService<Services.VigilanteDeVencimientos>();
+        services.AddHostedService<Services.DueDateWatcher>();
     }
 
     private static void AddCommandsAndQueries(this IServiceCollection services)

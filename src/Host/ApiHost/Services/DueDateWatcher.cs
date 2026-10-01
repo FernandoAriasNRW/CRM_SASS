@@ -12,15 +12,15 @@ namespace ApiHost.Services;
 ///
 /// **Vive en el host porque cruza módulos**: lee tareas de WorkItems y llama al motor de
 /// Automations, y ningún módulo referencia a otro. Mismo sitio y mismo motivo que
-/// <see cref="PuenteDeAutomatizaciones"/>.
+/// <see cref="AutomationsBridge"/>.
 ///
 /// Es el disparador que reacciona a que **no** ha pasado nada. Los otros tres responden a algo
 /// que alguien hizo —crear, mover, repriorizar—; una tarea que se acerca a su fecha sin que
 /// nadie la toque no emite ningún evento, y es justo el caso que hay que vigilar.
 /// </summary>
-public sealed class VigilanteDeVencimientos(
+public sealed class DueDateWatcher(
     IServiceProvider serviceProvider,
-    ILogger<VigilanteDeVencimientos> logger) : BackgroundService
+    ILogger<DueDateWatcher> logger) : BackgroundService
 {
     /// <summary>
     /// Cada hora, no cada día.
@@ -30,7 +30,7 @@ public sealed class VigilanteDeVencimientos(
     /// revisar y nadie lo notaría hasta que un aviso no llegara. Repetir dentro del mismo día no
     /// cuesta nada porque el registro de ejecuciones hace de memoria.
     /// </summary>
-    private static readonly TimeSpan Intervalo = TimeSpan.FromHours(1);
+    private static readonly TimeSpan Interval = TimeSpan.FromHours(1);
 
     /// <summary>
     /// Cuántos días hacia adelante se miran.
@@ -39,13 +39,13 @@ public sealed class VigilanteDeVencimientos(
     /// todas convertiría esto en un recorrido de la tabla entera cada hora. Treinta días cubre
     /// de sobra los avisos que la gente configura.
     /// </summary>
-    private const int DiasHaciaAdelante = 30;
+    private const int DaysAhead = 30;
 
     /// <summary>
     /// Y cuántos hacia atrás. Una tarea que venció hace medio año y sigue abierta ya no necesita
     /// que se avise otra vez: o se abandonó, o el aviso lleva medio año sin surtir efecto.
     /// </summary>
-    private const int DiasHaciaAtras = 30;
+    private const int DaysBehind = 30;
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -55,7 +55,7 @@ public sealed class VigilanteDeVencimientos(
         {
             try
             {
-                await RevisarAsync(stoppingToken);
+                await CheckAsync(stoppingToken);
             }
             catch (Exception ex)
             {
@@ -65,34 +65,34 @@ public sealed class VigilanteDeVencimientos(
                 logger.LogError(ex, "Error revisando vencimientos");
             }
 
-            try { await Task.Delay(Intervalo, stoppingToken); }
+            try { await Task.Delay(Interval, stoppingToken); }
             catch (TaskCanceledException) { break; }
         }
     }
 
-    private async Task RevisarAsync(CancellationToken ct)
+    private async Task CheckAsync(CancellationToken ct)
     {
         using var scope = serviceProvider.CreateScope();
 
-        var tareasDb = scope.ServiceProvider.GetRequiredService<WorkItemsDbContext>();
-        var motor = scope.ServiceProvider.GetRequiredService<IMotorDeAutomatizaciones>();
+        var tasksDb = scope.ServiceProvider.GetRequiredService<WorkItemsDbContext>();
+        var motor = scope.ServiceProvider.GetRequiredService<IAutomationEngine>();
 
-        var hoy = DateOnly.FromDateTime(DateTime.UtcNow);
-        var desde = hoy.AddDays(-DiasHaciaAtras);
-        var hasta = hoy.AddDays(DiasHaciaAdelante);
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var from = today.AddDays(-DaysBehind);
+        var to = today.AddDays(DaysAhead);
 
         // `IgnoreQueryFilters` porque esto no corre dentro de una petición: no hay usuario, así
         // que el filtro global de inquilino dejaría la consulta vacía y el trabajo no haría nada
         // sin dar ningún error. El inquilino se lleva a mano en cada disparo, que es lo que
         // mantiene el aislamiento aquí.
-        var candidatas = await tareasDb.Tasks
+        var candidates = await tasksDb.Tasks
             .IgnoreQueryFilters()
             .AsNoTracking()
             // `CompletedAtUtc == null` descarta lo terminado sin tener que interpretar el
             // estado en SQL. No hay filtro de borrado lógico porque WorkTask no lo tiene: las
             // tareas se borran de verdad.
-            .Where(t => t.DueDate >= desde
-                     && t.DueDate <= hasta
+            .Where(t => t.DueDate >= from
+                     && t.DueDate <= to
                      && t.CompletedAtUtc == null)
             .Select(t => new
             {
@@ -100,44 +100,44 @@ public sealed class VigilanteDeVencimientos(
                 t.TenantId,
                 t.ProjectId,
                 t.DueDate,
-                Titulo = t.Title.Value,
-                Estado = t.Status.Value,
-                Prioridad = t.Priority.Value,
+                Title = t.Title.Value,
+                Status = t.Status.Value,
+                Priority = t.Priority.Value,
                 t.AssigneeId,
             })
             .ToListAsync(ct);
 
-        if (candidatas.Count == 0) return;
+        if (candidates.Count == 0) return;
 
-        var disparos = 0;
+        var triggerEvents = 0;
 
-        foreach (var tarea in candidatas)
+        foreach (var task in candidates)
         {
             // Terminada no vence. Se filtra aquí y no en la consulta porque el estado final se
             // reconoce por valor o por nombre —ver TaskStatus.EsFinal— y esa comparación no se
             // traduce a SQL.
-            if (TaskStatus.IsFinal(tarea.Estado)) continue;
+            if (TaskStatus.IsFinal(task.Status)) continue;
 
-            var datos = new Dictionary<string, string?>
+            var data = new Dictionary<string, string?>
             {
                 // Negativo si ya venció, 0 si vence hoy. Es lo que compara la condición.
-                [CampoDelEvento.DiasParaVencer] =
-                    (tarea.DueDate.DayNumber - hoy.DayNumber).ToString(),
-                [CampoDelEvento.Estado] = tarea.Estado,
-                [CampoDelEvento.Prioridad] = tarea.Prioridad,
-                [CampoDelEvento.ProyectoId] = tarea.ProjectId.ToString(),
-                [CampoDelEvento.ResponsableId] =
-                    tarea.AssigneeId == Guid.Empty ? null : tarea.AssigneeId.ToString(),
-                [CampoDelEvento.Titulo] = tarea.Titulo,
+                [EventFields.DaysUntilDue] =
+                    (task.DueDate.DayNumber - today.DayNumber).ToString(),
+                [EventFields.Status] = task.Status,
+                [EventFields.Priority] = task.Priority,
+                [EventFields.ProjectId] = task.ProjectId.ToString(),
+                [EventFields.AssigneeId] =
+                    task.AssigneeId == Guid.Empty ? null : task.AssigneeId.ToString(),
+                [EventFields.Title] = task.Title,
             };
 
-            disparos += await motor.EjecutarAsync(new DisparoDeAutomatizacion(
-                tarea.TenantId, TipoDeDisparador.TareaPorVencer, tarea.Id, datos), ct);
+            triggerEvents += await motor.RunAsync(new AutomationTriggerEvent(
+                task.TenantId, TriggerTypes.TaskDueSoon, task.Id, data), ct);
         }
 
-        if (disparos > 0)
+        if (triggerEvents > 0)
             logger.LogInformation(
                 "Vencimientos: {Disparos} automatizaciones aplicadas sobre {Candidatas} tareas",
-                disparos, candidatas.Count);
+                triggerEvents, candidates.Count);
     }
 }

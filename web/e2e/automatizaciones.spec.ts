@@ -23,17 +23,17 @@ const SESION = {
 };
 
 const VOCABULARIO = {
-  disparadores: ['TareaCreada', 'TareaCambiaDeEstado'],
-  campos: ['Estado', 'ResponsableId'],
-  operadores: ['Igual', 'EstaVacio'],
-  acciones: ['CambiarEstado', 'CambiarPrioridad'],
+  triggers: ['TaskCreated', 'TaskStatusChanged'],
+  fields: ['Status', 'AssigneeId'],
+  operators: ['EqualTo', 'IsEmpty'],
+  actions: ['ChangeStatus', 'ChangePriority'],
 };
 
 const REGLA = {
-  id: 'r1', nombre: 'Bajar al cerrar', disparador: 'TareaCambiaDeEstado', activa: true,
-  condiciones: [{ campo: 'Estado', operador: 'Igual', valor: 'Done' }],
-  acciones: [{ tipo: 'CambiarPrioridad', valor: 'Low' }],
-  vecesEjecutada: 3, ultimaEjecucionUtc: '2026-08-14T10:00:00Z',
+  id: 'r1', name: 'Bajar al cerrar', trigger: 'TaskStatusChanged', isActive: true,
+  conditions: [{ field: 'Status', operator: 'EqualTo', value: 'Done' }],
+  actions: [{ type: 'ChangePriority', value: 'Low' }],
+  executionCount: 3, lastExecutedAtUtc: '2026-08-14T10:00:00Z',
 };
 
 const json = (cuerpo: unknown, status = 200) => ({
@@ -62,7 +62,7 @@ async function entrar(
     if (/\/views\//.test(url)) return r.fulfill(json([]));
     if (/\/custom-fields/.test(url)) return r.fulfill(json([]));
 
-    if (/\/automations\/vocabulario/.test(url)) return r.fulfill(json(VOCABULARIO));
+    if (/\/automations\/vocabulary/.test(url)) return r.fulfill(json(VOCABULARIO));
 
     if (/\/automations/.test(url)) {
       if (metodo === 'GET') return r.fulfill(json(reglas));
@@ -99,7 +99,7 @@ test('la lista dice qué hace cada regla y cuántas veces se ha ejecutado', asyn
   await entrar(page, [REGLA]);
 
   await expect(page.getByRole('cell', { name: 'Bajar al cerrar', exact: true })).toBeVisible();
-  await expect(page.getByRole('cell', { name: /Estado Igual Done/ })).toBeVisible();
+  await expect(page.getByRole('cell', { name: /Estado es igual a Done/ })).toBeVisible();
   await expect(page.getByRole('cell', { name: '3', exact: true })).toBeVisible();
 });
 
@@ -118,7 +118,7 @@ test('los desplegables se llenan con el vocabulario del servidor', async ({ page
   await page.getByRole('button', { name: 'Nueva automatización' }).click();
 
   const cuando = page.getByLabel('Cuándo');
-  await expect(cuando.locator('option')).toHaveText(['TareaCreada', 'TareaCambiaDeEstado']);
+  await expect(cuando.locator('option')).toHaveText(['Se crea una tarea', 'Cambia el estado de una tarea']);
 });
 
 test('no deja guardar una automatización sin nombre, y dice por qué', async ({ page }) => {
@@ -134,22 +134,22 @@ test('crear manda la regla tal y como se configuró', async ({ page }) => {
   await page.getByRole('button', { name: 'Nueva automatización' }).click();
 
   await page.getByLabel('Nombre', { exact: true }).fill('Bajar al cerrar');
-  await page.getByLabel('Cuándo').selectOption('TareaCambiaDeEstado');
+  await page.getByLabel('Cuándo').selectOption('TaskStatusChanged');
   await page.getByRole('button', { name: '+ Condición' }).click();
-  await page.getByLabel('Campo', { exact: true }).selectOption('Estado');
-  await page.getByLabel('Operador', { exact: true }).selectOption('Igual');
+  await page.getByLabel('Campo', { exact: true }).selectOption('Status');
+  await page.getByLabel('Operador', { exact: true }).selectOption('EqualTo');
   await page.getByLabel('Valor de la condición').fill('Done');
-  await page.getByLabel('Acción', { exact: true }).selectOption('CambiarPrioridad');
+  await page.getByLabel('Acción', { exact: true }).selectOption('ChangePriority');
   await page.getByLabel('Valor de la acción').fill('Low');
 
   await page.getByRole('button', { name: 'Guardar' }).click();
 
   await expect.poll(() => enviados.length).toBe(1);
   expect(enviados[0].cuerpo).toEqual({
-    nombre: 'Bajar al cerrar',
-    disparador: 'TareaCambiaDeEstado',
-    condiciones: [{ campo: 'Estado', operador: 'Igual', valor: 'Done' }],
-    acciones: [{ tipo: 'CambiarPrioridad', valor: 'Low' }],
+    name: 'Bajar al cerrar',
+    trigger: 'TaskStatusChanged',
+    conditions: [{ field: 'Status', operator: 'EqualTo', value: 'Done' }],
+    actions: [{ type: 'ChangePriority', value: 'Low' }],
   });
 });
 
@@ -159,7 +159,7 @@ test('un operador que no compara no pide valor', async ({ page }) => {
   await page.getByRole('button', { name: 'Nueva automatización' }).click();
   await page.getByRole('button', { name: '+ Condición' }).click();
 
-  await page.getByLabel('Operador', { exact: true }).selectOption('EstaVacio');
+  await page.getByLabel('Operador', { exact: true }).selectOption('IsEmpty');
 
   await expect(page.getByLabel('Valor de la condición')).toHaveCount(0);
   await expect(page.getByText('sin valor')).toBeVisible();
@@ -183,7 +183,7 @@ test('apagar una regla avisa al servidor', async ({ page }) => {
   await page.getByRole('checkbox', { name: 'Bajar al cerrar' }).uncheck();
 
   await expect.poll(() => enviados.length).toBe(1);
-  expect(enviados[0].cuerpo).toEqual({ activa: false });
+  expect(enviados[0].cuerpo).toEqual({ isActive: false });
 });
 
 test('borrar pide confirmación en la propia fila', async ({ page }) => {

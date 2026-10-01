@@ -15,7 +15,7 @@ namespace ApiHost.Tags;
 /// escuchar esos eventos referenciaba `Projects.Domain` y `Teams.Domain`: dos módulos alcanzando
 /// a otros dos, exactamente lo que la arquitectura prohíbe. Aquí es legítimo, porque el host es
 /// quien conoce a todos y compone lo que ninguno puede componer solo — el mismo sitio y el mismo
-/// motivo que <see cref="ApiHost.Services.PuenteDeAutomatizaciones"/>.
+/// motivo que <see cref="ApiHost.Services.AutomationsBridge"/>.
 ///
 /// La alternativa habría sido escuchar los eventos de integración de `BuildingBlocks.Contracts`,
 /// que ya declaran un `ProjectCreatedEvent` con estos mismos campos. Se descartó porque **nadie

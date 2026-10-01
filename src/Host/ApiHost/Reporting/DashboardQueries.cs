@@ -13,7 +13,7 @@ namespace ApiHost.Reporting;
 ///
 /// **Vive en el host y no en Reporting.Infrastructure a propósito.** Ningún módulo referencia a
 /// otro; lo que necesita datos de varios se compone aquí, que es donde ya vive
-/// <see cref="ApiHost.Services.PuenteDeAutomatizaciones"/> por la misma razón.
+/// <see cref="ApiHost.Services.AutomationsBridge"/> por la misma razón.
 ///
 /// Estaba dentro del módulo, y para conseguirlo `Reporting.Infrastructure` referenciaba los
 /// proyectos de Projects, WorkItems y Ticketing —incluidas sus capas de infraestructura, o sea

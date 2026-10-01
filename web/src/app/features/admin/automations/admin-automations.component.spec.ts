@@ -15,17 +15,17 @@ import {
  */
 describe('AdminAutomationsComponent', () => {
   const VOCABULARIO: VocabularioDeAutomatizacion = {
-    disparadores: ['TareaCreada', 'TareaCambiaDeEstado'],
-    campos: ['Estado', 'ResponsableId'],
-    operadores: ['Igual', 'EstaVacio'],
-    acciones: ['CambiarEstado', 'CambiarPrioridad'],
+    triggers: ['TaskCreated', 'TaskStatusChanged'],
+    fields: ['Status', 'AssigneeId'],
+    operators: ['EqualTo', 'IsEmpty'],
+    actions: ['ChangeStatus', 'ChangePriority'],
   };
 
   const REGLA: ReglaDeAutomatizacion = {
-    id: 'r1', nombre: 'Bajar al cerrar', disparador: 'TareaCambiaDeEstado', activa: true,
-    condiciones: [{ campo: 'Estado', operador: 'Igual', valor: 'Done' }],
-    acciones: [{ tipo: 'CambiarPrioridad', valor: 'Low' }],
-    vecesEjecutada: 3, ultimaEjecucionUtc: '2026-08-14T10:00:00Z',
+    id: 'r1', name: 'Bajar al cerrar', trigger: 'TaskStatusChanged', isActive: true,
+    conditions: [{ field: 'Status', operator: 'EqualTo', value: 'Done' }],
+    actions: [{ type: 'ChangePriority', value: 'Low' }],
+    executionCount: 3, lastExecutedAtUtc: '2026-08-14T10:00:00Z',
   };
 
   let servicio: jasmine.SpyObj<AutomationsService>;
@@ -70,8 +70,8 @@ describe('AdminAutomationsComponent', () => {
 
     componente.nueva();
 
-    expect(componente.disparador).toBe('TareaCreada');
-    expect(componente.acciones).toEqual([{ tipo: 'CambiarEstado', valor: '' }]);
+    expect(componente.trigger).toBe('TaskCreated');
+    expect(componente.actions).toEqual([{ type: 'ChangeStatus', value: '' }]);
   });
 
   /** Una regla sin acciones se ejecutaría entera para no hacer nada. */
@@ -80,46 +80,46 @@ describe('AdminAutomationsComponent', () => {
 
     componente.nueva();
 
-    expect(componente.acciones.length).toBe(1);
+    expect(componente.actions.length).toBe(1);
   });
 
   describe('lo que impide guardar', () => {
     beforeEach(async () => {
       await montar();
       componente.nueva();
-      componente.acciones = [{ tipo: 'CambiarPrioridad', valor: 'Low' }];
+      componente.actions = [{ type: 'ChangePriority', value: 'Low' }];
     });
 
     it('una automatización sin nombre', () => {
-      componente.nombre = '  ';
+      componente.name = '  ';
 
       expect(componente.impedimento).toBeTruthy();
     });
 
     it('una acción sin valor', () => {
-      componente.nombre = 'Algo';
-      componente.acciones = [{ tipo: 'CambiarPrioridad', valor: '' }];
+      componente.name = 'Algo';
+      componente.actions = [{ type: 'ChangePriority', value: '' }];
 
       expect(componente.impedimento).toBeTruthy();
     });
 
     it('una condición que compara y no dice contra qué', () => {
-      componente.nombre = 'Algo';
-      componente.condiciones = [{ campo: 'Estado', operador: 'Igual', valor: '' }];
+      componente.name = 'Algo';
+      componente.conditions = [{ field: 'Status', operator: 'EqualTo', value: '' }];
 
       expect(componente.impedimento).toBeTruthy();
     });
 
     /** «Está vacío» es el único operador que no compara contra nada. */
     it('nada, si la condición usa un operador que no necesita valor', () => {
-      componente.nombre = 'Algo';
-      componente.condiciones = [{ campo: 'ResponsableId', operador: 'EstaVacio', valor: '' }];
+      componente.name = 'Algo';
+      componente.conditions = [{ field: 'AssigneeId', operator: 'IsEmpty', value: '' }];
 
       expect(componente.impedimento).toBe('');
     });
 
     it('e impedida, no se manda nada al servidor', () => {
-      componente.nombre = '';
+      componente.name = '';
 
       componente.guardar();
 
@@ -130,32 +130,32 @@ describe('AdminAutomationsComponent', () => {
   it('crea la regla con las condiciones y acciones limpias', async () => {
     await montar();
     componente.nueva();
-    componente.nombre = '  Bajar al cerrar  ';
-    componente.disparador = 'TareaCambiaDeEstado';
-    componente.condiciones = [{ campo: 'Estado', operador: 'Igual', valor: ' Done ' }];
-    componente.acciones = [{ tipo: 'CambiarPrioridad', valor: ' Low ' }];
+    componente.name = '  Bajar al cerrar  ';
+    componente.trigger = 'TaskStatusChanged';
+    componente.conditions = [{ field: 'Status', operator: 'EqualTo', value: ' Done ' }];
+    componente.actions = [{ type: 'ChangePriority', value: ' Low ' }];
 
     componente.guardar();
 
     expect(servicio.crear).toHaveBeenCalledWith({
-      nombre: 'Bajar al cerrar',
-      disparador: 'TareaCambiaDeEstado',
-      condiciones: [{ campo: 'Estado', operador: 'Igual', valor: 'Done' }],
-      acciones: [{ tipo: 'CambiarPrioridad', valor: 'Low' }],
+      name: 'Bajar al cerrar',
+      trigger: 'TaskStatusChanged',
+      conditions: [{ field: 'Status', operator: 'EqualTo', value: 'Done' }],
+      actions: [{ type: 'ChangePriority', value: 'Low' }],
     });
   });
 
   it('una condición sin valor se manda como nula, no como cadena vacía', async () => {
     await montar();
     componente.nueva();
-    componente.nombre = 'Sin responsable';
-    componente.condiciones = [{ campo: 'ResponsableId', operador: 'EstaVacio', valor: 'ruido' }];
-    componente.acciones = [{ tipo: 'CambiarPrioridad', valor: 'High' }];
+    componente.name = 'Sin responsable';
+    componente.conditions = [{ field: 'AssigneeId', operator: 'IsEmpty', value: 'ruido' }];
+    componente.actions = [{ type: 'ChangePriority', value: 'High' }];
 
     componente.guardar();
 
     expect(servicio.crear).toHaveBeenCalledWith(jasmine.objectContaining({
-      condiciones: [{ campo: 'ResponsableId', operador: 'EstaVacio', valor: null }],
+      conditions: [{ field: 'AssigneeId', operator: 'IsEmpty', value: null }],
     }));
   });
 
@@ -167,24 +167,24 @@ describe('AdminAutomationsComponent', () => {
 
     expect(componente.esNueva()).toBeFalse();
     expect(servicio.crear).not.toHaveBeenCalled();
-    expect(servicio.actualizar).toHaveBeenCalledWith('r1', jasmine.objectContaining({ nombre: 'Bajar al cerrar' }));
+    expect(servicio.actualizar).toHaveBeenCalledWith('r1', jasmine.objectContaining({ name: 'Bajar al cerrar' }));
   });
 
   it('editar no toca la regla de la lista hasta que el servidor acepte', async () => {
     await montar([REGLA]);
 
     componente.editar(REGLA);
-    componente.condiciones[0].valor = 'In Review';
+    componente.conditions[0].value = 'In Review';
 
-    expect(componente.reglas()[0].condiciones[0].valor).toBe('Done');
+    expect(componente.reglas()[0].conditions[0].value).toBe('Done');
   });
 
   it('si el servidor rechaza, el formulario sigue abierto con su explicación', async () => {
     await montar();
     servicio.crear.and.returnValue(throwError(() => ({ error: 'Ya hay una automatización con ese nombre' })));
     componente.nueva();
-    componente.nombre = 'Repetida';
-    componente.acciones = [{ tipo: 'CambiarPrioridad', valor: 'Low' }];
+    componente.name = 'Repetida';
+    componente.actions = [{ type: 'ChangePriority', value: 'Low' }];
 
     componente.guardar();
 
@@ -199,7 +199,7 @@ describe('AdminAutomationsComponent', () => {
       componente.alternarActiva(REGLA);
 
       expect(servicio.activar).toHaveBeenCalledWith('r1', false);
-      expect(componente.reglas()[0].activa).toBeFalse();
+      expect(componente.reglas()[0].isActive).toBeFalse();
     });
 
     /**
@@ -212,7 +212,7 @@ describe('AdminAutomationsComponent', () => {
 
       componente.alternarActiva(REGLA);
 
-      expect(componente.reglas()[0].activa).toBeTrue();
+      expect(componente.reglas()[0].isActive).toBeTrue();
       expect(componente.error()).toBe('No se pudo');
     });
   });
@@ -230,8 +230,8 @@ describe('AdminAutomationsComponent', () => {
   it('el resumen dice qué hace la regla sin tener que abrirla', async () => {
     await montar([REGLA]);
 
-    expect(componente.resumenDe(REGLA)).toContain('Estado Igual Done');
-    expect(componente.resumenDe(REGLA)).toContain('CambiarPrioridad: Low');
+    expect(componente.resumenDe(REGLA)).toContain('Estado es igual a Done');
+    expect(componente.resumenDe(REGLA)).toContain('Cambiar la prioridad: Low');
   });
 
   it('si la carga falla lo dice en lugar de enseñar una lista vacía', async () => {

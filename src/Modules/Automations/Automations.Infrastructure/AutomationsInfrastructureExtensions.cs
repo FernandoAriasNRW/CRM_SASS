@@ -1,5 +1,5 @@
 using Automations.Application.Abstractions;
-using Automations.Application.Servicios;
+using Automations.Application.Services;
 using Automations.Domain.Entities;
 using Automations.Infrastructure.Persistence;
 using BuildingBlocks.Infrastructure.Outbox;
@@ -25,41 +25,41 @@ public sealed class EfAutomationRuleRepository(AutomationsDbContext context) : I
   public async Task<IReadOnlyList<AutomationRule>> GetByTenantAsync(Guid tenantId, CancellationToken ct = default)
       => await context.Rules
           .Where(r => r.TenantId == tenantId)
-          .OrderBy(r => r.Nombre)
+          .OrderBy(r => r.Name)
           .ToListAsync(ct);
 
-  public async Task<IReadOnlyList<AutomationRule>> GetActivasPorDisparadorAsync(
-      Guid tenantId, string disparador, CancellationToken ct = default)
+  public async Task<IReadOnlyList<AutomationRule>> GetActiveByTriggerAsync(
+      Guid tenantId, string trigger, CancellationToken ct = default)
       => await context.Rules
-          .Where(r => r.TenantId == tenantId && r.Disparador == disparador && r.Activa)
-          .OrderBy(r => r.Nombre)
+          .Where(r => r.TenantId == tenantId && r.Trigger == trigger && r.IsActive)
+          .OrderBy(r => r.Name)
           .ToListAsync(ct);
 
-  public async Task<bool> ExisteConNombreAsync(
-      Guid tenantId, string nombre, Guid? excepto, CancellationToken ct = default)
+  public async Task<bool> ExistsWithNameAsync(
+      Guid tenantId, string name, Guid? exceptId, CancellationToken ct = default)
       => await context.Rules.AnyAsync(
-          r => r.TenantId == tenantId && r.Nombre == nombre && (excepto == null || r.Id != excepto), ct);
+          r => r.TenantId == tenantId && r.Name == name && (exceptId == null || r.Id != exceptId), ct);
 
-  public async Task AddAsync(AutomationRule regla, CancellationToken ct = default)
-      => await context.Rules.AddAsync(regla, ct);
+  public async Task AddAsync(AutomationRule rule, CancellationToken ct = default)
+      => await context.Rules.AddAsync(rule, ct);
 
-  public Task UpdateAsync(AutomationRule regla, CancellationToken ct = default)
+  public Task UpdateAsync(AutomationRule rule, CancellationToken ct = default)
   {
-    context.Rules.Update(regla);
+    context.Rules.Update(rule);
     return Task.CompletedTask;
   }
 
-  public Task RemoveAsync(AutomationRule regla, CancellationToken ct = default)
+  public Task RemoveAsync(AutomationRule rule, CancellationToken ct = default)
   {
-    context.Rules.Remove(regla);
+    context.Rules.Remove(rule);
     return Task.CompletedTask;
   }
 }
 
-public sealed class EfRepositorioDeEjecuciones(AutomationsDbContext context) : IRepositorioDeEjecuciones
+public sealed class EfExecutionRepository(AutomationsDbContext context) : IExecutionRepository
 {
-  public async Task AnotarAsync(EjecucionDeAutomatizacion ejecucion, CancellationToken ct = default)
-      => await context.Ejecuciones.AddAsync(ejecucion, ct);
+  public async Task RecordAsync(AutomationExecution execution, CancellationToken ct = default)
+      => await context.Executions.AddAsync(execution, ct);
 
   /// <summary>
   /// Se pregunta sólo por las que llegaron a aplicarse.
@@ -68,22 +68,22 @@ public sealed class EfRepositorioDeEjecuciones(AutomationsDbContext context) : I
   /// cumplía y mañana sí, el aviso tiene que salir. Contar cualquier ejecución como «ya hecha»
   /// silenciaría precisamente el día en que la regla empieza a tener razón.
   /// </summary>
-  public Task<bool> YaSeEjecutoHoyAsync(
-      Guid tenantId, Guid ruleId, Guid entityId, DateOnly dia, CancellationToken ct = default)
-      => context.Ejecuciones.AnyAsync(
+  public Task<bool> AlreadyRanTodayAsync(
+      Guid tenantId, Guid ruleId, Guid entityId, DateOnly day, CancellationToken ct = default)
+      => context.Executions.AnyAsync(
           x => x.TenantId == tenantId
             && x.RuleId == ruleId
             && x.EntityId == entityId
-            && x.Dia == dia
-            && x.Resultado == ResultadoDeEjecucion.Aplicada, ct);
+            && x.Day == day
+            && x.Outcome == ExecutionOutcomes.Applied, ct);
 
-  public async Task<IReadOnlyList<EjecucionDeAutomatizacion>> UltimasDeLaReglaAsync(
-      Guid tenantId, Guid ruleId, int cuantas, CancellationToken ct = default)
-      => await context.Ejecuciones
+  public async Task<IReadOnlyList<AutomationExecution>> LatestForRuleAsync(
+      Guid tenantId, Guid ruleId, int count, CancellationToken ct = default)
+      => await context.Executions
           .AsNoTracking()
           .Where(x => x.TenantId == tenantId && x.RuleId == ruleId)
-          .OrderByDescending(x => x.CuandoUtc)
-          .Take(cuantas)
+          .OrderByDescending(x => x.AtUtc)
+          .Take(count)
           .ToListAsync(ct);
 }
 
@@ -99,8 +99,8 @@ public static class AutomationsInfrastructureExtensions
     services.AddScoped<IOutboxService, OutboxService>();
     services.AddScoped<IAutomationsUnitOfWork, AutomationsModuleUnitOfWork>();
     services.AddScoped<IAutomationRuleRepository, EfAutomationRuleRepository>();
-    services.AddScoped<IRepositorioDeEjecuciones, EfRepositorioDeEjecuciones>();
-    services.AddScoped<IMotorDeAutomatizaciones, MotorDeAutomatizaciones>();
+    services.AddScoped<IExecutionRepository, EfExecutionRepository>();
+    services.AddScoped<IAutomationEngine, AutomationEngine>();
 
     return services;
   }
