@@ -55,7 +55,8 @@ public class UnitOfWork<TContext>(
         await _outboxService.AddMessageAsync(eventType, payload, ct);
       }
 
-      // 4. Dispatch in-process via MediatR if dispatcher is available
+      // 4. Dispatch in-process via MediatR if dispatcher is available.
+      // El dispatcher sólo reparte en proceso: el outbox se escribe una vez, arriba.
       if (_domainEventDispatcher != null)
       {
         await _domainEventDispatcher.DispatchAsync(domainEvents, ct);
