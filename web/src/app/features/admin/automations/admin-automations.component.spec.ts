@@ -62,14 +62,14 @@ describe('AdminAutomationsComponent', () => {
     }).compileComponents();
   });
 
-  it('pide el vocabulario y las reglas al abrir', async () => {
+  it('asks for the vocabulary and rules on open', async () => {
     await mount([RULE]);
 
     expect(service.vocabulary).toHaveBeenCalled();
     expect(component.rules()).toEqual([RULE]);
   });
 
-  it('el formulario se arma con lo que dice el servidor', async () => {
+  it('the form is built from what the server says', async () => {
     await mount();
 
     component.startNew();
@@ -79,7 +79,7 @@ describe('AdminAutomationsComponent', () => {
   });
 
   /** Una regla sin acciones se ejecutaría entera para no hacer nada. */
-  it('una automatización nueva empieza con una acción', async () => {
+  it('a new automation starts with one action', async () => {
     await mount();
 
     component.startNew();
@@ -91,13 +91,13 @@ describe('AdminAutomationsComponent', () => {
    * Una condición sobre un campo que el disparador no trae no se cumple nunca, y se anotaba como
    * «condiciones no cumplidas» sin avisar a nadie. El formulario sólo ofrece los campos que trae.
    */
-  describe('campos por disparador', () => {
+  describe('fields by trigger', () => {
     function fieldOptions(): string[] {
       const select = fixture.nativeElement.querySelector('select[aria-label="Campo"]') as HTMLSelectElement;
       return Array.from(select.options).map(o => o.value);
     }
 
-    it('el desplegable de campo sólo ofrece los del disparador elegido', async () => {
+    it('the field dropdown only offers the chosen trigger fields', async () => {
       await mount();
       component.startNew();
       component.addCondition();
@@ -112,7 +112,7 @@ describe('AdminAutomationsComponent', () => {
       expect(fieldOptions()).toEqual(['Status', 'AssigneeId']);
     });
 
-    it('una condición nueva empieza con un campo del disparador', async () => {
+    it('a new condition starts with a trigger field', async () => {
       await mount();
       component.startNew();
 
@@ -121,7 +121,7 @@ describe('AdminAutomationsComponent', () => {
       expect(component.conditions[0].field).toBe('AssigneeId');
     });
 
-    it('cambiar de disparador quita las condiciones que el nuevo no trae, y lo dice', async () => {
+    it('changing the trigger removes conditions the new one lacks, and says so', async () => {
       await mount();
       component.startNew();
       component.changeTrigger('TaskStatusChanged');
@@ -139,7 +139,7 @@ describe('AdminAutomationsComponent', () => {
       expect(notice?.textContent).toContain('Estado');
     });
 
-    it('si no se quita ninguna, no avisa de nada', async () => {
+    it('if none is removed, it warns about nothing', async () => {
       await mount();
       component.startNew();
       component.conditions = [{ field: 'AssigneeId', operator: 'IsEmpty', value: null }];
@@ -151,13 +151,13 @@ describe('AdminAutomationsComponent', () => {
     });
 
     /** Reglas guardadas antes de que el servidor lo comprobara. */
-    describe('una regla antigua con una condición que su disparador no trae', () => {
+    describe('an old rule with a condition its trigger lacks', () => {
       const LEGACY: AutomationRule = {
         ...RULE, id: 'r2', name: 'Título con 8b', trigger: 'TaskCreated',
         conditions: [{ field: 'Title', operator: 'Contains', value: '8b' }],
       };
 
-      it('se marca en la lista', async () => {
+      it('is flagged in the list', async () => {
         await mount([RULE, LEGACY]);
 
         const marks = fixture.nativeElement.querySelectorAll('[data-testid="unreachable-condition"]');
@@ -166,7 +166,7 @@ describe('AdminAutomationsComponent', () => {
         expect(component.hasUnreachableCondition(RULE)).toBeFalse();
       });
 
-      it('al editarla se enseña la condición y no deja guardar hasta arreglarla', async () => {
+      it('editing it shows the condition and blocks saving until fixed', async () => {
         await mount([LEGACY]);
 
         component.edit(LEGACY);
@@ -182,27 +182,27 @@ describe('AdminAutomationsComponent', () => {
     });
   });
 
-  describe('lo que impide guardar', () => {
+  describe('what blocks saving', () => {
     beforeEach(async () => {
       await mount();
       component.startNew();
       component.actions = [{ type: 'ChangePriority', value: 'Low' }];
     });
 
-    it('una automatización sin nombre', () => {
+    it('an automation without a name', () => {
       component.name = '  ';
 
       expect(component.blocker).toBeTruthy();
     });
 
-    it('una acción sin valor', () => {
+    it('an action without a value', () => {
       component.name = 'Algo';
       component.actions = [{ type: 'ChangePriority', value: '' }];
 
       expect(component.blocker).toBeTruthy();
     });
 
-    it('una condición que compara y no dice contra qué', () => {
+    it('a comparing condition that does not say against what', () => {
       component.name = 'Algo';
       component.conditions = [{ field: 'Status', operator: 'EqualTo', value: '' }];
 
@@ -210,14 +210,14 @@ describe('AdminAutomationsComponent', () => {
     });
 
     /** «Está vacío» es el único operador que no compara contra nada. */
-    it('nada, si la condición usa un operador que no necesita valor', () => {
+    it('nothing, if the condition uses an operator that needs no value', () => {
       component.name = 'Algo';
       component.conditions = [{ field: 'AssigneeId', operator: 'IsEmpty', value: '' }];
 
       expect(component.blocker).toBe('');
     });
 
-    it('e impedida, no se manda nada al servidor', () => {
+    it('and when blocked, nothing is sent to the server', () => {
       component.name = '';
 
       component.save();
@@ -226,7 +226,7 @@ describe('AdminAutomationsComponent', () => {
     });
   });
 
-  it('crea la regla con las condiciones y acciones limpias', async () => {
+  it('creates the rule with clean conditions and actions', async () => {
     await mount();
     component.startNew();
     component.name = '  Bajar al cerrar  ';
@@ -244,7 +244,7 @@ describe('AdminAutomationsComponent', () => {
     });
   });
 
-  it('una condición sin valor se manda como nula, no como cadena vacía', async () => {
+  it('a condition without value is sent as null, not as an empty string', async () => {
     await mount();
     component.startNew();
     component.name = 'Sin responsable';
@@ -258,7 +258,7 @@ describe('AdminAutomationsComponent', () => {
     }));
   });
 
-  it('editar carga la regla y actualiza en lugar de crear', async () => {
+  it('editing loads the rule and updates instead of creating', async () => {
     await mount([RULE]);
 
     component.edit(RULE);
@@ -269,7 +269,7 @@ describe('AdminAutomationsComponent', () => {
     expect(service.update).toHaveBeenCalledWith('r1', jasmine.objectContaining({ name: 'Bajar al cerrar' }));
   });
 
-  it('editar no toca la regla de la lista hasta que el servidor acepte', async () => {
+  it('editing does not touch the listed rule until the server accepts', async () => {
     await mount([RULE]);
 
     component.edit(RULE);
@@ -278,7 +278,7 @@ describe('AdminAutomationsComponent', () => {
     expect(component.rules()[0].conditions[0].value).toBe('Done');
   });
 
-  it('si el servidor rechaza, el formulario sigue abierto con su explicación', async () => {
+  it('if the server rejects, the form stays open with its explanation', async () => {
     await mount();
     service.create.and.returnValue(throwError(() => ({ error: 'Ya hay una automatización con ese nombre' })));
     component.startNew();
@@ -291,8 +291,8 @@ describe('AdminAutomationsComponent', () => {
     expect(component.error()).toBe('Ya hay una automatización con ese nombre');
   });
 
-  describe('apagar y encender', () => {
-    it('cambia el interruptor y avisa al servidor', async () => {
+  describe('turning off and on', () => {
+    it('flips the switch and tells the server', async () => {
       await mount([RULE]);
 
       component.toggleActive(RULE);
@@ -305,7 +305,7 @@ describe('AdminAutomationsComponent', () => {
      * Una automatización que se ve apagada y sigue ejecutándose es la peor mentira posible en
      * esta pantalla: nadie vuelve a mirarla.
      */
-    it('si el servidor rechaza, el interruptor vuelve a donde estaba', async () => {
+    it('if the server rejects, the switch goes back', async () => {
       await mount([RULE]);
       service.setActive.and.returnValue(throwError(() => ({ error: 'No se pudo' })));
 
@@ -316,7 +316,7 @@ describe('AdminAutomationsComponent', () => {
     });
   });
 
-  it('el borrado se pide dos veces: una para armarlo y otra para confirmarlo', async () => {
+  it('deleting takes two clicks: one to arm and one to confirm', async () => {
     await mount([RULE]);
 
     component.deleting.set(RULE.id);
@@ -326,14 +326,14 @@ describe('AdminAutomationsComponent', () => {
     expect(service.remove).toHaveBeenCalledWith('r1');
   });
 
-  it('el resumen dice qué hace la regla sin tener que abrirla', async () => {
+  it('the summary says what the rule does without opening it', async () => {
     await mount([RULE]);
 
     expect(component.summaryOf(RULE)).toContain('Estado es igual a Done');
     expect(component.summaryOf(RULE)).toContain('Cambiar la prioridad: Low');
   });
 
-  it('si la carga falla lo dice en lugar de enseñar una lista vacía', async () => {
+  it('if loading fails it says so instead of showing an empty list', async () => {
     service.rules.and.returnValue(throwError(() => ({ error: 'Sin permiso' })));
 
     fixture = TestBed.createComponent(AdminAutomationsComponent);

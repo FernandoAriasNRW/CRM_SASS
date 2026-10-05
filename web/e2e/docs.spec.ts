@@ -68,7 +68,7 @@ async function openDocs(page: Page) {
   await expect(page).toHaveURL(/\/docs/, { timeout: 30_000 });
 }
 
-test('la sección de documentos carga sin errores de consola', async ({ page }) => {
+test('the documents section loads without console errors', async ({ page }) => {
   const errors: string[] = [];
   page.on('pageerror', e => errors.push(e.message));
 
@@ -80,13 +80,13 @@ test('la sección de documentos carga sin errores de consola', async ({ page }) 
 
 
 
-test('muestra los documentos que devuelve la API', async ({ page }) => {
+test('shows the documents the API returns', async ({ page }) => {
   await openDocs(page);
 
   await expect(page.getByText('Manual de arquitectura').first()).toBeVisible({ timeout: 15_000 });
 });
 
-test('el modal de importar se abre, valida y se cierra', async ({ page }) => {
+test('the import modal opens, validates and closes', async ({ page }) => {
   await openDocs(page);
 
   await page.getByRole('button', { name: /^importar$/i }).first().click();
@@ -103,7 +103,7 @@ test('el modal de importar se abre, valida y se cierra', async ({ page }) => {
   await expect(modal).toBeHidden();
 });
 
-test('el cajón de plantillas las ofrece todas, se filtran y se recorren con teclado', async ({ page }) => {
+test('the template drawer offers them all, filters them and is keyboard navigable', async ({ page }) => {
   await openDocs(page);
 
   await page.getByRole('button', { name: /más opciones de documento nuevo/i }).click();
@@ -136,7 +136,7 @@ test('el cajón de plantillas las ofrece todas, se filtran y se recorren con tec
  * La prueba fuerza el fallo del servidor. Una que sólo comprobara el camino bueno la pasaba
  * también la versión rota.
  */
-test('si el guardado falla, la cabecera lo dice y ofrece reintentar', async ({ page }) => {
+test('if saving fails, the header says so and offers to retry', async ({ page }) => {
   const PAGE = {
     id: '00000000-0000-0000-0000-0000000000a1',
     documentId: DOCUMENTS[0].id,
@@ -183,7 +183,7 @@ test('si el guardado falla, la cabecera lo dice y ofrece reintentar', async ({ p
  * llamaba desde ningún sitio, así que cada documento se quedaba con la página que le creó la
  * plantilla y no había forma de organizarlo.
  */
-test('el árbol permite crear una página nueva', async ({ page }) => {
+test('the tree allows creating a new page', async ({ page }) => {
   const PAGE = {
     id: '00000000-0000-0000-0000-0000000000a1',
     documentId: DOCUMENTS[0].id,
@@ -214,7 +214,7 @@ test('el árbol permite crear una página nueva', async ({ page }) => {
   await expect.poll(() => creations).toBe(1);
 });
 
-test('no tiene violaciones graves de accesibilidad', async ({ page }) => {
+test('has no serious accessibility violations', async ({ page }) => {
   const { default: AxeBuilder } = await import('@axe-core/playwright');
   await openDocs(page);
 

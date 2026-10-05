@@ -14,13 +14,13 @@ describe('gantt', () => {
     ...overrides,
   } as TaskItem);
 
-  describe('diaDesde', () => {
-    it('lee una fecha suelta', () => {
+  describe('dayFrom', () => {
+    it('reads a plain date', () => {
       expect(dayFrom('1970-01-01')).toBe(0);
       expect(dayFrom('1970-01-02')).toBe(1);
     });
 
-    it('lee una fecha con hora, que es como la manda parte de la API', () => {
+    it('reads a date with time, as part of the API sends it', () => {
       expect(dayFrom('2026-08-15T00:00:00')).toBe(dayFrom('2026-08-15')!);
     });
 
@@ -29,22 +29,22 @@ describe('gantt', () => {
      * devuelve el 14. Ese error de un día no se ve al programarlo y sale sólo para media Europa
      * y toda América.
      */
-    it('no se corre un día por el huso horario', () => {
+    it('does not shift a day because of the time zone', () => {
       const day = dayFrom('2026-08-15')!;
 
       expect(dateOfDay(day).getUTCDate()).toBe(15);
       expect(dateOfDay(day).getUTCMonth()).toBe(7);
     });
 
-    it('cuenta bien un cambio de mes', () => {
+    it('counts a month change correctly', () => {
       expect(dayFrom('2026-09-01')! - dayFrom('2026-08-31')!).toBe(1);
     });
 
-    it('cuenta bien un año bisiesto', () => {
+    it('counts a leap year correctly', () => {
       expect(dayFrom('2028-03-01')! - dayFrom('2028-02-28')!).toBe(2);
     });
 
-    it('un valor ausente o con mala pinta no revienta', () => {
+    it('a missing or malformed value does not crash', () => {
       expect(dayFrom(null)).toBeNull();
       expect(dayFrom(undefined)).toBeNull();
       expect(dayFrom('')).toBeNull();
@@ -52,15 +52,15 @@ describe('gantt', () => {
     });
   });
 
-  describe('rangoDe', () => {
+  describe('rangeOf', () => {
     const today = dayFrom('2026-08-13')!;
 
-    it('sin tareas con fechas no hay nada que pintar', () => {
+    it('without dated tasks there is nothing to draw', () => {
       expect(rangeOf([], today)).toBeNull();
       expect(rangeOf([task({ dueDate: '' })], today)).toBeNull();
     });
 
-    it('abarca de la fecha más temprana a la más tardía', () => {
+    it('spans from the earliest to the latest date', () => {
       const range = rangeOf([
         task({ dueDate: '2026-08-20', startDate: '2026-08-18' }),
         task({ dueDate: '2026-08-25' }),
@@ -71,29 +71,29 @@ describe('gantt', () => {
     });
 
     /** Un diagrama que empieza el mes que viene no deja ver dónde está uno. */
-    it('siempre incluye el día de hoy, aunque todo esté en el futuro', () => {
+    it('always includes today, even if everything is in the future', () => {
       const range = rangeOf([task({ dueDate: '2026-12-01' })], today)!;
 
       expect(range.firstDay).toBe(today);
     });
 
-    it('y también si todo está en el pasado', () => {
+    it('and also if everything is in the past', () => {
       const range = rangeOf([task({ dueDate: '2026-01-05' })], today)!;
 
       expect(range.lastDay).toBe(today);
     });
 
-    it('cuenta los dos extremos', () => {
+    it('counts both ends', () => {
       const range = rangeOf([task({ dueDate: '2026-08-13' })], today)!;
 
       expect(range.days).toBe(1);
     });
   });
 
-  describe('barrasDe', () => {
+  describe('barsOf', () => {
     const today = dayFrom('2026-08-13')!;
 
-    it('una tarea con inicio y vencimiento ocupa los días entre ambos, incluidos', () => {
+    it('a task with start and due date spans the days between, inclusive', () => {
       const t = task({ dueDate: '2026-08-20', startDate: '2026-08-18' });
       const range = rangeOf([t], today)!;
 
@@ -104,7 +104,7 @@ describe('gantt', () => {
       expect(bar.offset).toBe(dayFrom('2026-08-18')! - range.firstDay);
     });
 
-    it('empezar y vencer el mismo día dura un día, no cero', () => {
+    it('starting and ending on the same day lasts one day, not zero', () => {
       const t = task({ dueDate: '2026-08-20', startDate: '2026-08-20' });
       const range = rangeOf([t], today)!;
 
@@ -112,7 +112,7 @@ describe('gantt', () => {
     });
 
     /** Inventarle un principio es exactamente lo que se decidió no hacer. */
-    it('sin fecha de inicio sale un hito en el vencimiento', () => {
+    it('without a start date a milestone shows on the due date', () => {
       const t = task({ dueDate: '2026-08-20' });
       const range = rangeOf([t], today)!;
 
@@ -123,7 +123,7 @@ describe('gantt', () => {
       expect(bar.offset).toBe(dayFrom('2026-08-20')! - range.firstDay);
     });
 
-    it('sin vencimiento no se pinta: no hay dónde ponerla', () => {
+    it('without a due date it is not drawn: there is nowhere to put it', () => {
       const withDueDate = task({ id: 'a', dueDate: '2026-08-20' });
       const withoutDueDate = task({ id: 'b', dueDate: '' });
       const range = rangeOf([withDueDate, withoutDueDate], today)!;
@@ -135,7 +135,7 @@ describe('gantt', () => {
      * El dominio rechaza un inicio posterior al vencimiento, pero un dato viejo no puede dejar
      * la pantalla con una barra de longitud negativa.
      */
-    it('un inicio posterior al vencimiento se trata como si no lo hubiera', () => {
+    it('a start after the due date is treated as missing', () => {
       const t = task({ dueDate: '2026-08-20', startDate: '2026-09-30' });
       const range = rangeOf([t], today)!;
 
@@ -145,7 +145,7 @@ describe('gantt', () => {
       expect(bar.duration).toBe(1);
     });
 
-    it('marca las bloqueadas con lo que ya cuenta el servidor', () => {
+    it('marks blocked tasks with what the server already counts', () => {
       const blocked = task({ id: 'a', dueDate: '2026-08-20', blockedByCount: 2 });
       const unblocked = task({ id: 'b', dueDate: '2026-08-21', blockedByCount: 0 });
       const range = rangeOf([blocked, unblocked], today)!;
@@ -157,8 +157,8 @@ describe('gantt', () => {
     });
   });
 
-  describe('marcasDelEje', () => {
-    it('marca el principio y cada primero de mes', () => {
+  describe('axisTicks', () => {
+    it('marks the start and every first of the month', () => {
       const range = rangeOf([
         task({ dueDate: '2026-10-05', startDate: '2026-08-28' }),
       ], dayFrom('2026-08-28')!)!;
@@ -169,8 +169,8 @@ describe('gantt', () => {
     });
   });
 
-  describe('esFinDeSemana', () => {
-    it('reconoce sábado y domingo', () => {
+  describe('isWeekend', () => {
+    it('recognises Saturday and Sunday', () => {
       // 2026-08-15 es sábado y el 16, domingo.
       expect(isWeekend(dayFrom('2026-08-15')!)).toBeTrue();
       expect(isWeekend(dayFrom('2026-08-16')!)).toBeTrue();
@@ -178,7 +178,7 @@ describe('gantt', () => {
     });
   });
 
-  describe('flechasDe', () => {
+  describe('arrowsOf', () => {
     const today = dayFrom('2026-08-10')!;
 
     /** `a` empieza el 18 y vence el 20; `b` empieza el 22 y vence el 24. */
@@ -189,7 +189,7 @@ describe('gantt', () => {
       return barsOf(tasks, rangeOf(tasks, today)!);
     }
 
-    it('une la barra que bloquea con la bloqueada', () => {
+    it('connects the blocking bar with the blocked one', () => {
       const [arrow] = arrowsOf([{ taskId: 'b', dependsOnTaskId: 'a' }], bars());
 
       expect(arrow.fromRow).toBe(0);
@@ -201,13 +201,13 @@ describe('gantt', () => {
      * Es lo que un Gantt tiene que gritar: el plan es imposible tal cual está, porque lo que
      * bloquea todavía no ha terminado cuando lo bloqueado ya tendría que haber empezado.
      */
-    it('marca como incumplida la que va hacia atrás en el tiempo', () => {
+    it('marks as broken the one going back in time', () => {
       const [arrow] = arrowsOf([{ taskId: 'a', dependsOnTaskId: 'b' }], bars());
 
       expect(arrow.isViolated).toBeTrue();
     });
 
-    it('encadenar justo el día siguiente no se considera incumplido', () => {
+    it('chaining on the very next day is not considered broken', () => {
       const before = task({ id: 'a', dueDate: '2026-08-20', startDate: '2026-08-18' });
       const after = task({ id: 'b', dueDate: '2026-08-25', startDate: '2026-08-21' });
 
@@ -218,7 +218,7 @@ describe('gantt', () => {
     });
 
     /** Una flecha que sale del diagrama y no llega a nada confunde más que no dibujarla. */
-    it('descarta las que apuntan a una tarea que no se está pintando', () => {
+    it('discards those pointing to a task that is not drawn', () => {
       const arrows = arrowsOf([
         { taskId: 'b', dependsOnTaskId: 'fantasma' },
         { taskId: 'fantasma', dependsOnTaskId: 'a' },
@@ -227,11 +227,11 @@ describe('gantt', () => {
       expect(arrows).toEqual([]);
     });
 
-    it('sin dependencias no hay flechas', () => {
+    it('without dependencies there are no arrows', () => {
       expect(arrowsOf([], bars())).toEqual([]);
     });
 
-    it('una tarea puede tener varias flechas', () => {
+    it('a task can have several arrows', () => {
       const third = task({ id: 'c', dueDate: '2026-08-28', startDate: '2026-08-26' });
 
       const arrows = arrowsOf([
@@ -244,8 +244,8 @@ describe('gantt', () => {
     });
   });
 
-  describe('hoyComoDia', () => {
-    it('usa el día local y no el UTC, que es el que ve quien mira la pantalla', () => {
+  describe('todayAsDay', () => {
+    it('uses the local day, not UTC, which is what the viewer sees', () => {
       const newYearsEve = new Date(2026, 11, 31, 23, 30);
 
       expect(todayAsDay(newYearsEve)).toBe(dayFrom('2026-12-31')!);

@@ -157,8 +157,8 @@ async function goToTasks(page: Page) {
   await expect(page).toHaveURL(/\/tasks/, { timeout: 15_000 });
 }
 
-test.describe('la pestaña que define los campos', () => {
-  test('los ordena por posición, no por el orden en que lleguen', async ({ page }) => {
+test.describe('the tab that defines the fields', () => {
+  test('sorts them by position, not by arrival order', async ({ page }) => {
     await signIn(page);
     await goToFieldsTab(page);
 
@@ -166,14 +166,14 @@ test.describe('la pestaña que define los campos', () => {
     await expect(names).toHaveText(['Cliente facturable', 'Canal de entrada']);
   });
 
-  test('sin campos definidos lo dice en lugar de enseñar una tabla vacía', async ({ page }) => {
+  test('without defined fields it says so instead of showing an empty table', async ({ page }) => {
     await signIn(page, { definitions: [] });
     await goToFieldsTab(page);
 
     await expect(page.getByText(/todavía no hay campos definidos/i)).toBeVisible();
   });
 
-  test('no deja guardar un campo sin nombre, y dice por qué', async ({ page }) => {
+  test('it does not save a field without a name, and says why', async ({ page }) => {
     await signIn(page);
     await goToFieldsTab(page);
     await page.getByRole('button', { name: 'Nuevo campo', exact: true }).click();
@@ -182,7 +182,7 @@ test.describe('la pestaña que define los campos', () => {
     await expect(page.getByRole('button', { name: 'Guardar' })).toBeDisabled();
   });
 
-  test('un tipo de selección pide sus opciones', async ({ page }) => {
+  test('a select type asks for its options', async ({ page }) => {
     await signIn(page);
     await goToFieldsTab(page);
     await page.getByRole('button', { name: 'Nuevo campo', exact: true }).click();
@@ -194,7 +194,7 @@ test.describe('la pestaña que define los campos', () => {
     await expect(page.getByLabel(/opciones, una por línea/i)).toBeVisible();
   });
 
-  test('si el servidor rechaza el alta, el formulario sigue abierto con lo escrito', async ({ page }) => {
+  test('if the server rejects the creation, the form stays open with what was typed', async ({ page }) => {
     await signIn(page, {
       created: { status: 400, body: 'Ya hay un campo con ese nombre para esa entidad' },
     });
@@ -210,7 +210,7 @@ test.describe('la pestaña que define los campos', () => {
     await expect(page.getByLabel('Nombre')).toHaveValue('Cliente facturable');
   });
 
-  test('al editar no se puede cambiar el tipo, y se explica', async ({ page }) => {
+  test('the type cannot be changed when editing, and it explains why', async ({ page }) => {
     await signIn(page);
     await goToFieldsTab(page);
 
@@ -220,7 +220,7 @@ test.describe('la pestaña que define los campos', () => {
     await expect(page.getByText(/el tipo no se puede cambiar/i)).toBeVisible();
   });
 
-  test('borrar pide confirmación en la propia fila', async ({ page }) => {
+  test('deleting asks for confirmation in the row itself', async ({ page }) => {
     await signIn(page);
     await goToFieldsTab(page);
 
@@ -230,14 +230,14 @@ test.describe('la pestaña que define los campos', () => {
   });
 });
 
-test.describe('el formulario del detalle de tarea', () => {
+test.describe('the task detail form', () => {
   async function openTask(page: Page) {
     await goToTasks(page);
     await page.getByText('Tarea con campos').first().click();
     await expect(page.getByText('Campos personalizados')).toBeVisible({ timeout: 15_000 });
   }
 
-  test('pinta cada campo con su valor', async ({ page }) => {
+  test('renders each field with its value', async ({ page }) => {
     await signIn(page);
     await openTask(page);
 
@@ -245,7 +245,7 @@ test.describe('el formulario del detalle de tarea', () => {
     await expect(page.getByLabel('Canal de entrada')).toBeVisible();
   });
 
-  test('un valor rechazado se revierte y el motivo sale junto al campo', async ({ page }) => {
+  test('a rejected value reverts and the reason shows next to the field', async ({ page }) => {
     await signIn(page, {
       savedValue: { status: 400, body: '«Paloma mensajera» no está entre las opciones del campo' },
     });
@@ -259,7 +259,7 @@ test.describe('el formulario del detalle de tarea', () => {
     await expect(page.getByLabel('Cliente facturable')).toHaveValue('Acme');
   });
 
-  test('un inquilino sin campos definidos no ve ni el encabezado', async ({ page }) => {
+  test('a tenant without defined fields does not even see the heading', async ({ page }) => {
     await signIn(page, { values: [] });
 
     await goToTasks(page);

@@ -13,7 +13,7 @@ import { MentionsService } from './mentions.service';
  * Por eso se comprueba la URL literal y no sólo que «se llamó a la API»: un doble que responde a
  * cualquier ruta habría dejado pasar el fallo tal cual.
  */
-describe('MencionesService', () => {
+describe('MentionsService', () => {
   let service: MentionsService;
   let api: jasmine.SpyObj<ApiService>;
 
@@ -45,7 +45,7 @@ describe('MencionesService', () => {
     service = TestBed.inject(MentionsService);
   });
 
-  it('busca las personas en /users, pidiendo sólo las que va a enseñar', async () => {
+  it('searches people in /users, asking only for those it will show', async () => {
     const candidates = await service.search('@', 'ana');
 
     expect(requested).toEqual(['/users?pageSize=5&search=ana']);
@@ -59,7 +59,7 @@ describe('MencionesService', () => {
    * búsqueda volvería a mirar sólo las primeras filas y fallaría únicamente con datos grandes,
    * que es cuando ya no se relaciona con esto.
    */
-  it('manda el texto al servidor en las tres listas de #', async () => {
+  it('sends the text to the server in the three # lists', async () => {
     await service.search('#', 'migrar');
 
     expect(requested).toEqual([
@@ -69,14 +69,14 @@ describe('MencionesService', () => {
     ]);
   });
 
-  it('escapa lo que se escribe, para que un & no parta la consulta', async () => {
+  it('escapes what is typed, so an & does not split the query', async () => {
     await service.search('@', 'diseño & obra');
 
     expect(requested).toEqual(['/users?pageSize=5&search=dise%C3%B1o%20%26%20obra']);
   });
 
   /** Sin nada escrito no se molesta al servidor: `@` recién tecleado no es una búsqueda. */
-  it('no pide nada con la consulta vacía', async () => {
+  it('asks for nothing with an empty query', async () => {
     expect(await service.search('@', '   ')).toEqual([]);
     expect(api.get).not.toHaveBeenCalled();
   });
@@ -85,7 +85,7 @@ describe('MencionesService', () => {
    * Un fallo de red no puede reventar el editor, pero <b>tiene que dejar rastro</b>: la ruta mala
    * sobrevivió a un commit entero porque el error no aparecía por ningún lado.
    */
-  it('devuelve vacío si la petición falla, pero lo deja en la consola', async () => {
+  it('returns empty if the request fails, but logs it to the console', async () => {
     api.get.and.returnValue(throwError(() => new Error('404')));
     const callout = spyOn(console, 'warn');
 
@@ -93,7 +93,7 @@ describe('MencionesService', () => {
     expect(callout).toHaveBeenCalled();
   });
 
-  it('mezcla tareas, tickets y proyectos en una sola lista', async () => {
+  it('mixes tasks, tickets and projects in one list', async () => {
     const candidates = await service.search('#', 'migrar');
 
     expect(candidates).toEqual([

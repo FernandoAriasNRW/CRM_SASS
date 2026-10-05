@@ -15,28 +15,28 @@ describe('workload', () => {
     ...overrides,
   } as TaskItem);
 
-  describe('lunesDe', () => {
-    it('un miércoles cae en su lunes', () => {
+  describe('mondayOf', () => {
+    it('a Wednesday maps to its Monday', () => {
       // 2026-08-19 es miércoles; su lunes es el 17.
       expect(mondayOf(dayFrom('2026-08-19')!)).toBe(dayFrom('2026-08-17')!);
     });
 
-    it('un lunes es su propio lunes', () => {
+    it('a Monday is its own Monday', () => {
       expect(mondayOf(dayFrom('2026-08-17')!)).toBe(dayFrom('2026-08-17')!);
     });
 
     /** `getUTCDay` numera el domingo como 0: sin cuidado, el domingo salta a la semana siguiente. */
-    it('un domingo cae en la semana que termina, no en la que empieza', () => {
+    it('a Sunday belongs to the week that ends, not the one that starts', () => {
       expect(mondayOf(dayFrom('2026-08-23')!)).toBe(dayFrom('2026-08-17')!);
     });
   });
 
-  describe('cargaDe', () => {
-    it('sin tareas no hay nada que repartir', () => {
+  describe('workloadOf', () => {
+    it('without tasks there is nothing to split', () => {
       expect(workloadOf([]).rows).toEqual([]);
     });
 
-    it('una tarea de un día carga todas sus horas en su semana', () => {
+    it('a one-day task loads all its hours on its week', () => {
       const workload = workloadOf([task({
         assigneeId: 'ana', estimatedHours: 8, dueDate: '2026-08-19',
       })]);
@@ -46,7 +46,7 @@ describe('workload', () => {
       expect(workload.rows[0].total).toBe(8);
     });
 
-    it('reparte entre los días laborables que ocupa', () => {
+    it('splits across the working days it spans', () => {
       // Del martes 18 al jueves 20: tres días laborables, ocho horas.
       const workload = workloadOf([task({
         assigneeId: 'ana', estimatedHours: 9, startDate: '2026-08-18', dueDate: '2026-08-20',
@@ -56,7 +56,7 @@ describe('workload', () => {
       expect(workload.rows[0].weeks.length).toBe(1);
     });
 
-    it('una tarea a caballo de dos semanas reparte entre las dos', () => {
+    it('a task spanning two weeks splits between both', () => {
       // Del jueves 20 al martes 25.
       const workload = workloadOf([task({
         assigneeId: 'ana', estimatedHours: 8, startDate: '2026-08-20', dueDate: '2026-08-25',
@@ -68,7 +68,7 @@ describe('workload', () => {
     });
 
     /** El fin de semana no es tiempo de trabajo, así que no diluye la carga de los días útiles. */
-    it('los fines de semana no reciben horas', () => {
+    it('weekends get no hours', () => {
       // Del viernes 21 al lunes 24: dos días laborables, no cuatro.
       const workload = workloadOf([task({
         assigneeId: 'ana', estimatedHours: 10, startDate: '2026-08-21', dueDate: '2026-08-24',
@@ -79,7 +79,7 @@ describe('workload', () => {
       expect(fridayWeek.hours).toBe(5);
     });
 
-    it('una tarea que cae entera en fin de semana carga en su vencimiento', () => {
+    it('a task entirely on a weekend loads on its due date', () => {
       const workload = workloadOf([task({
         assigneeId: 'ana', estimatedHours: 4, startDate: '2026-08-22', dueDate: '2026-08-23',
       })]);
@@ -87,7 +87,7 @@ describe('workload', () => {
       expect(workload.rows[0].total).toBe(4);
     });
 
-    it('las completadas no cuentan: ya no son carga futura', () => {
+    it('completed tasks do not count: they are no longer future workload', () => {
       const workload = workloadOf([
         task({ assigneeId: 'ana', estimatedHours: 8, dueDate: '2026-08-19', status: 'Done' }),
         task({ assigneeId: 'ana', estimatedHours: 3, dueDate: '2026-08-19' }),
@@ -100,7 +100,7 @@ describe('workload', () => {
      * Esconder el trabajo sin fecha es el error que hace decir «vamos bien» justo antes de un
      * retraso. No se reparte —no hay dónde— pero se cuenta y se dice.
      */
-    it('las que no tienen fecha límite se cuentan aparte', () => {
+    it('those without a due date are counted apart', () => {
       const workload = workloadOf([
         task({ assigneeId: 'ana', estimatedHours: 8, dueDate: '' }),
         task({ assigneeId: 'ana', estimatedHours: 3, dueDate: '2026-08-19' }),
@@ -110,7 +110,7 @@ describe('workload', () => {
       expect(workload.rows[0].total).toBe(3);
     });
 
-    it('las que no tienen responsable van a su propia fila', () => {
+    it('those without an assignee go to their own row', () => {
       const workload = workloadOf([task({ assigneeId: '', estimatedHours: 5, dueDate: '2026-08-19' })]);
 
       expect(workload.rows[0].userId).toBeNull();
@@ -120,7 +120,7 @@ describe('workload', () => {
      * Dos personas en una tarea de ocho horas es que las dos tienen ocho horas por delante, no
      * cuatro. Dividirlas haría que la tabla dijera que hay hueco donde no lo hay.
      */
-    it('una tarea con varios responsables cuenta entera para cada uno', () => {
+    it('a task with several assignees counts fully for each', () => {
       const workload = workloadOf([task({
         assigneeId: 'ana', assignees: ['ana', 'luis'], estimatedHours: 8, dueDate: '2026-08-19',
       })]);
@@ -129,7 +129,7 @@ describe('workload', () => {
       expect(workload.rows.every(f => f.total === 8)).toBeTrue();
     });
 
-    it('ordena por quien más acumula, que es la fila que se busca', () => {
+    it('sorts by whoever has the most, which is the row people look for', () => {
       const workload = workloadOf([
         task({ id: 'a', assigneeId: 'ana', estimatedHours: 2, dueDate: '2026-08-19' }),
         task({ id: 'b', assigneeId: 'luis', estimatedHours: 9, dueDate: '2026-08-19' }),
@@ -138,7 +138,7 @@ describe('workload', () => {
       expect(workload.rows.map(f => f.userId)).toEqual(['luis', 'ana']);
     });
 
-    it('el máximo es la celda más alta, para poder escalar las barras', () => {
+    it('the max is the highest cell, so the bars can be scaled', () => {
       const workload = workloadOf([
         task({ id: 'a', assigneeId: 'ana', estimatedHours: 2, dueDate: '2026-08-19' }),
         task({ id: 'b', assigneeId: 'luis', estimatedHours: 9, dueDate: '2026-08-19' }),
@@ -147,7 +147,7 @@ describe('workload', () => {
       expect(workload.max).toBe(9);
     });
 
-    it('todas las personas tienen una celda por semana, aunque no trabajen esa semana', () => {
+    it('everyone has a cell per week, even if they do not work that week', () => {
       const workload = workloadOf([
         task({ id: 'a', assigneeId: 'ana', estimatedHours: 2, dueDate: '2026-08-19' }),
         task({ id: 'b', assigneeId: 'luis', estimatedHours: 9, dueDate: '2026-08-26' }),
@@ -157,7 +157,7 @@ describe('workload', () => {
       expect(workload.rows.every(f => f.weeks.length === 2)).toBeTrue();
     });
 
-    it('las semanas salen en orden', () => {
+    it('weeks come in order', () => {
       const workload = workloadOf([
         task({ id: 'a', assigneeId: 'ana', estimatedHours: 1, dueDate: '2026-09-02' }),
         task({ id: 'b', assigneeId: 'ana', estimatedHours: 1, dueDate: '2026-08-19' }),
@@ -167,7 +167,7 @@ describe('workload', () => {
       expect(dateOfDay(workload.weeks[0]).getUTCMonth()).toBe(7);
     });
 
-    it('una tarea sin horas estimadas no inventa carga', () => {
+    it('a task without estimated hours invents no workload', () => {
       const workload = workloadOf([task({ assigneeId: 'ana', estimatedHours: 0, dueDate: '2026-08-19' })]);
 
       expect(workload.rows[0].total).toBe(0);

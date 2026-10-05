@@ -34,7 +34,7 @@ describe('DocumentSaveService', () => {
     service = TestBed.inject(DocumentSaveService);
   });
 
-  it('marca pendiente al instante y sólo manda al dejar de escribir', fakeAsync(() => {
+  it('marks pending at once and only sends after typing stops', fakeAsync(() => {
     docs.updatePage.and.returnValue(of(void 0));
 
     service.queuePage(change('a'));
@@ -50,7 +50,7 @@ describe('DocumentSaveService', () => {
     expect(service.savedAt()).not.toBeNull();
   }));
 
-  it('un fallo se cuenta y el reintento manda lo que no llegó', fakeAsync(() => {
+  it('a failure is reported and the retry sends what did not arrive', fakeAsync(() => {
     docs.updatePage.and.returnValue(throwError(() => new Error('sesión caducada')));
 
     service.queuePage(change('lo que falló'));
@@ -66,14 +66,14 @@ describe('DocumentSaveService', () => {
     expect(service.state()).toBe('saved');
   }));
 
-  it('no manda un título de documento vacío', fakeAsync(() => {
+  it('does not send an empty document title', fakeAsync(() => {
     service.queueDocumentTitle('d1', '   ');
     tick(700);
 
     expect(docs.renameDocument).not.toHaveBeenCalled();
   }));
 
-  it('manda el título recortado tras el respiro', fakeAsync(() => {
+  it('sends the trimmed title after the pause', fakeAsync(() => {
     docs.renameDocument.and.returnValue(of(void 0));
 
     service.queueDocumentTitle('d1', '  Plan  ');

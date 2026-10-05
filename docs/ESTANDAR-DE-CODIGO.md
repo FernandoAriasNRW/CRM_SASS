@@ -405,7 +405,7 @@ suites completas en verde, catálogo i18n re-extraído al final.
 | 9c ✅ | **Lo que quede en pantallas y e2e** | 124 identificadores; el frontend queda sin código en español |
 | 10a ✅ | **Nombres de las pruebas unitarias** (C#) | ~350 pruebas, sus clases, ficheros y variables |
 | 10b ✅ | **Nombres de las pruebas de integración** (C#) | ~360 pruebas, sus clases, ficheros y variables |
-| 10c | **Títulos de las pruebas del frontend y de las e2e** | Los `it`/`describe` y los nombres de fichero |
+| 10c ✅ | **Títulos de las pruebas del frontend y de las e2e** | 345 títulos y 9 ficheros e2e |
 | 11 | **`TimeProvider` en todos los módulos** | Cambiar el reloj módulo a módulo deja dos formas de dar la hora conviviendo; va de una vez, al final |
 
 ### Migraciones de renombrado
@@ -925,6 +925,16 @@ cambiarlo exige migrar ese contenido. Por eso fue un bloque aparte, el 5c.
 - Quedan variables locales en español en algunos manejadores de producción (WorkItems, entre
   otros), que el detector marca y que los bloques anteriores no recogieron. No son contrato; van
   en una pasada final.
+
+### Hecho en el bloque 10c (títulos de las pruebas del frontend y de las e2e)
+
+- Los 345 títulos de `it`, `describe` y `test` traducidos como frases, sustituidos sólo en la
+  posición del título (no en el resto de cadenas de la prueba). Los `describe` que nombraban una
+  función o una clase con su nombre viejo (`diaDesde`, `CalendarioService`…) llevan ahora el actual
+  (`dayFrom`, `CalendarService`…).
+- Los ficheros e2e en español pasan a inglés (`custom-fields.spec.ts`, `board-pagination.spec.ts`…).
+- Lo que el detector sigue marcando son una abreviatura (`el`) y un nombre propio de los datos de
+  prueba.
 
 ---
 

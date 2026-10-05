@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { ContextMenuComponent, type MenuOption } from './context-menu.component';
 
-describe('MenuContextualComponent', () => {
+describe('ContextMenuComponent', () => {
   let fixture: ComponentFixture<ContextMenuComponent>;
   let component: ContextMenuComponent;
 
@@ -25,7 +25,7 @@ describe('MenuContextualComponent', () => {
     fixture.detectChanges();
   });
 
-  it('empieza cerrado y se abre donde se pulsó', () => {
+  it('starts closed and opens where it was clicked', () => {
     expect(component.isOpen()).toBeFalse();
 
     component.openAt(raton(100, 120));
@@ -36,7 +36,7 @@ describe('MenuContextualComponent', () => {
   });
 
   /** Sin esto, el menú del calendario abriría además el día de la celda sobre la que se pulsó. */
-  it('cancela el menú del navegador', () => {
+  it('cancels the browser menu', () => {
     const event = raton(10, 10);
     component.openAt(event);
 
@@ -47,7 +47,7 @@ describe('MenuContextualComponent', () => {
    * El fallo que esto evita: pulsando en la última fila del mes, el menú se salía por abajo y sus
    * últimas opciones —las de borrar— quedaban fuera de la pantalla, inalcanzables.
    */
-  it('se recoloca para no salirse de la ventana', () => {
+  it('repositions to stay inside the window', () => {
     component.openAt(raton(window.innerWidth - 5, window.innerHeight - 5));
 
     const { x, y } = component.position();
@@ -55,7 +55,7 @@ describe('MenuContextualComponent', () => {
     expect(y).toBeLessThan(window.innerHeight - 5);
   });
 
-  it('avisa de la opción elegida y se cierra', () => {
+  it('emits the chosen option and closes', () => {
     const chosenKeys: string[] = [];
     component.chosen.subscribe(c => chosenKeys.push(c));
 
@@ -66,7 +66,7 @@ describe('MenuContextualComponent', () => {
     expect(component.isOpen()).toBeFalse();
   });
 
-  it('una opción deshabilitada no hace nada', () => {
+  it('a disabled option does nothing', () => {
     const chosenKeys: string[] = [];
     component.chosen.subscribe(c => chosenKeys.push(c));
 
@@ -77,7 +77,7 @@ describe('MenuContextualComponent', () => {
     expect(component.isOpen()).withContext('el menú sigue abierto para poder elegir otra').toBeTrue();
   });
 
-  it('se cierra con Escape y al moverse la página', () => {
+  it('closes on Escape and when the page moves', () => {
     component.openAt(raton(10, 10));
     component.onEscape();
     expect(component.isOpen()).toBeFalse();
@@ -89,7 +89,7 @@ describe('MenuContextualComponent', () => {
     ).toBeFalse();
   });
 
-  it('pinta las opciones, con su separador y su color', () => {
+  it('renders the options with their separator and color', () => {
     component.openAt(raton(10, 10));
     fixture.detectChanges();
 

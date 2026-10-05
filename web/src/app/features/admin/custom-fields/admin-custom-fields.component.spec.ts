@@ -48,19 +48,19 @@ describe('AdminCustomFieldsComponent', () => {
     }).compileComponents();
   });
 
-  it('arranca pidiendo los campos de tareas', async () => {
+  it('starts by asking for the task fields', async () => {
     await mount();
 
     expect(service.loadDefinitions).toHaveBeenCalledWith('Task');
   });
 
-  it('los enseña por posición, no por el orden en que lleguen', async () => {
+  it('shows them by position, not by arrival order', async () => {
     await mount([CLIENT_FIELD, CANAL]);
 
     expect(component.sorted().map(d => d.id)).toEqual(['def-2', 'def-1']);
   });
 
-  it('cambiar de entidad vuelve a pedir y cierra el formulario abierto', async () => {
+  it('switching entity reloads and closes the open form', async () => {
     await mount([CLIENT_FIELD]);
     component.startNew();
 
@@ -70,25 +70,25 @@ describe('AdminCustomFieldsComponent', () => {
     expect(component.editing()).toBeNull();
   });
 
-  describe('lo que impide guardar', () => {
+  describe('what blocks saving', () => {
     beforeEach(async () => {
       await mount();
       component.startNew();
     });
 
-    it('un campo sin nombre', () => {
+    it('a field without a name', () => {
       component.name = '   ';
 
       expect(component.blocker).toBeTruthy();
     });
 
-    it('un nombre más largo de lo que admite el dominio', () => {
+    it('a name longer than the domain allows', () => {
       component.name = 'x'.repeat(81);
 
       expect(component.blocker).toBeTruthy();
     });
 
-    it('una selección sin ninguna opción', () => {
+    it('a select without any option', () => {
       component.name = 'Canal';
       component.type = 'Select';
       component.options = '   \n  \n';
@@ -96,7 +96,7 @@ describe('AdminCustomFieldsComponent', () => {
       expect(component.blocker).toBeTruthy();
     });
 
-    it('nada, cuando el campo está bien', () => {
+    it('nothing, when the field is fine', () => {
       component.name = 'Canal';
       component.type = 'Select';
       component.options = 'Web\nTeléfono';
@@ -104,14 +104,14 @@ describe('AdminCustomFieldsComponent', () => {
       expect(component.blocker).toBe('');
     });
 
-    it('un campo de texto no necesita opciones', () => {
+    it('a text field needs no options', () => {
       component.name = 'Cliente facturable';
       component.type = 'Text';
 
       expect(component.blocker).toBe('');
     });
 
-    it('e impedido, no se manda nada al servidor', () => {
+    it('and when blocked, nothing is sent to the server', () => {
       component.name = '';
 
       component.save();
@@ -120,7 +120,7 @@ describe('AdminCustomFieldsComponent', () => {
     });
   });
 
-  it('crea el campo con el nombre y las opciones ya limpias', async () => {
+  it('creates the field with the name and options already cleaned', async () => {
     await mount();
     component.startNew();
     component.name = '  Canal  ';
@@ -144,7 +144,7 @@ describe('AdminCustomFieldsComponent', () => {
     });
   });
 
-  it('un campo sin opciones no las manda aunque quedaran escritas de antes', async () => {
+  it('a field without options does not send them even if typed before', async () => {
     await mount();
     component.startNew();
     component.type = 'Select';
@@ -157,7 +157,7 @@ describe('AdminCustomFieldsComponent', () => {
     expect(service.define).toHaveBeenCalledWith(jasmine.objectContaining({ options: [] }));
   });
 
-  it('el campo nuevo se coloca detrás del último', async () => {
+  it('the new field goes after the last one', async () => {
     await mount([CLIENT_FIELD, CANAL]);
 
     component.startNew();
@@ -165,7 +165,7 @@ describe('AdminCustomFieldsComponent', () => {
     expect(component.position).toBe(3);
   });
 
-  it('editar carga el campo y deja de ser nuevo, que es lo que bloquea el tipo', async () => {
+  it('editing loads the field and stops being new, which locks the type', async () => {
     await mount([CANAL]);
 
     component.edit(CANAL);
@@ -175,7 +175,7 @@ describe('AdminCustomFieldsComponent', () => {
     expect(component.options).toBe('Web\nTeléfono');
   });
 
-  it('editar actualiza en lugar de crear', async () => {
+  it('editing updates instead of creating', async () => {
     await mount([CANAL]);
     component.edit(CANAL);
     component.name = 'Canal de entrada';
@@ -191,7 +191,7 @@ describe('AdminCustomFieldsComponent', () => {
     });
   });
 
-  it('tras guardar cierra el formulario y relee la lista', async () => {
+  it('after saving it closes the form and reloads the list', async () => {
     await mount([CLIENT_FIELD]);
     component.startNew();
     component.name = 'Otro';
@@ -202,7 +202,7 @@ describe('AdminCustomFieldsComponent', () => {
     expect(service.loadDefinitions).toHaveBeenCalledTimes(2);
   });
 
-  it('si el servidor rechaza, el formulario sigue abierto con su explicación', async () => {
+  it('if the server rejects, the form stays open with its explanation', async () => {
     await mount();
     service.define.and.returnValue(throwError(() => ({ error: 'Ya hay un campo con ese nombre para esa entidad' })));
     component.startNew();
@@ -215,7 +215,7 @@ describe('AdminCustomFieldsComponent', () => {
     expect(component.error()).toBe('Ya hay un campo con ese nombre para esa entidad');
   });
 
-  it('el borrado se pide dos veces: una para armarlo y otra para confirmarlo', async () => {
+  it('deleting takes two clicks: one to arm and one to confirm', async () => {
     await mount([CANAL]);
 
     component.deleting.set(CANAL.id);
@@ -226,7 +226,7 @@ describe('AdminCustomFieldsComponent', () => {
     expect(component.deleting()).toBeNull();
   });
 
-  it('un borrado que falla lo dice y desarma la confirmación', async () => {
+  it('a failed delete says so and disarms the confirmation', async () => {
     await mount([CANAL]);
     service.remove.and.returnValue(throwError(() => ({ error: { detail: 'No se pudo borrar' } })));
     component.deleting.set(CANAL.id);
@@ -237,7 +237,7 @@ describe('AdminCustomFieldsComponent', () => {
     expect(component.deleting()).toBeNull();
   });
 
-  it('si la carga falla lo dice en lugar de enseñar una lista vacía', async () => {
+  it('if loading fails it says so instead of showing an empty list', async () => {
     service.loadDefinitions.and.returnValue(throwError(() => ({ error: 'Sin permiso' })));
 
     fixture = TestBed.createComponent(AdminCustomFieldsComponent);

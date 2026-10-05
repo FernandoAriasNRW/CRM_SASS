@@ -13,7 +13,7 @@ import { CalendarService, toLocalDateTime, toIsoDate } from './calendar.service'
  * un <code>catch</code> vacío: el calendario salía vacío siempre y crear un evento no hacía nada,
  * sin un solo mensaje. Por eso se comprueban los nombres literales y no «que se llamó a la API».
  */
-describe('CalendarioService', () => {
+describe('CalendarService', () => {
   let service: CalendarService;
   let api: jasmine.SpyObj<ApiService>;
 
@@ -32,7 +32,7 @@ describe('CalendarioService', () => {
     service = TestBed.inject(CalendarService);
   });
 
-  it('pide el rango con los nombres que el servidor entiende', async () => {
+  it('asks for the range with the names the server understands', async () => {
     await service.eventsBetween(new Date('2026-09-01T00:00:00Z'), new Date('2026-09-30T23:59:59Z'));
 
     const [route, params] = api.get.calls.mostRecent().args;
@@ -44,7 +44,7 @@ describe('CalendarioService', () => {
    * La respuesta viene envuelta. Tratarla como un array hacía que `filter` reventara, y el error
    * se perdía: el mes salía vacío tuviera lo que tuviera.
    */
-  it('saca los eventos de dentro de «items»', async () => {
+  it('takes the events out of «items»', async () => {
     api.get.and.returnValue(of({ items: [{ id: 'e1', title: 'Reunión' }], totalCount: 1 }) as any);
 
     const events = await service.eventsBetween(new Date(), new Date());
@@ -52,12 +52,12 @@ describe('CalendarioService', () => {
     expect(events[0].title).toBe('Reunión');
   });
 
-  it('devuelve una lista vacía si la respuesta no trae «items»', async () => {
+  it('returns an empty list if the response has no «items»', async () => {
     api.get.and.returnValue(of({} as any));
     await expectAsync(service.eventsBetween(new Date(), new Date())).toBeResolvedTo([]);
   });
 
-  it('anula por su propia ruta, que no es la de borrar', async () => {
+  it('cancels through its own route, not the delete one', async () => {
     await service.cancel('e1', 'El cliente lo aplaza');
 
     expect(api.post).toHaveBeenCalledWith('/calendar/events/e1/cancel', { reason: 'El cliente lo aplaza' });
@@ -68,7 +68,7 @@ describe('CalendarioService', () => {
    * Anular y tirar a la papelera son dos cosas, y la diferencia se nota aquí: si volvieran a ser
    * la misma llamada, un evento anulado desaparecería del calendario otra vez.
    */
-  it('la papelera es DELETE y tiene vuelta', async () => {
+  it('the trash is a DELETE and can be undone', async () => {
     await service.moveToTrash('e1');
     expect(api.delete).toHaveBeenCalledWith('/calendar/events/e1');
 
@@ -76,7 +76,7 @@ describe('CalendarioService', () => {
     expect(api.post).toHaveBeenCalledWith('/calendar/events/e1/restore', {});
   });
 
-  it('los enlaces van los tres juntos, para que un nulo signifique «quítalo»', async () => {
+  it('the three links go together, so a null means «remove it»', async () => {
     await service.link('e1', { projectId: null, taskId: 't1', ticketId: null });
 
     expect(api.put).toHaveBeenCalledWith('/calendar/events/e1/links',
@@ -90,18 +90,18 @@ describe('CalendarioService', () => {
  * `toISOString().slice(0,10)` pasa por UTC: en un huso al oeste, el 8 a las 20:00 es el 9 en UTC.
  * La agenda del día saldría cambiada justo por la tarde, que es cuando se mira.
  */
-describe('Fechas del calendario', () => {
-  it('aFechaIso da el día local, no el de UTC', () => {
+describe('Calendar dates', () => {
+  it('toIsoDate returns the local day, not the UTC one', () => {
     // 23:30 del 8 en local. En cualquier huso al oeste de Greenwich esto ya es día 9 en UTC.
     const date = new Date(2026, 8, 8, 23, 30);
     expect(toIsoDate(date)).toBe('2026-09-08');
   });
 
-  it('aFechaIso rellena con ceros', () => {
+  it('toIsoDate pads with zeros', () => {
     expect(toIsoDate(new Date(2026, 0, 5))).toBe('2026-01-05');
   });
 
-  it('aFechaHoraLocal da lo que espera un datetime-local', () => {
+  it('toLocalDateTime returns what a datetime-local expects', () => {
     expect(toLocalDateTime(new Date(2026, 8, 8, 9, 5))).toBe('2026-09-08T09:05');
   });
 });

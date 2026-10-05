@@ -36,7 +36,7 @@ async function signIn(page: Page) {
 
 const palette = (page: Page) => page.getByRole('dialog', { name: 'Paleta de comandos' });
 
-test('Ctrl+K abre la paleta con el foco puesto en el buscador', async ({ page }) => {
+test('Ctrl+K opens the palette with focus on the search box', async ({ page }) => {
   await signIn(page);
 
   await page.keyboard.press('Control+k');
@@ -47,7 +47,7 @@ test('Ctrl+K abre la paleta con el foco puesto en el buscador', async ({ page })
   await expect(page.getByRole('combobox')).toBeFocused();
 });
 
-test('Escape la cierra', async ({ page }) => {
+test('Escape closes it', async ({ page }) => {
   await signIn(page);
   await page.keyboard.press('Control+k');
   await expect(palette(page)).toBeVisible();
@@ -57,7 +57,7 @@ test('Escape la cierra', async ({ page }) => {
   await expect(palette(page)).toBeHidden();
 });
 
-test('escribir filtra y Enter navega a la sección elegida', async ({ page }) => {
+test('typing filters and Enter navigates to the chosen section', async ({ page }) => {
   await signIn(page);
   await page.keyboard.press('Control+k');
 
@@ -68,7 +68,7 @@ test('escribir filtra y Enter navega a la sección elegida', async ({ page }) =>
   await expect(palette(page)).toBeHidden();
 });
 
-test('las flechas recorren la lista y marcan una sola opción', async ({ page }) => {
+test('the arrows move through the list and highlight one option', async ({ page }) => {
   await signIn(page);
   await page.keyboard.press('Control+k');
 
@@ -84,7 +84,7 @@ test('las flechas recorren la lista y marcan una sola opción', async ({ page })
   expect(active).toBeTruthy();
 });
 
-test('avisa cuando nada coincide, en lugar de quedarse vacía', async ({ page }) => {
+test('it says when nothing matches instead of staying empty', async ({ page }) => {
   await signIn(page);
   await page.keyboard.press('Control+k');
 
@@ -101,7 +101,7 @@ const CREATE_COMMANDS = [
 ];
 
 for (const { command, form, url } of CREATE_COMMANDS) {
-  test(`«${command}» abre el formulario de creación y deja la URL limpia`, async ({ page }) => {
+  test(`«${command}» opens the creation form and leaves the URL clean`, async ({ page }) => {
     await signIn(page);
     await page.keyboard.press('Control+k');
 

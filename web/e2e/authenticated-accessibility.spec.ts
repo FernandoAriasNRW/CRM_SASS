@@ -77,7 +77,7 @@ const VIEWS = [
 ];
 
 for (const view of VIEWS) {
-  test(`${view.name} no tiene violaciones graves de accesibilidad`, async ({ page }) => {
+  test(`${view.name} has no serious accessibility violations`, async ({ page }) => {
     await signIn(page);
     await goTo(page, view.term, view.url);
 
@@ -94,7 +94,7 @@ for (const view of VIEWS) {
   });
 }
 
-test('la paleta de comandos no tiene violaciones graves', async ({ page }) => {
+test('the command palette has no serious violations', async ({ page }) => {
   await signIn(page);
   await page.keyboard.press('Control+k');
   await expect(page.getByRole('dialog', { name: 'Paleta de comandos' })).toBeVisible();

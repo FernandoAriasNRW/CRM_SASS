@@ -13,7 +13,7 @@ import { ApiService } from '../api.service';
  * explicar. Pero cuando quien hizo la petición pone el mensaje junto al campo que lo provocó, el
  * del interceptor es el mismo texto repetido: **dos avisos para un solo fallo**.
  */
-describe('errorInterceptor — avisos duplicados', () => {
+describe('errorInterceptor — duplicate toasts', () => {
   let toast: jasmine.SpyObj<ToastService>;
 
   const failure = (status: number) => new HttpErrorResponse({
@@ -41,7 +41,7 @@ describe('errorInterceptor — avisos duplicados', () => {
     });
   });
 
-  it('avisa de un fallo que nadie más va a explicar', done => {
+  it('reports a failure nobody else will explain', done => {
     const request = new HttpRequest('GET', '/api/v1/tasks');
 
     intercept(request).subscribe({
@@ -52,7 +52,7 @@ describe('errorInterceptor — avisos duplicados', () => {
     });
   });
 
-  it('no avisa si quien llamó se reservó explicarlo', done => {
+  it('does not report it if the caller will explain it', done => {
     const request = new HttpRequest('GET', '/api/v1/tasks', { context: skipGlobalErrorToast() });
 
     intercept(request).subscribe({
@@ -64,7 +64,7 @@ describe('errorInterceptor — avisos duplicados', () => {
   });
 
   /** El error se sigue propagando: quien llamó tiene que poder contarlo. */
-  it('el error llega igualmente a quien hizo la petición', done => {
+  it('the error still reaches the caller', done => {
     const request = new HttpRequest('GET', '/api/v1/tasks', { context: skipGlobalErrorToast() });
 
     intercept(request).subscribe({

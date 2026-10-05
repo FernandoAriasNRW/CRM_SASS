@@ -10,7 +10,7 @@ import type { DailyAgenda, AgendaItem } from './calendar.service';
  * concreta, y colocarla en una inventada haría creer que sí; y un día que empieza a las 00:00
  * obliga a desplazarse ocho franjas vacías para ver la primera reunión.
  */
-describe('DiaDesplegadoComponent', () => {
+describe('ExpandedDayComponent', () => {
   let fixture: ComponentFixture<ExpandedDayComponent>;
   let component: ExpandedDayComponent;
 
@@ -41,7 +41,7 @@ describe('DiaDesplegadoComponent', () => {
     render(agenda());
   });
 
-  it('un día vacío sigue teniendo horas donde pulsar', () => {
+  it('an empty day still has hours to click', () => {
     const slots = component.slots();
 
     expect(slots[0].hour).toBe(8);
@@ -52,7 +52,7 @@ describe('DiaDesplegadoComponent', () => {
    * Con algo antes de las 8 o después de las 19, la franja se estira. Si no, el evento existiría
    * en los datos y no habría dónde pintarlo.
    */
-  it('se estira para que quepa lo que cae fuera del horario normal', () => {
+  it('stretches to fit what falls outside the normal hours', () => {
     render(agenda({ events: [calendarEvent('a', '2026-09-08T06:30:00'), calendarEvent('b', '2026-09-08T22:00:00')] }));
 
     const hours = component.slots().map(f => f.hour);
@@ -60,7 +60,7 @@ describe('DiaDesplegadoComponent', () => {
     expect(hours[hours.length - 1]).toBe(22);
   });
 
-  it('coloca cada evento en su hora', () => {
+  it('places each event at its hour', () => {
     render(agenda({ events: [calendarEvent('a', '2026-09-08T09:15:00'), calendarEvent('b', '2026-09-08T09:45:00')] }));
 
     const atNine = component.slots().find(f => f.hour === 9)!;
@@ -71,7 +71,7 @@ describe('DiaDesplegadoComponent', () => {
    * Lo que vence ese día va arriba, no repartido por horas. Es la diferencia entre «esto pasa a
    * las 10» y «esto hay que tenerlo hecho hoy».
    */
-  it('lo que no tiene hora va aparte', () => {
+  it('what has no time goes apart', () => {
     const task: AgendaItem = {
       type: 'Task', id: 't1', title: 'Migrar la base', detail: 'En curso',
       time: null, endTime: null, isCancelled: false
@@ -83,7 +83,7 @@ describe('DiaDesplegadoComponent', () => {
     expect(component.slots().flatMap(f => f.events).map(e => e.id)).toEqual(['a']);
   });
 
-  it('el resumen cuenta sólo lo que hay', () => {
+  it('the summary counts only what exists', () => {
     expect(component.summary()).toBe('Nada en el calendario este día');
 
     render(agenda({ events: [calendarEvent('a', '2026-09-08T09:00:00')] }));
@@ -94,7 +94,7 @@ describe('DiaDesplegadoComponent', () => {
   });
 
   /** Un evento anulado se sigue viendo, tachado: es todo el sentido de separarlo de la papelera. */
-  it('pinta tachado lo anulado, sin quitarlo', () => {
+  it('renders cancelled items struck through, without removing them', () => {
     render(agenda({ events: [calendarEvent('a', '2026-09-08T09:00:00', true)] }));
 
     const button = Array.from(

@@ -107,7 +107,7 @@ async function goToTags(page: Page) {
   await expect(page.getByText('Clientes grandes')).toBeVisible({ timeout: 15_000 });
 }
 
-test('la lista enseña cada etiqueta con su categoría y su tipo', async ({ page }) => {
+test('the list shows each tag with its category and type', async ({ page }) => {
   await signIn(page);
   await goToTags(page);
 
@@ -118,7 +118,7 @@ test('la lista enseña cada etiqueta con su categoría y su tipo', async ({ page
   await expect(page.getByRole('row').filter({ hasText: 'Clientes grandes' })).toContainText('Propia');
 });
 
-test('pulsar una fila abre el cajón, y guardar manda la etiqueta editada', async ({ page }) => {
+test('clicking a row opens the drawer, and saving sends the edited tag', async ({ page }) => {
   await signIn(page);
   await goToTags(page);
 
@@ -136,7 +136,7 @@ test('pulsar una fila abre el cajón, y guardar manda la etiqueta editada', asyn
   expect(put.postDataJSON()).toEqual({ name: 'Clientes estratégicos', colorHex: '#3B82F6', category: 'Business' });
 });
 
-test('una etiqueta de proyecto se ve pero no se edita, y se explica por qué', async ({ page }) => {
+test('a project tag is shown but not editable, and it explains why', async ({ page }) => {
   await signIn(page);
   await goToTags(page);
 
@@ -149,7 +149,7 @@ test('una etiqueta de proyecto se ve pero no se edita, y se explica por qué', a
   await expect(cajon.getByTestId('tag-delete')).toHaveCount(0);
 });
 
-test('borrar pide confirmación y después manda el DELETE', async ({ page }) => {
+test('deleting asks for confirmation and then sends the DELETE', async ({ page }) => {
   await signIn(page);
   await goToTags(page);
 
@@ -165,7 +165,7 @@ test('borrar pide confirmación y después manda el DELETE', async ({ page }) =>
   expect(writes.map(e => `${e.method()} ${new URL(e.url()).pathname}`)).toEqual(['DELETE /api/v1/tags/tag-propia']);
 });
 
-test('si el servidor rechaza el alta, el cajón sigue abierto con lo escrito y el motivo', async ({ page }) => {
+test('if the server rejects the creation, the drawer stays open with what was typed and the reason', async ({ page }) => {
   await signIn(page, { created: { status: 409, body: 'Ya existe una etiqueta llamada «Socio» en esa categoría' } });
   await goToTags(page);
 
@@ -184,7 +184,7 @@ test('si el servidor rechaza el alta, el cajón sigue abierto con lo escrito y e
   await expect(cajon.getByLabel('Nombre')).toHaveValue('Socio');
 });
 
-test('las categorías se renombran, y sólo se borra una vacía', async ({ page }) => {
+test('categories can be renamed, and only an empty one can be deleted', async ({ page }) => {
   await signIn(page);
   await goToTags(page);
 

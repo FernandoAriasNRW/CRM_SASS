@@ -5,7 +5,7 @@ import { BehaviorSubject } from 'rxjs';
 import { NavigationPanelComponent } from './navigation-panel.component';
 import { SHARED_ENTRIES, FILTERS, MENU_VOCABULARY } from './menu-vocabulary';
 
-describe('PanelDeNavegacionComponent', () => {
+describe('NavigationPanelComponent', () => {
   let fixture: ComponentFixture<NavigationPanelComponent>;
   let component: NavigationPanelComponent;
   let params: BehaviorSubject<Record<string, string>>;
@@ -33,7 +33,7 @@ describe('PanelDeNavegacionComponent', () => {
     fixture.detectChanges();
   });
 
-  it('pinta el vocabulario del módulo que se le pide', () => {
+  it('renders the vocabulary of the requested module', () => {
     expect(component.vocabulary().title).toBe(MENU_VOCABULARY['tickets'].title);
     expect(component.vocabulary().entries.length).toBe(SHARED_ENTRIES.length);
   });
@@ -45,7 +45,7 @@ describe('PanelDeNavegacionComponent', () => {
    * igual, pero la URL parecería filtrada: al copiarla y compartirla, quien la abriera no sabría
    * si está viendo todo o el resultado de un filtro que no reconoce.
    */
-  it('«ver todo» quita el parámetro de la URL', () => {
+  it('«see all» removes the URL parameter', () => {
     const seeAll = component.vocabulary().entries.find(e => e.filter === null)!;
 
     component.go(seeAll);
@@ -54,7 +54,7 @@ describe('PanelDeNavegacionComponent', () => {
     expect(options.queryParams['filter']).toBeNull();
   });
 
-  it('cada entrada navega con su filtro', () => {
+  it('each entry navigates with its filter', () => {
     const favorites = component.vocabulary().entries.find(e => e.filter === FILTERS.favorites)!;
 
     component.go(favorites);
@@ -70,7 +70,7 @@ describe('PanelDeNavegacionComponent', () => {
    * Tickets, «Favoritos» tiene que llevar a los tickets favoritos. Navegando relativo llevaba a
    * las tareas favoritas, que es la pantalla equivocada con el filtro correcto.
    */
-  it('navega al módulo del panel aunque se esté en otro', () => {
+  it('navigates to the panel module even from another one', () => {
     fixture.componentRef.setInput('currentModule', 'tasks');
     fixture.detectChanges();
 
@@ -84,7 +84,7 @@ describe('PanelDeNavegacionComponent', () => {
    * Y por lo mismo, asomado sobre otro módulo no marca nada: el filtro de la URL es del módulo en
    * el que se está, y marcarlo aquí haría creer que los tickets ya están filtrados así.
    */
-  it('asomado sobre otro módulo no marca ninguna entrada', () => {
+  it('peeking over another module marks no entry', () => {
     fixture.componentRef.setInput('currentModule', 'tasks');
     params.next({ filter: 'archived' });
     fixture.detectChanges();
@@ -97,7 +97,7 @@ describe('PanelDeNavegacionComponent', () => {
    * La entrada activa sale de la URL y no de un click guardado. Así, entrar por un enlace ya
    * filtrado marca la entrada correcta, y el botón de atrás también.
    */
-  it('marca como activa la entrada que dice la URL', () => {
+  it('marks as active the entry the URL says', () => {
     params.next({ filter: 'archived' });
     fixture.detectChanges();
 
@@ -108,13 +108,13 @@ describe('PanelDeNavegacionComponent', () => {
     expect(component.isActive(mine)).toBeFalse();
   });
 
-  it('sin filtro en la URL, la activa es «ver todo»', () => {
+  it('without a filter in the URL, «see all» is active', () => {
     const seeAll = component.vocabulary().entries.find(e => e.filter === null)!;
 
     expect(component.isActive(seeAll)).toBeTrue();
   });
 
-  it('el anclaje se puede alternar', () => {
+  it('pinning can be toggled', () => {
     expect(component.pinned()).toBeTrue();
 
     component.togglePinned(new MouseEvent('click'));
@@ -130,7 +130,7 @@ describe('PanelDeNavegacionComponent', () => {
    * conocerlo. Inventarle «Mis facturas» o «Facturas del equipo» sería repetir el fallo que se
    * quitó —ofrecer filtros que el servidor no aplica—.
    */
-  it('un módulo nuevo recibe panel, con la única entrada que es cierta', () => {
+  it('a new module gets a panel with the only entry that is true', () => {
     fixture.componentRef.setInput('moduleKey', 'facturas');
     fixture.componentRef.setInput('currentModule', 'facturas');
     fixture.componentRef.setInput('moduleName', 'Facturas');
@@ -144,7 +144,7 @@ describe('PanelDeNavegacionComponent', () => {
    * Y el que sí tiene vocabulario propio lo usa. Es la otra mitad: si el respaldo se aplicara
    * siempre, todos los módulos tendrían una sola entrada y nadie lo notaría hasta usarlos.
    */
-  it('un módulo conocido usa su propio vocabulario', () => {
+  it('a known module uses its own vocabulary', () => {
     fixture.componentRef.setInput('moduleKey', 'docs');
     fixture.detectChanges();
 
@@ -152,14 +152,14 @@ describe('PanelDeNavegacionComponent', () => {
   });
 });
 
-describe('vocabulario del menú', () => {
+describe('menu vocabulary', () => {
   /**
    * La regla que sostiene toda la fase 5A: aquí sólo hay entradas que el servidor sabe filtrar.
    *
    * Esta prueba no puede comprobar el backend —eso lo hacen las de integración—, pero sí que
    * nadie añada una entrada con un filtro inventado sobre la marcha.
    */
-  it('todas las entradas usan un filtro conocido, o ninguno', () => {
+  it('every entry uses a known filter, or none', () => {
     const known = Object.values(FILTERS) as string[];
 
     for (const entry of SHARED_ENTRIES) {
@@ -168,7 +168,7 @@ describe('vocabulario del menú', () => {
     }
   });
 
-  it('los tres módulos con lista comparten el vocabulario transversal', () => {
+  it('the three list modules share the cross-cutting vocabulary', () => {
     for (const moduleKey of ['tasks', 'tickets', 'projects']) {
       expect(MENU_VOCABULARY[moduleKey].entries).toBe(SHARED_ENTRIES);
     }

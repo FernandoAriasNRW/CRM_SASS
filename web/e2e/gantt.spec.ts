@@ -70,14 +70,14 @@ async function signIn(page: Page, tasks: unknown[], dependencies: unknown[] = []
   await page.getByRole('button', { name: 'Gantt', exact: true }).click();
 }
 
-test('una tarea con inicio sale como barra y una sin inicio como hito', async ({ page }) => {
+test('a task with a start shows as a bar and one without as a milestone', async ({ page }) => {
   await signIn(page, [WITH_BAR, MILESTONE]);
 
   await expect(page.getByRole('button', { name: /Tarea planificada, del .* al / })).toBeVisible();
   await expect(page.getByRole('button', { name: /Tarea sin inicio, vence el / })).toBeVisible();
 });
 
-test('una tarea sin fecha límite no se pinta: no hay dónde ponerla', async ({ page }) => {
+test('a task without a due date is not drawn: there is nowhere to put it', async ({ page }) => {
   await signIn(page, [WITH_BAR, NO_DATES]);
 
   // Aparece en la columna de nombres sólo lo que tiene sitio en el calendario.
@@ -87,19 +87,19 @@ test('una tarea sin fecha límite no se pinta: no hay dónde ponerla', async ({ 
   await expect(page.getByRole('button', { name: 'Tarea sin fechas', exact: true })).toHaveCount(0);
 });
 
-test('sin ninguna tarea con fechas lo dice, en lugar de enseñar un eje vacío', async ({ page }) => {
+test('without dated tasks it says so instead of showing an empty axis', async ({ page }) => {
   await signIn(page, [NO_DATES]);
 
   await expect(page.getByText('Nada que planificar todavía')).toBeVisible();
 });
 
-test('una tarea bloqueada se marca', async ({ page }) => {
+test('a blocked task is marked', async ({ page }) => {
   await signIn(page, [BLOCKED]);
 
   await expect(page.getByTitle('La bloquea otra tarea')).toBeVisible();
 });
 
-test('una dependencia entre dos tareas visibles se dibuja', async ({ page }) => {
+test('a dependency between two visible tasks is drawn', async ({ page }) => {
   await signIn(page, [WITH_BAR, BLOCKED], [
     { taskId: BLOCKED.id, dependsOnTaskId: WITH_BAR.id },
   ]);
@@ -112,7 +112,7 @@ test('una dependencia entre dos tareas visibles se dibuja', async ({ page }) => 
  * empiece la bloqueada, así que el plan es imposible tal cual está. Es lo que un Gantt tiene
  * que gritar, no callar.
  */
-test('una dependencia que el calendario no respeta se marca y se explica', async ({ page }) => {
+test('a dependency the schedule breaks is marked and explained', async ({ page }) => {
   await signIn(page, [WITH_BAR, BLOCKED], [
     { taskId: BLOCKED.id, dependsOnTaskId: WITH_BAR.id },
   ]);
@@ -121,7 +121,7 @@ test('una dependencia que el calendario no respeta se marca y se explica', async
   await expect(page.getByText(/dependencias que el calendario no respeta/i)).toBeVisible();
 });
 
-test('sin dependencias no se dibuja ninguna flecha ni se avisa de nada', async ({ page }) => {
+test('without dependencies no arrow is drawn and nothing is flagged', async ({ page }) => {
   await signIn(page, [WITH_BAR, MILESTONE], []);
 
   // Se cuentan las flechas por su punta y no los `svg` sueltos: los iconos de los rombos
@@ -130,7 +130,7 @@ test('sin dependencias no se dibuja ninguna flecha ni se avisa de nada', async (
   await expect(page.getByText(/dependencias que el calendario no respeta/i)).toHaveCount(0);
 });
 
-test('pulsar una tarea abre su detalle', async ({ page }) => {
+test('clicking a task opens its detail', async ({ page }) => {
   await signIn(page, [WITH_BAR]);
 
   await page.getByRole('button', { name: /Tarea planificada, del / }).click();
