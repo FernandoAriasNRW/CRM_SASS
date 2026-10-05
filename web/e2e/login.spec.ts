@@ -20,7 +20,7 @@ const VALID_SESSION = {
   },
 };
 
-test('un usuario no autenticado que entra a la raíz acaba en el login', async ({ page }) => {
+test('an unauthenticated user visiting the root ends up at login', async ({ page }) => {
   await page.goto('/');
 
   await expect(page).toHaveURL(/\/login/);
@@ -30,14 +30,14 @@ test('un usuario no autenticado que entra a la raíz acaba en el login', async (
   await expect(page.getByRole('heading', { name: 'Iniciar sesión', level: 1 })).toBeVisible();
 });
 
-test('una ruta protegida no es accesible sin sesión', async ({ page }) => {
+test('a protected route is not reachable without a session', async ({ page }) => {
   await page.goto('/projects');
 
   // La guarda debe interceptar antes de pintar nada de la vista de proyectos.
   await expect(page).toHaveURL(/\/login/);
 });
 
-test('con credenciales inválidas se informa del error y no se navega', async ({ page }) => {
+test('invalid credentials report the error and do not navigate', async ({ page }) => {
   await page.route('**/api/v1/auth/login', route =>
     route.fulfill({ status: 401, contentType: 'application/json', body: '{}' }));
 
@@ -49,7 +49,7 @@ test('con credenciales inválidas se informa del error y no se navega', async ({
   await expect(page).toHaveURL(/\/login/);
 });
 
-test('con credenciales válidas se entra a la aplicación', async ({ page }) => {
+test('valid credentials sign in to the application', async ({ page }) => {
   await page.route('**/api/v1/auth/login', route =>
     route.fulfill({
       status: 200,

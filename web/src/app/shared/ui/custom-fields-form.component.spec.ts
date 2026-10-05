@@ -54,20 +54,20 @@ describe('CustomFieldsFormComponent', () => {
     }).compileComponents();
   });
 
-  it('no pinta ni encabezado cuando el inquilino no ha definido campos', async () => {
+  it('renders not even a heading when the tenant has no fields', async () => {
     await mount([]);
 
     expect(fixture.nativeElement.textContent.trim()).toBe('');
   });
 
-  it('pinta un campo por definición, con su nombre', async () => {
+  it('renders one field per definition, with its name', async () => {
     await mount([TEXT_FIELD, MULTIPLE]);
 
     expect(fixture.nativeElement.textContent).toContain('Cliente facturable');
     expect(fixture.nativeElement.textContent).toContain('Canales');
   });
 
-  it('guarda el valor tal cual, sin normalizarlo en el navegador', async () => {
+  it('saves the value as is, without normalizing it in the browser', async () => {
     await mount([TEXT_FIELD]);
 
     // La coma decimal la arregla el servidor: normalizar aquí serían dos reglas que discrepan.
@@ -76,7 +76,7 @@ describe('CustomFieldsFormComponent', () => {
     expect(service.saveValue).toHaveBeenCalledWith('def-texto', 'tarea-1', '1,5');
   });
 
-  it('el valor vacío se manda como nulo, que es como se borra', async () => {
+  it('an empty value is sent as null, which is how it is cleared', async () => {
     await mount([TEXT_FIELD]);
 
     fixture.componentInstance.save(TEXT_FIELD, '');
@@ -84,7 +84,7 @@ describe('CustomFieldsFormComponent', () => {
     expect(service.saveValue).toHaveBeenCalledWith('def-texto', 'tarea-1', null);
   });
 
-  it('si el servidor rechaza, revierte el valor y enseña su explicación', async () => {
+  it('if the server rejects, it reverts the value and shows the explanation', async () => {
     await mount([TEXT_FIELD]);
     service.saveValue.and.returnValue(throwError(() => ({ error: 'No es un número' })));
 
@@ -96,7 +96,7 @@ describe('CustomFieldsFormComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('No es un número');
   });
 
-  it('entiende también el ProblemDetails del manejador global', async () => {
+  it('also understands the global handler ProblemDetails', async () => {
     await mount([TEXT_FIELD]);
     service.saveValue.and.returnValue(throwError(() => ({ error: { detail: 'El campo es obligatorio' } })));
 
@@ -105,7 +105,7 @@ describe('CustomFieldsFormComponent', () => {
     expect(fixture.componentInstance.errors()['def-texto']).toBe('El campo es obligatorio');
   });
 
-  it('un rechazo sin mensaje no deja al usuario sin explicación', async () => {
+  it('a rejection without message still explains something to the user', async () => {
     await mount([TEXT_FIELD]);
     service.saveValue.and.returnValue(throwError(() => ({ status: 500 })));
 
@@ -114,7 +114,7 @@ describe('CustomFieldsFormComponent', () => {
     expect(fixture.componentInstance.errors()['def-texto']).toBeTruthy();
   });
 
-  it('un guardado correcto deja el valor nuevo como el bueno al que revertir', async () => {
+  it('a successful save makes the new value the one to revert to', async () => {
     await mount([TEXT_FIELD]);
 
     fixture.componentInstance.save(TEXT_FIELD, 'Globex');
@@ -124,8 +124,8 @@ describe('CustomFieldsFormComponent', () => {
     expect(fixture.componentInstance.fields()[0].value).toBe('Globex');
   });
 
-  describe('selección múltiple', () => {
-    it('marca una opción añadiéndola a las que ya había', async () => {
+  describe('multi select', () => {
+    it('checks an option adding it to the existing ones', async () => {
       await mount([MULTIPLE]);
 
       fixture.componentInstance.toggleOption(MULTIPLE, 'Correo');
@@ -133,7 +133,7 @@ describe('CustomFieldsFormComponent', () => {
       expect(service.saveValue).toHaveBeenCalledWith('def-multiple', 'tarea-1', 'Web\nCorreo');
     });
 
-    it('desmarca la que ya estaba', async () => {
+    it('unchecks the one already checked', async () => {
       await mount([MULTIPLE]);
 
       fixture.componentInstance.toggleOption(MULTIPLE, 'Web');
@@ -142,7 +142,7 @@ describe('CustomFieldsFormComponent', () => {
       expect(service.saveValue).toHaveBeenCalledWith('def-multiple', 'tarea-1', null);
     });
 
-    it('sabe cuáles están marcadas', async () => {
+    it('knows which ones are checked', async () => {
       await mount([MULTIPLE]);
       const component = fixture.componentInstance;
 
@@ -151,7 +151,7 @@ describe('CustomFieldsFormComponent', () => {
     });
   });
 
-  it('un tipo que esta versión no sabe pintar enseña el valor en crudo', async () => {
+  it('a type this version cannot render shows the raw value', async () => {
     const unknown: CustomFieldValue = {
       definitionId: 'def-raro', name: 'Fórmula', type: 'Calculado',
       isRequired: false, options: [], position: 0, value: '42',

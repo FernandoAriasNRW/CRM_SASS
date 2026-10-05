@@ -93,7 +93,7 @@ async function goToList(page: Page) {
 
 const hoursCell = (page: Page) => page.getByRole('row').filter({ hasText: 'Configurar alertas' }).getByRole('cell').nth(4);
 
-test('sólo las columnas editables ofrecen editarse', async ({ page }) => {
+test('only editable columns offer editing', async ({ page }) => {
   await signIn(page);
   await goToList(page);
 
@@ -103,7 +103,7 @@ test('sólo las columnas editables ofrecen editarse', async ({ page }) => {
   await expect(page.getByRole('button', { name: 'Editar Asignado' })).toHaveCount(0);
 });
 
-test('editar una celda manda sólo el campo que cambió', async ({ page }) => {
+test('editing a cell sends only the changed field', async ({ page }) => {
   const sent = await signIn(page);
   await goToList(page);
 
@@ -116,7 +116,7 @@ test('editar una celda manda sólo el campo que cambió', async ({ page }) => {
   await expect(hoursCell(page)).toContainText('13.5');
 });
 
-test('el estado se edita con un desplegable de los estados que existen', async ({ page }) => {
+test('the status is edited with a dropdown of the existing statuses', async ({ page }) => {
   const sent = await signIn(page);
   await goToList(page);
 
@@ -128,7 +128,7 @@ test('el estado se edita con un desplegable de los estados que existen', async (
   expect(sent[0].body).toEqual({ status: 'In Progress' });
 });
 
-test('escapar no guarda nada', async ({ page }) => {
+test('escape saves nothing', async ({ page }) => {
   const sent = await signIn(page);
   await goToList(page);
 
@@ -141,7 +141,7 @@ test('escapar no guarda nada', async ({ page }) => {
   await expect(hoursCell(page)).toContainText('8');
 });
 
-test('dejar el mismo valor no gasta una petición', async ({ page }) => {
+test('keeping the same value does not spend a request', async ({ page }) => {
   const sent = await signIn(page);
   await goToList(page);
 
@@ -152,7 +152,7 @@ test('dejar el mismo valor no gasta una petición', async ({ page }) => {
   expect(sent).toEqual([]);
 });
 
-test('si el servidor rechaza, la celda vuelve a lo que había y dice por qué', async ({ page }) => {
+test('if the server rejects, the cell reverts and says why', async ({ page }) => {
   await signIn(page, {
     patch: { status: 400, body: 'Las horas estimadas no pueden ser negativas' },
   });
@@ -172,7 +172,7 @@ test('si el servidor rechaza, la celda vuelve a lo que había y dice por qué', 
  * esta pantalla levanta el suyo con el nombre de la tarea que se revirtió: el mismo texto salía
  * dos veces. Ahora la petición se reserva explicarlo y el interceptor se calla.
  */
-test('un solo fallo levanta un solo aviso', async ({ page }) => {
+test('a single failure raises a single toast', async ({ page }) => {
   await signIn(page, {
     patch: { status: 400, body: 'Las horas estimadas no pueden ser negativas' },
   });
@@ -190,7 +190,7 @@ test('un solo fallo levanta un solo aviso', async ({ page }) => {
  * response for http://localhost:8080/…», que enseña la dirección interna de la API y no dice
  * nada que quien la lee pueda usar.
  */
-test('el aviso no enseña la dirección interna de la API', async ({ page }) => {
+test('the toast does not show the internal API address', async ({ page }) => {
   await signIn(page, {
     patch: { status: 400, body: 'Las horas estimadas no pueden ser negativas' },
   });

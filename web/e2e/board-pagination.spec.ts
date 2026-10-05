@@ -70,7 +70,7 @@ async function openBoard(page: Page) {
 
 const cards = (page: Page) => page.locator('[cdkdroplist] [cdkdrag], [cdkDropList] [cdkDrag]');
 
-test('pinta sólo la primera tanda, no las 60 tareas', async ({ page }) => {
+test('renders only the first batch, not all 60 tasks', async ({ page }) => {
   await openBoard(page);
 
   // Lo que se pinta es lo que cuesta: 60 tarjetas arrastrables se notan al desplazarse.
@@ -78,14 +78,14 @@ test('pinta sólo la primera tanda, no las 60 tareas', async ({ page }) => {
   await expect(page.getByText('Tarea 26', { exact: true })).toBeHidden();
 });
 
-test('el contador de la columna muestra el total, no lo pintado', async ({ page }) => {
+test('the column counter shows the total, not what is rendered', async ({ page }) => {
   await openBoard(page);
 
   // Si el contador dijera 25, el tablero estaría ocultando trabajo sin avisar.
   await expect(page.getByText('60', { exact: true }).first()).toBeVisible();
 });
 
-test('«mostrar más» revela la siguiente tanda', async ({ page }) => {
+test('«show more» reveals the next batch', async ({ page }) => {
   await openBoard(page);
 
   await page.getByRole('button', { name: /mostrar 25 más/i }).click();
@@ -94,7 +94,7 @@ test('«mostrar más» revela la siguiente tanda', async ({ page }) => {
   await expect(page.getByText('Tarea 51', { exact: true })).toBeHidden();
 });
 
-test('el botón desaparece al no quedar nada por mostrar', async ({ page }) => {
+test('the button disappears when nothing is left to show', async ({ page }) => {
   await openBoard(page);
 
   await page.getByRole('button', { name: /mostrar .* más/i }).click();
@@ -104,7 +104,7 @@ test('el botón desaparece al no quedar nada por mostrar', async ({ page }) => {
   await expect(page.getByRole('button', { name: /mostrar .* más/i })).toHaveCount(0);
 });
 
-test('el botón es alcanzable con el teclado', async ({ page }) => {
+test('the button is reachable with the keyboard', async ({ page }) => {
   await openBoard(page);
 
   // Es un <button> nativo, no un div con (click): recibe foco y se activa con Enter sin

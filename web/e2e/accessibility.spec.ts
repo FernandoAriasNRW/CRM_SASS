@@ -21,7 +21,7 @@ const PUBLIC_ROUTES = [
 ];
 
 for (const route of PUBLIC_ROUTES) {
-  test(`${route.name} no tiene violaciones graves de accesibilidad`, async ({ page }) => {
+  test(`${route.name} has no serious accessibility violations`, async ({ page }) => {
     await page.goto(route.url);
 
     const result = await new AxeBuilder({ page })
@@ -37,7 +37,7 @@ for (const route of PUBLIC_ROUTES) {
   });
 }
 
-test('el login se puede completar sólo con el teclado', async ({ page }) => {
+test('login can be completed with the keyboard only', async ({ page }) => {
   await page.route('**/api/v1/auth/login', route =>
     route.fulfill({ status: 401, contentType: 'application/json', body: '{}' }));
 
@@ -58,7 +58,7 @@ test('el login se puede completar sólo con el teclado', async ({ page }) => {
   await expect(page.getByRole('button', { name: /ingresar/i })).toBeFocused();
 });
 
-test('el foco es visible al navegar con el teclado', async ({ page }) => {
+test('focus is visible when navigating with the keyboard', async ({ page }) => {
   await page.goto('/login');
 
   // Esperar a que el formulario exista antes de tabular. Sin esto la pulsación puede

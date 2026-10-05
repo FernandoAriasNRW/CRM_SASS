@@ -61,14 +61,14 @@ async function signIn(page: Page, taskDelay = 0) {
   await expect(page).toHaveURL(/\/tasks/);
 }
 
-test('un tablero sin tareas explica que está vacío en cada columna', async ({ page }) => {
+test('a board without tasks explains it is empty in each column', async ({ page }) => {
   await signIn(page);
 
   // Una columna vacía sin ningún texto se lee como que algo falló al cargar.
   await expect(page.getByText('Sin tareas').first()).toBeVisible({ timeout: 15_000 });
 });
 
-test('mientras carga muestra esqueletos, no una pantalla en blanco', async ({ page }) => {
+test('while loading it shows skeletons, not a blank screen', async ({ page }) => {
   await signIn(page, 2500);
 
   // El esqueleto ocupa el sitio de las tarjetas para que el diseño no salte al llegar

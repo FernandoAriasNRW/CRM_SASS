@@ -18,7 +18,7 @@ import { Mention } from './mention';
  * Por eso el HTML de aquí es <b>exactamente el que produce la migración</b> (comprobado contra la
  * base de desarrollo), y no el que escribe el editor, que sería comprobarse a sí mismo.
  */
-describe('HTML guardado de las páginas', () => {
+describe('stored page HTML', () => {
   const MIGRATED = [
     '<p><span data-mention-type="Task" data-mention-id="11111111-1111-1111-1111-111111111111" class="mention">#Una tarea</span> ',
     '<span data-mention-type="Person" data-mention-id="22222222-2222-2222-2222-222222222222" class="mention">@Ana</span></p>',
@@ -58,7 +58,7 @@ describe('HTML guardado de las páginas', () => {
     return [json, ...(json.content ?? []).flatMap(child => nodes(child))];
   }
 
-  it('reconoce las menciones con su tipo y su identificador', () => {
+  it('recognises mentions with their type and id', () => {
     const mentions = nodes().filter(n => n.type === 'mention').map(n => n.attrs);
 
     expect(mentions).toEqual([
@@ -67,30 +67,30 @@ describe('HTML guardado de las páginas', () => {
     ]);
   });
 
-  it('reconoce los avisos con su tono', () => {
+  it('recognises callouts with their tone', () => {
     const tones = nodes().filter(n => n.type === 'callout').map(n => n.attrs?.['tone']);
 
     expect(tones).toEqual(['warning', 'success']);
   });
 
-  it('reconoce las tres columnas', () => {
+  it('recognises the three columns', () => {
     const columns = nodes().find(n => n.type === 'columns');
 
     expect(columns?.attrs?.['count']).toBe(3);
     expect(columns?.content?.filter(c => c.type === 'column').length).toBe(3);
   });
 
-  it('reconoce el comentario en línea con su anotación', () => {
+  it('recognises the inline comment with its annotation', () => {
     const marks = nodes().flatMap(n => n.marks ?? []).filter(m => m.type === 'comment');
 
     expect(marks.map(m => m.attrs?.['annotationId'])).toEqual(['66666666-6666-6666-6666-666666666666']);
   });
 
-  it('reconoce el desplegable', () => {
+  it('recognises the toggle', () => {
     expect(nodes().some(n => n.type === 'details')).toBeTrue();
   });
 
-  it('vuelve a escribir los mismos atributos al guardar', () => {
+  it('writes the same attributes back when saving', () => {
     // Lo que el servidor lee (las menciones) y lo que la hoja de estilos pinta (el resto).
     const html = editor.getHTML();
 

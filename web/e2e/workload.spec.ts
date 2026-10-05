@@ -73,35 +73,35 @@ async function signIn(page: Page, tasks: unknown[]) {
   await page.getByRole('button', { name: 'Carga', exact: true }).click();
 }
 
-test('reparte por persona y pone delante a quien más acumula', async ({ page }) => {
+test('splits by person and puts whoever has the most first', async ({ page }) => {
   await signIn(page, [ADMIN_TASK, LUISA_TASK]);
 
   const names = page.locator('app-workload tbody tr td:first-child');
   await expect(names).toHaveText(['Luisa Pérez', 'Admin Administrator']);
 });
 
-test('los totales son las horas de cada uno', async ({ page }) => {
+test('the totals are each person hours', async ({ page }) => {
   await signIn(page, [ADMIN_TASK, LUISA_TASK]);
 
   const totals = page.locator('app-workload tbody tr td:last-child');
   await expect(totals).toHaveText(['12', '4']);
 });
 
-test('una tarea completada no cuenta como carga futura', async ({ page }) => {
+test('a completed task does not count as future workload', async ({ page }) => {
   await signIn(page, [ADMIN_TASK, COMPLETED]);
 
   // Sin descartarla, el total del administrador serían 44 en lugar de 4.
   await expect(page.locator('app-workload tbody tr td:last-child')).toHaveText(['4']);
 });
 
-test('las tareas sin fecha límite no se esconden: se cuentan y se dicen', async ({ page }) => {
+test('tasks without a due date are not hidden: they are counted and shown', async ({ page }) => {
   await signIn(page, [ADMIN_TASK, NO_DATE]);
 
   await expect(page.getByText(/sin fecha límite/i)).toBeVisible();
   await expect(page.getByText(/la carga real es mayor/i)).toBeVisible();
 });
 
-test('sin tareas repartibles lo dice, en lugar de enseñar una tabla vacía', async ({ page }) => {
+test('without assignable tasks it says so instead of showing an empty table', async ({ page }) => {
   await signIn(page, [NO_DATE]);
 
   await expect(page.getByText('Nada que repartir todavía')).toBeVisible();
@@ -111,7 +111,7 @@ test('sin tareas repartibles lo dice, en lugar de enseñar una tabla vacía', as
  * No hay línea de capacidad porque el producto no sabe la jornada de nadie. Pintar una sería
  * inventarse el dato que decide si algo está sobrecargado.
  */
-test('la vista avisa de que el reparto es una estimación', async ({ page }) => {
+test('the view warns that the split is an estimate', async ({ page }) => {
   await signIn(page, [ADMIN_TASK]);
 
   await expect(page.getByText(/es una estimación, no un registro de dedicación/i)).toBeVisible();

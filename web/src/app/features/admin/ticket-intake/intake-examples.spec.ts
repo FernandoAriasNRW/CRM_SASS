@@ -2,17 +2,17 @@ import {
   API_KEY_HEADER, REQUIRED_FIELDS, curlExample, curlWithAttachmentsExample, formExample,
 } from './intake-examples';
 
-describe('ejemplos de la entrada de tickets', () => {
+describe('ticket intake examples', () => {
   const url = 'https://api.ejemplo.com/api/v1/ticket-intake';
 
-  it('el formulario llama a la URL real con la clave en su cabecera', () => {
+  it('the form calls the real URL with the key in its header', () => {
     const html = formExample(url, 'tke_abc"123');
 
     expect(html).toContain(`fetch("${url}"`);
     expect(html).toContain(`"${API_KEY_HEADER}": "tke_abc\\"123"`);
   });
 
-  it('el formulario pide los seis obligatorios y admite varios adjuntos de imagen o vídeo', () => {
+  it('the form asks for the six required fields and accepts several image or video attachments', () => {
     const html = formExample(url, 'tke_x');
 
     for (const field of REQUIRED_FIELDS) {
@@ -21,14 +21,14 @@ describe('ejemplos de la entrada de tickets', () => {
     expect(html).toContain('name="attachments" type="file" accept="image/*,video/*" multiple');
   });
 
-  it('el formulario deja al navegador poner el Content-Type del multipart', () => {
+  it('the form lets the browser set the multipart Content-Type', () => {
     const html = formExample(url, 'tke_x');
 
     expect(html).toContain('body: new FormData(evento.target)');
     expect(html).not.toContain('Content-Type');
   });
 
-  it('el ejemplo de backend manda un JSON con todos los obligatorios', () => {
+  it('the backend example sends a JSON with all required fields', () => {
     const curl = curlExample(url, 'tke_x');
     const body = JSON.parse(curl.slice(curl.indexOf("-d '") + 4, curl.lastIndexOf("'")));
 
@@ -39,7 +39,7 @@ describe('ejemplos de la entrada de tickets', () => {
     }
   });
 
-  it('el ejemplo con adjuntos manda los obligatorios y un -F por fichero', () => {
+  it('the attachments example sends the required fields and one -F per file', () => {
     const curl = curlWithAttachmentsExample(url, 'tke_x');
 
     for (const field of REQUIRED_FIELDS) {

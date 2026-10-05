@@ -11,17 +11,17 @@ import { EDITOR_COMMANDS, matchingCommands } from './editor-commands';
  * Se prueba aquí y no a través del editor porque es una función pura: montar TipTap para
  * comprobar una búsqueda de texto haría la prueba lenta y frágil sin comprobar nada más.
  */
-describe('comandosQueCasan', () => {
+describe('matchingCommands', () => {
   const keys = (query: string) => matchingCommands(query).map(c => c.key);
 
-  it('sin nada escrito ofrece todos los comandos que valen donde está el cursor', () => {
+  it('with nothing typed it offers every command valid at the cursor', () => {
     const contextual = EDITOR_COMMANDS.filter(c => c.onlyInside).length;
 
     expect(matchingCommands('').length).toBe(EDITOR_COMMANDS.length - contextual);
     expect(matchingCommands('', { insideColumns: true }).length).toBe(EDITOR_COMMANDS.length);
   });
 
-  it('«Deshacer columnas» sólo aparece con el cursor dentro de unas columnas', () => {
+  it('«Undo columns» only appears with the cursor inside columns', () => {
     // Fuera de unas columnas no hace nada: ofrecerlo sería poner en el menú un botón que no
     // responde, que es el tipo de fallo que esta tanda ha ido quitando.
     expect(keys('columnas')).not.toContain('columns-unset');
@@ -29,40 +29,40 @@ describe('comandosQueCasan', () => {
       .toContain('columns-unset');
   });
 
-  it('encuentra por el título en español', () => {
+  it('finds by the Spanish title', () => {
     expect(keys('lista')).toContain('bullets');
     expect(keys('lista')).toContain('numbered');
     expect(keys('lista')).toContain('tasks');
   });
 
-  it('encuentra por el medio del título, no sólo por el principio', () => {
+  it('finds by the middle of the title, not only the start', () => {
     // «Lista con viñetas» no empieza por «viñetas»: con `startsWith` esto no devolvía nada.
     expect(keys('viñetas')).toContain('bullets');
   });
 
-  it('no le afectan los acentos ni las mayúsculas', () => {
+  it('is not affected by accents or case', () => {
     expect(keys('VIDEO')).toContain('video');
     expect(keys('vídeo')).toContain('video');
     expect(keys('codigo')).toContain('code');
     expect(keys('CÓDIGO')).toContain('code');
   });
 
-  it('sigue encontrando por el nombre en inglés, que es lo que mucha gente escribe', () => {
+  it('still finds by the English name, which many people type', () => {
     expect(keys('list')).toContain('bullets');
     expect(keys('table')).toContain('table');
     expect(keys('quote')).toContain('quote');
   });
 
-  it('entiende los atajos de encabezado', () => {
+  it('understands heading shortcuts', () => {
     expect(keys('h1')).toEqual(['h1']);
     expect(keys('h2')).toEqual(['h2']);
   });
 
-  it('no devuelve nada cuando de verdad no hay nada', () => {
+  it('returns nothing when there really is nothing', () => {
     expect(matchingCommands('xyzzy')).toEqual([]);
   });
 
-  it('todos los comandos tienen título, descripción, icono y grupo', () => {
+  it('every command has a title, description, icon and group', () => {
     for (const command of EDITOR_COMMANDS) {
       expect(command.title.length).toBeGreaterThan(0);
       expect(command.description.length).toBeGreaterThan(0);
@@ -73,7 +73,7 @@ describe('comandosQueCasan', () => {
     }
   });
 
-  it('los comandos van agrupados y no mezclados', () => {
+  it('commands are grouped, not mixed', () => {
     // El desplegable pinta la cabecera del grupo al cambiar de grupo. Si el catálogo alternara
     // grupos, la misma cabecera saldría varias veces.
     const groups = EDITOR_COMMANDS.map(c => c.group);

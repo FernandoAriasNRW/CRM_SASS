@@ -16,20 +16,20 @@ describe('CommandPaletteService', () => {
     http = TestBed.inject(HttpTestingController);
   });
 
-  it('sin consulta ofrece todas las secciones y acciones', () => {
+  it('without a query it offers every section and action', () => {
     expect(svc.results().length).toBeGreaterThan(5);
     expect(svc.results().some(c => c.group === 'Ir a')).toBeTrue();
     expect(svc.results().some(c => c.group === 'Acciones')).toBeTrue();
   });
 
-  it('filtra por etiqueta', () => {
+  it('filters by label', () => {
     svc.query.set('tareas');
 
     expect(svc.results().length).toBeGreaterThan(0);
     expect(svc.results().every(c => /tarea/i.test(c.label))).toBeTrue();
   });
 
-  it('encuentra sin escribir los acentos', () => {
+  it('finds without typing accents', () => {
     // Obligar a teclear el acento exacto rompe el flujo que justifica el paletón.
     svc.query.set('calendario');
     const accented = svc.results().length;
@@ -39,27 +39,27 @@ describe('CommandPaletteService', () => {
     expect(svc.results().length).toBe(accented);
   });
 
-  it('encuentra por palabra clave aunque no esté en la etiqueta', () => {
+  it('finds by keyword even if it is not in the label', () => {
     svc.query.set('oscuro');
 
     expect(svc.results().some(c => c.id === 'accion-tema')).toBeTrue();
   });
 
-  it('agrupa conservando el orden de aparición', () => {
+  it('groups keeping the order of appearance', () => {
     const groups = svc.grouped().map(g => g.name);
 
     expect(groups[0]).toBe('Ir a');
     expect(new Set(groups).size).toBe(groups.length);
   });
 
-  it('no va al servidor con menos de dos caracteres', () => {
+  it('does not call the server with fewer than two characters', () => {
     svc.searchServer('a');
 
     http.expectNone(() => true);
     expect(svc.searching()).toBeFalse();
   });
 
-  it('busca en proyectos, tareas y tickets a la vez', () => {
+  it('searches projects, tasks and tickets at once', () => {
     svc.query.set('crm');
     svc.searchServer('crm');
 
@@ -74,7 +74,7 @@ describe('CommandPaletteService', () => {
     expect(svc.searching()).toBeFalse();
   });
 
-  it('si un módulo falla, los demás siguen dando resultados', () => {
+  it('if a module fails, the others still return results', () => {
     svc.query.set('crm');
     svc.searchServer('crm');
 
@@ -89,7 +89,7 @@ describe('CommandPaletteService', () => {
     expect(svc.results().some(c => c.group === 'Proyectos')).toBeTrue();
   });
 
-  it('descarta una respuesta que llega tarde', () => {
+  it('discards a response that arrives late', () => {
     svc.query.set('crm');
     svc.searchServer('crm');
 
@@ -105,7 +105,7 @@ describe('CommandPaletteService', () => {
     expect(svc.results().some(c => c.group === 'Proyectos')).toBeFalse();
   });
 
-  it('abrir limpia la consulta anterior', () => {
+  it('opening clears the previous query', () => {
     svc.query.set('algo');
 
     svc.open();

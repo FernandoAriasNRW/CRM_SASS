@@ -9,7 +9,7 @@ import type { SavedView } from '../../services/views.service';
  * En tickets eso dejaba sin manera de ver la lista; en tareas se llevaba además el Gantt y la
  * carga. Y como nadie llamaba a borrar vistas, no había vuelta atrás.
  */
-describe('BarraDeVistasComponent', () => {
+describe('ViewTabsComponent', () => {
   let fixture: ComponentFixture<ViewTabsComponent>;
   let component: ViewTabsComponent;
 
@@ -46,7 +46,7 @@ describe('BarraDeVistasComponent', () => {
     fixture.detectChanges();
   });
 
-  it('enseña las vistas de fábrica cuando no hay ninguna guardada', () => {
+  it('shows the built-in views when none is saved', () => {
     expect(pestanas()).toEqual(['Tablero', 'Lista', 'Gantt', 'Vista']);
   });
 
@@ -54,7 +54,7 @@ describe('BarraDeVistasComponent', () => {
    * El fallo, con su nombre. Sin esta comprobación volvería a colarse: la versión rota también
    * «enseñaba las pestañas» —mientras no hubiera vistas guardadas—.
    */
-  it('sigue enseñándolas cuando hay vistas guardadas', () => {
+  it('keeps showing them when there are saved views', () => {
     fixture.componentRef.setInput('saved', [view('v1', 'Urgentes')]);
     fixture.detectChanges();
 
@@ -64,7 +64,7 @@ describe('BarraDeVistasComponent', () => {
     expect(pestanas()).toContain('Urgentes');
   });
 
-  it('marca la de fábrica activa sólo si no hay una guardada puesta', () => {
+  it('marks the built-in one active only if no saved view is applied', () => {
     fixture.componentRef.setInput('saved', [view('v1', 'Urgentes')]);
     fixture.componentRef.setInput('activeViewId', 'v1');
     fixture.detectChanges();
@@ -79,19 +79,19 @@ describe('BarraDeVistasComponent', () => {
     ).toContain('border-transparent');
   });
 
-  it('el icono de una guardada sale de su estado, no de su nombre', () => {
+  it('a saved view icon comes from its state, not its name', () => {
     expect(component.iconOf(view('v1', 'Lo que sea', 'gantt'))).toBe('lucideChartGantt');
     expect(component.iconOf(view('v2', 'Tablero de Ana', 'list'))).toBe('lucideList');
   });
 
   /** Un estado ilegible no puede tumbar la barra: si no, no se podría ni borrar la vista mala. */
-  it('aguanta una vista con el estado corrupto', () => {
+  it('survives a view with a corrupt state', () => {
     const broken = { ...view('v3', 'Rota'), stateJson: 'esto no es json' };
     expect(() => component.iconOf(broken)).not.toThrow();
     expect(component.iconOf(broken)).toBe('lucideList');
   });
 
-  it('propone guardar la forma que se está viendo', () => {
+  it('suggests saving the current view type', () => {
     fixture.componentRef.setInput('mode', 'gantt');
     fixture.detectChanges();
 
@@ -101,7 +101,7 @@ describe('BarraDeVistasComponent', () => {
     ).toBe('gantt');
   });
 
-  it('no crea una vista sin nombre', () => {
+  it('does not create a view without a name', () => {
     const created: unknown[] = [];
     component.create.subscribe(v => created.push(v));
 
@@ -113,7 +113,7 @@ describe('BarraDeVistasComponent', () => {
     expect(component.creating()).withContext('el campo sigue abierto para poder escribir').toBeTrue();
   });
 
-  it('crea la vista con el nombre recortado', () => {
+  it('creates the view with the trimmed name', () => {
     const created: { name: string; type: string }[] = [];
     component.create.subscribe(v => created.push(v));
 
@@ -126,7 +126,7 @@ describe('BarraDeVistasComponent', () => {
     expect(component.creating()).toBeFalse();
   });
 
-  it('pide confirmación antes de borrar, y no borra si se dice que no', () => {
+  it('asks for confirmation before deleting, and does not delete on no', () => {
     const deleted: SavedView[] = [];
     component.remove.subscribe(v => deleted.push(v));
 

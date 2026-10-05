@@ -5,7 +5,7 @@ import { currentLanguage, urlInLanguage, LANGUAGES } from './language';
  * navegador dice qué prefiere el usuario, no qué está viendo. Confundir ambas cosas hace
  * que el selector ofrezca cambiar al idioma que ya está puesto.
  */
-describe('idioma', () => {
+describe('language', () => {
   function docWith(baseHref: string | null): Document {
     return {
       querySelector: () => (baseHref === null ? null : { getAttribute: () => baseHref }),
@@ -13,49 +13,49 @@ describe('idioma', () => {
   }
 
   describe('currentLanguage', () => {
-    it('lee inglés del prefijo', () => {
+    it('reads English from the prefix', () => {
       expect(currentLanguage(docWith('/en/'))).toBe('en');
     });
 
-    it('lee español del prefijo', () => {
+    it('reads Spanish from the prefix', () => {
       expect(currentLanguage(docWith('/es/'))).toBe('es');
     });
 
-    it('sin prefijo asume el idioma de origen', () => {
+    it('without a prefix it assumes the source language', () => {
       // Es el caso del servidor de desarrollo, que sirve sin prefijo de idioma.
       expect(currentLanguage(docWith('/'))).toBe('es');
     });
 
-    it('sin etiqueta base tampoco falla', () => {
+    it('without a base tag it does not fail either', () => {
       expect(currentLanguage(docWith(null))).toBe('es');
     });
   });
 
   describe('urlInLanguage', () => {
-    it('conserva la ruta al cambiar de idioma', () => {
+    it('keeps the path when switching language', () => {
       // Cambiar de idioma desde una pantalla concreta no debe devolver al inicio.
       expect(urlInLanguage('en', { pathname: '/es/tasks', search: '' })).toBe('/en/tasks');
     });
 
-    it('conserva los parámetros de consulta', () => {
+    it('keeps the query parameters', () => {
       expect(urlInLanguage('en', { pathname: '/es/tasks', search: '?filter=mine' }))
         .toBe('/en/tasks?filter=mine');
     });
 
-    it('añade el prefijo cuando no lo hay', () => {
+    it('adds the prefix when there is none', () => {
       expect(urlInLanguage('en', { pathname: '/tasks', search: '' })).toBe('/en/tasks');
     });
 
-    it('funciona desde la raíz', () => {
+    it('works from the root', () => {
       expect(urlInLanguage('en', { pathname: '/es/', search: '' })).toBe('/en/');
     });
 
-    it('no duplica el prefijo al repetir idioma', () => {
+    it('does not duplicate the prefix when repeating the language', () => {
       expect(urlInLanguage('es', { pathname: '/es/projects', search: '' })).toBe('/es/projects');
     });
   });
 
-  it('los dos idiomas declarados tienen código y nombre', () => {
+  it('both declared languages have a code and a name', () => {
     expect(LANGUAGES.map(i => i.code)).toEqual(['es', 'en']);
     expect(LANGUAGES.every(i => i.name.length > 0)).toBeTrue();
   });

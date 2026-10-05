@@ -28,29 +28,29 @@ describe('ClickableDirective', () => {
     element = fixture.nativeElement.querySelector('div');
   });
 
-  it('se anuncia como botón', () => {
+  it('announces itself as a button', () => {
     expect(element.getAttribute('role')).toBe('button');
   });
 
-  it('es alcanzable con el tabulador', () => {
+  it('is reachable with Tab', () => {
     expect(element.getAttribute('tabindex')).toBe('0');
   });
 
-  it('Enter activa el mismo manejador que el ratón', () => {
+  it('Enter fires the same handler as the mouse', () => {
     element.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
     fixture.detectChanges();
 
     expect(fixture.componentInstance.times).toBe(1);
   });
 
-  it('Espacio activa el mismo manejador que el ratón', () => {
+  it('Space fires the same handler as the mouse', () => {
     element.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', bubbles: true }));
     fixture.detectChanges();
 
     expect(fixture.componentInstance.times).toBe(1);
   });
 
-  it('Espacio no desplaza la página', () => {
+  it('Space does not scroll the page', () => {
     const event = new KeyboardEvent('keydown', { key: ' ', bubbles: true, cancelable: true });
 
     element.dispatchEvent(event);
@@ -58,7 +58,7 @@ describe('ClickableDirective', () => {
     expect(event.defaultPrevented).toBeTrue();
   });
 
-  it('el clic del ratón sigue funcionando una sola vez', () => {
+  it('a mouse click still fires only once', () => {
     // Reenviar la pulsación como click no debe provocar recursión ni doble disparo.
     element.click();
     fixture.detectChanges();

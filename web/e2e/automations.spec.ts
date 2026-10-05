@@ -99,7 +99,7 @@ async function signIn(
   return sent;
 }
 
-test('la lista dice qué hace cada regla y cuántas veces se ha ejecutado', async ({ page }) => {
+test('the list says what each rule does and how many times it ran', async ({ page }) => {
   await signIn(page, [RULE]);
 
   await expect(page.getByRole('cell', { name: 'Bajar al cerrar', exact: true })).toBeVisible();
@@ -107,7 +107,7 @@ test('la lista dice qué hace cada regla y cuántas veces se ha ejecutado', asyn
   await expect(page.getByRole('cell', { name: '3', exact: true })).toBeVisible();
 });
 
-test('sin automatizaciones lo dice, en lugar de enseñar una tabla vacía', async ({ page }) => {
+test('without automations it says so instead of showing an empty table', async ({ page }) => {
   await signIn(page, []);
 
   await expect(page.getByText('Todavía no hay automatizaciones.')).toBeVisible();
@@ -117,7 +117,7 @@ test('sin automatizaciones lo dice, en lugar de enseñar una tabla vacía', asyn
  * Si la pantalla llevara su propia lista, se desincronizaría el día que se añada un disparador
  * y dejaría configurar algo que el servidor no entiende.
  */
-test('los desplegables se llenan con el vocabulario del servidor', async ({ page }) => {
+test('the dropdowns are filled from the server vocabulary', async ({ page }) => {
   await signIn(page, []);
   await page.getByRole('button', { name: 'Nueva automatización' }).click();
 
@@ -125,7 +125,7 @@ test('los desplegables se llenan con el vocabulario del servidor', async ({ page
   await expect(when.locator('option')).toHaveText(['Se crea una tarea', 'Cambia el estado de una tarea']);
 });
 
-test('no deja guardar una automatización sin nombre, y dice por qué', async ({ page }) => {
+test('it does not save an automation without a name, and says why', async ({ page }) => {
   await signIn(page, []);
   await page.getByRole('button', { name: 'Nueva automatización' }).click();
 
@@ -133,7 +133,7 @@ test('no deja guardar una automatización sin nombre, y dice por qué', async ({
   await expect(page.getByRole('button', { name: 'Guardar' })).toBeDisabled();
 });
 
-test('crear manda la regla tal y como se configuró', async ({ page }) => {
+test('create sends the rule exactly as configured', async ({ page }) => {
   const sent = await signIn(page, []);
   await page.getByRole('button', { name: 'Nueva automatización' }).click();
 
@@ -158,7 +158,7 @@ test('crear manda la regla tal y como se configuró', async ({ page }) => {
 });
 
 /** «Está vacío» no compara contra nada: pedir un valor sería pedir algo que se va a descartar. */
-test('un operador que no compara no pide valor', async ({ page }) => {
+test('an operator that does not compare asks for no value', async ({ page }) => {
   await signIn(page, []);
   await page.getByRole('button', { name: 'Nueva automatización' }).click();
   await page.getByRole('button', { name: '+ Condición' }).click();
@@ -169,7 +169,7 @@ test('un operador que no compara no pide valor', async ({ page }) => {
   await expect(page.getByText('sin valor')).toBeVisible();
 });
 
-test('si el servidor rechaza el alta, el formulario sigue abierto con lo escrito', async ({ page }) => {
+test('if the server rejects the creation, the form stays open with what was typed', async ({ page }) => {
   await signIn(page, [], { status: 400, body: 'Ya hay una automatización con ese nombre' });
   await page.getByRole('button', { name: 'Nueva automatización' }).click();
   await page.getByLabel('Nombre', { exact: true }).fill('Repetida');
@@ -181,7 +181,7 @@ test('si el servidor rechaza el alta, el formulario sigue abierto con lo escrito
   await expect(page.getByLabel('Nombre', { exact: true })).toHaveValue('Repetida');
 });
 
-test('apagar una regla avisa al servidor', async ({ page }) => {
+test('turning a rule off tells the server', async ({ page }) => {
   const sent = await signIn(page, [RULE]);
 
   await page.getByRole('checkbox', { name: 'Bajar al cerrar' }).uncheck();
@@ -190,7 +190,7 @@ test('apagar una regla avisa al servidor', async ({ page }) => {
   expect(sent[0].body).toEqual({ isActive: false });
 });
 
-test('borrar pide confirmación en la propia fila', async ({ page }) => {
+test('deleting asks for confirmation in the row itself', async ({ page }) => {
   await signIn(page, [RULE]);
 
   await page.getByRole('button', { name: 'Borrar la automatización' }).click();

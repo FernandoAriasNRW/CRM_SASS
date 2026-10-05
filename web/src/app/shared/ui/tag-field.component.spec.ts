@@ -38,17 +38,17 @@ describe('TagFieldComponent', () => {
     }).compileComponents();
   });
 
-  it('pide las etiquetas en el idioma de la aplicación', async () => {
+  it('asks for tags in the application language', async () => {
     await mount([]);
     expect(api.get).toHaveBeenCalledWith(jasmine.stringMatching(/^\/tags\?language=/));
   });
 
-  it('enseña las que tiene el elemento y se salta un id que ya no existe', async () => {
+  it('shows the item tags and skips an id that no longer exists', async () => {
     await mount(['vip', 'borrada']);
     expect(text('[data-testid="tag-chip"]').map(t => t.replace('×', '').trim())).toEqual(['Cliente VIP']);
   });
 
-  it('agrupa el selector por categoría', async () => {
+  it('groups the picker by category', async () => {
     await mount([]);
     (fixture.nativeElement.querySelector('[data-testid="tag-picker-toggle"]') as HTMLButtonElement).click();
     fixture.detectChanges();
@@ -58,7 +58,7 @@ describe('TagFieldComponent', () => {
     expect(picker.textContent).toContain('Negocio');
   });
 
-  it('avisa con la lista nueva al marcar y al quitar', async () => {
+  it('emits the new list when checking and unchecking', async () => {
     await mount(['bug']);
     const emitted: string[][] = [];
     fixture.componentInstance.tagIdsChange.subscribe(ids => emitted.push(ids));

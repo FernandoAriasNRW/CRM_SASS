@@ -35,7 +35,7 @@ describe('PaginationComponent', () => {
     fixture.detectChanges();
   });
 
-  it('dibuja los cuatro iconos de navegación', () => {
+  it('draws the four navigation icons', () => {
     const icons = fixture.nativeElement.querySelectorAll('ng-icon svg');
 
     expect(icons.length).withContext(
@@ -44,14 +44,14 @@ describe('PaginationComponent', () => {
     ).toBe(4);
   });
 
-  it('no se pinta con una sola página', () => {
+  it('is not rendered with a single page', () => {
     fixture.componentRef.setInput('state', state({ totalPages: 1 }));
     fixture.detectChanges();
 
     expect(fixture.nativeElement.querySelectorAll('button').length).toBe(0);
   });
 
-  it('desactiva lo que no lleva a ninguna parte', () => {
+  it('disables what leads nowhere', () => {
     const buttons = Array.from(
       fixture.nativeElement.querySelectorAll('button') as NodeListOf<HTMLButtonElement>
     );

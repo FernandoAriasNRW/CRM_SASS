@@ -16,7 +16,7 @@ interface Row extends Record<string, unknown> {
  * pruebas fijan esa frontera, porque es lo que evita que haya dos sitios decidiendo qué se ve —el
  * que guarda es quien revierte si el servidor rechaza, y esa lógica ya vive en quien usa la tabla—.
  */
-describe('DataTableComponent — edición en línea', () => {
+describe('DataTableComponent — inline editing', () => {
   const ROW: Row = {
     id: 't1', title: 'Configurar alertas', status: 'To Do',
     dueDate: '2026-08-15T00:00:00', assigneeId: 'u1',
@@ -51,22 +51,22 @@ describe('DataTableComponent — edición en línea', () => {
     table.cellEdit.subscribe(change => emitted.push(change));
   });
 
-  describe('qué columnas se pueden editar', () => {
-    it('las que lo piden', () => {
+  describe('which columns can be edited', () => {
+    it('those that ask for it', () => {
       expect(table.canEdit(column('title'))).toBeTrue();
     });
 
-    it('y no las que no', () => {
+    it('and not the others', () => {
       expect(table.canEdit(column('assigneeId'))).toBeFalse();
     });
 
-    it('un desplegable sin opciones no se edita: sería un control que no deja elegir', () => {
+    it('a dropdown without options is not editable: it would be a control with nothing to choose', () => {
       expect(table.canEdit({ key: 'x', label: 'X', editable: true, editor: 'select' })).toBeFalse();
       expect(table.canEdit({ key: 'x', label: 'X', editable: true, editor: 'select', options: [] })).toBeFalse();
     });
   });
 
-  it('sólo se edita una celda a la vez', () => {
+  it('only one cell is edited at a time', () => {
     table.startEdit(ROW, column('title'));
     table.startEdit(ROW, column('status'));
 
@@ -74,13 +74,13 @@ describe('DataTableComponent — edición en línea', () => {
     expect(table.isEditingThis(ROW, column('status'))).toBeTrue();
   });
 
-  it('una columna que no se puede editar no abre editor', () => {
+  it('a non-editable column opens no editor', () => {
     table.startEdit(ROW, column('assigneeId'));
 
     expect(table.editing()).toBeNull();
   });
 
-  it('confirmar emite el cambio y cierra el editor', () => {
+  it('confirming emits the change and closes the editor', () => {
     table.startEdit(ROW, column('title'));
 
     table.confirmEdit(ROW, column('title'), 'Otro título');
@@ -89,7 +89,7 @@ describe('DataTableComponent — edición en línea', () => {
     expect(table.editing()).toBeNull();
   });
 
-  it('confirmar el mismo valor no gasta una petición', () => {
+  it('confirming the same value does not spend a request', () => {
     table.startEdit(ROW, column('title'));
 
     table.confirmEdit(ROW, column('title'), 'Configurar alertas');
@@ -98,7 +98,7 @@ describe('DataTableComponent — edición en línea', () => {
     expect(table.editing()).toBeNull();
   });
 
-  it('escapar cierra sin emitir nada', () => {
+  it('escape closes without emitting anything', () => {
     table.startEdit(ROW, column('title'));
 
     table.cancelEdit();
@@ -112,7 +112,7 @@ describe('DataTableComponent — edición en línea', () => {
    * que acaba de desaparecer. Sin guarda, ese `blur` guardaba el valor recién descartado y
    * Escape no cancelaba nada.
    */
-  it('el blur que llega después de cancelar no guarda lo descartado', () => {
+  it('the blur after cancelling does not save what was discarded', () => {
     table.startEdit(ROW, column('title'));
     table.cancelEdit();
 
@@ -121,7 +121,7 @@ describe('DataTableComponent — edición en línea', () => {
     expect(emitted).toEqual([]);
   });
 
-  it('un blur sobre una celda que no se está editando tampoco guarda', () => {
+  it('a blur on a cell not being edited saves nothing either', () => {
     table.startEdit(ROW, column('title'));
 
     table.confirmEdit(ROW, column('status'), 'Done');
@@ -133,17 +133,17 @@ describe('DataTableComponent — edición en línea', () => {
    * `input type="date"` sólo entiende `aaaa-mm-dd`. Con la marca de tiempo entera se queda vacío,
    * sin decir por qué, y parece que la tarea no tiene fecha.
    */
-  it('una fecha se recorta al formato que entiende el editor', () => {
+  it('a date is trimmed to the format the editor understands', () => {
     expect(table.textValue(ROW, column('dueDate'))).toBe('2026-08-15');
   });
 
-  it('y ese recorte hace que una fecha sin cambios tampoco se emita', () => {
+  it('and that trimming means an unchanged date is not emitted either', () => {
     table.confirmEdit(ROW, column('dueDate'), '2026-08-15');
 
     expect(emitted).toEqual([]);
   });
 
-  it('un valor nulo se edita como cadena vacía, no como «null»', () => {
+  it('a null value is edited as an empty string, not as «null»', () => {
     const noDate = { ...ROW, dueDate: null as unknown as string };
 
     expect(table.textValue(noDate, column('dueDate'))).toBe('');

@@ -36,7 +36,7 @@ test.beforeEach(async ({ page }) => {
   await expect(page).toHaveURL(/\/design-system/, { timeout: 30_000 });
 });
 
-test('renderiza la biblioteca sin errores', async ({ page }) => {
+test('renders the library without errors', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Sistema de diseño', level: 1 })).toBeVisible();
 
   // Si un componente reventara al construirse, su sección quedaría vacía.
@@ -45,7 +45,7 @@ test('renderiza la biblioteca sin errores', async ({ page }) => {
   }
 });
 
-test('no tiene violaciones graves de accesibilidad', async ({ page }) => {
+test('has no serious accessibility violations', async ({ page }) => {
   const result = await new AxeBuilder({ page })
     .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
     .analyze();
@@ -56,7 +56,7 @@ test('no tiene violaciones graves de accesibilidad', async ({ page }) => {
   expect(graves.map(v => `${v.id} (${v.impact}) ×${v.nodes.length}: ${v.help}`)).toEqual([]);
 });
 
-test('la directiva de teclado funciona en la propia guía', async ({ page }) => {
+test('the keyboard directive works in the guide itself', async ({ page }) => {
   const box = page.getByText(/Actívame con el ratón/);
 
   await box.focus();
