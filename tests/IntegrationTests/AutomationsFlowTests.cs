@@ -22,37 +22,37 @@ public sealed class AutomationsFlowTests(CrmApiFactory factory)
     private const string Email = "admin@acme.com";
     private const string Password = "admin123";
 
-    private async Task<(HttpClient cliente, Guid tenantId)> AutenticarAsync()
+    private async Task<(HttpClient client, Guid tenantId)> AuthenticateAsync()
     {
         var login = await factory.CreateClient().PostAsJsonAsync("/api/v1/auth/login", new { Email, Password });
         login.EnsureSuccessStatusCode();
 
-        var cuerpo = await login.Content.ReadFromJsonAsync<JsonElement>();
-        var token = cuerpo.GetProperty("accessToken").GetString()!;
+        var body = await login.Content.ReadFromJsonAsync<JsonElement>();
+        var token = body.GetProperty("accessToken").GetString()!;
 
-        var cliente = factory.CreateClient();
-        cliente.DefaultRequestHeaders.Authorization = new("Bearer", token);
+        var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Authorization = new("Bearer", token);
 
-        return (cliente, TenantDelToken(token));
+        return (client, TenantFromToken(token));
     }
 
-    private static Guid TenantDelToken(string token)
+    private static Guid TenantFromToken(string token)
     {
-        var cuerpo = token.Split('.')[1].Replace('-', '+').Replace('_', '/');
-        var relleno = cuerpo.PadRight(cuerpo.Length + (4 - cuerpo.Length % 4) % 4, '=');
-        var json = JsonDocument.Parse(Convert.FromBase64String(relleno));
+        var body = token.Split('.')[1].Replace('-', '+').Replace('_', '/');
+        var payload = body.PadRight(body.Length + (4 - body.Length % 4) % 4, '=');
+        var json = JsonDocument.Parse(Convert.FromBase64String(payload));
 
         return Guid.Parse(json.RootElement.GetProperty("tenantId").GetString()!);
     }
 
-    private async Task<Guid> CrearTareaAsync(HttpClient cliente, Guid tenantId, string titulo)
+    private async Task<Guid> CreateTaskAsync(HttpClient client, Guid tenantId, string title)
     {
-        var respuesta = await cliente.PostAsJsonAsync("/api/v1/tasks", new
+        var response = await client.PostAsJsonAsync("/api/v1/tasks", new
         {
             tenantId,
             createdById = Guid.NewGuid(),
             projectId = Guid.NewGuid(),
-            title = titulo,
+            title = title,
             description = "creada por las pruebas de integración",
             assigneeId = Guid.NewGuid(),
             estimatedHours = 2m,
@@ -60,13 +60,13 @@ public sealed class AutomationsFlowTests(CrmApiFactory factory)
             priority = "Normal"
         });
 
-        respuesta.StatusCode.Should().Be(HttpStatusCode.Created);
-        return (await respuesta.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetGuid();
+        response.StatusCode.Should().Be(HttpStatusCode.Created);
+        return (await response.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetGuid();
     }
 
-    private static object ReglaQueBajaLaPrioridadAlCerrar(string nombre) => new
+    private static object RuleThatLowersPriorityOnDone(string name) => new
     {
-        name = nombre,
+        name = name,
         trigger = "TaskStatusChanged",
         conditions = new[] { new { field = "Status", @operator = "EqualTo", value = "Done" } },
         actions = new[] { new { type = "ChangePriority", value = "Low" } },
@@ -79,44 +79,44 @@ public sealed class AutomationsFlowTests(CrmApiFactory factory)
     /// otra prueba **se ejecuta igual**: eso es lo que hace el motor. Sin limpiar, comprobar que
     /// «esta regla no se ejecutó» falla porque se ejecutó otra, y el fallo depende del orden.
     /// </summary>
-    private static async Task LimpiarReglasAsync(HttpClient cliente)
+    private static async Task ClearRulesAsync(HttpClient client)
     {
-        var reglas = await cliente.GetFromJsonAsync<JsonElement>("/api/v1/automations");
+        var rules = await client.GetFromJsonAsync<JsonElement>("/api/v1/automations");
 
-        foreach (var regla in reglas.EnumerateArray())
-            await cliente.DeleteAsync($"/api/v1/automations/{regla.GetProperty("id").GetGuid()}");
+        foreach (var rule in rules.EnumerateArray())
+            await client.DeleteAsync($"/api/v1/automations/{rule.GetProperty("id").GetGuid()}");
     }
 
-    private async Task<Guid> CrearReglaAsync(HttpClient cliente, object regla)
+    private async Task<Guid> CreateRuleAsync(HttpClient client, object rule)
     {
-        var respuesta = await cliente.PostAsJsonAsync("/api/v1/automations", regla);
-        respuesta.StatusCode.Should().Be(HttpStatusCode.Created);
-        return (await respuesta.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetGuid();
+        var response = await client.PostAsJsonAsync("/api/v1/automations", rule);
+        response.StatusCode.Should().Be(HttpStatusCode.Created);
+        return (await response.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetGuid();
     }
 
-    private static async Task<JsonElement> ReglaAsync(HttpClient cliente, Guid id)
+    private static async Task<JsonElement> RuleAsync(HttpClient client, Guid id)
     {
-        var reglas = await cliente.GetFromJsonAsync<JsonElement>("/api/v1/automations");
-        return reglas.EnumerateArray().Single(r => r.GetProperty("id").GetGuid() == id);
+        var rules = await client.GetFromJsonAsync<JsonElement>("/api/v1/automations");
+        return rules.EnumerateArray().Single(r => r.GetProperty("id").GetGuid() == id);
     }
 
     [Fact]
-    public async Task Una_regla_se_ejecuta_sola_cuando_se_cumple_su_disparador()
+    public async Task A_rule_runs_by_itself_when_its_trigger_fires()
     {
-        var (cliente, tenantId) = await AutenticarAsync();
-        await LimpiarReglasAsync(cliente);
-        var reglaId = await CrearReglaAsync(cliente, ReglaQueBajaLaPrioridadAlCerrar($"Bajar al cerrar {Guid.NewGuid()}"));
-        var tareaId = await CrearTareaAsync(cliente, tenantId, "Tarea que se cerrará");
+        var (client, tenantId) = await AuthenticateAsync();
+        await ClearRulesAsync(client);
+        var ruleId = await CreateRuleAsync(client, RuleThatLowersPriorityOnDone($"Bajar al cerrar {Guid.NewGuid()}"));
+        var taskId = await CreateTaskAsync(client, tenantId, "Tarea que se cerrará");
 
-        await cliente.PatchAsJsonAsync($"/api/v1/tasks/{tareaId}", new { status = "Done" });
+        await client.PatchAsJsonAsync($"/api/v1/tasks/{taskId}", new { status = "Done" });
 
-        var tarea = await cliente.GetFromJsonAsync<JsonElement>($"/api/v1/tasks/{tareaId}");
-        tarea.GetProperty("priority").GetString().Should().Be("Low",
+        var task = await client.GetFromJsonAsync<JsonElement>($"/api/v1/tasks/{taskId}");
+        task.GetProperty("priority").GetString().Should().Be("Low",
             "la automatización tenía que haber bajado la prioridad al pasar la tarea a Done");
 
-        var regla = await ReglaAsync(cliente, reglaId);
-        regla.GetProperty("executionCount").GetInt32().Should().Be(1);
-        regla.GetProperty("lastExecutedAtUtc").ValueKind.Should().NotBe(JsonValueKind.Null);
+        var rule = await RuleAsync(client, ruleId);
+        rule.GetProperty("executionCount").GetInt32().Should().Be(1);
+        rule.GetProperty("lastExecutedAtUtc").ValueKind.Should().NotBe(JsonValueKind.Null);
     }
 
     /// <summary>
@@ -124,19 +124,19 @@ public sealed class AutomationsFlowTests(CrmApiFactory factory)
     /// siempre —ignorando sus condiciones— pasaría la primera igual de bien.
     /// </summary>
     [Fact]
-    public async Task Una_regla_no_se_ejecuta_si_sus_condiciones_no_se_cumplen()
+    public async Task A_rule_does_not_run_if_its_conditions_do_not_match()
     {
-        var (cliente, tenantId) = await AutenticarAsync();
-        await LimpiarReglasAsync(cliente);
-        var reglaId = await CrearReglaAsync(cliente, ReglaQueBajaLaPrioridadAlCerrar($"Bajar al cerrar {Guid.NewGuid()}"));
-        var tareaId = await CrearTareaAsync(cliente, tenantId, "Tarea que sólo avanza");
+        var (client, tenantId) = await AuthenticateAsync();
+        await ClearRulesAsync(client);
+        var ruleId = await CreateRuleAsync(client, RuleThatLowersPriorityOnDone($"Bajar al cerrar {Guid.NewGuid()}"));
+        var taskId = await CreateTaskAsync(client, tenantId, "Tarea que sólo avanza");
 
-        await cliente.PatchAsJsonAsync($"/api/v1/tasks/{tareaId}", new { status = "In Progress" });
+        await client.PatchAsJsonAsync($"/api/v1/tasks/{taskId}", new { status = "In Progress" });
 
-        var tarea = await cliente.GetFromJsonAsync<JsonElement>($"/api/v1/tasks/{tareaId}");
-        tarea.GetProperty("priority").GetString().Should().Be("Normal");
+        var task = await client.GetFromJsonAsync<JsonElement>($"/api/v1/tasks/{taskId}");
+        task.GetProperty("priority").GetString().Should().Be("Normal");
 
-        (await ReglaAsync(cliente, reglaId)).GetProperty("executionCount").GetInt32().Should().Be(0);
+        (await RuleAsync(client, ruleId)).GetProperty("executionCount").GetInt32().Should().Be(0);
     }
 
     /// <summary>
@@ -144,20 +144,20 @@ public sealed class AutomationsFlowTests(CrmApiFactory factory)
     /// daño. Si la regla siguiera ejecutándose, el botón sería decorativo.
     /// </summary>
     [Fact]
-    public async Task Una_regla_desactivada_no_se_ejecuta()
+    public async Task A_deactivated_rule_does_not_run()
     {
-        var (cliente, tenantId) = await AutenticarAsync();
-        await LimpiarReglasAsync(cliente);
-        var reglaId = await CrearReglaAsync(cliente, ReglaQueBajaLaPrioridadAlCerrar($"Desactivada {Guid.NewGuid()}"));
+        var (client, tenantId) = await AuthenticateAsync();
+        await ClearRulesAsync(client);
+        var ruleId = await CreateRuleAsync(client, RuleThatLowersPriorityOnDone($"Desactivada {Guid.NewGuid()}"));
 
-        var apagar = await cliente.PutAsJsonAsync($"/api/v1/automations/{reglaId}/active", new { isActive = false });
-        apagar.StatusCode.Should().Be(HttpStatusCode.OK);
+        var turnOff = await client.PutAsJsonAsync($"/api/v1/automations/{ruleId}/active", new { isActive = false });
+        turnOff.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        var tareaId = await CrearTareaAsync(cliente, tenantId, "Tarea con la regla apagada");
-        await cliente.PatchAsJsonAsync($"/api/v1/tasks/{tareaId}", new { status = "Done" });
+        var taskId = await CreateTaskAsync(client, tenantId, "Tarea con la regla apagada");
+        await client.PatchAsJsonAsync($"/api/v1/tasks/{taskId}", new { status = "Done" });
 
-        var tarea = await cliente.GetFromJsonAsync<JsonElement>($"/api/v1/tasks/{tareaId}");
-        tarea.GetProperty("priority").GetString().Should().Be("Normal");
+        var task = await client.GetFromJsonAsync<JsonElement>($"/api/v1/tasks/{taskId}");
+        task.GetProperty("priority").GetString().Should().Be("Normal");
     }
 
     /// <summary>
@@ -166,14 +166,14 @@ public sealed class AutomationsFlowTests(CrmApiFactory factory)
     /// la otra se llamarían para siempre.
     /// </summary>
     [Fact]
-    public async Task Las_acciones_de_una_regla_no_disparan_otras_reglas()
+    public async Task A_rule_actions_do_not_trigger_other_rules()
     {
-        var (cliente, tenantId) = await AutenticarAsync();
-        await LimpiarReglasAsync(cliente);
+        var (client, tenantId) = await AuthenticateAsync();
+        await ClearRulesAsync(client);
 
         // La primera pasa la tarea a Done; la segunda reaccionaría a ese Done bajando la
         // prioridad. Si las cadenas existieran, la prioridad acabaría en Low.
-        await CrearReglaAsync(cliente, new
+        await CreateRuleAsync(client, new
         {
             name = $"Cerrar al revisar {Guid.NewGuid()}",
             trigger = "TaskStatusChanged",
@@ -181,7 +181,7 @@ public sealed class AutomationsFlowTests(CrmApiFactory factory)
             actions = new[] { new { type = "ChangeStatus", value = "Done" } },
         });
 
-        await CrearReglaAsync(cliente, new
+        await CreateRuleAsync(client, new
         {
             name = $"Bajar al cerrar {Guid.NewGuid()}",
             trigger = "TaskStatusChanged",
@@ -189,22 +189,22 @@ public sealed class AutomationsFlowTests(CrmApiFactory factory)
             actions = new[] { new { type = "ChangePriority", value = "Low" } },
         });
 
-        var tareaId = await CrearTareaAsync(cliente, tenantId, "Tarea que pasa por revisión");
-        await cliente.PatchAsJsonAsync($"/api/v1/tasks/{tareaId}", new { status = "In Review" });
+        var taskId = await CreateTaskAsync(client, tenantId, "Tarea que pasa por revisión");
+        await client.PatchAsJsonAsync($"/api/v1/tasks/{taskId}", new { status = "In Review" });
 
-        var tarea = await cliente.GetFromJsonAsync<JsonElement>($"/api/v1/tasks/{tareaId}");
-        tarea.GetProperty("status").GetString().Should().Be("Done", "la primera regla sí se ejecutó");
-        tarea.GetProperty("priority").GetString().Should().Be("Normal",
+        var task = await client.GetFromJsonAsync<JsonElement>($"/api/v1/tasks/{taskId}");
+        task.GetProperty("status").GetString().Should().Be("Done", "la primera regla sí se ejecutó");
+        task.GetProperty("priority").GetString().Should().Be("Normal",
             "la segunda no, porque las acciones de una automatización no disparan otras");
     }
 
     [Fact]
-    public async Task Una_regla_sin_acciones_se_rechaza()
+    public async Task A_rule_without_actions_is_rejected()
     {
-        var (cliente, _) = await AutenticarAsync();
-        await LimpiarReglasAsync(cliente);
+        var (client, _) = await AuthenticateAsync();
+        await ClearRulesAsync(client);
 
-        var respuesta = await cliente.PostAsJsonAsync("/api/v1/automations", new
+        var response = await client.PostAsJsonAsync("/api/v1/automations", new
         {
             name = $"Sin acciones {Guid.NewGuid()}",
             trigger = "TaskStatusChanged",
@@ -212,35 +212,35 @@ public sealed class AutomationsFlowTests(CrmApiFactory factory)
             actions = Array.Empty<object>(),
         });
 
-        respuesta.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
     [Fact]
-    public async Task Dos_reglas_no_pueden_llamarse_igual()
+    public async Task Two_rules_cannot_share_a_name()
     {
-        var (cliente, _) = await AutenticarAsync();
-        await LimpiarReglasAsync(cliente);
-        var nombre = $"Repetida {Guid.NewGuid()}";
+        var (client, _) = await AuthenticateAsync();
+        await ClearRulesAsync(client);
+        var name = $"Repetida {Guid.NewGuid()}";
 
-        await CrearReglaAsync(cliente, ReglaQueBajaLaPrioridadAlCerrar(nombre));
-        var segunda = await cliente.PostAsJsonAsync("/api/v1/automations", ReglaQueBajaLaPrioridadAlCerrar(nombre));
+        await CreateRuleAsync(client, RuleThatLowersPriorityOnDone(name));
+        var second = await client.PostAsJsonAsync("/api/v1/automations", RuleThatLowersPriorityOnDone(name));
 
-        segunda.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        second.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
     [Fact]
-    public async Task El_vocabulario_lo_sirve_el_servidor()
+    public async Task The_server_serves_the_vocabulary()
     {
-        var (cliente, _) = await AutenticarAsync();
-        await LimpiarReglasAsync(cliente);
+        var (client, _) = await AuthenticateAsync();
+        await ClearRulesAsync(client);
 
-        var vocabulario = await cliente.GetFromJsonAsync<JsonElement>("/api/v1/automations/vocabulary");
+        var vocabulary = await client.GetFromJsonAsync<JsonElement>("/api/v1/automations/vocabulary");
 
         // La interfaz construye el formulario con esto. Repetir la lista en el cliente la dejaría
         // desincronizada el día que se añada un disparador.
-        vocabulario.GetProperty("triggers").GetArrayLength().Should().BeGreaterThan(0);
-        vocabulario.GetProperty("operators").GetArrayLength().Should().BeGreaterThan(0);
-        vocabulario.GetProperty("actions").GetArrayLength().Should().BeGreaterThan(0);
+        vocabulary.GetProperty("triggers").GetArrayLength().Should().BeGreaterThan(0);
+        vocabulary.GetProperty("operators").GetArrayLength().Should().BeGreaterThan(0);
+        vocabulary.GetProperty("actions").GetArrayLength().Should().BeGreaterThan(0);
     }
 
     /// <summary>
@@ -250,21 +250,21 @@ public sealed class AutomationsFlowTests(CrmApiFactory factory)
     [Fact]
     public async Task The_vocabulary_serves_the_fields_each_trigger_carries()
     {
-        var (cliente, _) = await AutenticarAsync();
+        var (client, _) = await AuthenticateAsync();
 
-        var vocabulario = await cliente.GetFromJsonAsync<JsonElement>("/api/v1/automations/vocabulary");
-        var porDisparador = vocabulario.GetProperty("fieldsByTrigger");
+        var vocabulary = await client.GetFromJsonAsync<JsonElement>("/api/v1/automations/vocabulary");
+        var byTrigger = vocabulary.GetProperty("fieldsByTrigger");
 
-        porDisparador.EnumerateObject().Select(p => p.Name)
+        byTrigger.EnumerateObject().Select(p => p.Name)
             .Should().BeEquivalentTo(TriggerTypes.All());
 
         foreach (var trigger in TriggerTypes.All())
         {
-            porDisparador.GetProperty(trigger).EnumerateArray().Select(f => f.GetString())
+            byTrigger.GetProperty(trigger).EnumerateArray().Select(f => f.GetString())
                 .Should().Equal(EventFields.ForTrigger(trigger), trigger);
         }
 
-        porDisparador.GetProperty(TriggerTypes.TaskCreated).EnumerateArray()
+        byTrigger.GetProperty(TriggerTypes.TaskCreated).EnumerateArray()
             .Select(f => f.GetString()).Should().Contain(EventFields.Title)
             .And.NotContain(EventFields.PreviousStatus);
     }
@@ -276,30 +276,30 @@ public sealed class AutomationsFlowTests(CrmApiFactory factory)
     [Fact]
     public async Task A_condition_on_a_field_the_trigger_does_not_carry_is_rejected()
     {
-        var (cliente, _) = await AutenticarAsync();
-        await LimpiarReglasAsync(cliente);
+        var (client, _) = await AuthenticateAsync();
+        await ClearRulesAsync(client);
 
-        object Regla(string nombre) => new
+        object Rule(string name) => new
         {
-            name = nombre,
+            name = name,
             trigger = TriggerTypes.TaskCreated,
             conditions = new[] { new { field = EventFields.PreviousStatus, @operator = "EqualTo", value = "Done" } },
             actions = new[] { new { type = "ChangePriority", value = "Low" } },
         };
 
-        var alCrear = await cliente.PostAsJsonAsync("/api/v1/automations", Regla($"Anterior {Guid.NewGuid()}"));
+        var onCreate = await client.PostAsJsonAsync("/api/v1/automations", Rule($"Anterior {Guid.NewGuid()}"));
 
-        alCrear.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-        (await alCrear.Content.ReadFromJsonAsync<string>()).Should().Contain(AutomationRule.Rules.FieldNotInTrigger);
+        onCreate.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await onCreate.Content.ReadFromJsonAsync<string>()).Should().Contain(AutomationRule.Rules.FieldNotInTrigger);
 
-        var nombre = $"Editada {Guid.NewGuid()}";
-        var id = await CrearReglaAsync(cliente, ReglaQueBajaLaPrioridadAlCerrar(nombre));
+        var name = $"Editada {Guid.NewGuid()}";
+        var id = await CreateRuleAsync(client, RuleThatLowersPriorityOnDone(name));
 
-        var alEditar = await cliente.PutAsJsonAsync($"/api/v1/automations/{id}", Regla(nombre));
+        var onEdit = await client.PutAsJsonAsync($"/api/v1/automations/{id}", Rule(name));
 
-        alEditar.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-        (await alEditar.Content.ReadFromJsonAsync<string>()).Should().Contain(AutomationRule.Rules.FieldNotInTrigger);
-        (await ReglaAsync(cliente, id)).GetProperty("trigger").GetString()
+        onEdit.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await onEdit.Content.ReadFromJsonAsync<string>()).Should().Contain(AutomationRule.Rules.FieldNotInTrigger);
+        (await RuleAsync(client, id)).GetProperty("trigger").GetString()
             .Should().Be(TriggerTypes.TaskStatusChanged, "el rechazo no deja la regla a medias");
     }
 
@@ -311,9 +311,9 @@ public sealed class AutomationsFlowTests(CrmApiFactory factory)
     [Fact]
     public async Task A_task_created_rule_can_look_at_the_title()
     {
-        var (cliente, tenantId) = await AutenticarAsync();
-        await LimpiarReglasAsync(cliente);
-        var reglaId = await CrearReglaAsync(cliente, new
+        var (client, tenantId) = await AuthenticateAsync();
+        await ClearRulesAsync(client);
+        var ruleId = await CreateRuleAsync(client, new
         {
             name = $"Título con 8b {Guid.NewGuid()}",
             trigger = TriggerTypes.TaskCreated,
@@ -321,14 +321,14 @@ public sealed class AutomationsFlowTests(CrmApiFactory factory)
             actions = new[] { new { type = "ChangePriority", value = "Low" } },
         });
 
-        var conTitulo = await CrearTareaAsync(cliente, tenantId, "Revisar el bloque 8b");
-        var sinTitulo = await CrearTareaAsync(cliente, tenantId, "Revisar otra cosa");
+        var withTitle = await CreateTaskAsync(client, tenantId, "Revisar el bloque 8b");
+        var withoutTitle = await CreateTaskAsync(client, tenantId, "Revisar otra cosa");
 
-        (await cliente.GetFromJsonAsync<JsonElement>($"/api/v1/tasks/{conTitulo}"))
+        (await client.GetFromJsonAsync<JsonElement>($"/api/v1/tasks/{withTitle}"))
             .GetProperty("priority").GetString().Should().Be("Low");
-        (await cliente.GetFromJsonAsync<JsonElement>($"/api/v1/tasks/{sinTitulo}"))
+        (await client.GetFromJsonAsync<JsonElement>($"/api/v1/tasks/{withoutTitle}"))
             .GetProperty("priority").GetString().Should().Be("Normal");
-        (await ReglaAsync(cliente, reglaId)).GetProperty("executionCount").GetInt32().Should().Be(1);
+        (await RuleAsync(client, ruleId)).GetProperty("executionCount").GetInt32().Should().Be(1);
     }
 
     /// <summary>
@@ -339,46 +339,46 @@ public sealed class AutomationsFlowTests(CrmApiFactory factory)
     [Fact]
     public async Task A_status_rule_sees_the_title_changed_in_the_same_patch()
     {
-        var (cliente, tenantId) = await AutenticarAsync();
-        await LimpiarReglasAsync(cliente);
-        var reglaId = await CrearReglaAsync(cliente, new
+        var (client, tenantId) = await AuthenticateAsync();
+        await ClearRulesAsync(client);
+        var ruleId = await CreateRuleAsync(client, new
         {
             name = $"Cerrar con 8b {Guid.NewGuid()}",
             trigger = TriggerTypes.TaskStatusChanged,
             conditions = new[] { new { field = EventFields.Title, @operator = "Contains", value = "8b" } },
             actions = new[] { new { type = "ChangePriority", value = "Low" } },
         });
-        var tareaId = await CrearTareaAsync(cliente, tenantId, "Revisar el bloque");
+        var taskId = await CreateTaskAsync(client, tenantId, "Revisar el bloque");
 
-        await cliente.PatchAsJsonAsync($"/api/v1/tasks/{tareaId}", new { title = "Revisar el bloque 8b", status = "Done" });
+        await client.PatchAsJsonAsync($"/api/v1/tasks/{taskId}", new { title = "Revisar el bloque 8b", status = "Done" });
 
-        (await cliente.GetFromJsonAsync<JsonElement>($"/api/v1/tasks/{tareaId}"))
+        (await client.GetFromJsonAsync<JsonElement>($"/api/v1/tasks/{taskId}"))
             .GetProperty("priority").GetString().Should().Be("Low");
-        (await ReglaAsync(cliente, reglaId)).GetProperty("executionCount").GetInt32().Should().Be(1);
+        (await RuleAsync(client, ruleId)).GetProperty("executionCount").GetInt32().Should().Be(1);
     }
 
     [Fact]
-    public async Task Una_regla_se_puede_borrar()
+    public async Task A_rule_can_be_deleted()
     {
-        var (cliente, _) = await AutenticarAsync();
-        await LimpiarReglasAsync(cliente);
-        var reglaId = await CrearReglaAsync(cliente, ReglaQueBajaLaPrioridadAlCerrar($"Para borrar {Guid.NewGuid()}"));
+        var (client, _) = await AuthenticateAsync();
+        await ClearRulesAsync(client);
+        var ruleId = await CreateRuleAsync(client, RuleThatLowersPriorityOnDone($"Para borrar {Guid.NewGuid()}"));
 
-        var borrado = await cliente.DeleteAsync($"/api/v1/automations/{reglaId}");
-        borrado.StatusCode.Should().Be(HttpStatusCode.NoContent);
+        var deleted = await client.DeleteAsync($"/api/v1/automations/{ruleId}");
+        deleted.StatusCode.Should().Be(HttpStatusCode.NoContent);
 
-        var reglas = await cliente.GetFromJsonAsync<JsonElement>("/api/v1/automations");
-        reglas.EnumerateArray().Should().NotContain(r => r.GetProperty("id").GetGuid() == reglaId);
+        var rules = await client.GetFromJsonAsync<JsonElement>("/api/v1/automations");
+        rules.EnumerateArray().Should().NotContain(r => r.GetProperty("id").GetGuid() == ruleId);
     }
 
     [Fact]
-    public async Task Una_regla_que_no_existe_da_404()
+    public async Task A_missing_rule_returns_404()
     {
-        var (cliente, _) = await AutenticarAsync();
-        await LimpiarReglasAsync(cliente);
+        var (client, _) = await AuthenticateAsync();
+        await ClearRulesAsync(client);
 
-        var respuesta = await cliente.DeleteAsync($"/api/v1/automations/{Guid.NewGuid()}");
+        var response = await client.DeleteAsync($"/api/v1/automations/{Guid.NewGuid()}");
 
-        respuesta.StatusCode.Should().Be(HttpStatusCode.NotFound);
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 }

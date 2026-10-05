@@ -43,7 +43,7 @@ public sealed class ReportName : ValueObject
 /// cosas**: son exactamente lo que devuelven `/api/v1/reports/tasks/breakdown` y
 /// `/api/v1/reports/kpi`. Lo que faltaba era el nombre en esta lista.
 ///
-/// `ContratoDeInformesTests` comprueba que todo lo que ofrece la pantalla se acepta aquí, para
+/// `ReportContractTests` comprueba que todo lo que ofrece la pantalla se acepta aquí, para
 /// que la próxima vez que se añada una opción no vuelva a fallar en silencio hasta que alguien
 /// la pulse.
 /// </summary>

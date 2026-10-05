@@ -26,152 +26,152 @@ public sealed class TaskAssigneeFlowTests(CrmApiFactory factory)
     private const string Email = "admin@acme.com";
     private const string Password = "admin123";
 
-    private async Task<(HttpClient cliente, Guid tenantId)> AutenticarAsync()
+    private async Task<(HttpClient client, Guid tenantId)> AuthenticateAsync()
     {
         var login = await factory.CreateClient().PostAsJsonAsync("/api/v1/auth/login", new { Email, Password });
         login.EnsureSuccessStatusCode();
 
         var token = (await login.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("accessToken").GetString()!;
-        var cliente = factory.CreateClient();
-        cliente.DefaultRequestHeaders.Authorization = new("Bearer", token);
+        var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Authorization = new("Bearer", token);
 
-        var cuerpo = token.Split('.')[1].Replace('-', '+').Replace('_', '/');
-        var relleno = cuerpo.PadRight(cuerpo.Length + (4 - cuerpo.Length % 4) % 4, '=');
-        var tenantId = Guid.Parse(JsonDocument.Parse(Convert.FromBase64String(relleno))
+        var body = token.Split('.')[1].Replace('-', '+').Replace('_', '/');
+        var payload = body.PadRight(body.Length + (4 - body.Length % 4) % 4, '=');
+        var tenantId = Guid.Parse(JsonDocument.Parse(Convert.FromBase64String(payload))
             .RootElement.GetProperty("tenantId").GetString()!);
 
-        return (cliente, tenantId);
+        return (client, tenantId);
     }
 
-    private async Task<Guid> CrearAsync(HttpClient cliente, Guid tenantId, Guid projectId, string titulo, Guid responsable)
+    private async Task<Guid> CreateAsync(HttpClient client, Guid tenantId, Guid projectId, string title, Guid assignee)
     {
-        var respuesta = await cliente.PostAsJsonAsync("/api/v1/tasks", new
+        var response = await client.PostAsJsonAsync("/api/v1/tasks", new
         {
             tenantId,
             createdById = Guid.NewGuid(),
             projectId,
-            title = titulo,
+            title = title,
             description = "creada por las pruebas de integración",
-            assigneeId = responsable,
+            assigneeId = assignee,
             estimatedHours = 1m,
             dueDate = "2026-12-01"
         });
 
-        respuesta.StatusCode.Should().Be(HttpStatusCode.Created);
-        return (await respuesta.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetGuid();
+        response.StatusCode.Should().Be(HttpStatusCode.Created);
+        return (await response.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetGuid();
     }
 
-    private static async Task<List<Guid>> ResponsablesDeAsync(HttpClient cliente, Guid tarea)
+    private static async Task<List<Guid>> AssigneesOfAsync(HttpClient client, Guid task)
     {
-        var leida = await cliente.GetFromJsonAsync<JsonElement>($"/api/v1/tasks/{tarea}");
-        return leida.GetProperty("assignees").EnumerateArray().Select(x => x.GetGuid()).ToList();
-    }
-
-    [Fact]
-    public async Task Una_tarea_creada_con_responsable_lo_devuelve_en_la_coleccion()
-    {
-        var (cliente, tenantId) = await AutenticarAsync();
-        var quien = Guid.NewGuid();
-
-        var tarea = await CrearAsync(cliente, tenantId, Guid.NewGuid(), "Con responsable", quien);
-
-        (await ResponsablesDeAsync(cliente, tarea)).Should().ContainSingle().Which.Should().Be(quien);
+        var read = await client.GetFromJsonAsync<JsonElement>($"/api/v1/tasks/{task}");
+        return read.GetProperty("assignees").EnumerateArray().Select(x => x.GetGuid()).ToList();
     }
 
     [Fact]
-    public async Task Se_pueden_añadir_varios_responsables()
+    public async Task A_task_created_with_an_assignee_returns_it_in_the_collection()
     {
-        var (cliente, tenantId) = await AutenticarAsync();
+        var (client, tenantId) = await AuthenticateAsync();
+        var who = Guid.NewGuid();
+
+        var task = await CreateAsync(client, tenantId, Guid.NewGuid(), "Con responsable", who);
+
+        (await AssigneesOfAsync(client, task)).Should().ContainSingle().Which.Should().Be(who);
+    }
+
+    [Fact]
+    public async Task Several_assignees_can_be_added()
+    {
+        var (client, tenantId) = await AuthenticateAsync();
         var principal = Guid.NewGuid();
-        var segundo = Guid.NewGuid();
-        var tercero = Guid.NewGuid();
-        var tarea = await CrearAsync(cliente, tenantId, Guid.NewGuid(), "En equipo", principal);
+        var second = Guid.NewGuid();
+        var third = Guid.NewGuid();
+        var task = await CreateAsync(client, tenantId, Guid.NewGuid(), "En equipo", principal);
 
-        foreach (var quien in new[] { segundo, tercero })
+        foreach (var who in new[] { second, third })
         {
-            var respuesta = await cliente.PostAsJsonAsync($"/api/v1/tasks/{tarea}/assignees", new { userId = quien });
-            respuesta.StatusCode.Should().Be(HttpStatusCode.OK);
+            var response = await client.PostAsJsonAsync($"/api/v1/tasks/{task}/assignees", new { userId = who });
+            response.StatusCode.Should().Be(HttpStatusCode.OK);
         }
 
-        (await ResponsablesDeAsync(cliente, tarea)).Should().BeEquivalentTo([principal, segundo, tercero]);
+        (await AssigneesOfAsync(client, task)).Should().BeEquivalentTo([principal, second, third]);
 
-        var leida = await cliente.GetFromJsonAsync<JsonElement>($"/api/v1/tasks/{tarea}");
-        leida.GetProperty("assigneeId").GetGuid().Should().Be(principal, "añadir gente no cambia el principal");
+        var read = await client.GetFromJsonAsync<JsonElement>($"/api/v1/tasks/{task}");
+        read.GetProperty("assigneeId").GetGuid().Should().Be(principal, "añadir gente no cambia el principal");
     }
 
     [Fact]
-    public async Task La_misma_persona_no_se_añade_dos_veces()
+    public async Task The_same_person_is_not_added_twice()
     {
-        var (cliente, tenantId) = await AutenticarAsync();
-        var quien = Guid.NewGuid();
-        var tarea = await CrearAsync(cliente, tenantId, Guid.NewGuid(), "Repetida", quien);
+        var (client, tenantId) = await AuthenticateAsync();
+        var who = Guid.NewGuid();
+        var task = await CreateAsync(client, tenantId, Guid.NewGuid(), "Repetida", who);
 
-        var respuesta = await cliente.PostAsJsonAsync($"/api/v1/tasks/{tarea}/assignees", new { userId = quien });
+        var response = await client.PostAsJsonAsync($"/api/v1/tasks/{task}/assignees", new { userId = who });
 
-        respuesta.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-        (await ResponsablesDeAsync(cliente, tarea)).Should().HaveCount(1);
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await AssigneesOfAsync(client, task)).Should().HaveCount(1);
     }
 
     [Fact]
-    public async Task Quitar_al_principal_promueve_al_siguiente()
+    public async Task Removing_the_primary_promotes_the_next()
     {
-        var (cliente, tenantId) = await AutenticarAsync();
+        var (client, tenantId) = await AuthenticateAsync();
         var principal = Guid.NewGuid();
-        var segundo = Guid.NewGuid();
-        var tarea = await CrearAsync(cliente, tenantId, Guid.NewGuid(), "Con relevo", principal);
-        await cliente.PostAsJsonAsync($"/api/v1/tasks/{tarea}/assignees", new { userId = segundo });
+        var second = Guid.NewGuid();
+        var task = await CreateAsync(client, tenantId, Guid.NewGuid(), "Con relevo", principal);
+        await client.PostAsJsonAsync($"/api/v1/tasks/{task}/assignees", new { userId = second });
 
-        var borrado = await cliente.DeleteAsync($"/api/v1/tasks/{tarea}/assignees/{principal}");
+        var deleted = await client.DeleteAsync($"/api/v1/tasks/{task}/assignees/{principal}");
 
-        borrado.StatusCode.Should().Be(HttpStatusCode.NoContent);
-        var leida = await cliente.GetFromJsonAsync<JsonElement>($"/api/v1/tasks/{tarea}");
-        leida.GetProperty("assigneeId").GetGuid().Should().Be(segundo);
-        leida.GetProperty("assignees").EnumerateArray().Should().HaveCount(1);
+        deleted.StatusCode.Should().Be(HttpStatusCode.NoContent);
+        var read = await client.GetFromJsonAsync<JsonElement>($"/api/v1/tasks/{task}");
+        read.GetProperty("assigneeId").GetGuid().Should().Be(second);
+        read.GetProperty("assignees").EnumerateArray().Should().HaveCount(1);
     }
 
     [Fact]
-    public async Task Quitar_al_ultimo_responsable_deja_la_tarea_sin_asignar()
+    public async Task Removing_the_last_assignee_leaves_the_task_unassigned()
     {
-        var (cliente, tenantId) = await AutenticarAsync();
-        var quien = Guid.NewGuid();
-        var tarea = await CrearAsync(cliente, tenantId, Guid.NewGuid(), "Se queda sola", quien);
+        var (client, tenantId) = await AuthenticateAsync();
+        var who = Guid.NewGuid();
+        var task = await CreateAsync(client, tenantId, Guid.NewGuid(), "Se queda sola", who);
 
-        await cliente.DeleteAsync($"/api/v1/tasks/{tarea}/assignees/{quien}");
+        await client.DeleteAsync($"/api/v1/tasks/{task}/assignees/{who}");
 
-        var leida = await cliente.GetFromJsonAsync<JsonElement>($"/api/v1/tasks/{tarea}");
-        leida.GetProperty("assigneeId").GetGuid().Should().Be(Guid.Empty);
-        leida.GetProperty("assignees").EnumerateArray().Should().BeEmpty();
+        var read = await client.GetFromJsonAsync<JsonElement>($"/api/v1/tasks/{task}");
+        read.GetProperty("assigneeId").GetGuid().Should().Be(Guid.Empty);
+        read.GetProperty("assignees").EnumerateArray().Should().BeEmpty();
     }
 
     [Fact]
-    public async Task El_filtro_por_responsable_encuentra_a_quien_no_es_el_principal()
+    public async Task The_assignee_filter_finds_non_primary_assignees()
     {
         // El caso que un filtro que siguiera mirando sólo el campo antiguo perdería en silencio.
-        var (cliente, tenantId) = await AutenticarAsync();
-        var proyecto = Guid.NewGuid();
-        var colaborador = Guid.NewGuid();
-        var tarea = await CrearAsync(cliente, tenantId, proyecto, "La que colabora", Guid.NewGuid());
-        await cliente.PostAsJsonAsync($"/api/v1/tasks/{tarea}/assignees", new { userId = colaborador });
-        await CrearAsync(cliente, tenantId, proyecto, "Ajena", Guid.NewGuid());
+        var (client, tenantId) = await AuthenticateAsync();
+        var project = Guid.NewGuid();
+        var collaborator = Guid.NewGuid();
+        var task = await CreateAsync(client, tenantId, project, "La que colabora", Guid.NewGuid());
+        await client.PostAsJsonAsync($"/api/v1/tasks/{task}/assignees", new { userId = collaborator });
+        await CreateAsync(client, tenantId, project, "Ajena", Guid.NewGuid());
 
-        var pagina = await cliente.GetFromJsonAsync<JsonElement>(
-            $"/api/v1/tasks?projectId={proyecto}&assigneeId={colaborador}&pageSize=50");
+        var page = await client.GetFromJsonAsync<JsonElement>(
+            $"/api/v1/tasks?projectId={project}&assigneeId={collaborator}&pageSize=50");
 
-        pagina.GetProperty("items").EnumerateArray()
+        page.GetProperty("items").EnumerateArray()
             .Select(t => t.GetProperty("title").GetString()!)
             .Should().ContainSingle().Which.Should().Be("La que colabora");
     }
 
     [Fact]
-    public async Task El_traspaso_de_la_migracion_dejo_a_todo_principal_como_responsable()
+    public async Task The_migration_kept_every_primary_as_an_assignee()
     {
         // Sobre los datos que siembra la aplicación al arrancar: si el traspaso hubiera fallado,
         // habría tareas con principal y sin responsables, y no daría ningún error.
-        var (cliente, _) = await AutenticarAsync();
+        var (client, _) = await AuthenticateAsync();
 
-        var pagina = await cliente.GetFromJsonAsync<JsonElement>("/api/v1/tasks?pageSize=200&includeSubtasks=true");
+        var page = await client.GetFromJsonAsync<JsonElement>("/api/v1/tasks?pageSize=200&includeSubtasks=true");
 
-        var incoherentes = pagina.GetProperty("items").EnumerateArray()
+        var inconsistent = page.GetProperty("items").EnumerateArray()
             .Where(t => t.GetProperty("assigneeId").GetGuid() != Guid.Empty)
             .Where(t => !t.GetProperty("assignees").EnumerateArray()
                 .Select(a => a.GetGuid())
@@ -179,6 +179,6 @@ public sealed class TaskAssigneeFlowTests(CrmApiFactory factory)
             .Select(t => t.GetProperty("title").GetString())
             .ToList();
 
-        incoherentes.Should().BeEmpty("todo principal tiene que figurar entre los responsables");
+        inconsistent.Should().BeEmpty("todo principal tiene que figurar entre los responsables");
     }
 }

@@ -24,157 +24,157 @@ public sealed class SubtaskFlowTests(CrmApiFactory factory)
     private const string Email = "admin@acme.com";
     private const string Password = "admin123";
 
-    private async Task<(HttpClient cliente, Guid tenantId)> AutenticarAsync()
+    private async Task<(HttpClient client, Guid tenantId)> AuthenticateAsync()
     {
         var login = await factory.CreateClient().PostAsJsonAsync("/api/v1/auth/login", new { Email, Password });
         login.EnsureSuccessStatusCode();
 
         var token = (await login.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("accessToken").GetString()!;
-        var cliente = factory.CreateClient();
-        cliente.DefaultRequestHeaders.Authorization = new("Bearer", token);
+        var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Authorization = new("Bearer", token);
 
-        var cuerpo = token.Split('.')[1].Replace('-', '+').Replace('_', '/');
-        var relleno = cuerpo.PadRight(cuerpo.Length + (4 - cuerpo.Length % 4) % 4, '=');
-        var tenantId = Guid.Parse(JsonDocument.Parse(Convert.FromBase64String(relleno))
+        var body = token.Split('.')[1].Replace('-', '+').Replace('_', '/');
+        var payload = body.PadRight(body.Length + (4 - body.Length % 4) % 4, '=');
+        var tenantId = Guid.Parse(JsonDocument.Parse(Convert.FromBase64String(payload))
             .RootElement.GetProperty("tenantId").GetString()!);
 
-        return (cliente, tenantId);
+        return (client, tenantId);
     }
 
-    private static object CuerpoDeTarea(Guid tenantId, Guid projectId, string titulo, Guid? padre) => new
+    private static object TaskBody(Guid tenantId, Guid projectId, string title, Guid? parent) => new
     {
         tenantId,
         createdById = Guid.NewGuid(),
         projectId,
-        title = titulo,
+        title = title,
         description = "creada por las pruebas de integración",
         assigneeId = Guid.NewGuid(),
         estimatedHours = 1m,
         dueDate = "2026-12-01",
-        parentTaskId = padre
+        parentTaskId = parent
     };
 
-    private async Task<Guid> CrearAsync(HttpClient cliente, Guid tenantId, Guid projectId, string titulo, Guid? padre = null)
+    private async Task<Guid> CreateAsync(HttpClient client, Guid tenantId, Guid projectId, string title, Guid? parent = null)
     {
-        var respuesta = await cliente.PostAsJsonAsync("/api/v1/tasks", CuerpoDeTarea(tenantId, projectId, titulo, padre));
-        respuesta.StatusCode.Should().Be(HttpStatusCode.Created);
-        return (await respuesta.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetGuid();
+        var response = await client.PostAsJsonAsync("/api/v1/tasks", TaskBody(tenantId, projectId, title, parent));
+        response.StatusCode.Should().Be(HttpStatusCode.Created);
+        return (await response.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetGuid();
     }
 
-    private static async Task<JsonElement> LeerAsync(HttpClient cliente, Guid id)
-        => await cliente.GetFromJsonAsync<JsonElement>($"/api/v1/tasks/{id}");
+    private static async Task<JsonElement> ReadAsync(HttpClient client, Guid id)
+        => await client.GetFromJsonAsync<JsonElement>($"/api/v1/tasks/{id}");
 
     [Fact]
-    public async Task Una_subtarea_guarda_su_padre_y_lo_devuelve()
+    public async Task A_subtask_keeps_its_parent_and_returns_it()
     {
-        var (cliente, tenantId) = await AutenticarAsync();
+        var (client, tenantId) = await AuthenticateAsync();
         var projectId = Guid.NewGuid();
-        var padre = await CrearAsync(cliente, tenantId, projectId, "Padre");
+        var parent = await CreateAsync(client, tenantId, projectId, "Padre");
 
-        var hija = await CrearAsync(cliente, tenantId, projectId, "Hija", padre);
+        var child = await CreateAsync(client, tenantId, projectId, "Hija", parent);
 
-        (await LeerAsync(cliente, hija)).GetProperty("parentTaskId").GetGuid().Should().Be(padre);
+        (await ReadAsync(client, child)).GetProperty("parentTaskId").GetGuid().Should().Be(parent);
     }
 
     [Fact]
-    public async Task Las_listas_devuelven_solo_tareas_de_primer_nivel()
+    public async Task Lists_return_only_top_level_tasks()
     {
-        var (cliente, tenantId) = await AutenticarAsync();
+        var (client, tenantId) = await AuthenticateAsync();
         var projectId = Guid.NewGuid();
-        var padre = await CrearAsync(cliente, tenantId, projectId, "Padre visible");
-        await CrearAsync(cliente, tenantId, projectId, "Hija escondida", padre);
+        var parent = await CreateAsync(client, tenantId, projectId, "Padre visible");
+        await CreateAsync(client, tenantId, projectId, "Hija escondida", parent);
 
-        var pagina = await cliente.GetFromJsonAsync<JsonElement>($"/api/v1/tasks?projectId={projectId}&pageSize=200");
-        var titulos = pagina.GetProperty("items").EnumerateArray()
+        var page = await client.GetFromJsonAsync<JsonElement>($"/api/v1/tasks?projectId={projectId}&pageSize=200");
+        var titles = page.GetProperty("items").EnumerateArray()
             .Select(t => t.GetProperty("title").GetString()!).ToList();
 
-        titulos.Should().ContainSingle().Which.Should().Be("Padre visible");
-        pagina.GetProperty("totalCount").GetInt32().Should().Be(1,
+        titles.Should().ContainSingle().Which.Should().Be("Padre visible");
+        page.GetProperty("totalCount").GetInt32().Should().Be(1,
             "el total de la paginación cuenta tareas, no subtareas");
     }
 
     [Fact]
-    public async Task Las_subtareas_se_piden_por_su_padre()
+    public async Task Subtasks_are_requested_by_their_parent()
     {
-        var (cliente, tenantId) = await AutenticarAsync();
+        var (client, tenantId) = await AuthenticateAsync();
         var projectId = Guid.NewGuid();
-        var padre = await CrearAsync(cliente, tenantId, projectId, "Padre");
-        await CrearAsync(cliente, tenantId, projectId, "Hija 1", padre);
-        await CrearAsync(cliente, tenantId, projectId, "Hija 2", padre);
+        var parent = await CreateAsync(client, tenantId, projectId, "Padre");
+        await CreateAsync(client, tenantId, projectId, "Hija 1", parent);
+        await CreateAsync(client, tenantId, projectId, "Hija 2", parent);
 
-        var pagina = await cliente.GetFromJsonAsync<JsonElement>($"/api/v1/tasks/{padre}/subtasks");
+        var page = await client.GetFromJsonAsync<JsonElement>($"/api/v1/tasks/{parent}/subtasks");
 
-        pagina.GetProperty("items").EnumerateArray()
+        page.GetProperty("items").EnumerateArray()
             .Select(t => t.GetProperty("title").GetString()!)
             .Should().BeEquivalentTo(["Hija 1", "Hija 2"]);
     }
 
     [Fact]
-    public async Task El_progreso_del_padre_cuenta_las_subtareas_completadas()
+    public async Task Parent_progress_counts_completed_subtasks()
     {
-        var (cliente, tenantId) = await AutenticarAsync();
+        var (client, tenantId) = await AuthenticateAsync();
         var projectId = Guid.NewGuid();
-        var padre = await CrearAsync(cliente, tenantId, projectId, "Padre con progreso");
-        var hija1 = await CrearAsync(cliente, tenantId, projectId, "Hija 1", padre);
-        await CrearAsync(cliente, tenantId, projectId, "Hija 2", padre);
-        await CrearAsync(cliente, tenantId, projectId, "Hija 3", padre);
+        var parent = await CreateAsync(client, tenantId, projectId, "Padre con progreso");
+        var child1 = await CreateAsync(client, tenantId, projectId, "Hija 1", parent);
+        await CreateAsync(client, tenantId, projectId, "Hija 2", parent);
+        await CreateAsync(client, tenantId, projectId, "Hija 3", parent);
 
-        var patch = await cliente.PatchAsJsonAsync($"/api/v1/tasks/{hija1}", new { status = "Done" });
+        var patch = await client.PatchAsJsonAsync($"/api/v1/tasks/{child1}", new { status = "Done" });
         patch.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        var leido = await LeerAsync(cliente, padre);
+        var read = await ReadAsync(client, parent);
 
-        leido.GetProperty("subtaskCount").GetInt32().Should().Be(3);
-        leido.GetProperty("completedSubtaskCount").GetInt32().Should().Be(1);
+        read.GetProperty("subtaskCount").GetInt32().Should().Be(3);
+        read.GetProperty("completedSubtaskCount").GetInt32().Should().Be(1);
     }
 
     [Fact]
-    public async Task Una_subtarea_no_puede_tener_subtareas()
+    public async Task A_subtask_cannot_have_subtasks()
     {
-        var (cliente, tenantId) = await AutenticarAsync();
+        var (client, tenantId) = await AuthenticateAsync();
         var projectId = Guid.NewGuid();
-        var padre = await CrearAsync(cliente, tenantId, projectId, "Padre");
-        var hija = await CrearAsync(cliente, tenantId, projectId, "Hija", padre);
+        var parent = await CreateAsync(client, tenantId, projectId, "Padre");
+        var child = await CreateAsync(client, tenantId, projectId, "Hija", parent);
 
-        var respuesta = await cliente.PostAsJsonAsync("/api/v1/tasks",
-            CuerpoDeTarea(tenantId, projectId, "Nieta", hija));
+        var response = await client.PostAsJsonAsync("/api/v1/tasks",
+            TaskBody(tenantId, projectId, "Nieta", child));
 
-        respuesta.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-        (await respuesta.Content.ReadAsStringAsync()).Should().Contain("un solo nivel");
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await response.Content.ReadAsStringAsync()).Should().Contain("un solo nivel");
     }
 
     [Fact]
-    public async Task Una_tarea_se_puede_colgar_y_desligar_despues()
+    public async Task A_task_can_be_reparented_and_detached_later()
     {
-        var (cliente, tenantId) = await AutenticarAsync();
+        var (client, tenantId) = await AuthenticateAsync();
         var projectId = Guid.NewGuid();
-        var padre = await CrearAsync(cliente, tenantId, projectId, "Padre");
-        var suelta = await CrearAsync(cliente, tenantId, projectId, "Suelta");
+        var parent = await CreateAsync(client, tenantId, projectId, "Padre");
+        var loose = await CreateAsync(client, tenantId, projectId, "Suelta");
 
-        var colgar = await cliente.PatchAsJsonAsync($"/api/v1/tasks/{suelta}/parent", new { parentTaskId = padre });
-        colgar.StatusCode.Should().Be(HttpStatusCode.OK);
-        (await LeerAsync(cliente, suelta)).GetProperty("parentTaskId").GetGuid().Should().Be(padre);
+        var reparent = await client.PatchAsJsonAsync($"/api/v1/tasks/{loose}/parent", new { parentTaskId = parent });
+        reparent.StatusCode.Should().Be(HttpStatusCode.OK);
+        (await ReadAsync(client, loose)).GetProperty("parentTaskId").GetGuid().Should().Be(parent);
 
-        var desligar = await cliente.PatchAsJsonAsync($"/api/v1/tasks/{suelta}/parent", new { parentTaskId = (Guid?)null });
-        desligar.StatusCode.Should().Be(HttpStatusCode.OK);
+        var detach = await client.PatchAsJsonAsync($"/api/v1/tasks/{loose}/parent", new { parentTaskId = (Guid?)null });
+        detach.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        var despues = await LeerAsync(cliente, suelta);
-        despues.TryGetProperty("parentTaskId", out var valor).Should().BeTrue();
-        valor.ValueKind.Should().Be(JsonValueKind.Null, "desligar deja la tarea de primer nivel");
+        var after = await ReadAsync(client, loose);
+        after.TryGetProperty("parentTaskId", out var value).Should().BeTrue();
+        value.ValueKind.Should().Be(JsonValueKind.Null, "desligar deja la tarea de primer nivel");
     }
 
     [Fact]
-    public async Task Una_tarea_con_subtareas_no_se_puede_convertir_en_subtarea()
+    public async Task A_task_with_subtasks_cannot_become_a_subtask()
     {
-        var (cliente, tenantId) = await AutenticarAsync();
+        var (client, tenantId) = await AuthenticateAsync();
         var projectId = Guid.NewGuid();
-        var conHijas = await CrearAsync(cliente, tenantId, projectId, "Con hijas");
-        await CrearAsync(cliente, tenantId, projectId, "Hija", conHijas);
-        var otra = await CrearAsync(cliente, tenantId, projectId, "Otra");
+        var withChildren = await CreateAsync(client, tenantId, projectId, "Con hijas");
+        await CreateAsync(client, tenantId, projectId, "Hija", withChildren);
+        var other = await CreateAsync(client, tenantId, projectId, "Otra");
 
-        var respuesta = await cliente.PatchAsJsonAsync($"/api/v1/tasks/{conHijas}/parent", new { parentTaskId = otra });
+        var response = await client.PatchAsJsonAsync($"/api/v1/tasks/{withChildren}/parent", new { parentTaskId = other });
 
-        respuesta.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-        (await respuesta.Content.ReadAsStringAsync()).Should().Contain("no puede convertirse en subtarea");
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await response.Content.ReadAsStringAsync()).Should().Contain("no puede convertirse en subtarea");
     }
 }

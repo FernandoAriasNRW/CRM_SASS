@@ -24,23 +24,23 @@ public sealed class PanelFlowTests(CrmApiFactory factory)
     private const string Email = "admin@acme.com";
     private const string Password = "admin123";
 
-    private async Task<HttpClient> AutenticarAsync()
+    private async Task<HttpClient> AuthenticateAsync()
     {
         var login = await factory.CreateClient().PostAsJsonAsync("/api/v1/auth/login", new { Email, Password });
         login.EnsureSuccessStatusCode();
 
         var token = (await login.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("accessToken").GetString()!;
 
-        var cliente = factory.CreateClient();
-        cliente.DefaultRequestHeaders.Authorization = new("Bearer", token);
-        return cliente;
+        var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Authorization = new("Bearer", token);
+        return client;
     }
 
-    private static async Task<JsonElement> MiPanelAsync(HttpClient cliente)
+    private static async Task<JsonElement> MyDashboardAsync(HttpClient client)
     {
-        var respuesta = await cliente.GetAsync("/api/v1/dashboards/mine");
-        respuesta.StatusCode.Should().Be(HttpStatusCode.OK, await respuesta.Content.ReadAsStringAsync());
-        return await respuesta.Content.ReadFromJsonAsync<JsonElement>();
+        var response = await client.GetAsync("/api/v1/dashboards/mine");
+        response.StatusCode.Should().Be(HttpStatusCode.OK, await response.Content.ReadAsStringAsync());
+        return await response.Content.ReadFromJsonAsync<JsonElement>();
     }
 
     #region Arranque
@@ -53,11 +53,11 @@ public sealed class PanelFlowTests(CrmApiFactory factory)
     /// mañana, y el resto vería una pantalla vacía sin saber por qué.
     /// </summary>
     [Fact]
-    public async Task Mi_panel_se_crea_solo_la_primera_vez_y_trae_recuadros()
+    public async Task My_dashboard_is_created_once_with_widgets()
     {
-        var cliente = await AutenticarAsync();
+        var client = await AuthenticateAsync();
 
-        var panel = await MiPanelAsync(cliente);
+        var panel = await MyDashboardAsync(client);
 
         panel.GetProperty("isMine").GetBoolean().Should().BeTrue();
         panel.GetProperty("widgets").EnumerateArray().Should().NotBeEmpty(
@@ -66,14 +66,14 @@ public sealed class PanelFlowTests(CrmApiFactory factory)
 
     /// <summary>Pedirlo dos veces devuelve el mismo, no crea uno nuevo cada vez.</summary>
     [Fact]
-    public async Task Pedir_mi_panel_dos_veces_devuelve_el_mismo()
+    public async Task Asking_for_my_dashboard_twice_returns_the_same()
     {
-        var cliente = await AutenticarAsync();
+        var client = await AuthenticateAsync();
 
-        var primera = await MiPanelAsync(cliente);
-        var segunda = await MiPanelAsync(cliente);
+        var first = await MyDashboardAsync(client);
+        var second = await MyDashboardAsync(client);
 
-        segunda.GetProperty("id").GetGuid().Should().Be(primera.GetProperty("id").GetGuid());
+        second.GetProperty("id").GetGuid().Should().Be(first.GetProperty("id").GetGuid());
     }
 
     /// <summary>
@@ -84,17 +84,17 @@ public sealed class PanelFlowTests(CrmApiFactory factory)
     /// los que ve todo el mundo el primer día.
     /// </summary>
     [Fact]
-    public async Task Los_recuadros_de_partida_caben_en_la_rejilla()
+    public async Task Starter_widgets_fit_the_grid()
     {
-        var cliente = await AutenticarAsync();
-        var panel = await MiPanelAsync(cliente);
+        var client = await AuthenticateAsync();
+        var panel = await MyDashboardAsync(client);
 
         foreach (var widget in panel.GetProperty("widgets").EnumerateArray())
         {
             var x = widget.GetProperty("x").GetInt32();
-            var ancho = widget.GetProperty("width").GetInt32();
+            var width = widget.GetProperty("width").GetInt32();
 
-            (x + ancho).Should().BeLessThanOrEqualTo(12,
+            (x + width).Should().BeLessThanOrEqualTo(12,
                 $"el recuadro «{widget.GetProperty("title")}» se sale de las 12 columnas");
         }
     }
@@ -111,25 +111,25 @@ public sealed class PanelFlowTests(CrmApiFactory factory)
     /// «sólo se ofrece de serie lo que los datos de hoy pueden responder».
     /// </summary>
     [Fact]
-    public async Task Los_recuadros_de_partida_traen_datos_y_ninguno_falla()
+    public async Task Starter_widgets_bring_data_and_none_fails()
     {
-        var cliente = await AutenticarAsync();
-        var panel = await MiPanelAsync(cliente);
+        var client = await AuthenticateAsync();
+        var panel = await MyDashboardAsync(client);
         var panelId = panel.GetProperty("id").GetGuid();
 
-        var datos = await cliente.GetFromJsonAsync<JsonElement>($"/api/v1/dashboards/{panelId}/data");
-        var recuadros = datos.EnumerateArray().ToList();
+        var data = await client.GetFromJsonAsync<JsonElement>($"/api/v1/dashboards/{panelId}/data");
+        var widgets = data.EnumerateArray().ToList();
 
-        recuadros.Should().NotBeEmpty();
+        widgets.Should().NotBeEmpty();
 
-        var rotos = recuadros
+        var broken = widgets
             .Where(r => r.GetProperty("error").ValueKind != JsonValueKind.Null)
             .Select(r => $"{r.GetProperty("title").GetString()}: {r.GetProperty("error").GetString()}")
             .ToList();
 
-        rotos.Should().BeEmpty("los recuadros de partida tienen que funcionar el primer día");
+        broken.Should().BeEmpty("los recuadros de partida tienen que funcionar el primer día");
 
-        recuadros.Should().Contain(
+        widgets.Should().Contain(
             r => r.GetProperty("rows").EnumerateArray().Any(),
             "al menos uno tiene que traer datos; si todos salen vacíos, el panel no dice nada");
     }
@@ -138,19 +138,19 @@ public sealed class PanelFlowTests(CrmApiFactory factory)
     /// Cada recuadro trae su forma y sus columnas: lo que la pantalla necesita para pintarlo.
     /// </summary>
     [Fact]
-    public async Task Cada_recuadro_dice_como_pintarse()
+    public async Task Each_widget_says_how_to_render()
     {
-        var cliente = await AutenticarAsync();
-        var panel = await MiPanelAsync(cliente);
+        var client = await AuthenticateAsync();
+        var panel = await MyDashboardAsync(client);
         var panelId = panel.GetProperty("id").GetGuid();
 
-        var datos = await cliente.GetFromJsonAsync<JsonElement>($"/api/v1/dashboards/{panelId}/data");
+        var data = await client.GetFromJsonAsync<JsonElement>($"/api/v1/dashboards/{panelId}/data");
 
-        foreach (var recuadro in datos.EnumerateArray())
+        foreach (var widget in data.EnumerateArray())
         {
-            recuadro.GetProperty("visualization").GetString().Should().NotBeNullOrWhiteSpace();
-            recuadro.GetProperty("title").GetString().Should().NotBeNullOrWhiteSpace();
-            recuadro.GetProperty("columns").EnumerateArray().Should().NotBeEmpty();
+            widget.GetProperty("visualization").GetString().Should().NotBeNullOrWhiteSpace();
+            widget.GetProperty("title").GetString().Should().NotBeNullOrWhiteSpace();
+            widget.GetProperty("columns").EnumerateArray().Should().NotBeEmpty();
         }
     }
 
@@ -162,43 +162,43 @@ public sealed class PanelFlowTests(CrmApiFactory factory)
     /// y quien lo viera no sabría cuál de los seis es el culpable.
     /// </summary>
     [Fact]
-    public async Task Un_recuadro_roto_no_tumba_el_panel_entero()
+    public async Task A_broken_widget_does_not_take_down_the_dashboard()
     {
-        var cliente = await AutenticarAsync();
-        var panel = await MiPanelAsync(cliente);
+        var client = await AuthenticateAsync();
+        var panel = await MyDashboardAsync(client);
         var panelId = panel.GetProperty("id").GetGuid();
 
-        var informe = await cliente.PostAsJsonAsync("/api/v1/reports", new
+        var report = await client.PostAsJsonAsync("/api/v1/reports", new
         {
             Name = $"Sin configurar {Guid.NewGuid():N}"[..30],
             Type = "Custom",
             Format = "Csv"
         });
 
-        var informeId = (await informe.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetGuid();
+        var reportId = (await report.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetGuid();
 
-        var anadido = await cliente.PostAsJsonAsync($"/api/v1/dashboards/{panelId}/widgets",
-            new { ReportId = informeId, Visualization = "bar" });
+        var anadido = await client.PostAsJsonAsync($"/api/v1/dashboards/{panelId}/widgets",
+            new { ReportId = reportId, Visualization = "bar" });
 
         anadido.StatusCode.Should().Be(HttpStatusCode.OK, await anadido.Content.ReadAsStringAsync());
         var widgetId = (await anadido.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetGuid();
 
         try
         {
-            var datos = await cliente.GetFromJsonAsync<JsonElement>($"/api/v1/dashboards/{panelId}/data");
-            var recuadros = datos.EnumerateArray().ToList();
+            var data = await client.GetFromJsonAsync<JsonElement>($"/api/v1/dashboards/{panelId}/data");
+            var widgets = data.EnumerateArray().ToList();
 
-            var roto = recuadros.Single(r => r.GetProperty("widgetId").GetGuid() == widgetId);
-            roto.GetProperty("error").GetString().Should().Contain("constructor",
+            var broken = widgets.Single(r => r.GetProperty("widgetId").GetGuid() == widgetId);
+            broken.GetProperty("error").GetString().Should().Contain("constructor",
                 "el recuadro roto explica qué hacer, no sólo que falló");
 
-            recuadros.Where(r => r.GetProperty("widgetId").GetGuid() != widgetId)
+            widgets.Where(r => r.GetProperty("widgetId").GetGuid() != widgetId)
                 .Should().OnlyContain(r => r.GetProperty("error").ValueKind == JsonValueKind.Null,
                     "los demás siguen funcionando");
         }
         finally
         {
-            await cliente.DeleteAsync($"/api/v1/dashboards/{panelId}/widgets/{widgetId}");
+            await client.DeleteAsync($"/api/v1/dashboards/{panelId}/widgets/{widgetId}");
         }
     }
 
@@ -207,10 +207,10 @@ public sealed class PanelFlowTests(CrmApiFactory factory)
     #region Colocar
 
     [Fact]
-    public async Task La_disposicion_se_guarda_y_se_relee()
+    public async Task The_layout_is_saved_and_reread()
     {
-        var cliente = await AutenticarAsync();
-        var panel = await MiPanelAsync(cliente);
+        var client = await AuthenticateAsync();
+        var panel = await MyDashboardAsync(client);
         var panelId = panel.GetProperty("id").GetGuid();
 
         var widgets = panel.GetProperty("widgets").EnumerateArray()
@@ -227,15 +227,15 @@ public sealed class PanelFlowTests(CrmApiFactory factory)
             })
             .ToList();
 
-        var guardado = await cliente.PutAsJsonAsync(
+        var saved = await client.PutAsJsonAsync(
             $"/api/v1/dashboards/{panelId}/layout", new { Widgets = widgets });
 
-        guardado.StatusCode.Should().Be(HttpStatusCode.NoContent, await guardado.Content.ReadAsStringAsync());
+        saved.StatusCode.Should().Be(HttpStatusCode.NoContent, await saved.Content.ReadAsStringAsync());
 
         // Se relee en otra petición: la lección del PATCH que respondía 200 sin guardar.
-        var despues = await MiPanelAsync(cliente);
+        var after = await MyDashboardAsync(client);
 
-        despues.GetProperty("widgets").EnumerateArray()
+        after.GetProperty("widgets").EnumerateArray()
             .Should().OnlyContain(w => w.GetProperty("width").GetInt32() == 12);
     }
 
@@ -246,62 +246,62 @@ public sealed class PanelFlowTests(CrmApiFactory factory)
     /// para entonces quien lo movió ya ha cerrado.
     /// </summary>
     [Fact]
-    public async Task Un_recuadro_fuera_de_la_rejilla_se_rechaza()
+    public async Task A_widget_outside_the_grid_is_rejected()
     {
-        var cliente = await AutenticarAsync();
-        var panel = await MiPanelAsync(cliente);
+        var client = await AuthenticateAsync();
+        var panel = await MyDashboardAsync(client);
         var panelId = panel.GetProperty("id").GetGuid();
 
-        var uno = panel.GetProperty("widgets").EnumerateArray().First();
+        var one = panel.GetProperty("widgets").EnumerateArray().First();
 
-        var respuesta = await cliente.PutAsJsonAsync($"/api/v1/dashboards/{panelId}/layout", new
+        var response = await client.PutAsJsonAsync($"/api/v1/dashboards/{panelId}/layout", new
         {
             Widgets = new[]
             {
                 new
                 {
-                    id = uno.GetProperty("id").GetGuid(),
-                    reportId = uno.GetProperty("reportId").GetGuid(),
+                    id = one.GetProperty("id").GetGuid(),
+                    reportId = one.GetProperty("reportId").GetGuid(),
                     x = 10, y = 0, width = 6, height = 4,
                     visualization = "bar", title = "Se sale"
                 }
             }
         });
 
-        respuesta.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-        (await respuesta.Content.ReadAsStringAsync()).Should().Contain("12 columnas");
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await response.Content.ReadAsStringAsync()).Should().Contain("12 columnas");
     }
 
     [Fact]
-    public async Task Un_recuadro_se_puede_anadir_y_quitar()
+    public async Task A_widget_can_be_added_and_removed()
     {
-        var cliente = await AutenticarAsync();
-        var panel = await MiPanelAsync(cliente);
+        var client = await AuthenticateAsync();
+        var panel = await MyDashboardAsync(client);
         var panelId = panel.GetProperty("id").GetGuid();
 
-        var cuantosAntes = panel.GetProperty("widgets").EnumerateArray().Count();
+        var countBefore = panel.GetProperty("widgets").EnumerateArray().Count();
 
-        var informe = await cliente.PostAsJsonAsync("/api/v1/reports", new
+        var report = await client.PostAsJsonAsync("/api/v1/reports", new
         {
             Name = $"Para el panel {Guid.NewGuid():N}"[..30],
             Type = "KpiSummary",
             Format = "Csv"
         });
-        var informeId = (await informe.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetGuid();
+        var reportId = (await report.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetGuid();
 
-        var anadido = await cliente.PostAsJsonAsync($"/api/v1/dashboards/{panelId}/widgets",
-            new { ReportId = informeId, Visualization = (string?)null });
+        var anadido = await client.PostAsJsonAsync($"/api/v1/dashboards/{panelId}/widgets",
+            new { ReportId = reportId, Visualization = (string?)null });
 
         var widgetId = (await anadido.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetGuid();
 
-        (await MiPanelAsync(cliente)).GetProperty("widgets").EnumerateArray()
-            .Should().HaveCount(cuantosAntes + 1);
+        (await MyDashboardAsync(client)).GetProperty("widgets").EnumerateArray()
+            .Should().HaveCount(countBefore + 1);
 
-        (await cliente.DeleteAsync($"/api/v1/dashboards/{panelId}/widgets/{widgetId}"))
+        (await client.DeleteAsync($"/api/v1/dashboards/{panelId}/widgets/{widgetId}"))
             .StatusCode.Should().Be(HttpStatusCode.NoContent);
 
-        (await MiPanelAsync(cliente)).GetProperty("widgets").EnumerateArray()
-            .Should().HaveCount(cuantosAntes);
+        (await MyDashboardAsync(client)).GetProperty("widgets").EnumerateArray()
+            .Should().HaveCount(countBefore);
     }
 
     /// <summary>
@@ -311,34 +311,34 @@ public sealed class PanelFlowTests(CrmApiFactory factory)
     /// por un gesto que no lo pedía.
     /// </summary>
     [Fact]
-    public async Task Quitar_un_recuadro_no_borra_el_informe()
+    public async Task Removing_a_widget_keeps_the_report()
     {
-        var cliente = await AutenticarAsync();
-        var panel = await MiPanelAsync(cliente);
+        var client = await AuthenticateAsync();
+        var panel = await MyDashboardAsync(client);
         var panelId = panel.GetProperty("id").GetGuid();
 
-        var uno = panel.GetProperty("widgets").EnumerateArray().First();
-        var widgetId = uno.GetProperty("id").GetGuid();
-        var informeId = uno.GetProperty("reportId").GetGuid();
+        var one = panel.GetProperty("widgets").EnumerateArray().First();
+        var widgetId = one.GetProperty("id").GetGuid();
+        var reportId = one.GetProperty("reportId").GetGuid();
 
-        await cliente.DeleteAsync($"/api/v1/dashboards/{panelId}/widgets/{widgetId}");
+        await client.DeleteAsync($"/api/v1/dashboards/{panelId}/widgets/{widgetId}");
 
-        var informe = await cliente.GetAsync($"/api/v1/reports/{informeId}");
-        informe.StatusCode.Should().Be(HttpStatusCode.OK, "el informe sigue en su lista");
+        var report = await client.GetAsync($"/api/v1/reports/{reportId}");
+        report.StatusCode.Should().Be(HttpStatusCode.OK, "el informe sigue en su lista");
 
         // Se devuelve al panel para no dejar el arranque cambiado a las demás pruebas.
-        await cliente.PostAsJsonAsync($"/api/v1/dashboards/{panelId}/widgets",
-            new { ReportId = informeId, Visualization = uno.GetProperty("visualization").GetString() });
+        await client.PostAsJsonAsync($"/api/v1/dashboards/{panelId}/widgets",
+            new { ReportId = reportId, Visualization = one.GetProperty("visualization").GetString() });
     }
 
     #endregion
 
     [Fact]
-    public async Task Sin_autenticar_no_hay_panel()
+    public async Task Without_authentication_there_is_no_dashboard()
     {
-        var anonimo = factory.CreateClient();
+        var anonymous = factory.CreateClient();
 
-        (await anonimo.GetAsync("/api/v1/dashboards/mine")).StatusCode
+        (await anonymous.GetAsync("/api/v1/dashboards/mine")).StatusCode
             .Should().Be(HttpStatusCode.Unauthorized);
     }
 }

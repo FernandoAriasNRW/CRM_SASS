@@ -22,7 +22,7 @@ public sealed record PatchTaskCommand(
     /// Vaciar la fecha de inicio. Hace falta un interruptor aparte porque `null` ya significa
     /// «no toques este campo», que es lo que necesita una pantalla que manda sólo lo que cambió.
     /// </summary>
-    bool QuitarFechaInicio = false,
+    bool ClearStartDate = false,
     /// <summary>
     /// Las etiquetas, todas: sustituyen a las que tuviera. <c>null</c> es «no las toques»; una
     /// lista vacía, «quítalas todas».

@@ -28,7 +28,7 @@ public sealed class LoginFlowTests(CrmApiFactory factory)
     private HttpClient Client => factory.CreateClient();
 
     [Fact]
-    public async Task Un_usuario_del_seed_puede_iniciar_sesion()
+    public async Task A_seeded_user_can_sign_in()
     {
         var response = await Client.PostAsJsonAsync("/api/v1/auth/login", new
         {
@@ -41,13 +41,13 @@ public sealed class LoginFlowTests(CrmApiFactory factory)
     }
 
     [Fact]
-    public async Task El_login_devuelve_un_token_utilizable()
+    public async Task Login_returns_a_usable_token()
     {
         var response = await Client.PostAsJsonAsync("/api/v1/auth/login", new { Email, Password });
         response.EnsureSuccessStatusCode();
 
-        var cuerpo = await response.Content.ReadFromJsonAsync<JsonElement>();
-        var token = cuerpo.GetProperty("accessToken").GetString();
+        var body = await response.Content.ReadFromJsonAsync<JsonElement>();
+        var token = body.GetProperty("accessToken").GetString();
 
         token.Should().NotBeNullOrWhiteSpace();
 
@@ -57,13 +57,13 @@ public sealed class LoginFlowTests(CrmApiFactory factory)
         var autenticado = factory.CreateClient();
         autenticado.DefaultRequestHeaders.Authorization = new("Bearer", token);
 
-        var protegido = await autenticado.GetAsync("/api/v1/auth/users/me");
+        var protectedResponse = await autenticado.GetAsync("/api/v1/auth/users/me");
 
-        protegido.StatusCode.Should().Be(HttpStatusCode.OK);
+        protectedResponse.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
     [Fact]
-    public async Task Una_contraseña_incorrecta_sigue_siendo_rechazada()
+    public async Task A_wrong_password_is_still_rejected()
     {
         // Contrapeso de las anteriores: comprobar que el login funciona no sirve de nada
         // si de paso se dejó de verificar la contraseña.

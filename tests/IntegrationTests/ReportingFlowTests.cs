@@ -26,17 +26,17 @@ public sealed class ReportingFlowTests(CrmApiFactory factory)
     private const string Email = "admin@acme.com";
     private const string Password = "admin123";
 
-    private async Task<HttpClient> AutenticarAsync()
+    private async Task<HttpClient> AuthenticateAsync()
     {
         var login = await factory.CreateClient().PostAsJsonAsync("/api/v1/auth/login", new { Email, Password });
         login.EnsureSuccessStatusCode();
 
-        var cuerpo = await login.Content.ReadFromJsonAsync<JsonElement>();
-        var token = cuerpo.GetProperty("accessToken").GetString()!;
+        var body = await login.Content.ReadFromJsonAsync<JsonElement>();
+        var token = body.GetProperty("accessToken").GetString()!;
 
-        var cliente = factory.CreateClient();
-        cliente.DefaultRequestHeaders.Authorization = new("Bearer", token);
-        return cliente;
+        var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Authorization = new("Bearer", token);
+        return client;
     }
 
     /// <summary>
@@ -49,30 +49,30 @@ public sealed class ReportingFlowTests(CrmApiFactory factory)
     /// que hizo su vecina vuelve a fallar en cuanto cambia el orden, y entonces el fallo no
     /// señala a nada.
     /// </summary>
-    private static async Task<Guid> CrearProyectoConTareaAsync(HttpClient cliente)
+    private static async Task<Guid> CreateProjectWithTaskAsync(HttpClient client)
     {
-        var alta = await cliente.PostAsJsonAsync("/api/v1/projects", new
+        var creation = await client.PostAsJsonAsync("/api/v1/projects", new
         {
             spaceId = Guid.NewGuid(),
             name = "Proyecto para informes " + Guid.NewGuid(),
             description = "Creado por la prueba para que los informes tengan algo que contar",
             estimatedEndDate = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(30)),
         });
-        alta.EnsureSuccessStatusCode();
-        var proyecto = (await alta.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetGuid();
+        creation.EnsureSuccessStatusCode();
+        var project = (await creation.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetGuid();
 
-        var tarea = await cliente.PostAsJsonAsync("/api/v1/tasks", new
+        var task = await client.PostAsJsonAsync("/api/v1/tasks", new
         {
-            projectId = proyecto,
+            projectId = project,
             title = "Tarea para informes",
             description = "Para que el desglose por estado no salga vacío",
             assigneeId = Guid.Empty,
             estimatedHours = 4,
             dueDate = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(7)),
         });
-        tarea.EnsureSuccessStatusCode();
+        task.EnsureSuccessStatusCode();
 
-        return proyecto;
+        return project;
     }
 
     /// <summary>
@@ -84,13 +84,13 @@ public sealed class ReportingFlowTests(CrmApiFactory factory)
     [InlineData("/api/v1/reports/tasks/breakdown")]
     [InlineData("/api/v1/reports/projects/progress")]
     [InlineData("/api/v1/dashboards")]
-    public async Task Las_rutas_de_informes_responden(string ruta)
+    public async Task Report_routes_answer(string path)
     {
-        var cliente = await AutenticarAsync();
+        var client = await AuthenticateAsync();
 
-        var respuesta = await cliente.GetAsync(ruta);
+        var response = await client.GetAsync(path);
 
-        respuesta.StatusCode.Should().Be(HttpStatusCode.OK,
+        response.StatusCode.Should().Be(HttpStatusCode.OK,
             "es una de las rutas sobre las que se construye el dashboard");
     }
 
@@ -103,11 +103,11 @@ public sealed class ReportingFlowTests(CrmApiFactory factory)
     [InlineData("/api/v1/reports/tasks/breakdown")]
     [InlineData("/api/v1/reports/projects/progress")]
     [InlineData("/api/v1/dashboards")]
-    public async Task Sin_autenticar_no_se_llega_a_los_informes(string ruta)
+    public async Task Without_authentication_reports_are_unreachable(string path)
     {
-        var respuesta = await factory.CreateClient().GetAsync(ruta);
+        var response = await factory.CreateClient().GetAsync(path);
 
-        respuesta.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
     /// <summary>
@@ -115,12 +115,12 @@ public sealed class ReportingFlowTests(CrmApiFactory factory)
     /// con una tarea, así que ninguno de los dos contadores puede seguir en cero.
     /// </summary>
     [Fact]
-    public async Task Los_kpi_cuentan_lo_que_hay_de_verdad()
+    public async Task Kpis_count_what_really_exists()
     {
-        var cliente = await AutenticarAsync();
-        await CrearProyectoConTareaAsync(cliente);
+        var client = await AuthenticateAsync();
+        await CreateProjectWithTaskAsync(client);
 
-        var kpi = await cliente.GetFromJsonAsync<JsonElement>("/api/v1/reports/kpi");
+        var kpi = await client.GetFromJsonAsync<JsonElement>("/api/v1/reports/kpi");
 
         kpi.GetProperty("totalProjects").GetInt32().Should().BeGreaterThan(0);
         kpi.GetProperty("totalTasks").GetInt32().Should().BeGreaterThan(0);
@@ -132,19 +132,19 @@ public sealed class ReportingFlowTests(CrmApiFactory factory)
     /// no viene de donde dice.
     /// </summary>
     [Fact]
-    public async Task El_avance_cuadra_con_las_tareas_hechas_y_el_total()
+    public async Task Progress_matches_done_and_total_tasks()
     {
-        var cliente = await AutenticarAsync();
-        await CrearProyectoConTareaAsync(cliente);
+        var client = await AuthenticateAsync();
+        await CreateProjectWithTaskAsync(client);
 
-        var kpi = await cliente.GetFromJsonAsync<JsonElement>("/api/v1/reports/kpi");
+        var kpi = await client.GetFromJsonAsync<JsonElement>("/api/v1/reports/kpi");
 
         var total = kpi.GetProperty("totalTasks").GetInt32();
-        var hechas = kpi.GetProperty("doneTasks").GetInt32();
-        var avance = kpi.GetProperty("throughput").GetDouble();
+        var done = kpi.GetProperty("doneTasks").GetInt32();
+        var progress = kpi.GetProperty("throughput").GetDouble();
 
-        hechas.Should().BeLessThanOrEqualTo(total);
-        avance.Should().BeApproximately((double)hechas / total * 100, 0.1);
+        done.Should().BeLessThanOrEqualTo(total);
+        progress.Should().BeApproximately((double)done / total * 100, 0.1);
     }
 
     /// <summary>
@@ -153,34 +153,34 @@ public sealed class ReportingFlowTests(CrmApiFactory factory)
     /// que sea mayor significaría que alguna tarea se cuenta dos veces.
     /// </summary>
     [Fact]
-    public async Task El_desglose_por_estado_no_cuenta_ninguna_tarea_dos_veces()
+    public async Task The_status_breakdown_counts_no_task_twice()
     {
-        var cliente = await AutenticarAsync();
-        await CrearProyectoConTareaAsync(cliente);
+        var client = await AuthenticateAsync();
+        await CreateProjectWithTaskAsync(client);
 
-        var kpi = await cliente.GetFromJsonAsync<JsonElement>("/api/v1/reports/kpi");
-        var desglose = await cliente.GetFromJsonAsync<JsonElement>("/api/v1/reports/tasks/breakdown");
+        var kpi = await client.GetFromJsonAsync<JsonElement>("/api/v1/reports/kpi");
+        var breakdown = await client.GetFromJsonAsync<JsonElement>("/api/v1/reports/tasks/breakdown");
 
         var total = kpi.GetProperty("totalTasks").GetInt32();
-        var sumaDelDesglose = desglose.EnumerateArray().Sum(e => e.GetProperty("count").GetInt32());
+        var breakdownSum = breakdown.EnumerateArray().Sum(e => e.GetProperty("count").GetInt32());
 
-        sumaDelDesglose.Should().BeLessThanOrEqualTo(total);
+        breakdownSum.Should().BeLessThanOrEqualTo(total);
     }
 
     /// <summary>Cada corte del desglose trae su color: el gráfico se pinta con esto.</summary>
     [Fact]
-    public async Task Cada_corte_del_desglose_trae_estado_y_color()
+    public async Task Each_breakdown_slice_has_status_and_color()
     {
-        var cliente = await AutenticarAsync();
+        var client = await AuthenticateAsync();
 
-        var desglose = await cliente.GetFromJsonAsync<JsonElement>("/api/v1/reports/tasks/breakdown");
+        var breakdown = await client.GetFromJsonAsync<JsonElement>("/api/v1/reports/tasks/breakdown");
 
-        desglose.EnumerateArray().Should().NotBeEmpty();
-        foreach (var corte in desglose.EnumerateArray())
+        breakdown.EnumerateArray().Should().NotBeEmpty();
+        foreach (var slice in breakdown.EnumerateArray())
         {
-            corte.GetProperty("status").GetString().Should().NotBeNullOrWhiteSpace();
-            corte.GetProperty("color").GetString().Should().MatchRegex("^#[0-9A-Fa-f]{6}$");
-            corte.GetProperty("count").GetInt32().Should().BeGreaterThanOrEqualTo(0);
+            slice.GetProperty("status").GetString().Should().NotBeNullOrWhiteSpace();
+            slice.GetProperty("color").GetString().Should().MatchRegex("^#[0-9A-Fa-f]{6}$");
+            slice.GetProperty("count").GetInt32().Should().BeGreaterThanOrEqualTo(0);
         }
     }
 
@@ -189,27 +189,27 @@ public sealed class ReportingFlowTests(CrmApiFactory factory)
     /// corresponde con sus propios contadores es el síntoma de un cálculo inventado.
     /// </summary>
     [Fact]
-    public async Task El_progreso_de_cada_proyecto_cuadra_con_sus_propias_tareas()
+    public async Task Each_project_progress_matches_its_own_tasks()
     {
-        var cliente = await AutenticarAsync();
-        await CrearProyectoConTareaAsync(cliente);
+        var client = await AuthenticateAsync();
+        await CreateProjectWithTaskAsync(client);
 
-        var progreso = await cliente.GetFromJsonAsync<JsonElement>("/api/v1/reports/projects/progress");
+        var progressValue = await client.GetFromJsonAsync<JsonElement>("/api/v1/reports/projects/progress");
 
-        progreso.EnumerateArray().Should().NotBeEmpty("la prueba acaba de crear uno");
+        progressValue.EnumerateArray().Should().NotBeEmpty("la prueba acaba de crear uno");
 
-        foreach (var proyecto in progreso.EnumerateArray())
+        foreach (var project in progressValue.EnumerateArray())
         {
-            var total = proyecto.GetProperty("totalTasks").GetInt32();
-            var hechas = proyecto.GetProperty("doneTasks").GetInt32();
-            var pct = proyecto.GetProperty("completionPct").GetDouble();
+            var total = project.GetProperty("totalTasks").GetInt32();
+            var done = project.GetProperty("doneTasks").GetInt32();
+            var pct = project.GetProperty("completionPct").GetDouble();
 
-            proyecto.GetProperty("name").GetString().Should().NotBeNullOrWhiteSpace();
-            hechas.Should().BeLessThanOrEqualTo(total);
+            project.GetProperty("name").GetString().Should().NotBeNullOrWhiteSpace();
+            done.Should().BeLessThanOrEqualTo(total);
             pct.Should().BeInRange(0, 100);
 
-            var esperado = total > 0 ? (double)hechas / total * 100 : 0;
-            pct.Should().BeApproximately(esperado, 0.1);
+            var expected = total > 0 ? (double)done / total * 100 : 0;
+            pct.Should().BeApproximately(expected, 0.1);
         }
     }
 
@@ -222,11 +222,11 @@ public sealed class ReportingFlowTests(CrmApiFactory factory)
     /// verdad tardó. Si alguien devolviera otra vez un número fijo, esto lo pilla.
     /// </summary>
     [Fact]
-    public async Task El_tiempo_de_entrega_sale_de_las_fechas_y_no_de_una_constante()
+    public async Task Lead_time_comes_from_the_dates_not_a_constant()
     {
-        var cliente = await AutenticarAsync();
+        var client = await AuthenticateAsync();
 
-        var alta = await cliente.PostAsJsonAsync("/api/v1/tasks", new
+        var creation = await client.PostAsJsonAsync("/api/v1/tasks", new
         {
             projectId = Guid.NewGuid(),
             title = "Tarea que se cierra al momento",
@@ -235,18 +235,18 @@ public sealed class ReportingFlowTests(CrmApiFactory factory)
             estimatedHours = 1,
             dueDate = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(1)),
         });
-        alta.EnsureSuccessStatusCode();
-        var tarea = (await alta.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetGuid();
+        creation.EnsureSuccessStatusCode();
+        var task = (await creation.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetGuid();
 
-        var cierre = await cliente.PatchAsJsonAsync($"/api/v1/tasks/{tarea}/move", new { newStatus = "Done" });
-        cierre.EnsureSuccessStatusCode();
+        var closing = await client.PatchAsJsonAsync($"/api/v1/tasks/{task}/move", new { newStatus = "Done" });
+        closing.EnsureSuccessStatusCode();
 
-        var kpi = await cliente.GetFromJsonAsync<JsonElement>("/api/v1/reports/kpi");
-        var entrega = kpi.GetProperty("avgLeadTimeDays");
+        var kpi = await client.GetFromJsonAsync<JsonElement>("/api/v1/reports/kpi");
+        var leadTime = kpi.GetProperty("avgLeadTimeDays");
 
-        entrega.ValueKind.Should().NotBe(JsonValueKind.Null,
+        leadTime.ValueKind.Should().NotBe(JsonValueKind.Null,
             "acaba de cerrarse una tarea, así que hay con qué calcular la media");
-        entrega.GetDouble().Should().BeLessThan(1.0,
+        leadTime.GetDouble().Should().BeLessThan(1.0,
             "la tarea se creó y se cerró en la misma prueba: la media no puede dar los 2,5 días que devolvía la constante");
     }
 
@@ -258,11 +258,11 @@ public sealed class ReportingFlowTests(CrmApiFactory factory)
     /// calcular. Un hueco es la respuesta honesta; el 1,4 que había antes no lo era.
     /// </summary>
     [Fact]
-    public async Task El_tiempo_de_ciclo_se_declara_desconocido_en_vez_de_inventarse()
+    public async Task Cycle_time_is_reported_unknown_instead_of_invented()
     {
-        var cliente = await AutenticarAsync();
+        var client = await AuthenticateAsync();
 
-        var kpi = await cliente.GetFromJsonAsync<JsonElement>("/api/v1/reports/kpi");
+        var kpi = await client.GetFromJsonAsync<JsonElement>("/api/v1/reports/kpi");
 
         kpi.GetProperty("avgCycleTimeDays").ValueKind.Should().Be(JsonValueKind.Null,
             "sin historial de cambios de estado no hay forma de medirlo, y un número inventado no se distingue de uno medido");
@@ -276,22 +276,22 @@ public sealed class ReportingFlowTests(CrmApiFactory factory)
     /// gráfico que no depende de los datos es una decoración con aspecto de medida.
     /// </summary>
     [Fact]
-    public async Task El_quemado_no_baja_si_no_se_cierra_nada()
+    public async Task The_burndown_does_not_drop_if_nothing_closes()
     {
-        var cliente = await AutenticarAsync();
-        var proyecto = await CrearProyectoConTareaAsync(cliente);
+        var client = await AuthenticateAsync();
+        var project = await CreateProjectWithTaskAsync(client);
 
-        var quemado = await cliente.GetFromJsonAsync<JsonElement>(
-            $"/api/v1/reports/projects/{proyecto}/burndown");
+        var burndown = await client.GetFromJsonAsync<JsonElement>(
+            $"/api/v1/reports/projects/{project}/burndown");
 
-        var puntos = quemado.GetProperty("data").EnumerateArray().ToList();
-        puntos.Should().NotBeEmpty();
+        var items = burndown.GetProperty("data").EnumerateArray().ToList();
+        items.Should().NotBeEmpty();
 
-        var restantes = puntos.Select(p => p.GetProperty("remainingTasks").GetInt32()).ToList();
+        var remaining = items.Select(p => p.GetProperty("remainingTasks").GetInt32()).ToList();
 
-        restantes.Should().OnlyContain(r => r == restantes[0],
+        remaining.Should().OnlyContain(r => r == remaining[0],
             "no se ha cerrado ninguna tarea del proyecto, así que lo que queda no puede bajar solo");
-        restantes[0].Should().Be(1, "el proyecto tiene exactamente la tarea que creó la prueba");
+        remaining[0].Should().Be(1, "el proyecto tiene exactamente la tarea que creó la prueba");
     }
 
     /// <summary>
@@ -299,23 +299,23 @@ public sealed class ReportingFlowTests(CrmApiFactory factory)
     /// quien llama necesita distinguir «no está» de «está y no tiene nada».
     /// </summary>
     [Fact]
-    public async Task Un_informe_que_no_existe_da_404()
+    public async Task A_missing_report_returns_404()
     {
-        var cliente = await AutenticarAsync();
+        var client = await AuthenticateAsync();
 
-        var respuesta = await cliente.GetAsync($"/api/v1/reports/{Guid.NewGuid()}");
+        var response = await client.GetAsync($"/api/v1/reports/{Guid.NewGuid()}");
 
-        respuesta.StatusCode.Should().Be(HttpStatusCode.NotFound);
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
     /// <summary>El listado de informes es una lista, aunque esté vacía. Nunca un 404.</summary>
     [Fact]
-    public async Task El_listado_de_informes_responde_aunque_no_haya_ninguno()
+    public async Task The_report_listing_answers_even_when_empty()
     {
-        var cliente = await AutenticarAsync();
+        var client = await AuthenticateAsync();
 
-        var respuesta = await cliente.GetAsync("/api/v1/reports");
+        var response = await client.GetAsync("/api/v1/reports");
 
-        respuesta.StatusCode.Should().Be(HttpStatusCode.OK);
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 }

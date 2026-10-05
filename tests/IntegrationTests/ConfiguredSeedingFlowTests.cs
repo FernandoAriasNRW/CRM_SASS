@@ -16,31 +16,31 @@ namespace IntegrationTests;
 /// todo está apagado.
 /// </summary>
 [Collection(ApiCollection.Name)]
-public sealed class SiembraBajoConfiguracionFlowTests(CrmApiFactory factory)
+public sealed class ConfiguredSeedingFlowTests(CrmApiFactory factory)
 {
     [Fact]
-    public void Sin_configuracion_no_se_siembra_ni_se_crea_administrador()
+    public void Without_configuration_nothing_is_seeded_and_no_admin_is_created()
     {
-        var ajustes = SeedingSettings.From(new ConfigurationBuilder().Build());
+        var settings = SeedingSettings.From(new ConfigurationBuilder().Build());
 
-        ajustes.SeedOnStartup.Should().BeFalse("sembrar al arrancar se enciende a mano");
-        ajustes.AllowSeedEndpoint.Should().BeFalse("el endpoint de siembra se enciende a mano");
-        ajustes.HasInitialAdmin.Should().BeFalse("no hay administrador con contraseña conocida por defecto");
+        settings.SeedOnStartup.Should().BeFalse("sembrar al arrancar se enciende a mano");
+        settings.AllowSeedEndpoint.Should().BeFalse("el endpoint de siembra se enciende a mano");
+        settings.HasInitialAdmin.Should().BeFalse("no hay administrador con contraseña conocida por defecto");
     }
 
     [Fact]
-    public async Task Sin_la_opcion_el_endpoint_de_siembra_no_existe()
+    public async Task Without_the_option_the_seed_endpoint_does_not_exist()
     {
         // La misma base, otro host con la opción apagada. El de la colección la enciende.
-        await using var apagado = factory.WithWebHostBuilder(b =>
+        await using var off = factory.WithWebHostBuilder(b =>
         {
             b.UseSetting("DemoData:SeedOnStartup", "false");
             b.UseSetting("DemoData:AllowSeedEndpoint", "false");
         });
 
-        var respuesta = await apagado.CreateClient().PostAsync("/api/v1/admin/seed-database", null);
+        var response = await off.CreateClient().PostAsync("/api/v1/admin/seed-database", null);
 
-        respuesta.StatusCode.Should().Be(HttpStatusCode.NotFound,
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound,
             "sin DemoData:AllowSeedEndpoint la ruta no se registra, en ningún entorno");
     }
 }

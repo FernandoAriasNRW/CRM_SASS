@@ -22,42 +22,42 @@ namespace IntegrationTests;
 /// filtro sobre lo ya descargado.
 /// </summary>
 [Collection(ApiCollection.Name)]
-public sealed class BusquedaPorTextoFlowTests(CrmApiFactory factory)
+public sealed class TextSearchFlowTests(CrmApiFactory factory)
 {
     private const string Email = "admin@acme.com";
     private const string Password = "admin123";
 
     /// <summary>Las listas paginadas que buscan, con el campo por el que se titula cada una.</summary>
-    public static TheoryData<string, string> Listas => new()
+    public static TheoryData<string, string> Lists => new()
     {
         { "/api/v1/tasks", "title" },
         { "/api/v1/tickets", "title" },
         { "/api/v1/projects", "name" }
     };
 
-    private async Task<HttpClient> AutenticarAsync()
+    private async Task<HttpClient> AuthenticateAsync()
     {
         var login = await factory.CreateClient().PostAsJsonAsync("/api/v1/auth/login", new { Email, Password });
         login.EnsureSuccessStatusCode();
 
         var token = (await login.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("accessToken").GetString()!;
 
-        var cliente = factory.CreateClient();
-        cliente.DefaultRequestHeaders.Authorization = new("Bearer", token);
-        return cliente;
+        var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Authorization = new("Bearer", token);
+        return client;
     }
 
-    private static async Task<JsonElement[]> ItemsAsync(HttpClient cliente, string ruta)
+    private static async Task<JsonElement[]> ItemsAsync(HttpClient client, string path)
     {
-        var respuesta = await cliente.GetAsync(ruta);
-        respuesta.StatusCode.Should().Be(HttpStatusCode.OK, ruta);
+        var response = await client.GetAsync(path);
+        response.StatusCode.Should().Be(HttpStatusCode.OK, path);
 
-        var cuerpo = await respuesta.Content.ReadFromJsonAsync<JsonElement>();
+        var body = await response.Content.ReadFromJsonAsync<JsonElement>();
 
         // Las listas paginadas envuelven en `items`; la de personas devuelve el array pelado.
-        return cuerpo.ValueKind == JsonValueKind.Array
-            ? [.. cuerpo.EnumerateArray()]
-            : [.. cuerpo.GetProperty("items").EnumerateArray()];
+        return body.ValueKind == JsonValueKind.Array
+            ? [.. body.EnumerateArray()]
+            : [.. body.GetProperty("items").EnumerateArray()];
     }
 
     /// <summary>
@@ -67,21 +67,21 @@ public sealed class BusquedaPorTextoFlowTests(CrmApiFactory factory)
     /// (<c>utf8mb4_0900_ai_ci</c>), y precisamente por eso se compara así. Con un <c>Contains</c>
     /// a secas, «Diseño» encontrado por «diseno» parecería un resultado que sobra.
     /// </summary>
-    private static string Plano(string texto)
+    private static string Plain(string text)
     {
-        var descompuesto = texto.Normalize(NormalizationForm.FormD);
-        var sinTildes = new StringBuilder(descompuesto.Length);
+        var decomposed = text.Normalize(NormalizationForm.FormD);
+        var withoutAccents = new StringBuilder(decomposed.Length);
 
-        foreach (var letra in descompuesto)
+        foreach (var letter in decomposed)
         {
-            if (CharUnicodeInfo.GetUnicodeCategory(letra) != UnicodeCategory.NonSpacingMark)
-                sinTildes.Append(letra);
+            if (CharUnicodeInfo.GetUnicodeCategory(letter) != UnicodeCategory.NonSpacingMark)
+                withoutAccents.Append(letter);
         }
 
-        return sinTildes.ToString().Normalize(NormalizationForm.FormC).ToLowerInvariant();
+        return withoutAccents.ToString().Normalize(NormalizationForm.FormC).ToLowerInvariant();
     }
 
-    private static readonly char[] Separadores = [' ', '-', ':', ',', '.'];
+    private static readonly char[] Separators = [' ', '-', ':', ',', '.'];
 
     /// <summary>
     /// Cuántos se piden como «primera página».
@@ -90,13 +90,13 @@ public sealed class BusquedaPorTextoFlowTests(CrmApiFactory factory)
     /// la búsqueda alcanza algo que no está en la página que se pidió, y para eso da igual el
     /// tamaño mientras haya registros de sobra.
     /// </summary>
-    private const int TAMANO_DE_PAGINA = 3;
+    private const int PAGE_SIZE = 3;
 
     /// <summary>
     /// Una palabra del título que sirva para buscar: la más larga, para que no sea «de» ni «la».
     /// </summary>
-    private static string PalabraBuscable(string titulo) =>
-        titulo.Split(Separadores, StringSplitOptions.RemoveEmptyEntries)
+    private static string SearchableWord(string title) =>
+        title.Split(Separators, StringSplitOptions.RemoveEmptyEntries)
               .OrderByDescending(p => p.Length)
               .First();
 
@@ -114,13 +114,13 @@ public sealed class BusquedaPorTextoFlowTests(CrmApiFactory factory)
     /// entre las dos llamadas.
     /// </summary>
     [Theory]
-    [MemberData(nameof(Listas))]
-    public async Task Encuentra_registros_que_no_estan_en_la_primera_pagina(string ruta, string campo)
+    [MemberData(nameof(Lists))]
+    public async Task Finds_records_beyond_the_first_page(string path, string field)
     {
-        var cliente = await AutenticarAsync();
+        var client = await AuthenticateAsync();
 
-        var todos = await ItemsAsync(cliente, $"{ruta}?pageSize=200");
-        todos.Length.Should().BeGreaterThan(TAMANO_DE_PAGINA,
+        var all = await ItemsAsync(client, $"{path}?pageSize=200");
+        all.Length.Should().BeGreaterThan(PAGE_SIZE,
             "hacen falta más registros que los que cabe en una página para que haya algo fuera");
 
         // Se pide la página primero y **se elige después** uno que no esté en ella.
@@ -130,22 +130,22 @@ public sealed class BusquedaPorTextoFlowTests(CrmApiFactory factory)
         // una fila más entre las dos llamadas, el elemento elegido entraba en la página y la
         // prueba fallaba sin que nada estuviera roto. Comprobar la pertenencia real no depende de
         // cuántos haya.
-        var primeraPagina = await ItemsAsync(cliente, $"{ruta}?pageSize={TAMANO_DE_PAGINA}");
-        var enLaPagina = primeraPagina.Select(i => i.GetProperty("id").GetGuid()).ToHashSet();
+        var firstPage = await ItemsAsync(client, $"{path}?pageSize={PAGE_SIZE}");
+        var onPage = firstPage.Select(i => i.GetProperty("id").GetGuid()).ToHashSet();
 
-        var escondido = todos.LastOrDefault(t => !enLaPagina.Contains(t.GetProperty("id").GetGuid()));
+        var hidden = all.LastOrDefault(t => !onPage.Contains(t.GetProperty("id").GetGuid()));
 
-        escondido.ValueKind.Should().NotBe(JsonValueKind.Undefined,
+        hidden.ValueKind.Should().NotBe(JsonValueKind.Undefined,
             "el elemento elegido tiene que estar fuera de la primera página; si no, buscar en el "
             + "cliente sobre lo ya descargado también lo habría encontrado");
 
-        var id = escondido.GetProperty("id").GetGuid();
-        var titulo = escondido.GetProperty(campo).GetString()!;
+        var id = hidden.GetProperty("id").GetGuid();
+        var title = hidden.GetProperty(field).GetString()!;
 
-        var encontrados = await ItemsAsync(cliente, $"{ruta}?pageSize=200&search={Uri.EscapeDataString(titulo)}");
+        var found = await ItemsAsync(client, $"{path}?pageSize=200&search={Uri.EscapeDataString(title)}");
 
-        encontrados.Select(i => i.GetProperty("id").GetGuid()).Should().Contain(id,
-            $"«{titulo}» existe en el inquilino, así que buscarlo tiene que darlo aunque esté en "
+        found.Select(i => i.GetProperty("id").GetGuid()).Should().Contain(id,
+            $"«{title}» existe en el inquilino, así que buscarlo tiene que darlo aunque esté en "
             + "la última página");
     }
 
@@ -154,29 +154,29 @@ public sealed class BusquedaPorTextoFlowTests(CrmApiFactory factory)
     /// engaño que el menú que filtraba y no filtraba.
     /// </summary>
     [Theory]
-    [MemberData(nameof(Listas))]
-    public async Task Lo_que_devuelve_contiene_lo_buscado_y_es_menos_que_todo(string ruta, string campo)
+    [MemberData(nameof(Lists))]
+    public async Task What_it_returns_contains_the_term_and_is_less_than_everything(string path, string field)
     {
-        var cliente = await AutenticarAsync();
+        var client = await AuthenticateAsync();
 
-        var todos = await ItemsAsync(cliente, $"{ruta}?pageSize=200");
-        var palabra = PalabraBuscable(todos[^1].GetProperty(campo).GetString()!);
+        var all = await ItemsAsync(client, $"{path}?pageSize=200");
+        var word = SearchableWord(all[^1].GetProperty(field).GetString()!);
 
-        var encontrados = await ItemsAsync(cliente, $"{ruta}?pageSize=200&search={Uri.EscapeDataString(palabra)}");
+        var found = await ItemsAsync(client, $"{path}?pageSize=200&search={Uri.EscapeDataString(word)}");
 
-        encontrados.Should().NotBeEmpty("la palabra sale de un registro que existe");
-        encontrados.Length.Should().BeLessThan(todos.Length,
-            $"«{palabra}» no puede estar en todos los registros; si lo devuelve todo, el parámetro "
+        found.Should().NotBeEmpty("la palabra sale de un registro que existe");
+        found.Length.Should().BeLessThan(all.Length,
+            $"«{word}» no puede estar en todos los registros; si lo devuelve todo, el parámetro "
             + "llega y nadie lo lee");
 
         // El texto puede estar en el título o en la descripción: se busca en los dos, así que
         // exigir que esté en el título convertiría un acierto en un fallo de la prueba.
-        foreach (var item in encontrados)
+        foreach (var item in found)
         {
-            var titulo = item.GetProperty(campo).GetString() ?? "";
-            var descripcion = item.TryGetProperty("description", out var d) ? d.GetString() ?? "" : "";
+            var title = item.GetProperty(field).GetString() ?? "";
+            var description = item.TryGetProperty("description", out var d) ? d.GetString() ?? "" : "";
 
-            (Plano(titulo) + " " + Plano(descripcion)).Should().Contain(Plano(palabra),
+            (Plain(title) + " " + Plain(description)).Should().Contain(Plain(word),
                 "cada resultado tiene que contener lo buscado en alguna parte");
         }
     }
@@ -187,16 +187,16 @@ public sealed class BusquedaPorTextoFlowTests(CrmApiFactory factory)
     /// como «no encuentres nada».
     /// </summary>
     [Theory]
-    [MemberData(nameof(Listas))]
-    public async Task Sin_buscar_o_buscando_en_blanco_sale_la_lista_de_siempre(string ruta, string campo)
+    [MemberData(nameof(Lists))]
+    public async Task Without_search_or_blank_search_returns_the_usual_list(string path, string field)
     {
-        _ = campo;
-        var cliente = await AutenticarAsync();
+        _ = field;
+        var client = await AuthenticateAsync();
 
-        var sinParametro = await ItemsAsync(cliente, $"{ruta}?pageSize=200");
-        var enBlanco = await ItemsAsync(cliente, $"{ruta}?pageSize=200&search=%20%20");
+        var withoutParameter = await ItemsAsync(client, $"{path}?pageSize=200");
+        var blank = await ItemsAsync(client, $"{path}?pageSize=200&search=%20%20");
 
-        enBlanco.Length.Should().Be(sinParametro.Length,
+        blank.Length.Should().Be(withoutParameter.Length,
             "buscar espacios no es buscar; sería la lista vacía en cuanto alguien deje el cuadro a medias");
     }
 
@@ -205,23 +205,23 @@ public sealed class BusquedaPorTextoFlowTests(CrmApiFactory factory)
     /// estaba rota: el servicio pedía una ruta que no existe y el error se perdía por el camino.
     /// </summary>
     [Fact]
-    public async Task Las_personas_se_buscan_por_nombre_y_por_correo()
+    public async Task People_are_searched_by_name_and_email()
     {
-        var cliente = await AutenticarAsync();
+        var client = await AuthenticateAsync();
 
-        var todas = await ItemsAsync(cliente, "/api/v1/users");
-        todas.Should().NotBeEmpty("el sembrador crea usuarios");
+        var all = await ItemsAsync(client, "/api/v1/users");
+        all.Should().NotBeEmpty("el sembrador crea usuarios");
 
-        var alguien = todas[^1];
-        var nombre = alguien.GetProperty("name").GetString()!;
-        var correo = alguien.GetProperty("email").GetString()!;
-        var id = alguien.GetProperty("id").GetGuid();
+        var someone = all[^1];
+        var name = someone.GetProperty("name").GetString()!;
+        var email = someone.GetProperty("email").GetString()!;
+        var id = someone.GetProperty("id").GetGuid();
 
-        var porNombre = await ItemsAsync(cliente, $"/api/v1/users?search={Uri.EscapeDataString(PalabraBuscable(nombre))}");
-        porNombre.Select(u => u.GetProperty("id").GetGuid()).Should().Contain(id);
+        var byName = await ItemsAsync(client, $"/api/v1/users?search={Uri.EscapeDataString(SearchableWord(name))}");
+        byName.Select(u => u.GetProperty("id").GetGuid()).Should().Contain(id);
 
-        var porCorreo = await ItemsAsync(cliente, $"/api/v1/users?search={Uri.EscapeDataString(correo)}");
-        porCorreo.Select(u => u.GetProperty("id").GetGuid()).Should().Contain(id,
+        var byEmail = await ItemsAsync(client, $"/api/v1/users?search={Uri.EscapeDataString(email)}");
+        byEmail.Select(u => u.GetProperty("id").GetGuid()).Should().Contain(id,
             "quien escribe el correo entero espera a esa persona, no la lista completa");
     }
 
@@ -234,18 +234,18 @@ public sealed class BusquedaPorTextoFlowTests(CrmApiFactory factory)
     /// misma lista y un recorte por defecto le escondería personas sin decírselo a nadie.
     /// </summary>
     [Fact]
-    public async Task La_lista_de_personas_se_recorta_solo_si_se_pide()
+    public async Task The_people_list_is_trimmed_only_when_asked()
     {
-        var cliente = await AutenticarAsync();
+        var client = await AuthenticateAsync();
 
-        var todas = await ItemsAsync(cliente, "/api/v1/users");
-        todas.Length.Should().BeGreaterThan(1, "con una sola persona no se distingue recortar de no recortar");
+        var all = await ItemsAsync(client, "/api/v1/users");
+        all.Length.Should().BeGreaterThan(1, "con una sola persona no se distingue recortar de no recortar");
 
-        var recortada = await ItemsAsync(cliente, "/api/v1/users?pageSize=1");
-        recortada.Should().ContainSingle("se ha pedido una y sólo una");
+        var trimmed = await ItemsAsync(client, "/api/v1/users?pageSize=1");
+        trimmed.Should().ContainSingle("se ha pedido una y sólo una");
 
-        var sinPedirlo = await ItemsAsync(cliente, "/api/v1/users");
-        sinPedirlo.Length.Should().Be(todas.Length,
+        var withoutAsking = await ItemsAsync(client, "/api/v1/users");
+        withoutAsking.Length.Should().Be(all.Length,
             "sin `pageSize` siguen viniendo todas; recortar por defecto escondería personas en la "
             + "pantalla de administración sin que nadie se enterara");
     }
@@ -258,29 +258,29 @@ public sealed class BusquedaPorTextoFlowTests(CrmApiFactory factory)
     /// sería que las tildes dejan de encontrarse y nadie sabría por qué.
     /// </summary>
     [Fact]
-    public async Task Buscar_ignora_tildes_y_mayusculas()
+    public async Task Search_ignores_accents_and_case()
     {
-        var cliente = await AutenticarAsync();
+        var client = await AuthenticateAsync();
 
-        var todas = await ItemsAsync(cliente, "/api/v1/tasks?pageSize=200");
+        var all = await ItemsAsync(client, "/api/v1/tasks?pageSize=200");
 
-        var conTilde = todas
+        var accented = all
             .Select(t => t.GetProperty("title").GetString() ?? "")
-            .SelectMany(PalabrasDe)
-            .FirstOrDefault(p => Plano(p) != p.ToLowerInvariant());
+            .SelectMany(WordsOf)
+            .FirstOrDefault(p => Plain(p) != p.ToLowerInvariant());
 
         // Sin datos acentuados no hay nada que comprobar, y fingirlo creando aquí una tarea con
         // tilde probaría la colación de una fila recién insertada, no la de las que ya existen.
-        if (conTilde is null) return;
+        if (accented is null) return;
 
-        var buscado = Plano(conTilde).ToUpperInvariant();
-        var encontradas = await ItemsAsync(cliente, $"/api/v1/tasks?pageSize=200&search={Uri.EscapeDataString(buscado)}");
+        var searched = Plain(accented).ToUpperInvariant();
+        var found = await ItemsAsync(client, $"/api/v1/tasks?pageSize=200&search={Uri.EscapeDataString(searched)}");
 
-        encontradas.Should().NotBeEmpty(
-            $"«{buscado}» tiene que encontrar «{conTilde}»: la colación de la base de datos es "
+        found.Should().NotBeEmpty(
+            $"«{searched}» tiene que encontrar «{accented}»: la colación de la base de datos es "
             + "insensible a tildes y mayúsculas");
     }
 
-    private static IEnumerable<string> PalabrasDe(string texto) =>
-        texto.Split(Separadores, StringSplitOptions.RemoveEmptyEntries).Where(p => p.Length > 3);
+    private static IEnumerable<string> WordsOf(string text) =>
+        text.Split(Separators, StringSplitOptions.RemoveEmptyEntries).Where(p => p.Length > 3);
 }

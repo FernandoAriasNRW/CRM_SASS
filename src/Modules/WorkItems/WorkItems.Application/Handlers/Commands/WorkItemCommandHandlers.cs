@@ -93,7 +93,7 @@ public sealed class PatchTaskCommandHandler(
     {
       task.UpdateDetails(
           request.Title, request.Description, request.EstimatedHours, request.DueDate,
-          request.StartDate, request.QuitarFechaInicio);
+          request.StartDate, request.ClearStartDate);
     }
     catch (InvalidOperationException ex) { return Result<bool>.Failure(ex.Message); }
 

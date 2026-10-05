@@ -20,138 +20,138 @@ public sealed class ChecklistFlowTests(CrmApiFactory factory)
     private const string Email = "admin@acme.com";
     private const string Password = "admin123";
 
-    private async Task<(HttpClient cliente, Guid tenantId)> AutenticarAsync()
+    private async Task<(HttpClient client, Guid tenantId)> AuthenticateAsync()
     {
         var login = await factory.CreateClient().PostAsJsonAsync("/api/v1/auth/login", new { Email, Password });
         login.EnsureSuccessStatusCode();
 
         var token = (await login.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("accessToken").GetString()!;
-        var cliente = factory.CreateClient();
-        cliente.DefaultRequestHeaders.Authorization = new("Bearer", token);
+        var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Authorization = new("Bearer", token);
 
-        var cuerpo = token.Split('.')[1].Replace('-', '+').Replace('_', '/');
-        var relleno = cuerpo.PadRight(cuerpo.Length + (4 - cuerpo.Length % 4) % 4, '=');
-        var tenantId = Guid.Parse(JsonDocument.Parse(Convert.FromBase64String(relleno))
+        var body = token.Split('.')[1].Replace('-', '+').Replace('_', '/');
+        var payload = body.PadRight(body.Length + (4 - body.Length % 4) % 4, '=');
+        var tenantId = Guid.Parse(JsonDocument.Parse(Convert.FromBase64String(payload))
             .RootElement.GetProperty("tenantId").GetString()!);
 
-        return (cliente, tenantId);
+        return (client, tenantId);
     }
 
-    private async Task<Guid> CrearTareaAsync(HttpClient cliente, Guid tenantId, string titulo)
+    private async Task<Guid> CreateTaskAsync(HttpClient client, Guid tenantId, string title)
     {
-        var respuesta = await cliente.PostAsJsonAsync("/api/v1/tasks", new
+        var response = await client.PostAsJsonAsync("/api/v1/tasks", new
         {
             tenantId,
             createdById = Guid.NewGuid(),
             projectId = Guid.NewGuid(),
-            title = titulo,
+            title = title,
             description = "creada por las pruebas de integración",
             assigneeId = Guid.NewGuid(),
             estimatedHours = 1m,
             dueDate = "2026-12-01"
         });
 
-        respuesta.StatusCode.Should().Be(HttpStatusCode.Created);
-        return (await respuesta.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetGuid();
+        response.StatusCode.Should().Be(HttpStatusCode.Created);
+        return (await response.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetGuid();
     }
 
-    private static async Task<Guid> AgregarAsync(HttpClient cliente, Guid tarea, string texto)
+    private static async Task<Guid> AddAsync(HttpClient client, Guid task, string text)
     {
-        var respuesta = await cliente.PostAsJsonAsync($"/api/v1/tasks/{tarea}/checklist", new { text = texto });
-        respuesta.StatusCode.Should().Be(HttpStatusCode.OK);
-        return (await respuesta.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetGuid();
+        var response = await client.PostAsJsonAsync($"/api/v1/tasks/{task}/checklist", new { text = text });
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        return (await response.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetGuid();
     }
 
-    private static async Task<List<string>> TextosAsync(HttpClient cliente, Guid tarea)
+    private static async Task<List<string>> TextsAsync(HttpClient client, Guid task)
     {
-        var puntos = await cliente.GetFromJsonAsync<JsonElement>($"/api/v1/tasks/{tarea}/checklist");
-        return puntos.EnumerateArray().Select(p => p.GetProperty("text").GetString()!).ToList();
+        var items = await client.GetFromJsonAsync<JsonElement>($"/api/v1/tasks/{task}/checklist");
+        return items.EnumerateArray().Select(p => p.GetProperty("text").GetString()!).ToList();
     }
 
     [Fact]
-    public async Task Los_puntos_vuelven_en_el_orden_en_que_se_escribieron()
+    public async Task Items_come_back_in_the_order_they_were_written()
     {
-        var (cliente, tenantId) = await AutenticarAsync();
-        var tarea = await CrearTareaAsync(cliente, tenantId, "Con checklist");
+        var (client, tenantId) = await AuthenticateAsync();
+        var task = await CreateTaskAsync(client, tenantId, "Con checklist");
 
-        foreach (var texto in new[] { "Comprar", "Cocinar", "Comer", "Recoger" })
-            await AgregarAsync(cliente, tarea, texto);
+        foreach (var text in new[] { "Comprar", "Cocinar", "Comer", "Recoger" })
+            await AddAsync(client, task, text);
 
-        (await TextosAsync(cliente, tarea))
+        (await TextsAsync(client, task))
             .Should().ContainInOrder("Comprar", "Cocinar", "Comer", "Recoger");
     }
 
     [Fact]
-    public async Task El_progreso_de_la_checklist_llega_en_la_tarea()
+    public async Task Checklist_progress_comes_with_the_task()
     {
-        var (cliente, tenantId) = await AutenticarAsync();
-        var tarea = await CrearTareaAsync(cliente, tenantId, "Con progreso");
-        var uno = await AgregarAsync(cliente, tarea, "Uno");
-        await AgregarAsync(cliente, tarea, "Dos");
-        await AgregarAsync(cliente, tarea, "Tres");
+        var (client, tenantId) = await AuthenticateAsync();
+        var task = await CreateTaskAsync(client, tenantId, "Con progreso");
+        var one = await AddAsync(client, task, "Uno");
+        await AddAsync(client, task, "Dos");
+        await AddAsync(client, task, "Tres");
 
-        var marcado = await cliente.PatchAsJsonAsync($"/api/v1/tasks/{tarea}/checklist/{uno}", new { isDone = true });
-        marcado.StatusCode.Should().Be(HttpStatusCode.OK);
+        var @checked = await client.PatchAsJsonAsync($"/api/v1/tasks/{task}/checklist/{one}", new { isDone = true });
+        @checked.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        var leida = await cliente.GetFromJsonAsync<JsonElement>($"/api/v1/tasks/{tarea}");
-        leida.GetProperty("checklistTotal").GetInt32().Should().Be(3);
-        leida.GetProperty("checklistDone").GetInt32().Should().Be(1);
+        var read = await client.GetFromJsonAsync<JsonElement>($"/api/v1/tasks/{task}");
+        read.GetProperty("checklistTotal").GetInt32().Should().Be(3);
+        read.GetProperty("checklistDone").GetInt32().Should().Be(1);
     }
 
     [Fact]
-    public async Task Renombrar_un_punto_no_lo_desmarca()
+    public async Task Renaming_an_item_does_not_uncheck_it()
     {
-        var (cliente, tenantId) = await AutenticarAsync();
-        var tarea = await CrearTareaAsync(cliente, tenantId, "Con typo");
-        var punto = await AgregarAsync(cliente, tarea, "Con typo");
-        await cliente.PatchAsJsonAsync($"/api/v1/tasks/{tarea}/checklist/{punto}", new { isDone = true });
+        var (client, tenantId) = await AuthenticateAsync();
+        var task = await CreateTaskAsync(client, tenantId, "Con typo");
+        var item = await AddAsync(client, task, "Con typo");
+        await client.PatchAsJsonAsync($"/api/v1/tasks/{task}/checklist/{item}", new { isDone = true });
 
-        await cliente.PatchAsJsonAsync($"/api/v1/tasks/{tarea}/checklist/{punto}", new { text = "Sin typo" });
+        await client.PatchAsJsonAsync($"/api/v1/tasks/{task}/checklist/{item}", new { text = "Sin typo" });
 
-        var puntos = await cliente.GetFromJsonAsync<JsonElement>($"/api/v1/tasks/{tarea}/checklist");
-        var unico = puntos.EnumerateArray().Single();
-        unico.GetProperty("text").GetString().Should().Be("Sin typo");
-        unico.GetProperty("isDone").GetBoolean().Should().BeTrue();
+        var items = await client.GetFromJsonAsync<JsonElement>($"/api/v1/tasks/{task}/checklist");
+        var single = items.EnumerateArray().Single();
+        single.GetProperty("text").GetString().Should().Be("Sin typo");
+        single.GetProperty("isDone").GetBoolean().Should().BeTrue();
     }
 
     [Fact]
-    public async Task Un_punto_sin_texto_se_rechaza()
+    public async Task An_item_without_text_is_rejected()
     {
-        var (cliente, tenantId) = await AutenticarAsync();
-        var tarea = await CrearTareaAsync(cliente, tenantId, "Sin texto");
+        var (client, tenantId) = await AuthenticateAsync();
+        var task = await CreateTaskAsync(client, tenantId, "Sin texto");
 
-        var respuesta = await cliente.PostAsJsonAsync($"/api/v1/tasks/{tarea}/checklist", new { text = "   " });
+        var response = await client.PostAsJsonAsync($"/api/v1/tasks/{task}/checklist", new { text = "   " });
 
-        respuesta.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-        (await TextosAsync(cliente, tarea)).Should().BeEmpty();
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await TextsAsync(client, task)).Should().BeEmpty();
     }
 
     [Fact]
-    public async Task Borrar_del_medio_no_revuelve_el_orden_de_los_demas()
+    public async Task Deleting_from_the_middle_keeps_the_others_in_order()
     {
-        var (cliente, tenantId) = await AutenticarAsync();
-        var tarea = await CrearTareaAsync(cliente, tenantId, "Con hueco");
-        await AgregarAsync(cliente, tarea, "Primero");
-        var delMedio = await AgregarAsync(cliente, tarea, "Segundo");
-        await AgregarAsync(cliente, tarea, "Tercero");
+        var (client, tenantId) = await AuthenticateAsync();
+        var task = await CreateTaskAsync(client, tenantId, "Con hueco");
+        await AddAsync(client, task, "Primero");
+        var middle = await AddAsync(client, task, "Segundo");
+        await AddAsync(client, task, "Tercero");
 
-        var borrado = await cliente.DeleteAsync($"/api/v1/tasks/{tarea}/checklist/{delMedio}");
-        borrado.StatusCode.Should().Be(HttpStatusCode.NoContent);
-        await AgregarAsync(cliente, tarea, "Cuarto");
+        var deleted = await client.DeleteAsync($"/api/v1/tasks/{task}/checklist/{middle}");
+        deleted.StatusCode.Should().Be(HttpStatusCode.NoContent);
+        await AddAsync(client, task, "Cuarto");
 
-        (await TextosAsync(cliente, tarea)).Should().ContainInOrder("Primero", "Tercero", "Cuarto");
+        (await TextsAsync(client, task)).Should().ContainInOrder("Primero", "Tercero", "Cuarto");
     }
 
     [Fact]
-    public async Task Tocar_un_punto_que_no_existe_se_rechaza()
+    public async Task Touching_a_missing_item_is_rejected()
     {
-        var (cliente, tenantId) = await AutenticarAsync();
-        var tarea = await CrearTareaAsync(cliente, tenantId, "Vacía");
+        var (client, tenantId) = await AuthenticateAsync();
+        var task = await CreateTaskAsync(client, tenantId, "Vacía");
 
-        var patch = await cliente.PatchAsJsonAsync($"/api/v1/tasks/{tarea}/checklist/{Guid.NewGuid()}", new { isDone = true });
-        var borrado = await cliente.DeleteAsync($"/api/v1/tasks/{tarea}/checklist/{Guid.NewGuid()}");
+        var patch = await client.PatchAsJsonAsync($"/api/v1/tasks/{task}/checklist/{Guid.NewGuid()}", new { isDone = true });
+        var deleted = await client.DeleteAsync($"/api/v1/tasks/{task}/checklist/{Guid.NewGuid()}");
 
         patch.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-        borrado.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        deleted.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 }

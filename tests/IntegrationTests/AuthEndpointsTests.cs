@@ -15,7 +15,7 @@ public sealed class AuthEndpointsTests(CrmApiFactory factory)
     private HttpClient Client => factory.CreateClient();
 
     [Fact]
-    public async Task Login_con_credenciales_invalidas_devuelve_401()
+    public async Task Login_with_invalid_credentials_returns_401()
     {
         var response = await Client.PostAsJsonAsync("/api/v1/auth/login", new
         {
@@ -27,7 +27,7 @@ public sealed class AuthEndpointsTests(CrmApiFactory factory)
     }
 
     [Fact]
-    public async Task Login_con_email_vacio_devuelve_400_y_no_401()
+    public async Task Login_with_empty_email_returns_400_not_401()
     {
         // Distinguir 400 de 401 confirma que ValidationBehavior está en el pipeline:
         // antes de la Fase 1 los validadores existían pero no se ejecutaban, y una
@@ -42,7 +42,7 @@ public sealed class AuthEndpointsTests(CrmApiFactory factory)
     }
 
     [Fact]
-    public async Task Un_endpoint_protegido_sin_token_devuelve_401()
+    public async Task A_protected_endpoint_without_token_returns_401()
     {
         var response = await Client.GetAsync("/api/v1/projects");
 
@@ -50,7 +50,7 @@ public sealed class AuthEndpointsTests(CrmApiFactory factory)
     }
 
     [Fact]
-    public async Task El_seed_de_base_de_datos_no_es_accesible_sin_autenticacion()
+    public async Task The_database_seed_is_not_reachable_without_authentication()
     {
         // Estaba abierto: un POST anónimo reinicializaba los datos. Se cubre para que
         // no vuelva a quedar expuesto sin que nadie se entere.
@@ -62,7 +62,7 @@ public sealed class AuthEndpointsTests(CrmApiFactory factory)
     }
 
     [Fact]
-    public async Task El_healthcheck_de_vida_responde_sin_autenticacion()
+    public async Task The_liveness_healthcheck_answers_without_authentication()
     {
         var response = await Client.GetAsync("/health/live");
 
