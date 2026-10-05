@@ -8,12 +8,13 @@ using MediatR;
 
 namespace Docs.Application.Handlers.Commands;
 
-public class CreateDocumentHandler(IDocumentRepository repository) 
+public class CreateDocumentHandler(TimeProvider timeProvider, IDocumentRepository repository) 
     : IRequestHandler<CreateDocumentCommand, Result<Guid>>
 {
     public async Task<Result<Guid>> Handle(CreateDocumentCommand request, CancellationToken cancellationToken)
     {
         var document = Document.Create(
+            timeProvider.GetUtcNow().UtcDateTime,
             request.TenantId,
             request.Title,
             request.Description,
@@ -39,7 +40,7 @@ public class CreateDocumentHandler(IDocumentRepository repository)
             ? "<p>Start typing or use / for commands...</p>" 
             : request.InitialContent;
             
-        var page = Page.Create(document.Id, null, request.Title, initialContent, 0);
+        var page = Page.Create(timeProvider.GetUtcNow().UtcDateTime, document.Id, null, request.Title, initialContent, 0);
         await repository.AddPageAsync(page, cancellationToken);
 
         await repository.SaveChangesAsync(cancellationToken);

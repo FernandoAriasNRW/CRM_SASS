@@ -5,6 +5,7 @@ using Comments.Domain.Entities;
 namespace Comments.Application;
 
 public sealed class AddCommentHandler(
+    TimeProvider timeProvider,
     ICommentRepository repository,
     ICommentsUnitOfWork unitOfWork) : ICommandHandler<AddCommentCommand, CommentDto>
 {
@@ -32,6 +33,7 @@ public sealed class AddCommentHandler(
         try
         {
             comment = Comment.Create(
+                timeProvider.GetUtcNow().UtcDateTime,
                 request.TenantId, request.EntityType, request.EntityId,
                 request.AuthorId, request.Text, request.ReplyToId);
         }

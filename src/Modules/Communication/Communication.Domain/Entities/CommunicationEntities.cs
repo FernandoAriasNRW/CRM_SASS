@@ -27,7 +27,7 @@ public sealed class Conversation : AggregateRoot, ITenantEntity, ISoftDeletable
   private Conversation()
   { }
 
-  public static Result<Conversation> Create(Guid tenantId, string name, ConversationType type)
+  public static Result<Conversation> Create(DateTime nowUtc, Guid tenantId, string name, ConversationType type)
   {
     if (string.IsNullOrWhiteSpace(name))
       return Result<Conversation>.Failure("El nombre de la conversación es requerido");
@@ -41,7 +41,7 @@ public sealed class Conversation : AggregateRoot, ITenantEntity, ISoftDeletable
       TenantId = tenantId,
       Name = name,
       TypeValue = type.Value,
-      CreatedAt = DateTime.UtcNow,
+      CreatedAt = nowUtc,
       IsDeleted = false,
       DeletedAt = null,
       DeletedBy = null
@@ -65,25 +65,25 @@ public sealed class Conversation : AggregateRoot, ITenantEntity, ISoftDeletable
   /// <summary>
   /// Agrega un mensaje a la conversación.
   /// </summary>
-  public void AddMessage(Message message)
+  public void AddMessage(DateTime nowUtc, Message message)
   {
     if (IsDeleted)
       throw new InvalidOperationException("No se puede agregar mensajes a una conversación eliminada");
 
-    LastMessageAt = DateTime.UtcNow;
+    LastMessageAt = nowUtc;
     RaiseDomainEvent(new MessageAddedEvent(message.Id, Id, TenantId));
   }
 
   /// <summary>
   /// Soft delete de la conversación.
   /// </summary>
-  public void Delete(Guid deletedBy)
+  public void Delete(DateTime nowUtc, Guid deletedBy)
   {
     if (IsDeleted)
       throw new InvalidOperationException("La conversación ya ha sido eliminada");
 
     IsDeleted = true;
-    DeletedAt = DateTime.UtcNow;
+    DeletedAt = nowUtc;
     DeletedBy = deletedBy;
 
     RaiseDomainEvent(new ConversationDeletedEvent(Id, TenantId, deletedBy));
@@ -124,7 +124,7 @@ public sealed class Message : AggregateRoot, ITenantEntity, ISoftDeletable
   private Message()
   { }
 
-  public static Result<Message> Create(Guid tenantId, Guid conversationId, Guid senderId, string content)
+  public static Result<Message> Create(DateTime nowUtc, Guid tenantId, Guid conversationId, Guid senderId, string content)
   {
     var contentResult = MessageContent.Create(content);
     if (contentResult.IsFailure)
@@ -137,7 +137,7 @@ public sealed class Message : AggregateRoot, ITenantEntity, ISoftDeletable
       ConversationId = conversationId,
       SenderId = senderId,
       Content = content,
-      SentAt = DateTime.UtcNow,
+      SentAt = nowUtc,
       IsDeleted = false,
       DeletedAt = null,
       DeletedBy = null
@@ -146,7 +146,7 @@ public sealed class Message : AggregateRoot, ITenantEntity, ISoftDeletable
     return Result<Message>.Success(message);
   }
 
-  public Result<Message> Edit(string newContent, Guid editorId)
+  public Result<Message> Edit(DateTime nowUtc, string newContent, Guid editorId)
   {
     if (IsDeleted)
       return Result<Message>.Failure("No se puede editar un mensaje eliminado");
@@ -160,7 +160,7 @@ public sealed class Message : AggregateRoot, ITenantEntity, ISoftDeletable
       return Result<Message>.Failure(contentResult.Error!);
 
     Content = newContent;
-    EditedAt = DateTime.UtcNow;
+    EditedAt = nowUtc;
 
     return Result<Message>.Success(this);
   }
@@ -168,13 +168,13 @@ public sealed class Message : AggregateRoot, ITenantEntity, ISoftDeletable
   /// <summary>
   /// Soft delete del mensaje.
   /// </summary>
-  public void Delete(Guid deletedBy)
+  public void Delete(DateTime nowUtc, Guid deletedBy)
   {
     if (IsDeleted)
       throw new InvalidOperationException("El mensaje ya ha sido eliminado");
 
     IsDeleted = true;
-    DeletedAt = DateTime.UtcNow;
+    DeletedAt = nowUtc;
     DeletedBy = deletedBy;
 
     RaiseDomainEvent(new MessageDeletedEvent(Id, TenantId, deletedBy));

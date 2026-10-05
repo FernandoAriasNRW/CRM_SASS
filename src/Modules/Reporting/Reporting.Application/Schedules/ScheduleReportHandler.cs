@@ -8,6 +8,7 @@ using Reporting.Domain.ValueObjects;
 namespace Reporting.Application.Schedules;
 
 public sealed class ScheduleReportHandler(
+    TimeProvider timeProvider,
     IReportRepository reports,
     IScheduleRepository schedules,
     IReportingUnitOfWork unitOfWork) : ICommandHandler<ScheduleReportCommand, ScheduleDto>
@@ -38,6 +39,7 @@ public sealed class ScheduleReportHandler(
             return Result<ScheduleDto>.Failure("El informe no existe");
 
         var created = ReportSchedule.Create(
+            timeProvider.GetUtcNow().UtcDateTime,
             request.TenantId, request.ReportId, request.RecipientId, frequency, format, time, request.Day);
 
         if (created.IsFailure)

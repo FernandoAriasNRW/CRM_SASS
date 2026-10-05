@@ -288,6 +288,7 @@ public class ReportScheduleTests
     private static ReportSchedule Create(
         ScheduleFrequency frequency, string hour = "08:00", int? day = null)
         => ReportSchedule.Create(
+            DateTime.UtcNow,
             Tenant, Report, Person, frequency, ReportFormat.Pdf, TimeOnly.Parse(hour), day).Value!;
 
     /// <summary>Un lunes a las 9, para tener una referencia con nombre.</summary>
@@ -416,6 +417,7 @@ public class ReportScheduleTests
     public void A_weekly_without_day_is_rejected()
     {
         var result = ReportSchedule.Create(
+            DateTime.UtcNow,
             Tenant, Report, Person, ScheduleFrequency.Weekly, ReportFormat.Pdf,
             new TimeOnly(8, 0), day: null);
 
@@ -426,6 +428,7 @@ public class ReportScheduleTests
     public void An_out_of_range_weekday_is_rejected()
     {
         ReportSchedule.Create(
+                DateTime.UtcNow,
                 Tenant, Report, Person, ScheduleFrequency.Weekly, ReportFormat.Pdf,
                 new TimeOnly(8, 0), day: 8)
             .Error.Should().Be(ReportSchedule.Rules.DayOfWeekOutOfRange);
@@ -441,6 +444,7 @@ public class ReportScheduleTests
     public void A_day_of_month_above_28_is_rejected()
     {
         ReportSchedule.Create(
+                DateTime.UtcNow,
                 Tenant, Report, Person, ScheduleFrequency.Monthly, ReportFormat.Pdf,
                 new TimeOnly(8, 0), day: 31)
             .Error.Should().Contain("febrero");

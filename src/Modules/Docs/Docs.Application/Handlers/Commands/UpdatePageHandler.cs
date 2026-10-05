@@ -16,6 +16,7 @@ public record UpdatePageCommand(Guid PageId, string Title, string Content) : IRe
 }
 
 public class UpdatePageHandler(
+    TimeProvider timeProvider,
     IDocumentRepository documentRepository,
     Mentions.MentionUpdater mentionUpdater,
     IUserContext userContext) : IRequestHandler<UpdatePageCommand, Result>
@@ -26,7 +27,7 @@ public class UpdatePageHandler(
         if (page == null)
             return Result.Failure("The page was not found.");
 
-        page.UpdateContent(request.Title, request.Content);
+        page.UpdateContent(timeProvider.GetUtcNow().UtcDateTime, request.Title, request.Content);
 
         await documentRepository.SaveChangesAsync(cancellationToken);
 

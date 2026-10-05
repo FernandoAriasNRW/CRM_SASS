@@ -5,7 +5,7 @@ using MediatR;
 
 namespace Docs.Application.Annotations;
 
-public sealed class ResolveAnnotationHandler(IDocumentRepository repository)
+public sealed class ResolveAnnotationHandler(TimeProvider timeProvider, IDocumentRepository repository)
     : IRequestHandler<ResolveAnnotationCommand, Result>
 {
     public async Task<Result> Handle(ResolveAnnotationCommand request, CancellationToken cancellationToken)
@@ -14,7 +14,7 @@ public sealed class ResolveAnnotationHandler(IDocumentRepository repository)
         if (annotation is null)
             return Result.Failure("La anotación no existe.");
 
-        if (request.IsResolved) annotation.Resolve(request.UserId);
+        if (request.IsResolved) annotation.Resolve(timeProvider.GetUtcNow().UtcDateTime, request.UserId);
         else annotation.Reopen();
 
         await repository.SaveChangesAsync(cancellationToken);

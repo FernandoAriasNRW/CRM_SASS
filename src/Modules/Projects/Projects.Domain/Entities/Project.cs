@@ -31,6 +31,7 @@ public sealed class Project : AggregateRoot, ITenantEntity, ISoftDeletable, IArc
   { }
 
   public static Project Create(
+      DateTime nowUtc,
       Guid tenantId,
       Guid spaceId,
       Guid? folderId,
@@ -51,7 +52,7 @@ public sealed class Project : AggregateRoot, ITenantEntity, ISoftDeletable, IArc
       FolderId = folderId,
       Name = nameResult.Value!,
       Description = description,
-      StartDate = DateOnly.FromDateTime(DateTime.UtcNow),
+      StartDate = DateOnly.FromDateTime(nowUtc),
       EstimatedEndDate = estimatedEndDate,
       Status = ProjectStatus.Planned,
       OwnerId = ownerId,
@@ -103,13 +104,13 @@ public sealed class Project : AggregateRoot, ITenantEntity, ISoftDeletable, IArc
   /// <summary>
   /// Soft delete del proyecto.
   /// </summary>
-  public void Delete(Guid deletedBy)
+  public void Delete(DateTime nowUtc, Guid deletedBy)
   {
     if (IsDeleted)
       throw new InvalidOperationException("El proyecto ya ha sido eliminado");
 
     IsDeleted = true;
-    DeletedAt = DateTime.UtcNow;
+    DeletedAt = nowUtc;
     DeletedBy = deletedBy;
 
     RaiseDomainEvent(new ProjectDeletedEvent(Id, TenantId, deletedBy));
@@ -168,10 +169,10 @@ public sealed class Project : AggregateRoot, ITenantEntity, ISoftDeletable, IArc
     /// Archivar no es borrar: la papelera de este agregado sigue siendo <c>IsDeleted</c>, y las
     /// dos cosas conviven. Un proyecto archivado que se borra sigue archivado al restaurarlo.
     /// </summary>
-    public void Archive()
+    public void Archive(DateTime nowUtc)
     {
         if (ArchivedAtUtc is not null) return;
-        ArchivedAtUtc = DateTime.UtcNow;
+        ArchivedAtUtc = nowUtc;
     }
 
     /// <summary>Devuelve el proyecto a las listas.</summary>

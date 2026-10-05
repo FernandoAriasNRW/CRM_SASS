@@ -9,16 +9,17 @@ using Teams.Domain.ValueObjects;
 namespace Teams.Application.Handlers.Commands;
 
 public sealed class CreateTeamCommandHandler(
+    TimeProvider timeProvider,
     ITeamRepository repository,
     ITeamsUnitOfWork unitOfWork) : ICommandHandler<CreateTeamCommand, Guid>
 {
     public async Task<Result<Guid>> Handle(CreateTeamCommand request, CancellationToken cancellationToken)
     {
-        var team = Team.Create(request.TenantId, request.Name, request.Description);
+        var team = Team.Create(timeProvider.GetUtcNow().UtcDateTime, request.TenantId, request.Name, request.Description);
         
         foreach (var memberId in request.MemberIds)
         {
-            team.AddMember(memberId, TeamRole.Member);
+            team.AddMember(timeProvider.GetUtcNow().UtcDateTime, memberId, TeamRole.Member);
         }
 
         await repository.AddAsync(team, cancellationToken);
@@ -46,6 +47,7 @@ public sealed class UpdateTeamCommandHandler(
 }
 
 public sealed class DeleteTeamCommandHandler(
+    TimeProvider timeProvider,
     ITeamRepository repository,
     ITeamsUnitOfWork unitOfWork) : ICommandHandler<DeleteTeamCommand, bool>
 {
@@ -54,7 +56,7 @@ public sealed class DeleteTeamCommandHandler(
         var team = await repository.GetByIdAsync(request.TenantId, request.TeamId, cancellationToken);
         if (team is null) return Result<bool>.Failure("Team not found");
 
-        team.Delete();
+        team.Delete(timeProvider.GetUtcNow().UtcDateTime);
         await repository.UpdateAsync(team, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
         return Result<bool>.Success(true);

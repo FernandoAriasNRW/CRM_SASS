@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ApiHost.Seeding;
 
-public sealed class CommunicationSeeder(CommunicationsDbContext communicationDb) : IModuleSeeder
+public sealed class CommunicationSeeder(TimeProvider timeProvider, CommunicationsDbContext communicationDb) : IModuleSeeder
 {
     public string Module => "Communication";
     public int Order => 80;
@@ -26,9 +26,9 @@ public sealed class CommunicationSeeder(CommunicationsDbContext communicationDb)
         if (await communicationDb.Conversations.AnyAsync(c => c.TenantId == tenantId, cancellationToken))
             return;
 
-        var general = Conversation.Create(tenantId, "#general", ConversationType.Channel);
-        var backend = Conversation.Create(tenantId, "#desarrollo-backend", ConversationType.Channel);
-        var frontend = Conversation.Create(tenantId, "#frontend-angular", ConversationType.Channel);
+        var general = Conversation.Create(timeProvider.GetUtcNow().UtcDateTime, tenantId, "#general", ConversationType.Channel);
+        var backend = Conversation.Create(timeProvider.GetUtcNow().UtcDateTime, tenantId, "#desarrollo-backend", ConversationType.Channel);
+        var frontend = Conversation.Create(timeProvider.GetUtcNow().UtcDateTime, tenantId, "#frontend-angular", ConversationType.Channel);
 
         if (general.Value is null || backend.Value is null || frontend.Value is null
             || general.IsFailure || backend.IsFailure || frontend.IsFailure)
@@ -39,13 +39,13 @@ public sealed class CommunicationSeeder(CommunicationsDbContext communicationDb)
 
         var messages = new List<BuildingBlocks.Domain.Result<Message>>
         {
-            Message.Create(tenantId, general.Value.Id, admin.Id, "¡Hola a todos! Bienvenidos al espacio oficial de CRM SaaS Suite."),
-            Message.Create(tenantId, backend.Value.Id, admin.Id, "Completamos la migración a .NET 9 con MediatR y CQRS. Los handlers están probados."),
-            Message.Create(tenantId, frontend.Value.Id, admin.Id, "La interfaz del Centro de Admin estilo ClickUp ya está lista y funcionando.")
+            Message.Create(timeProvider.GetUtcNow().UtcDateTime, tenantId, general.Value.Id, admin.Id, "¡Hola a todos! Bienvenidos al espacio oficial de CRM SaaS Suite."),
+            Message.Create(timeProvider.GetUtcNow().UtcDateTime, tenantId, backend.Value.Id, admin.Id, "Completamos la migración a .NET 9 con MediatR y CQRS. Los handlers están probados."),
+            Message.Create(timeProvider.GetUtcNow().UtcDateTime, tenantId, frontend.Value.Id, admin.Id, "La interfaz del Centro de Admin estilo ClickUp ya está lista y funcionando.")
         };
 
         if (context.Members.Count > 0)
-            messages.Add(Message.Create(tenantId, general.Value.Id, context.Members[0].Id, "¡Excelente noticia! Ya estoy probando las funciones con la data de demostración."));
+            messages.Add(Message.Create(timeProvider.GetUtcNow().UtcDateTime, tenantId, general.Value.Id, context.Members[0].Id, "¡Excelente noticia! Ya estoy probando las funciones con la data de demostración."));
 
         foreach (var created in messages)
         {

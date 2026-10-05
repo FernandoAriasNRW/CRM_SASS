@@ -59,6 +59,7 @@ public sealed class ReportSchedule : AggregateRoot, ITenantEntity
     private ReportSchedule() { }
 
     public static Result<ReportSchedule> Create(
+        DateTime nowUtc,
         Guid tenantId, Guid reportId, Guid recipientId,
         ScheduleFrequency frequency, ReportFormat format, TimeOnly time, int? day)
     {
@@ -83,7 +84,7 @@ public sealed class ReportSchedule : AggregateRoot, ITenantEntity
             Time = time,
             Day = frequency == ScheduleFrequency.Daily ? null : day,
             IsActive = true,
-            CreatedAtUtc = DateTime.UtcNow
+            CreatedAtUtc = nowUtc
         });
     }
 

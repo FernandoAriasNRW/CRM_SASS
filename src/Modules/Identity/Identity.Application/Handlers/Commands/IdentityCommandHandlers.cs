@@ -83,6 +83,7 @@ public sealed class RefreshTokenCommandHandler(IJwtService jwtService, IUserRepo
 /// Handler para crear un nuevo usuario.
 /// </summary>
 public sealed class CreateUserCommandHandler(
+    TimeProvider timeProvider,
     IUserRepository userRepository,
     IIdentityUnitOfWork unitOfWork) : ICommandHandler<CreateUserCommand, UserDto>
 {
@@ -99,11 +100,11 @@ public sealed class CreateUserCommandHandler(
       return Result<UserDto>.Failure(emailResult.Error!);
 
     PasswordHash passwordHash;
-    try { passwordHash = PasswordHash.Create(request.Password); }
+    try { passwordHash = PasswordHash.Create(timeProvider.GetUtcNow().UtcDateTime, request.Password); }
     catch (ArgumentException ex) { return Result<UserDto>.Failure(ex.Message); }
 
     var role = UserRole.FromName<UserRole>(request.Role) ?? UserRole.Member;
-    var userResult = User.Create(request.TenantId, request.Name, emailResult.Value!, passwordHash, role);
+    var userResult = User.Create(timeProvider.GetUtcNow().UtcDateTime, request.TenantId, request.Name, emailResult.Value!, passwordHash, role);
 
     if (userResult.IsFailure)
       return Result<UserDto>.Failure(userResult.Error!);
@@ -220,6 +221,7 @@ public sealed class UpdateProfileCommandHandler(
 /// Handler para eliminar (soft delete) un usuario.
 /// </summary>
 public sealed class DeleteUserCommandHandler(
+    TimeProvider timeProvider,
     IUserRepository userRepository,
     IIdentityUnitOfWork unitOfWork) : ICommandHandler<DeleteUserCommand, bool>
 {
@@ -244,7 +246,7 @@ public sealed class DeleteUserCommandHandler(
         return Result<bool>.Failure("No se puede eliminar al último administrador del sistema");
     }
 
-    user.Delete(request.DeletedBy);
+    user.Delete(timeProvider.GetUtcNow().UtcDateTime, request.DeletedBy);
 
     await _userRepository.UpdateAsync(user, cancellationToken);
     await _unitOfWork.SaveChangesAsync(cancellationToken);
@@ -286,6 +288,7 @@ public sealed class RestoreUserCommandHandler(
 /// Handler para cambiar contraseña.
 /// </summary>
 public sealed class ChangePasswordCommandHandler(
+    TimeProvider timeProvider,
     IUserRepository userRepository,
     IIdentityUnitOfWork unitOfWork) : ICommandHandler<ChangePasswordCommand, bool>
 {
@@ -315,7 +318,7 @@ public sealed class ChangePasswordCommandHandler(
       return Result<bool>.Failure("La contraseña actual no es correcta");
 
     PasswordHash newHash;
-    try { newHash = PasswordHash.Create(request.NewPassword); }
+    try { newHash = PasswordHash.Create(timeProvider.GetUtcNow().UtcDateTime, request.NewPassword); }
     catch (ArgumentException ex) { return Result<bool>.Failure(ex.Message); }
 
     user.ChangePassword(newHash);

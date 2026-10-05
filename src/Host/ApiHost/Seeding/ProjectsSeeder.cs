@@ -56,11 +56,11 @@ public sealed class ProjectsSeeder(TimeProvider timeProvider, ProjectsDbContext 
         {
             var today = timeProvider.GetUtcNow().UtcDateTime;
             projectsDb.Projects.AddRange(
-                Project.Create(tenantId, coreSpace.Id, backendFolder.Id, "CRM SaaS Suite v2.0", "Migración a arquitectura limpia C# .NET 9 con MediatR y CQRS", DateOnly.FromDateTime(today.AddMonths(2)), admin.Id),
-                Project.Create(tenantId, coreSpace.Id, frontendFolder.Id, "Rediseño ClickUp UI/UX", "Implementación de interfaz moderna con Tailwind CSS y componentes ShadCN", DateOnly.FromDateTime(today.AddMonths(1)), admin.Id),
-                Project.Create(tenantId, coreSpace.Id, backendFolder.Id, "Sistema de Webhooks Globals", "Infraestructura de suscripción a eventos con seguridad HMAC-SHA256", DateOnly.FromDateTime(today.AddDays(21)), admin.Id),
-                Project.Create(tenantId, operationsSpace.Id, null, "Portal de Clientes Enterprise", "Plataforma self-service para clientes corporativos con tableros interactivos", DateOnly.FromDateTime(today.AddMonths(3)), admin.Id),
-                Project.Create(tenantId, coreSpace.Id, null, "Auditoría de Seguridad & Permisos", "Matriz de permisos granulares por usuario, equipo y rol", DateOnly.FromDateTime(today.AddMonths(1)), admin.Id));
+                Project.Create(timeProvider.GetUtcNow().UtcDateTime, tenantId, coreSpace.Id, backendFolder.Id, "CRM SaaS Suite v2.0", "Migración a arquitectura limpia C# .NET 9 con MediatR y CQRS", DateOnly.FromDateTime(today.AddMonths(2)), admin.Id),
+                Project.Create(timeProvider.GetUtcNow().UtcDateTime, tenantId, coreSpace.Id, frontendFolder.Id, "Rediseño ClickUp UI/UX", "Implementación de interfaz moderna con Tailwind CSS y componentes ShadCN", DateOnly.FromDateTime(today.AddMonths(1)), admin.Id),
+                Project.Create(timeProvider.GetUtcNow().UtcDateTime, tenantId, coreSpace.Id, backendFolder.Id, "Sistema de Webhooks Globals", "Infraestructura de suscripción a eventos con seguridad HMAC-SHA256", DateOnly.FromDateTime(today.AddDays(21)), admin.Id),
+                Project.Create(timeProvider.GetUtcNow().UtcDateTime, tenantId, operationsSpace.Id, null, "Portal de Clientes Enterprise", "Plataforma self-service para clientes corporativos con tableros interactivos", DateOnly.FromDateTime(today.AddMonths(3)), admin.Id),
+                Project.Create(timeProvider.GetUtcNow().UtcDateTime, tenantId, coreSpace.Id, null, "Auditoría de Seguridad & Permisos", "Matriz de permisos granulares por usuario, equipo y rol", DateOnly.FromDateTime(today.AddMonths(1)), admin.Id));
             await projectsDb.SaveChangesAsync(cancellationToken);
             projects = await projectsDb.Projects.Where(p => p.TenantId == tenantId).ToListAsync(cancellationToken);
         }

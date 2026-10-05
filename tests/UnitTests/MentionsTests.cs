@@ -174,6 +174,7 @@ public class MentionReaderTests
         var larguisimo = new string('a', 500);
 
         var mention = DocumentMention.Create(
+            DateTime.UtcNow,
             Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), "Task", TaskMention, larguisimo);
 
         mention.VisibleText.Length.Should().Be(200);

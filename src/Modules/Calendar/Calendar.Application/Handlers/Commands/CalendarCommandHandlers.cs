@@ -13,6 +13,7 @@ namespace Calendar.Application.Handlers.Commands;
 /// Handler para crear un nuevo evento de calendario.
 /// </summary>
 public sealed class CreateCalendarEventHandler(
+    TimeProvider timeProvider,
     ICalendarEventRepository repository,
     ICalendarUnitOfWork unitOfWork) : ICommandHandler<CreateCalendarEventCommand, CalendarEventDto>
 {
@@ -27,6 +28,7 @@ public sealed class CreateCalendarEventHandler(
 
         // 2. Delegar creación a la entidad (lógica de negocio en Domain)
         var createResult = CalendarEvent.Create(
+            timeProvider.GetUtcNow().UtcDateTime,
             request.TenantId,
             request.OrganizerId,
             request.Title,
@@ -127,6 +129,7 @@ public sealed class RescheduleEventHandler(
 /// Handler para cancelar (soft delete) un evento de calendario.
 /// </summary>
 public sealed class MoveEventToTrashHandler(
+    TimeProvider timeProvider,
     ICalendarEventRepository repository,
     ICalendarUnitOfWork unitOfWork) : ICommandHandler<MoveEventToTrashCommand, bool>
 {
@@ -146,7 +149,7 @@ public sealed class MoveEventToTrashHandler(
         // A la papelera: quitarlo de en medio, recuperable. Hasta el bloque 6a este comando se
         // llamaba «Cancel» y publicaba «calendar.event.cancelled»; la anulación, que lo deja a la
         // vista, es CancelEventCommand.
-        calendarEvent.MoveToTrash(request.DeletedBy);
+        calendarEvent.MoveToTrash(timeProvider.GetUtcNow().UtcDateTime, request.DeletedBy);
 
         await _repository.UpdateAsync(calendarEvent, ct);
         await _unitOfWork.SaveChangesAsync(ct);
@@ -222,6 +225,7 @@ public sealed class PermanentDeleteEventHandler(
 /// es lo mismo que mandarlo a la papelera.
 /// </summary>
 public sealed class CancelEventHandler(
+    TimeProvider timeProvider,
     ICalendarEventRepository repository,
     ICalendarUnitOfWork unitOfWork) : ICommandHandler<CancelEventCommand, CalendarEventDto>
 {
@@ -232,7 +236,7 @@ public sealed class CancelEventHandler(
         if (calendarEvent is null)
             return Result<CalendarEventDto>.Failure("Evento no encontrado");
 
-        var result = calendarEvent.Cancel(request.UserId, request.Reason);
+        var result = calendarEvent.Cancel(timeProvider.GetUtcNow().UtcDateTime, request.UserId, request.Reason);
         if (result.IsFailure)
             return Result<CalendarEventDto>.Failure(result.Error!);
 

@@ -9,12 +9,14 @@ using Webhook.Domain.Entities;
 namespace Webhook.Application.Handlers.Commands;
 
 public sealed class CreateWebhookSubscriptionHandler(
+    TimeProvider timeProvider,
     IWebhookSubscriptionRepository repository,
     IWebhookUnitOfWork unitOfWork) : ICommandHandler<CreateWebhookCommand, WebhookSubscriptionDto>
 {
     public async Task<Result<WebhookSubscriptionDto>> Handle(CreateWebhookCommand request, CancellationToken ct)
     {
         var subscription = WebhookSubscription.Create(
+            timeProvider.GetUtcNow().UtcDateTime,
             request.TenantId, request.EventName, request.TargetUrl, request.Secret);
 
         await repository.AddAsync(subscription, ct);
@@ -25,6 +27,7 @@ public sealed class CreateWebhookSubscriptionHandler(
 }
 
 public sealed class UpdateWebhookSubscriptionHandler(
+    TimeProvider timeProvider,
     IWebhookSubscriptionRepository repository,
     IWebhookUnitOfWork unitOfWork) : ICommandHandler<UpdateWebhookSubscriptionCommand, WebhookSubscriptionDto>
 {
@@ -34,7 +37,7 @@ public sealed class UpdateWebhookSubscriptionHandler(
         if (sub is null)
             return Result<WebhookSubscriptionDto>.Failure("Subscription not found");
 
-        sub.Update(request.TargetUrl, request.Secret);
+        sub.Update(timeProvider.GetUtcNow().UtcDateTime, request.TargetUrl, request.Secret);
         await repository.UpdateAsync(sub, ct);
         await unitOfWork.SaveChangesAsync(ct);
 
@@ -60,6 +63,7 @@ public sealed class DeleteWebhookSubscriptionHandler(
 }
 
 public sealed class ToggleWebhookSubscriptionHandler(
+    TimeProvider timeProvider,
     IWebhookSubscriptionRepository repository,
     IWebhookUnitOfWork unitOfWork) : ICommandHandler<ToggleWebhookSubscriptionCommand, WebhookSubscriptionDto>
 {
@@ -69,7 +73,7 @@ public sealed class ToggleWebhookSubscriptionHandler(
         if (sub is null)
             return Result<WebhookSubscriptionDto>.Failure("Subscription not found");
 
-        if (request.Activate) sub.Activate(); else sub.Deactivate();
+        if (request.Activate) sub.Activate(timeProvider.GetUtcNow().UtcDateTime); else sub.Deactivate(timeProvider.GetUtcNow().UtcDateTime);
         await repository.UpdateAsync(sub, ct);
         await unitOfWork.SaveChangesAsync(ct);
 

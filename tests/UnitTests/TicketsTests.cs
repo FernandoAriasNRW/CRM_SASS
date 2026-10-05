@@ -42,6 +42,7 @@ public class TicketsTests
         // Arrange & Act
         var priority = TicketPriority.FromName<TicketPriority>("High")!;
         var ticket = Ticket.Create(
+            DateTime.UtcNow,
             _tenantId, _customerId, "Test Subject", "Message", priority
         ).Value!;
 
@@ -60,6 +61,7 @@ public class TicketsTests
         // Arrange
         var priority = TicketPriority.FromName<TicketPriority>("High")!;
         var ticket = Ticket.Create(
+            DateTime.UtcNow,
             _tenantId, _customerId, "Ticket to Assign", "Message", priority
         ).Value!;
 
@@ -78,7 +80,7 @@ public class TicketsTests
     public async Task CreateTicket_WithValidCommand_ReturnsTicket()
     {
         // Arrange
-        var handler = new CreateTicketHandler(_repositoryMock, _unitOfWorkMock);
+        var handler = new CreateTicketHandler(TimeProvider.System, _repositoryMock, _unitOfWorkMock);
         var command = new CreateTicketCommand(
             TenantId: _tenantId,
             CustomerId: _customerId,
@@ -109,6 +111,7 @@ public class TicketsTests
         // Arrange
         var priority = TicketPriority.FromName<TicketPriority>("High")!;
         var ticket = Ticket.Create(
+            DateTime.UtcNow,
             _tenantId, _customerId, "Ticket to Assign", "Message", priority
         ).Value!;
 
@@ -137,7 +140,7 @@ public class TicketsTests
     public async Task GetTickets_ReturnsTicketsForTenant()
     {
         // Arrange
-        var t1 = Ticket.Create(_tenantId, _customerId, "Ticket 1", "Desc", TicketPriority.FromName<TicketPriority>("High")!).Value!;
+        var t1 = Ticket.Create(DateTime.UtcNow, _tenantId, _customerId, "Ticket 1", "Desc", TicketPriority.FromName<TicketPriority>("High")!).Value!;
         
         var pagedResult = PagedResult<TicketDto>.Create(
             new List<TicketDto>
@@ -176,6 +179,7 @@ public class TicketsTests
         // Arrange
         var priority = TicketPriority.FromName<TicketPriority>("High")!;
         var ticket = Ticket.Create(
+            DateTime.UtcNow,
             _tenantId, _customerId, "Specific Ticket", "Message", priority
         ).Value!;
 

@@ -147,8 +147,9 @@ public static class DatabaseInitialization
             throw new InvalidOperationException($"InitialAdmin:Email no es un correo válido: {emailResult.Error}");
 
         var email = emailResult.Value!;
-        var password = global::Identity.Domain.ValueObjects.PasswordHash.Create(seeding.InitialAdminPassword);
-        var user = global::Identity.Domain.Entities.User.Create(Guid.NewGuid(), "Admin", email, password, adminRole).Value!;
+        var nowUtc = services.GetRequiredService<TimeProvider>().GetUtcNow().UtcDateTime;
+        var password = global::Identity.Domain.ValueObjects.PasswordHash.Create(nowUtc, seeding.InitialAdminPassword);
+        var user = global::Identity.Domain.Entities.User.Create(nowUtc, Guid.NewGuid(), "Admin", email, password, adminRole).Value!;
         identity.User.Add(user);
         identity.SaveChanges();
     }

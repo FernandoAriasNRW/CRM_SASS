@@ -8,6 +8,7 @@ using WorkItems.Domain.Entities;
 namespace WorkItems.Application.Handlers.Commands;
 
 public sealed class CreateTaskCommandHandler(
+    TimeProvider timeProvider,
     ITaskRepository repository,
     IWorkItemsUnitOfWork unitOfWork) : ICommandHandler<CreateTaskCommand, WorkTask>
 {
@@ -33,6 +34,7 @@ public sealed class CreateTaskCommandHandler(
     try
     {
       task = WorkTask.Create(
+          timeProvider.GetUtcNow().UtcDateTime,
           request.TenantId, request.ProjectId, request.Title, request.Description,
           request.AssigneeId, request.CreatedById, request.EstimatedHours, request.DueDate,
           request.Priority, request.ParentTaskId, request.StartDate);
@@ -51,6 +53,7 @@ public sealed class CreateTaskCommandHandler(
 }
 
 public sealed class MoveTaskCommandHandler(
+    TimeProvider timeProvider,
     ITaskRepository repository,
     IWorkItemsUnitOfWork unitOfWork) : ICommandHandler<MoveTaskCommand, bool>
 {
@@ -63,7 +66,7 @@ public sealed class MoveTaskCommandHandler(
     if (request.ActorRole != "Admin" && task.AssigneeId != request.ActorId)
       return Result<bool>.Failure("No tiene permisos para mover esta tarea");
 
-    try { task.Move(request.NewStatus); }
+    try { task.Move(timeProvider.GetUtcNow().UtcDateTime, request.NewStatus); }
     catch (InvalidOperationException ex) { return Result<bool>.Failure(ex.Message); }
 
     await repository.UpdateAsync(task, cancellationToken);
@@ -73,6 +76,7 @@ public sealed class MoveTaskCommandHandler(
 }
 
 public sealed class PatchTaskCommandHandler(
+    TimeProvider timeProvider,
     ITaskRepository repository,
     IWorkItemsUnitOfWork unitOfWork,
     ITagCatalog tagCatalog) : ICommandHandler<PatchTaskCommand, bool>
@@ -102,7 +106,7 @@ public sealed class PatchTaskCommandHandler(
 
     if (!string.IsNullOrEmpty(request.Status))
     {
-      try { task.Move(request.Status); }
+      try { task.Move(timeProvider.GetUtcNow().UtcDateTime, request.Status); }
       catch (InvalidOperationException ex) { return Result<bool>.Failure(ex.Message); }
     }
 
@@ -179,6 +183,7 @@ public sealed class ReparentTaskCommandHandler(
 }
 
 public sealed class DeleteTaskCommandHandler(
+    TimeProvider timeProvider,
     ITaskRepository repository,
     IWorkItemsUnitOfWork unitOfWork) : ICommandHandler<DeleteTaskCommand, bool>
 {
@@ -191,7 +196,7 @@ public sealed class DeleteTaskCommandHandler(
     // Este handler cargaba la tarea, la volvía a guardar **sin tocarla** y devolvía éxito: el
     // endpoint contestaba 204 y la tarea seguía en la lista al recargar. Borrar es mandarla a
     // la papelera, que es además lo que la pantalla promete al decir que se puede recuperar.
-    task.MoveToTrash();
+    task.MoveToTrash(timeProvider.GetUtcNow().UtcDateTime);
 
     await repository.UpdateAsync(task, cancellationToken);
     await unitOfWork.SaveChangesAsync(cancellationToken);

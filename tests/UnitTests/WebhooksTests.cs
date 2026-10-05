@@ -33,7 +33,7 @@ public class WebhooksTests
     public void Create_ReturnsSubscription()
     {
         // Arrange & Act
-        var subscription = WebhookSubscription.Create(_tenantId, "TestEvent", "https://test.com", "secret");
+        var subscription = WebhookSubscription.Create(DateTime.UtcNow, _tenantId, "TestEvent", "https://test.com", "secret");
 
         // Assert
         subscription.Should().NotBeNull();
@@ -49,7 +49,7 @@ public class WebhooksTests
     public async Task CreateSubscription_WithValidCommand_ReturnsDto()
     {
         // Arrange
-        var handler = new CreateWebhookSubscriptionHandler(_repositoryMock, _unitOfWorkMock);
+        var handler = new CreateWebhookSubscriptionHandler(TimeProvider.System, _repositoryMock, _unitOfWorkMock);
         var command = new CreateWebhookCommand("https://test.com", "TestEvent", _tenantId, "secret");
 
         // Act
@@ -72,11 +72,11 @@ public class WebhooksTests
     public async Task UpdateSubscription_ReturnsUpdatedDto()
     {
         // Arrange
-        var subscription = WebhookSubscription.Create(_tenantId, "TestEvent", "https://test.com", "secret");
+        var subscription = WebhookSubscription.Create(DateTime.UtcNow, _tenantId, "TestEvent", "https://test.com", "secret");
         _repositoryMock.GetByIdAsync(_tenantId, _subscriptionId, Arg.Any<CancellationToken>())
             .Returns(subscription);
 
-        var handler = new UpdateWebhookSubscriptionHandler(_repositoryMock, _unitOfWorkMock);
+        var handler = new UpdateWebhookSubscriptionHandler(TimeProvider.System, _repositoryMock, _unitOfWorkMock);
         var command = new UpdateWebhookSubscriptionCommand(_tenantId, _subscriptionId, "https://new.com", "newsecret");
 
         // Act
@@ -98,7 +98,7 @@ public class WebhooksTests
     public async Task DeleteSubscription_ReturnsTrue()
     {
         // Arrange
-        var subscription = WebhookSubscription.Create(_tenantId, "TestEvent", "https://test.com", "secret");
+        var subscription = WebhookSubscription.Create(DateTime.UtcNow, _tenantId, "TestEvent", "https://test.com", "secret");
         _repositoryMock.GetByIdAsync(_tenantId, _subscriptionId, Arg.Any<CancellationToken>())
             .Returns(subscription);
 
@@ -123,7 +123,7 @@ public class WebhooksTests
     public async Task GetSubscriptions_ReturnsList()
     {
         // Arrange
-        var subscription = WebhookSubscription.Create(_tenantId, "TestEvent", "https://test.com", "secret");
+        var subscription = WebhookSubscription.Create(DateTime.UtcNow, _tenantId, "TestEvent", "https://test.com", "secret");
         _repositoryMock.GetByTenantAsync(_tenantId, null, Arg.Any<CancellationToken>())
             .Returns(new List<WebhookSubscription> { subscription });
 

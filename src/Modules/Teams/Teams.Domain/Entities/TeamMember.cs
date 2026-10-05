@@ -14,7 +14,7 @@ public sealed class TeamMember : Entity, ISoftDeletable
 
     private TeamMember() { }
 
-    internal static TeamMember Create(Guid teamId, Guid userId, ValueObjects.TeamRole role)
+    internal static TeamMember Create(DateTime nowUtc, Guid teamId, Guid userId, ValueObjects.TeamRole role)
     {
         return new TeamMember
         {
@@ -22,7 +22,7 @@ public sealed class TeamMember : Entity, ISoftDeletable
             TeamId = teamId,
             UserId = userId,
             Role = role,
-            JoinedAtUtc = DateTime.UtcNow,
+            JoinedAtUtc = nowUtc,
             IsDeleted = false
         };
     }
@@ -33,10 +33,10 @@ public sealed class TeamMember : Entity, ISoftDeletable
         Role = newRole;
     }
 
-    public void Remove()
+    public void Remove(DateTime nowUtc)
     {
         if (IsDeleted) return;
         IsDeleted = true;
-        DeletedAt = DateTime.UtcNow;
+        DeletedAt = nowUtc;
     }
 }

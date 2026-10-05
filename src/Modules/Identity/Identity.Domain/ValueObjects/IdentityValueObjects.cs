@@ -66,13 +66,7 @@ public sealed class PasswordHash : ValueObject
     CreatedAtUtc = createdAtUtc;
   }
 
-  private PasswordHash(string value)
-  {
-    Value = value;
-    CreatedAtUtc = DateTime.UtcNow;
-  }
-
-  public static PasswordHash Create(string plainPassword)
+  public static PasswordHash Create(DateTime nowUtc, string plainPassword)
   {
     if (string.IsNullOrWhiteSpace(plainPassword))
       throw new ArgumentException("Contraseña no puede estar vacía");
@@ -81,7 +75,7 @@ public sealed class PasswordHash : ValueObject
       throw new ArgumentException("Contraseña debe tener al menos 6 caracteres");
 
     var hash = BCrypt.Net.BCrypt.HashPassword(plainPassword, BCrypt.Net.BCrypt.GenerateSalt(12));
-    return new PasswordHash(hash);
+    return new PasswordHash(hash, nowUtc);
   }
 
   public static bool Verify(string plainPassword, string hash)
@@ -131,23 +125,23 @@ public sealed class RefreshToken : ValueObject
     IsRevoked = false;
   }
 
-  public static RefreshToken Create()
+  public static RefreshToken Create(DateTime nowUtc)
   {
     var randomBytes = new byte[64];
     using var rng = System.Security.Cryptography.RandomNumberGenerator.Create();
     rng.GetBytes(randomBytes);
     var token = Convert.ToBase64String(randomBytes);
-    var expires = DateTime.UtcNow.AddDays(7);
+    var expires = nowUtc.AddDays(7);
     return new RefreshToken(token, expires);
   }
 
-  public bool IsExpired => DateTime.UtcNow > ExpiresAtUtc;
-  public bool IsValid => !IsRevoked && !IsExpired;
+  public bool IsExpired(DateTime nowUtc) => nowUtc > ExpiresAtUtc;
+  public bool IsValid(DateTime nowUtc) => !IsRevoked && !IsExpired(nowUtc);
 
-  public void Revoke(string reason = "Revocado")
+  public void Revoke(DateTime nowUtc, string reason = "Revocado")
   {
     IsRevoked = true;
-    RevokedAtUtc = DateTime.UtcNow;
+    RevokedAtUtc = nowUtc;
   }
 
   public override IEnumerable<object> GetEqualityComponents()

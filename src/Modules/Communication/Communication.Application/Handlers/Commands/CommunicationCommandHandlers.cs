@@ -13,6 +13,7 @@ namespace Communication.Application.Handlers.Commands;
 /// Handler para crear una nueva conversación.
 /// </summary>
 public sealed class CreateConversationHandler(
+    TimeProvider timeProvider,
     IConversationRepository repository,
     ICommunicationUnitOfWork unitOfWork) : ICommandHandler<CreateConversationCommand, ConversationDto>
 {
@@ -23,7 +24,7 @@ public sealed class CreateConversationHandler(
   {
     var type = ConversationType.FromName<ConversationType>(request.Type) ?? ConversationType.Direct;
 
-    var conversationResult = Conversation.Create(request.TenantId, request.Name, type);
+    var conversationResult = Conversation.Create(timeProvider.GetUtcNow().UtcDateTime, request.TenantId, request.Name, type);
 
     if (conversationResult.IsFailure)
       return Result<ConversationDto>.Failure(conversationResult.Error!);
@@ -39,6 +40,7 @@ public sealed class CreateConversationHandler(
 /// Handler para eliminar (soft delete) una conversación.
 /// </summary>
 public sealed class DeleteConversationHandler(
+    TimeProvider timeProvider,
     IConversationRepository repository,
     ICommunicationUnitOfWork unitOfWork) : ICommandHandler<DeleteConversationCommand, bool>
 {
@@ -55,7 +57,7 @@ public sealed class DeleteConversationHandler(
     if (conversation.IsDeleted)
       return Result<bool>.Failure("La conversación ya ha sido eliminada");
 
-    conversation.Delete(request.DeletedBy);
+    conversation.Delete(timeProvider.GetUtcNow().UtcDateTime, request.DeletedBy);
 
     await _repository.UpdateAsync(conversation, cancellationToken);
     await _unitOfWork.SaveChangesAsync(cancellationToken);
@@ -101,6 +103,7 @@ public sealed class RestoreConversationHandler(
 /// Handler para enviar un mensaje.
 /// </summary>
 public sealed class SendMessageHandler(
+    TimeProvider timeProvider,
     IMessageRepository messageRepository,
     IConversationRepository conversationRepository,
     ICommunicationUnitOfWork unitOfWork) : ICommandHandler<SendMessageCommand, MessageDto>
@@ -119,12 +122,12 @@ public sealed class SendMessageHandler(
     if (conversation.IsDeleted)
       return Result<MessageDto>.Failure("No se pueden enviar mensajes a una conversación eliminada");
 
-    var messageResult = Message.Create(request.TenantId, request.ConversationId, request.SenderId, request.Content);
+    var messageResult = Message.Create(timeProvider.GetUtcNow().UtcDateTime, request.TenantId, request.ConversationId, request.SenderId, request.Content);
 
     if (messageResult.IsFailure)
       return Result<MessageDto>.Failure(messageResult.Error!);
 
-    conversation.AddMessage(messageResult.Value!);
+    conversation.AddMessage(timeProvider.GetUtcNow().UtcDateTime, messageResult.Value!);
 
     await _messageRepository.AddAsync(messageResult.Value!, cancellationToken);
     await _conversationRepository.UpdateAsync(conversation, cancellationToken);
@@ -138,6 +141,7 @@ public sealed class SendMessageHandler(
 /// Handler para editar un mensaje.
 /// </summary>
 public sealed class EditMessageHandler(
+    TimeProvider timeProvider,
     IMessageRepository repository,
     ICommunicationUnitOfWork unitOfWork) : ICommandHandler<EditMessageCommand, MessageDto>
 {
@@ -151,7 +155,7 @@ public sealed class EditMessageHandler(
     if (message is null)
       return Result<MessageDto>.Failure("Mensaje no encontrado");
 
-    var editResult = message.Edit(request.NewContent, request.SenderId);
+    var editResult = message.Edit(timeProvider.GetUtcNow().UtcDateTime, request.NewContent, request.SenderId);
 
     if (editResult.IsFailure)
       return Result<MessageDto>.Failure(editResult.Error!);
@@ -167,6 +171,7 @@ public sealed class EditMessageHandler(
 /// Handler para eliminar (soft delete) un mensaje.
 /// </summary>
 public sealed class DeleteMessageHandler(
+    TimeProvider timeProvider,
     IMessageRepository repository,
     ICommunicationUnitOfWork unitOfWork) : ICommandHandler<DeleteMessageCommand, bool>
 {
@@ -183,7 +188,7 @@ public sealed class DeleteMessageHandler(
     if (message.IsDeleted)
       return Result<bool>.Failure("El mensaje ya ha sido eliminado");
 
-    message.Delete(request.DeletedBy);
+    message.Delete(timeProvider.GetUtcNow().UtcDateTime, request.DeletedBy);
 
     await _repository.UpdateAsync(message, cancellationToken);
     await _unitOfWork.SaveChangesAsync(cancellationToken);

@@ -19,6 +19,7 @@ public sealed class CommentTests
 
     private static Comment New(string text = "Un comentario", Guid? author = null, Guid? repliesTo = null)
         => Comment.Create(
+            DateTime.UtcNow,
             Guid.NewGuid(), CommentableEntityTypes.Task, Guid.NewGuid(),
             author ?? Author, text, repliesTo);
 
@@ -62,6 +63,7 @@ public sealed class CommentTests
     public void Only_entities_someone_renders_can_be_commented()
     {
         var act = () => Comment.Create(
+            DateTime.UtcNow,
             Guid.NewGuid(), "Factura", Guid.NewGuid(), Author, "Hola");
 
         act.Should().Throw<InvalidOperationException>()
@@ -74,7 +76,7 @@ public sealed class CommentTests
     {
         var comment = New();
 
-        var act = () => comment.Edit(Other, "Otra cosa");
+        var act = () => comment.Edit(DateTime.UtcNow, Other, "Otra cosa");
 
         act.Should().Throw<InvalidOperationException>()
             .WithMessage(Comment.Rules.OnlyAuthorEdits);
@@ -90,7 +92,7 @@ public sealed class CommentTests
     {
         var comment = New();
 
-        comment.Edit(Author, "Corregido");
+        comment.Edit(DateTime.UtcNow, Author, "Corregido");
 
         comment.Text.Should().Be("Corregido");
         comment.EditedAtUtc.Should().NotBeNull();
@@ -102,7 +104,7 @@ public sealed class CommentTests
     {
         var comment = New();
 
-        var act = () => comment.Edit(Author, "  ");
+        var act = () => comment.Edit(DateTime.UtcNow, Author, "  ");
 
         act.Should().Throw<InvalidOperationException>();
         comment.Text.Should().Be("Un comentario");
@@ -135,11 +137,13 @@ public sealed class CommentTests
     public void A_comment_without_author_or_entity_is_rejected()
     {
         var withoutAuthor = () => Comment.Create(
+            DateTime.UtcNow,
             Guid.NewGuid(), CommentableEntityTypes.Ticket, Guid.NewGuid(), Guid.Empty, "Hola");
         withoutAuthor.Should().Throw<InvalidOperationException>()
             .WithMessage(Comment.Rules.MissingAuthor);
 
         var withoutEntity = () => Comment.Create(
+            DateTime.UtcNow,
             Guid.NewGuid(), CommentableEntityTypes.Ticket, Guid.Empty, Author, "Hola");
         withoutEntity.Should().Throw<InvalidOperationException>()
             .WithMessage(Comment.Rules.MissingEntity);

@@ -8,6 +8,7 @@ using Reporting.Domain.ValueObjects;
 namespace Reporting.Application.Exports;
 
 public sealed class RequestExportHandler(
+    TimeProvider timeProvider,
     IReportRepository reports,
     IExportRepository exports,
     IReportingUnitOfWork unitOfWork) : ICommandHandler<RequestExportCommand, ExportDto>
@@ -39,7 +40,7 @@ public sealed class RequestExportHandler(
         if (inProgress is not null)
             return Result<ExportDto>.Success(ToDto(inProgress));
 
-        var created = Export.Request(request.TenantId, request.ReportId, request.RequestedById, format);
+        var created = Export.Request(timeProvider.GetUtcNow().UtcDateTime, request.TenantId, request.ReportId, request.RequestedById, format);
         if (created.IsFailure)
             return Result<ExportDto>.Failure(created.Error!);
 

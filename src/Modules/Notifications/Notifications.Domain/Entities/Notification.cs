@@ -36,6 +36,7 @@ public sealed class Notification : AggregateRoot, ITenantEntity, ISoftDeletable
 
   // Constructor para uso del repositorio
   public Notification(
+      DateTime nowUtc,
       Guid tenantId,
       Guid recipientUserId,
       string type,
@@ -51,13 +52,14 @@ public sealed class Notification : AggregateRoot, ITenantEntity, ISoftDeletable
     StatusValue = NotificationStatus.Pending.Name;
     Subject = subject;
     Body = body;
-    CreatedAt = DateTime.UtcNow;
+    CreatedAt = nowUtc;
     IsDeleted = false;
     DeletedAt = null;
     DeletedBy = null;
   }
 
   public static Result<Notification> Create(
+      DateTime nowUtc,
       Guid tenantId,
       Guid recipientUserId,
       string type,
@@ -79,7 +81,7 @@ public sealed class Notification : AggregateRoot, ITenantEntity, ISoftDeletable
       StatusValue = NotificationStatus.Pending.Name,
       Subject = subject,
       Body = body,
-      CreatedAt = DateTime.UtcNow,
+      CreatedAt = nowUtc,
       IsDeleted = false,
       DeletedAt = null,
       DeletedBy = null
@@ -90,23 +92,23 @@ public sealed class Notification : AggregateRoot, ITenantEntity, ISoftDeletable
     return Result<Notification>.Success(notification);
   }
 
-  public void MarkAsSent()
+  public void MarkAsSent(DateTime nowUtc)
   {
     if (IsDeleted)
       throw new InvalidOperationException("No se puede marcar como enviada una notificación eliminada");
 
     StatusValue = NotificationStatus.Sent.Name;
-    SentAt = DateTime.UtcNow;
+    SentAt = nowUtc;
     RaiseDomainEvent(new NotificationSentEvent(Id, TenantId));
   }
 
-  public void MarkAsRead()
+  public void MarkAsRead(DateTime nowUtc)
   {
     if (IsDeleted)
       throw new InvalidOperationException("No se puede marcar como leída una notificación eliminada");
 
     StatusValue = NotificationStatus.Read.Name;
-    ReadAt = DateTime.UtcNow;
+    ReadAt = nowUtc;
     RaiseDomainEvent(new NotificationReadEvent(Id, TenantId, RecipientUserId));
   }
 
@@ -123,13 +125,13 @@ public sealed class Notification : AggregateRoot, ITenantEntity, ISoftDeletable
   /// <summary>
   /// Soft delete de la notificación.
   /// </summary>
-  public void Delete(Guid deletedBy)
+  public void Delete(DateTime nowUtc, Guid deletedBy)
   {
     if (IsDeleted)
       throw new InvalidOperationException("La notificación ya ha sido eliminada");
 
     IsDeleted = true;
-    DeletedAt = DateTime.UtcNow;
+    DeletedAt = nowUtc;
     DeletedBy = deletedBy;
 
     RaiseDomainEvent(new NotificationDeletedEvent(Id, TenantId, deletedBy));

@@ -50,11 +50,11 @@ public class ReportDto(Guid Id, Guid tenantId, Guid createdById, string name, st
     };
   }
 
-  public Report ToEntity()
+  public Report ToEntity(DateTime nowUtc)
   {
     try
     {
-      var report = Report.Create(TenantId, CreatedById, Name, ReportType.FromName<ReportType>(Type)!, ReportFormat.FromName<ReportFormat>(Format)!);
+      var report = Report.Create(nowUtc, TenantId, CreatedById, Name, ReportType.FromName<ReportType>(Type)!, ReportFormat.FromName<ReportFormat>(Format)!);
 
       if (report.IsFailure)
       {

@@ -20,7 +20,7 @@ public sealed class Page : Entity, ISoftDeletable
 
     private Page() { Content = null!; Title = null!; } // EF las rellena al materializar.
 
-    public static Page Create(Guid documentId, Guid? parentPageId, string title, string content, int order)
+    public static Page Create(DateTime nowUtc, Guid documentId, Guid? parentPageId, string title, string content, int order)
     {
         return new Page
         {
@@ -30,31 +30,31 @@ public sealed class Page : Entity, ISoftDeletable
             Title = title,
             Content = content,
             Order = order,
-            CreatedAtUtc = DateTime.UtcNow,
-            UpdatedAtUtc = DateTime.UtcNow,
+            CreatedAtUtc = nowUtc,
+            UpdatedAtUtc = nowUtc,
             IsDeleted = false
         };
     }
 
-    public void UpdateContent(string title, string content)
+    public void UpdateContent(DateTime nowUtc, string title, string content)
     {
         Title = title;
         Content = content;
-        UpdatedAtUtc = DateTime.UtcNow;
+        UpdatedAtUtc = nowUtc;
     }
 
     /// <summary>Cambia el título sin tocar el contenido, para renombrar desde el árbol.</summary>
-    public void Rename(string title)
+    public void Rename(DateTime nowUtc, string title)
     {
         Title = title;
-        UpdatedAtUtc = DateTime.UtcNow;
+        UpdatedAtUtc = nowUtc;
     }
 
     /// <summary>Cuelga la página de otra, o del documento cuando el padre es <c>null</c>.</summary>
-    public void Move(Guid? parentPageId)
+    public void Move(DateTime nowUtc, Guid? parentPageId)
     {
         ParentPageId = parentPageId;
-        UpdatedAtUtc = DateTime.UtcNow;
+        UpdatedAtUtc = nowUtc;
     }
 
     /// <summary>

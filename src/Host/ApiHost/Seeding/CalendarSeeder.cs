@@ -30,6 +30,7 @@ public sealed class CalendarSeeder(TimeProvider timeProvider, CalendarDbContext 
         var events = new[]
         {
             CalendarEvent.Create(
+                timeProvider.GetUtcNow().UtcDateTime,
                 tenantId: tenantId, organizerId: organizerId,
                 title: "Sprint Planning - CRM SaaS v2.0",
                 startTime: now.AddDays(1).Date.AddHours(9),
@@ -39,6 +40,7 @@ public sealed class CalendarSeeder(TimeProvider timeProvider, CalendarDbContext 
                 location: "Sala Virtual Meet", isAllDay: false),
 
             CalendarEvent.Create(
+                timeProvider.GetUtcNow().UtcDateTime,
                 tenantId: tenantId, organizerId: organizerId,
                 title: "Demo de Producto con Cliente VIP - Acme Corp",
                 startTime: now.AddDays(2).Date.AddHours(14),
@@ -48,6 +50,7 @@ public sealed class CalendarSeeder(TimeProvider timeProvider, CalendarDbContext 
                 location: "Google Meet Link", isAllDay: false),
 
             CalendarEvent.Create(
+                timeProvider.GetUtcNow().UtcDateTime,
                 tenantId: tenantId, organizerId: organizerId,
                 title: "Revisión de Arquitectura & Webhooks",
                 startTime: now.AddDays(3).Date.AddHours(11),
@@ -57,6 +60,7 @@ public sealed class CalendarSeeder(TimeProvider timeProvider, CalendarDbContext 
                 location: "Sala de Reuniones A", isAllDay: false),
 
             CalendarEvent.Create(
+                timeProvider.GetUtcNow().UtcDateTime,
                 tenantId: tenantId, organizerId: organizerId,
                 title: "Despliegue a Producción v2.1",
                 startTime: now.AddDays(5).Date.AddHours(8),

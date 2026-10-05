@@ -84,7 +84,7 @@ public static class NotificationsEndpoints
       return result.IsSuccess ? Results.Ok() : Results.BadRequest(result.Error);
     });
 
-    group.MapPost("/read-all", async (IUserContext currentUser, NotificationsDbContext dbContext) =>
+    group.MapPost("/read-all", async (IUserContext currentUser, NotificationsDbContext dbContext, TimeProvider timeProvider) =>
     {
       var tenantId = currentUser.TenantId;
       var userId = currentUser.UserId;
@@ -95,7 +95,7 @@ public static class NotificationsEndpoints
 
       foreach (var n in notifs)
       {
-          n.MarkAsRead();
+          n.MarkAsRead(timeProvider.GetUtcNow().UtcDateTime);
       }
 
       await dbContext.SaveChangesAsync();

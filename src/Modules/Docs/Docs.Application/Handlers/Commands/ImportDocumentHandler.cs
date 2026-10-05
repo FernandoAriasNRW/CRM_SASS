@@ -7,13 +7,14 @@ using MediatR;
 
 namespace Docs.Application.Handlers.Commands;
 
-public class ImportDocumentHandler(IDocumentRepository repository) 
+public class ImportDocumentHandler(TimeProvider timeProvider, IDocumentRepository repository) 
     : IRequestHandler<ImportDocumentCommand, Result<Guid>>
 {
     public async Task<Result<Guid>> Handle(ImportDocumentCommand request, CancellationToken cancellationToken)
     {
         var title = string.IsNullOrWhiteSpace(request.Title) ? "Imported Document" : request.Title;
         var document = Document.Create(
+            timeProvider.GetUtcNow().UtcDateTime,
             request.TenantId,
             title,
             "Imported document",
@@ -36,7 +37,7 @@ public class ImportDocumentHandler(IDocumentRepository repository)
             content = string.Join("", paragraphs.Select(p => $"<p>{System.Net.WebUtility.HtmlEncode(p).Replace("\n", "<br/>")}</p>"));
         }
 
-        var page = Page.Create(document.Id, null, title, content, 0);
+        var page = Page.Create(timeProvider.GetUtcNow().UtcDateTime, document.Id, null, title, content, 0);
         await repository.AddPageAsync(page, cancellationToken);
 
         await repository.SaveChangesAsync(cancellationToken);

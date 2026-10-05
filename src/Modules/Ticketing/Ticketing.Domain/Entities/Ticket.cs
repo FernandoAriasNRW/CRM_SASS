@@ -66,6 +66,7 @@ public sealed class Ticket : AggregateRoot, ITenantEntity, ISoftDeletable, IArch
     private Ticket() { }
 
     public static Result<Ticket> Create(
+        DateTime nowUtc,
         Guid tenantId,
         Guid customerId,
         string title,
@@ -85,7 +86,7 @@ public sealed class Ticket : AggregateRoot, ITenantEntity, ISoftDeletable, IArch
             Description = description,
             PriorityValue = priority.Value,
             StatusValue = TicketStatus.Open.Value,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = nowUtc
         };
 
         ticket.RaiseDomainEvent(new TicketCreatedEvent(ticket.Id, tenantId));
@@ -99,10 +100,10 @@ public sealed class Ticket : AggregateRoot, ITenantEntity, ISoftDeletable, IArch
     /// así que <see cref="CustomerId"/> queda vacío y el contacto va en los campos del solicitante.
     /// Qué es obligatorio lo decide quien recibe la petición; aquí sólo se guarda.
     /// </summary>
-    public static Result<Ticket> CreateFromExternal(IntakeKey key, ExternalTicketRequest request)
+    public static Result<Ticket> CreateFromExternal(DateTime nowUtc, IntakeKey key, ExternalTicketRequest request)
     {
         // Prioridad media: la decide quien atiende el ticket, no quien lo manda.
-        var created = Create(key.TenantId, Guid.Empty, request.Title, request.Description, TicketPriority.Medium);
+        var created = Create(nowUtc, key.TenantId, Guid.Empty, request.Title, request.Description, TicketPriority.Medium);
         if (created.IsFailure)
             return created;
 
@@ -174,7 +175,7 @@ public sealed class Ticket : AggregateRoot, ITenantEntity, ISoftDeletable, IArch
         return Result<bool>.Success(true);
     }
 
-    public bool ChangeStatus(TicketStatus newStatus)
+    public bool ChangeStatus(DateTime nowUtc, TicketStatus newStatus)
     {
         if (!Status.CanTransitionTo(newStatus))
             return false;
@@ -183,7 +184,7 @@ public sealed class Ticket : AggregateRoot, ITenantEntity, ISoftDeletable, IArch
         StatusValue = newStatus.Value;
 
         if (newStatus == TicketStatus.Resolved)
-            ResolvedAt = DateTime.UtcNow;
+            ResolvedAt = nowUtc;
 
         RaiseDomainEvent(new TicketStatusChangedEvent(Id, TenantId, previousStatus, newStatus.Value));
         return true;
@@ -235,10 +236,10 @@ public sealed class Ticket : AggregateRoot, ITenantEntity, ISoftDeletable, IArch
     /// pestañas abiertas pueden mandar la misma orden, y reescribir la fecha haría parecer
     /// reciente algo archivado hace meses.
     /// </summary>
-    public void Archive()
+    public void Archive(DateTime nowUtc)
     {
         if (ArchivedAtUtc is not null) return;
-        ArchivedAtUtc = DateTime.UtcNow;
+        ArchivedAtUtc = nowUtc;
     }
 
     /// <summary>Devuelve el ticket a las listas.</summary>
@@ -250,11 +251,11 @@ public sealed class Ticket : AggregateRoot, ITenantEntity, ISoftDeletable, IArch
     /// Archivar y borrar no se pisan. Un ticket archivado que se borra sigue archivado al
     /// restaurarlo, que es lo que espera quien lo archivó.
     /// </summary>
-    public void MoveToTrash()
+    public void MoveToTrash(DateTime nowUtc)
     {
         if (IsDeleted) return;
         IsDeleted = true;
-        DeletedAtUtc = DateTime.UtcNow;
+        DeletedAtUtc = nowUtc;
     }
 
     /// <summary>Saca el ticket de la papelera y lo deja como estaba.</summary>

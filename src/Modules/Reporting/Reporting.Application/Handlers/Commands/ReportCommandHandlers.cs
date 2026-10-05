@@ -9,6 +9,7 @@ using Reporting.Domain.ValueObjects;
 namespace Reporting.Application.Handlers.Commands;
 
 public sealed class CreateReportHandler(
+    TimeProvider timeProvider,
     IReportRepository repository,
     IReportingUnitOfWork unitOfWork) : ICommandHandler<CreateReportCommand, Report>
 {
@@ -33,7 +34,7 @@ public sealed class CreateReportHandler(
                 $"El formato «{request.Format}» no existe. Los que hay: "
                 + string.Join(", ", ReportFormat.All().Select(f => f.Name)));
 
-        var reportResult = Report.Create(request.TenantId, request.CreatedById, request.Name, type, format, request.Parameters);
+        var reportResult = Report.Create(timeProvider.GetUtcNow().UtcDateTime, request.TenantId, request.CreatedById, request.Name, type, format, request.Parameters);
         if (reportResult.IsFailure)
             return Result<Report>.Failure(reportResult.Error!);
 

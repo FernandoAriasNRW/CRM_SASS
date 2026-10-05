@@ -49,6 +49,7 @@ public sealed class DocumentMention : Entity, ITenantEntity
     private DocumentMention() { }
 
     public static DocumentMention Create(
+        DateTime nowUtc,
         Guid tenantId, Guid documentId, Guid pageId, string type, Guid entityId, string visibleText)
         => new()
         {
@@ -59,7 +60,7 @@ public sealed class DocumentMention : Entity, ITenantEntity
             MentionedType = type,
             MentionedEntityId = entityId,
             VisibleText = Truncate(visibleText),
-            DetectedAtUtc = DateTime.UtcNow
+            DetectedAtUtc = nowUtc
         };
 
     /// <summary>El texto visible se recorta: es una etiqueta, no el contenido de la página.</summary>

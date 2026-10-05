@@ -59,6 +59,7 @@ public sealed class TenantFilterParametrizationTests : IDisposable
 
     private static Project SampleProject(Guid tenantId, string name) =>
         Project.Create(
+            DateTime.UtcNow,
             tenantId,
             spaceId: Guid.NewGuid(),
             folderId: null,

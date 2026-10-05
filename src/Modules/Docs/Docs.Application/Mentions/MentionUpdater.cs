@@ -9,7 +9,7 @@ namespace Docs.Application.Mentions;
 /// Vive en un servicio y no dentro del handler de guardar para que se pueda llamar desde los dos
 /// sitios que escriben contenido —crear página y actualizarla— sin repetir la lógica en ninguno.
 /// </summary>
-public sealed class MentionUpdater(IMentionRepository repository)
+public sealed class MentionUpdater(TimeProvider timeProvider, IMentionRepository repository)
 {
     public async Task UpdateAsync(
         Guid tenantId, Guid documentId, Guid pageId, string? content, CancellationToken ct = default)
@@ -18,6 +18,7 @@ public sealed class MentionUpdater(IMentionRepository repository)
 
         var mentions = found
             .Select(m => DocumentMention.Create(
+                timeProvider.GetUtcNow().UtcDateTime,
                 tenantId, documentId, pageId, m.Type, m.EntityId, m.VisibleText))
             .ToList();
 

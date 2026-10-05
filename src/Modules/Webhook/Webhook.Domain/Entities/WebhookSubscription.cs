@@ -14,7 +14,7 @@ public sealed class WebhookSubscription : AggregateRoot, ITenantEntity
 
     private WebhookSubscription() { }
 
-    public static WebhookSubscription Create(Guid tenantId, string eventName, string targetUrl, string secret)
+    public static WebhookSubscription Create(DateTime nowUtc, Guid tenantId, string eventName, string targetUrl, string secret)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(eventName);
         ArgumentException.ThrowIfNullOrWhiteSpace(targetUrl);
@@ -27,26 +27,26 @@ public sealed class WebhookSubscription : AggregateRoot, ITenantEntity
             TargetUrl = targetUrl,
             Secret = secret,
             IsActive = true,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = nowUtc
         };
     }
 
-    public void Update(string? targetUrl, string? secret)
+    public void Update(DateTime nowUtc, string? targetUrl, string? secret)
     {
         if (!string.IsNullOrWhiteSpace(targetUrl)) TargetUrl = targetUrl;
         if (!string.IsNullOrWhiteSpace(secret)) Secret = secret;
-        UpdatedAt = DateTime.UtcNow;
+        UpdatedAt = nowUtc;
     }
 
-    public void Deactivate()
+    public void Deactivate(DateTime nowUtc)
     {
         IsActive = false;
-        UpdatedAt = DateTime.UtcNow;
+        UpdatedAt = nowUtc;
     }
 
-    public void Activate()
+    public void Activate(DateTime nowUtc)
     {
         IsActive = true;
-        UpdatedAt = DateTime.UtcNow;
+        UpdatedAt = nowUtc;
     }
 }

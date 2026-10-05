@@ -31,6 +31,7 @@ public sealed class User : AggregateRoot, ITenantEntity, ISoftDeletable
   { }
 
   public static Result<User> Create(
+      DateTime nowUtc,
       Guid tenantId,
       string name,
       Email email,
@@ -54,7 +55,7 @@ public sealed class User : AggregateRoot, ITenantEntity, ISoftDeletable
       PhoneNumber = null,
       Bio = null,
       SidebarPreferences = null,
-      CreatedAtUtc = DateTime.UtcNow,
+      CreatedAtUtc = nowUtc,
       IsDeleted = false,
       DeletedAt = null,
       DeletedBy = null
@@ -142,7 +143,7 @@ public sealed class User : AggregateRoot, ITenantEntity, ISoftDeletable
   /// <summary>
   /// Soft delete del usuario.
   /// </summary>
-  public void Delete(Guid deletedBy)
+  public void Delete(DateTime nowUtc, Guid deletedBy)
   {
     if (IsDeleted)
       throw new InvalidOperationException("El usuario ya ha sido eliminado");
@@ -154,7 +155,7 @@ public sealed class User : AggregateRoot, ITenantEntity, ISoftDeletable
     }
 
     IsDeleted = true;
-    DeletedAt = DateTime.UtcNow;
+    DeletedAt = nowUtc;
     DeletedBy = deletedBy;
 
     RaiseDomainEvent(new UserDeletedEvent(Id, TenantId, deletedBy));

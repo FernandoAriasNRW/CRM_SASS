@@ -8,6 +8,7 @@ using Projects.Application.Abstractions.Repositories;
 namespace Projects.Application;
 
 public sealed class ChangeProjectArchiveStateHandler(
+    TimeProvider timeProvider,
     IProjectRepository repository,
     IProjectsUnitOfWork unitOfWork) : ICommandHandler<ChangeProjectArchiveStateCommand, bool>
 {
@@ -21,13 +22,13 @@ public sealed class ChangeProjectArchiveStateHandler(
         {
             switch (request.Action)
             {
-                case ArchiveAction.Archive: project.Archive(); break;
+                case ArchiveAction.Archive: project.Archive(timeProvider.GetUtcNow().UtcDateTime); break;
                 case ArchiveAction.Unarchive: project.Unarchive(); break;
 
                 // El agregado lanza si ya está borrado o si no lo está. Se traduce a un fallo
                 // con mensaje en vez de dejar salir la excepción: pulsar dos veces «restaurar»
                 // no es un error del programa, es una pantalla con datos de hace un segundo.
-                case ArchiveAction.MoveToTrash: project.Delete(request.ActorId); break;
+                case ArchiveAction.MoveToTrash: project.Delete(timeProvider.GetUtcNow().UtcDateTime, request.ActorId); break;
                 case ArchiveAction.RestoreFromTrash: project.Restore(); break;
             }
         }

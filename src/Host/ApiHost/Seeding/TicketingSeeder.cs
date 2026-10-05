@@ -5,7 +5,7 @@ using Ticketing.Infrastructure.Persistence;
 
 namespace ApiHost.Seeding;
 
-public sealed class TicketingSeeder(TicketingDbContext ticketsDb) : IModuleSeeder
+public sealed class TicketingSeeder(TimeProvider timeProvider, TicketingDbContext ticketsDb) : IModuleSeeder
 {
     public string Module => "Ticketing";
     public int Order => 60;
@@ -35,7 +35,7 @@ public sealed class TicketingSeeder(TicketingDbContext ticketsDb) : IModuleSeede
                 ? context.Members[Random.Shared.Next(context.Members.Count)].Id
                 : context.Admin.Id;
 
-            var created = Ticket.Create(tenantId, customerId, sample.Title, sample.Description, sample.Priority);
+            var created = Ticket.Create(timeProvider.GetUtcNow().UtcDateTime, tenantId, customerId, sample.Title, sample.Description, sample.Priority);
             if (created.IsFailure || created.Value is null)
                 continue;
 
