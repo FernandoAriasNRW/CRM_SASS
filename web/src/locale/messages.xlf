@@ -109,11 +109,11 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/projects/projects.component.ts</context>
-          <context context-type="linenumber">64</context>
+          <context context-type="linenumber">65</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/projects/projects.component.ts</context>
-          <context context-type="linenumber">77</context>
+          <context context-type="linenumber">78</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tasks/task-detail-panel.component.html</context>
@@ -121,15 +121,15 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tasks/tasks.component.ts</context>
-          <context context-type="linenumber">146</context>
+          <context context-type="linenumber">147</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tasks/tasks.component.ts</context>
-          <context context-type="linenumber">161</context>
+          <context context-type="linenumber">162</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tickets/tickets.component.ts</context>
-          <context context-type="linenumber">109</context>
+          <context context-type="linenumber">110</context>
         </context-group>
       </trans-unit>
       <trans-unit id="4724386939331900839" datatype="html">
@@ -155,11 +155,11 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tasks/tasks.component.ts</context>
-          <context context-type="linenumber">150</context>
+          <context context-type="linenumber">151</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tasks/tasks.component.ts</context>
-          <context context-type="linenumber">162</context>
+          <context context-type="linenumber">163</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tickets/ticket-create-modal.component.html</context>
@@ -167,7 +167,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tickets/tickets.component.ts</context>
-          <context context-type="linenumber">110</context>
+          <context context-type="linenumber">111</context>
         </context-group>
       </trans-unit>
       <trans-unit id="418149951377226032" datatype="html">
@@ -189,7 +189,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tasks/tasks.component.ts</context>
-          <context context-type="linenumber">160</context>
+          <context context-type="linenumber">161</context>
         </context-group>
       </trans-unit>
       <trans-unit id="5053485827612204865" datatype="html">
@@ -218,11 +218,11 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tasks/tasks.component.ts</context>
-          <context context-type="linenumber">143</context>
+          <context context-type="linenumber">144</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tickets/tickets.component.ts</context>
-          <context context-type="linenumber">107</context>
+          <context context-type="linenumber">108</context>
         </context-group>
       </trans-unit>
       <trans-unit id="1323925847469750143" datatype="html">
@@ -424,7 +424,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/projects/projects.component.ts</context>
-          <context context-type="linenumber">68</context>
+          <context context-type="linenumber">69</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/ui/navigation-panel/menu-vocabulary.ts</context>
@@ -532,7 +532,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/reports/reports.component.ts</context>
-          <context context-type="linenumber">69</context>
+          <context context-type="linenumber">70</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tags/tags.component.html</context>
@@ -833,7 +833,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/projects/projects.component.ts</context>
-          <context context-type="linenumber">62</context>
+          <context context-type="linenumber">63</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tags/tag-drawer.component.html</context>
@@ -999,7 +999,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/admin/teams/admin-teams.component.html</context>
-          <context context-type="linenumber">164,165</context>
+          <context context-type="linenumber">149,150</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/calendar/event-drawer.component.ts</context>
@@ -1810,7 +1810,7 @@ Pendiente</source>
         <source>Permisos</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/admin/teams/admin-teams.component.html</context>
-          <context context-type="linenumber">102,103</context>
+          <context context-type="linenumber">87,88</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/admin/users/admin-users.component.html</context>
@@ -1821,35 +1821,35 @@ Pendiente</source>
         <source>No hay equipos creados</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/admin/teams/admin-teams.component.html</context>
-          <context context-type="linenumber">112,113</context>
+          <context context-type="linenumber">97,98</context>
         </context-group>
       </trans-unit>
       <trans-unit id="2692256062374228921" datatype="html">
         <source>Crea tu primer equipo para organizar miembros y delegar permisos.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/admin/teams/admin-teams.component.html</context>
-          <context context-type="linenumber">113,114</context>
+          <context context-type="linenumber">98,99</context>
         </context-group>
       </trans-unit>
       <trans-unit id="3177282742817239749" datatype="html">
         <source>Nombre del Equipo *</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/admin/teams/admin-teams.component.html</context>
-          <context context-type="linenumber">132,133</context>
+          <context context-type="linenumber">117,118</context>
         </context-group>
       </trans-unit>
       <trans-unit id="2429897824495004570" datatype="html">
         <source>Ej. Equipo de Desarrollo Backend</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/admin/teams/admin-teams.component.html</context>
-          <context context-type="linenumber">136,137</context>
+          <context context-type="linenumber">121,122</context>
         </context-group>
       </trans-unit>
       <trans-unit id="2702769239797460498" datatype="html">
         <source>Descripción</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/admin/teams/admin-teams.component.html</context>
-          <context context-type="linenumber">141,142</context>
+          <context context-type="linenumber">126,127</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/calendar/event-drawer.component.ts</context>
@@ -1873,7 +1873,7 @@ Pendiente</source>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/projects/projects.component.ts</context>
-          <context context-type="linenumber">63</context>
+          <context context-type="linenumber">64</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tasks/task-create-modal.component.html</context>
@@ -1885,7 +1885,7 @@ Pendiente</source>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tasks/tasks.component.ts</context>
-          <context context-type="linenumber">144</context>
+          <context context-type="linenumber">145</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/teams/team-detail.component.html</context>
@@ -1901,28 +1901,28 @@ Pendiente</source>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tickets/tickets.component.ts</context>
-          <context context-type="linenumber">108</context>
+          <context context-type="linenumber">109</context>
         </context-group>
       </trans-unit>
       <trans-unit id="3285168185261347849" datatype="html">
         <source>Propósito del equipo...</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/admin/teams/admin-teams.component.html</context>
-          <context context-type="linenumber">145,146</context>
+          <context context-type="linenumber">130,131</context>
         </context-group>
       </trans-unit>
       <trans-unit id="442535966115849639" datatype="html">
         <source>Seleccionar Miembros del Equipo</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/admin/teams/admin-teams.component.html</context>
-          <context context-type="linenumber">150,151</context>
+          <context context-type="linenumber">135,136</context>
         </context-group>
       </trans-unit>
       <trans-unit id="7161179299593805966" datatype="html">
         <source>Guardar Cambios</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/admin/teams/admin-teams.component.html</context>
-          <context context-type="linenumber">167</context>
+          <context context-type="linenumber">152</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/admin/users/admin-users.component.html</context>
@@ -1945,14 +1945,14 @@ Pendiente</source>
         <source>Crear Equipo</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/admin/teams/admin-teams.component.html</context>
-          <context context-type="linenumber">167,168</context>
+          <context context-type="linenumber">152,153</context>
         </context-group>
       </trans-unit>
       <trans-unit id="9089392450232532076" datatype="html">
         <source>Error al cargar equipos</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/admin/teams/admin-teams.component.ts</context>
-          <context context-type="linenumber">89</context>
+          <context context-type="linenumber">85</context>
         </context-group>
       </trans-unit>
       <trans-unit id="183276747283762359" datatype="html">
@@ -3873,7 +3873,7 @@ Pendiente</source>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tasks/tasks.component.ts</context>
-          <context context-type="linenumber">577</context>
+          <context context-type="linenumber">575</context>
         </context-group>
       </trans-unit>
       <trans-unit id="4918317744378679008" datatype="html">
@@ -5293,33 +5293,18 @@ Pendiente</source>
         <source>Propietario</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/projects/projects.component.ts</context>
-          <context context-type="linenumber">65</context>
+          <context context-type="linenumber">66</context>
         </context-group>
       </trans-unit>
       <trans-unit id="3067930309989544614" datatype="html">
         <source>Fin estimado</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/projects/projects.component.ts</context>
-          <context context-type="linenumber">69</context>
+          <context context-type="linenumber">70</context>
         </context-group>
       </trans-unit>
       <trans-unit id="4155087585589578541" datatype="html">
         <source>Desde</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/projects/projects.component.ts</context>
-          <context context-type="linenumber">78</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/tasks/tasks.component.ts</context>
-          <context context-type="linenumber">163</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/tickets/tickets.component.ts</context>
-          <context context-type="linenumber">119</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="2987084982624145537" datatype="html">
-        <source>Hasta</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/projects/projects.component.ts</context>
           <context context-type="linenumber">79</context>
@@ -5331,6 +5316,21 @@ Pendiente</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tickets/tickets.component.ts</context>
           <context context-type="linenumber">120</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2987084982624145537" datatype="html">
+        <source>Hasta</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/projects/projects.component.ts</context>
+          <context context-type="linenumber">80</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/tasks.component.ts</context>
+          <context context-type="linenumber">165</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tickets/tickets.component.ts</context>
+          <context context-type="linenumber">121</context>
         </context-group>
       </trans-unit>
       <trans-unit id="1453124955640330010" datatype="html">
@@ -6274,7 +6274,7 @@ Pendiente</source>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tasks/tasks.component.ts</context>
-          <context context-type="linenumber">155</context>
+          <context context-type="linenumber">156</context>
         </context-group>
       </trans-unit>
       <trans-unit id="7310099750613863144" datatype="html">
@@ -6677,17 +6677,6 @@ Pendiente</source>
         <source>Tablero</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tasks/tasks.component.ts</context>
-          <context context-type="linenumber">110</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/tickets/tickets.component.ts</context>
-          <context context-type="linenumber">93</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="1802619862731601881" datatype="html">
-        <source>Lista</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/tasks/tasks.component.ts</context>
           <context context-type="linenumber">111</context>
         </context-group>
         <context-group purpose="location">
@@ -6695,88 +6684,99 @@ Pendiente</source>
           <context context-type="linenumber">94</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="1802619862731601881" datatype="html">
+        <source>Lista</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/tasks.component.ts</context>
+          <context context-type="linenumber">112</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tickets/tickets.component.ts</context>
+          <context context-type="linenumber">95</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="4703412002234796149" datatype="html">
         <source>Gantt</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tasks/tasks.component.ts</context>
-          <context context-type="linenumber">112</context>
+          <context context-type="linenumber">113</context>
         </context-group>
       </trans-unit>
       <trans-unit id="4075705825773516834" datatype="html">
         <source>Carga</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tasks/tasks.component.ts</context>
-          <context context-type="linenumber">113</context>
+          <context context-type="linenumber">114</context>
         </context-group>
       </trans-unit>
       <trans-unit id="8180710318857613171" datatype="html">
         <source>Asignado</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tasks/tasks.component.ts</context>
-          <context context-type="linenumber">153</context>
+          <context context-type="linenumber">154</context>
         </context-group>
       </trans-unit>
       <trans-unit id="1552992431454668792" datatype="html">
         <source>Horas</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tasks/tasks.component.ts</context>
-          <context context-type="linenumber">154</context>
+          <context context-type="linenumber">155</context>
         </context-group>
       </trans-unit>
       <trans-unit id="8121921990776935406" datatype="html">
         <source><x id="PH" equiv-text="task.checklistDone ?? 0"/> de <x id="PH_1" equiv-text="task.checklistTotal"/> puntos hechos</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tasks/tasks.component.ts</context>
-          <context context-type="linenumber">197</context>
+          <context context-type="linenumber">198</context>
         </context-group>
       </trans-unit>
       <trans-unit id="3963746112432770684" datatype="html">
         <source><x id="PH" equiv-text="task.assignees?.length ?? 0"/> personas responsables</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tasks/tasks.component.ts</context>
-          <context context-type="linenumber">202</context>
+          <context context-type="linenumber">203</context>
         </context-group>
       </trans-unit>
       <trans-unit id="171937729494075993" datatype="html">
         <source>Bloqueada por <x id="PH" equiv-text="task.blockedByCount"/> tarea(s)</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tasks/tasks.component.ts</context>
-          <context context-type="linenumber">207</context>
+          <context context-type="linenumber">208</context>
         </context-group>
       </trans-unit>
       <trans-unit id="2435365218649977532" datatype="html">
         <source><x id="PH" equiv-text="task.completedSubtaskCount ?? 0"/> de <x id="PH_1" equiv-text="task.subtaskCount"/> subtareas completadas</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tasks/tasks.component.ts</context>
-          <context context-type="linenumber">212</context>
+          <context context-type="linenumber">213</context>
         </context-group>
       </trans-unit>
       <trans-unit id="3296241950953848248" datatype="html">
         <source>No se pudo mover la tarea</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tasks/tasks.component.ts</context>
-          <context context-type="linenumber">554</context>
+          <context context-type="linenumber">552</context>
         </context-group>
       </trans-unit>
       <trans-unit id="7646590756920030055" datatype="html">
         <source>«<x id="PH" equiv-text="value"/>» no es un número de horas.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tasks/tasks.component.ts</context>
-          <context context-type="linenumber">578</context>
+          <context context-type="linenumber">576</context>
         </context-group>
       </trans-unit>
       <trans-unit id="388306122432231988" datatype="html">
         <source>«<x id="PH" equiv-text="item.title"/>» se queda como estaba</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tasks/tasks.component.ts</context>
-          <context context-type="linenumber">591</context>
+          <context context-type="linenumber">589</context>
         </context-group>
       </trans-unit>
       <trans-unit id="475463244606901658" datatype="html">
         <source>No se pudo guardar el cambio.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tasks/tasks.component.ts</context>
-          <context context-type="linenumber">592</context>
+          <context context-type="linenumber">590</context>
         </context-group>
       </trans-unit>
       <trans-unit id="405058489481409876" datatype="html">
@@ -7063,21 +7063,21 @@ Pendiente</source>
         <source>Agente</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tickets/tickets.component.ts</context>
-          <context context-type="linenumber">111</context>
+          <context context-type="linenumber">112</context>
         </context-group>
       </trans-unit>
       <trans-unit id="7284413204045478097" datatype="html">
         <source>Creado</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tickets/tickets.component.ts</context>
-          <context context-type="linenumber">112</context>
+          <context context-type="linenumber">113</context>
         </context-group>
       </trans-unit>
       <trans-unit id="8593116484969132330" datatype="html">
         <source>No se pudo mover el ticket</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tickets/tickets.component.ts</context>
-          <context context-type="linenumber">429</context>
+          <context context-type="linenumber">424</context>
         </context-group>
       </trans-unit>
       <trans-unit id="3672287793640783844" datatype="html">

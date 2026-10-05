@@ -17,6 +17,7 @@ import {
   lucideLayoutDashboard, lucideFilter, lucideUser, lucideSave
 } from '@ng-icons/lucide';
 import { DataTableComponent, ColumnDef, TableState } from '../../shared/ui/data-table/data-table.component';
+import { listQueryParams } from '../../shared/ui/data-table/list-query';
 import { FilterField } from '../../shared/ui/data-table/advanced-filters.component';
 import { ViewsService, SavedView } from '../../shared/services/views.service';
 import { TableColumnService } from '../../shared/services/table-column.service';
@@ -181,12 +182,9 @@ export class TicketsComponent implements OnInit {
       this.realtime.connectTickets(userInfo.tenantId);
     }
 
+    // El estado llega por su nombre, el mismo que trae la lista.
     this.realtime.ticketMoved$.subscribe(({ ticketId, status }) => {
-      // Map status number to string if necessary, assuming status string comes through.
-      // If it comes as a number (0=Open, 1=InProgress, 2=Resolved, 3=Closed)
-      const statusMap = ['Open', 'InProgress', 'Resolved', 'Closed'];
-      const statusStr = typeof status === 'number' ? statusMap[status] : status;
-      this.allTickets.update(tickets => tickets.map(t => t.id === ticketId ? { ...t, status: statusStr as string } : t));
+      this.allTickets.update(tickets => tickets.map(t => t.id === ticketId ? { ...t, status } : t));
       this.distributeTicketsToColumns();
     });
   }
@@ -299,11 +297,8 @@ export class TicketsComponent implements OnInit {
     const state = this.tableState();
     
     const params: any = {
-      pageNumber: state.page,
+      ...listQueryParams(state),
       pageSize: this.viewMode() === 'board' ? 1000 : state.pageSize, // Get all for board view
-      sortColumn: state.sortColumn,
-      sortDirection: state.sortDirection,
-      searchTerm: state.searchTerm
     };
 
     if (state.filters) {

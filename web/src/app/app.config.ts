@@ -18,8 +18,8 @@ import { catchError, of, tap } from 'rxjs';
 export function initializeApp(api: ApiService, auth: AuthSignalStore) {
   return () => {
     if (auth.userInfo()) {
-      return api.post<{ accessToken: string, expiresAt: string }>('/auth/refresh', {}).pipe(
-        tap(res => auth.setAccessToken(res.accessToken, new Date(res.expiresAt))),
+      return api.post<{ accessToken: string, accessTokenExpiresAtUtc: string }>('/auth/refresh', {}).pipe(
+        tap(res => auth.setAccessToken(res.accessToken, new Date(res.accessTokenExpiresAtUtc))),
         catchError(() => {
           auth.clearTokens();
           return of(null);

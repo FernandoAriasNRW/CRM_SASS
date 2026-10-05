@@ -12,7 +12,7 @@ import { lucidePlus, lucideHash, lucideSend } from '@ng-icons/lucide';
 import { Subscription } from 'rxjs';
 
 interface Channel { id: string; name: string; type: string; }
-interface Message { id: string; channelId: string; senderId: string; content: string; sentAtUtc: string; }
+interface Message { id: string; conversationId: string; senderId: string; content: string; sentAt: string; }
 
 @Component({
   selector: 'app-chat',
@@ -43,7 +43,7 @@ export class ChatComponent implements OnInit, OnDestroy {
     });
 
     this.sub = this.realtime.chatMessage$.subscribe(msg => {
-      if (msg.channelId === this.activeChannel()?.id) {
+      if (msg.conversationId === this.activeChannel()?.id) {
         this.messages.update(msgs => [...msgs, msg]);
       }
     });

@@ -39,7 +39,7 @@
               <div class="flex items-baseline gap-2">
                 <span class="text-xs font-medium">{{ msg.senderId | slice:0:8 }}</span>
                 <span class="text-xs text-muted-foreground">
-                  {{ msg.sentAtUtc | date:'HH:mm' }}
+                  {{ msg.sentAt | date:'HH:mm' }}
                 </span>
               </div>
               <p class="text-sm mt-0.5 break-words">{{ msg.content }}</p>

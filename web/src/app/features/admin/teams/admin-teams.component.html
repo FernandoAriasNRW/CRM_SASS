@@ -58,7 +58,7 @@
               </div>
               <div>
                 <h3 class="font-bold text-sm text-foreground group-hover:text-primary transition-colors">{{ team.name }}</h3>
-                <span class="text-[11px] text-muted-foreground">{{ team.members ? team.members.length : 0 }} miembros</span>
+                <span class="text-[11px] text-muted-foreground">{{ team.memberCount }} miembros</span>
               </div>
             </div>
 
@@ -77,23 +77,8 @@
           </p>
         </div>
 
-        <!-- Bottom Row: Members Preview & Granular Permissions Button -->
-        <div class="pt-3 border-t border-border dark:border-border/80 flex items-center justify-between gap-2">
-          
-          <!-- Member Avatars -->
-          <div class="flex items-center -space-x-2 overflow-hidden">
-            @for (m of (team.members || []).slice(0, 4); track m.userId) {
-              <div class="w-6 h-6 rounded-full bg-primary-subtle text-primary-subtle-fg font-bold text-[10px] flex items-center justify-center border-2 border-white dark:border-border" title="{{ m.name || m.userId }}">
-                {{ (m.name || 'U').charAt(0).toUpperCase() }}
-              </div>
-            }
-            @if ((team.members || []).length > 4) {
-              <div class="w-6 h-6 rounded-full bg-secondary dark:bg-muted text-muted-foreground text-[10px] font-bold flex items-center justify-center border-2 border-white dark:border-border">
-                +{{ (team.members || []).length - 4 }}
-              </div>
-            }
-          </div>
-
+        <!-- Bottom Row: Granular Permissions Button -->
+        <div class="pt-3 border-t border-border dark:border-border/80 flex items-center justify-end gap-2">
           <!-- ClickUp Granular Permissions Button -->
           <button 
             (click)="openPermissionsModal(team)"

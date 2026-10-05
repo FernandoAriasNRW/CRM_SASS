@@ -27,8 +27,9 @@ public sealed class MessageDto
   private MessageDto()
   { }
 
-  private MessageDto(Guid tenantId, Guid conversationId, Guid senderId, string content, DateTime sentAt, DateTime? editedAt, bool isDeleted)
+  private MessageDto(Guid id, Guid tenantId, Guid conversationId, Guid senderId, string content, DateTime sentAt, DateTime? editedAt, bool isDeleted)
   {
+    Id = id;
     TenantId = tenantId;
     ConversationId = conversationId;
     SenderId = senderId;
@@ -48,10 +49,12 @@ public sealed class MessageDto
     SentAt = sentAt;
   }
 
-  // Mapping desde entidad
+  // Mapping desde entidad. El identificador faltaba: todos los mensajes salían con el Guid vacío y
+  // la lista del chat, que los sigue por él, tenía claves repetidas.
   public static MessageDto FromDomain(Message entity)
   {
     return new MessageDto(
+        entity.Id,
         entity.TenantId,
         entity.ConversationId,
         entity.SenderId,

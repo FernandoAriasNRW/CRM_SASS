@@ -966,6 +966,13 @@ que lleva «8b» en el título. Lo único que sigue siendo propio de un disparad
 - **Documentos tiene la columna de archivado y no la usa.** Se le puso al modelar el concepto
   para no dejar el agregado a medias, pero Docs mantiene su propio panel lateral y no se ha
   enganchado al compartido.
+- **Lo que el frontend pide y la API no tiene** (§22.3): la pantalla de webhooks, las
+  notificaciones push, `GET /dashboards/{id}` y el aviso `notification_received`.
+- **El tiempo real no conecta** (§22.4), y los hubs dejan unirse a grupos de otra organización.
+- **Los miembros de un equipo no se pueden editar**: `UpdateTeamCommand` ignora `memberIds` y la
+  API no dice quiénes son los miembros, sólo cuántos.
+- **`/projects` no ordena ni filtra por fechas, y `/reports` no ordena, no busca ni filtra por
+  formato**, aunque las pantallas manden esos parámetros: se ignoran sin error.
 
 ---
 
@@ -1549,3 +1556,65 @@ configuración por defecto, no siembra y enseña los datos que quedan.
 
 **No se pudo recuperar** lo que la siembra se llevó de otras organizaciones: no queda constancia de
 a cuál pertenecía cada fila, así que se trata como de la demostración.
+
+---
+
+## 22. Contratos entre el frontend y la API
+
+Al pasar los nombres a inglés, `TaskDependenciesDto` mandaba `bloqueadaPor`/`bloqueaA` y la ficha
+leía `blockedBy`/`blocks`: la tarea no enseñaba nunca sus dependencias, y ninguna prueba lo vio
+porque las e2e simulan la API con `page.route` y Karma usa espías. Ese caso ya estaba arreglado;
+esta pasada buscó los demás de forma sistemática, en octubre de 2026.
+
+### 22.1 Cómo se buscó
+
+1. `tools/contract-snapshot` sobre la API compilada: los campos que puede sacar cada DTO.
+2. Cada `api.get/post/put/patch/delete` de `web/src/app`, con su tipo, su ruta y su cuerpo,
+   cruzado con el OpenAPI de la API levantada (`/openapi/v1.json`): rutas y métodos que no
+   existen, cuerpos con campos que no se enlazan y parámetros de consulta con otro nombre.
+3. Cada GET pedido a la API levantada y su JSON real comparado, recorriendo los tipos anidados,
+   con las propiedades del tipo TypeScript que lo lee. Esto ve también los objetos anónimos
+   (`Results.Ok(new { ... })`), que el contrato por reflexión no ve.
+4. Lo que la base de desarrollo no tenía (comentarios, checklist, adjuntos…) se cotejó con el DTO
+   del handler. Y los mensajes de SignalR, a mano.
+
+### 22.2 Lo que estaba roto y se arregló
+
+- **Las listas no paginaban ni buscaban en el servidor.** Tareas, tickets, proyectos e informes
+  mandaban `pageNumber` y `searchTerm`; la API lee `page` y `search`. La segunda página era la
+  primera y el buscador no filtraba. Ahora los parámetros salen de un solo sitio,
+  `shared/ui/data-table/list-query.ts`, con su prueba.
+- **El chat no enviaba.** El texto se esperaba como parámetro de consulta y la interfaz lo manda en
+  el cuerpo: todo envío daba 400. Además los mensajes salían con el `Guid` vacío (`FromDomain` no
+  copiaba el `Id`, y la lista se sigue por él), la pantalla leía `channelId`/`sentAtUtc` en vez de
+  `conversationId`/`sentAt` —el mensaje en tiempo real no casaba nunca con el canal abierto— y el
+  canal no traía el `type` que se enseña.
+- **Los equipos salían con 0 miembros** en administración: se leía `members`, que la API no manda.
+  Ahora se usa `memberCount`.
+- **La renovación de sesión al arrancar** leía `expiresAt`; la API manda `accessTokenExpiresAtUtc`
+  y la caducidad quedaba en una fecha inválida.
+- **El estado de un ticket en tiempo real** iba como número (1 a 5) y el tablero lo traducía con
+  una lista que empezaba en 0 y no tenía `PendingInfo`. Ahora va por su nombre, como en `TicketDto`.
+
+`FrontendContractTests` lee el JSON real con los nombres exactos que usa cada componente.
+
+### 22.3 Lo que el frontend pide y la API no tiene
+
+No son nombres cambiados sino pantallas hechas contra una API que no existe; quedan anotadas:
+
+- **Webhooks** (pestaña de administración): espera `name`, `url`, `secret`, `eventTypes`,
+  recuentos de éxito y fallo, `PUT`, `regenerate-secret` y `/webhooks/events`. La API tiene
+  `eventName`, `targetUrl`, `isActive`, actualiza con `PATCH` y no tiene lo demás. La pestaña no
+  enseña ni crea nada útil.
+- **Notificaciones push**: `/notifications/push/vapid-key`, `subscribe`, `unsubscribe` y `test` no
+  existen.
+- **`GET /dashboards/{id}`** (`getDashboardById`, sin uso) no existe.
+- **`notification_received`**: el frontend lo escucha y nadie lo manda.
+
+### 22.4 El tiempo real no conecta
+
+Los hubs exigen autenticación, pero la API no lee el token de la cadena de consulta
+(`access_token`), que es por donde lo manda SignalR en WebSockets y SSE: la conexión da 401. Así
+que el arreglo de 22.2 sobre el estado de los tickets no se ve hasta resolver esto. Y al
+resolverlo hay que cerrar antes otra cosa: `JoinTickets`, `JoinBoard` y `JoinChannel` aceptan
+cualquier identificador, así que cualquiera podría escuchar los grupos de otra organización.

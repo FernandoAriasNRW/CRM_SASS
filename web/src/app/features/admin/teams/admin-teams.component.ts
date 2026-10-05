@@ -11,19 +11,15 @@ import { GranularPermissionsModalComponent } from '../permissions/granular-permi
 import { DrawerComponent } from '../../../shared/ui/drawer.component';
 import { ClickableDirective } from '../../../shared/directives/clickable.directive';
 
-export interface TeamMemberDto {
-  userId: string;
-  role: string;
-  name?: string;
-  email?: string;
-}
-
 export interface TeamDto {
   id: string;
   name: string;
   description: string;
-  createdAtUtc: string;
-  members: TeamMemberDto[];
+  /**
+   * Cuántos miembros tiene. La API no manda la lista: leía `members`, que no llegaba nunca, y
+   * todos los equipos salían con 0 miembros.
+   */
+  memberCount: number;
 }
 
 export interface UserOptionDto {
@@ -110,7 +106,8 @@ export class AdminTeamsComponent implements OnInit {
     this.editingTeam.set(team);
     this.formName = team.name;
     this.formDescription = team.description || '';
-    this.selectedMemberIds.set(team.members ? team.members.map(m => m.userId) : []);
+    // La API no dice quiénes son los miembros, sólo cuántos, así que no hay a quién marcar.
+    this.selectedMemberIds.set([]);
     this.showFormModal.set(true);
   }
 

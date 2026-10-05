@@ -21,6 +21,7 @@ import { GanttComponent } from './gantt.component';
 import { WorkloadComponent } from './workload.component';
 import type { DependencyEdge } from './gantt';
 import { DataTableComponent, ColumnDef, TableState, type CellEdit } from '../../shared/ui/data-table/data-table.component';
+import { listQueryParams } from '../../shared/ui/data-table/list-query';
 import { FilterField } from '../../shared/ui/data-table/advanced-filters.component';
 import { ViewsService, SavedView } from '../../shared/services/views.service';
 import { ViewTabsComponent, type BuiltInView } from '../../shared/ui/view-tabs/view-tabs.component';
@@ -400,13 +401,10 @@ export class TasksComponent implements OnInit {
     const state = this.tableState();
     
     const params: any = {
-      pageNumber: state.page,
+      ...listQueryParams(state),
       // El tablero y el Gantt piden todo: los dos colocan cada tarea en su sitio —columna o
       // fecha— y una página suelta dejaría huecos que parecerían trabajo inexistente.
       pageSize: this.viewMode() === 'list' ? state.pageSize : 1000,
-      sortColumn: state.sortColumn,
-      sortDirection: state.sortDirection,
-      searchTerm: state.searchTerm
     };
 
     if (state.filters) {

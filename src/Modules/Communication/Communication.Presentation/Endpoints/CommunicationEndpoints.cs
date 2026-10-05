@@ -1,4 +1,4 @@
-using BuildingBlocks.Application.Abstractions;
+﻿using BuildingBlocks.Application.Abstractions;
 using System.Linq;
 using Communication.Application.Commands;
 using Communication.Application.Queries;
@@ -14,6 +14,12 @@ namespace Communication.Presentation.Endpoints;
 
 public static class CommunicationEndpoints
 {
+  /// <summary>
+  /// El cuerpo de un mensaje nuevo. El texto iba como parámetro de consulta —un <c>string</c>
+  /// suelto en la lambda— y la interfaz lo manda en el cuerpo, así que todo envío daba 400.
+  /// </summary>
+  public sealed record NewMessageRequest(string Content);
+
   public static IServiceCollection AddCommunicationPresentation(this IServiceCollection services, IConfiguration configuration)
   {
     services.AddCommunicationInfrastructure(configuration);
@@ -59,9 +65,9 @@ public static class CommunicationEndpoints
     // Quien firma el mensaje es quien lo manda, no quien lo diga la petición: `senderId` venía
     // en la cadena de consulta, así que cualquiera podía escribir en un canal con el nombre de
     // otra persona. Es la misma regla que en los comentarios, donde el autor sale del token.
-    group.MapPost("/{id:guid}/messages", async (Guid id, string content, IUserContext currentUser, IMediator mediator) =>
+    group.MapPost("/{id:guid}/messages", async (Guid id, NewMessageRequest body, IUserContext currentUser, IMediator mediator) =>
     {
-      var command = new SendMessageCommand(currentUser.TenantId, id, currentUser.UserId, content);
+      var command = new SendMessageCommand(currentUser.TenantId, id, currentUser.UserId, body.Content);
       var result = await mediator.Send(command);
       return result.IsSuccess
               ? Results.Created($"/api/v1/channels/{id}/messages/{result.Value!.Id}", result.Value)
