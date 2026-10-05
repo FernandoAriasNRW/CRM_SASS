@@ -8,6 +8,7 @@ using Notifications.Domain.Entities;
 namespace Notifications.Application.Handlers.Commands;
 
 public sealed class CreateNotificationHandler(
+    TimeProvider timeProvider,
     INotificationRepository repository,
     INotificationsUnitOfWork unitOfWork) : ICommandHandler<CreateNotificationCommand, Notification>
 {
@@ -17,6 +18,7 @@ public sealed class CreateNotificationHandler(
   public async Task<Result<Notification>> Handle(CreateNotificationCommand request, CancellationToken ct)
   {
     var notificationResult = Notification.Create(
+        timeProvider.GetUtcNow().UtcDateTime,
         request.TenantId,
         request.RecipientUserId,
         request.Type,
@@ -40,6 +42,7 @@ public sealed class CreateNotificationHandler(
 }
 
 public sealed class MarkNotificationAsReadHandler(
+    TimeProvider timeProvider,
     INotificationRepository repository,
     INotificationsUnitOfWork unitOfWork) : ICommandHandler<MarkNotificationAsReadCommand, bool>
 {
@@ -54,7 +57,7 @@ public sealed class MarkNotificationAsReadHandler(
     if (dto.IsDeleted)
       return Result<bool>.Failure("No se puede modificar una notificación eliminada");
 
-    dto.MarkAsRead();
+    dto.MarkAsRead(timeProvider.GetUtcNow().UtcDateTime);
 
     var updated = await _repository.UpdateAsync(dto, cancellationToken);
     await _unitOfWork.SaveChangesAsync(cancellationToken);

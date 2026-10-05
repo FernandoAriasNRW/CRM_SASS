@@ -8,6 +8,7 @@ using Ticketing.Application.Abstractions.Repositories;
 namespace Ticketing.Application;
 
 public sealed class ChangeTicketArchiveStateHandler(
+    TimeProvider timeProvider,
     ITicketRepository repository,
     ITicketingUnitOfWork unitOfWork) : ICommandHandler<ChangeTicketArchiveStateCommand, bool>
 {
@@ -20,9 +21,9 @@ public sealed class ChangeTicketArchiveStateHandler(
 
         switch (request.Action)
         {
-            case ArchiveAction.Archive: ticket.Archive(); break;
+            case ArchiveAction.Archive: ticket.Archive(timeProvider.GetUtcNow().UtcDateTime); break;
             case ArchiveAction.Unarchive: ticket.Unarchive(); break;
-            case ArchiveAction.MoveToTrash: ticket.MoveToTrash(); break;
+            case ArchiveAction.MoveToTrash: ticket.MoveToTrash(timeProvider.GetUtcNow().UtcDateTime); break;
             case ArchiveAction.RestoreFromTrash: ticket.RestoreFromTrash(); break;
         }
 

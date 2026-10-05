@@ -124,7 +124,7 @@ public sealed class ExportGenerator(
 
         // Segunda comprobación, ahora sobre la fila recién leída. Entre que la tanda la eligió y
         // este momento, otro proceso pudo cogerla; `Comenzar` devuelve false y se pasa.
-        if (!export.Start()) return;
+        if (!export.Start(timeProvider.GetUtcNow().UtcDateTime)) return;
 
         // «Empezar» no levanta ningún evento, así que aquí basta con guardar.
         await db.SaveChangesAsync(ct);
@@ -149,7 +149,7 @@ public sealed class ExportGenerator(
 
             await db.ExportContents.AddAsync(content, ct);
 
-            export.Finish(name, bytes.LongLength);
+            export.Finish(timeProvider.GetUtcNow().UtcDateTime, name, bytes.LongLength);
             await unitOfWork.SaveChangesAndDispatchAsync(ct);
 
             logger.LogInformation(
@@ -162,7 +162,7 @@ public sealed class ExportGenerator(
             // «¿por qué no salió mi informe?» no tiene acceso a los registros del servidor.
             logger.LogError(ex, "La exportación {Exportacion} falló", export.Id);
 
-            export.Fail(ex.Message);
+            export.Fail(timeProvider.GetUtcNow().UtcDateTime, ex.Message);
 
             try
             {

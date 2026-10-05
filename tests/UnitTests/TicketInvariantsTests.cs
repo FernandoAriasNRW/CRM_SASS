@@ -14,6 +14,7 @@ namespace UnitTests;
 public sealed class TicketInvariantsTests
 {
     private static Ticket NewTicket() => Ticket.Create(
+        DateTime.UtcNow,
         tenantId: Guid.NewGuid(),
         customerId: Guid.NewGuid(),
         title: "No puedo iniciar sesión",
@@ -33,7 +34,7 @@ public sealed class TicketInvariantsTests
     [Fact]
     public void An_empty_title_produces_no_ticket()
     {
-        var result = Ticket.Create(Guid.NewGuid(), Guid.NewGuid(), "", "descripción", TicketPriority.Low);
+        var result = Ticket.Create(DateTime.UtcNow, Guid.NewGuid(), Guid.NewGuid(), "", "descripción", TicketPriority.Low);
 
         result.IsSuccess.Should().BeFalse();
         result.Error.Should().NotBeNullOrWhiteSpace();
@@ -44,7 +45,7 @@ public sealed class TicketInvariantsTests
     {
         var ticket = NewTicket();
 
-        ticket.ChangeStatus(TicketStatus.Resolved).Should().BeTrue();
+        ticket.ChangeStatus(DateTime.UtcNow, TicketStatus.Resolved).Should().BeTrue();
 
         ticket.ResolvedAt.Should().NotBeNull();
         ticket.ResolvedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
@@ -54,13 +55,13 @@ public sealed class TicketInvariantsTests
     public void A_closed_ticket_can_be_reopened()
     {
         var ticket = NewTicket();
-        ticket.ChangeStatus(TicketStatus.Closed).Should().BeTrue();
+        ticket.ChangeStatus(DateTime.UtcNow, TicketStatus.Closed).Should().BeTrue();
 
         // Closed fue terminal y dejó de serlo con la retirada de la máquina de estados:
         // en un tablero, esa regla se traducía en una tarjeta que no se dejaba arrastrar
         // sin explicar por qué. Si algún día vuelve a bloquearse, será una decisión
         // consciente y este test tendrá que cambiar.
-        ticket.ChangeStatus(TicketStatus.Open).Should().BeTrue();
+        ticket.ChangeStatus(DateTime.UtcNow, TicketStatus.Open).Should().BeTrue();
 
         ticket.StatusValue.Should().Be(TicketStatus.Open.Value);
     }
@@ -72,9 +73,9 @@ public sealed class TicketInvariantsTests
         var source = TicketStatus.All().Single(s => s.Value == from);
         var target = TicketStatus.All().Single(s => s.Value == to);
         var ticket = NewTicket();
-        ticket.ChangeStatus(source);
+        ticket.ChangeStatus(DateTime.UtcNow, source);
 
-        ticket.ChangeStatus(target).Should().BeTrue();
+        ticket.ChangeStatus(DateTime.UtcNow, target).Should().BeTrue();
 
         ticket.StatusValue.Should().Be(target.Value);
     }
@@ -92,9 +93,9 @@ public sealed class TicketInvariantsTests
     public void A_resolved_ticket_can_be_reopened_to_in_progress()
     {
         var ticket = NewTicket();
-        ticket.ChangeStatus(TicketStatus.Resolved);
+        ticket.ChangeStatus(DateTime.UtcNow, TicketStatus.Resolved);
 
-        ticket.ChangeStatus(TicketStatus.InProgress).Should().BeTrue();
+        ticket.ChangeStatus(DateTime.UtcNow, TicketStatus.InProgress).Should().BeTrue();
 
         ticket.StatusValue.Should().Be(TicketStatus.InProgress.Value);
     }
@@ -118,7 +119,7 @@ public sealed class TicketInvariantsTests
         var ticket = NewTicket();
         ticket.ClearDomainEvents();
 
-        ticket.ChangeStatus(TicketStatus.InProgress);
+        ticket.ChangeStatus(DateTime.UtcNow, TicketStatus.InProgress);
 
         var domainEvent = ticket.DomainEvents.Should().ContainSingle()
             .Which.Should().BeOfType<TicketStatusChangedEvent>().Subject;

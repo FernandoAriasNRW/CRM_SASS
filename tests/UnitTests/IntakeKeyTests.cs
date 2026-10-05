@@ -49,7 +49,7 @@ public sealed class IntakeKeyTests
         var tenant = Guid.NewGuid();
         var (key, _) = IntakeKey.Generate(tenant, "a", Guid.NewGuid(), DateTime.UtcNow);
 
-        var ticket = Ticket.CreateFromExternal(key, new ExternalTicketRequest(
+        var ticket = Ticket.CreateFromExternal(DateTime.UtcNow, key, new ExternalTicketRequest(
             "Título suficiente", "Descripción", "  Ana  ", "ana@cliente.com", " ", "Cliente S.L.")).Value!;
 
         ticket.TenantId.Should().Be(tenant);

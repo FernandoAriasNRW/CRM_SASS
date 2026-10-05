@@ -42,7 +42,7 @@ public sealed class Favorite : AggregateRoot, ITenantEntity
 
     private Favorite() { }
 
-    public static Favorite Mark(Guid tenantId, Guid userId, string entityType, Guid entityId)
+    public static Favorite Mark(DateTime nowUtc, Guid tenantId, Guid userId, string entityType, Guid entityId)
     {
         if (!EntityTypes.Exists(entityType))
             throw new InvalidOperationException(Rules.UnknownType);
@@ -57,7 +57,7 @@ public sealed class Favorite : AggregateRoot, ITenantEntity
             UserId = userId,
             EntityType = entityType,
             EntityId = entityId,
-            MarkedAtUtc = DateTime.UtcNow,
+            MarkedAtUtc = nowUtc,
         };
     }
 

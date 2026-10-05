@@ -65,6 +65,7 @@ public sealed class Export : AggregateRoot, ITenantEntity
     private Export() { }
 
     public static Result<Export> Request(
+        DateTime nowUtc,
         Guid tenantId, Guid reportId, Guid requestedById, ReportFormat format)
     {
         if (reportId == Guid.Empty)
@@ -81,7 +82,7 @@ public sealed class Export : AggregateRoot, ITenantEntity
             RequestedById = requestedById,
             FormatValue = format.Value,
             StatusValue = ExportStatus.Pending.Value,
-            RequestedAtUtc = DateTime.UtcNow
+            RequestedAtUtc = nowUtc
         };
 
         return Result<Export>.Success(export);
@@ -93,12 +94,12 @@ public sealed class Export : AggregateRoot, ITenantEntity
     /// Devuelve <c>false</c> si otro se la llevó primero. No lanza: que dos trabajadores compitan
     /// por la misma fila es normal, no un error, y el que pierde simplemente coge la siguiente.
     /// </summary>
-    public bool Start()
+    public bool Start(DateTime nowUtc)
     {
-        if (!CanStart()) return false;
+        if (!CanStart(nowUtc)) return false;
 
         StatusValue = ExportStatus.Generating.Value;
-        StartedAtUtc = DateTime.UtcNow;
+        StartedAtUtc = nowUtc;
         Attempts++;
         return true;
     }
@@ -111,7 +112,7 @@ public sealed class Export : AggregateRoot, ITenantEntity
     /// a mitad —el contenedor se reinicia y la fila se queda como estaba—, y sin esto nadie la
     /// tocaría nunca más.
     /// </summary>
-    public bool CanStart()
+    public bool CanStart(DateTime nowUtc)
     {
         if (StatusValue == ExportStatus.Pending.Value)
             return true;
@@ -119,7 +120,7 @@ public sealed class Export : AggregateRoot, ITenantEntity
         if (StatusValue == ExportStatus.Generating.Value
             && Attempts < MaxAttempts
             && StartedAtUtc is not null
-            && DateTime.UtcNow - StartedAtUtc.Value > GivenUpAfter)
+            && nowUtc - StartedAtUtc.Value > GivenUpAfter)
         {
             return true;
         }
@@ -127,10 +128,10 @@ public sealed class Export : AggregateRoot, ITenantEntity
         return false;
     }
 
-    public void Finish(string fileName, long tamanoBytes)
+    public void Finish(DateTime nowUtc, string fileName, long tamanoBytes)
     {
         StatusValue = ExportStatus.Ready.Value;
-        FinishedAtUtc = DateTime.UtcNow;
+        FinishedAtUtc = nowUtc;
         FileName = fileName;
         SizeBytes = tamanoBytes;
         Error = null;
@@ -145,10 +146,10 @@ public sealed class Export : AggregateRoot, ITenantEntity
     /// contestar «¿por qué no salió mi informe?», y esa pregunta la hace quien no tiene acceso a
     /// los registros.
     /// </summary>
-    public void Fail(string reason)
+    public void Fail(DateTime nowUtc, string reason)
     {
         StatusValue = ExportStatus.Failed.Value;
-        FinishedAtUtc = DateTime.UtcNow;
+        FinishedAtUtc = nowUtc;
         Error = string.IsNullOrWhiteSpace(reason) ? Rules.FailureWithoutReason : reason;
 
         RaiseDomainEvent(new ExportFailedEvent(Id, TenantId, ReportId, RequestedById, Error));

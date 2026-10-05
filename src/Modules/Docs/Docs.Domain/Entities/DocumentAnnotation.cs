@@ -48,6 +48,7 @@ public sealed class DocumentAnnotation : Entity, ITenantEntity
     private DocumentAnnotation() { }
 
     public static DocumentAnnotation Create(
+        DateTime nowUtc,
         Guid tenantId, Guid documentId, Guid pageId, Guid createdBy, string quotedText)
         => new()
         {
@@ -57,7 +58,7 @@ public sealed class DocumentAnnotation : Entity, ITenantEntity
             PageId = pageId,
             CreatedBy = createdBy,
             QuotedText = Truncate(quotedText),
-            CreatedAtUtc = DateTime.UtcNow
+            CreatedAtUtc = nowUtc
         };
 
     /// <summary>
@@ -66,11 +67,11 @@ public sealed class DocumentAnnotation : Entity, ITenantEntity
     /// Resolver no es borrar: el hilo se queda y se puede volver a abrir. Un comentario que
     /// desaparece al marcarlo como atendido se lleva por delante el motivo del cambio.
     /// </summary>
-    public void Resolve(Guid userId)
+    public void Resolve(DateTime nowUtc, Guid userId)
     {
         if (IsResolved) return;
 
-        ResolvedAtUtc = DateTime.UtcNow;
+        ResolvedAtUtc = nowUtc;
         ResolvedBy = userId;
     }
 

@@ -33,10 +33,10 @@ public sealed class Folder : AggregateRoot, ITenantEntity, ISoftDeletable
         Name = name;
     }
 
-    public void Delete(Guid deletedBy)
+    public void Delete(DateTime nowUtc, Guid deletedBy)
     {
         IsDeleted = true;
-        DeletedAt = DateTime.UtcNow;
+        DeletedAt = nowUtc;
         DeletedBy = deletedBy;
     }
 }

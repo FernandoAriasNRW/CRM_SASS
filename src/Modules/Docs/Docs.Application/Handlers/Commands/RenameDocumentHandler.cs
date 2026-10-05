@@ -22,7 +22,7 @@ public record RenameDocumentCommand(Guid DocumentId, string Title, string? Descr
     public string RequiredPermission => "Write";
 }
 
-public class RenameDocumentHandler(IDocumentRepository repository)
+public class RenameDocumentHandler(TimeProvider timeProvider, IDocumentRepository repository)
     : IRequestHandler<RenameDocumentCommand, Result>
 {
     public async Task<Result> Handle(RenameDocumentCommand request, CancellationToken cancellationToken)
@@ -41,7 +41,7 @@ public class RenameDocumentHandler(IDocumentRepository repository)
         // La descripción es opcional y se conserva cuando no viene. La pantalla renombra desde un
         // campo que sólo edita el título; mandar `null` y que eso borrara la descripción sería
         // perder un dato que nadie pidió tocar.
-        document.Update(title, request.Description ?? document.Description);
+        document.Update(timeProvider.GetUtcNow().UtcDateTime, title, request.Description ?? document.Description);
 
         await repository.SaveChangesAsync(cancellationToken);
         return Result.Success();

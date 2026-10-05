@@ -7,6 +7,7 @@ using WorkItems.Application.Abstractions.Repositories;
 namespace WorkItems.Application;
 
 public sealed class ChangeTaskArchiveStateHandler(
+    TimeProvider timeProvider,
     ITaskRepository repository,
     IWorkItemsUnitOfWork unitOfWork) : ICommandHandler<ChangeTaskArchiveStateCommand, bool>
 {
@@ -21,9 +22,9 @@ public sealed class ChangeTaskArchiveStateHandler(
 
         switch (request.Action)
         {
-            case ArchiveAction.Archive: task.Archive(); break;
+            case ArchiveAction.Archive: task.Archive(timeProvider.GetUtcNow().UtcDateTime); break;
             case ArchiveAction.Unarchive: task.Unarchive(); break;
-            case ArchiveAction.MoveToTrash: task.MoveToTrash(); break;
+            case ArchiveAction.MoveToTrash: task.MoveToTrash(timeProvider.GetUtcNow().UtcDateTime); break;
             case ArchiveAction.RestoreFromTrash: task.RestoreFromTrash(); break;
         }
 

@@ -5,7 +5,7 @@ using Teams.Infrastructure.Persistence;
 
 namespace ApiHost.Seeding;
 
-public sealed class TeamsSeeder(TeamsDbContext teamsDb) : IModuleSeeder
+public sealed class TeamsSeeder(TimeProvider timeProvider, TeamsDbContext teamsDb) : IModuleSeeder
 {
     public string Module => "Teams";
     public int Order => 20;
@@ -29,24 +29,24 @@ public sealed class TeamsSeeder(TeamsDbContext teamsDb) : IModuleSeeder
         var admin = context.Admin;
         var members = context.Members;
 
-        var core = Team.Create(tenantId, "🚀 Core Engineering", "Desarrollo de microservicios backend C# .NET 9 y frontend Angular 19");
-        var design = Team.Create(tenantId, "🎨 Product & UI/UX Design", "Diseño de interfaces, componentes ShadCN y experiencia de usuario");
-        var sales = Team.Create(tenantId, "📊 Sales & Customer Success", "Atención a clientes VIP, soporte técnico y crecimiento comercial");
-        var devOps = Team.Create(tenantId, "🔒 DevOps & Cloud Infra", "Infraestructura Cloud, despliegues Docker y seguridad de datos");
+        var core = Team.Create(timeProvider.GetUtcNow().UtcDateTime, tenantId, "🚀 Core Engineering", "Desarrollo de microservicios backend C# .NET 9 y frontend Angular 19");
+        var design = Team.Create(timeProvider.GetUtcNow().UtcDateTime, tenantId, "🎨 Product & UI/UX Design", "Diseño de interfaces, componentes ShadCN y experiencia de usuario");
+        var sales = Team.Create(timeProvider.GetUtcNow().UtcDateTime, tenantId, "📊 Sales & Customer Success", "Atención a clientes VIP, soporte técnico y crecimiento comercial");
+        var devOps = Team.Create(timeProvider.GetUtcNow().UtcDateTime, tenantId, "🔒 DevOps & Cloud Infra", "Infraestructura Cloud, despliegues Docker y seguridad de datos");
 
-        core.AddMember(admin.Id, TeamRole.Owner);
-        if (members.Count > 0) core.AddMember(members[0].Id, TeamRole.Member);
-        if (members.Count > 1) core.AddMember(members[1].Id, TeamRole.Member);
+        core.AddMember(timeProvider.GetUtcNow().UtcDateTime, admin.Id, TeamRole.Owner);
+        if (members.Count > 0) core.AddMember(timeProvider.GetUtcNow().UtcDateTime, members[0].Id, TeamRole.Member);
+        if (members.Count > 1) core.AddMember(timeProvider.GetUtcNow().UtcDateTime, members[1].Id, TeamRole.Member);
 
-        design.AddMember(admin.Id, TeamRole.Member);
-        if (members.Count > 2) design.AddMember(members[2].Id, TeamRole.Owner);
-        if (members.Count > 3) design.AddMember(members[3].Id, TeamRole.Member);
+        design.AddMember(timeProvider.GetUtcNow().UtcDateTime, admin.Id, TeamRole.Member);
+        if (members.Count > 2) design.AddMember(timeProvider.GetUtcNow().UtcDateTime, members[2].Id, TeamRole.Owner);
+        if (members.Count > 3) design.AddMember(timeProvider.GetUtcNow().UtcDateTime, members[3].Id, TeamRole.Member);
 
-        sales.AddMember(admin.Id, TeamRole.Member);
-        if (members.Count > 4) sales.AddMember(members[4].Id, TeamRole.Owner);
+        sales.AddMember(timeProvider.GetUtcNow().UtcDateTime, admin.Id, TeamRole.Member);
+        if (members.Count > 4) sales.AddMember(timeProvider.GetUtcNow().UtcDateTime, members[4].Id, TeamRole.Owner);
 
-        devOps.AddMember(admin.Id, TeamRole.Owner);
-        if (members.Count > 5) devOps.AddMember(members[5].Id, TeamRole.Member);
+        devOps.AddMember(timeProvider.GetUtcNow().UtcDateTime, admin.Id, TeamRole.Owner);
+        if (members.Count > 5) devOps.AddMember(timeProvider.GetUtcNow().UtcDateTime, members[5].Id, TeamRole.Member);
 
         teamsDb.Teams.AddRange(core, design, sales, devOps);
         await teamsDb.SaveChangesAsync(cancellationToken);

@@ -45,6 +45,7 @@ public sealed class Comment : AggregateRoot, ITenantEntity
     private Comment() { }
 
     public static Comment Create(
+        DateTime nowUtc,
         Guid tenantId, string entityType, Guid entityId, Guid authorId, string text,
         Guid? replyToId = null)
     {
@@ -67,7 +68,7 @@ public sealed class Comment : AggregateRoot, ITenantEntity
             EntityId = entityId,
             AuthorId = authorId,
             Text = trimmed,
-            CreatedAtUtc = DateTime.UtcNow,
+            CreatedAtUtc = nowUtc,
             ReplyToId = replyToId,
         };
 
@@ -84,13 +85,13 @@ public sealed class Comment : AggregateRoot, ITenantEntity
     /// puede reescribir, la firma deja de significar nada. Ni siquiera un administrador; para eso
     /// está borrarlo, que sí deja constancia de que desapareció.
     /// </summary>
-    public void Edit(Guid userId, string text)
+    public void Edit(DateTime nowUtc, Guid userId, string text)
     {
         if (userId != AuthorId)
             throw new InvalidOperationException(Rules.OnlyAuthorEdits);
 
         Text = Validate(text);
-        EditedAtUtc = DateTime.UtcNow;
+        EditedAtUtc = nowUtc;
 
         RaiseDomainEvent(new CommentEditedEvent(Id, TenantId, AuthorId));
     }

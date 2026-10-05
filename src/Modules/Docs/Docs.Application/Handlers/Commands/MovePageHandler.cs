@@ -25,7 +25,7 @@ public record MovePageCommand(Guid PageId, Guid? ParentPageId, int Order) : IReq
     public string RequiredPermission => "Write";
 }
 
-public class MovePageHandler(IDocumentRepository repository)
+public class MovePageHandler(TimeProvider timeProvider, IDocumentRepository repository)
     : IRequestHandler<MovePageCommand, Result>
 {
     public async Task<Result> Handle(MovePageCommand request, CancellationToken cancellationToken)
@@ -54,7 +54,7 @@ public class MovePageHandler(IDocumentRepository repository)
         }
 
         var previousParentId = page.ParentPageId;
-        page.Move(request.ParentPageId);
+        page.Move(timeProvider.GetUtcNow().UtcDateTime, request.ParentPageId);
 
         // Se renumera el destino entero: la que se mueve entra en la posición pedida y las demás
         // se recolocan a su alrededor.

@@ -38,7 +38,10 @@ privados `_camelCase`; interfaces con `I`; asíncronos con sufijo `Async`; `Verb
 
 - **El inquilino y el usuario salen de `IUserContext`.** Nunca leas los claims a mano en un
   endpoint. Esa repetición ya causó una escritura entre organizaciones.
-- **La hora se inyecta con `TimeProvider`**, no con `DateTime.UtcNow`, en todo lo nuevo.
+- **La hora entra por un solo sitio.** Aplicación, infraestructura y Host piden `TimeProvider`
+  inyectado (`timeProvider.GetUtcNow().UtcDateTime`); las entidades de dominio no leen el reloj:
+  reciben `DateTime nowUtc` como **primer parámetro**. `ClockUsageTests` falla si aparece un
+  `DateTime.UtcNow`, `Now` o `Today` en `src/`.
 - **Autorización:** un comando de escritura implementa `IAuthorizeEntity` (`EntityType`,
   `EntityId`, `RequiredPermission`). Sin eso, el nivel por rol se guarda y no se aplica.
 - **Nada de dos vocabularios para lo mismo.** `EntityTypes` (BuildingBlocks) es el único catálogo

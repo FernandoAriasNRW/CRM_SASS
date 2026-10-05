@@ -9,12 +9,14 @@ using Projects.Domain.ValueObjects;
 namespace Projects.Application.Handlers.Commands;
 
 public sealed class CreateProjectCommandHandler(
+    TimeProvider timeProvider,
     IProjectRepository repository,
     IProjectsUnitOfWork unitOfWork) : ICommandHandler<CreateProjectCommand, Project>
 {
   public async Task<Result<Project>> Handle(CreateProjectCommand request, CancellationToken cancellationToken)
   {
     var project = Project.Create(
+        timeProvider.GetUtcNow().UtcDateTime,
         request.TenantId, request.SpaceId, request.FolderId, request.Name, request.Description,
         request.EstimatedEndDate, request.OwnerId);
 
@@ -61,6 +63,7 @@ public sealed class PatchProjectCommandHandler(
 }
 
 public sealed class DeleteProjectCommandHandler(
+    TimeProvider timeProvider,
     IProjectRepository repository,
     IProjectsUnitOfWork unitOfWork) : ICommandHandler<DeleteProjectCommand, bool>
 {
@@ -73,7 +76,7 @@ public sealed class DeleteProjectCommandHandler(
     if (project.IsDeleted)
       return Result<bool>.Failure("El proyecto ya ha sido eliminado");
 
-    project.Delete(request.DeletedBy);
+    project.Delete(timeProvider.GetUtcNow().UtcDateTime, request.DeletedBy);
 
     await repository.UpdateAsync(project, cancellationToken);
     await unitOfWork.SaveChangesAsync(cancellationToken);

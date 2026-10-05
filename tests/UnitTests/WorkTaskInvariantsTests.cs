@@ -14,6 +14,7 @@ namespace UnitTests;
 public sealed class WorkTaskInvariantsTests
 {
     private static WorkTask NewTask() => WorkTask.Create(
+        DateTime.UtcNow,
         tenantId: Guid.NewGuid(),
         projectId: Guid.NewGuid(),
         title: "Tarea de prueba",
@@ -48,9 +49,9 @@ public sealed class WorkTaskInvariantsTests
     public void Any_status_is_reachable_from_any_other(string from, string to)
     {
         var task = NewTask();
-        task.Move(from);
+        task.Move(DateTime.UtcNow, from);
 
-        task.Move(to);
+        task.Move(DateTime.UtcNow, to);
 
         task.Status.Value.ToString().Should().Be(to);
     }
@@ -73,7 +74,7 @@ public sealed class WorkTaskInvariantsTests
         // ninguna vista sabría representar.
         var task = NewTask();
 
-        var move = () => task.Move("Archivada");
+        var move = () => task.Move(DateTime.UtcNow, "Archivada");
 
         move.Should().Throw<InvalidOperationException>()
             .WithMessage("*no existe*");
@@ -85,7 +86,7 @@ public sealed class WorkTaskInvariantsTests
         var task = NewTask();
         task.ClearDomainEvents();
 
-        task.Move("In Progress");
+        task.Move(DateTime.UtcNow, "In Progress");
 
         var domainEvent = task.DomainEvents.Should().ContainSingle()
             .Which.Should().BeOfType<TaskStatusChangedEvent>().Subject;
@@ -143,6 +144,7 @@ public sealed class WorkTaskInvariantsTests
     public void A_task_can_start_with_the_given_priority()
     {
         var task = WorkTask.Create(
+            DateTime.UtcNow,
             Guid.NewGuid(), Guid.NewGuid(), "Urgente", "descripción",
             Guid.NewGuid(), Guid.NewGuid(), 4m,
             DateOnly.FromDateTime(DateTime.UtcNow), "Urgent");
@@ -192,6 +194,7 @@ public sealed class WorkTaskInvariantsTests
     public void An_unknown_priority_is_not_accepted_on_create()
     {
         var create = () => WorkTask.Create(
+            DateTime.UtcNow,
             Guid.NewGuid(), Guid.NewGuid(), "Tarea", "descripción",
             Guid.NewGuid(), Guid.NewGuid(), 1m,
             DateOnly.FromDateTime(DateTime.UtcNow), "Altísima");
@@ -284,6 +287,7 @@ public sealed class WorkTaskInvariantsTests
         var parent = Guid.NewGuid();
 
         var task = WorkTask.Create(
+            DateTime.UtcNow,
             Guid.NewGuid(), Guid.NewGuid(), "Subtarea", "descripción",
             Guid.NewGuid(), Guid.NewGuid(), 1m,
             DateOnly.FromDateTime(DateTime.UtcNow), null, parent);
@@ -382,6 +386,7 @@ public sealed class WorkTaskInvariantsTests
         var assignee = Guid.NewGuid();
 
         var task = WorkTask.Create(
+            DateTime.UtcNow,
             Guid.NewGuid(), Guid.NewGuid(), "Con responsable", "x",
             assignee, Guid.NewGuid(), 1m, DateOnly.FromDateTime(DateTime.UtcNow));
 
@@ -394,6 +399,7 @@ public sealed class WorkTaskInvariantsTests
     public void An_unassigned_task_has_no_assignees()
     {
         var task = WorkTask.Create(
+            DateTime.UtcNow,
             Guid.NewGuid(), Guid.NewGuid(), "Sin asignar", "x",
             Guid.Empty, Guid.NewGuid(), 1m, DateOnly.FromDateTime(DateTime.UtcNow));
 
@@ -420,6 +426,7 @@ public sealed class WorkTaskInvariantsTests
         // Lo contrario dejaría el campo del principal vacío con responsables dentro, que es
         // exactamente la incoherencia que la colección viene a evitar.
         var task = WorkTask.Create(
+            DateTime.UtcNow,
             Guid.NewGuid(), Guid.NewGuid(), "Sin asignar", "x",
             Guid.Empty, Guid.NewGuid(), 1m, DateOnly.FromDateTime(DateTime.UtcNow));
         var someone = Guid.NewGuid();
@@ -680,7 +687,7 @@ public sealed class WorkTaskInvariantsTests
     {
         var task = RepeatingTask(RecurrencePattern.Frequencies.Daily, 1, new DateOnly(2026, 8, 20));
 
-        task.GenerateOccurrencesUntil(new DateOnly(2026, 8, 19)).Should().BeEmpty();
+        task.GenerateOccurrencesUntil(DateTime.UtcNow, new DateOnly(2026, 8, 19)).Should().BeEmpty();
     }
 
     [Fact]
@@ -690,7 +697,7 @@ public sealed class WorkTaskInvariantsTests
         // reclamar pero que falsean cualquier informe.
         var task = RepeatingTask(RecurrencePattern.Frequencies.Daily, 1, new DateOnly(2026, 8, 10));
 
-        var generated = task.GenerateOccurrencesUntil(new DateOnly(2026, 8, 13));
+        var generated = task.GenerateOccurrencesUntil(DateTime.UtcNow, new DateOnly(2026, 8, 13));
 
         generated.Should().HaveCount(4);
         generated.Select(t => t.DueDate).Should().ContainInOrder(
@@ -706,7 +713,7 @@ public sealed class WorkTaskInvariantsTests
         // multiplicaría sola hasta llenar el tablero.
         var task = RepeatingTask(RecurrencePattern.Frequencies.Daily, 1, new DateOnly(2026, 8, 12));
 
-        var generated = task.GenerateOccurrencesUntil(new DateOnly(2026, 8, 12));
+        var generated = task.GenerateOccurrencesUntil(DateTime.UtcNow, new DateOnly(2026, 8, 12));
 
         generated.Should().ContainSingle().Which.Recurrence.Should().BeNull();
     }
@@ -718,11 +725,11 @@ public sealed class WorkTaskInvariantsTests
             RecurrencePattern.Frequencies.Daily, 1,
             new DateOnly(2026, 8, 10), end: new DateOnly(2026, 8, 11));
 
-        var generated = task.GenerateOccurrencesUntil(new DateOnly(2026, 8, 31));
+        var generated = task.GenerateOccurrencesUntil(DateTime.UtcNow, new DateOnly(2026, 8, 31));
 
         generated.Should().HaveCount(2);
         task.Recurrence!.IsExhausted.Should().BeTrue();
-        task.GenerateOccurrencesUntil(new DateOnly(2026, 9, 30)).Should().BeEmpty();
+        task.GenerateOccurrencesUntil(DateTime.UtcNow, new DateOnly(2026, 9, 30)).Should().BeEmpty();
     }
 
     [Fact]
@@ -737,7 +744,7 @@ public sealed class WorkTaskInvariantsTests
         task.Reprioritize("High");
         task.SetRecurrence(RecurrencePattern.Frequencies.Weekly, 1, new DateOnly(2026, 8, 12), null);
 
-        var occurrence = task.GenerateOccurrencesUntil(new DateOnly(2026, 8, 12)).Single();
+        var occurrence = task.GenerateOccurrencesUntil(DateTime.UtcNow, new DateOnly(2026, 8, 12)).Single();
 
         occurrence.Title.Value.Should().Be(task.Title.Value);
         occurrence.Priority.Value.Should().Be("High");
@@ -754,7 +761,7 @@ public sealed class WorkTaskInvariantsTests
         task.Reparent(Guid.NewGuid());
         task.SetRecurrence(RecurrencePattern.Frequencies.Daily, 1, new DateOnly(2026, 8, 12), null);
 
-        var occurrence = task.GenerateOccurrencesUntil(new DateOnly(2026, 8, 12)).Single();
+        var occurrence = task.GenerateOccurrencesUntil(DateTime.UtcNow, new DateOnly(2026, 8, 12)).Single();
 
         occurrence.ParentTaskId.Should().BeNull();
     }
@@ -767,7 +774,7 @@ public sealed class WorkTaskInvariantsTests
         task.ClearRecurrence();
 
         task.Recurrence.Should().BeNull();
-        task.GenerateOccurrencesUntil(new DateOnly(2026, 12, 31)).Should().BeEmpty();
+        task.GenerateOccurrencesUntil(DateTime.UtcNow, new DateOnly(2026, 12, 31)).Should().BeEmpty();
     }
 
     #endregion
@@ -887,6 +894,7 @@ public sealed class WorkTaskInvariantsTests
     #region Fecha de inicio
 
     private static WorkTask DueTask(DateOnly dueDate, DateOnly? start = null) => WorkTask.Create(
+        DateTime.UtcNow,
         tenantId: Guid.NewGuid(),
         projectId: Guid.NewGuid(),
         title: "Tarea con calendario",
@@ -1005,6 +1013,7 @@ public sealed class WorkTaskInvariantsTests
     public void An_occurrence_inherits_the_duration_not_the_start_date()
     {
         var task = WorkTask.Create(
+            DateTime.UtcNow,
             Guid.NewGuid(), Guid.NewGuid(), "Repetitiva", "descripción",
             Guid.NewGuid(), Guid.NewGuid(), 4m,
             dueDate: new DateOnly(2026, 8, 10), priority: null, parentTaskId: null,
@@ -1012,7 +1021,7 @@ public sealed class WorkTaskInvariantsTests
 
         task.SetRecurrence(RecurrencePattern.Frequencies.Monthly, 1, new DateOnly(2026, 9, 10), null);
 
-        var occurrence = task.GenerateOccurrencesUntil(new DateOnly(2026, 9, 10)).Single();
+        var occurrence = task.GenerateOccurrencesUntil(DateTime.UtcNow, new DateOnly(2026, 9, 10)).Single();
 
         occurrence.DueDate.Should().Be(new DateOnly(2026, 9, 10));
         occurrence.StartDate.Should().Be(new DateOnly(2026, 9, 7), "dura los mismos tres días");
@@ -1023,7 +1032,7 @@ public sealed class WorkTaskInvariantsTests
     {
         var task = RepeatingTask(RecurrencePattern.Frequencies.Daily, 1, new DateOnly(2026, 8, 10));
 
-        var occurrence = task.GenerateOccurrencesUntil(new DateOnly(2026, 8, 10)).First();
+        var occurrence = task.GenerateOccurrencesUntil(DateTime.UtcNow, new DateOnly(2026, 8, 10)).First();
 
         occurrence.StartDate.Should().BeNull();
     }
@@ -1037,6 +1046,7 @@ public sealed class WorkTaskInvariantsTests
     // calcularlos.
 
     private static WorkTask FreshTask() => WorkTask.Create(
+        DateTime.UtcNow,
         Guid.NewGuid(), Guid.NewGuid(), "Una tarea", "descripción",
         Guid.NewGuid(), Guid.NewGuid(), 3m, new DateOnly(2026, 12, 31));
 
@@ -1057,7 +1067,7 @@ public sealed class WorkTaskInvariantsTests
         var task = FreshTask();
         var before = DateTime.UtcNow;
 
-        task.Move("Done");
+        task.Move(DateTime.UtcNow, "Done");
 
         task.CompletedAtUtc.Should().NotBeNull();
         task.CompletedAtUtc!.Value.Should().BeOnOrAfter(before).And.BeOnOrBefore(DateTime.UtcNow);
@@ -1072,10 +1082,10 @@ public sealed class WorkTaskInvariantsTests
     public void Reopening_a_task_clears_the_completion_date()
     {
         var task = FreshTask();
-        task.Move("Done");
+        task.Move(DateTime.UtcNow, "Done");
         task.CompletedAtUtc.Should().NotBeNull();
 
-        task.Move("In Progress");
+        task.Move(DateTime.UtcNow, "In Progress");
 
         task.CompletedAtUtc.Should().BeNull("una tarea reabierta no está completada");
     }
@@ -1093,7 +1103,7 @@ public sealed class WorkTaskInvariantsTests
     {
         var task = FreshTask();
 
-        task.Move(status);
+        task.Move(DateTime.UtcNow, status);
 
         task.CompletedAtUtc.Should().BeNull();
     }

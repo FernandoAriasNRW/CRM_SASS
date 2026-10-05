@@ -18,7 +18,7 @@ namespace UnitTests;
 public class ExportTests
 {
     private static Export New()
-        => Export.Request(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), ReportFormat.Csv).Value!;
+        => Export.Request(DateTime.UtcNow, Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), ReportFormat.Csv).Value!;
 
     [Fact]
     public void Starts_pending()
@@ -33,7 +33,7 @@ public class ExportTests
     [Fact]
     public void It_cannot_be_requested_without_a_requester()
     {
-        var result = Export.Request(Guid.NewGuid(), Guid.NewGuid(), Guid.Empty, ReportFormat.Pdf);
+        var result = Export.Request(DateTime.UtcNow, Guid.NewGuid(), Guid.NewGuid(), Guid.Empty, ReportFormat.Pdf);
 
         result.IsFailure.Should().BeTrue();
         result.Error.Should().Be(Export.Rules.MissingRequester);
@@ -45,8 +45,8 @@ public class ExportTests
     {
         var export = New();
 
-        export.Start().Should().BeTrue();
-        export.Start().Should().BeFalse("otro ya la cogió; no es un error, es una carrera perdida");
+        export.Start(DateTime.UtcNow).Should().BeTrue();
+        export.Start(DateTime.UtcNow).Should().BeFalse("otro ya la cogió; no es un error, es una carrera perdida");
 
         export.Attempts.Should().Be(1, "el que pierde no cuenta como intento");
     }
@@ -55,9 +55,9 @@ public class ExportTests
     public void Finishing_leaves_it_ready_with_its_file()
     {
         var export = New();
-        export.Start();
+        export.Start(DateTime.UtcNow);
 
-        export.Finish("informe.csv", 1234);
+        export.Finish(DateTime.UtcNow, "informe.csv", 1234);
 
         export.Status.Should().Be(ExportStatus.Ready);
         export.FileName.Should().Be("informe.csv");
@@ -69,9 +69,9 @@ public class ExportTests
     public void Failing_keeps_the_reason()
     {
         var export = New();
-        export.Start();
+        export.Start(DateTime.UtcNow);
 
-        export.Fail("La base de datos no responde");
+        export.Fail(DateTime.UtcNow, "La base de datos no responde");
 
         export.Status.Should().Be(ExportStatus.Failed);
         export.Error.Should().Be("La base de datos no responde");
@@ -87,9 +87,9 @@ public class ExportTests
     public void A_failure_without_message_still_explains_something()
     {
         var export = New();
-        export.Start();
+        export.Start(DateTime.UtcNow);
 
-        export.Fail("   ");
+        export.Fail(DateTime.UtcNow, "   ");
 
         export.Error.Should().Be(Export.Rules.FailureWithoutReason);
     }
@@ -98,9 +98,9 @@ public class ExportTests
     public void Finishing_raises_the_event_that_triggers_the_notification()
     {
         var export = New();
-        export.Start();
+        export.Start(DateTime.UtcNow);
 
-        export.Finish("informe.pdf", 10);
+        export.Finish(DateTime.UtcNow, "informe.pdf", 10);
 
         export.DomainEvents.Should().ContainSingle(e => e is Reporting.Domain.Events.ExportReadyEvent);
     }
@@ -109,9 +109,9 @@ public class ExportTests
     public void Failing_also_raises_an_event_because_failures_are_notified_too()
     {
         var export = New();
-        export.Start();
+        export.Start(DateTime.UtcNow);
 
-        export.Fail("se rompió");
+        export.Fail(DateTime.UtcNow, "se rompió");
 
         export.DomainEvents.Should().ContainSingle(e => e is Reporting.Domain.Events.ExportFailedEvent);
     }
@@ -120,9 +120,9 @@ public class ExportTests
     public void A_just_started_one_is_not_taken_again()
     {
         var export = New();
-        export.Start();
+        export.Start(DateTime.UtcNow);
 
-        export.CanStart().Should().BeFalse(
+        export.CanStart(DateTime.UtcNow).Should().BeFalse(
             "acaba de empezar; recogerla ahora sería generarla dos veces a la vez");
     }
 
@@ -130,23 +130,23 @@ public class ExportTests
     public void A_ready_one_is_not_generated_again()
     {
         var export = New();
-        export.Start();
-        export.Finish("x.csv", 1);
+        export.Start(DateTime.UtcNow);
+        export.Finish(DateTime.UtcNow, "x.csv", 1);
 
-        export.CanStart().Should().BeFalse();
+        export.CanStart(DateTime.UtcNow).Should().BeFalse();
     }
 
     [Fact]
     public void Requeue_puts_it_back_in_the_queue()
     {
         var export = New();
-        export.Start();
-        export.Fail("un fallo pasajero");
+        export.Start(DateTime.UtcNow);
+        export.Fail(DateTime.UtcNow, "un fallo pasajero");
 
         export.Requeue();
 
         export.Status.Should().Be(ExportStatus.Pending);
-        export.CanStart().Should().BeTrue();
+        export.CanStart(DateTime.UtcNow).Should().BeTrue();
     }
 
     /// <summary>
@@ -164,7 +164,7 @@ public class ExportTests
         for (var i = 0; i < Export.MaxAttempts; i++)
         {
             export.Requeue();
-            export.Start().Should().BeTrue();
+            export.Start(DateTime.UtcNow).Should().BeTrue();
         }
 
         export.Attempts.Should().Be(Export.MaxAttempts);

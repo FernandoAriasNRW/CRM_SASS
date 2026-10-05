@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ApiHost.Seeding;
 
-public sealed class IdentitySeeder(IdentityDbContext identityDb, ILogger<IdentitySeeder> logger) : IModuleSeeder
+public sealed class IdentitySeeder(TimeProvider timeProvider, IdentityDbContext identityDb, ILogger<IdentitySeeder> logger) : IModuleSeeder
 {
     public string Module => "Identity";
     public int Order => 10;
@@ -45,8 +45,8 @@ public sealed class IdentitySeeder(IdentityDbContext identityDb, ILogger<Identit
         if (existingAdmin is null)
         {
             var email = Email.Create("admin@acme.com").Value!;
-            var password = PasswordHash.Create("admin123");
-            existingAdmin = User.Create(Guid.NewGuid(), "Admin Administrator", email, password, UserRole.Admin).Value
+            var password = PasswordHash.Create(timeProvider.GetUtcNow().UtcDateTime, "admin123");
+            existingAdmin = User.Create(timeProvider.GetUtcNow().UtcDateTime, Guid.NewGuid(), "Admin Administrator", email, password, UserRole.Admin).Value
                 ?? throw new InvalidOperationException("No se pudo crear el usuario administrador del seed.");
             identityDb.User.Add(existingAdmin);
             await SaveUsersAsync(cancellationToken);
@@ -97,8 +97,8 @@ public sealed class IdentitySeeder(IdentityDbContext identityDb, ILogger<Identit
                 // vista, así que no puede coincidir con ninguna credencial de
                 // infraestructura: hasta agosto de 2026 era el mismo que el de MySQL en
                 // desarrollo, y eso convertía un dato de demo en una credencial filtrada.
-                var created = User.Create(tenantId, demoUser.Name, Email.Create(demoUser.Email).Value!,
-                    PasswordHash.Create("DemoAcme2026!"), demoUser.Role);
+                var created = User.Create(timeProvider.GetUtcNow().UtcDateTime, tenantId, demoUser.Name, Email.Create(demoUser.Email).Value!,
+                    PasswordHash.Create(timeProvider.GetUtcNow().UtcDateTime, "DemoAcme2026!"), demoUser.Role);
                 if (created.IsSuccess && created.Value != null)
                     identityDb.User.Add(created.Value);
             }

@@ -11,6 +11,7 @@ using Reporting.Domain.ValueObjects;
 namespace Reporting.Application.Dashboards;
 
 public sealed class GetMyDashboardHandler(
+    TimeProvider timeProvider,
     ICustomDashboardRepository dashboards,
     IReportRepository reports,
     IReportingUnitOfWork unitOfWork) : IQueryHandler<GetMyDashboardQuery, MyDashboardDto>
@@ -34,6 +35,7 @@ public sealed class GetMyDashboardHandler(
         foreach (var suggested in StarterDashboard.Reports())
         {
             var report = Report.Create(
+                timeProvider.GetUtcNow().UtcDateTime,
                 request.TenantId, request.UserId, suggested.Name,
                 ReportType.Custom, ReportFormat.Csv);
 

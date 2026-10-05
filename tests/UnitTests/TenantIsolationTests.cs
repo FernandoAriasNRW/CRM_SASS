@@ -49,6 +49,7 @@ public sealed class TenantIsolationTests : IDisposable
 
     private static Project NewProject(Guid tenantId, string name) =>
         Project.Create(
+            DateTime.UtcNow,
             tenantId,
             spaceId: Guid.NewGuid(),
             folderId: null,
@@ -109,7 +110,7 @@ public sealed class TenantIsolationTests : IDisposable
         using (var context = CreateContext(TenantA))
         {
             var project = context.Projects.Single();
-            project.Delete(Guid.NewGuid());
+            project.Delete(DateTime.UtcNow, Guid.NewGuid());
             context.SaveChanges();
         }
 

@@ -18,7 +18,7 @@ public sealed class Team : AggregateRoot, ITenantEntity, ISoftDeletable
 
     private Team() { }
 
-    public static Team Create(Guid tenantId, string name, string description)
+    public static Team Create(DateTime nowUtc, Guid tenantId, string name, string description)
     {
         var team = new Team
         {
@@ -26,7 +26,7 @@ public sealed class Team : AggregateRoot, ITenantEntity, ISoftDeletable
             TenantId = tenantId,
             Name = name,
             Description = description,
-            CreatedAtUtc = DateTime.UtcNow,
+            CreatedAtUtc = nowUtc,
             IsDeleted = false
         };
 
@@ -35,14 +35,14 @@ public sealed class Team : AggregateRoot, ITenantEntity, ISoftDeletable
         return team;
     }
 
-    public void AddMember(Guid userId, ValueObjects.TeamRole role)
+    public void AddMember(DateTime nowUtc, Guid userId, ValueObjects.TeamRole role)
     {
         if (IsDeleted) throw new InvalidOperationException("Team is deleted.");
         
         var existingMember = _members.FirstOrDefault(m => m.UserId == userId && !m.IsDeleted);
         if (existingMember != null) return;
 
-        var member = TeamMember.Create(Id, userId, role);
+        var member = TeamMember.Create(nowUtc, Id, userId, role);
         _members.Add(member);
     }
 
@@ -53,10 +53,10 @@ public sealed class Team : AggregateRoot, ITenantEntity, ISoftDeletable
         Description = description;
     }
 
-    public void Delete()
+    public void Delete(DateTime nowUtc)
     {
         if (IsDeleted) return;
         IsDeleted = true;
-        DeletedAt = DateTime.UtcNow;
+        DeletedAt = nowUtc;
     }
 }

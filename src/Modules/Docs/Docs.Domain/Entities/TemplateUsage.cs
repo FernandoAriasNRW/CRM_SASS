@@ -34,19 +34,19 @@ public sealed class TemplateUsage : Entity, ITenantEntity
 
     private TemplateUsage() { }
 
-    public static TemplateUsage First(Guid tenantId, string key)
+    public static TemplateUsage First(DateTime nowUtc, Guid tenantId, string key)
         => new()
         {
             Id = Guid.NewGuid(),
             TenantId = tenantId,
             Key = key,
             Count = 1,
-            LastUsedAtUtc = DateTime.UtcNow
+            LastUsedAtUtc = nowUtc
         };
 
-    public void Increment()
+    public void Increment(DateTime nowUtc)
     {
         Count++;
-        LastUsedAtUtc = DateTime.UtcNow;
+        LastUsedAtUtc = nowUtc;
     }
 }

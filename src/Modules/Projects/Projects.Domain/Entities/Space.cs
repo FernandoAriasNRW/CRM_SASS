@@ -37,10 +37,10 @@ public sealed class Space : AggregateRoot, ITenantEntity, ISoftDeletable
         Color = color;
     }
 
-    public void Delete(Guid deletedBy)
+    public void Delete(DateTime nowUtc, Guid deletedBy)
     {
         IsDeleted = true;
-        DeletedAt = DateTime.UtcNow;
+        DeletedAt = nowUtc;
         DeletedBy = deletedBy;
     }
 }

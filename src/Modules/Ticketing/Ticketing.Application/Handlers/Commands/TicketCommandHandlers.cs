@@ -9,6 +9,7 @@ using Ticketing.Domain.ValueObjects;
 namespace Ticketing.Application.Handlers.Commands;
 
 public sealed class CreateTicketHandler(
+    TimeProvider timeProvider,
     ITicketRepository repository,
     ITicketingUnitOfWork unitOfWork) : ICommandHandler<CreateTicketCommand, Ticket>
 {
@@ -18,7 +19,7 @@ public sealed class CreateTicketHandler(
     if (priority is null)
       return Result<Ticket>.Failure("Invalid priority");
 
-    var ticketResult = Ticket.Create(request.TenantId, request.CustomerId,
+    var ticketResult = Ticket.Create(timeProvider.GetUtcNow().UtcDateTime, request.TenantId, request.CustomerId,
         request.Title, request.Description, priority);
 
     if (ticketResult.IsFailure)
@@ -45,6 +46,7 @@ public sealed class CreateTicketHandler(
 /// cuatro; un comando por campo multiplicaría los viajes sin ganar nada.
 /// </summary>
 public sealed class UpdateTicketHandler(
+    TimeProvider timeProvider,
     ITicketRepository repository,
     ITicketingUnitOfWork unitOfWork,
     ITagCatalog tagCatalog) : ICommandHandler<UpdateTicketCommand, bool>
@@ -82,7 +84,7 @@ public sealed class UpdateTicketHandler(
     {
       // Por el método del dominio, no asignando el valor: es el que levanta el evento que
       // disparan las automatizaciones y las notificaciones de «tu ticket cambió de estado».
-      if (!ticket.ChangeStatus(status))
+      if (!ticket.ChangeStatus(timeProvider.GetUtcNow().UtcDateTime, status))
         return Result<bool>.Failure($"Cannot transition from {ticket.Status.Name} to {request.Status}");
     }
 
@@ -121,6 +123,7 @@ public sealed class UpdateTicketHandler(
 }
 
 public sealed class ChangeTicketStatusHandler(
+    TimeProvider timeProvider,
     ITicketRepository repository,
     ITicketingUnitOfWork unitOfWork) : ICommandHandler<ChangeTicketStatusCommand, bool>
 {
@@ -135,7 +138,7 @@ public sealed class ChangeTicketStatusHandler(
       return Result<bool>.Failure("Invalid status");
 
     // Domain method validates transition rules and raises TicketStatusChangedEvent
-    if (!ticket.ChangeStatus(newStatus))
+    if (!ticket.ChangeStatus(timeProvider.GetUtcNow().UtcDateTime, newStatus))
       return Result<bool>.Failure($"Cannot transition from {ticket.Status.Name} to {request.NewStatus}");
 
     await repository.UpdateAsync(ticket, cancellationToken);
@@ -164,6 +167,7 @@ public sealed class AssignTicketHandler(
 }
 
 public sealed class CloseTicketHandler(
+    TimeProvider timeProvider,
     ITicketRepository repository,
     ITicketingUnitOfWork unitOfWork) : ICommandHandler<CloseTicketCommand, bool>
 {
@@ -173,7 +177,7 @@ public sealed class CloseTicketHandler(
     if (ticket is null)
       return Result<bool>.Failure("Ticket not found");
 
-    if (!ticket.ChangeStatus(TicketStatus.Closed))
+    if (!ticket.ChangeStatus(timeProvider.GetUtcNow().UtcDateTime, TicketStatus.Closed))
       return Result<bool>.Failure("Cannot close ticket in current status");
 
     await repository.UpdateAsync(ticket, cancellationToken);

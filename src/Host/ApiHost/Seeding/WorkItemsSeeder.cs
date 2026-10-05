@@ -48,6 +48,7 @@ public sealed class WorkItemsSeeder(TimeProvider timeProvider, WorkItemsDbContex
             var assignee = context.AllUsers.Count > 0 ? context.AllUsers[index % context.AllUsers.Count].Id : context.Admin.Id;
 
             var task = WorkTask.Create(
+                timeProvider.GetUtcNow().UtcDateTime,
                 tenantId,
                 project.Id,
                 sample.Title,
@@ -59,9 +60,9 @@ public sealed class WorkItemsSeeder(TimeProvider timeProvider, WorkItemsDbContex
 
             if (sample.Status != "To Do")
             {
-                task.Move("In Progress");
-                if (sample.Status == "In Review") task.Move("In Review");
-                else if (sample.Status == "Done") task.Move("Done");
+                task.Move(timeProvider.GetUtcNow().UtcDateTime, "In Progress");
+                if (sample.Status == "In Review") task.Move(timeProvider.GetUtcNow().UtcDateTime, "In Review");
+                else if (sample.Status == "Done") task.Move(timeProvider.GetUtcNow().UtcDateTime, "Done");
             }
 
             workItemsDb.Tasks.Add(task);

@@ -38,7 +38,7 @@ public class CalendarTests
     public async Task CreateEvent_WithValidCommand_ReturnsSuccessAndDto()
     {
         // Arrange
-        var handler = new CreateCalendarEventHandler(_repositoryMock, _unitOfWorkMock);
+        var handler = new CreateCalendarEventHandler(TimeProvider.System, _repositoryMock, _unitOfWorkMock);
         var now = DateTime.UtcNow;
         var command = new CreateCalendarEventCommand(
             TenantId: _tenantId,
@@ -72,8 +72,8 @@ public class CalendarTests
     public async Task GetEvents_ReturnsEventsForTenant()
     {
         // Arrange
-        var evt1 = CalendarEvent.Create(_tenantId, _userId, "Event 1", DateTime.UtcNow, DateTime.UtcNow.AddHours(1), CalendarEventType.FromName<CalendarEventType>("Meeting")!).Value!;
-        var evt2 = CalendarEvent.Create(_tenantId, _userId, "Event 2", DateTime.UtcNow.AddDays(1), DateTime.UtcNow.AddDays(1).AddHours(1), CalendarEventType.FromName<CalendarEventType>("Reminder")!).Value!;
+        var evt1 = CalendarEvent.Create(DateTime.UtcNow, _tenantId, _userId, "Event 1", DateTime.UtcNow, DateTime.UtcNow.AddHours(1), CalendarEventType.FromName<CalendarEventType>("Meeting")!).Value!;
+        var evt2 = CalendarEvent.Create(DateTime.UtcNow, _tenantId, _userId, "Event 2", DateTime.UtcNow.AddDays(1), DateTime.UtcNow.AddDays(1).AddHours(1), CalendarEventType.FromName<CalendarEventType>("Reminder")!).Value!;
         
         var pagedResult = PagedResult<CalendarEventDto>.Create(
             new List<CalendarEventDto>

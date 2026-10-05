@@ -57,6 +57,7 @@ public sealed class Report : AggregateRoot, ITenantEntity, ISoftDeletable
     private Report() { }
 
     public static Result<Report> Create(
+        DateTime nowUtc,
         Guid tenantId,
         Guid createdById,
         string name,
@@ -77,7 +78,7 @@ public sealed class Report : AggregateRoot, ITenantEntity, ISoftDeletable
             TypeValue = type.Value,
             FormatValue = format.Value,
             Parameters = parameters,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = nowUtc
         };
 
         report.RaiseDomainEvent(new ReportCreatedEvent(report.Id, tenantId, createdById));

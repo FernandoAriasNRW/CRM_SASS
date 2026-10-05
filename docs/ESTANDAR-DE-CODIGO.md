@@ -373,7 +373,7 @@ los repositorios (28). Se mantiene así en los tipos nuevos.
 | Dónde | Problema | Qué se hace |
 |---|---|---|
 | **13 ficheros de endpoints leen los claims a mano** (≈100 veces `FindFirstValue("tenantId")`) | Cada endpoint decide cómo se obtiene el inquilino; ya hubo un fallo por eso (2.5) | Todos usan `IUserContext` |
-| **27 usos de `DateTime.UtcNow`** en dominio y aplicación | El tiempo no se puede fijar en pruebas | `TimeProvider` inyectado |
+| **27 usos de `DateTime.UtcNow`** en dominio y aplicación | El tiempo no se puede fijar en pruebas | `TimeProvider` inyectado ✅ (11a y 11b) |
 
 ---
 
@@ -410,7 +410,7 @@ suites completas en verde, catálogo i18n re-extraído al final.
 | 10c ✅ | **Títulos de las pruebas del frontend y de las e2e** | 345 títulos y 9 ficheros e2e |
 | Final ✅ | **Pasada final** sobre lo que quedaba en producción | Unos 20 nombres; destapó un contrato roto |
 | 11a ✅ | **`TimeProvider` fuera del dominio** (aplicación, infraestructura, Host) y la hora de los eventos | 22 usos; los eventos guardaban mal su hora |
-| 11b | **El reloj en las entidades de dominio** (reciben `nowUtc`) | Unos 70 usos; cambian firmas y arrastran a sus llamadores y a las pruebas |
+| 11b ✅ | **El reloj en las entidades de dominio** (reciben `nowUtc`) | 63 miembros y todos sus llamadores; una prueba impide que vuelva |
 
 ### Migraciones de renombrado
 
@@ -966,6 +966,20 @@ cambiarlo exige migrar ese contenido. Por eso fue un bloque aparte, el 5c.
   `with` desde el tipo base) y sobrevive al JSON. Prueba: `DomainEventClockTests`.
 - Visto de paso, sin cambiar: con `SaveChangesAndDispatchAsync` cada evento se escribe **dos veces**
   en el outbox (el `UnitOfWork` y el `DomainEventDispatcher`). Queda como tarea aparte.
+
+### Hecho en el bloque 11b (el reloj en las entidades de dominio)
+
+- Los 63 miembros de entidades y objetos de valor que leían `DateTime.UtcNow` reciben ahora
+  `DateTime nowUtc` **como primer parámetro**: `Ticket.Create`, `WorkTask.Move`, `Export.Start`,
+  `Document.Archive`… Primero y no al final, para no chocar con los parámetros opcionales y para
+  que todas las llamadas se arreglen igual. `RefreshToken.IsExpired` / `IsValid` pasan de
+  propiedades a métodos con la hora.
+- Los llamadores se arreglaron guiándose por los errores de compilación: los manejadores, con
+  `TimeProvider` inyectado; el propio dominio, pasando `nowUtc` hacia arriba; las pruebas, con la
+  hora del sistema. Se comprobó que ninguna firma deja otra fecha justo detrás de `nowUtc`, que es
+  el caso en que una llamada antigua podría seguir compilando con los argumentos corridos.
+- **`ClockUsageTests`** recorre `src/` y falla si aparece `DateTime.UtcNow`, `Now` o `Today` fuera
+  de comentarios y migraciones. Hoy no queda ninguno.
 
 ---
 

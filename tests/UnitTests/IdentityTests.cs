@@ -43,8 +43,8 @@ public class IdentityTests
         var handler = new LoginCommandHandler(_userRepositoryMock, _jwtServiceMock);
         var command = new LoginCommand("test@test.com", "password123");
 
-        var passwordHash = PasswordHash.Create("password123");
-        var user = User.Create(_tenantId, "Test User", Email.Create("test@test.com").Value!, passwordHash, UserRole.Admin).Value;
+        var passwordHash = PasswordHash.Create(DateTime.UtcNow, "password123");
+        var user = User.Create(DateTime.UtcNow, _tenantId, "Test User", Email.Create("test@test.com").Value!, passwordHash, UserRole.Admin).Value;
         
         _userRepositoryMock.FindByEmailAsync("test@test.com", Arg.Any<CancellationToken>()).Returns(user);
 
@@ -67,8 +67,8 @@ public class IdentityTests
         var handler = new LoginCommandHandler(_userRepositoryMock, _jwtServiceMock);
         var command = new LoginCommand("test@test.com", "wrongpassword");
 
-        var passwordHash = PasswordHash.Create("password123");
-        var user = User.Create(_tenantId, "Test User", Email.Create("test@test.com").Value!, passwordHash, UserRole.Admin).Value;
+        var passwordHash = PasswordHash.Create(DateTime.UtcNow, "password123");
+        var user = User.Create(DateTime.UtcNow, _tenantId, "Test User", Email.Create("test@test.com").Value!, passwordHash, UserRole.Admin).Value;
         
         _userRepositoryMock.FindByEmailAsync("test@test.com", Arg.Any<CancellationToken>()).Returns(user);
 

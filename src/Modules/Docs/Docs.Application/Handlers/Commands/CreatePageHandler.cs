@@ -13,7 +13,7 @@ public record CreatePageCommand(Guid DocumentId, Guid? ParentPageId, string Titl
     public string RequiredPermission => "Write";
 }
 
-public class CreatePageHandler(IDocumentRepository documentRepository) : IRequestHandler<CreatePageCommand, Result<Guid>>
+public class CreatePageHandler(TimeProvider timeProvider, IDocumentRepository documentRepository) : IRequestHandler<CreatePageCommand, Result<Guid>>
 {
     public async Task<Result<Guid>> Handle(CreatePageCommand request, CancellationToken cancellationToken)
     {
@@ -30,7 +30,7 @@ public class CreatePageHandler(IDocumentRepository documentRepository) : IReques
             order = parentPage.SubPages.Count;
         }
 
-        var page = Page.Create(request.DocumentId, request.ParentPageId, request.Title, string.Empty, order);
+        var page = Page.Create(timeProvider.GetUtcNow().UtcDateTime, request.DocumentId, request.ParentPageId, request.Title, string.Empty, order);
         
         await documentRepository.AddPageAsync(page, cancellationToken);
         

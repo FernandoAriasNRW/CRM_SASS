@@ -5,7 +5,7 @@ using Identity.Domain.Entities;
 namespace Identity.Application.Favorites;
 
 /// <summary>Devuelve cómo quedó: <c>true</c> si ahora está marcado.</summary>
-public sealed class ToggleFavoriteHandler(IFavoriteRepository repository)
+public sealed class ToggleFavoriteHandler(TimeProvider timeProvider, IFavoriteRepository repository)
     : ICommandHandler<ToggleFavoriteCommand, bool>
 {
     public async Task<Result<bool>> Handle(ToggleFavoriteCommand request, CancellationToken ct)
@@ -33,7 +33,7 @@ public sealed class ToggleFavoriteHandler(IFavoriteRepository repository)
         Favorite created;
         try
         {
-            created = Favorite.Mark(request.TenantId, request.UserId, request.EntityType, request.EntityId);
+            created = Favorite.Mark(timeProvider.GetUtcNow().UtcDateTime, request.TenantId, request.UserId, request.EntityType, request.EntityId);
         }
         catch (InvalidOperationException ex)
         {

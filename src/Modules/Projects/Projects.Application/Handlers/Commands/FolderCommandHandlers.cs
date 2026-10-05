@@ -32,14 +32,14 @@ public sealed class UpdateFolderCommandHandler(IFolderRepository repository, IPr
     }
 }
 
-public sealed class DeleteFolderCommandHandler(IFolderRepository repository, IProjectsUnitOfWork unitOfWork) : ICommandHandler<DeleteFolderCommand, bool>
+public sealed class DeleteFolderCommandHandler(TimeProvider timeProvider, IFolderRepository repository, IProjectsUnitOfWork unitOfWork) : ICommandHandler<DeleteFolderCommand, bool>
 {
     public async Task<Result<bool>> Handle(DeleteFolderCommand request, CancellationToken cancellationToken)
     {
         var folder = await repository.GetByIdAsync(request.TenantId, request.FolderId, false, cancellationToken);
         if (folder is null) return Result<bool>.Failure("Folder no encontrado");
 
-        folder.Delete(request.DeletedBy);
+        folder.Delete(timeProvider.GetUtcNow().UtcDateTime, request.DeletedBy);
         await repository.UpdateAsync(folder, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
         return Result<bool>.Success(true);

@@ -11,6 +11,7 @@ namespace WorkItems.Infrastructure.Recurrence;
 /// contra la base de datos lo que hace, en lugar de esperar a que salte un temporizador.
 /// </summary>
 public sealed class RecurringTaskGenerator(
+    TimeProvider timeProvider,
     WorkItemsDbContext context,
     ILogger<RecurringTaskGenerator> logger)
 {
@@ -40,7 +41,7 @@ public sealed class RecurringTaskGenerator(
 
     foreach (var series in dueSeries)
     {
-      var occurrences = series.GenerateOccurrencesUntil(today);
+      var occurrences = series.GenerateOccurrencesUntil(timeProvider.GetUtcNow().UtcDateTime, today);
       if (occurrences.Count == 0)
         continue;
 

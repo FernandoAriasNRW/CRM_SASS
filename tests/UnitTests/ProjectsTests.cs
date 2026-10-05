@@ -40,6 +40,7 @@ public class ProjectsTests
     {
         // Arrange & Act
         var project = Project.Create(
+            DateTime.UtcNow,
             _tenantId, _spaceId, null, "New Project", "Project description",
             DateOnly.FromDateTime(DateTime.UtcNow.AddMonths(3)), _ownerId
         );
@@ -58,6 +59,7 @@ public class ProjectsTests
     {
         // Arrange
         var project = Project.Create(
+            DateTime.UtcNow,
             _tenantId, _spaceId, null, "Original Name", "Original Description",
             DateOnly.FromDateTime(DateTime.UtcNow.AddMonths(2)), _ownerId
         );
@@ -82,7 +84,7 @@ public class ProjectsTests
     public async Task CreateProject_WithValidCommand_ReturnsProject()
     {
         // Arrange
-        var handler = new CreateProjectCommandHandler(_repositoryMock, _unitOfWorkMock);
+        var handler = new CreateProjectCommandHandler(TimeProvider.System, _repositoryMock, _unitOfWorkMock);
         var command = new CreateProjectCommand(
             TenantId: _tenantId,
             SpaceId: _spaceId,
@@ -114,8 +116,10 @@ public class ProjectsTests
     {
         // Arrange
         var p1 = Project.Create(
+            DateTime.UtcNow,
             _tenantId, _spaceId, null, "Project 1", "Desc", DateOnly.FromDateTime(DateTime.UtcNow), _ownerId);
         var p2 = Project.Create(
+            DateTime.UtcNow,
             _tenantId, _spaceId, null, "Project 2", "Desc", DateOnly.FromDateTime(DateTime.UtcNow), _ownerId);
 
         var pagedResult = PagedResult<ProjectDto>.Create(
@@ -156,6 +160,7 @@ public class ProjectsTests
     {
         // Arrange
         var project = Project.Create(
+            DateTime.UtcNow,
             _tenantId, _spaceId, null, "Original Name", "Original Description",
             DateOnly.FromDateTime(DateTime.UtcNow.AddMonths(1)), _ownerId
         );
@@ -193,13 +198,14 @@ public class ProjectsTests
     {
         // Arrange
         var project = Project.Create(
+            DateTime.UtcNow,
             _tenantId, _spaceId, null, "To Delete", "Description",
             DateOnly.FromDateTime(DateTime.UtcNow.AddMonths(1)), _ownerId
         );
         _repositoryMock.GetByIdAsync(_tenantId, project.Id, false, Arg.Any<CancellationToken>())
             .Returns(project);
 
-        var deleteHandler = new DeleteProjectCommandHandler(_repositoryMock, _unitOfWorkMock);
+        var deleteHandler = new DeleteProjectCommandHandler(TimeProvider.System, _repositoryMock, _unitOfWorkMock);
         var deleteCommand = new DeleteProjectCommand(_tenantId, project.Id, _ownerId);
 
         // Act

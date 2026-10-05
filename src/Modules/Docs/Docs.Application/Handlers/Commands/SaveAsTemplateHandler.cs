@@ -7,7 +7,7 @@ using MediatR;
 
 namespace Docs.Application.Handlers.Commands;
 
-public class SaveAsTemplateHandler(IDocumentRepository repository) 
+public class SaveAsTemplateHandler(TimeProvider timeProvider, IDocumentRepository repository) 
     : IRequestHandler<SaveAsTemplateCommand, Result<Guid>>
 {
     public async Task<Result<Guid>> Handle(SaveAsTemplateCommand request, CancellationToken cancellationToken)
@@ -26,6 +26,7 @@ public class SaveAsTemplateHandler(IDocumentRepository repository)
 
         // Create new Template document
         var templateDoc = Document.Create(
+            timeProvider.GetUtcNow().UtcDateTime,
             request.TenantId,
             templateTitle,
             templateDesc,
@@ -49,7 +50,7 @@ public class SaveAsTemplateHandler(IDocumentRepository repository)
                 ? pageMap[srcPage.ParentPageId.Value]
                 : null;
 
-            var newPage = Page.Create(templateDoc.Id, newParentId, srcPage.Title, srcPage.Content, srcPage.Order);
+            var newPage = Page.Create(timeProvider.GetUtcNow().UtcDateTime, templateDoc.Id, newParentId, srcPage.Title, srcPage.Content, srcPage.Order);
             pageMap[srcPage.Id] = newPage.Id;
             await repository.AddPageAsync(newPage, cancellationToken);
         }

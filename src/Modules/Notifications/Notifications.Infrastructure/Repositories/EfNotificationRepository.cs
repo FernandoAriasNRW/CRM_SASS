@@ -7,7 +7,7 @@ using Notifications.Infrastructure.Persistence;
 
 namespace Notifications.Infrastructure.Repositories;
 
-public sealed class EfNotificationRepository(NotificationsDbContext context) : INotificationRepository
+public sealed class EfNotificationRepository(TimeProvider timeProvider, NotificationsDbContext context) : INotificationRepository
 {
     public async Task<(IReadOnlyList<Notification> Items, int TotalCount)> GetByTenantAsync(
         Guid tenantId, Guid? recipientId, string? type, string? status,
@@ -58,7 +58,7 @@ public sealed class EfNotificationRepository(NotificationsDbContext context) : I
 
         if (notification.StatusValue == NotificationStatus.Read.Name && entity.StatusValue != NotificationStatus.Read.Name)
         {
-            entity.MarkAsRead();
+            entity.MarkAsRead(timeProvider.GetUtcNow().UtcDateTime);
         }
 
         entity.UpdateContent(notification.Subject, notification.Body, notification.Metadata, notification.TypeValue);
@@ -78,7 +78,7 @@ public sealed class EfNotificationRepository(NotificationsDbContext context) : I
 
         if (entity is not null && !entity.IsDeleted)
         {
-            entity.Delete(deletedBy);
+            entity.Delete(timeProvider.GetUtcNow().UtcDateTime, deletedBy);
             await context.SaveChangesAsync(ct);
         }
     }

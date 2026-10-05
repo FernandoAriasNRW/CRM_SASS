@@ -102,6 +102,7 @@ public sealed class WorkTask : AggregateRoot, ITenantEntity, ISoftDeletable, IAr
     private WorkTask() { }
 
     public static WorkTask Create(
+        DateTime nowUtc,
         Guid tenantId,
         Guid projectId,
         string title,
@@ -138,7 +139,7 @@ public sealed class WorkTask : AggregateRoot, ITenantEntity, ISoftDeletable, IAr
             EstimatedHours = estimatedHours,
             DueDate = dueDate,
             StartDate = startDate,
-            CreatedAtUtc = DateTime.UtcNow
+            CreatedAtUtc = nowUtc
         };
 
         // Una tarea que nace asignada aparece ya en el conjunto de responsables, no sólo en el
@@ -161,7 +162,7 @@ public sealed class WorkTask : AggregateRoot, ITenantEntity, ISoftDeletable, IAr
     /// movimiento tiene sentido lo decide quien gestiona el trabajo. Sólo se rechaza un
     /// estado que no exista, que sería un dato corrupto.
     /// </summary>
-    public void Move(string newStatus)
+    public void Move(DateTime nowUtc, string newStatus)
     {
         if (!TaskStatus.Exists(newStatus))
             throw new InvalidOperationException($"El estado '{newStatus}' no existe");
@@ -172,7 +173,7 @@ public sealed class WorkTask : AggregateRoot, ITenantEntity, ISoftDeletable, IAr
         // La marca de cierre se pone al entrar en el estado final y se quita al salir de él.
         // Quitarla importa tanto como ponerla: una tarea reabierta que conservara la fecha del
         // primer cierre daría un tiempo de ciclo que mide un trabajo que luego se deshizo.
-        CompletedAtUtc = TaskStatus.IsFinal(newStatus) ? DateTime.UtcNow : null;
+        CompletedAtUtc = TaskStatus.IsFinal(newStatus) ? nowUtc : null;
 
         RaiseDomainEvent(new TaskStatusChangedEvent(
             Id, TenantId, ProjectId, oldStatus.Value.ToString(), newStatus,
@@ -470,7 +471,7 @@ public sealed class WorkTask : AggregateRoot, ITenantEntity, ISoftDeletable, IAr
     /// No copia dependencias ni subtareas: son relaciones con otras tareas concretas, y
     /// duplicarlas crearía enlaces que nadie pidió.
     /// </summary>
-    public IReadOnlyList<WorkTask> GenerateOccurrencesUntil(DateOnly today)
+    public IReadOnlyList<WorkTask> GenerateOccurrencesUntil(DateTime nowUtc, DateOnly today)
     {
         if (Recurrence is null)
             return [];
@@ -488,6 +489,7 @@ public sealed class WorkTask : AggregateRoot, ITenantEntity, ISoftDeletable, IAr
                 : (DateOnly?)null;
 
             var occurrence = Create(
+                nowUtc,
                 TenantId, ProjectId, Title.Value, Description,
                 AssigneeId, CreatedById, EstimatedHours,
                 Recurrence.NextOccurrence, Priority.Value,
@@ -567,10 +569,10 @@ public sealed class WorkTask : AggregateRoot, ITenantEntity, ISoftDeletable, IAr
     /// pestañas abiertas pueden mandar la misma orden, y reescribir la fecha haría parecer
     /// reciente algo archivado hace meses.
     /// </summary>
-    public void Archive()
+    public void Archive(DateTime nowUtc)
     {
         if (ArchivedAtUtc is not null) return;
-        ArchivedAtUtc = DateTime.UtcNow;
+        ArchivedAtUtc = nowUtc;
     }
 
     /// <summary>Devuelve la tarea a las listas.</summary>
@@ -582,11 +584,11 @@ public sealed class WorkTask : AggregateRoot, ITenantEntity, ISoftDeletable, IAr
     /// Archivar y borrar no se pisan. Una tarea archivado que se borra sigue archivado al
     /// restaurarlo, que es lo que espera quien lo archivó.
     /// </summary>
-    public void MoveToTrash()
+    public void MoveToTrash(DateTime nowUtc)
     {
         if (IsDeleted) return;
         IsDeleted = true;
-        DeletedAtUtc = DateTime.UtcNow;
+        DeletedAtUtc = nowUtc;
     }
 
     /// <summary>Saca la tarea de la papelera y la deja como estaba.</summary>

@@ -32,14 +32,14 @@ public sealed class UpdateSpaceCommandHandler(ISpaceRepository repository, IProj
     }
 }
 
-public sealed class DeleteSpaceCommandHandler(ISpaceRepository repository, IProjectsUnitOfWork unitOfWork) : ICommandHandler<DeleteSpaceCommand, bool>
+public sealed class DeleteSpaceCommandHandler(TimeProvider timeProvider, ISpaceRepository repository, IProjectsUnitOfWork unitOfWork) : ICommandHandler<DeleteSpaceCommand, bool>
 {
     public async Task<Result<bool>> Handle(DeleteSpaceCommand request, CancellationToken cancellationToken)
     {
         var space = await repository.GetByIdAsync(request.TenantId, request.SpaceId, false, cancellationToken);
         if (space is null) return Result<bool>.Failure("Space no encontrado");
 
-        space.Delete(request.DeletedBy);
+        space.Delete(timeProvider.GetUtcNow().UtcDateTime, request.DeletedBy);
         await repository.UpdateAsync(space, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
         return Result<bool>.Success(true);

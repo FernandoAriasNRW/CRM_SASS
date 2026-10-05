@@ -122,6 +122,7 @@ public sealed class ReportScheduler(
         }
 
         var export = Export.Request(
+            timeProvider.GetUtcNow().UtcDateTime,
             schedule.TenantId, schedule.ReportId, schedule.RecipientId, schedule.Format);
 
         if (export.IsFailure)

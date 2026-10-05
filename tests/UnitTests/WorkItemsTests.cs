@@ -40,6 +40,7 @@ public class WorkItemsTests
     {
         // Arrange & Act
         var task = WorkTask.Create(
+            DateTime.UtcNow,
             _tenantId, _projectId, "Test Task", "Task description",
             _userId, _adminId, 8, DateOnly.FromDateTime(DateTime.UtcNow.AddDays(7))
         );
@@ -57,12 +58,13 @@ public class WorkItemsTests
     {
         // Arrange
         var task = WorkTask.Create(
+            DateTime.UtcNow,
             _tenantId, _projectId, "Test Task", "Task description",
             _userId, _adminId, 8, DateOnly.FromDateTime(DateTime.UtcNow.AddDays(7))
         );
 
         // Act
-        task.Move("In Progress");
+        task.Move(DateTime.UtcNow, "In Progress");
 
         // Assert
         task.Status.Value.ToString().Should().Be("In Progress");
@@ -76,7 +78,7 @@ public class WorkItemsTests
     public async Task CreateTask_WithValidCommand_ReturnsTask()
     {
         // Arrange
-        var handler = new CreateTaskCommandHandler(_repositoryMock, _unitOfWorkMock);
+        var handler = new CreateTaskCommandHandler(TimeProvider.System, _repositoryMock, _unitOfWorkMock);
         var command = new CreateTaskCommand(
             TenantId: _tenantId,
             CreatedById: _adminId,
@@ -113,13 +115,14 @@ public class WorkItemsTests
     {
         // Arrange
         var task = WorkTask.Create(
+            DateTime.UtcNow,
             _tenantId, _projectId, "Task to Move", "Description",
             _userId, _adminId, 8, DateOnly.FromDateTime(DateTime.UtcNow.AddDays(7))
         );
         _repositoryMock.GetByIdAsync(_tenantId, task.Id, Arg.Any<CancellationToken>())
             .Returns(task);
 
-        var moveHandler = new MoveTaskCommandHandler(_repositoryMock, _unitOfWorkMock);
+        var moveHandler = new MoveTaskCommandHandler(TimeProvider.System, _repositoryMock, _unitOfWorkMock);
         var moveCommand = new MoveTaskCommand(
             TenantId: _tenantId,
             Id: task.Id,
@@ -144,13 +147,14 @@ public class WorkItemsTests
     {
         // Arrange
         var task = WorkTask.Create(
+            DateTime.UtcNow,
             _tenantId, _projectId, "Task to Move", "Description",
             _userId, _adminId, 8, DateOnly.FromDateTime(DateTime.UtcNow.AddDays(7))
         );
         _repositoryMock.GetByIdAsync(_tenantId, task.Id, Arg.Any<CancellationToken>())
             .Returns(task);
 
-        var moveHandler = new MoveTaskCommandHandler(_repositoryMock, _unitOfWorkMock);
+        var moveHandler = new MoveTaskCommandHandler(TimeProvider.System, _repositoryMock, _unitOfWorkMock);
         var moveCommand = new MoveTaskCommand(
             TenantId: _tenantId,
             Id: task.Id,
@@ -176,6 +180,7 @@ public class WorkItemsTests
     /// otras filas. La tercera —no ser su propio padre— la cubre WorkTaskInvariantsTests.
     /// </summary>
     private WorkTask SampleTask(string title = "Tarea", Guid? parent = null) => WorkTask.Create(
+        DateTime.UtcNow,
         _tenantId, _projectId, title, "Descripción", _userId, _adminId, 4,
         DateOnly.FromDateTime(DateTime.UtcNow.AddDays(3)), null, parent);
 
@@ -219,6 +224,7 @@ public class WorkItemsTests
     {
         var task = SampleTask();
         var fromOtherProject = WorkTask.Create(
+            DateTime.UtcNow,
             _tenantId, Guid.NewGuid(), "De otro proyecto", "x", _userId, _adminId, 1,
             DateOnly.FromDateTime(DateTime.UtcNow));
         _repositoryMock.GetByIdAsync(_tenantId, task.Id, Arg.Any<CancellationToken>()).Returns(task);
@@ -253,7 +259,7 @@ public class WorkItemsTests
         _repositoryMock.GetByIdAsync(_tenantId, Arg.Any<Guid>(), Arg.Any<CancellationToken>())
             .Returns((WorkTask?)null);
 
-        var handler = new CreateTaskCommandHandler(_repositoryMock, _unitOfWorkMock);
+        var handler = new CreateTaskCommandHandler(TimeProvider.System, _repositoryMock, _unitOfWorkMock);
         var result = await handler.Handle(new CreateTaskCommand(
             TenantId: _tenantId, CreatedById: _adminId, ProjectId: _projectId,
             Title: "Subtarea huérfana", Description: "x", AssigneeId: _userId,
@@ -273,7 +279,7 @@ public class WorkItemsTests
     public async Task GetTasks_ReturnsTasksForTenant()
     {
         // Arrange
-        var t1 = WorkTask.Create(_tenantId, _projectId, "Task 1", "Desc", _userId, _adminId, 8, DateOnly.FromDateTime(DateTime.UtcNow));
+        var t1 = WorkTask.Create(DateTime.UtcNow, _tenantId, _projectId, "Task 1", "Desc", _userId, _adminId, 8, DateOnly.FromDateTime(DateTime.UtcNow));
         
         var pagedResult = PagedResult<TaskDto>.Create(
             new List<TaskDto>

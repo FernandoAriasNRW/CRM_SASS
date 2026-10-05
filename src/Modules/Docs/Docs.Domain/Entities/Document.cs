@@ -27,7 +27,7 @@ public sealed class Document : Entity, ITenantEntity, ISoftDeletable, IArchivabl
 
     private Document() { Description = null!; Title = null!; } // EF las rellena al materializar.
 
-    public static Document Create(Guid tenantId, string title, string description, ValueObjects.DocumentType type, Guid ownerId, Guid? teamId, Guid? projectId)
+    public static Document Create(DateTime nowUtc, Guid tenantId, string title, string description, ValueObjects.DocumentType type, Guid ownerId, Guid? teamId, Guid? projectId)
     {
         return new Document
         {
@@ -39,17 +39,17 @@ public sealed class Document : Entity, ITenantEntity, ISoftDeletable, IArchivabl
             OwnerId = ownerId,
             TeamId = teamId,
             ProjectId = projectId,
-            CreatedAtUtc = DateTime.UtcNow,
-            UpdatedAtUtc = DateTime.UtcNow,
+            CreatedAtUtc = nowUtc,
+            UpdatedAtUtc = nowUtc,
             IsDeleted = false
         };
     }
 
-    public void Update(string title, string description)
+    public void Update(DateTime nowUtc, string title, string description)
     {
         Title = title;
         Description = description;
-        UpdatedAtUtc = DateTime.UtcNow;
+        UpdatedAtUtc = nowUtc;
     }
 
     public void AddPage(Page page)
@@ -62,10 +62,10 @@ public sealed class Document : Entity, ITenantEntity, ISoftDeletable, IArchivabl
         _permissions.Add(permission);
     }
 
-    public void Delete()
+    public void Delete(DateTime nowUtc)
     {
         IsDeleted = true;
-        DeletedAt = DateTime.UtcNow;
+        DeletedAt = nowUtc;
     }
 
     #region Archivo
@@ -82,10 +82,10 @@ public sealed class Document : Entity, ITenantEntity, ISoftDeletable, IArchivabl
     /// Archivar no es borrar: la papelera de este agregado sigue siendo <c>IsDeleted</c>, y las
     /// dos cosas conviven. Un documento archivado que se borra sigue archivado al restaurarlo.
     /// </summary>
-    public void Archive()
+    public void Archive(DateTime nowUtc)
     {
         if (ArchivedAtUtc is not null) return;
-        ArchivedAtUtc = DateTime.UtcNow;
+        ArchivedAtUtc = nowUtc;
     }
 
     /// <summary>Devuelve el documento a las listas.</summary>

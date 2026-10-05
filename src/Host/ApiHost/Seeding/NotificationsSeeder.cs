@@ -5,7 +5,7 @@ using Notifications.Infrastructure.Persistence;
 
 namespace ApiHost.Seeding;
 
-public sealed class NotificationsSeeder(NotificationsDbContext notificationsDb) : IModuleSeeder
+public sealed class NotificationsSeeder(TimeProvider timeProvider, NotificationsDbContext notificationsDb) : IModuleSeeder
 {
     public string Module => "Notifications";
     public int Order => 90;
@@ -21,13 +21,13 @@ public sealed class NotificationsSeeder(NotificationsDbContext notificationsDb) 
         if (await notificationsDb.Notifications.AnyAsync(n => n.TenantId == tenantId && n.RecipientUserId == adminId, cancellationToken))
             return;
 
-        var assigned = Notification.Create(tenantId, adminId, NotificationType.InApp.Name, "Tarea Asignada", "Te han asignado la tarea: Implementar Webhooks v2");
-        var priorityTicket = Notification.Create(tenantId, adminId, NotificationType.InApp.Name, "Nuevo Ticket Prioritario", "Se ha registrado un ticket sobre la consulta de permisos por rol.");
-        var mention = Notification.Create(tenantId, adminId, NotificationType.InApp.Name, "Mención en Documento", "Sofia te ha mencionado en la especificación técnica de arquitectura.");
+        var assigned = Notification.Create(timeProvider.GetUtcNow().UtcDateTime, tenantId, adminId, NotificationType.InApp.Name, "Tarea Asignada", "Te han asignado la tarea: Implementar Webhooks v2");
+        var priorityTicket = Notification.Create(timeProvider.GetUtcNow().UtcDateTime, tenantId, adminId, NotificationType.InApp.Name, "Nuevo Ticket Prioritario", "Se ha registrado un ticket sobre la consulta de permisos por rol.");
+        var mention = Notification.Create(timeProvider.GetUtcNow().UtcDateTime, tenantId, adminId, NotificationType.InApp.Name, "Mención en Documento", "Sofia te ha mencionado en la especificación técnica de arquitectura.");
 
         if (assigned.IsSuccess && assigned.Value != null)
         {
-            assigned.Value.MarkAsRead();
+            assigned.Value.MarkAsRead(timeProvider.GetUtcNow().UtcDateTime);
             notificationsDb.Notifications.Add(assigned.Value);
         }
         if (priorityTicket.IsSuccess && priorityTicket.Value != null) notificationsDb.Notifications.Add(priorityTicket.Value);

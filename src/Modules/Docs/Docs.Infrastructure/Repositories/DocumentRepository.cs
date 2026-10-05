@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Docs.Infrastructure.Repositories;
 
-public class DocumentRepository(DocsDbContext dbContext) : IDocumentRepository
+public class DocumentRepository(TimeProvider timeProvider, DocsDbContext dbContext) : IDocumentRepository
 {
     public async Task AddAsync(Document document, CancellationToken cancellationToken = default)
     {
@@ -55,9 +55,9 @@ public class DocumentRepository(DocsDbContext dbContext) : IDocumentRepository
             .FirstOrDefaultAsync(u => u.TenantId == tenantId && u.Key == key, cancellationToken);
 
         if (usage is null)
-            await dbContext.TemplateUsages.AddAsync(TemplateUsage.First(tenantId, key), cancellationToken);
+            await dbContext.TemplateUsages.AddAsync(TemplateUsage.First(timeProvider.GetUtcNow().UtcDateTime, tenantId, key), cancellationToken);
         else
-            usage.Increment();
+            usage.Increment(timeProvider.GetUtcNow().UtcDateTime);
     }
 
     public async Task<List<TemplateUsage>> GetTemplateUsagesAsync(Guid tenantId, CancellationToken cancellationToken = default)

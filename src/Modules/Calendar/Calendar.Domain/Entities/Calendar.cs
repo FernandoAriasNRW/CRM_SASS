@@ -63,6 +63,7 @@ public sealed class CalendarEvent : AggregateRoot, ITenantEntity, ISoftDeletable
   { }
 
   public static Result<CalendarEvent> Create(
+      DateTime nowUtc,
       Guid tenantId,
       Guid organizerId,
       string title,
@@ -100,7 +101,7 @@ public sealed class CalendarEvent : AggregateRoot, ITenantEntity, ISoftDeletable
       Location = location,
       IsAllDay = isAllDay,
       RecurrenceValue = (recurrence ?? RecurrencePattern.None).Value,
-      CreatedAt = DateTime.UtcNow
+      CreatedAt = nowUtc
     };
 
     evt.RaiseDomainEvent(new CalendarCreatedEvent(evt.Id, tenantId, organizerId, title));
@@ -124,13 +125,13 @@ public sealed class CalendarEvent : AggregateRoot, ITenantEntity, ISoftDeletable
   /// Antes se llamaba <c>Cancel</c> y hacía esto mismo, de modo que cancelar una reunión la hacía
   /// desaparecer del calendario. Hoy <see cref="Cancel"/> es la anulación, que la deja a la vista. Ver <see cref="CancelledAtUtc"/> para por qué son cosas distintas.
   /// </summary>
-  public void MoveToTrash(Guid userId)
+  public void MoveToTrash(DateTime nowUtc, Guid userId)
   {
     if (IsDeleted)
       throw new InvalidOperationException("El evento ya está en la papelera");
 
     IsDeleted = true;
-    DeletedAt = DateTime.UtcNow;
+    DeletedAt = nowUtc;
     DeletedBy = userId;
 
     RaiseDomainEvent(new CalendarEventTrashedEvent(Id, TenantId, userId));
@@ -143,7 +144,7 @@ public sealed class CalendarEvent : AggregateRoot, ITenantEntity, ISoftDeletable
   /// reunión no llegara a celebrarse, y prohibirlo obligaría a borrarla, que es peor —quedaría
   /// como si se hubiera hecho—.
   /// </summary>
-  public Result<CalendarEvent> Cancel(Guid userId, string? reason = null)
+  public Result<CalendarEvent> Cancel(DateTime nowUtc, Guid userId, string? reason = null)
   {
     if (IsDeleted)
       return Result<CalendarEvent>.Failure("No se puede cancelar un evento que está en la papelera");
@@ -151,7 +152,7 @@ public sealed class CalendarEvent : AggregateRoot, ITenantEntity, ISoftDeletable
     if (IsCancelled)
       return Result<CalendarEvent>.Failure("El evento ya está cancelado");
 
-    CancelledAtUtc = DateTime.UtcNow;
+    CancelledAtUtc = nowUtc;
     CancelledBy = userId;
     CancellationReason = string.IsNullOrWhiteSpace(reason) ? null : reason.Trim();
 

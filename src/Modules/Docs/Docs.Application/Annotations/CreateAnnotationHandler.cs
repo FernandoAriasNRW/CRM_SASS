@@ -5,7 +5,7 @@ using MediatR;
 
 namespace Docs.Application.Annotations;
 
-public sealed class CreateAnnotationHandler(IDocumentRepository repository)
+public sealed class CreateAnnotationHandler(TimeProvider timeProvider, IDocumentRepository repository)
     : IRequestHandler<CreateAnnotationCommand, Result<Guid>>
 {
     public async Task<Result<Guid>> Handle(CreateAnnotationCommand request, CancellationToken cancellationToken)
@@ -18,6 +18,7 @@ public sealed class CreateAnnotationHandler(IDocumentRepository repository)
         // una anotación podría quedar colgada de un documento que no es el suyo y el panel la
         // buscaría donde no está.
         var annotation = DocumentAnnotation.Create(
+            timeProvider.GetUtcNow().UtcDateTime,
             request.TenantId, page.DocumentId, request.PageId, request.CreatedBy, request.QuotedText);
 
         await repository.AddAnnotationAsync(annotation, cancellationToken);

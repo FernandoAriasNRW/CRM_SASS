@@ -4,7 +4,7 @@ using Webhook.Infrastructure.Persistence;
 
 namespace ApiHost.Seeding;
 
-public sealed class WebhookSeeder(WebhookDbContext webhookDb) : IModuleSeeder
+public sealed class WebhookSeeder(TimeProvider timeProvider, WebhookDbContext webhookDb) : IModuleSeeder
 {
     public string Module => "Webhook";
     public int Order => 100;
@@ -20,9 +20,9 @@ public sealed class WebhookSeeder(WebhookDbContext webhookDb) : IModuleSeeder
             return;
 
         webhookDb.Subscriptions.AddRange(
-            WebhookSubscription.Create(tenantId, "task.created", "https://hooks.slack.com/services/T00/B00/X00", "whsec_slack_123456789"),
-            WebhookSubscription.Create(tenantId, "ticket.updated", "https://hooks.zapier.com/hooks/catch/12345/abcde", "whsec_zapier_987654321"),
-            WebhookSubscription.Create(tenantId, "user.created", "https://http-intake.logs.datadoghq.com/v1/input", "whsec_datadog_456789123"));
+            WebhookSubscription.Create(timeProvider.GetUtcNow().UtcDateTime, tenantId, "task.created", "https://hooks.slack.com/services/T00/B00/X00", "whsec_slack_123456789"),
+            WebhookSubscription.Create(timeProvider.GetUtcNow().UtcDateTime, tenantId, "ticket.updated", "https://hooks.zapier.com/hooks/catch/12345/abcde", "whsec_zapier_987654321"),
+            WebhookSubscription.Create(timeProvider.GetUtcNow().UtcDateTime, tenantId, "user.created", "https://http-intake.logs.datadoghq.com/v1/input", "whsec_datadog_456789123"));
         await webhookDb.SaveChangesAsync(cancellationToken);
     }
 }

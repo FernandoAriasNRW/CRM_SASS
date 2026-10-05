@@ -5,7 +5,7 @@ using MediatR;
 
 namespace Docs.Application.Handlers.Commands;
 
-public class DeleteDocumentHandler(IDocumentRepository repository) 
+public class DeleteDocumentHandler(TimeProvider timeProvider, IDocumentRepository repository) 
     : IRequestHandler<DeleteDocumentCommand, Result>
 {
     public async Task<Result> Handle(DeleteDocumentCommand request, CancellationToken cancellationToken)
@@ -14,7 +14,7 @@ public class DeleteDocumentHandler(IDocumentRepository repository)
         if (document == null)
             return Result.Failure("Document not found");
 
-        document.Delete();
+        document.Delete(timeProvider.GetUtcNow().UtcDateTime);
         await repository.SaveChangesAsync(cancellationToken);
 
         return Result.Success();

@@ -63,7 +63,7 @@ public sealed class CreateExternalTicketHandler(
         if (rejection is not null)
             return Failure(rejection);
 
-        var created = Ticket.CreateFromExternal(key, new ExternalTicketRequest(
+        var created = Ticket.CreateFromExternal(timeProvider.GetUtcNow().UtcDateTime, key, new ExternalTicketRequest(
             request.Title!.Trim(), request.Description!.Trim(),
             request.RequesterName, request.RequesterEmail, request.RequesterPhone, request.RequesterCompany));
         if (created.IsFailure)
