@@ -396,7 +396,7 @@ tres módulos en caliente.
 Al escribir el guardián apareció lo que no se veía a simple vista: **`Tags.Application`
 referenciaba `Teams.Domain` y `Projects.Domain`** para que dos manejadores crearan una etiqueta
 al nacer un equipo o un proyecto. Esos manejadores están ahora en
-`ApiHost/Tags/EtiquetasAutomaticas.cs`.
+`ApiHost/Tags/AutomaticTags.cs`.
 
 `ModuleIsolationTests` recorre los `.csproj` en disco —no los ensamblados cargados, para
 ver también los módulos que el proyecto de pruebas no referencia, que es donde nadie mira— y

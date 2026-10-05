@@ -23,7 +23,7 @@ namespace ApiHost.Tags;
 /// construir antes el camino de publicación, y habría convertido un arreglo de aislamiento en un
 /// proyecto aparte. Queda anotado como la evolución natural de esto.
 /// </summary>
-public sealed class EtiquetasAutomaticas(ITagRepository etiquetas)
+public sealed class AutomaticTags(ITagRepository tags)
     : INotificationHandler<DomainEventNotification<ProjectCreatedEvent>>,
       INotificationHandler<DomainEventNotification<TeamCreatedEvent>>
 {
@@ -35,18 +35,18 @@ public sealed class EtiquetasAutomaticas(ITagRepository etiquetas)
     /// en el mismo instante —una importación, o el sembrado inicial— salían todos del mismo
     /// color. `Random.Shared` no tiene ese problema y además es seguro entre hilos.
     /// </summary>
-    private static string ColorAlAzar() => "#" + Random.Shared.Next(0x1000000).ToString("X6");
+    private static string RandomColor() => "#" + Random.Shared.Next(0x1000000).ToString("X6");
 
-    public Task Handle(DomainEventNotification<ProjectCreatedEvent> notificacion, CancellationToken ct)
+    public Task Handle(DomainEventNotification<ProjectCreatedEvent> notification, CancellationToken ct)
     {
-        var evento = notificacion.DomainEvent;
-        return CreateIfMissingAsync(evento.TenantId, evento.Name, TagCategory.Project, evento.ProjectId, ct);
+        var domainEvent = notification.DomainEvent;
+        return CreateIfMissingAsync(domainEvent.TenantId, domainEvent.Name, TagCategory.Project, domainEvent.ProjectId, ct);
     }
 
-    public Task Handle(DomainEventNotification<TeamCreatedEvent> notificacion, CancellationToken ct)
+    public Task Handle(DomainEventNotification<TeamCreatedEvent> notification, CancellationToken ct)
     {
-        var evento = notificacion.DomainEvent;
-        return CreateIfMissingAsync(evento.TenantId, evento.Name, TagCategory.Team, evento.TeamId, ct);
+        var domainEvent = notification.DomainEvent;
+        return CreateIfMissingAsync(domainEvent.TenantId, domainEvent.Name, TagCategory.Team, domainEvent.TeamId, ct);
     }
 
     /// <summary>
@@ -56,13 +56,13 @@ public sealed class EtiquetasAutomaticas(ITagRepository etiquetas)
     /// </summary>
     private async Task CreateIfMissingAsync(Guid tenantId, string name, string category, Guid referenceId, CancellationToken ct)
     {
-        if (await etiquetas.ExistsByNameAsync(tenantId, category, name, ct))
+        if (await tags.ExistsByNameAsync(tenantId, category, name, ct))
             return;
 
-        await etiquetas.AddAsync(Tag.Create(
+        await tags.AddAsync(Tag.Create(
             tenantId: tenantId,
             name: name,
-            colorHex: ColorAlAzar(),
+            colorHex: RandomColor(),
             category: category,
             externalReferenceId: referenceId), ct);
     }

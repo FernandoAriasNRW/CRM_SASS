@@ -73,12 +73,12 @@ public sealed class TaskDependencyFlowTests(CrmApiFactory factory)
         (await BlockAsync(client, task, bloqueante)).StatusCode.Should().Be(HttpStatusCode.OK);
 
         var ofWaiting = await client.GetFromJsonAsync<JsonElement>($"/api/v1/tasks/{task}/dependencies");
-        ofWaiting.GetProperty("bloqueadaPor").EnumerateArray()
+        ofWaiting.GetProperty("blockedBy").EnumerateArray()
             .Select(t => t.GetProperty("title").GetString()!)
             .Should().ContainSingle().Which.Should().Be("La que bloquea");
 
         var ofBlocker = await client.GetFromJsonAsync<JsonElement>($"/api/v1/tasks/{bloqueante}/dependencies");
-        ofBlocker.GetProperty("bloqueaA").EnumerateArray()
+        ofBlocker.GetProperty("blocks").EnumerateArray()
             .Select(t => t.GetProperty("title").GetString()!)
             .Should().ContainSingle().Which.Should().Be("La que espera");
     }

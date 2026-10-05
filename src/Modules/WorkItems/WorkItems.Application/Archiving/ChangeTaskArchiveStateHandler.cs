@@ -15,19 +15,19 @@ public sealed class ChangeTaskArchiveStateHandler(
         // Se busca incluyendo lo oculto **a propósito**: restaurar algo de la papelera exige
         // encontrarlo, y el filtro global lo esconde. Con la búsqueda normal, «restaurar»
         // habría contestado siempre «tarea no encontrada».
-        var tarea = await repository.GetIncludingHiddenAsync(request.TenantId, request.Id, ct);
-        if (tarea is null)
+        var task = await repository.GetIncludingHiddenAsync(request.TenantId, request.Id, ct);
+        if (task is null)
             return Result<bool>.Failure("Tarea no encontrada");
 
         switch (request.Action)
         {
-            case ArchiveAction.Archive: tarea.Archive(); break;
-            case ArchiveAction.Unarchive: tarea.Unarchive(); break;
-            case ArchiveAction.MoveToTrash: tarea.MoveToTrash(); break;
-            case ArchiveAction.RestoreFromTrash: tarea.RestoreFromTrash(); break;
+            case ArchiveAction.Archive: task.Archive(); break;
+            case ArchiveAction.Unarchive: task.Unarchive(); break;
+            case ArchiveAction.MoveToTrash: task.MoveToTrash(); break;
+            case ArchiveAction.RestoreFromTrash: task.RestoreFromTrash(); break;
         }
 
-        await repository.UpdateAsync(tarea, ct);
+        await repository.UpdateAsync(task, ct);
         await unitOfWork.SaveChangesAsync(ct);
         return Result<bool>.Success(true);
     }

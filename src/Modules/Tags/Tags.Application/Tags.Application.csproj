@@ -2,7 +2,7 @@
 
   <!-- Sin referencias a otros módulos. Había dos, a Teams.Domain y Projects.Domain, para que
        dos manejadores de eventos pudieran crear una etiqueta al nacer un equipo o un proyecto.
-       Esos manejadores viven ahora en ApiHost/Tags/EtiquetasAutomaticas.cs. -->
+       Esos manejadores viven ahora en ApiHost/Tags/AutomaticTags.cs. -->
   <ItemGroup>
     <ProjectReference Include="..\..\..\BuildingBlocks\BuildingBlocks.Application\BuildingBlocks.Application.csproj" />
     <ProjectReference Include="..\Tags.Domain\Tags.Domain.csproj" />

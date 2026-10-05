@@ -21,15 +21,15 @@ public sealed class AddChecklistItemCommandHandler(
     if (task is null)
       return Result<ChecklistItemDto>.Failure("Tarea no encontrada");
 
-    Domain.Entities.ChecklistItem punto;
-    try { punto = task.AddChecklistItem(request.Text); }
+    Domain.Entities.ChecklistItem item;
+    try { item = task.AddChecklistItem(request.Text); }
     catch (InvalidOperationException ex) { return Result<ChecklistItemDto>.Failure(ex.Message); }
 
     await repository.UpdateAsync(task, cancellationToken);
     await unitOfWork.SaveChangesAsync(cancellationToken);
 
     return Result<ChecklistItemDto>.Success(
-        new ChecklistItemDto(punto.Id, punto.Text, punto.IsDone, punto.Position));
+        new ChecklistItemDto(item.Id, item.Text, item.IsDone, item.Position));
   }
 }
 

@@ -16,27 +16,27 @@ public sealed class ViewScopeResolver(
     IEntityVisibility visibility) : IViewScopeResolver
 {
     public async Task<ViewScope> ResolveAsync(
-        string? filtro, Guid? userId, string entityType, CancellationToken ct = default)
+        string? filter, Guid? userId, string entityType, CancellationToken ct = default)
     {
         // Sin filtro no se consulta nada. Pedir favoritos y compartidos en cada listado serían
         // dos viajes de más a la base en la pantalla que más se abre.
-        if (!ViewFilters.Exists(filtro))
+        if (!ViewFilters.Exists(filter))
             return ViewScope.None;
 
-        var favoriteIds = ViewFilters.Is(filtro, ViewFilters.Favorites)
+        var favoriteIds = ViewFilters.Is(filter, ViewFilters.Favorites)
             ? await favorites.GetIdsAsync(entityType, ct)
             : [];
 
-        var sharedWithMe = ViewFilters.Is(filtro, ViewFilters.SharedWithMe)
+        var sharedWithMe = ViewFilters.Is(filter, ViewFilters.SharedWithMe)
             ? await visibility.GetSharedWithMeAsync(entityType, ct)
             : [];
 
         // «Privado» es lo mío que no está compartido con nadie, así que necesita la lista de lo
         // compartido para restarla. Es la única entrada que consulta para excluir.
-        var sharedWithOthers = ViewFilters.Is(filtro, ViewFilters.Private)
+        var sharedWithOthers = ViewFilters.Is(filter, ViewFilters.Private)
             ? await visibility.GetSharedWithOthersAsync(entityType, ct)
             : [];
 
-        return new ViewScope(filtro, userId, favoriteIds, sharedWithMe, sharedWithOthers);
+        return new ViewScope(filter, userId, favoriteIds, sharedWithMe, sharedWithOthers);
     }
 }

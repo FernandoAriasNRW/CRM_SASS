@@ -17,15 +17,15 @@ public sealed class CreateTaskCommandHandler(
     // mismo una subtarea. Se comprueba antes de crear para no dejar nada a medias.
     if (request.ParentTaskId.HasValue)
     {
-      var padre = await repository.GetByIdAsync(request.TenantId, request.ParentTaskId.Value, cancellationToken);
+      var parent = await repository.GetByIdAsync(request.TenantId, request.ParentTaskId.Value, cancellationToken);
 
-      if (padre is null)
+      if (parent is null)
         return Result<WorkTask>.Failure(WorkTask.NestingRules.ParentNotFound);
 
-      if (padre.IsSubtask)
+      if (parent.IsSubtask)
         return Result<WorkTask>.Failure(WorkTask.NestingRules.ParentIsSubtask);
 
-      if (padre.ProjectId != request.ProjectId)
+      if (parent.ProjectId != request.ProjectId)
         return Result<WorkTask>.Failure(WorkTask.NestingRules.ParentFromAnotherProject);
     }
 
@@ -153,19 +153,19 @@ public sealed class ReparentTaskCommandHandler(
 
     if (request.ParentTaskId.HasValue)
     {
-      var padre = await repository.GetByIdAsync(request.TenantId, request.ParentTaskId.Value, cancellationToken);
+      var parent = await repository.GetByIdAsync(request.TenantId, request.ParentTaskId.Value, cancellationToken);
 
-      if (padre is null)
+      if (parent is null)
         return Result<bool>.Failure(WorkTask.NestingRules.ParentNotFound);
 
-      if (padre.IsSubtask)
+      if (parent.IsSubtask)
         return Result<bool>.Failure(WorkTask.NestingRules.ParentIsSubtask);
 
-      if (padre.ProjectId != task.ProjectId)
+      if (parent.ProjectId != task.ProjectId)
         return Result<bool>.Failure(WorkTask.NestingRules.ParentFromAnotherProject);
 
-      var subtareasPropias = await repository.CountSubtasksAsync(request.TenantId, task.Id, cancellationToken);
-      if (subtareasPropias > 0)
+      var ownSubtasks = await repository.CountSubtasksAsync(request.TenantId, task.Id, cancellationToken);
+      if (ownSubtasks > 0)
         return Result<bool>.Failure(WorkTask.NestingRules.HasSubtasks);
     }
 

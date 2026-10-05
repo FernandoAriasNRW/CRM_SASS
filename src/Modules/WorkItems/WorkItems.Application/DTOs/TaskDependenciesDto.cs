@@ -20,6 +20,6 @@ public sealed record TaskDependencyRefDto(Guid Id, string Title, string Status, 
 public sealed record TaskDependencyEdgeDto(Guid TaskId, Guid DependsOnTaskId);
 
 public sealed record TaskDependenciesDto(
-    IReadOnlyList<TaskDependencyRefDto> BloqueadaPor,
-    IReadOnlyList<TaskDependencyRefDto> BloqueaA
+    IReadOnlyList<TaskDependencyRefDto> BlockedBy,
+    IReadOnlyList<TaskDependencyRefDto> Blocks
 );

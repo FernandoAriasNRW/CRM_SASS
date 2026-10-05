@@ -406,6 +406,7 @@ suites completas en verde, catálogo i18n re-extraído al final.
 | 10a ✅ | **Nombres de las pruebas unitarias** (C#) | ~350 pruebas, sus clases, ficheros y variables |
 | 10b ✅ | **Nombres de las pruebas de integración** (C#) | ~360 pruebas, sus clases, ficheros y variables |
 | 10c ✅ | **Títulos de las pruebas del frontend y de las e2e** | 345 títulos y 9 ficheros e2e |
+| Final ✅ | **Pasada final** sobre lo que quedaba en producción | Unos 20 nombres; destapó un contrato roto |
 | 11 | **`TimeProvider` en todos los módulos** | Cambiar el reloj módulo a módulo deja dos formas de dar la hora conviviendo; va de una vez, al final |
 
 ### Migraciones de renombrado
@@ -935,6 +936,19 @@ cambiarlo exige migrar ese contenido. Por eso fue un bloque aparte, el 5c.
 - Los ficheros e2e en español pasan a inglés (`custom-fields.spec.ts`, `board-pagination.spec.ts`…).
 - Lo que el detector sigue marcando son una abreviatura (`el`) y un nombre propio de los datos de
   prueba.
+
+### Hecho en la pasada final
+
+- Lo que los bloques no recogieron en producción: variables locales de WorkItems, `filtro` en
+  `ViewScopeResolver`, los nombres de tupla de dos endpoints y la clase `EtiquetasAutomaticas` del
+  Host, que pasa a `AutomaticTags`.
+- **`TaskDependenciesDto` seguía con `BloqueadaPor` / `BloqueaA`**, mientras que el frontend leía
+  `blockedBy` / `blocks` desde la 4b. La sección de dependencias de la ficha de tarea salía
+  siempre vacía con la API real, y ninguna prueba lo veía: las e2e simulan la API y la de
+  integración leía los nombres viejos. Ahora la API manda `blockedBy` / `blocks`.
+- Lo que el detector sigue marcando en producción son las cabeceras de columna de los informes
+  (texto que lee el usuario) y nombres de `#region`. **El paso de nombres a inglés queda
+  terminado**; sólo falta el bloque 11, que no es de nombres.
 
 ---
 
