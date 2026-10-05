@@ -7,7 +7,7 @@ using MediatR;
 
 namespace Docs.Application.Handlers.Commands;
 
-public class CreateFromTemplateHandler(IDocumentRepository repository) 
+public class CreateFromTemplateHandler(TimeProvider timeProvider, IDocumentRepository repository) 
     : IRequestHandler<CreateFromTemplateCommand, Result<Guid>>
 {
     public async Task<Result<Guid>> Handle(CreateFromTemplateCommand request, CancellationToken cancellationToken)
@@ -42,7 +42,7 @@ public class CreateFromTemplateHandler(IDocumentRepository repository)
         else
         {
             var content = Templates.BuiltInTemplates.For(
-                request.TemplateKey ?? string.Empty, request.Language, DateTime.UtcNow);
+                request.TemplateKey ?? string.Empty, request.Language, timeProvider.GetUtcNow().UtcDateTime);
 
             // Una clave que no existe es un error, no un documento en blanco. Antes caía en un
             // `default` que creaba «Untitled Document» y le contaba un uso a una plantilla

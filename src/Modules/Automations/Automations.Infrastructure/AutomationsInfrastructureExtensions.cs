@@ -11,8 +11,8 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Automations.Infrastructure;
 
 /// <summary>Ata el UnitOfWork del módulo a su propio DbContext.</summary>
-public sealed class AutomationsModuleUnitOfWork(AutomationsDbContext context, IOutboxService outboxService)
-    : UnitOfWork<AutomationsDbContext>(context, outboxService), IAutomationsUnitOfWork
+public sealed class AutomationsModuleUnitOfWork(AutomationsDbContext context, IOutboxService outboxService, TimeProvider timeProvider)
+    : UnitOfWork<AutomationsDbContext>(context, outboxService, timeProvider), IAutomationsUnitOfWork
 {
 }
 

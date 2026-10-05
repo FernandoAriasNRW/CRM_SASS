@@ -8,6 +8,7 @@ using Reporting.Domain.Events;
 namespace ApiHost.Reporting;
 
 public sealed class ExportFailedNotifier(
+    TimeProvider timeProvider,
     IMediator mediator,
     INotificationPreferencesRepository preferences,
     ILogger<ExportFailedNotifier> logger)
@@ -25,6 +26,7 @@ public sealed class ExportFailedNotifier(
             // «falló» a secas tiene que ir a buscar el porqué; quien recibe el porqué a veces
             // puede arreglarlo solo.
             $"No se pudo generar el informe: {domainEvent.Error}",
+            timeProvider.GetUtcNow().UtcDateTime,
             ct);
     }
 }

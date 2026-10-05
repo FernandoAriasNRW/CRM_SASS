@@ -32,7 +32,7 @@ internal static class AttachmentStorage
     /// entrada respondía 500, así que la web del cliente no podía decir qué adjunto quitar.
     /// </summary>
     public static async Task<(List<TicketAttachment> Uploaded, string? Error)> UploadAsync(
-        IStorageService storage, Ticket ticket, IReadOnlyList<IncomingFile> files, Guid? uploadedBy, CancellationToken ct)
+        IStorageService storage, Ticket ticket, IReadOnlyList<IncomingFile> files, Guid? uploadedBy, DateTime nowUtc, CancellationToken ct)
     {
         var uploaded = new List<TicketAttachment>();
         foreach (var file in files)
@@ -49,7 +49,7 @@ internal static class AttachmentStorage
                 return (uploaded, $"No se pudo guardar «{file.Name}»: comprueba que es una imagen o un vídeo válido");
             }
 
-            uploaded.Add(TicketAttachment.Create(ticket, file.Name, url, file.ContentType, file.Size, uploadedBy, DateTime.UtcNow));
+            uploaded.Add(TicketAttachment.Create(ticket, file.Name, url, file.ContentType, file.Size, uploadedBy, nowUtc));
         }
         return (uploaded, null);
     }

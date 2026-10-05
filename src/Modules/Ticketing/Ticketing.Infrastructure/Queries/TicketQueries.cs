@@ -7,7 +7,7 @@ using Ticketing.Application.DTOs;
 
 namespace Ticketing.Infrastructure.Queries;
 
-public sealed class TicketQueries(TicketingDbContext context) : ITicketQueries
+public sealed class TicketQueries(TimeProvider timeProvider, TicketingDbContext context) : ITicketQueries
 {
     public async Task<PagedResult<TicketDto>> GetByTenantAsync(
         Guid tenantId, Guid? customerId, Guid? agentId, string? priority, string? status,
@@ -113,7 +113,7 @@ public sealed class TicketQueries(TicketingDbContext context) : ITicketQueries
         if (pagination.StartDate.HasValue) query = query.Where(t => t.CreatedAt >= pagination.StartDate.Value);
         if (pagination.EndDate.HasValue) query = query.Where(t => t.CreatedAt <= pagination.EndDate.Value);
 
-        var limitDate = DateTime.UtcNow.AddMonths(-3);
+        var limitDate = timeProvider.GetUtcNow().UtcDateTime.AddMonths(-3);
         query = query.Where(t => !((t.StatusValue == 4 || t.StatusValue == 5) && (t.ResolvedAt ?? t.CreatedAt) < limitDate));
 
         var totalCount = await query.CountAsync(ct);

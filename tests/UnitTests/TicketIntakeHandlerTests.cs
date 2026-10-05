@@ -18,7 +18,7 @@ public sealed class TicketIntakeHandlerTests
     private readonly IStorageService _storage = Substitute.For<IStorageService>();
     private readonly ITicketingUnitOfWork _unitOfWork = Substitute.For<ITicketingUnitOfWork>();
 
-    private CreateExternalTicketHandler Handler() => new(_keys, _tickets, _attachments, _storage, _unitOfWork);
+    private CreateExternalTicketHandler Handler() => new(TimeProvider.System, _keys, _tickets, _attachments, _storage, _unitOfWork);
 
     private static IncomingFile File(string name, string type)
         => new(name, type, 128, () => new MemoryStream(new byte[128]));

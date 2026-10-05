@@ -31,7 +31,7 @@ public class JwtServiceTests
         })
         .Build();
 
-    _jwtService = new JwtService(_config);
+    _jwtService = new JwtService(_config, TimeProvider.System);
   }
 
   #region GenerateTokens Tests
@@ -139,7 +139,7 @@ public class JwtServiceTests
         .Build();
 
     // Act & Assert
-    Assert.Throws<InvalidOperationException>(() => new JwtService(badConfig));
+    Assert.Throws<InvalidOperationException>(() => new JwtService(badConfig, TimeProvider.System));
   }
 
   [Fact]
@@ -155,7 +155,7 @@ public class JwtServiceTests
         .Build();
 
     // Act & Assert
-    Assert.Throws<InvalidOperationException>(() => new JwtService(badConfig));
+    Assert.Throws<InvalidOperationException>(() => new JwtService(badConfig, TimeProvider.System));
   }
 
   #endregion

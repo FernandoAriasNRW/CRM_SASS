@@ -27,7 +27,8 @@ public static class DocsInfrastructureExtensions
 
         services.AddScoped<IUnitOfWork<DocsDbContext>>(sp => new UnitOfWork<DocsDbContext>(
             sp.GetRequiredService<DocsDbContext>(),
-            sp.GetRequiredService<BuildingBlocks.Infrastructure.Outbox.IOutboxService>()
+            sp.GetRequiredService<BuildingBlocks.Infrastructure.Outbox.IOutboxService>(),
+            sp.GetRequiredService<TimeProvider>()
         ));
 
         services.AddScoped<Docs.Application.Abstractions.Repositories.IDocumentRepository, Repositories.DocumentRepository>();

@@ -15,6 +15,7 @@ namespace WorkItems.Infrastructure.Recurrence;
 /// igual que hace el worker del outbox.
 /// </summary>
 public sealed class RecurringTasksWorker(
+    TimeProvider timeProvider,
     IServiceProvider serviceProvider,
     ILogger<RecurringTasksWorker> logger) : BackgroundService
 {
@@ -31,7 +32,7 @@ public sealed class RecurringTasksWorker(
         using var scope = serviceProvider.CreateScope();
         var generator = scope.ServiceProvider.GetRequiredService<RecurringTaskGenerator>();
 
-        await generator.GeneratePendingAsync(DateOnly.FromDateTime(DateTime.UtcNow), stoppingToken);
+        await generator.GeneratePendingAsync(DateOnly.FromDateTime(timeProvider.GetUtcNow().UtcDateTime), stoppingToken);
       }
       catch (Exception ex)
       {

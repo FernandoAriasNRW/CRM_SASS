@@ -10,8 +10,8 @@ using Microsoft.Extensions.DependencyInjection;
 namespace CustomFields.Infrastructure;
 
 /// <summary>Ata el UnitOfWork del módulo a su propio DbContext.</summary>
-public sealed class CustomFieldsModuleUnitOfWork(CustomFieldsDbContext context, IOutboxService outboxService)
-    : UnitOfWork<CustomFieldsDbContext>(context, outboxService), ICustomFieldsUnitOfWork
+public sealed class CustomFieldsModuleUnitOfWork(CustomFieldsDbContext context, IOutboxService outboxService, TimeProvider timeProvider)
+    : UnitOfWork<CustomFieldsDbContext>(context, outboxService, timeProvider), ICustomFieldsUnitOfWork
 {
 }
 

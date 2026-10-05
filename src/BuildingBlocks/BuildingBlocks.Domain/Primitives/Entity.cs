@@ -53,5 +53,5 @@ public interface IDomainEvent
 public abstract record DomainEvent : IDomainEvent
 {
   public Guid EventId { get; } = Guid.NewGuid();
-  public DateTime OccurredOnUtc { get; } = DateTime.UtcNow;
+  public DateTime OccurredOnUtc { get; init; }
 }

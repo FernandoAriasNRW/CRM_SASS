@@ -4,7 +4,7 @@ using WorkItems.Infrastructure.Persistence;
 
 namespace ApiHost.Seeding;
 
-public sealed class WorkItemsSeeder(WorkItemsDbContext workItemsDb) : IModuleSeeder
+public sealed class WorkItemsSeeder(TimeProvider timeProvider, WorkItemsDbContext workItemsDb) : IModuleSeeder
 {
     public string Module => "WorkItems";
     public int Order => 40;
@@ -55,7 +55,7 @@ public sealed class WorkItemsSeeder(WorkItemsDbContext workItemsDb) : IModuleSee
                 assignee,
                 context.Admin.Id,
                 sample.Hours,
-                DateOnly.FromDateTime(DateTime.UtcNow.AddDays(7 + index)));
+                DateOnly.FromDateTime(timeProvider.GetUtcNow().UtcDateTime.AddDays(7 + index)));
 
             if (sample.Status != "To Do")
             {

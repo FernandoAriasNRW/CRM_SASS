@@ -8,7 +8,7 @@ namespace Identity.Infrastructure.Persistence;
 /// <summary>
 /// Ata el UnitOfWork del módulo Identity a su propio <c>DbContext</c>.
 /// </summary>
-public sealed class IdentityModuleUnitOfWork(IdentityDbContext context, IOutboxService outboxService)
-    : UnitOfWork<IdentityDbContext>(context, outboxService), IIdentityUnitOfWork
+public sealed class IdentityModuleUnitOfWork(IdentityDbContext context, IOutboxService outboxService, TimeProvider timeProvider)
+    : UnitOfWork<IdentityDbContext>(context, outboxService, timeProvider), IIdentityUnitOfWork
 {
 }

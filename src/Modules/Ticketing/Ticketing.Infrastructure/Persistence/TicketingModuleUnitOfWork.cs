@@ -8,7 +8,7 @@ namespace Ticketing.Infrastructure.Persistence;
 /// <summary>
 /// Ata el UnitOfWork del módulo Ticketing a su propio <c>DbContext</c>.
 /// </summary>
-public sealed class TicketingModuleUnitOfWork(TicketingDbContext context, IOutboxService outboxService)
-    : UnitOfWork<TicketingDbContext>(context, outboxService), ITicketingUnitOfWork
+public sealed class TicketingModuleUnitOfWork(TicketingDbContext context, IOutboxService outboxService, TimeProvider timeProvider)
+    : UnitOfWork<TicketingDbContext>(context, outboxService, timeProvider), ITicketingUnitOfWork
 {
 }

@@ -4,7 +4,7 @@ using Projects.Infrastructure.Persistence;
 
 namespace ApiHost.Seeding;
 
-public sealed class ProjectsSeeder(ProjectsDbContext projectsDb) : IModuleSeeder
+public sealed class ProjectsSeeder(TimeProvider timeProvider, ProjectsDbContext projectsDb) : IModuleSeeder
 {
     public string Module => "Projects";
     public int Order => 30;
@@ -54,7 +54,7 @@ public sealed class ProjectsSeeder(ProjectsDbContext projectsDb) : IModuleSeeder
         var projects = await projectsDb.Projects.Where(p => p.TenantId == tenantId).ToListAsync(cancellationToken);
         if (projects.Count == 0)
         {
-            var today = DateTime.UtcNow;
+            var today = timeProvider.GetUtcNow().UtcDateTime;
             projectsDb.Projects.AddRange(
                 Project.Create(tenantId, coreSpace.Id, backendFolder.Id, "CRM SaaS Suite v2.0", "Migración a arquitectura limpia C# .NET 9 con MediatR y CQRS", DateOnly.FromDateTime(today.AddMonths(2)), admin.Id),
                 Project.Create(tenantId, coreSpace.Id, frontendFolder.Id, "Rediseño ClickUp UI/UX", "Implementación de interfaz moderna con Tailwind CSS y componentes ShadCN", DateOnly.FromDateTime(today.AddMonths(1)), admin.Id),

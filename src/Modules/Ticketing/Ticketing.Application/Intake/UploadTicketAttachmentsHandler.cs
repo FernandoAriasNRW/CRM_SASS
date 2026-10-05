@@ -10,6 +10,7 @@ using Ticketing.Domain.ValueObjects;
 namespace Ticketing.Application.Intake;
 
 public sealed class UploadTicketAttachmentsHandler(
+    TimeProvider timeProvider,
     IUserContext user,
     ITicketRepository tickets,
     ITicketAttachmentRepository attachments,
@@ -29,7 +30,7 @@ public sealed class UploadTicketAttachmentsHandler(
         if (ticket is null)
             return Result<List<TicketAttachmentDto>>.Failure(IntakeErrors.TicketNotFound);
 
-        var (uploaded, uploadError) = await AttachmentStorage.UploadAsync(storage, ticket, request.Attachments, request.UploadedBy, ct);
+        var (uploaded, uploadError) = await AttachmentStorage.UploadAsync(storage, ticket, request.Attachments, request.UploadedBy, timeProvider.GetUtcNow().UtcDateTime, ct);
         if (uploadError is not null)
             return Result<List<TicketAttachmentDto>>.Failure(uploadError);
         try
