@@ -162,6 +162,8 @@ Un concepto, un nombre. Ordenado por área.
 | ámbito (using) | `Scope` |
 | ver también (borrados/archivados) | `IncludeHidden` |
 | como inquilino | `AsTenant` |
+| página, buscar (parámetros de consulta de una lista) | `page`, `search` (`listQueryParams`; nunca `pageNumber`/`searchTerm`) |
+| canal / conversación (chat), mensaje | `Conversation` en la API (`conversationId`), `/channels` en la ruta; `Message` |
 
 ### Tareas, proyectos, calendario
 

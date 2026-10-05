@@ -7,6 +7,7 @@ import { ReportCreateModalComponent } from './report-create-modal.component';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import { lucideRefreshCw, lucidePlus, lucideDownload, lucideFileText, lucideFilter, lucideSave, lucideTag } from '@ng-icons/lucide';
 import { DataTableComponent, ColumnDef, TableState } from '../../shared/ui/data-table/data-table.component';
+import { listQueryParams } from '../../shared/ui/data-table/list-query';
 import { AdvancedFiltersComponent, FilterField } from '../../shared/ui/data-table/advanced-filters.component';
 import { ViewsService, SavedView } from '../../shared/services/views.service';
 import { TableColumnService } from '../../shared/services/table-column.service';
@@ -143,13 +144,7 @@ export class ReportsComponent implements OnInit {
     this.loading.set(true);
     const state = this.tableState();
     
-    const params: any = {
-      pageNumber: state.page,
-      pageSize: state.pageSize,
-      sortColumn: state.sortColumn,
-      sortDirection: state.sortDirection,
-      searchTerm: state.searchTerm
-    };
+    const params: any = listQueryParams(state);
 
     if (state.filters) {
       if (state.filters['type']) params.type = state.filters['type'];

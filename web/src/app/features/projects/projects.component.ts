@@ -11,6 +11,7 @@ import {
   projectsLoaded, selectProjects, selectProjectsLoaded, type Project
 } from '../../state/projects/projects.state';
 import { DataTableComponent, ColumnDef, TableState } from '../../shared/ui/data-table/data-table.component';
+import { listQueryParams } from '../../shared/ui/data-table/list-query';
 import { AdvancedFiltersComponent, FilterField } from '../../shared/ui/data-table/advanced-filters.component';
 import { ButtonComponent } from '../../shared/ui/button.component';
 import { HierarchySignalStore } from '../../core/hierarchy-signal.store';
@@ -201,13 +202,7 @@ export class ProjectsComponent implements OnInit {
     this.isLoading.set(true);
     const state = this.tableState();
     
-    const params: any = {
-      pageNumber: state.page,
-      pageSize: state.pageSize,
-      sortColumn: state.sortColumn,
-      sortDirection: state.sortDirection,
-      searchTerm: state.searchTerm
-    };
+    const params: any = listQueryParams(state);
 
     if (state.filters) {
       if (state.filters['startDate']) params.startDate = state.filters['startDate'];

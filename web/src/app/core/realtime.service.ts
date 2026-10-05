@@ -21,7 +21,7 @@ export class RealtimeService {
   readonly notification$ = new Subject<RealtimeNotification>();
   readonly taskMoved$ = new Subject<{ taskId: string; status: string }>();
   readonly chatMessage$ = new Subject<any>();
-  readonly ticketMoved$ = new Subject<{ ticketId: string; status: number }>();
+  readonly ticketMoved$ = new Subject<{ ticketId: string; status: string }>();
   private chatHub: signalR.HubConnection | null = null;
   private ticketsHub: signalR.HubConnection | null = null;
 

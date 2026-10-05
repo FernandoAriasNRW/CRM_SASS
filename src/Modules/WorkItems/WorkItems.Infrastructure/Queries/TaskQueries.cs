@@ -1,4 +1,4 @@
-using System.Linq.Expressions;
+﻿using System.Linq.Expressions;
 using BuildingBlocks.Application;
 using BuildingBlocks.Domain;
 using Microsoft.EntityFrameworkCore;
@@ -160,7 +160,7 @@ public sealed class TaskQueries(TimeProvider timeProvider, WorkItemsDbContext co
 
     // Apply Sorting
     var desc = pagination.SortDirection?.ToLower() == "desc";
-    query = pagination.SortColumn?.ToLower() switch
+    IOrderedQueryable<WorkTask> ordered = pagination.SortColumn?.ToLower() switch
     {
         "title" => desc ? query.OrderByDescending(t => t.Title.Value) : query.OrderBy(t => t.Title.Value),
         "status" => desc ? query.OrderByDescending(t => t.Status.Value) : query.OrderBy(t => t.Status.Value),
@@ -169,6 +169,11 @@ public sealed class TaskQueries(TimeProvider timeProvider, WorkItemsDbContext co
         "estimatedhours" => desc ? query.OrderByDescending(t => t.EstimatedHours) : query.OrderBy(t => t.EstimatedHours),
         _ => query.OrderByDescending(t => t.DueDate)
     };
+
+    // El desempate por Id hace que el orden sea total. Con sólo la columna elegida, las filas que
+    // empatan (la misma fecha, el mismo estado) salen en el orden que le parezca a MySQL en cada
+    // consulta, y al paginar una fila puede repetirse en dos páginas y otra no salir en ninguna.
+    query = ordered.ThenBy(t => t.Id);
 
     var items = await Project(query.Skip(pagination.Skip).Take(pagination.Take), tenantId)
         .ToListAsync(ct);
