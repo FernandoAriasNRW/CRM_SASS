@@ -12,7 +12,7 @@ using DomainTaskStatus = WorkItems.Domain.ValueObjects.TaskStatus;
 
 namespace WorkItems.Infrastructure.Queries;
 
-public sealed class TaskQueries(WorkItemsDbContext context) : ITaskQueries
+public sealed class TaskQueries(TimeProvider timeProvider, WorkItemsDbContext context) : ITaskQueries
 {
   /// <summary>
   /// Posición de la prioridad en el orden de negocio, para ordenar en la base de datos.
@@ -153,7 +153,7 @@ public sealed class TaskQueries(WorkItemsDbContext context) : ITaskQueries
         query = query.Where(t => t.DueDate <= ed);
     }
 
-    var limitDate = DateOnly.FromDateTime(DateTime.UtcNow.AddMonths(-3));
+    var limitDate = DateOnly.FromDateTime(timeProvider.GetUtcNow().UtcDateTime.AddMonths(-3));
     query = query.Where(t => !((t.Status.Value == "Done" || t.Status.Name == "Done") && t.DueDate < limitDate));
 
     var totalCount = await query.CountAsync(ct);

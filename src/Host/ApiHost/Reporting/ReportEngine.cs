@@ -29,6 +29,7 @@ namespace ApiHost.Reporting;
 /// habría que escribir un traductor a <c>GroupBy</c> por cada campo del catálogo.
 /// </summary>
 public sealed class ReportEngine(
+    TimeProvider timeProvider,
     WorkItemsDbContext tasksDb,
     TicketingDbContext ticketsDb,
     ProjectsDbContext projectsDb) : global::Reporting.Application.Definitions.IReportResolver
@@ -276,7 +277,7 @@ public sealed class ReportEngine(
 
     #region Componer el resultado
 
-    private static ReportTable Compose(
+    private ReportTable Compose(
         string title, ReportDefinition d, DataSource dataSource, List<RawRow> raw)
     {
         var measure = dataSource.Measure(d.Measure)!;
@@ -371,7 +372,7 @@ public sealed class ReportEngine(
     /// y acaba en una reunión sin quien lo generó delante; sin esta línea, nadie puede saber si
     /// «Tickets por estado» son todos o sólo los de una persona.
     /// </summary>
-    private static string Subtitle(
+    private string Subtitle(
         ReportDefinition d, DataSource dataSource, AvailableMeasure measure, int rows, bool trimmed)
     {
         var parts = new List<string>
@@ -401,7 +402,7 @@ public sealed class ReportEngine(
             parts.Add($"sólo los {d.EffectiveGroups} mayores");
 
         return string.Join(" · ", parts)
-               + $" · Generado el {DateTime.UtcNow.ToString("dd/MM/yyyy HH:mm", Spanish)} UTC";
+               + $" · Generado el {timeProvider.GetUtcNow().UtcDateTime.ToString("dd/MM/yyyy HH:mm", Spanish)} UTC";
     }
 
     #endregion

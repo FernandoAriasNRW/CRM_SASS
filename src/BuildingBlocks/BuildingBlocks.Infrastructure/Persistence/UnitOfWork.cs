@@ -8,6 +8,7 @@ namespace BuildingBlocks.Infrastructure.Persistence;
 public class UnitOfWork<TContext>(
     TContext context,
     IOutboxService outboxService,
+    TimeProvider timeProvider,
     IDomainEventDispatcher? domainEventDispatcher = null) : IUnitOfWork<TContext>
     where TContext : DbContext
 {
@@ -90,7 +91,13 @@ public class UnitOfWork<TContext>(
 
     foreach (var entry in entities)
     {
-      var events = entry.Entity.DomainEvents.ToList();
+      // La hora del suceso se sella aquí, con el reloj inyectado, y no al construir el evento:
+      // así no depende de DateTime.UtcNow y sobrevive al viaje por el outbox, donde antes se
+      // perdía al deserializar (la propiedad se volvía a inicializar con la hora de lectura).
+      var occurredOnUtc = timeProvider.GetUtcNow().UtcDateTime;
+      var events = entry.Entity.DomainEvents
+          .Select(e => e is DomainEvent d && d.OccurredOnUtc == default ? d with { OccurredOnUtc = occurredOnUtc } : e)
+          .ToList();
       domainEvents.AddRange(events);
       entry.Entity.ClearDomainEvents();
     }

@@ -8,7 +8,7 @@ namespace Projects.Infrastructure.Persistence;
 /// <summary>
 /// Ata el UnitOfWork del módulo Projects a su propio <c>DbContext</c>.
 /// </summary>
-public sealed class ProjectsModuleUnitOfWork(ProjectsDbContext context, IOutboxService outboxService)
-    : UnitOfWork<ProjectsDbContext>(context, outboxService), IProjectsUnitOfWork
+public sealed class ProjectsModuleUnitOfWork(ProjectsDbContext context, IOutboxService outboxService, TimeProvider timeProvider)
+    : UnitOfWork<ProjectsDbContext>(context, outboxService, timeProvider), IProjectsUnitOfWork
 {
 }

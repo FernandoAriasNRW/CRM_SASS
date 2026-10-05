@@ -27,6 +27,7 @@ namespace ApiHost.Reporting;
 /// unos totales que ya se veían.
 /// </summary>
 public sealed class ReportData(
+    TimeProvider timeProvider,
     DashboardQueries panel,
     ReportEngine motor,
     ProjectsDbContext projectsDb,
@@ -219,7 +220,7 @@ public sealed class ReportData(
                 // Los días que lleva abierto, o los que tardó. Es la columna por la que se ordena
                 // cuando alguien busca qué se está atascando, y calcularla aquí evita que cada
                 // quien la saque a mano en una hoja de cálculo.
-                ((t.ResolvedAt ?? DateTime.UtcNow) - t.CreatedAt).TotalDays.ToString("0.#", Spanish)
+                ((t.ResolvedAt ?? timeProvider.GetUtcNow().UtcDateTime) - t.CreatedAt).TotalDays.ToString("0.#", Spanish)
             ])
             .ToList();
 
@@ -274,9 +275,9 @@ public sealed class ReportData(
     /// Avisa cuando el informe llegó al tope. Recortar sin decirlo es la peor opción: quien lea
     /// el fichero dará por hecho que ésos son todos los datos.
     /// </summary>
-    private static string Subtitle(int rows)
+    private string Subtitle(int rows)
     {
-        var generated = $"Generado el {DateTime.UtcNow.ToString("dd/MM/yyyy HH:mm", Spanish)} UTC";
+        var generated = $"Generado el {timeProvider.GetUtcNow().UtcDateTime.ToString("dd/MM/yyyy HH:mm", Spanish)} UTC";
 
         return rows >= MaxRows
             ? $"{generated} · {rows:N0} filas (recortado: el informe tiene más datos de los que caben)"

@@ -4,7 +4,7 @@ using Reporting.Domain.Entities;
 
 namespace Reporting.Infrastructure.Persistence;
 
-public sealed class ExportRepository(ReportingDbContext db) : IExportRepository
+public sealed class ExportRepository(TimeProvider timeProvider, ReportingDbContext db) : IExportRepository
 {
     public Task<Export?> GetByIdAsync(Guid tenantId, Guid id, CancellationToken ct = default)
         => db.Exports.FirstOrDefaultAsync(e => e.TenantId == tenantId && e.Id == id, ct);
@@ -35,7 +35,7 @@ public sealed class ExportRepository(ReportingDbContext db) : IExportRepository
         //
         // Cada Exportacion lleva su TenantId, y todo lo que el trabajador haga después con ella
         // usa ese identificador. La frontera no se pierde, se lleva a mano.
-        var limit = DateTime.UtcNow - Export.GivenUpAfter;
+        var limit = timeProvider.GetUtcNow().UtcDateTime - Export.GivenUpAfter;
 
         return await db.Exports
             .IgnoreQueryFilters()

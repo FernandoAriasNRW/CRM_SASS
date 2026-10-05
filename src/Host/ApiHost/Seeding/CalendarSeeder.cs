@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ApiHost.Seeding;
 
-public sealed class CalendarSeeder(CalendarDbContext calendarDb) : IModuleSeeder
+public sealed class CalendarSeeder(TimeProvider timeProvider, CalendarDbContext calendarDb) : IModuleSeeder
 {
     public string Module => "Calendar";
     public int Order => 70;
@@ -21,7 +21,7 @@ public sealed class CalendarSeeder(CalendarDbContext calendarDb) : IModuleSeeder
         if (await calendarDb.CalendarEvents.AnyAsync(e => e.TenantId == tenantId, cancellationToken))
             return;
 
-        var now = DateTime.UtcNow;
+        var now = timeProvider.GetUtcNow().UtcDateTime;
 
         // Con argumentos con nombre. Estaban puestos por posición, y al añadir `ticketId`
         // a `Create` **la descripción pasó a ocupar el hueco del identificador**: sólo se

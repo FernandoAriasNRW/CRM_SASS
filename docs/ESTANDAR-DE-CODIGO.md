@@ -407,7 +407,8 @@ suites completas en verde, catálogo i18n re-extraído al final.
 | 10b ✅ | **Nombres de las pruebas de integración** (C#) | ~360 pruebas, sus clases, ficheros y variables |
 | 10c ✅ | **Títulos de las pruebas del frontend y de las e2e** | 345 títulos y 9 ficheros e2e |
 | Final ✅ | **Pasada final** sobre lo que quedaba en producción | Unos 20 nombres; destapó un contrato roto |
-| 11 | **`TimeProvider` en todos los módulos** | Cambiar el reloj módulo a módulo deja dos formas de dar la hora conviviendo; va de una vez, al final |
+| 11a ✅ | **`TimeProvider` fuera del dominio** (aplicación, infraestructura, Host) y la hora de los eventos | 22 usos; los eventos guardaban mal su hora |
+| 11b | **El reloj en las entidades de dominio** (reciben `nowUtc`) | Unos 70 usos; cambian firmas y arrastran a sus llamadores y a las pruebas |
 
 ### Migraciones de renombrado
 
@@ -949,6 +950,20 @@ cambiarlo exige migrar ese contenido. Por eso fue un bloque aparte, el 5c.
 - Lo que el detector sigue marcando en producción son las cabeceras de columna de los informes
   (texto que lee el usuario) y nombres de `#region`. **El paso de nombres a inglés queda
   terminado**; sólo falta el bloque 11, que no es de nombres.
+
+### Hecho en el bloque 11a (`TimeProvider` fuera del dominio)
+
+- Los 22 usos de `DateTime.UtcNow` / `DateTime.Now` de aplicación, infraestructura y Host leen
+  ahora `TimeProvider` inyectado: generador y planificador de informes (que sigue usando la hora
+  **local**, con `GetLocalNow()`), sembradores, vigilante de vencimientos, motor de
+  automatizaciones, JWT, entrada de tickets, webhooks y consultas con fechas límite. Los auxiliares
+  estáticos reciben la hora como parámetro.
+- **La hora de los eventos de dominio no se guardaba.** `OccurredOnUtc` se fijaba al construir el
+  evento y, al leerlo del outbox, la propiedad sin `set` se volvía a inicializar con la hora de
+  lectura. Ahora el `UnitOfWork` la sella con el reloj inyectado al recoger los eventos (copia con
+  `with` desde el tipo base) y sobrevive al JSON. Prueba: `DomainEventClockTests`.
+- Visto de paso, sin cambiar: con `SaveChangesAndDispatchAsync` cada evento se escribe **dos veces**
+  en el outbox (el `UnitOfWork` y el `DomainEventDispatcher`). Queda como tarea aparte.
 
 ---
 

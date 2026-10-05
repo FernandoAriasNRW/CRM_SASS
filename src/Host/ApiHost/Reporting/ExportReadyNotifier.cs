@@ -20,6 +20,7 @@ namespace ApiHost.Reporting;
 /// pregunta al soporte.
 /// </summary>
 public sealed class ExportReadyNotifier(
+    TimeProvider timeProvider,
     IMediator mediator,
     INotificationPreferencesRepository preferences,
     ILogger<ExportReadyNotifier> logger)
@@ -34,6 +35,7 @@ public sealed class ExportReadyNotifier(
             domainEvent.TenantId, domainEvent.RequestedById,
             "Tu exportación está lista",
             $"«{domainEvent.FileName}» ya se puede descargar.",
+            timeProvider.GetUtcNow().UtcDateTime,
             ct);
     }
 }

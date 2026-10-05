@@ -19,10 +19,12 @@ public sealed class JwtService : IJwtService
     private readonly SymmetricSecurityKey _securityKey;
     private readonly string _issuer;
     private readonly string _audience;
+    private readonly TimeProvider _timeProvider;
 
-    public JwtService(IConfiguration config)
+    public JwtService(IConfiguration config, TimeProvider timeProvider)
     {
         _config = config;
+        _timeProvider = timeProvider;
 
         var keyString = _config["Jwt:Key"]
             ?? throw new InvalidOperationException("Jwt:Key no está configurada en appsettings.json");
@@ -53,7 +55,7 @@ public sealed class JwtService : IJwtService
             new Claim(ClaimTypes.Role, user.Role)
         };
 
-        var accessExpires = DateTime.UtcNow.AddMinutes(15);
+        var accessExpires = _timeProvider.GetUtcNow().UtcDateTime.AddMinutes(15);
         var accessToken = new JwtSecurityToken(_issuer, _audience, accessClaims, expires: accessExpires, signingCredentials: credentials);
 
         // El refresh token NO debe llevar los mismos claims que el access token.
@@ -68,7 +70,7 @@ public sealed class JwtService : IJwtService
             new Claim("tenantId", user.TenantId.ToString())
         };
 
-        var refreshExpires = DateTime.UtcNow.AddDays(7);
+        var refreshExpires = _timeProvider.GetUtcNow().UtcDateTime.AddDays(7);
         var refreshTokenJwt = new JwtSecurityToken(_issuer, _audience, refreshClaims, expires: refreshExpires, signingCredentials: credentials);
         var refreshToken = new JwtSecurityTokenHandler().WriteToken(refreshTokenJwt);
 

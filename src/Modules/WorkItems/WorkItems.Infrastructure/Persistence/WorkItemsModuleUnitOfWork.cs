@@ -17,8 +17,8 @@ namespace WorkItems.Infrastructure.Persistence;
 /// </summary>
 public sealed class WorkItemsModuleUnitOfWork(
     WorkItemsDbContext context,
-    IOutboxService outboxService,
+    IOutboxService outboxService, TimeProvider timeProvider,
     IDomainEventDispatcher domainEventDispatcher)
-    : UnitOfWork<WorkItemsDbContext>(context, outboxService, domainEventDispatcher), IWorkItemsUnitOfWork
+    : UnitOfWork<WorkItemsDbContext>(context, outboxService, timeProvider, domainEventDispatcher), IWorkItemsUnitOfWork
 {
 }

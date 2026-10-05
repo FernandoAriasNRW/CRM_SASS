@@ -20,6 +20,7 @@ namespace Automations.Application.Services;
 /// y no puede hacer nada al respecto. Por eso todo va dentro de un try y sale por el registro.
 /// </summary>
 public sealed class AutomationEngine(
+    TimeProvider timeProvider,
     IAutomationRuleRepository repository,
     IExecutionRepository executions,
     IAutomationsUnitOfWork unitOfWork,
@@ -58,7 +59,7 @@ public sealed class AutomationEngine(
         var executed = 0;
         var recorded = 0;
 
-        var now = DateTime.UtcNow;
+        var now = timeProvider.GetUtcNow().UtcDateTime;
         var today = DateOnly.FromDateTime(now);
 
         foreach (var rule in rules)

@@ -10,7 +10,7 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Comments.Infrastructure;
 
 /// <summary>Ata el UnitOfWork del módulo a su propio DbContext.</summary>
-public sealed class CommentsModuleUnitOfWork(CommentsDbContext context, IOutboxService outboxService)
-    : UnitOfWork<CommentsDbContext>(context, outboxService), ICommentsUnitOfWork
+public sealed class CommentsModuleUnitOfWork(CommentsDbContext context, IOutboxService outboxService, TimeProvider timeProvider)
+    : UnitOfWork<CommentsDbContext>(context, outboxService, timeProvider), ICommentsUnitOfWork
 {
 }

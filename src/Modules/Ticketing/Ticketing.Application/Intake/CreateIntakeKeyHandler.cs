@@ -9,7 +9,7 @@ using Ticketing.Domain.ValueObjects;
 
 namespace Ticketing.Application.Intake;
 
-public sealed class CreateIntakeKeyHandler(IIntakeKeyRepository keys, ITicketingUnitOfWork unitOfWork)
+public sealed class CreateIntakeKeyHandler(TimeProvider timeProvider, IIntakeKeyRepository keys, ITicketingUnitOfWork unitOfWork)
     : ICommandHandler<CreateIntakeKeyCommand, CreatedIntakeKeyDto>
 {
     public async Task<Result<CreatedIntakeKeyDto>> Handle(CreateIntakeKeyCommand request, CancellationToken ct)
@@ -18,7 +18,7 @@ public sealed class CreateIntakeKeyHandler(IIntakeKeyRepository keys, ITicketing
         if (name.Length is 0 or > 100)
             return Result<CreatedIntakeKeyDto>.Failure("El nombre de la clave es obligatorio y admite hasta 100 caracteres");
 
-        var (key, plainText) = IntakeKey.Generate(request.TenantId, name, request.CreatedBy, DateTime.UtcNow);
+        var (key, plainText) = IntakeKey.Generate(request.TenantId, name, request.CreatedBy, timeProvider.GetUtcNow().UtcDateTime);
         await keys.AddAsync(key, ct);
         await unitOfWork.SaveChangesAsync(ct);
 

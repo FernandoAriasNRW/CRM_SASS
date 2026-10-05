@@ -21,6 +21,7 @@ namespace ApiHost.Reporting;
 /// nadie.
 /// </summary>
 public sealed class ReportScheduler(
+    TimeProvider timeProvider,
     IServiceScopeFactory ambitos,
     ILogger<ReportScheduler> logger) : BackgroundService
 {
@@ -73,7 +74,7 @@ public sealed class ReportScheduler(
         // La hora local del servidor. La programación guarda hora local del inquilino, y mientras
         // no haya zona horaria por inquilino, ésta es la aproximación honesta: está anotado en la
         // auditoría como lo que hay que afinar cuando haya clientes en varios husos.
-        var now = DateTime.Now;
+        var now = timeProvider.GetLocalNow().DateTime;
 
         foreach (var schedule in active)
         {
