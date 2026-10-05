@@ -18,7 +18,7 @@ public sealed class RecurringTasksWorker(
     IServiceProvider serviceProvider,
     ILogger<RecurringTasksWorker> logger) : BackgroundService
 {
-  private static readonly TimeSpan Intervalo = TimeSpan.FromHours(1);
+  private static readonly TimeSpan Interval = TimeSpan.FromHours(1);
 
   protected override async Task ExecuteAsync(CancellationToken stoppingToken)
   {
@@ -38,7 +38,7 @@ public sealed class RecurringTasksWorker(
         logger.LogError(ex, "Error generando tareas recurrentes");
       }
 
-      try { await Task.Delay(Intervalo, stoppingToken); }
+      try { await Task.Delay(Interval, stoppingToken); }
       catch (TaskCanceledException) { break; }
     }
   }

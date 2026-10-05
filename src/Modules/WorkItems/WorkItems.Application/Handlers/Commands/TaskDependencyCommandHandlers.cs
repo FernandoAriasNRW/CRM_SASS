@@ -18,7 +18,7 @@ namespace WorkItems.Application.Handlers.Commands;
 /// </summary>
 public sealed class AddTaskDependencyCommandHandler(
     ITaskRepository tasks,
-    ITaskDependencyRepository dependencias,
+    ITaskDependencyRepository dependencies,
     IWorkItemsUnitOfWork unitOfWork) : ICommandHandler<AddTaskDependencyCommand, bool>
 {
   public async Task<Result<bool>> Handle(AddTaskDependencyCommand request, CancellationToken cancellationToken)
@@ -26,28 +26,28 @@ public sealed class AddTaskDependencyCommandHandler(
     if (request.Id == request.DependsOnTaskId)
       return Result<bool>.Failure(TaskDependency.Rules.CannotBlockItself);
 
-    var tarea = await tasks.GetByIdAsync(request.TenantId, request.Id, cancellationToken);
+    var task = await tasks.GetByIdAsync(request.TenantId, request.Id, cancellationToken);
     var bloqueante = await tasks.GetByIdAsync(request.TenantId, request.DependsOnTaskId, cancellationToken);
 
-    if (tarea is null || bloqueante is null)
+    if (task is null || bloqueante is null)
       return Result<bool>.Failure(TaskDependency.Rules.TaskNotFound);
 
-    if (tarea.ProjectId != bloqueante.ProjectId)
+    if (task.ProjectId != bloqueante.ProjectId)
       return Result<bool>.Failure(TaskDependency.Rules.FromAnotherProject);
 
-    var yaExiste = await dependencias.GetAsync(request.TenantId, request.Id, request.DependsOnTaskId, cancellationToken);
-    if (yaExiste is not null)
+    var alreadyExists = await dependencies.GetAsync(request.TenantId, request.Id, request.DependsOnTaskId, cancellationToken);
+    if (alreadyExists is not null)
       return Result<bool>.Failure(TaskDependency.Rules.AlreadyExists);
 
-    var aristas = await dependencias.GetProjectEdgesAsync(request.TenantId, tarea.ProjectId, cancellationToken);
-    if (CycleDetector.WouldCloseCycle(aristas, request.Id, request.DependsOnTaskId))
+    var edges = await dependencies.GetProjectEdgesAsync(request.TenantId, task.ProjectId, cancellationToken);
+    if (CycleDetector.WouldCloseCycle(edges, request.Id, request.DependsOnTaskId))
       return Result<bool>.Failure(TaskDependency.Rules.WouldCreateCycle);
 
-    TaskDependency dependencia;
-    try { dependencia = TaskDependency.Create(request.TenantId, request.Id, request.DependsOnTaskId); }
+    TaskDependency dependency;
+    try { dependency = TaskDependency.Create(request.TenantId, request.Id, request.DependsOnTaskId); }
     catch (InvalidOperationException ex) { return Result<bool>.Failure(ex.Message); }
 
-    await dependencias.AddAsync(dependencia, cancellationToken);
+    await dependencies.AddAsync(dependency, cancellationToken);
     await unitOfWork.SaveChangesAsync(cancellationToken);
 
     return Result<bool>.Success(true);
@@ -55,17 +55,17 @@ public sealed class AddTaskDependencyCommandHandler(
 }
 
 public sealed class RemoveTaskDependencyCommandHandler(
-    ITaskDependencyRepository dependencias,
+    ITaskDependencyRepository dependencies,
     IWorkItemsUnitOfWork unitOfWork) : ICommandHandler<RemoveTaskDependencyCommand, bool>
 {
   public async Task<Result<bool>> Handle(RemoveTaskDependencyCommand request, CancellationToken cancellationToken)
   {
-    var dependencia = await dependencias.GetAsync(request.TenantId, request.Id, request.DependsOnTaskId, cancellationToken);
-    if (dependencia is null)
+    var dependency = await dependencies.GetAsync(request.TenantId, request.Id, request.DependsOnTaskId, cancellationToken);
+    if (dependency is null)
       return Result<bool>.Failure("La dependencia no existe");
 
-    dependencia.MarkAsRemoved();
-    dependencias.Remove(dependencia);
+    dependency.MarkAsRemoved();
+    dependencies.Remove(dependency);
     await unitOfWork.SaveChangesAsync(cancellationToken);
 
     return Result<bool>.Success(true);

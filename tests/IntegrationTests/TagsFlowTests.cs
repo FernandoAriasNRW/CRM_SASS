@@ -15,7 +15,7 @@ namespace IntegrationTests;
 /// Las predefinidas (hitos, negocio, seguridad, tipo de trabajo, fase de desarrollo) se crean al
 /// arrancar para cada organización y se muestran en el idioma que pida la pantalla. Los listados no
 /// se comparan con un número exacto: otras pruebas crean proyectos, y cada proyecto crea su etiqueta
-/// (<c>EtiquetasAutomaticas</c>).
+/// (<c>AutomaticTags</c>).
 /// </summary>
 [Collection(ApiCollection.Name)]
 public sealed class TagsFlowTests(CrmApiFactory factory)

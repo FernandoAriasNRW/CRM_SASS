@@ -15,7 +15,7 @@ namespace WorkItems.Presentation.Endpoints;
 public static class WorkItemsEndpoints
 {
   /// <summary>Las rutas de archivo y papelera, con la acción que ejecuta cada una.</summary>
-  private static readonly (string Ruta, BuildingBlocks.Application.ArchiveAction Accion)[] ArchiveActions =
+  private static readonly (string Route, BuildingBlocks.Application.ArchiveAction Action)[] ArchiveActions =
   [
     ("archive", BuildingBlocks.Application.ArchiveAction.Archive),
     ("unarchive", BuildingBlocks.Application.ArchiveAction.Unarchive),
