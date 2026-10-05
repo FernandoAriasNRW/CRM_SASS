@@ -112,6 +112,11 @@ public sealed class FrontendContractTests(CrmApiFactory factory)
     /// <c>list-query.ts</c> manda <c>page</c> y <c>search</c>. Las listas mandaban
     /// <c>pageNumber</c> y <c>searchTerm</c>, que la API ignora: la segunda página era la primera
     /// y el buscador no filtraba.
+    ///
+    /// Se recorren todas las páginas de una en una y cada fila tiene que salir exactamente una vez.
+    /// Comparar sólo la página 1 con la 2 no basta: el orden por defecto (la fecha) empata entre
+    /// muchas filas, y sin desempate MySQL las devolvía en otro orden en cada consulta. Esta prueba
+    /// lo destapó en el CI —la página 2 repetía la fila de la 1— y no en local.
     /// </summary>
     [Theory]
     [InlineData("/api/v1/tasks")]
@@ -122,11 +127,14 @@ public sealed class FrontendContractTests(CrmApiFactory factory)
         var client = await AuthenticateAsync();
 
         var all = await client.GetFromJsonAsync<JsonElement>($"{path}?page=1&pageSize=1000");
-        all.GetProperty("totalCount").GetInt32().Should().BeGreaterThan(1, "hacen falta dos filas para ver una segunda página");
+        var expected = all.GetProperty("items").EnumerateArray().Select(i => i.GetProperty("id").GetGuid()).ToList();
+        expected.Should().HaveCountGreaterThan(1, "hacen falta dos filas para ver una segunda página");
 
-        var first = await client.GetFromJsonAsync<JsonElement>($"{path}?page=1&pageSize=1");
-        var second = await client.GetFromJsonAsync<JsonElement>($"{path}?page=2&pageSize=1");
-        Id(second).Should().NotBe(Id(first));
+        var paged = new List<Guid>();
+        for (var page = 1; page <= expected.Count; page++)
+            paged.Add(Id(await client.GetFromJsonAsync<JsonElement>($"{path}?page={page}&pageSize=1")));
+
+        paged.Should().OnlyHaveUniqueItems().And.BeEquivalentTo(expected);
 
         var nothing = await client.GetFromJsonAsync<JsonElement>($"{path}?search=zzz-no-existe-zzz");
         nothing.GetProperty("items").GetArrayLength().Should().Be(0);

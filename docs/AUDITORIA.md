@@ -1598,6 +1598,13 @@ esta pasada buscó los demás de forma sistemática, en octubre de 2026.
 
 `FrontendContractTests` lee el JSON real con los nombres exactos que usa cada componente.
 
+De camino salió otro fallo de paginación, éste de la API: **tareas, tickets y proyectos se
+ordenaban sólo por una columna con empates** (la fecha límite, la de creación, la de inicio).
+MySQL no garantiza el orden de las filas que empatan, y con un `LIMIT` pequeño cambia de una
+consulta a otra: una fila podía salir en dos páginas y otra en ninguna. En local el orden era
+estable y no se veía; en el CI la página 2 repitió la fila de la 1. Ahora las tres desempatan por
+`Id`, y la prueba recorre todas las páginas y exige que cada fila salga una sola vez.
+
 ### 22.3 Lo que el frontend pide y la API no tiene
 
 No son nombres cambiados sino pantallas hechas contra una API que no existe; quedan anotadas:

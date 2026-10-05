@@ -1,9 +1,10 @@
-using BuildingBlocks.Application;
+﻿using BuildingBlocks.Application;
 using BuildingBlocks.Domain;
 using Microsoft.EntityFrameworkCore;
 using Ticketing.Infrastructure.Persistence;
 using Ticketing.Application.Abstractions.Queries;
 using Ticketing.Application.DTOs;
+using Ticketing.Domain.Entities;
 
 namespace Ticketing.Infrastructure.Queries;
 
@@ -120,7 +121,7 @@ public sealed class TicketQueries(TimeProvider timeProvider, TicketingDbContext 
         
         // Apply Sorting
         var desc = pagination.SortDirection?.ToLower() == "desc";
-        query = pagination.SortColumn?.ToLower() switch
+        IOrderedQueryable<Ticket> ordered = pagination.SortColumn?.ToLower() switch
         {
             "title" => desc ? query.OrderByDescending(t => t.Title) : query.OrderBy(t => t.Title),
             "status" => desc ? query.OrderByDescending(t => t.StatusValue) : query.OrderBy(t => t.StatusValue),
@@ -128,6 +129,11 @@ public sealed class TicketQueries(TimeProvider timeProvider, TicketingDbContext 
             "createdat" => desc ? query.OrderByDescending(t => t.CreatedAt) : query.OrderBy(t => t.CreatedAt),
             _ => query.OrderByDescending(t => t.CreatedAt)
         };
+
+        // El desempate por Id hace que el orden sea total. Con sólo la columna elegida, las filas que
+        // empatan (la misma fecha, el mismo estado) salen en el orden que le parezca a MySQL en cada
+        // consulta, y al paginar una fila puede repetirse en dos páginas y otra no salir en ninguna.
+        query = ordered.ThenBy(t => t.Id);
 
         var items = await query
             .Skip(pagination.Skip).Take(pagination.Take)

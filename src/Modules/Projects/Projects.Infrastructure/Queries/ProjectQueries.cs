@@ -1,4 +1,4 @@
-using BuildingBlocks.Application;
+﻿using BuildingBlocks.Application;
 using BuildingBlocks.Domain;
 using Microsoft.EntityFrameworkCore;
 using Projects.Application.Abstractions.Queries;
@@ -84,6 +84,9 @@ public sealed class ProjectQueries(ProjectsDbContext context) : IProjectQueries
         var totalCount = await query.CountAsync(ct);
         var items = await query
             .OrderByDescending(p => p.StartDate)
+            // Desempate por Id: ver TaskQueries. Dos proyectos con la misma fecha de inicio podían
+            // salir en las dos páginas, o en ninguna.
+            .ThenBy(p => p.Id)
             .Skip(pagination.Skip).Take(pagination.Take)
             .Select(p => new ProjectDto(p.Id, p.TenantId, p.SpaceId, p.FolderId, p.Name.Value, p.Description,
                 p.StartDate, p.EstimatedEndDate, p.Status.Value, p.OwnerId, p.TagIds))
