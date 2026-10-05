@@ -10,6 +10,7 @@ using Ticketing.Domain.ValueObjects;
 namespace Ticketing.Application.Intake;
 
 public sealed class CreateExternalTicketHandler(
+    TimeProvider timeProvider,
     IIntakeKeyRepository keys,
     ITicketRepository tickets,
     ITicketAttachmentRepository attachments,
@@ -69,13 +70,13 @@ public sealed class CreateExternalTicketHandler(
             return Failure(created.Error!);
 
         var ticket = created.Value!;
-        var (uploaded, uploadError) = await AttachmentStorage.UploadAsync(storage, ticket, request.Attachments, uploadedBy: null, ct);
+        var (uploaded, uploadError) = await AttachmentStorage.UploadAsync(storage, ticket, request.Attachments, uploadedBy: null, timeProvider.GetUtcNow().UtcDateTime, ct);
         if (uploadError is not null)
             return Failure(uploadError);
 
         try
         {
-            key.MarkUsed(DateTime.UtcNow);
+            key.MarkUsed(timeProvider.GetUtcNow().UtcDateTime);
             await tickets.AddAsync(ticket, ct);
             foreach (var attachment in uploaded)
                 await attachments.AddAsync(attachment, ct);

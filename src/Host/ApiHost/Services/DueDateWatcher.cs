@@ -19,6 +19,7 @@ namespace ApiHost.Services;
 /// nadie la toque no emite ningún evento, y es justo el caso que hay que vigilar.
 /// </summary>
 public sealed class DueDateWatcher(
+    TimeProvider timeProvider,
     IServiceProvider serviceProvider,
     ILogger<DueDateWatcher> logger) : BackgroundService
 {
@@ -77,7 +78,7 @@ public sealed class DueDateWatcher(
         var tasksDb = scope.ServiceProvider.GetRequiredService<WorkItemsDbContext>();
         var motor = scope.ServiceProvider.GetRequiredService<IAutomationEngine>();
 
-        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var today = DateOnly.FromDateTime(timeProvider.GetUtcNow().UtcDateTime);
         var from = today.AddDays(-DaysBehind);
         var to = today.AddDays(DaysAhead);
 

@@ -28,6 +28,7 @@ namespace ApiHost.Services;
 /// por qué no le llegó nada.
 /// </summary>
 public sealed class AutomationNotifier(
+    TimeProvider timeProvider,
     IMediator mediator,
     WorkItemsDbContext tasks,
     INotificationPreferencesRepository preferences)
@@ -62,7 +63,7 @@ public sealed class AutomationNotifier(
         var theirs = await preferences.GetForUserAsync(tenantId, recipientId, ct)
                     ?? NotificationPreferences.CreateDefault(tenantId, recipientId);
 
-        var now = TimeOnly.FromDateTime(DateTime.UtcNow);
+        var now = TimeOnly.FromDateTime(timeProvider.GetUtcNow().UtcDateTime);
 
         if (!theirs.ShouldDeliver(NotificationTypes.TaskDueSoon, now))
         {

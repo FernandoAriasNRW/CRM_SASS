@@ -9,6 +9,7 @@ using Webhook.Domain.Entities;
 namespace Webhook.Infrastructure.Services;
 
 public sealed class WebhookDispatchService(
+    TimeProvider timeProvider,
     IWebhookSubscriptionRepository repository,
     IHttpClientFactory httpClientFactory) : IWebhookDispatchService
 {
@@ -23,7 +24,7 @@ public sealed class WebhookDispatchService(
         var active = subscriptions.Where(s => s.TenantId == tenantId).ToList();
         if (active.Count == 0) return;
 
-        var payload = new WebhookPayload(eventName, tenantId, DateTime.UtcNow, eventData);
+        var payload = new WebhookPayload(eventName, tenantId, timeProvider.GetUtcNow().UtcDateTime, eventData);
         var json = JsonSerializer.Serialize(payload, JsonOptions);
 
         var client = httpClientFactory.CreateClient("webhook");

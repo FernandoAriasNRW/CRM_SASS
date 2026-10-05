@@ -9,7 +9,7 @@ using Ticketing.Domain.ValueObjects;
 
 namespace Ticketing.Application.Intake;
 
-public sealed class RevokeIntakeKeyHandler(IIntakeKeyRepository keys, ITicketingUnitOfWork unitOfWork)
+public sealed class RevokeIntakeKeyHandler(TimeProvider timeProvider, IIntakeKeyRepository keys, ITicketingUnitOfWork unitOfWork)
     : ICommandHandler<RevokeIntakeKeyCommand, bool>
 {
     public async Task<Result<bool>> Handle(RevokeIntakeKeyCommand request, CancellationToken ct)
@@ -18,7 +18,7 @@ public sealed class RevokeIntakeKeyHandler(IIntakeKeyRepository keys, ITicketing
         if (key is null)
             return Result<bool>.Failure("Clave no encontrada");
 
-        key.Revoke(DateTime.UtcNow);
+        key.Revoke(timeProvider.GetUtcNow().UtcDateTime);
         await unitOfWork.SaveChangesAsync(ct);
         return Result<bool>.Success(true);
     }

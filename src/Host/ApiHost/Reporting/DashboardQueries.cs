@@ -33,6 +33,7 @@ namespace ApiHost.Reporting;
 /// eliminaron junto con esta refactorización.
 /// </summary>
 public sealed class DashboardQueries(
+    TimeProvider timeProvider,
     ProjectsDbContext projectsDb,
     WorkItemsDbContext workItemsDb,
     TicketingDbContext ticketingDb) : IDashboardRepository
@@ -184,7 +185,7 @@ public sealed class DashboardQueries(
 
         // El eje va del arranque del proyecto —o de la primera tarea creada, si no hay fecha—
         // hasta hoy. No se extiende al futuro: un quemado no predice, sólo cuenta lo ocurrido.
-        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var today = DateOnly.FromDateTime(timeProvider.GetUtcNow().UtcDateTime);
         var start = project?.StartDate
             ?? (pTasks.Count > 0 ? DateOnly.FromDateTime(pTasks.Min(t => t.CreatedAtUtc)) : today);
 

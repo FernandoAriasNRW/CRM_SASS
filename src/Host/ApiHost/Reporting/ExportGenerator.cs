@@ -29,6 +29,7 @@ namespace ApiHost.Reporting;
 /// los intentos, se marca fallida **con el motivo**.
 /// </summary>
 public sealed class ExportGenerator(
+    TimeProvider timeProvider,
     IServiceScopeFactory ambitos,
     ILogger<ExportGenerator> logger) : BackgroundService
 {
@@ -188,7 +189,7 @@ public sealed class ExportGenerator(
     /// que Windows no admite en un nombre de fichero: un informe llamado «Ventas 2026/2027»
     /// generaría una ruta con una carpeta por medio.
     /// </summary>
-    private static string FileName(string reportName, string extension)
+    private string FileName(string reportName, string extension)
     {
         var forbidden = Path.GetInvalidFileNameChars();
         var clean = new string(reportName.Where(c => !forbidden.Contains(c)).ToArray()).Trim();
@@ -196,6 +197,6 @@ public sealed class ExportGenerator(
         if (string.IsNullOrWhiteSpace(clean)) clean = "informe";
         if (clean.Length > 80) clean = clean[..80];
 
-        return $"{clean} {DateTime.UtcNow:yyyy-MM-dd}{extension}";
+        return $"{clean} {timeProvider.GetUtcNow().UtcDateTime:yyyy-MM-dd}{extension}";
     }
 }

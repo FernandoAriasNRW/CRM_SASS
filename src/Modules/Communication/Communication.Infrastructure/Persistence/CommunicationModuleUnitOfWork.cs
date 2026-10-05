@@ -8,7 +8,7 @@ namespace Communication.Infrastructure.Persistence;
 /// <summary>
 /// Ata el UnitOfWork del módulo Communication a su propio <c>DbContext</c>.
 /// </summary>
-public sealed class CommunicationModuleUnitOfWork(CommunicationsDbContext context, IOutboxService outboxService)
-    : UnitOfWork<CommunicationsDbContext>(context, outboxService), ICommunicationUnitOfWork
+public sealed class CommunicationModuleUnitOfWork(CommunicationsDbContext context, IOutboxService outboxService, TimeProvider timeProvider)
+    : UnitOfWork<CommunicationsDbContext>(context, outboxService, timeProvider), ICommunicationUnitOfWork
 {
 }

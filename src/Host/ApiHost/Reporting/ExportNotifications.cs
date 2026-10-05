@@ -17,6 +17,7 @@ internal static class ExportNotifications
         Guid recipient,
         string subject,
         string body,
+        DateTime nowUtc,
         CancellationToken ct)
     {
         if (recipient == Guid.Empty) return;
@@ -27,7 +28,7 @@ internal static class ExportNotifications
         var theirs = await preferences.GetForUserAsync(tenantId, recipient, ct)
                     ?? NotificationPreferences.CreateDefault(tenantId, recipient);
 
-        var now = TimeOnly.FromDateTime(DateTime.UtcNow);
+        var now = TimeOnly.FromDateTime(nowUtc);
 
         if (!theirs.ShouldDeliver(NotificationTypes.ExportReady, now))
         {
