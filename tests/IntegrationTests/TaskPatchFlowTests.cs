@@ -23,37 +23,37 @@ public sealed class TaskPatchFlowTests(CrmApiFactory factory)
     private const string Email = "admin@acme.com";
     private const string Password = "admin123";
 
-    private async Task<(HttpClient cliente, Guid tenantId)> AutenticarAsync()
+    private async Task<(HttpClient client, Guid tenantId)> AuthenticateAsync()
     {
         var login = await factory.CreateClient().PostAsJsonAsync("/api/v1/auth/login", new { Email, Password });
         login.EnsureSuccessStatusCode();
 
-        var cuerpo = await login.Content.ReadFromJsonAsync<JsonElement>();
-        var token = cuerpo.GetProperty("accessToken").GetString()!;
+        var body = await login.Content.ReadFromJsonAsync<JsonElement>();
+        var token = body.GetProperty("accessToken").GetString()!;
 
-        var cliente = factory.CreateClient();
-        cliente.DefaultRequestHeaders.Authorization = new("Bearer", token);
+        var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Authorization = new("Bearer", token);
 
-        return (cliente, TenantDelToken(token));
+        return (client, TenantFromToken(token));
     }
 
-    private static Guid TenantDelToken(string token)
+    private static Guid TenantFromToken(string token)
     {
-        var cuerpo = token.Split('.')[1].Replace('-', '+').Replace('_', '/');
-        var relleno = cuerpo.PadRight(cuerpo.Length + (4 - cuerpo.Length % 4) % 4, '=');
-        var json = JsonDocument.Parse(Convert.FromBase64String(relleno));
+        var body = token.Split('.')[1].Replace('-', '+').Replace('_', '/');
+        var payload = body.PadRight(body.Length + (4 - body.Length % 4) % 4, '=');
+        var json = JsonDocument.Parse(Convert.FromBase64String(payload));
 
         return Guid.Parse(json.RootElement.GetProperty("tenantId").GetString()!);
     }
 
-    private async Task<Guid> CrearAsync(HttpClient cliente, Guid tenantId, string titulo)
+    private async Task<Guid> CreateAsync(HttpClient client, Guid tenantId, string title)
     {
-        var respuesta = await cliente.PostAsJsonAsync("/api/v1/tasks", new
+        var response = await client.PostAsJsonAsync("/api/v1/tasks", new
         {
             tenantId,
             createdById = Guid.NewGuid(),
             projectId = Guid.NewGuid(),
-            title = titulo,
+            title = title,
             description = "creada por las pruebas de integración",
             assigneeId = Guid.NewGuid(),
             estimatedHours = 8m,
@@ -61,64 +61,64 @@ public sealed class TaskPatchFlowTests(CrmApiFactory factory)
             priority = "Normal"
         });
 
-        respuesta.StatusCode.Should().Be(HttpStatusCode.Created);
-        var creada = await respuesta.Content.ReadFromJsonAsync<JsonElement>();
-        return creada.GetProperty("id").GetGuid();
+        response.StatusCode.Should().Be(HttpStatusCode.Created);
+        var created = await response.Content.ReadFromJsonAsync<JsonElement>();
+        return created.GetProperty("id").GetGuid();
     }
 
-    private Task<JsonElement> LeerAsync(HttpClient cliente, Guid id) =>
-        cliente.GetFromJsonAsync<JsonElement>($"/api/v1/tasks/{id}");
+    private Task<JsonElement> ReadAsync(HttpClient client, Guid id) =>
+        client.GetFromJsonAsync<JsonElement>($"/api/v1/tasks/{id}");
 
     [Fact]
-    public async Task El_titulo_se_cambia_y_persiste()
+    public async Task The_title_changes_and_persists()
     {
-        var (cliente, tenantId) = await AutenticarAsync();
-        var id = await CrearAsync(cliente, tenantId, "Título original");
+        var (client, tenantId) = await AuthenticateAsync();
+        var id = await CreateAsync(client, tenantId, "Título original");
 
-        var patch = await cliente.PatchAsJsonAsync($"/api/v1/tasks/{id}", new { title = "Título corregido" });
+        var patch = await client.PatchAsJsonAsync($"/api/v1/tasks/{id}", new { title = "Título corregido" });
         patch.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        var recuperada = await LeerAsync(cliente, id);
-        recuperada.GetProperty("title").GetString().Should().Be("Título corregido");
-    }
-
-    [Fact]
-    public async Task Las_horas_estimadas_se_cambian_y_persisten()
-    {
-        var (cliente, tenantId) = await AutenticarAsync();
-        var id = await CrearAsync(cliente, tenantId, "Para reestimar");
-
-        var patch = await cliente.PatchAsJsonAsync($"/api/v1/tasks/{id}", new { estimatedHours = 13.5m });
-        patch.StatusCode.Should().Be(HttpStatusCode.OK);
-
-        var recuperada = await LeerAsync(cliente, id);
-        recuperada.GetProperty("estimatedHours").GetDecimal().Should().Be(13.5m);
+        var retrieved = await ReadAsync(client, id);
+        retrieved.GetProperty("title").GetString().Should().Be("Título corregido");
     }
 
     [Fact]
-    public async Task La_fecha_limite_se_cambia_y_persiste()
+    public async Task Estimated_hours_change_and_persist()
     {
-        var (cliente, tenantId) = await AutenticarAsync();
-        var id = await CrearAsync(cliente, tenantId, "Para reprogramar");
+        var (client, tenantId) = await AuthenticateAsync();
+        var id = await CreateAsync(client, tenantId, "Para reestimar");
 
-        var patch = await cliente.PatchAsJsonAsync($"/api/v1/tasks/{id}", new { dueDate = "2027-03-15" });
+        var patch = await client.PatchAsJsonAsync($"/api/v1/tasks/{id}", new { estimatedHours = 13.5m });
         patch.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        var recuperada = await LeerAsync(cliente, id);
-        recuperada.GetProperty("dueDate").GetString().Should().StartWith("2027-03-15");
+        var retrieved = await ReadAsync(client, id);
+        retrieved.GetProperty("estimatedHours").GetDecimal().Should().Be(13.5m);
     }
 
     [Fact]
-    public async Task La_descripcion_se_cambia_y_persiste()
+    public async Task The_due_date_changes_and_persists()
     {
-        var (cliente, tenantId) = await AutenticarAsync();
-        var id = await CrearAsync(cliente, tenantId, "Para redescribir");
+        var (client, tenantId) = await AuthenticateAsync();
+        var id = await CreateAsync(client, tenantId, "Para reprogramar");
 
-        var patch = await cliente.PatchAsJsonAsync($"/api/v1/tasks/{id}", new { description = "otra descripción" });
+        var patch = await client.PatchAsJsonAsync($"/api/v1/tasks/{id}", new { dueDate = "2027-03-15" });
         patch.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        var recuperada = await LeerAsync(cliente, id);
-        recuperada.GetProperty("description").GetString().Should().Be("otra descripción");
+        var retrieved = await ReadAsync(client, id);
+        retrieved.GetProperty("dueDate").GetString().Should().StartWith("2027-03-15");
+    }
+
+    [Fact]
+    public async Task The_description_changes_and_persists()
+    {
+        var (client, tenantId) = await AuthenticateAsync();
+        var id = await CreateAsync(client, tenantId, "Para redescribir");
+
+        var patch = await client.PatchAsJsonAsync($"/api/v1/tasks/{id}", new { description = "otra descripción" });
+        patch.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var retrieved = await ReadAsync(client, id);
+        retrieved.GetProperty("description").GetString().Should().Be("otra descripción");
     }
 
     /// <summary>
@@ -126,26 +126,26 @@ public sealed class TaskPatchFlowTests(CrmApiFactory factory)
     /// «déjalo vacío», corregir una fecha borraría el título.
     /// </summary>
     [Fact]
-    public async Task Cambiar_un_campo_no_toca_los_demas()
+    public async Task Changing_one_field_keeps_the_others()
     {
-        var (cliente, tenantId) = await AutenticarAsync();
-        var id = await CrearAsync(cliente, tenantId, "Título que debe sobrevivir");
+        var (client, tenantId) = await AuthenticateAsync();
+        var id = await CreateAsync(client, tenantId, "Título que debe sobrevivir");
 
-        await cliente.PatchAsJsonAsync($"/api/v1/tasks/{id}", new { estimatedHours = 3m });
+        await client.PatchAsJsonAsync($"/api/v1/tasks/{id}", new { estimatedHours = 3m });
 
-        var recuperada = await LeerAsync(cliente, id);
-        recuperada.GetProperty("title").GetString().Should().Be("Título que debe sobrevivir");
-        recuperada.GetProperty("description").GetString().Should().Be("creada por las pruebas de integración");
-        recuperada.GetProperty("dueDate").GetString().Should().StartWith("2026-12-01");
+        var retrieved = await ReadAsync(client, id);
+        retrieved.GetProperty("title").GetString().Should().Be("Título que debe sobrevivir");
+        retrieved.GetProperty("description").GetString().Should().Be("creada por las pruebas de integración");
+        retrieved.GetProperty("dueDate").GetString().Should().StartWith("2026-12-01");
     }
 
     [Fact]
-    public async Task Varios_campos_a_la_vez_se_guardan_todos()
+    public async Task Several_fields_at_once_are_all_saved()
     {
-        var (cliente, tenantId) = await AutenticarAsync();
-        var id = await CrearAsync(cliente, tenantId, "Para editar entero");
+        var (client, tenantId) = await AuthenticateAsync();
+        var id = await CreateAsync(client, tenantId, "Para editar entero");
 
-        var patch = await cliente.PatchAsJsonAsync($"/api/v1/tasks/{id}", new
+        var patch = await client.PatchAsJsonAsync($"/api/v1/tasks/{id}", new
         {
             title = "Editado del todo",
             status = "In Progress",
@@ -155,38 +155,38 @@ public sealed class TaskPatchFlowTests(CrmApiFactory factory)
         });
         patch.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        var recuperada = await LeerAsync(cliente, id);
-        recuperada.GetProperty("title").GetString().Should().Be("Editado del todo");
-        recuperada.GetProperty("status").GetString().Should().Be("In Progress");
-        recuperada.GetProperty("priority").GetString().Should().Be("High");
-        recuperada.GetProperty("estimatedHours").GetDecimal().Should().Be(21m);
-        recuperada.GetProperty("dueDate").GetString().Should().StartWith("2027-01-31");
+        var retrieved = await ReadAsync(client, id);
+        retrieved.GetProperty("title").GetString().Should().Be("Editado del todo");
+        retrieved.GetProperty("status").GetString().Should().Be("In Progress");
+        retrieved.GetProperty("priority").GetString().Should().Be("High");
+        retrieved.GetProperty("estimatedHours").GetDecimal().Should().Be(21m);
+        retrieved.GetProperty("dueDate").GetString().Should().StartWith("2027-01-31");
     }
 
     [Fact]
-    public async Task Un_titulo_vacio_se_rechaza_y_no_llega_a_la_base()
+    public async Task An_empty_title_is_rejected_and_never_stored()
     {
-        var (cliente, tenantId) = await AutenticarAsync();
-        var id = await CrearAsync(cliente, tenantId, "Título que no debe perderse");
+        var (client, tenantId) = await AuthenticateAsync();
+        var id = await CreateAsync(client, tenantId, "Título que no debe perderse");
 
-        var patch = await cliente.PatchAsJsonAsync($"/api/v1/tasks/{id}", new { title = "   " });
+        var patch = await client.PatchAsJsonAsync($"/api/v1/tasks/{id}", new { title = "   " });
         patch.StatusCode.Should().Be(HttpStatusCode.BadRequest);
 
-        var recuperada = await LeerAsync(cliente, id);
-        recuperada.GetProperty("title").GetString().Should().Be("Título que no debe perderse");
+        var retrieved = await ReadAsync(client, id);
+        retrieved.GetProperty("title").GetString().Should().Be("Título que no debe perderse");
     }
 
     [Fact]
-    public async Task Unas_horas_negativas_se_rechazan_y_no_llegan_a_la_base()
+    public async Task Negative_hours_are_rejected_and_never_stored()
     {
-        var (cliente, tenantId) = await AutenticarAsync();
-        var id = await CrearAsync(cliente, tenantId, "Con horas sanas");
+        var (client, tenantId) = await AuthenticateAsync();
+        var id = await CreateAsync(client, tenantId, "Con horas sanas");
 
-        var patch = await cliente.PatchAsJsonAsync($"/api/v1/tasks/{id}", new { estimatedHours = -5m });
+        var patch = await client.PatchAsJsonAsync($"/api/v1/tasks/{id}", new { estimatedHours = -5m });
         patch.StatusCode.Should().Be(HttpStatusCode.BadRequest);
 
-        var recuperada = await LeerAsync(cliente, id);
-        recuperada.GetProperty("estimatedHours").GetDecimal().Should().Be(8m);
+        var retrieved = await ReadAsync(client, id);
+        retrieved.GetProperty("estimatedHours").GetDecimal().Should().Be(8m);
     }
 
     /// <summary>
@@ -194,11 +194,11 @@ public sealed class TaskPatchFlowTests(CrmApiFactory factory)
     /// donde no está, y la pantalla no podría distinguir «se borró» de «no vale».
     /// </summary>
     [Fact]
-    public async Task La_fecha_de_inicio_se_guarda_al_crear_y_vuelve_al_leer()
+    public async Task The_start_date_is_saved_on_create_and_returned_on_read()
     {
-        var (cliente, tenantId) = await AutenticarAsync();
+        var (client, tenantId) = await AuthenticateAsync();
 
-        var respuesta = await cliente.PostAsJsonAsync("/api/v1/tasks", new
+        var response = await client.PostAsJsonAsync("/api/v1/tasks", new
         {
             tenantId,
             createdById = Guid.NewGuid(),
@@ -211,12 +211,12 @@ public sealed class TaskPatchFlowTests(CrmApiFactory factory)
             startDate = "2026-11-25",
             priority = "Normal"
         });
-        respuesta.StatusCode.Should().Be(HttpStatusCode.Created);
+        response.StatusCode.Should().Be(HttpStatusCode.Created);
 
-        var id = (await respuesta.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetGuid();
-        var recuperada = await LeerAsync(cliente, id);
+        var id = (await response.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetGuid();
+        var retrieved = await ReadAsync(client, id);
 
-        recuperada.GetProperty("startDate").GetString().Should().StartWith("2026-11-25");
+        retrieved.GetProperty("startDate").GetString().Should().StartWith("2026-11-25");
     }
 
     /// <summary>
@@ -224,69 +224,69 @@ public sealed class TaskPatchFlowTests(CrmApiFactory factory)
     /// hito en su vencimiento, que es lo único que de verdad se sabe.
     /// </summary>
     [Fact]
-    public async Task Una_tarea_sin_fecha_de_inicio_la_devuelve_nula()
+    public async Task A_task_without_start_date_returns_null()
     {
-        var (cliente, tenantId) = await AutenticarAsync();
-        var id = await CrearAsync(cliente, tenantId, "Sin calendario");
+        var (client, tenantId) = await AuthenticateAsync();
+        var id = await CreateAsync(client, tenantId, "Sin calendario");
 
-        var recuperada = await LeerAsync(cliente, id);
+        var retrieved = await ReadAsync(client, id);
 
-        recuperada.GetProperty("startDate").ValueKind.Should().Be(JsonValueKind.Null);
+        retrieved.GetProperty("startDate").ValueKind.Should().Be(JsonValueKind.Null);
     }
 
     [Fact]
-    public async Task La_fecha_de_inicio_se_pone_y_se_quita()
+    public async Task The_start_date_can_be_set_and_cleared()
     {
-        var (cliente, tenantId) = await AutenticarAsync();
-        var id = await CrearAsync(cliente, tenantId, "Para planificar");
+        var (client, tenantId) = await AuthenticateAsync();
+        var id = await CreateAsync(client, tenantId, "Para planificar");
 
-        await cliente.PatchAsJsonAsync($"/api/v1/tasks/{id}", new { startDate = "2026-11-20" });
-        (await LeerAsync(cliente, id)).GetProperty("startDate").GetString().Should().StartWith("2026-11-20");
+        await client.PatchAsJsonAsync($"/api/v1/tasks/{id}", new { startDate = "2026-11-20" });
+        (await ReadAsync(client, id)).GetProperty("startDate").GetString().Should().StartWith("2026-11-20");
 
         // `null` significa «no toques este campo», así que vaciarla necesita su propio
         // interruptor. Sin él no habría forma de quitarla desde una pantalla que manda parches.
-        await cliente.PatchAsJsonAsync($"/api/v1/tasks/{id}", new { quitarFechaInicio = true });
-        (await LeerAsync(cliente, id)).GetProperty("startDate").ValueKind.Should().Be(JsonValueKind.Null);
+        await client.PatchAsJsonAsync($"/api/v1/tasks/{id}", new { clearStartDate = true });
+        (await ReadAsync(client, id)).GetProperty("startDate").ValueKind.Should().Be(JsonValueKind.Null);
     }
 
     [Fact]
-    public async Task Un_inicio_posterior_al_vencimiento_se_rechaza_y_no_llega_a_la_base()
+    public async Task A_start_after_the_due_date_is_rejected_and_never_stored()
     {
-        var (cliente, tenantId) = await AutenticarAsync();
-        var id = await CrearAsync(cliente, tenantId, "Con vencimiento en diciembre");
+        var (client, tenantId) = await AuthenticateAsync();
+        var id = await CreateAsync(client, tenantId, "Con vencimiento en diciembre");
 
-        var patch = await cliente.PatchAsJsonAsync($"/api/v1/tasks/{id}", new { startDate = "2027-01-01" });
+        var patch = await client.PatchAsJsonAsync($"/api/v1/tasks/{id}", new { startDate = "2027-01-01" });
         patch.StatusCode.Should().Be(HttpStatusCode.BadRequest);
 
-        (await LeerAsync(cliente, id)).GetProperty("startDate").ValueKind.Should().Be(JsonValueKind.Null);
+        (await ReadAsync(client, id)).GetProperty("startDate").ValueKind.Should().Be(JsonValueKind.Null);
     }
 
     [Fact]
-    public async Task Mover_las_dos_fechas_a_la_vez_hacia_adelante_vale()
+    public async Task Moving_both_dates_forward_together_is_valid()
     {
-        var (cliente, tenantId) = await AutenticarAsync();
-        var id = await CrearAsync(cliente, tenantId, "Para reprogramar entera");
-        await cliente.PatchAsJsonAsync($"/api/v1/tasks/{id}", new { startDate = "2026-11-25" });
+        var (client, tenantId) = await AuthenticateAsync();
+        var id = await CreateAsync(client, tenantId, "Para reprogramar entera");
+        await client.PatchAsJsonAsync($"/api/v1/tasks/{id}", new { startDate = "2026-11-25" });
 
-        var patch = await cliente.PatchAsJsonAsync($"/api/v1/tasks/{id}",
+        var patch = await client.PatchAsJsonAsync($"/api/v1/tasks/{id}",
             new { startDate = "2027-01-05", dueDate = "2027-01-10" });
         patch.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        var recuperada = await LeerAsync(cliente, id);
-        recuperada.GetProperty("startDate").GetString().Should().StartWith("2027-01-05");
-        recuperada.GetProperty("dueDate").GetString().Should().StartWith("2027-01-10");
+        var retrieved = await ReadAsync(client, id);
+        retrieved.GetProperty("startDate").GetString().Should().StartWith("2027-01-05");
+        retrieved.GetProperty("dueDate").GetString().Should().StartWith("2027-01-10");
     }
 
     [Fact]
-    public async Task Una_tarea_que_no_existe_da_404_y_un_valor_invalido_da_400()
+    public async Task A_missing_task_returns_404_and_an_invalid_value_400()
     {
-        var (cliente, tenantId) = await AutenticarAsync();
-        var id = await CrearAsync(cliente, tenantId, "Existe");
+        var (client, tenantId) = await AuthenticateAsync();
+        var id = await CreateAsync(client, tenantId, "Existe");
 
-        var inexistente = await cliente.PatchAsJsonAsync($"/api/v1/tasks/{Guid.NewGuid()}", new { title = "Da igual" });
-        inexistente.StatusCode.Should().Be(HttpStatusCode.NotFound);
+        var missing = await client.PatchAsJsonAsync($"/api/v1/tasks/{Guid.NewGuid()}", new { title = "Da igual" });
+        missing.StatusCode.Should().Be(HttpStatusCode.NotFound);
 
-        var invalida = await cliente.PatchAsJsonAsync($"/api/v1/tasks/{id}", new { priority = "Altísima" });
-        invalida.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        var invalid = await client.PatchAsJsonAsync($"/api/v1/tasks/{id}", new { priority = "Altísima" });
+        invalid.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 }

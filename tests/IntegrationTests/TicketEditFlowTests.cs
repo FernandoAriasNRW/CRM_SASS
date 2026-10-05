@@ -18,9 +18,9 @@ namespace IntegrationTests;
 /// otro estado, y que un título inválido <b>no deja nada a medio guardar</b>.
 /// </summary>
 [Collection(ApiCollection.Name)]
-public sealed class EdicionDeTicketFlowTests(CrmApiFactory factory)
+public sealed class TicketEditFlowTests(CrmApiFactory factory)
 {
-    private async Task<HttpClient> AutenticarAsync()
+    private async Task<HttpClient> AuthenticateAsync()
     {
         var login = await factory.CreateClient()
             .PostAsJsonAsync("/api/v1/auth/login", new { Email = "admin@acme.com", Password = "admin123" });
@@ -28,43 +28,43 @@ public sealed class EdicionDeTicketFlowTests(CrmApiFactory factory)
 
         var token = (await login.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("accessToken").GetString()!;
 
-        var cliente = factory.CreateClient();
-        cliente.DefaultRequestHeaders.Authorization = new("Bearer", token);
-        return cliente;
+        var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Authorization = new("Bearer", token);
+        return client;
     }
 
-    private static async Task<Guid> CrearTicketAsync(HttpClient cliente, string titulo)
+    private static async Task<Guid> CreateTicketAsync(HttpClient client, string title)
     {
-        var respuesta = await cliente.PostAsJsonAsync("/api/v1/tickets", new
+        var response = await client.PostAsJsonAsync("/api/v1/tickets", new
         {
-            Title = titulo,
+            Title = title,
             Description = "Creado por las pruebas de edición",
             Priority = "Medium"
         });
-        respuesta.EnsureSuccessStatusCode();
+        response.EnsureSuccessStatusCode();
 
-        var creado = await respuesta.Content.ReadFromJsonAsync<JsonElement>();
-        return creado.GetProperty("id").GetGuid();
+        var created = await response.Content.ReadFromJsonAsync<JsonElement>();
+        return created.GetProperty("id").GetGuid();
     }
 
-    private static async Task<JsonElement> LeerAsync(HttpClient cliente, Guid id)
+    private static async Task<JsonElement> ReadAsync(HttpClient client, Guid id)
     {
-        var respuesta = await cliente.GetAsync($"/api/v1/tickets/{id}");
-        respuesta.EnsureSuccessStatusCode();
-        return await respuesta.Content.ReadFromJsonAsync<JsonElement>();
+        var response = await client.GetAsync($"/api/v1/tickets/{id}");
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadFromJsonAsync<JsonElement>();
     }
 
     /// <summary>Arrastrar una tarjeta manda sólo el estado, y el ticket se queda donde se soltó.</summary>
     [Fact]
-    public async Task Cambiar_solo_el_estado_mueve_el_ticket_y_no_toca_lo_demas()
+    public async Task Changing_only_the_status_moves_the_ticket_and_keeps_the_rest()
     {
-        var cliente = await AutenticarAsync();
-        var id = await CrearTicketAsync(cliente, "Mover esta tarjeta entre columnas");
+        var client = await AuthenticateAsync();
+        var id = await CreateTicketAsync(client, "Mover esta tarjeta entre columnas");
 
-        var respuesta = await cliente.PatchAsJsonAsync($"/api/v1/tickets/{id}", new { Status = "InProgress" });
-        respuesta.StatusCode.Should().Be(HttpStatusCode.OK, await respuesta.Content.ReadAsStringAsync());
+        var response = await client.PatchAsJsonAsync($"/api/v1/tickets/{id}", new { Status = "InProgress" });
+        response.StatusCode.Should().Be(HttpStatusCode.OK, await response.Content.ReadAsStringAsync());
 
-        var ticket = await LeerAsync(cliente, id);
+        var ticket = await ReadAsync(client, id);
         ticket.GetProperty("status").GetString().Should().Be("InProgress");
 
         // Lo que no se mandó se queda como estaba. Una actualización total dejaría el título y la
@@ -75,18 +75,18 @@ public sealed class EdicionDeTicketFlowTests(CrmApiFactory factory)
 
     /// <summary>Un título inválido se rechaza entero: ni el título ni el estado se quedan a medias.</summary>
     [Fact]
-    public async Task Un_titulo_invalido_no_guarda_nada()
+    public async Task An_invalid_title_saves_nothing()
     {
-        var cliente = await AutenticarAsync();
-        var id = await CrearTicketAsync(cliente, "Este título sí es válido");
+        var client = await AuthenticateAsync();
+        var id = await CreateTicketAsync(client, "Este título sí es válido");
 
-        var respuesta = await cliente.PatchAsJsonAsync($"/api/v1/tickets/{id}",
+        var response = await client.PatchAsJsonAsync($"/api/v1/tickets/{id}",
             new { Title = "abc", Status = "Resolved" });
 
-        respuesta.StatusCode.Should().Be(HttpStatusCode.BadRequest,
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest,
             "un título corto es un dato mal formado, no un ticket que no existe");
 
-        var ticket = await LeerAsync(cliente, id);
+        var ticket = await ReadAsync(client, id);
         ticket.GetProperty("title").GetString().Should().Be("Este título sí es válido");
         ticket.GetProperty("status").GetString().Should().Be("Open",
             "el estado viajaba en la misma petición: si se hubiera aplicado antes de validar el "
@@ -95,21 +95,21 @@ public sealed class EdicionDeTicketFlowTests(CrmApiFactory factory)
 
     /// <summary>Editar la ficha entera guarda los cuatro campos de una vez.</summary>
     [Fact]
-    public async Task Editar_la_ficha_guarda_titulo_descripcion_y_prioridad()
+    public async Task Editing_the_detail_saves_title_description_and_priority()
     {
-        var cliente = await AutenticarAsync();
-        var id = await CrearTicketAsync(cliente, "Ficha por editar desde la pantalla");
+        var client = await AuthenticateAsync();
+        var id = await CreateTicketAsync(client, "Ficha por editar desde la pantalla");
 
-        var respuesta = await cliente.PatchAsJsonAsync($"/api/v1/tickets/{id}", new
+        var response = await client.PatchAsJsonAsync($"/api/v1/tickets/{id}", new
         {
             Title = "Ficha ya editada desde la pantalla",
             Description = "Descripción nueva",
             Priority = "High",
             Status = "PendingInfo"
         });
-        respuesta.StatusCode.Should().Be(HttpStatusCode.OK, await respuesta.Content.ReadAsStringAsync());
+        response.StatusCode.Should().Be(HttpStatusCode.OK, await response.Content.ReadAsStringAsync());
 
-        var ticket = await LeerAsync(cliente, id);
+        var ticket = await ReadAsync(client, id);
         ticket.GetProperty("title").GetString().Should().Be("Ficha ya editada desde la pantalla");
         ticket.GetProperty("description").GetString().Should().Be("Descripción nueva");
         ticket.GetProperty("priority").GetString().Should().Be("High");

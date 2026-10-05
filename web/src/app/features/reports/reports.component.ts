@@ -42,7 +42,7 @@ export class ReportsComponent implements OnInit {
    * Los formatos que se ofrecen. Salen del servidor —`ReportFormat`— y aquí se escriben una vez.
    *
    * Es la misma lección que dejó el desplegable de tipos de informe: ofrecía dos que el enum del
-   * servidor no conocía y pedirlos daba 400. `ContratoDeInformesTests` vigila esa unión.
+   * servidor no conocía y pedirlos daba 400. `ReportContractTests` vigila esa unión.
    */
   readonly formats = ['Pdf', 'Excel', 'Csv'] as const;
 

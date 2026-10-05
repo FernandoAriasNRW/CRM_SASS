@@ -24,122 +24,122 @@ public sealed class TaskPriorityFlowTests(CrmApiFactory factory)
     private const string Email = "admin@acme.com";
     private const string Password = "admin123";
 
-    private async Task<(HttpClient cliente, Guid tenantId)> AutenticarAsync()
+    private async Task<(HttpClient client, Guid tenantId)> AuthenticateAsync()
     {
         var login = await factory.CreateClient().PostAsJsonAsync("/api/v1/auth/login", new { Email, Password });
         login.EnsureSuccessStatusCode();
 
-        var cuerpo = await login.Content.ReadFromJsonAsync<JsonElement>();
-        var token = cuerpo.GetProperty("accessToken").GetString()!;
+        var body = await login.Content.ReadFromJsonAsync<JsonElement>();
+        var token = body.GetProperty("accessToken").GetString()!;
 
-        var cliente = factory.CreateClient();
-        cliente.DefaultRequestHeaders.Authorization = new("Bearer", token);
+        var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Authorization = new("Bearer", token);
 
         // El tenant se saca del propio token: las tareas se crean y se consultan en el mismo,
         // que es lo que el filtro global exige para encontrarlas después.
-        return (cliente, TenantDelToken(token));
+        return (client, TenantFromToken(token));
     }
 
     /// <summary>
     /// Lee el tenant del cuerpo del JWT sin librerías: al proyecto de pruebas no le hace
     /// falta una dependencia de validación para leer un claim.
     /// </summary>
-    private static Guid TenantDelToken(string token)
+    private static Guid TenantFromToken(string token)
     {
-        var cuerpo = token.Split('.')[1].Replace('-', '+').Replace('_', '/');
-        var relleno = cuerpo.PadRight(cuerpo.Length + (4 - cuerpo.Length % 4) % 4, '=');
-        var json = JsonDocument.Parse(Convert.FromBase64String(relleno));
+        var body = token.Split('.')[1].Replace('-', '+').Replace('_', '/');
+        var payload = body.PadRight(body.Length + (4 - body.Length % 4) % 4, '=');
+        var json = JsonDocument.Parse(Convert.FromBase64String(payload));
 
         return Guid.Parse(json.RootElement.GetProperty("tenantId").GetString()!);
     }
 
-    private static object CuerpoDeTarea(Guid tenantId, string titulo, string? prioridad) => new
+    private static object TaskBody(Guid tenantId, string title, string? priority) => new
     {
         tenantId,
         createdById = Guid.NewGuid(),
         projectId = Guid.NewGuid(),
-        title = titulo,
+        title = title,
         description = "creada por las pruebas de integración",
         assigneeId = Guid.NewGuid(),
         estimatedHours = 2m,
         dueDate = "2026-12-01",
-        priority = prioridad
+        priority = priority
     };
 
-    private async Task<JsonElement> CrearAsync(HttpClient cliente, Guid tenantId, string titulo, string? prioridad)
+    private async Task<JsonElement> CreateAsync(HttpClient client, Guid tenantId, string title, string? priority)
     {
-        var respuesta = await cliente.PostAsJsonAsync("/api/v1/tasks", CuerpoDeTarea(tenantId, titulo, prioridad));
-        respuesta.StatusCode.Should().Be(HttpStatusCode.Created);
-        return await respuesta.Content.ReadFromJsonAsync<JsonElement>();
+        var response = await client.PostAsJsonAsync("/api/v1/tasks", TaskBody(tenantId, title, priority));
+        response.StatusCode.Should().Be(HttpStatusCode.Created);
+        return await response.Content.ReadFromJsonAsync<JsonElement>();
     }
 
     [Fact]
-    public async Task Una_tarea_creada_con_prioridad_la_conserva_al_recuperarla()
+    public async Task A_task_created_with_a_priority_keeps_it_on_read()
     {
-        var (cliente, tenantId) = await AutenticarAsync();
+        var (client, tenantId) = await AuthenticateAsync();
 
-        var creada = await CrearAsync(cliente, tenantId, "Urgente de verdad", "Urgent");
-        var id = creada.GetProperty("id").GetGuid();
+        var created = await CreateAsync(client, tenantId, "Urgente de verdad", "Urgent");
+        var id = created.GetProperty("id").GetGuid();
 
-        var recuperada = await cliente.GetFromJsonAsync<JsonElement>($"/api/v1/tasks/{id}");
+        var retrieved = await client.GetFromJsonAsync<JsonElement>($"/api/v1/tasks/{id}");
 
-        recuperada.GetProperty("priority").GetString().Should().Be("Urgent");
+        retrieved.GetProperty("priority").GetString().Should().Be("Urgent");
     }
 
     [Fact]
-    public async Task Una_tarea_sin_prioridad_se_guarda_como_Normal()
+    public async Task A_task_without_priority_is_saved_as_Normal()
     {
-        var (cliente, tenantId) = await AutenticarAsync();
+        var (client, tenantId) = await AuthenticateAsync();
 
-        var creada = await CrearAsync(cliente, tenantId, "Sin prioridad explícita", null);
-        var id = creada.GetProperty("id").GetGuid();
+        var created = await CreateAsync(client, tenantId, "Sin prioridad explícita", null);
+        var id = created.GetProperty("id").GetGuid();
 
-        var recuperada = await cliente.GetFromJsonAsync<JsonElement>($"/api/v1/tasks/{id}");
+        var retrieved = await client.GetFromJsonAsync<JsonElement>($"/api/v1/tasks/{id}");
 
-        recuperada.GetProperty("priority").GetString().Should().Be("Normal",
+        retrieved.GetProperty("priority").GetString().Should().Be("Normal",
             "una prioridad vacía no la pintaría ninguna vista ni la encontraría ningún filtro");
     }
 
     [Fact]
-    public async Task La_prioridad_se_puede_cambiar_y_el_cambio_persiste()
+    public async Task Priority_can_change_and_the_change_persists()
     {
-        var (cliente, tenantId) = await AutenticarAsync();
-        var id = (await CrearAsync(cliente, tenantId, "Para repriorizar", "Low")).GetProperty("id").GetGuid();
+        var (client, tenantId) = await AuthenticateAsync();
+        var id = (await CreateAsync(client, tenantId, "Para repriorizar", "Low")).GetProperty("id").GetGuid();
 
-        var patch = await cliente.PatchAsJsonAsync($"/api/v1/tasks/{id}", new { priority = "Urgent" });
+        var patch = await client.PatchAsJsonAsync($"/api/v1/tasks/{id}", new { priority = "Urgent" });
         patch.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        var recuperada = await cliente.GetFromJsonAsync<JsonElement>($"/api/v1/tasks/{id}");
-        recuperada.GetProperty("priority").GetString().Should().Be("Urgent");
+        var retrieved = await client.GetFromJsonAsync<JsonElement>($"/api/v1/tasks/{id}");
+        retrieved.GetProperty("priority").GetString().Should().Be("Urgent");
     }
 
     [Fact]
-    public async Task Una_prioridad_inexistente_se_rechaza_y_no_llega_a_la_base()
+    public async Task An_unknown_priority_is_rejected_and_never_stored()
     {
-        var (cliente, tenantId) = await AutenticarAsync();
+        var (client, tenantId) = await AuthenticateAsync();
 
-        var respuesta = await cliente.PostAsJsonAsync("/api/v1/tasks",
-            CuerpoDeTarea(tenantId, "Prioridad inventada", "Altísima"));
+        var response = await client.PostAsJsonAsync("/api/v1/tasks",
+            TaskBody(tenantId, "Prioridad inventada", "Altísima"));
 
-        respuesta.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
     [Fact]
-    public async Task Se_puede_filtrar_por_prioridad()
+    public async Task Tasks_can_be_filtered_by_priority()
     {
-        var (cliente, tenantId) = await AutenticarAsync();
-        var marca = $"filtro-{Guid.NewGuid():N}";
-        await CrearAsync(cliente, tenantId, $"{marca} urgente", "Urgent");
-        await CrearAsync(cliente, tenantId, $"{marca} baja", "Low");
+        var (client, tenantId) = await AuthenticateAsync();
+        var mark = $"filtro-{Guid.NewGuid():N}";
+        await CreateAsync(client, tenantId, $"{mark} urgente", "Urgent");
+        await CreateAsync(client, tenantId, $"{mark} baja", "Low");
 
-        var pagina = await cliente.GetFromJsonAsync<JsonElement>("/api/v1/tasks?priority=Urgent&pageSize=200");
+        var page = await client.GetFromJsonAsync<JsonElement>("/api/v1/tasks?priority=Urgent&pageSize=200");
 
-        var titulos = pagina.GetProperty("items").EnumerateArray()
+        var titles = page.GetProperty("items").EnumerateArray()
             .Select(t => t.GetProperty("title").GetString()!)
-            .Where(t => t.StartsWith(marca))
+            .Where(t => t.StartsWith(mark))
             .ToList();
 
-        titulos.Should().ContainSingle().Which.Should().Be($"{marca} urgente");
+        titles.Should().ContainSingle().Which.Should().Be($"{mark} urgente");
     }
 
     /// <summary>
@@ -150,22 +150,22 @@ public sealed class TaskPriorityFlowTests(CrmApiFactory factory)
     /// inverso, para que un orden de inserción no pueda dar el resultado por casualidad.
     /// </summary>
     [Fact]
-    public async Task Ordenar_por_prioridad_devuelve_de_mas_urgente_a_menos()
+    public async Task Sorting_by_priority_goes_from_most_to_least_urgent()
     {
-        var (cliente, tenantId) = await AutenticarAsync();
-        var marca = $"orden-{Guid.NewGuid():N}";
+        var (client, tenantId) = await AuthenticateAsync();
+        var mark = $"orden-{Guid.NewGuid():N}";
 
-        foreach (var prioridad in new[] { "Low", "Normal", "High", "Urgent" })
-            await CrearAsync(cliente, tenantId, $"{marca} {prioridad}", prioridad);
+        foreach (var priority in new[] { "Low", "Normal", "High", "Urgent" })
+            await CreateAsync(client, tenantId, $"{mark} {priority}", priority);
 
-        var pagina = await cliente.GetFromJsonAsync<JsonElement>(
+        var page = await client.GetFromJsonAsync<JsonElement>(
             "/api/v1/tasks?sortColumn=priority&sortDirection=asc&pageSize=200");
 
-        var prioridadesEnOrden = pagina.GetProperty("items").EnumerateArray()
-            .Where(t => t.GetProperty("title").GetString()!.StartsWith(marca))
+        var prioritiesInOrder = page.GetProperty("items").EnumerateArray()
+            .Where(t => t.GetProperty("title").GetString()!.StartsWith(mark))
             .Select(t => t.GetProperty("priority").GetString()!)
             .ToList();
 
-        prioridadesEnOrden.Should().Equal("Urgent", "High", "Normal", "Low");
+        prioritiesInOrder.Should().Equal("Urgent", "High", "Normal", "Low");
     }
 }

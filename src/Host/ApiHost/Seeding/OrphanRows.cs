@@ -13,7 +13,7 @@ namespace ApiHost.Seeding;
 /// corre en cada arranque y en cualquier entorno: cada vez que la API arrancaba, los usuarios,
 /// proyectos, tareas, tickets, documentos y eventos de <b>todas</b> las organizaciones pasaban a la
 /// de demostración. Por eso vive aquí, una sola vez, y la condición es la única que se corresponde
-/// con «huérfana»: el inquilino vacío. Lo vigila <c>SiembraSinCruzarInquilinosFlowTests</c>.
+/// con «huérfana»: el inquilino vacío. Lo vigila <c>SeedingStaysInTenantFlowTests</c>.
 /// </summary>
 public static class OrphanRows
 {

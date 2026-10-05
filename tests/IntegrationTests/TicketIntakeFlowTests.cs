@@ -21,42 +21,42 @@ namespace IntegrationTests;
 [Collection(ApiCollection.Name)]
 public sealed class TicketIntakeFlowTests(CrmApiFactory factory)
 {
-    private const string Entrada = "/api/v1/ticket-intake";
+    private const string Intake = "/api/v1/ticket-intake";
 
-    private async Task<HttpClient> AdministradorAsync()
+    private async Task<HttpClient> AdminAsync()
     {
         var login = await factory.CreateClient()
             .PostAsJsonAsync("/api/v1/auth/login", new { Email = "admin@acme.com", Password = "admin123" });
         login.EnsureSuccessStatusCode();
 
         var token = (await login.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("accessToken").GetString()!;
-        var cliente = factory.CreateClient();
-        cliente.DefaultRequestHeaders.Authorization = new("Bearer", token);
-        return cliente;
+        var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Authorization = new("Bearer", token);
+        return client;
     }
 
-    private static async Task<(Guid id, string clave)> CrearClaveAsync(HttpClient admin, string nombre = "Web de soporte")
+    private static async Task<(Guid id, string key)> CreateKeyAsync(HttpClient admin, string name = "Web de soporte")
     {
-        var respuesta = await admin.PostAsJsonAsync("/api/v1/tickets/intake-keys", new { Name = nombre });
-        respuesta.StatusCode.Should().Be(HttpStatusCode.OK, await respuesta.Content.ReadAsStringAsync());
+        var response = await admin.PostAsJsonAsync("/api/v1/tickets/intake-keys", new { Name = name });
+        response.StatusCode.Should().Be(HttpStatusCode.OK, await response.Content.ReadAsStringAsync());
 
-        var cuerpo = await respuesta.Content.ReadFromJsonAsync<JsonElement>();
-        return (cuerpo.GetProperty("id").GetGuid(), cuerpo.GetProperty("key").GetString()!);
+        var body = await response.Content.ReadFromJsonAsync<JsonElement>();
+        return (body.GetProperty("id").GetGuid(), body.GetProperty("key").GetString()!);
     }
 
     /// <summary>Un cliente sin sesión, como la web de soporte de una organización.</summary>
-    private HttpClient ClienteDeFuera(string? clave)
+    private HttpClient ExternalClient(string? key)
     {
-        var cliente = factory.CreateClient();
-        if (clave is not null)
-            cliente.DefaultRequestHeaders.Add("X-Api-Key", clave);
-        return cliente;
+        var client = factory.CreateClient();
+        if (key is not null)
+            client.DefaultRequestHeaders.Add("X-Api-Key", key);
+        return client;
     }
 
     /// <summary>Lo mínimo que acepta la entrada: los seis obligatorios.</summary>
-    private static Dictionary<string, object?> Minimo(string? titulo = null) => new()
+    private static Dictionary<string, object?> Minimal(string? title = null) => new()
     {
-        ["title"] = titulo ?? $"No puedo descargar la factura {Guid.NewGuid():N}",
+        ["title"] = title ?? $"No puedo descargar la factura {Guid.NewGuid():N}",
         ["description"] = "Al pulsar en descargar no pasa nada",
         ["requesterName"] = "Marta Cliente",
         ["requesterEmail"] = "marta@cliente.example",
@@ -64,24 +64,24 @@ public sealed class TicketIntakeFlowTests(CrmApiFactory factory)
         ["requesterCompany"] = "Cliente S.L.",
     };
 
-    private static async Task<Guid> IdCreadoAsync(HttpResponseMessage respuesta)
+    private static async Task<Guid> CreatedIdAsync(HttpResponseMessage response)
     {
-        respuesta.StatusCode.Should().Be(HttpStatusCode.Created, await respuesta.Content.ReadAsStringAsync());
-        return (await respuesta.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetGuid();
+        response.StatusCode.Should().Be(HttpStatusCode.Created, await response.Content.ReadAsStringAsync());
+        return (await response.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetGuid();
     }
 
     [Fact]
-    public async Task Con_una_clave_se_abre_un_ticket_en_su_organizacion_sin_sesion()
+    public async Task With_a_key_a_ticket_opens_in_its_organisation_without_session()
     {
-        var admin = await AdministradorAsync();
-        var (_, clave) = await CrearClaveAsync(admin);
-        var cuerpo = Minimo();
+        var admin = await AdminAsync();
+        var (_, key) = await CreateKeyAsync(admin);
+        var body = Minimal();
 
-        var id = await IdCreadoAsync(await ClienteDeFuera(clave).PostAsJsonAsync(Entrada, cuerpo));
+        var id = await CreatedIdAsync(await ExternalClient(key).PostAsJsonAsync(Intake, body));
 
         // Lo ve la organización de la clave, desde la aplicación, con los datos de contacto.
         var ticket = await admin.GetFromJsonAsync<JsonElement>($"/api/v1/tickets/{id}");
-        ticket.GetProperty("title").GetString().Should().Be((string)cuerpo["title"]!);
+        ticket.GetProperty("title").GetString().Should().Be((string)body["title"]!);
         ticket.GetProperty("source").GetString().Should().Be("External");
         ticket.GetProperty("requesterName").GetString().Should().Be("Marta Cliente");
         ticket.GetProperty("requesterEmail").GetString().Should().Be("marta@cliente.example");
@@ -93,27 +93,27 @@ public sealed class TicketIntakeFlowTests(CrmApiFactory factory)
 
     /// <summary>Todos los que faltan a la vez: quien integra arregla la lista de una pasada.</summary>
     [Fact]
-    public async Task Sin_los_obligatorios_no_se_crea_y_se_dice_cuales_faltan()
+    public async Task Without_required_fields_nothing_is_created_and_it_lists_them()
     {
-        var admin = await AdministradorAsync();
-        var (_, clave) = await CrearClaveAsync(admin);
+        var admin = await AdminAsync();
+        var (_, key) = await CreateKeyAsync(admin);
 
-        var respuesta = await ClienteDeFuera(clave).PostAsJsonAsync(Entrada,
+        var response = await ExternalClient(key).PostAsJsonAsync(Intake,
             new { title = "Sólo el asunto", description = "Y el mensaje" });
 
-        respuesta.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-        var texto = await respuesta.Content.ReadAsStringAsync();
-        texto.Should().Contain("requesterName").And.Contain("requesterEmail")
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        var text = await response.Content.ReadAsStringAsync();
+        text.Should().Contain("requesterName").And.Contain("requesterEmail")
             .And.Contain("requesterPhone").And.Contain("requesterCompany");
     }
 
     [Fact]
     public async Task A_ticket_from_outside_starts_open_with_medium_priority_and_no_tags()
     {
-        var admin = await AdministradorAsync();
-        var (_, clave) = await CrearClaveAsync(admin);
+        var admin = await AdminAsync();
+        var (_, key) = await CreateKeyAsync(admin);
 
-        var id = await IdCreadoAsync(await ClienteDeFuera(clave).PostAsJsonAsync(Entrada, Minimo()));
+        var id = await CreatedIdAsync(await ExternalClient(key).PostAsJsonAsync(Intake, Minimal()));
 
         var ticket = await admin.GetFromJsonAsync<JsonElement>($"/api/v1/tickets/{id}");
         ticket.GetProperty("priority").GetString().Should().Be("Medium");
@@ -134,36 +134,36 @@ public sealed class TicketIntakeFlowTests(CrmApiFactory factory)
     [InlineData("tags", "billing")]
     public async Task A_retired_field_in_json_is_rejected_by_name(string field, string value)
     {
-        var admin = await AdministradorAsync();
-        var (_, clave) = await CrearClaveAsync(admin);
-        var titulo = $"Con campo retirado {Guid.NewGuid():N}";
-        var cuerpo = Minimo(titulo);
-        cuerpo[field] = value;
+        var admin = await AdminAsync();
+        var (_, key) = await CreateKeyAsync(admin);
+        var title = $"Con campo retirado {Guid.NewGuid():N}";
+        var body = Minimal(title);
+        body[field] = value;
 
-        var respuesta = await ClienteDeFuera(clave).PostAsJsonAsync(Entrada, cuerpo);
+        var response = await ExternalClient(key).PostAsJsonAsync(Intake, body);
 
-        respuesta.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-        (await respuesta.Content.ReadAsStringAsync()).Should().Contain(field);
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await response.Content.ReadAsStringAsync()).Should().Contain(field);
 
-        var lista = await admin.GetFromJsonAsync<JsonElement>($"/api/v1/tickets?search={Uri.EscapeDataString(titulo)}");
-        lista.GetRawText().Should().NotContain(titulo, "no se crea el ticket");
+        var list = await admin.GetFromJsonAsync<JsonElement>($"/api/v1/tickets?search={Uri.EscapeDataString(title)}");
+        list.GetRawText().Should().NotContain(title, "no se crea el ticket");
     }
 
     [Fact]
     public async Task A_retired_field_in_a_form_is_rejected_too()
     {
-        var admin = await AdministradorAsync();
-        var (_, clave) = await CrearClaveAsync(admin);
+        var admin = await AdminAsync();
+        var (_, key) = await CreateKeyAsync(admin);
 
-        using var formulario = new MultipartFormDataContent();
-        foreach (var (campo, valor) in Minimo())
-            formulario.Add(new StringContent(valor!.ToString()!), campo);
-        formulario.Add(new StringContent("billing,bug"), "tags");
+        using var form = new MultipartFormDataContent();
+        foreach (var (field, value) in Minimal())
+            form.Add(new StringContent(value!.ToString()!), field);
+        form.Add(new StringContent("billing,bug"), "tags");
 
-        var respuesta = await ClienteDeFuera(clave).PostAsync(Entrada, formulario);
+        var response = await ExternalClient(key).PostAsync(Intake, form);
 
-        respuesta.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-        (await respuesta.Content.ReadAsStringAsync()).Should().Contain("tags");
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await response.Content.ReadAsStringAsync()).Should().Contain("tags");
     }
 
     /// <summary>
@@ -171,108 +171,108 @@ public sealed class TicketIntakeFlowTests(CrmApiFactory factory)
     /// ven desde la aplicación.
     /// </summary>
     [Fact]
-    public async Task Un_formulario_con_varios_adjuntos_los_guarda_en_el_ticket()
+    public async Task A_form_with_several_attachments_saves_them_on_the_ticket()
     {
-        var admin = await AdministradorAsync();
-        var (_, clave) = await CrearClaveAsync(admin);
+        var admin = await AdminAsync();
+        var (_, key) = await CreateKeyAsync(admin);
 
-        using var formulario = new MultipartFormDataContent();
-        foreach (var (campo, valor) in Minimo())
-            formulario.Add(new StringContent(valor!.ToString()!), campo);
-        formulario.Add(Fichero("captura.png", "image/png", 2048), "attachments", "captura.png");
-        formulario.Add(Fichero("grabacion.mp4", "video/mp4", 4096), "attachments", "grabacion.mp4");
+        using var form = new MultipartFormDataContent();
+        foreach (var (field, value) in Minimal())
+            form.Add(new StringContent(value!.ToString()!), field);
+        form.Add(File("captura.png", "image/png", 2048), "attachments", "captura.png");
+        form.Add(File("grabacion.mp4", "video/mp4", 4096), "attachments", "grabacion.mp4");
 
-        var respuesta = await ClienteDeFuera(clave).PostAsync(Entrada, formulario);
-        var id = await IdCreadoAsync(respuesta);
+        var response = await ExternalClient(key).PostAsync(Intake, form);
+        var id = await CreatedIdAsync(response);
 
-        var adjuntos = await admin.GetFromJsonAsync<JsonElement>($"/api/v1/tickets/{id}/attachments");
-        adjuntos.EnumerateArray().Select(a => a.GetProperty("name").GetString())
+        var attachments = await admin.GetFromJsonAsync<JsonElement>($"/api/v1/tickets/{id}/attachments");
+        attachments.EnumerateArray().Select(a => a.GetProperty("name").GetString())
             .Should().BeEquivalentTo("captura.png", "grabacion.mp4");
-        adjuntos.EnumerateArray().Should().OnlyContain(a => a.GetProperty("fromExternal").GetBoolean());
+        attachments.EnumerateArray().Should().OnlyContain(a => a.GetProperty("fromExternal").GetBoolean());
     }
 
     /// <summary>Sólo imágenes y vídeos: un ejecutable disfrazado no entra, y el ticket tampoco.</summary>
     [Fact]
-    public async Task Un_adjunto_que_no_es_imagen_ni_video_se_rechaza_entero()
+    public async Task An_attachment_that_is_not_an_image_or_video_rejects_the_whole_request()
     {
-        var admin = await AdministradorAsync();
-        var (_, clave) = await CrearClaveAsync(admin);
-        var titulo = $"Con adjunto falso {Guid.NewGuid():N}";
+        var admin = await AdminAsync();
+        var (_, key) = await CreateKeyAsync(admin);
+        var title = $"Con adjunto falso {Guid.NewGuid():N}";
 
-        using var formulario = new MultipartFormDataContent();
-        foreach (var (campo, valor) in Minimo(titulo))
-            formulario.Add(new StringContent(valor!.ToString()!), campo);
-        formulario.Add(Fichero("factura.exe", "image/png", 1024), "attachments", "factura.exe");
+        using var form = new MultipartFormDataContent();
+        foreach (var (field, value) in Minimal(title))
+            form.Add(new StringContent(value!.ToString()!), field);
+        form.Add(File("factura.exe", "image/png", 1024), "attachments", "factura.exe");
 
-        var respuesta = await ClienteDeFuera(clave).PostAsync(Entrada, formulario);
+        var response = await ExternalClient(key).PostAsync(Intake, form);
 
-        respuesta.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-        (await respuesta.Content.ReadAsStringAsync()).Should().Contain("factura.exe");
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await response.Content.ReadAsStringAsync()).Should().Contain("factura.exe");
 
-        var lista = await admin.GetStringAsync($"/api/v1/tickets?pageSize=5&search={Uri.EscapeDataString(titulo)}");
-        lista.Should().NotContain(titulo);
+        var list = await admin.GetStringAsync($"/api/v1/tickets?pageSize=5&search={Uri.EscapeDataString(title)}");
+        list.Should().NotContain(title);
     }
 
     [Fact]
-    public async Task Sin_clave_o_con_una_inventada_no_entra_nada()
+    public async Task Without_a_key_or_with_a_fake_one_nothing_gets_in()
     {
-        (await ClienteDeFuera(null).PostAsJsonAsync(Entrada, Minimo()))
+        (await ExternalClient(null).PostAsJsonAsync(Intake, Minimal()))
             .StatusCode.Should().Be(HttpStatusCode.Unauthorized);
 
-        (await ClienteDeFuera("tke_inventada").PostAsJsonAsync(Entrada, Minimo()))
+        (await ExternalClient("tke_inventada").PostAsJsonAsync(Intake, Minimal()))
             .StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
     [Fact]
-    public async Task Una_clave_revocada_deja_de_servir()
+    public async Task A_revoked_key_stops_working()
     {
-        var admin = await AdministradorAsync();
-        var (id, clave) = await CrearClaveAsync(admin, "Clave que se revoca");
+        var admin = await AdminAsync();
+        var (id, key) = await CreateKeyAsync(admin, "Clave que se revoca");
 
         (await admin.DeleteAsync($"/api/v1/tickets/intake-keys/{id}"))
             .StatusCode.Should().Be(HttpStatusCode.NoContent);
 
-        (await ClienteDeFuera(clave).PostAsJsonAsync(Entrada, Minimo()))
+        (await ExternalClient(key).PostAsJsonAsync(Intake, Minimal()))
             .StatusCode.Should().Be(HttpStatusCode.Unauthorized);
 
-        var lista = await admin.GetFromJsonAsync<JsonElement>("/api/v1/tickets/intake-keys");
-        lista.EnumerateArray().Single(c => c.GetProperty("id").GetGuid() == id)
+        var list = await admin.GetFromJsonAsync<JsonElement>("/api/v1/tickets/intake-keys");
+        list.EnumerateArray().Single(c => c.GetProperty("id").GetGuid() == id)
             .GetProperty("revokedAtUtc").ValueKind.Should().NotBe(JsonValueKind.Null);
     }
 
     /// <summary>La clave no se puede volver a leer: la lista enseña sólo el principio.</summary>
     [Fact]
-    public async Task La_lista_de_claves_no_ensena_la_clave()
+    public async Task The_key_list_does_not_show_the_key()
     {
-        var admin = await AdministradorAsync();
-        var (id, clave) = await CrearClaveAsync(admin, "Clave que no se enseña");
+        var admin = await AdminAsync();
+        var (id, key) = await CreateKeyAsync(admin, "Clave que no se enseña");
 
-        var texto = await admin.GetStringAsync("/api/v1/tickets/intake-keys");
+        var text = await admin.GetStringAsync("/api/v1/tickets/intake-keys");
 
-        texto.Should().NotContain(clave);
-        var laNuestra = JsonDocument.Parse(texto).RootElement.EnumerateArray()
+        text.Should().NotContain(key);
+        var ours = JsonDocument.Parse(text).RootElement.EnumerateArray()
             .Single(c => c.GetProperty("id").GetGuid() == id);
-        clave.Should().StartWith(laNuestra.GetProperty("prefix").GetString());
+        key.Should().StartWith(ours.GetProperty("prefix").GetString());
     }
 
     /// <summary>La clave es la autorización para crear tickets, y nada más.</summary>
     [Fact]
-    public async Task La_clave_no_abre_el_resto_de_la_api()
+    public async Task The_key_does_not_open_the_rest_of_the_api()
     {
-        var admin = await AdministradorAsync();
-        var (_, clave) = await CrearClaveAsync(admin);
+        var admin = await AdminAsync();
+        var (_, key) = await CreateKeyAsync(admin);
 
-        var cliente = ClienteDeFuera(clave);
-        (await cliente.GetAsync("/api/v1/tickets")).StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+        var client = ExternalClient(key);
+        (await client.GetAsync("/api/v1/tickets")).StatusCode.Should().Be(HttpStatusCode.Unauthorized);
 
-        cliente.DefaultRequestHeaders.Authorization = new("Bearer", clave);
-        (await cliente.GetAsync("/api/v1/tickets")).StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+        client.DefaultRequestHeaders.Authorization = new("Bearer", key);
+        (await client.GetAsync("/api/v1/tickets")).StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
     [Fact]
-    public async Task Un_miembro_no_puede_gestionar_claves()
+    public async Task A_member_cannot_manage_keys()
     {
-        var admin = await AdministradorAsync();
+        var admin = await AdminAsync();
         var email = $"miembro.entrada.{Guid.NewGuid():N}@acme.com";
         (await admin.PostAsJsonAsync("/api/v1/users",
             new { Name = "Miembro sin claves", Email = email, Password = "Miembro2026!x", Role = "Member" }))
@@ -281,33 +281,33 @@ public sealed class TicketIntakeFlowTests(CrmApiFactory factory)
         var login = await factory.CreateClient()
             .PostAsJsonAsync("/api/v1/auth/login", new { Email = email, Password = "Miembro2026!x" });
         var token = (await login.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("accessToken").GetString()!;
-        var miembro = factory.CreateClient();
-        miembro.DefaultRequestHeaders.Authorization = new("Bearer", token);
+        var member = factory.CreateClient();
+        member.DefaultRequestHeaders.Authorization = new("Bearer", token);
 
-        (await miembro.PostAsJsonAsync("/api/v1/tickets/intake-keys", new { Name = "Colada" }))
+        (await member.PostAsJsonAsync("/api/v1/tickets/intake-keys", new { Name = "Colada" }))
             .StatusCode.Should().Be(HttpStatusCode.Forbidden);
-        (await miembro.GetAsync("/api/v1/tickets/intake-keys"))
+        (await member.GetAsync("/api/v1/tickets/intake-keys"))
             .StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }
 
     [Fact]
-    public async Task Datos_mal_formados_se_rechazan()
+    public async Task Malformed_data_is_rejected()
     {
-        var admin = await AdministradorAsync();
-        var (_, clave) = await CrearClaveAsync(admin);
-        var cliente = ClienteDeFuera(clave);
+        var admin = await AdminAsync();
+        var (_, key) = await CreateKeyAsync(admin);
+        var client = ExternalClient(key);
 
-        var prioridadRara = Minimo();
-        prioridadRara["priority"] = "Altisima";
-        (await cliente.PostAsJsonAsync(Entrada, prioridadRara)).StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        var oddPriority = Minimal();
+        oddPriority["priority"] = "Altisima";
+        (await client.PostAsJsonAsync(Intake, oddPriority)).StatusCode.Should().Be(HttpStatusCode.BadRequest);
 
-        var emailRaro = Minimo();
-        emailRaro["requesterEmail"] = "no-es-un-email";
-        (await cliente.PostAsJsonAsync(Entrada, emailRaro)).StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        var oddEmail = Minimal();
+        oddEmail["requesterEmail"] = "no-es-un-email";
+        (await client.PostAsJsonAsync(Intake, oddEmail)).StatusCode.Should().Be(HttpStatusCode.BadRequest);
 
-        var estadoRaro = Minimo();
-        estadoRaro["status"] = "Perdido";
-        (await cliente.PostAsJsonAsync(Entrada, estadoRaro)).StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        var oddStatus = Minimal();
+        oddStatus["status"] = "Perdido";
+        (await client.PostAsJsonAsync(Intake, oddStatus)).StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
     /// <summary>
@@ -315,24 +315,24 @@ public sealed class TicketIntakeFlowTests(CrmApiFactory factory)
     /// no conoce. El resto de la API no.
     /// </summary>
     [Fact]
-    public async Task El_navegador_de_otro_dominio_puede_llamar_a_la_entrada()
+    public async Task A_browser_from_another_domain_can_call_the_intake()
     {
-        var cliente = factory.CreateClient();
+        var client = factory.CreateClient();
 
-        var previa = new HttpRequestMessage(HttpMethod.Options, Entrada);
-        previa.Headers.Add("Origin", "https://soporte.cliente.example");
-        previa.Headers.Add("Access-Control-Request-Method", "POST");
-        previa.Headers.Add("Access-Control-Request-Headers", "content-type,x-api-key");
+        var preview = new HttpRequestMessage(HttpMethod.Options, Intake);
+        preview.Headers.Add("Origin", "https://soporte.cliente.example");
+        preview.Headers.Add("Access-Control-Request-Method", "POST");
+        preview.Headers.Add("Access-Control-Request-Headers", "content-type,x-api-key");
 
-        var respuesta = await cliente.SendAsync(previa);
+        var response = await client.SendAsync(preview);
 
-        respuesta.Headers.TryGetValues("Access-Control-Allow-Origin", out var origenes).Should().BeTrue();
-        origenes!.Should().Contain("*");
+        response.Headers.TryGetValues("Access-Control-Allow-Origin", out var origins).Should().BeTrue();
+        origins!.Should().Contain("*");
 
-        var alResto = new HttpRequestMessage(HttpMethod.Options, "/api/v1/tickets");
-        alResto.Headers.Add("Origin", "https://soporte.cliente.example");
-        alResto.Headers.Add("Access-Control-Request-Method", "GET");
-        (await cliente.SendAsync(alResto)).Headers.Contains("Access-Control-Allow-Origin").Should().BeFalse();
+        var toTheRest = new HttpRequestMessage(HttpMethod.Options, "/api/v1/tickets");
+        toTheRest.Headers.Add("Origin", "https://soporte.cliente.example");
+        toTheRest.Headers.Add("Access-Control-Request-Method", "GET");
+        (await client.SendAsync(toTheRest)).Headers.Contains("Access-Control-Allow-Origin").Should().BeFalse();
     }
 
     /// <summary>
@@ -340,31 +340,31 @@ public sealed class TicketIntakeFlowTests(CrmApiFactory factory)
     /// son las del módulo de etiquetas, por id.
     /// </summary>
     [Fact]
-    public async Task Desde_la_aplicacion_se_adjunta_y_se_guardan_las_etiquetas()
+    public async Task From_the_app_attachments_and_tags_are_saved()
     {
-        var admin = await AdministradorAsync();
-        var creado = await admin.PostAsJsonAsync("/api/v1/tickets",
+        var admin = await AdminAsync();
+        var created = await admin.PostAsJsonAsync("/api/v1/tickets",
             new { Title = "Ticket desde la aplicación", Description = "Con adjuntos", Priority = "Low" });
-        var id = await IdCreadoAsync(creado);
+        var id = await CreatedIdAsync(created);
 
-        using var formulario = new MultipartFormDataContent();
-        formulario.Add(Fichero("pantalla.jpg", "image/jpeg", 512), "attachments", "pantalla.jpg");
-        (await admin.PostAsync($"/api/v1/tickets/{id}/attachments", formulario))
+        using var form = new MultipartFormDataContent();
+        form.Add(File("pantalla.jpg", "image/jpeg", 512), "attachments", "pantalla.jpg");
+        (await admin.PostAsync($"/api/v1/tickets/{id}/attachments", form))
             .StatusCode.Should().Be(HttpStatusCode.OK);
 
-        var adjuntos = await admin.GetFromJsonAsync<JsonElement>($"/api/v1/tickets/{id}/attachments");
-        adjuntos.EnumerateArray().Should().ContainSingle()
+        var attachments = await admin.GetFromJsonAsync<JsonElement>($"/api/v1/tickets/{id}/attachments");
+        attachments.EnumerateArray().Should().ContainSingle()
             .Which.GetProperty("fromExternal").GetBoolean().Should().BeFalse();
 
-        var etiquetas = await admin.GetFromJsonAsync<JsonElement>("/api/v1/tags");
-        Guid Etiqueta(string clave) => etiquetas.EnumerateArray()
-            .Single(t => t.GetProperty("builtInKey").GetString() == clave).GetProperty("id").GetGuid();
-        var facturacion = Etiqueta("billing");
-        var bug = Etiqueta("bug");
+        var tags = await admin.GetFromJsonAsync<JsonElement>("/api/v1/tags");
+        Guid Tag(string key) => tags.EnumerateArray()
+            .Single(t => t.GetProperty("builtInKey").GetString() == key).GetProperty("id").GetGuid();
+        var facturacion = Tag("billing");
+        var bug = Tag("bug");
 
-        var guardado = await admin.PatchAsJsonAsync($"/api/v1/tickets/{id}",
+        var saved = await admin.PatchAsJsonAsync($"/api/v1/tickets/{id}",
             new { TagIds = new[] { facturacion, bug, facturacion }, Classification = "Acceso" });
-        guardado.StatusCode.Should().Be(HttpStatusCode.OK, await guardado.Content.ReadAsStringAsync());
+        saved.StatusCode.Should().Be(HttpStatusCode.OK, await saved.Content.ReadAsStringAsync());
 
         var ticket = await admin.GetFromJsonAsync<JsonElement>($"/api/v1/tickets/{id}");
         ticket.GetProperty("tagIds").EnumerateArray().Select(t => t.GetGuid())
@@ -373,10 +373,10 @@ public sealed class TicketIntakeFlowTests(CrmApiFactory factory)
         ticket.GetProperty("title").GetString().Should().Be("Ticket desde la aplicación", "lo que no se manda no se toca");
     }
 
-    private static ByteArrayContent Fichero(string nombre, string tipo, int bytes)
+    private static ByteArrayContent File(string name, string type, int bytes)
     {
-        var contenido = new ByteArrayContent(Enumerable.Repeat((byte)7, bytes).ToArray());
-        contenido.Headers.ContentType = new MediaTypeHeaderValue(tipo);
-        return contenido;
+        var content = new ByteArrayContent(Enumerable.Repeat((byte)7, bytes).ToArray());
+        content.Headers.ContentType = new MediaTypeHeaderValue(type);
+        return content;
     }
 }

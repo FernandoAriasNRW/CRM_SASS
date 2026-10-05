@@ -26,7 +26,7 @@ namespace IntegrationTests;
 /// terminaba bien las 115 veces.
 /// </summary>
 [Collection(ApiCollection.Name)]
-public sealed class SembradoIdempotenteFlowTests(CrmApiFactory factory)
+public sealed class IdempotentSeedingFlowTests(CrmApiFactory factory)
 {
     private const string Email = "admin@acme.com";
     private const string Password = "admin123";
@@ -35,26 +35,26 @@ public sealed class SembradoIdempotenteFlowTests(CrmApiFactory factory)
     /// Cuenta los usuarios <b>sin filtros</b>: es la única forma de ver los que el filtro de
     /// inquilino escondía, que son justo los que sobraban.
     /// </summary>
-    private static Task<int> CuantosUsuariosAsync(IServiceProvider proveedor)
+    private static Task<int> UserCountAsync(IServiceProvider provider)
     {
-        var identityDb = proveedor.GetRequiredService<IdentityDbContext>();
+        var identityDb = provider.GetRequiredService<IdentityDbContext>();
         return identityDb.User.IgnoreQueryFilters().CountAsync();
     }
 
     [Fact]
-    public async Task Sembrar_dos_veces_no_crea_usuarios_de_mas()
+    public async Task Seeding_twice_creates_no_extra_users()
     {
-        using var ambito = factory.Services.CreateScope();
-        var sembrador = ambito.ServiceProvider.GetRequiredService<DataSeederService>();
+        using var scope = factory.Services.CreateScope();
+        var seeder = scope.ServiceProvider.GetRequiredService<DataSeederService>();
 
         // La API ya sembró al arrancar, así que esta es al menos la segunda pasada.
-        var antes = await CuantosUsuariosAsync(ambito.ServiceProvider);
-        antes.Should().BeGreaterThan(0, "la API siembra al arrancar; sin datos esto no comprueba nada");
+        var before = await UserCountAsync(scope.ServiceProvider);
+        before.Should().BeGreaterThan(0, "la API siembra al arrancar; sin datos esto no comprueba nada");
 
-        await sembrador.SeedAllAsync();
-        var despues = await CuantosUsuariosAsync(ambito.ServiceProvider);
+        await seeder.SeedAllAsync();
+        var after = await UserCountAsync(scope.ServiceProvider);
 
-        despues.Should().Be(antes,
+        after.Should().Be(before,
             "sembrar sobre una base ya sembrada no debe añadir usuarios. Cuando esto fallaba, "
             + "cada arranque metía once filas más y la base de desarrollo llegó a 695");
     }
@@ -67,17 +67,17 @@ public sealed class SembradoIdempotenteFlowTests(CrmApiFactory factory)
     /// quita, esta prueba lo cuenta.
     /// </summary>
     [Fact]
-    public async Task Ningun_correo_esta_repetido()
+    public async Task No_email_is_repeated()
     {
-        using var ambito = factory.Services.CreateScope();
-        var identityDb = ambito.ServiceProvider.GetRequiredService<IdentityDbContext>();
+        using var scope = factory.Services.CreateScope();
+        var identityDb = scope.ServiceProvider.GetRequiredService<IdentityDbContext>();
 
-        var correos = await identityDb.User
+        var emails = await identityDb.User
             .IgnoreQueryFilters()
             .Select(u => u.Email.Value)
             .ToListAsync();
 
-        correos.Should().OnlyHaveUniqueItems(
+        emails.Should().OnlyHaveUniqueItems(
             "el correo identifica a la persona al entrar, y el índice único de la base lo impone");
     }
 
@@ -89,21 +89,21 @@ public sealed class SembradoIdempotenteFlowTests(CrmApiFactory factory)
     /// estaba roto no era la cuenta, era que el usuario del token no era el propietario de nada.
     /// </summary>
     [Fact]
-    public async Task Quien_entra_es_el_administrador_que_posee_las_cosas()
+    public async Task Who_signs_in_is_the_admin_who_owns_the_data()
     {
         var login = await factory.CreateClient().PostAsJsonAsync("/api/v1/auth/login", new { Email, Password });
         login.EnsureSuccessStatusCode();
 
         var token = (await login.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("accessToken").GetString()!;
-        var cliente = factory.CreateClient();
-        cliente.DefaultRequestHeaders.Authorization = new("Bearer", token);
+        var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Authorization = new("Bearer", token);
 
-        var todos = await cliente.GetFromJsonAsync<JsonElement>("/api/v1/projects?pageSize=1");
-        var mios = await cliente.GetFromJsonAsync<JsonElement>("/api/v1/projects?pageSize=1&filter=mine");
+        var all = await client.GetFromJsonAsync<JsonElement>("/api/v1/projects?pageSize=1");
+        var mine = await client.GetFromJsonAsync<JsonElement>("/api/v1/projects?pageSize=1&filter=mine");
 
-        todos.GetProperty("totalCount").GetInt32().Should().BeGreaterThan(0, "el sembrador crea proyectos");
+        all.GetProperty("totalCount").GetInt32().Should().BeGreaterThan(0, "el sembrador crea proyectos");
 
-        mios.GetProperty("totalCount").GetInt32().Should().BeGreaterThan(0,
+        mine.GetProperty("totalCount").GetInt32().Should().BeGreaterThan(0,
             "el sembrador pone al administrador de propietario de los proyectos que crea, así que "
             + "el administrador que inicia sesión tiene que verlos. Con los correos duplicados "
             + "entraba un «admin@acme.com» distinto del que era propietario, y esto daba 0");

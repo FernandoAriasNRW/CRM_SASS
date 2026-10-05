@@ -21,36 +21,36 @@ namespace IntegrationTests;
 /// es la buena»</b>. La versión rota pasaba la primera con nota.
 /// </summary>
 [Collection(ApiCollection.Name)]
-public sealed class CambioDeContrasenaFlowTests(CrmApiFactory factory)
+public sealed class PasswordChangeFlowTests(CrmApiFactory factory)
 {
     private const string Email = "admin@acme.com";
     private const string Password = "admin123";
 
-    private async Task<HttpClient> AutenticarAsync(string contrasena = Password)
+    private async Task<HttpClient> AuthenticateAsync(string password = Password)
     {
-        var login = await factory.CreateClient().PostAsJsonAsync("/api/v1/auth/login", new { Email, Password = contrasena });
+        var login = await factory.CreateClient().PostAsJsonAsync("/api/v1/auth/login", new { Email, Password = password });
         login.EnsureSuccessStatusCode();
 
         var token = (await login.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("accessToken").GetString()!;
 
-        var cliente = factory.CreateClient();
-        cliente.DefaultRequestHeaders.Authorization = new("Bearer", token);
-        return cliente;
+        var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Authorization = new("Bearer", token);
+        return client;
     }
 
-    private static Task<HttpResponseMessage> CambiarAsync(HttpClient cliente, string actual, string nueva)
-        => cliente.PutAsJsonAsync("/api/v1/users/me/password",
-            new { CurrentPassword = actual, NewPassword = nueva });
+    private static Task<HttpResponseMessage> ChangeAsync(HttpClient client, string actual, string newPassword)
+        => client.PutAsJsonAsync("/api/v1/users/me/password",
+            new { CurrentPassword = actual, NewPassword = newPassword });
 
     /// <summary>Con la contraseña actual equivocada no se cambia nada. Es el fallo, con su nombre.</summary>
     [Fact]
-    public async Task Sin_la_contrasena_actual_no_se_cambia()
+    public async Task Without_the_current_password_it_does_not_change()
     {
-        var cliente = await AutenticarAsync();
+        var client = await AuthenticateAsync();
 
-        var respuesta = await CambiarAsync(cliente, "esta-no-es", "loQueSea123");
+        var response = await ChangeAsync(client, "esta-no-es", "loQueSea123");
 
-        respuesta.StatusCode.Should().Be(HttpStatusCode.BadRequest,
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest,
             "el handler recibía la contraseña actual y no la miraba: devolvía 204 y la cambiaba igual");
 
         // Y lo que importa de verdad: que la de siempre siga sirviendo. Comprobar sólo el código
@@ -68,32 +68,32 @@ public sealed class CambioDeContrasenaFlowTests(CrmApiFactory factory)
     /// el orden en que se ejecuten.
     /// </summary>
     [Fact]
-    public async Task Con_la_contrasena_actual_se_cambia_y_la_nueva_sirve()
+    public async Task With_the_current_password_it_changes_and_the_new_one_works()
     {
-        const string Nueva = "unaNuevaClave9";
+        const string NewPassword = "unaNuevaClave9";
 
-        var cliente = await AutenticarAsync();
+        var client = await AuthenticateAsync();
 
-        var cambio = await CambiarAsync(cliente, Password, Nueva);
-        cambio.StatusCode.Should().Be(HttpStatusCode.NoContent, await cambio.Content.ReadAsStringAsync());
+        var change = await ChangeAsync(client, Password, NewPassword);
+        change.StatusCode.Should().Be(HttpStatusCode.NoContent, await change.Content.ReadAsStringAsync());
 
         try
         {
-            var conLaNueva = await factory.CreateClient()
-                .PostAsJsonAsync("/api/v1/auth/login", new { Email, Password = Nueva });
+            var withNew = await factory.CreateClient()
+                .PostAsJsonAsync("/api/v1/auth/login", new { Email, Password = NewPassword });
 
-            conLaNueva.StatusCode.Should().Be(HttpStatusCode.OK, "la nueva contraseña tiene que servir");
+            withNew.StatusCode.Should().Be(HttpStatusCode.OK, "la nueva contraseña tiene que servir");
 
-            var conLaVieja = await factory.CreateClient()
+            var withOld = await factory.CreateClient()
                 .PostAsJsonAsync("/api/v1/auth/login", new { Email, Password });
 
-            conLaVieja.StatusCode.Should().NotBe(HttpStatusCode.OK,
+            withOld.StatusCode.Should().NotBe(HttpStatusCode.OK,
                 "y la anterior tiene que dejar de servir, o no se ha cambiado nada");
         }
         finally
         {
-            var deVuelta = await AutenticarAsync(Nueva);
-            (await CambiarAsync(deVuelta, Nueva, Password))
+            var back = await AuthenticateAsync(NewPassword);
+            (await ChangeAsync(back, NewPassword, Password))
                 .StatusCode.Should().Be(HttpStatusCode.NoContent);
         }
     }
@@ -107,18 +107,18 @@ public sealed class CambioDeContrasenaFlowTests(CrmApiFactory factory)
     /// justamente confundirlas.
     /// </summary>
     [Fact]
-    public async Task El_usuario_actual_se_pide_por_su_ruta()
+    public async Task The_current_user_is_requested_by_its_route()
     {
-        var cliente = await AutenticarAsync();
+        var client = await AuthenticateAsync();
 
-        var buena = await cliente.GetAsync("/api/v1/auth/users/me");
-        buena.StatusCode.Should().Be(HttpStatusCode.OK);
+        var good = await client.GetAsync("/api/v1/auth/users/me");
+        good.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        (await buena.Content.ReadFromJsonAsync<JsonElement>())
+        (await good.Content.ReadFromJsonAsync<JsonElement>())
             .GetProperty("email").GetString().Should().Be(Email);
 
-        var laQuePedíaLaPantalla = await cliente.GetAsync("/api/v1/users/me");
-        laQuePedíaLaPantalla.StatusCode.Should().Be(HttpStatusCode.NotFound,
+        var theScreenRoute = await client.GetAsync("/api/v1/users/me");
+        theScreenRoute.StatusCode.Should().Be(HttpStatusCode.NotFound,
             "si algún día existe, el comentario de esta prueba deja de ser cierto y hay que revisarla");
     }
 }

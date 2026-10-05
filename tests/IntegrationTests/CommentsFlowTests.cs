@@ -19,133 +19,133 @@ public sealed class CommentsFlowTests(CrmApiFactory factory)
     private const string Email = "admin@acme.com";
     private const string Password = "admin123";
 
-    private async Task<HttpClient> AutenticarAsync()
+    private async Task<HttpClient> AuthenticateAsync()
     {
         var login = await factory.CreateClient().PostAsJsonAsync("/api/v1/auth/login", new { Email, Password });
         login.EnsureSuccessStatusCode();
 
-        var cuerpo = await login.Content.ReadFromJsonAsync<JsonElement>();
-        var token = cuerpo.GetProperty("accessToken").GetString()!;
+        var body = await login.Content.ReadFromJsonAsync<JsonElement>();
+        var token = body.GetProperty("accessToken").GetString()!;
 
-        var cliente = factory.CreateClient();
-        cliente.DefaultRequestHeaders.Authorization = new("Bearer", token);
-        return cliente;
+        var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Authorization = new("Bearer", token);
+        return client;
     }
 
-    private static async Task<Guid> ComentarAsync(HttpClient cliente, string entidad, Guid entityId, string texto, Guid? respondeA = null)
+    private static async Task<Guid> CommentAsync(HttpClient client, string entity, Guid entityId, string text, Guid? repliesTo = null)
     {
-        var respuesta = await cliente.PostAsJsonAsync(
-            $"/api/v1/comments/{entidad}/{entityId}", new { text = texto, replyToId = respondeA });
+        var response = await client.PostAsJsonAsync(
+            $"/api/v1/comments/{entity}/{entityId}", new { text = text, replyToId = repliesTo });
 
-        respuesta.StatusCode.Should().Be(HttpStatusCode.Created);
-        return (await respuesta.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetGuid();
+        response.StatusCode.Should().Be(HttpStatusCode.Created);
+        return (await response.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetGuid();
     }
 
-    private static Task<JsonElement> HiloAsync(HttpClient cliente, string entidad, Guid entityId) =>
-        cliente.GetFromJsonAsync<JsonElement>($"/api/v1/comments/{entidad}/{entityId}");
+    private static Task<JsonElement> ThreadAsync(HttpClient client, string entity, Guid entityId) =>
+        client.GetFromJsonAsync<JsonElement>($"/api/v1/comments/{entity}/{entityId}");
 
     [Theory]
     [InlineData("Task")]
     [InlineData("Ticket")]
     [InlineData("Project")]
-    public async Task Se_comenta_y_se_recupera_en_las_tres_entidades(string entidad)
+    public async Task Commenting_and_reading_work_on_the_three_entities(string entity)
     {
-        var cliente = await AutenticarAsync();
+        var client = await AuthenticateAsync();
         var entityId = Guid.NewGuid();
 
-        await ComentarAsync(cliente, entidad, entityId, "Primer comentario");
+        await CommentAsync(client, entity, entityId, "Primer comentario");
 
-        var hilo = await HiloAsync(cliente, entidad, entityId);
-        hilo.EnumerateArray().Should().ContainSingle()
+        var thread = await ThreadAsync(client, entity, entityId);
+        thread.EnumerateArray().Should().ContainSingle()
             .Which.GetProperty("text").GetString().Should().Be("Primer comentario");
     }
 
     /// <summary>El hilo se lee en orden: del más antiguo al más nuevo.</summary>
     [Fact]
-    public async Task El_hilo_sale_en_orden_de_escritura()
+    public async Task The_thread_comes_in_writing_order()
     {
-        var cliente = await AutenticarAsync();
+        var client = await AuthenticateAsync();
         var entityId = Guid.NewGuid();
 
-        await ComentarAsync(cliente, "Task", entityId, "Primero");
-        await ComentarAsync(cliente, "Task", entityId, "Segundo");
+        await CommentAsync(client, "Task", entityId, "Primero");
+        await CommentAsync(client, "Task", entityId, "Segundo");
 
-        var textos = (await HiloAsync(cliente, "Task", entityId))
+        var texts = (await ThreadAsync(client, "Task", entityId))
             .EnumerateArray().Select(c => c.GetProperty("text").GetString()).ToList();
 
-        textos.Should().Equal("Primero", "Segundo");
+        texts.Should().Equal("Primero", "Segundo");
     }
 
     /// <summary>Un hilo vacío es una lista vacía, no un 404. Era justo el defecto que se arregla.</summary>
     [Fact]
-    public async Task Una_entidad_sin_comentarios_devuelve_una_lista_vacia()
+    public async Task An_entity_without_comments_returns_an_empty_list()
     {
-        var cliente = await AutenticarAsync();
+        var client = await AuthenticateAsync();
 
-        var respuesta = await cliente.GetAsync($"/api/v1/comments/Task/{Guid.NewGuid()}");
+        var response = await client.GetAsync($"/api/v1/comments/Task/{Guid.NewGuid()}");
 
-        respuesta.StatusCode.Should().Be(HttpStatusCode.OK);
-        (await respuesta.Content.ReadFromJsonAsync<JsonElement>()).GetArrayLength().Should().Be(0);
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        (await response.Content.ReadFromJsonAsync<JsonElement>()).GetArrayLength().Should().Be(0);
     }
 
     [Fact]
-    public async Task El_autor_edita_su_comentario_y_queda_marcado_como_editado()
+    public async Task The_author_edits_the_comment_and_it_is_marked_edited()
     {
-        var cliente = await AutenticarAsync();
+        var client = await AuthenticateAsync();
         var entityId = Guid.NewGuid();
-        var id = await ComentarAsync(cliente, "Task", entityId, "Con errata");
+        var id = await CommentAsync(client, "Task", entityId, "Con errata");
 
-        var edicion = await cliente.PutAsJsonAsync($"/api/v1/comments/{id}", new { text = "Sin errata" });
-        edicion.StatusCode.Should().Be(HttpStatusCode.OK);
+        var edit = await client.PutAsJsonAsync($"/api/v1/comments/{id}", new { text = "Sin errata" });
+        edit.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        var comentario = (await HiloAsync(cliente, "Task", entityId)).EnumerateArray().Single();
-        comentario.GetProperty("text").GetString().Should().Be("Sin errata");
-        comentario.GetProperty("editedAtUtc").ValueKind.Should().NotBe(JsonValueKind.Null);
+        var comment = (await ThreadAsync(client, "Task", entityId)).EnumerateArray().Single();
+        comment.GetProperty("text").GetString().Should().Be("Sin errata");
+        comment.GetProperty("editedAtUtc").ValueKind.Should().NotBe(JsonValueKind.Null);
     }
 
     [Fact]
-    public async Task Un_comentario_vacio_se_rechaza()
+    public async Task An_empty_comment_is_rejected()
     {
-        var cliente = await AutenticarAsync();
+        var client = await AuthenticateAsync();
 
-        var respuesta = await cliente.PostAsJsonAsync(
+        var response = await client.PostAsJsonAsync(
             $"/api/v1/comments/Task/{Guid.NewGuid()}", new { text = "   " });
 
-        respuesta.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
     [Fact]
-    public async Task No_se_puede_comentar_sobre_algo_que_nadie_pinta()
+    public async Task Comments_on_entities_nobody_renders_are_rejected()
     {
-        var cliente = await AutenticarAsync();
+        var client = await AuthenticateAsync();
 
-        var respuesta = await cliente.PostAsJsonAsync(
+        var response = await client.PostAsJsonAsync(
             $"/api/v1/comments/Factura/{Guid.NewGuid()}", new { text = "Hola" });
 
-        respuesta.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
     [Fact]
-    public async Task Se_puede_responder_a_un_comentario()
+    public async Task A_comment_can_be_replied_to()
     {
-        var cliente = await AutenticarAsync();
+        var client = await AuthenticateAsync();
         var entityId = Guid.NewGuid();
-        var padre = await ComentarAsync(cliente, "Task", entityId, "Pregunta");
+        var parent = await CommentAsync(client, "Task", entityId, "Pregunta");
 
-        await ComentarAsync(cliente, "Task", entityId, "Respuesta", padre);
+        await CommentAsync(client, "Task", entityId, "Respuesta", parent);
 
-        var hilo = await HiloAsync(cliente, "Task", entityId);
-        hilo.GetArrayLength().Should().Be(2);
+        var thread = await ThreadAsync(client, "Task", entityId);
+        thread.GetArrayLength().Should().Be(2);
 
         // El comentario original tiene `replyToId` nulo, así que hay que mirarlo antes de
         // leerlo como Guid: el hilo trae los dos.
-        var respuestas = hilo.EnumerateArray()
+        var responses = thread.EnumerateArray()
             .Select(c => c.GetProperty("replyToId"))
             .Where(r => r.ValueKind != JsonValueKind.Null)
             .Select(r => r.GetGuid())
             .ToList();
 
-        respuestas.Should().Equal(padre);
+        responses.Should().Equal(parent);
     }
 
     /// <summary>
@@ -153,17 +153,17 @@ public sealed class CommentsFlowTests(CrmApiFactory factory)
     /// no caber, y permite pintarlos con una cuenta en vez de recorriendo un árbol.
     /// </summary>
     [Fact]
-    public async Task No_se_puede_responder_a_una_respuesta()
+    public async Task A_reply_cannot_be_replied_to()
     {
-        var cliente = await AutenticarAsync();
+        var client = await AuthenticateAsync();
         var entityId = Guid.NewGuid();
-        var padre = await ComentarAsync(cliente, "Task", entityId, "Pregunta");
-        var respuesta = await ComentarAsync(cliente, "Task", entityId, "Respuesta", padre);
+        var parent = await CommentAsync(client, "Task", entityId, "Pregunta");
+        var response = await CommentAsync(client, "Task", entityId, "Respuesta", parent);
 
-        var tercera = await cliente.PostAsJsonAsync(
-            $"/api/v1/comments/Task/{entityId}", new { text = "Otra", replyToId = respuesta });
+        var third = await client.PostAsJsonAsync(
+            $"/api/v1/comments/Task/{entityId}", new { text = "Otra", replyToId = response });
 
-        tercera.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        third.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
     /// <summary>
@@ -171,52 +171,52 @@ public sealed class CommentsFlowTests(CrmApiFactory factory)
     /// aparecer en un hilo donde nadie la escribió.
     /// </summary>
     [Fact]
-    public async Task Una_respuesta_no_puede_saltar_a_otro_hilo()
+    public async Task A_reply_cannot_jump_to_another_thread()
     {
-        var cliente = await AutenticarAsync();
-        var padre = await ComentarAsync(cliente, "Task", Guid.NewGuid(), "En una tarea");
+        var client = await AuthenticateAsync();
+        var parent = await CommentAsync(client, "Task", Guid.NewGuid(), "En una tarea");
 
-        var intruso = await cliente.PostAsJsonAsync(
-            $"/api/v1/comments/Task/{Guid.NewGuid()}", new { text = "En otra", replyToId = padre });
+        var intruder = await client.PostAsJsonAsync(
+            $"/api/v1/comments/Task/{Guid.NewGuid()}", new { text = "En otra", replyToId = parent });
 
-        intruso.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        intruder.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
     [Fact]
-    public async Task Un_comentario_se_borra()
+    public async Task A_comment_can_be_deleted()
     {
-        var cliente = await AutenticarAsync();
+        var client = await AuthenticateAsync();
         var entityId = Guid.NewGuid();
-        var id = await ComentarAsync(cliente, "Task", entityId, "Para borrar");
+        var id = await CommentAsync(client, "Task", entityId, "Para borrar");
 
-        var borrado = await cliente.DeleteAsync($"/api/v1/comments/{id}");
-        borrado.StatusCode.Should().Be(HttpStatusCode.NoContent);
+        var deleted = await client.DeleteAsync($"/api/v1/comments/{id}");
+        deleted.StatusCode.Should().Be(HttpStatusCode.NoContent);
 
-        (await HiloAsync(cliente, "Task", entityId)).GetArrayLength().Should().Be(0);
+        (await ThreadAsync(client, "Task", entityId)).GetArrayLength().Should().Be(0);
     }
 
     [Fact]
-    public async Task Editar_un_comentario_que_no_existe_da_404()
+    public async Task Editing_a_missing_comment_returns_404()
     {
-        var cliente = await AutenticarAsync();
+        var client = await AuthenticateAsync();
 
-        var respuesta = await cliente.PutAsJsonAsync($"/api/v1/comments/{Guid.NewGuid()}", new { text = "Hola" });
+        var response = await client.PutAsJsonAsync($"/api/v1/comments/{Guid.NewGuid()}", new { text = "Hola" });
 
-        respuesta.StatusCode.Should().Be(HttpStatusCode.NotFound);
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
     /// <summary>Los comentarios de una entidad no se mezclan con los de otra.</summary>
     [Fact]
-    public async Task Cada_entidad_tiene_su_propio_hilo()
+    public async Task Each_entity_has_its_own_thread()
     {
-        var cliente = await AutenticarAsync();
-        var unaTarea = Guid.NewGuid();
-        var otraTarea = Guid.NewGuid();
+        var client = await AuthenticateAsync();
+        var aTask = Guid.NewGuid();
+        var otherTask = Guid.NewGuid();
 
-        await ComentarAsync(cliente, "Task", unaTarea, "De la primera");
-        await ComentarAsync(cliente, "Task", otraTarea, "De la segunda");
+        await CommentAsync(client, "Task", aTask, "De la primera");
+        await CommentAsync(client, "Task", otherTask, "De la segunda");
 
-        (await HiloAsync(cliente, "Task", unaTarea)).EnumerateArray().Single()
+        (await ThreadAsync(client, "Task", aTask)).EnumerateArray().Single()
             .GetProperty("text").GetString().Should().Be("De la primera");
     }
 }

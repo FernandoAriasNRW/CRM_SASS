@@ -24,31 +24,31 @@ namespace IntegrationTests;
 /// campo es una respuesta correcta; guardarla con el tenant ajeno, no.
 /// </summary>
 [Collection(ApiCollection.Name)]
-public sealed class AislamientoEntreInquilinosTests(CrmApiFactory factory)
+public sealed class TenantIsolationFlowTests(CrmApiFactory factory)
 {
     private const string Email = "admin@acme.com";
     private const string Password = "admin123";
 
-    private async Task<(HttpClient Cliente, Guid Tenant, Guid Usuario)> AutenticarAsync()
+    private async Task<(HttpClient Client, Guid Tenant, Guid User)> AuthenticateAsync()
     {
         var login = await factory.CreateClient().PostAsJsonAsync("/api/v1/auth/login", new { Email, Password });
         login.EnsureSuccessStatusCode();
 
         var token = (await login.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("accessToken").GetString()!;
 
-        var cliente = factory.CreateClient();
-        cliente.DefaultRequestHeaders.Authorization = new("Bearer", token);
+        var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Authorization = new("Bearer", token);
 
-        var yo = await cliente.GetFromJsonAsync<JsonElement>("/api/v1/auth/users/me");
-        return (cliente, yo.GetProperty("tenantId").GetGuid(), yo.GetProperty("id").GetGuid());
+        var me = await client.GetFromJsonAsync<JsonElement>("/api/v1/auth/users/me");
+        return (client, me.GetProperty("tenantId").GetGuid(), me.GetProperty("id").GetGuid());
     }
 
     [Fact]
-    public async Task Un_proyecto_se_guarda_en_mi_inquilino_aunque_el_cuerpo_diga_otro()
+    public async Task A_project_is_saved_in_my_tenant_even_if_the_body_says_otherwise()
     {
-        var (cliente, miTenant, yo) = await AutenticarAsync();
+        var (client, myTenant, me) = await AuthenticateAsync();
 
-        var respuesta = await cliente.PostAsJsonAsync("/api/v1/projects", new
+        var response = await client.PostAsJsonAsync("/api/v1/projects", new
         {
             tenantId = Guid.NewGuid(),   // no es el mío
             ownerId = Guid.NewGuid(),    // tampoco soy yo
@@ -58,12 +58,12 @@ public sealed class AislamientoEntreInquilinosTests(CrmApiFactory factory)
             estimatedEndDate = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(30)),
         });
 
-        respuesta.StatusCode.Should().Be(HttpStatusCode.Created);
+        response.StatusCode.Should().Be(HttpStatusCode.Created);
 
-        var creado = await respuesta.Content.ReadFromJsonAsync<JsonElement>();
-        creado.GetProperty("tenantId").GetGuid().Should().Be(miTenant,
+        var created = await response.Content.ReadFromJsonAsync<JsonElement>();
+        created.GetProperty("tenantId").GetGuid().Should().Be(myTenant,
             "el inquilino sale del token; si sale del cuerpo, cualquiera escribe en los datos de otra empresa");
-        creado.GetProperty("ownerId").GetGuid().Should().Be(yo,
+        created.GetProperty("ownerId").GetGuid().Should().Be(me,
             "el dueño es quien lo crea, no quien diga la petición");
     }
 
@@ -72,37 +72,37 @@ public sealed class AislamientoEntreInquilinosTests(CrmApiFactory factory)
     /// listado —que sí filtra— no lo encuentra. Un 201 seguido de una lista vacía.
     /// </summary>
     [Fact]
-    public async Task Un_proyecto_recien_creado_aparece_en_el_listado()
+    public async Task A_newly_created_project_appears_in_the_listing()
     {
-        var (cliente, _, _) = await AutenticarAsync();
-        var nombre = "Proyecto visible " + Guid.NewGuid();
+        var (client, _, _) = await AuthenticateAsync();
+        var name = "Proyecto visible " + Guid.NewGuid();
 
-        var alta = await cliente.PostAsJsonAsync("/api/v1/projects", new
+        var creation = await client.PostAsJsonAsync("/api/v1/projects", new
         {
             spaceId = Guid.NewGuid(),
-            name = nombre,
+            name = name,
             description = "Tiene que salir en el listado justo después de crearlo",
             estimatedEndDate = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(30)),
         });
-        alta.StatusCode.Should().Be(HttpStatusCode.Created);
+        creation.StatusCode.Should().Be(HttpStatusCode.Created);
 
-        var listado = await cliente.GetFromJsonAsync<JsonElement>("/api/v1/projects?pageSize=100");
-        var nombres = listado.GetProperty("items").EnumerateArray()
+        var listing = await client.GetFromJsonAsync<JsonElement>("/api/v1/projects?pageSize=100");
+        var names = listing.GetProperty("items").EnumerateArray()
             .Select(p => p.GetProperty("name").ValueKind == JsonValueKind.Object
                 ? p.GetProperty("name").GetProperty("value").GetString()
                 : p.GetProperty("name").GetString())
             .ToList();
 
-        nombres.Should().Contain(nombre,
+        names.Should().Contain(name,
             "un alta que responde 201 y luego no se ve es peor que un error: nadie sabe que se perdió");
     }
 
     [Fact]
-    public async Task Una_tarea_se_guarda_en_mi_inquilino_aunque_el_cuerpo_diga_otro()
+    public async Task A_task_is_saved_in_my_tenant_even_if_the_body_says_otherwise()
     {
-        var (cliente, miTenant, yo) = await AutenticarAsync();
+        var (client, myTenant, me) = await AuthenticateAsync();
 
-        var respuesta = await cliente.PostAsJsonAsync("/api/v1/tasks", new
+        var response = await client.PostAsJsonAsync("/api/v1/tasks", new
         {
             tenantId = Guid.NewGuid(),
             createdById = Guid.NewGuid(),
@@ -114,11 +114,11 @@ public sealed class AislamientoEntreInquilinosTests(CrmApiFactory factory)
             dueDate = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(7)),
         });
 
-        respuesta.StatusCode.Should().Be(HttpStatusCode.Created);
+        response.StatusCode.Should().Be(HttpStatusCode.Created);
 
-        var creada = await respuesta.Content.ReadFromJsonAsync<JsonElement>();
-        creada.GetProperty("tenantId").GetGuid().Should().Be(miTenant);
-        creada.GetProperty("createdById").GetGuid().Should().Be(yo);
+        var created = await response.Content.ReadFromJsonAsync<JsonElement>();
+        created.GetProperty("tenantId").GetGuid().Should().Be(myTenant);
+        created.GetProperty("createdById").GetGuid().Should().Be(me);
     }
 
     /// <summary>
@@ -126,11 +126,11 @@ public sealed class AislamientoEntreInquilinosTests(CrmApiFactory factory)
     /// URL elegida por quien la plantó. De los que había, era el más caro.
     /// </summary>
     [Fact]
-    public async Task Un_webhook_se_guarda_en_mi_inquilino_aunque_el_cuerpo_diga_otro()
+    public async Task A_webhook_is_saved_in_my_tenant_even_if_the_body_says_otherwise()
     {
-        var (cliente, miTenant, _) = await AutenticarAsync();
+        var (client, myTenant, _) = await AuthenticateAsync();
 
-        var respuesta = await cliente.PostAsJsonAsync("/api/v1/webhooks", new
+        var response = await client.PostAsJsonAsync("/api/v1/webhooks", new
         {
             tenantId = Guid.NewGuid(),
             targetUrl = "https://ejemplo.invalido/hook",
@@ -138,10 +138,10 @@ public sealed class AislamientoEntreInquilinosTests(CrmApiFactory factory)
             secret = "un-secreto-de-prueba-suficientemente-largo",
         });
 
-        respuesta.StatusCode.Should().Be(HttpStatusCode.Created);
+        response.StatusCode.Should().Be(HttpStatusCode.Created);
 
-        var creado = await respuesta.Content.ReadFromJsonAsync<JsonElement>();
-        creado.GetProperty("tenantId").GetGuid().Should().Be(miTenant);
+        var created = await response.Content.ReadFromJsonAsync<JsonElement>();
+        created.GetProperty("tenantId").GetGuid().Should().Be(myTenant);
     }
 
     /// <summary>
@@ -154,24 +154,24 @@ public sealed class AislamientoEntreInquilinosTests(CrmApiFactory factory)
     /// prueba lo cubría porque las de extremo a extremo simulan la respuesta de la API.
     /// </summary>
     [Fact]
-    public async Task El_tablero_mueve_una_tarea_con_la_llamada_que_hace_de_verdad()
+    public async Task The_board_moves_a_task_with_the_real_call()
     {
-        var (cliente, _, _) = await AutenticarAsync();
-        var tarea = await CrearTareaAsync(cliente);
+        var (client, _, _) = await AuthenticateAsync();
+        var task = await CreateTaskAsync(client);
 
-        var respuesta = await cliente.PostAsJsonAsync(
-            $"/api/v1/tasks/{tarea}/move", new { newStatus = "In Progress" });
+        var response = await client.PostAsJsonAsync(
+            $"/api/v1/tasks/{task}/move", new { newStatus = "In Progress" });
 
-        respuesta.StatusCode.Should().Be(HttpStatusCode.OK,
+        response.StatusCode.Should().Be(HttpStatusCode.OK,
             "es exactamente la petición que manda el tablero al soltar una tarjeta");
 
-        var recargada = await cliente.GetFromJsonAsync<JsonElement>($"/api/v1/tasks/{tarea}");
-        var estado = recargada.GetProperty("status");
-        var valor = estado.ValueKind == JsonValueKind.Object
-            ? estado.GetProperty("value").GetString()
-            : estado.GetString();
+        var reloaded = await client.GetFromJsonAsync<JsonElement>($"/api/v1/tasks/{task}");
+        var status = reloaded.GetProperty("status");
+        var value = status.ValueKind == JsonValueKind.Object
+            ? status.GetProperty("value").GetString()
+            : status.GetString();
 
-        valor.Should().Be("In Progress",
+        value.Should().Be("In Progress",
             "un 200 que no guarda es peor que un error: la tarjeta se queda donde la soltaron y al recargar vuelve");
     }
 
@@ -187,22 +187,22 @@ public sealed class AislamientoEntreInquilinosTests(CrmApiFactory factory)
     /// fallaría; como el rol sale del token, se ignora y la tarea se mueve.
     /// </summary>
     [Fact]
-    public async Task El_rol_que_viaja_en_la_url_no_decide_nada()
+    public async Task The_role_in_the_url_decides_nothing()
     {
-        var (cliente, _, _) = await AutenticarAsync();
-        var tarea = await CrearTareaAsync(cliente);
+        var (client, _, _) = await AuthenticateAsync();
+        var task = await CreateTaskAsync(client);
 
-        var respuesta = await cliente.PostAsJsonAsync(
-            $"/api/v1/tasks/{tarea}/move?actorRole=Guest&actorId={Guid.NewGuid()}",
+        var response = await client.PostAsJsonAsync(
+            $"/api/v1/tasks/{task}/move?actorRole=Guest&actorId={Guid.NewGuid()}",
             new { newStatus = "In Progress" });
 
-        respuesta.StatusCode.Should().Be(HttpStatusCode.OK,
+        response.StatusCode.Should().Be(HttpStatusCode.OK,
             "quien manda es el token; lo que diga la URL sobre el rol es ruido y debe ignorarse");
     }
 
-    private static async Task<Guid> CrearTareaAsync(HttpClient cliente)
+    private static async Task<Guid> CreateTaskAsync(HttpClient client)
     {
-        var alta = await cliente.PostAsJsonAsync("/api/v1/tasks", new
+        var creation = await client.PostAsJsonAsync("/api/v1/tasks", new
         {
             projectId = Guid.NewGuid(),
             title = "Tarea para mover",
@@ -211,8 +211,8 @@ public sealed class AislamientoEntreInquilinosTests(CrmApiFactory factory)
             estimatedHours = 2,
             dueDate = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(5)),
         });
-        alta.EnsureSuccessStatusCode();
-        return (await alta.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetGuid();
+        creation.EnsureSuccessStatusCode();
+        return (await creation.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetGuid();
     }
 
     /// <summary>
@@ -222,13 +222,13 @@ public sealed class AislamientoEntreInquilinosTests(CrmApiFactory factory)
     /// un objeto tipado, porque lo que importa es qué bytes salen por el cable.
     /// </summary>
     [Fact]
-    public async Task El_hash_de_la_contrasena_no_sale_por_la_api()
+    public async Task The_password_hash_is_not_exposed_by_the_api()
     {
-        var (cliente, _, _) = await AutenticarAsync();
+        var (client, _, _) = await AuthenticateAsync();
 
-        var crudo = await (await cliente.GetAsync("/api/v1/auth/users/me")).Content.ReadAsStringAsync();
+        var raw = await (await client.GetAsync("/api/v1/auth/users/me")).Content.ReadAsStringAsync();
 
-        crudo.Should().NotContain("passwordHash", "el hash de la contraseña no tiene por qué llegar al cliente");
-        crudo.Should().NotContain("$2a$", "ni el hash en sí, se llame como se llame el campo");
+        raw.Should().NotContain("passwordHash", "el hash de la contraseña no tiene por qué llegar al cliente");
+        raw.Should().NotContain("$2a$", "ni el hash en sí, se llame como se llame el campo");
     }
 }

@@ -24,207 +24,207 @@ public sealed class TaskDependencyFlowTests(CrmApiFactory factory)
     private const string Email = "admin@acme.com";
     private const string Password = "admin123";
 
-    private async Task<(HttpClient cliente, Guid tenantId)> AutenticarAsync()
+    private async Task<(HttpClient client, Guid tenantId)> AuthenticateAsync()
     {
         var login = await factory.CreateClient().PostAsJsonAsync("/api/v1/auth/login", new { Email, Password });
         login.EnsureSuccessStatusCode();
 
         var token = (await login.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("accessToken").GetString()!;
-        var cliente = factory.CreateClient();
-        cliente.DefaultRequestHeaders.Authorization = new("Bearer", token);
+        var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Authorization = new("Bearer", token);
 
-        var cuerpo = token.Split('.')[1].Replace('-', '+').Replace('_', '/');
-        var relleno = cuerpo.PadRight(cuerpo.Length + (4 - cuerpo.Length % 4) % 4, '=');
-        var tenantId = Guid.Parse(JsonDocument.Parse(Convert.FromBase64String(relleno))
+        var body = token.Split('.')[1].Replace('-', '+').Replace('_', '/');
+        var payload = body.PadRight(body.Length + (4 - body.Length % 4) % 4, '=');
+        var tenantId = Guid.Parse(JsonDocument.Parse(Convert.FromBase64String(payload))
             .RootElement.GetProperty("tenantId").GetString()!);
 
-        return (cliente, tenantId);
+        return (client, tenantId);
     }
 
-    private async Task<Guid> CrearAsync(HttpClient cliente, Guid tenantId, Guid projectId, string titulo)
+    private async Task<Guid> CreateAsync(HttpClient client, Guid tenantId, Guid projectId, string title)
     {
-        var respuesta = await cliente.PostAsJsonAsync("/api/v1/tasks", new
+        var response = await client.PostAsJsonAsync("/api/v1/tasks", new
         {
             tenantId,
             createdById = Guid.NewGuid(),
             projectId,
-            title = titulo,
+            title = title,
             description = "creada por las pruebas de integración",
             assigneeId = Guid.NewGuid(),
             estimatedHours = 1m,
             dueDate = "2026-12-01"
         });
 
-        respuesta.StatusCode.Should().Be(HttpStatusCode.Created);
-        return (await respuesta.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetGuid();
+        response.StatusCode.Should().Be(HttpStatusCode.Created);
+        return (await response.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetGuid();
     }
 
-    private static Task<HttpResponseMessage> BloquearAsync(HttpClient cliente, Guid tarea, Guid bloqueante)
-        => cliente.PostAsJsonAsync($"/api/v1/tasks/{tarea}/dependencies", new { dependsOnTaskId = bloqueante });
+    private static Task<HttpResponseMessage> BlockAsync(HttpClient client, Guid task, Guid bloqueante)
+        => client.PostAsJsonAsync($"/api/v1/tasks/{task}/dependencies", new { dependsOnTaskId = bloqueante });
 
     [Fact]
-    public async Task Una_tarea_puede_quedar_bloqueada_por_otra_y_se_ve_en_las_dos_direcciones()
+    public async Task A_task_can_be_blocked_by_another_and_it_shows_both_ways()
     {
-        var (cliente, tenantId) = await AutenticarAsync();
-        var proyecto = Guid.NewGuid();
-        var tarea = await CrearAsync(cliente, tenantId, proyecto, "La que espera");
-        var bloqueante = await CrearAsync(cliente, tenantId, proyecto, "La que bloquea");
+        var (client, tenantId) = await AuthenticateAsync();
+        var project = Guid.NewGuid();
+        var task = await CreateAsync(client, tenantId, project, "La que espera");
+        var bloqueante = await CreateAsync(client, tenantId, project, "La que bloquea");
 
-        (await BloquearAsync(cliente, tarea, bloqueante)).StatusCode.Should().Be(HttpStatusCode.OK);
+        (await BlockAsync(client, task, bloqueante)).StatusCode.Should().Be(HttpStatusCode.OK);
 
-        var deLaQueEspera = await cliente.GetFromJsonAsync<JsonElement>($"/api/v1/tasks/{tarea}/dependencies");
-        deLaQueEspera.GetProperty("bloqueadaPor").EnumerateArray()
+        var ofWaiting = await client.GetFromJsonAsync<JsonElement>($"/api/v1/tasks/{task}/dependencies");
+        ofWaiting.GetProperty("bloqueadaPor").EnumerateArray()
             .Select(t => t.GetProperty("title").GetString()!)
             .Should().ContainSingle().Which.Should().Be("La que bloquea");
 
-        var deLaQueBloquea = await cliente.GetFromJsonAsync<JsonElement>($"/api/v1/tasks/{bloqueante}/dependencies");
-        deLaQueBloquea.GetProperty("bloqueaA").EnumerateArray()
+        var ofBlocker = await client.GetFromJsonAsync<JsonElement>($"/api/v1/tasks/{bloqueante}/dependencies");
+        ofBlocker.GetProperty("bloqueaA").EnumerateArray()
             .Select(t => t.GetProperty("title").GetString()!)
             .Should().ContainSingle().Which.Should().Be("La que espera");
     }
 
     [Fact]
-    public async Task Los_recuentos_de_bloqueo_llegan_en_el_listado()
+    public async Task Blocking_counts_come_in_the_listing()
     {
-        var (cliente, tenantId) = await AutenticarAsync();
-        var proyecto = Guid.NewGuid();
-        var tarea = await CrearAsync(cliente, tenantId, proyecto, "Bloqueada");
-        var uno = await CrearAsync(cliente, tenantId, proyecto, "Bloqueante 1");
-        var dos = await CrearAsync(cliente, tenantId, proyecto, "Bloqueante 2");
+        var (client, tenantId) = await AuthenticateAsync();
+        var project = Guid.NewGuid();
+        var task = await CreateAsync(client, tenantId, project, "Bloqueada");
+        var one = await CreateAsync(client, tenantId, project, "Bloqueante 1");
+        var two = await CreateAsync(client, tenantId, project, "Bloqueante 2");
 
-        await BloquearAsync(cliente, tarea, uno);
-        await BloquearAsync(cliente, tarea, dos);
+        await BlockAsync(client, task, one);
+        await BlockAsync(client, task, two);
 
-        var leida = await cliente.GetFromJsonAsync<JsonElement>($"/api/v1/tasks/{tarea}");
-        leida.GetProperty("blockedByCount").GetInt32().Should().Be(2);
-        leida.GetProperty("blocksCount").GetInt32().Should().Be(0);
+        var read = await client.GetFromJsonAsync<JsonElement>($"/api/v1/tasks/{task}");
+        read.GetProperty("blockedByCount").GetInt32().Should().Be(2);
+        read.GetProperty("blocksCount").GetInt32().Should().Be(0);
 
-        var bloqueante = await cliente.GetFromJsonAsync<JsonElement>($"/api/v1/tasks/{uno}");
+        var bloqueante = await client.GetFromJsonAsync<JsonElement>($"/api/v1/tasks/{one}");
         bloqueante.GetProperty("blocksCount").GetInt32().Should().Be(1);
     }
 
     [Fact]
-    public async Task Una_tarea_no_puede_bloquearse_a_si_misma()
+    public async Task A_task_cannot_block_itself()
     {
-        var (cliente, tenantId) = await AutenticarAsync();
-        var proyecto = Guid.NewGuid();
-        var tarea = await CrearAsync(cliente, tenantId, proyecto, "Sola");
+        var (client, tenantId) = await AuthenticateAsync();
+        var project = Guid.NewGuid();
+        var task = await CreateAsync(client, tenantId, project, "Sola");
 
-        var respuesta = await BloquearAsync(cliente, tarea, tarea);
+        var response = await BlockAsync(client, task, task);
 
-        respuesta.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-        (await respuesta.Content.ReadAsStringAsync()).Should().Contain("a sí misma");
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await response.Content.ReadAsStringAsync()).Should().Contain("a sí misma");
     }
 
     [Fact]
-    public async Task El_ciclo_directo_se_rechaza()
+    public async Task A_direct_cycle_is_rejected()
     {
-        var (cliente, tenantId) = await AutenticarAsync();
-        var proyecto = Guid.NewGuid();
-        var a = await CrearAsync(cliente, tenantId, proyecto, "A");
-        var b = await CrearAsync(cliente, tenantId, proyecto, "B");
+        var (client, tenantId) = await AuthenticateAsync();
+        var project = Guid.NewGuid();
+        var a = await CreateAsync(client, tenantId, project, "A");
+        var b = await CreateAsync(client, tenantId, project, "B");
 
-        (await BloquearAsync(cliente, a, b)).StatusCode.Should().Be(HttpStatusCode.OK);
+        (await BlockAsync(client, a, b)).StatusCode.Should().Be(HttpStatusCode.OK);
 
-        var respuesta = await BloquearAsync(cliente, b, a);
+        var response = await BlockAsync(client, b, a);
 
-        respuesta.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-        (await respuesta.Content.ReadAsStringAsync()).Should().Contain("ciclo");
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await response.Content.ReadAsStringAsync()).Should().Contain("ciclo");
     }
 
     [Fact]
-    public async Task El_ciclo_largo_se_rechaza()
+    public async Task A_long_cycle_is_rejected()
     {
         // A←B←C, y cerrar C←A. Es el caso que sólo se detecta recorriendo el grafo, no mirando
         // la arista que se añade.
-        var (cliente, tenantId) = await AutenticarAsync();
-        var proyecto = Guid.NewGuid();
-        var a = await CrearAsync(cliente, tenantId, proyecto, "A");
-        var b = await CrearAsync(cliente, tenantId, proyecto, "B");
-        var c = await CrearAsync(cliente, tenantId, proyecto, "C");
+        var (client, tenantId) = await AuthenticateAsync();
+        var project = Guid.NewGuid();
+        var a = await CreateAsync(client, tenantId, project, "A");
+        var b = await CreateAsync(client, tenantId, project, "B");
+        var c = await CreateAsync(client, tenantId, project, "C");
 
-        (await BloquearAsync(cliente, a, b)).StatusCode.Should().Be(HttpStatusCode.OK);
-        (await BloquearAsync(cliente, b, c)).StatusCode.Should().Be(HttpStatusCode.OK);
+        (await BlockAsync(client, a, b)).StatusCode.Should().Be(HttpStatusCode.OK);
+        (await BlockAsync(client, b, c)).StatusCode.Should().Be(HttpStatusCode.OK);
 
-        var respuesta = await BloquearAsync(cliente, c, a);
+        var response = await BlockAsync(client, c, a);
 
-        respuesta.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-        (await respuesta.Content.ReadAsStringAsync()).Should().Contain("ciclo");
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await response.Content.ReadAsStringAsync()).Should().Contain("ciclo");
     }
 
     [Fact]
-    public async Task Una_cadena_larga_legitima_se_acepta()
+    public async Task A_long_valid_chain_is_accepted()
     {
         // Contrapeso del test anterior: comprobar que se rechazan los ciclos no sirve de nada si
         // de paso se rechazan las cadenas válidas.
-        var (cliente, tenantId) = await AutenticarAsync();
-        var proyecto = Guid.NewGuid();
-        var a = await CrearAsync(cliente, tenantId, proyecto, "A");
-        var b = await CrearAsync(cliente, tenantId, proyecto, "B");
-        var c = await CrearAsync(cliente, tenantId, proyecto, "C");
+        var (client, tenantId) = await AuthenticateAsync();
+        var project = Guid.NewGuid();
+        var a = await CreateAsync(client, tenantId, project, "A");
+        var b = await CreateAsync(client, tenantId, project, "B");
+        var c = await CreateAsync(client, tenantId, project, "C");
 
-        (await BloquearAsync(cliente, a, b)).StatusCode.Should().Be(HttpStatusCode.OK);
-        (await BloquearAsync(cliente, b, c)).StatusCode.Should().Be(HttpStatusCode.OK);
+        (await BlockAsync(client, a, b)).StatusCode.Should().Be(HttpStatusCode.OK);
+        (await BlockAsync(client, b, c)).StatusCode.Should().Be(HttpStatusCode.OK);
 
-        (await cliente.GetFromJsonAsync<JsonElement>($"/api/v1/tasks/{a}"))
+        (await client.GetFromJsonAsync<JsonElement>($"/api/v1/tasks/{a}"))
             .GetProperty("blockedByCount").GetInt32().Should().Be(1);
     }
 
     [Fact]
-    public async Task La_misma_dependencia_no_se_registra_dos_veces()
+    public async Task The_same_dependency_is_not_registered_twice()
     {
-        var (cliente, tenantId) = await AutenticarAsync();
-        var proyecto = Guid.NewGuid();
-        var tarea = await CrearAsync(cliente, tenantId, proyecto, "Repetida");
-        var bloqueante = await CrearAsync(cliente, tenantId, proyecto, "Bloqueante");
+        var (client, tenantId) = await AuthenticateAsync();
+        var project = Guid.NewGuid();
+        var task = await CreateAsync(client, tenantId, project, "Repetida");
+        var bloqueante = await CreateAsync(client, tenantId, project, "Bloqueante");
 
-        (await BloquearAsync(cliente, tarea, bloqueante)).StatusCode.Should().Be(HttpStatusCode.OK);
-        var segunda = await BloquearAsync(cliente, tarea, bloqueante);
+        (await BlockAsync(client, task, bloqueante)).StatusCode.Should().Be(HttpStatusCode.OK);
+        var second = await BlockAsync(client, task, bloqueante);
 
-        segunda.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-        (await cliente.GetFromJsonAsync<JsonElement>($"/api/v1/tasks/{tarea}"))
+        second.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await client.GetFromJsonAsync<JsonElement>($"/api/v1/tasks/{task}"))
             .GetProperty("blockedByCount").GetInt32().Should().Be(1);
     }
 
     [Fact]
-    public async Task Las_dependencias_solo_se_establecen_dentro_del_mismo_proyecto()
+    public async Task Dependencies_only_exist_within_one_project()
     {
-        var (cliente, tenantId) = await AutenticarAsync();
-        var tarea = await CrearAsync(cliente, tenantId, Guid.NewGuid(), "De un proyecto");
-        var ajena = await CrearAsync(cliente, tenantId, Guid.NewGuid(), "De otro proyecto");
+        var (client, tenantId) = await AuthenticateAsync();
+        var task = await CreateAsync(client, tenantId, Guid.NewGuid(), "De un proyecto");
+        var foreign = await CreateAsync(client, tenantId, Guid.NewGuid(), "De otro proyecto");
 
-        var respuesta = await BloquearAsync(cliente, tarea, ajena);
+        var response = await BlockAsync(client, task, foreign);
 
-        respuesta.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-        (await respuesta.Content.ReadAsStringAsync()).Should().Contain("mismo proyecto");
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await response.Content.ReadAsStringAsync()).Should().Contain("mismo proyecto");
     }
 
     [Fact]
-    public async Task Una_dependencia_se_puede_quitar()
+    public async Task A_dependency_can_be_removed()
     {
-        var (cliente, tenantId) = await AutenticarAsync();
-        var proyecto = Guid.NewGuid();
-        var tarea = await CrearAsync(cliente, tenantId, proyecto, "Se desbloquea");
-        var bloqueante = await CrearAsync(cliente, tenantId, proyecto, "Deja de bloquear");
-        await BloquearAsync(cliente, tarea, bloqueante);
+        var (client, tenantId) = await AuthenticateAsync();
+        var project = Guid.NewGuid();
+        var task = await CreateAsync(client, tenantId, project, "Se desbloquea");
+        var bloqueante = await CreateAsync(client, tenantId, project, "Deja de bloquear");
+        await BlockAsync(client, task, bloqueante);
 
-        var borrado = await cliente.DeleteAsync($"/api/v1/tasks/{tarea}/dependencies/{bloqueante}");
+        var deleted = await client.DeleteAsync($"/api/v1/tasks/{task}/dependencies/{bloqueante}");
 
-        borrado.StatusCode.Should().Be(HttpStatusCode.NoContent);
-        (await cliente.GetFromJsonAsync<JsonElement>($"/api/v1/tasks/{tarea}"))
+        deleted.StatusCode.Should().Be(HttpStatusCode.NoContent);
+        (await client.GetFromJsonAsync<JsonElement>($"/api/v1/tasks/{task}"))
             .GetProperty("blockedByCount").GetInt32().Should().Be(0);
     }
 
     [Fact]
-    public async Task Quitar_una_dependencia_que_no_existe_se_rechaza()
+    public async Task Removing_a_missing_dependency_is_rejected()
     {
-        var (cliente, tenantId) = await AutenticarAsync();
-        var proyecto = Guid.NewGuid();
-        var tarea = await CrearAsync(cliente, tenantId, proyecto, "Sin bloqueos");
-        var otra = await CrearAsync(cliente, tenantId, proyecto, "Otra");
+        var (client, tenantId) = await AuthenticateAsync();
+        var project = Guid.NewGuid();
+        var task = await CreateAsync(client, tenantId, project, "Sin bloqueos");
+        var other = await CreateAsync(client, tenantId, project, "Otra");
 
-        var borrado = await cliente.DeleteAsync($"/api/v1/tasks/{tarea}/dependencies/{otra}");
+        var deleted = await client.DeleteAsync($"/api/v1/tasks/{task}/dependencies/{other}");
 
-        borrado.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        deleted.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 }

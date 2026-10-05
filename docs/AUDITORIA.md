@@ -1500,7 +1500,7 @@ constancia de a qué organización pertenecía cada fila.
 
 La intención era otra: «adoptar» las filas **sin inquilino** (`Guid.Empty`) que dejó el defecto del
 inquilino que llegaba vacío (§2). Ahora lo hace `OrphanRows.AdoptAsync`, una sola vez y con esa
-condición, y `SiembraSinCruzarInquilinosFlowTests` copia una fila de cada tabla con un inquilino
+condición, y `SeedingStaysInTenantFlowTests` copia una fila de cada tabla con un inquilino
 ajeno, siembra y comprueba que sigue siendo suya (fallaba antes del arreglo), y que una fila sin
 inquilino sí se adopta.
 
@@ -1518,7 +1518,7 @@ la configuración de cada entorno, apagado por defecto también en pruebas y en 
 
 En `docker-compose` salen de `.env` (`DEMO_DATA_SEED_ON_STARTUP`, `INITIAL_ADMIN_EMAIL`…, ver
 `.env.example`). Las pruebas de integración encienden las dos primeras explícitamente, porque
-trabajan sobre la demostración. `SiembraBajoConfiguracionFlowTests` fija que sin configuración todo
+trabajan sobre la demostración. `ConfiguredSeedingFlowTests` fija que sin configuración todo
 está apagado y que el endpoint no existe.
 
 ### 21.1 La limpieza de la base

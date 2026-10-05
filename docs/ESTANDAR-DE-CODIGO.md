@@ -404,7 +404,7 @@ suites completas en verde, catálogo i18n re-extraído al final.
 | 9b ✅ | **Componentes de `shared/ui`** (panel de navegación, menú contextual…) | 180 identificadores y seis ficheros |
 | 9c ✅ | **Lo que quede en pantallas y e2e** | 124 identificadores; el frontend queda sin código en español |
 | 10a ✅ | **Nombres de las pruebas unitarias** (C#) | ~350 pruebas, sus clases, ficheros y variables |
-| 10b | **Nombres de las pruebas de integración** (C#) | Como la 10a |
+| 10b ✅ | **Nombres de las pruebas de integración** (C#) | ~360 pruebas, sus clases, ficheros y variables |
 | 10c | **Títulos de las pruebas del frontend y de las e2e** | Los `it`/`describe` y los nombres de fichero |
 | 11 | **`TimeProvider` en todos los módulos** | Cambiar el reloj módulo a módulo deja dos formas de dar la hora conviviendo; va de una vez, al final |
 
@@ -913,6 +913,18 @@ cambiarlo exige migrar ese contenido. Por eso fue un bloque aparte, el 5c.
 - Ficheros renombrados para coincidir con sus clases (`ValueValidatorTests.cs`,
   `ReportBuilderTests.cs`, `CycleDetectorTests.cs`…).
 - Los `#region` siguen en español: son encabezados de sección, como los comentarios.
+
+### Hecho en el bloque 10b (nombres de las pruebas de integración)
+
+- Igual que la 10a: cada nombre traducido entero, con Roslyn, y los ficheros renombrados como su
+  clase (`ReportBuilderFlowTests.cs`, `SeedingStaysInTenantFlowTests.cs`…). Los nombres de los
+  elementos de tupla (`(HttpClient Cliente, Guid Yo)`) los renombra a mano, porque Roslyn no.
+- **Lo que cazaron las pruebas:** en una prueba, `quitarFechaInicio` no era una variable sino el
+  campo del JSON con el que la API quita la fecha de inicio de una tarea. Seguía en español en
+  `PatchTaskCommand` —se escapó en la 4a—; pasa a `ClearStartDate`. El frontend no lo usaba.
+- Quedan variables locales en español en algunos manejadores de producción (WorkItems, entre
+  otros), que el detector marca y que los bloques anteriores no recogieron. No son contrato; van
+  en una pasada final.
 
 ---
 
