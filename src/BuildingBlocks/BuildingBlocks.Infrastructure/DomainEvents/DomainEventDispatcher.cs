@@ -1,8 +1,6 @@
 using BuildingBlocks.Domain.Primitives;
-using BuildingBlocks.Infrastructure.Outbox;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
-using System.Text.Json;
 
 namespace BuildingBlocks.Infrastructure.DomainEvents;
 
@@ -11,15 +9,20 @@ public interface IDomainEventDispatcher
     Task DispatchAsync(IReadOnlyCollection<IDomainEvent> events, CancellationToken ct = default);
 }
 
-public sealed class DomainEventDispatcher(
-    IServiceProvider serviceProvider,
-    IOutboxService outboxService) : IDomainEventDispatcher
+/// <summary>
+/// Reparte los eventos de dominio en proceso, a los <c>INotificationHandler</c> de MediatR.
+///
+/// <b>No escribe en el outbox.</b> Eso lo hace <c>UnitOfWork</c> al guardar, antes de llamar
+/// aquí. Antes lo hacían los dos, así que cada evento guardado con
+/// <c>SaveChangesAndDispatchAsync</c> quedaba dos veces en <c>outbox_messages</c>, con la misma
+/// carga y el mismo <c>EventId</c>, y el <c>OutboxDispatcherWorker</c> lo publicaba dos veces.
+/// </summary>
+public sealed class DomainEventDispatcher(IServiceProvider serviceProvider) : IDomainEventDispatcher
 {
     public async Task DispatchAsync(IReadOnlyCollection<IDomainEvent> events, CancellationToken ct = default)
     {
         foreach (var @event in events)
         {
-            // 1. Dispatch in-process via MediatR INotificationHandler<T>
             using var scope = serviceProvider.CreateScope();
             var publisher = scope.ServiceProvider.GetRequiredService<IPublisher>();
             
@@ -30,12 +33,6 @@ public sealed class DomainEventDispatcher(
             {
                 await publisher.Publish(notification, ct);
             }
-
-            // 2. Persist to Outbox for cross-module integration (eventual consistency)
-            await outboxService.AddMessageAsync(
-                @event.GetType().FullName ?? @event.GetType().Name,
-                JsonSerializer.Serialize(@event, @event.GetType()),
-                ct);
         }
     }
 }
