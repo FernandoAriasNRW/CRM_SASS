@@ -1,4 +1,5 @@
 using BuildingBlocks.Application.Events;
+using BuildingBlocks.Application.Realtime;
 using Communication.Application.Abstractions.Repositories;
 using Communication.Application.DTOs;
 using Communication.Domain.Events;
@@ -32,8 +33,8 @@ public sealed class MessageAddedEventHandler(
 
     var dto = MessageDto.FromDomain(message);
 
-    // Enviar al grupo (canal) correspondiente
-    await _hubContext.Clients.Group($"channel_{domainEvent.ConversationId}")
+    // Al canal, dentro de la organización del mensaje.
+    await _hubContext.Clients.Group(RealtimeGroups.Channel(domainEvent.TenantId, domainEvent.ConversationId))
         .SendAsync("message_received", dto, cancellationToken);
         
     _logger.LogInformation("Broadcasted message {MessageId} to channel {ChannelId}", domainEvent.MessageId, domainEvent.ConversationId);

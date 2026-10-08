@@ -1,4 +1,5 @@
 using BuildingBlocks.Application.Events;
+using BuildingBlocks.Application.Realtime;
 using WorkItems.Domain.Events;
 using WorkItems.Presentation.Hubs;
 using MediatR;
@@ -15,8 +16,8 @@ public sealed class TaskStatusChangedEventHandler(
   {
     var domainEvent = notification.DomainEvent;
     
-    // Broadcast to the project's board group
-    await hubContext.Clients.Group(domainEvent.ProjectId.ToString())
+    // Al tablero del proyecto, dentro de la organización de la tarea.
+    await hubContext.Clients.Group(RealtimeGroups.Board(domainEvent.TenantId, domainEvent.ProjectId))
         .SendAsync("task_moved", new { taskId = domainEvent.TaskId, status = domainEvent.NewStatus }, cancellationToken);
         
     logger.LogInformation("Broadcasted task {TaskId} moved to status {Status} in board {ProjectId}", domainEvent.TaskId, domainEvent.NewStatus, domainEvent.ProjectId);

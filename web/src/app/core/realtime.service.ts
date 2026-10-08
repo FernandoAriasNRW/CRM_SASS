@@ -54,7 +54,8 @@ export class RealtimeService {
       .catch(err => console.warn('Board hub failed:', err));
   }
 
-  connectTickets(tenantId: string): void {
+  /** El tablero de tickets de la organización. El servidor elige el grupo por el token. */
+  connectTickets(): void {
     if (this.ticketsHub?.state === signalR.HubConnectionState.Connected) return;
 
     this.ticketsHub = new signalR.HubConnectionBuilder()
@@ -66,7 +67,7 @@ export class RealtimeService {
 
     this.ticketsHub.on('ticket_moved', (ticket: any) => this.ticketMoved$.next(ticket));
     this.ticketsHub.start()
-      .then(() => this.ticketsHub?.invoke('JoinTickets', tenantId))
+      .then(() => this.ticketsHub?.invoke('JoinTickets'))
       .catch(err => console.warn('Tickets hub failed:', err));
   }
 

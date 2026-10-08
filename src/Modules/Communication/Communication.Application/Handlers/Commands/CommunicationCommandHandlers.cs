@@ -131,7 +131,7 @@ public sealed class SendMessageHandler(
 
     await _messageRepository.AddAsync(messageResult.Value!, cancellationToken);
     await _conversationRepository.UpdateAsync(conversation, cancellationToken);
-    await _unitOfWork.SaveChangesAsync(cancellationToken);
+    await _unitOfWork.SaveChangesAndDispatchAsync(cancellationToken);
 
     return Result<MessageDto>.Success(MessageDto.FromDomain(messageResult.Value!));
   }

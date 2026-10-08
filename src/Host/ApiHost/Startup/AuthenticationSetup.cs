@@ -26,6 +26,22 @@ public static class AuthenticationSetup
 
                 options.Events = new JwtBearerEvents
                 {
+                    // El navegador no deja poner cabeceras al abrir un WebSocket ni un
+                    // EventSource, así que SignalR manda el token en la cadena de consulta como
+                    // `access_token`. Sin leerlo de ahí, los hubs —que exigen autenticación—
+                    // respondían 401 y el tiempo real no conectaba nunca. Sólo se acepta en
+                    // /hubs: en el resto de la API, un token en la URL acabaría en los registros.
+                    OnMessageReceived = context =>
+                    {
+                        var accessToken = context.Request.Query["access_token"];
+
+                        if (!string.IsNullOrEmpty(accessToken) && context.HttpContext.Request.Path.StartsWithSegments("/hubs"))
+                            context.Token = accessToken;
+
+                        return Task.CompletedTask;
+                    },
+
+
                     // Un refresh token está firmado con la misma clave y tiene el mismo
                     // issuer/audience que un access token, así que pasaría la validación
                     // estándar. Sólo el claim token_type los distingue: sin esta

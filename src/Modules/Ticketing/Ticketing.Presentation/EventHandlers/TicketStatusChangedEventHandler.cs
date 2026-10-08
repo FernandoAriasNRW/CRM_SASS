@@ -1,4 +1,5 @@
 ﻿using BuildingBlocks.Application.Events;
+using BuildingBlocks.Application.Realtime;
 using Ticketing.Domain.Events;
 using Ticketing.Domain.ValueObjects;
 using Ticketing.Presentation.Hubs;
@@ -21,8 +22,8 @@ public sealed class TicketStatusChangedEventHandler(
     // otra persona aparecía en la columna siguiente, o en ninguna.
     var status = TicketStatus.FromValue<TicketStatus>(domainEvent.NewStatus).Name;
 
-    // Broadcast to the tenant's tickets group
-    await hubContext.Clients.Group(domainEvent.TenantId.ToString())
+    // A las conexiones de la organización del ticket.
+    await hubContext.Clients.Group(RealtimeGroups.Tenant(domainEvent.TenantId))
         .SendAsync("ticket_moved", new { ticketId = domainEvent.TicketId, status }, cancellationToken);
         
     logger.LogInformation("Broadcasted ticket {TicketId} moved to status {Status} in tenant {TenantId}", domainEvent.TicketId, domainEvent.NewStatus, domainEvent.TenantId);
