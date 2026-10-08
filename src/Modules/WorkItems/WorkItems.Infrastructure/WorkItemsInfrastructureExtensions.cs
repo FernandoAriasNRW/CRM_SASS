@@ -29,6 +29,7 @@ public static class WorkItemsInfrastructureExtensions
 
     services.AddScoped<ITaskRepository, EfTaskRepository>();
     services.AddScoped<ITaskDependencyRepository, EfTaskDependencyRepository>();
+    services.AddScoped<WorkItems.Application.Attachments.IAttachedDocumentRepository, EfAttachedDocumentRepository>();
     services.AddScoped<ITaskQueries, TaskQueries>();
     services.AddScoped<BuildingBlocks.Application.Abstractions.ITagReferences, Persistence.TaskTagReferences>();
 

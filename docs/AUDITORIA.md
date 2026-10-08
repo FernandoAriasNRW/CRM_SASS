@@ -1741,3 +1741,34 @@ Lo prueban:
 - una prueba nueva en `RealtimeFlowTests`;
 - la e2e `board-scopes`, que elige cada ámbito y va al tablero desde un proyecto.
 
+### 23.4 Documentos adjuntos a una tarea (bloque 2)
+
+En la ficha de la tarea había un apartado «Adjuntos» con un botón «Adjuntar archivo, imagen,
+video o audio» que no hacía nada. Ahora se adjuntan documentos del módulo de documentos, desde
+los dos lados:
+
+- **Desde la tarea**, «Adjuntar documento»: busca entre los documentos de la organización. Cada
+  adjunto se abre en su sitio y se puede quitar de la tarea sin borrar el documento.
+- **Desde el documento**, la pestaña «Tareas» del panel lateral enseña en qué tareas está y deja
+  adjuntarlo a otra buscándola. Cada tarea se abre con `/tasks?task=<id>`, que abre su ficha.
+
+Adjuntar no es mencionar: mencionar una tarea en el texto de un documento es hablar de ella, y
+sale en la tarea como «Mencionado en», que ya existía.
+
+Cómo está hecho:
+
+- WorkItems guarda la relación (`AttachedDocument`, tabla `AttachedDocuments`). Un índice único
+  impide adjuntar dos veces el mismo documento; volver a adjuntarlo no hace nada.
+- El título se pregunta a Docs al enseñarlo, con un puerto nuevo, `IDocumentCatalog`.
+- Un documento borrado deja de salir en la tarea. Uno archivado sigue saliendo: archivarlo lo
+  aparta de la lista de documentos, no del trabajo al que pertenece.
+- Endpoints:
+  - `GET`, `POST /tasks/{id}/documents` y `DELETE /tasks/{id}/documents/{documentId}`;
+  - `GET /tasks/with-document/{documentId}` para la vuelta.
+
+Lo prueban `AttachedDocumentsFlowTests` (6 pruebas) y la e2e `attached-documents`, una por cada
+lado.
+
+Queda fuera, porque no se pidió: adjuntar ficheros sueltos (imágenes, vídeo) a una tarea. El
+botón que lo prometía ya no está.
+

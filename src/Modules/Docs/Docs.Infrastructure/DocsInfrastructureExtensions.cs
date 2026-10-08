@@ -39,6 +39,10 @@ public static class DocsInfrastructureExtensions
         services.AddScoped<Docs.Application.Mentions.MentionUpdater>();
         services.AddScoped<BuildingBlocks.Application.Abstractions.IDocumentMentions,
                            Persistence.DocumentMentionsAdapter>();
+
+        // Qué documentos existen y cómo se llaman, para los que los enlazan. Ver IDocumentCatalog.
+        services.AddScoped<BuildingBlocks.Application.Abstractions.IDocumentCatalog,
+                           Persistence.DocumentCatalog>();
         
         return services;
     }

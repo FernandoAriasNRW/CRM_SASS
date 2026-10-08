@@ -133,6 +133,10 @@ Un concepto, un nombre. Ordenado por área.
 | tipo de trabajo, fase de desarrollo (categorías) | `WorkType`, `DevelopmentPhase` |
 | almacenamiento, almacén en disco | `Storage`, `DiskStorage` |
 | fichero, adjunto | `File`, `Attachment` |
+| documento adjunto (a una tarea) | `AttachedDocument` |
+| catálogo de documentos, de proyectos (puertos: qué existe) | `IDocumentCatalog`, `IProjectCatalog` |
+| directorio de equipos (puerto: quién está en cada uno) | `ITeamDirectory` |
+| ámbito del tablero | `scope` |
 | subir | `Upload` |
 | mención, mencionado en | `Mention`, `MentionedIn` |
 | comentario, hilo | `Comment`, `Thread` |
