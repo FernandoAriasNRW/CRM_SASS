@@ -36,9 +36,18 @@ public sealed class TeamRepository(TeamsDbContext dbContext) : ITeamRepository
         return Task.CompletedTask;
     }
 
+    /// <summary>
+    /// El equipo llega ya seguido por el contexto (lo cargó <see cref="GetByIdAsync"/>), así que
+    /// los cambios se detectan solos. Lo que no se puede es llamar a <c>Update</c>: recorre el grafo y
+    /// marca como modificado todo lo que tiene clave, también al miembro recién añadido, cuyo
+    /// <c>Guid</c> pone el dominio. EF mandaba un UPDATE de una fila que no existía, que no tocaba
+    /// nada, y la edición acababa en <c>DbUpdateConcurrencyException</c>.
+    /// </summary>
     public Task UpdateAsync(Team team, CancellationToken cancellationToken = default)
     {
-        dbContext.Teams.Update(team);
+        if (dbContext.Entry(team).State == EntityState.Detached)
+            dbContext.Teams.Update(team);
+
         return Task.CompletedTask;
     }
 }

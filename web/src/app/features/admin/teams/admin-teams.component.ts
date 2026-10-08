@@ -9,17 +9,18 @@ import {
 } from '@ng-icons/lucide';
 import { GranularPermissionsModalComponent } from '../permissions/granular-permissions-modal.component';
 import { DrawerComponent } from '../../../shared/ui/drawer.component';
-import { ClickableDirective } from '../../../shared/directives/clickable.directive';
 
 export interface TeamDto {
   id: string;
   name: string;
   description: string;
   /**
-   * Cuántos miembros tiene. La API no manda la lista: leía `members`, que no llegaba nunca, y
-   * todos los equipos salían con 0 miembros.
+   * Cuántos miembros tiene. Se leía `members`, que no llegaba nunca, y todos los equipos salían
+   * con 0 miembros.
    */
   memberCount: number;
+  /** Quiénes son. La edición los marca de entrada, porque guardar sustituye la lista entera. */
+  memberIds: string[];
 }
 
 export interface UserOptionDto {
@@ -31,7 +32,7 @@ export interface UserOptionDto {
 @Component({
   selector: 'app-admin-teams',
   standalone: true,
-  imports: [ClickableDirective, FormsModule, NgIconComponent, GranularPermissionsModalComponent, DrawerComponent],
+  imports: [FormsModule, NgIconComponent, GranularPermissionsModalComponent, DrawerComponent],
   viewProviders: [
     provideIcons({
       lucideUsers, lucidePlus, lucideTrash2, lucideEdit3, lucideShieldCheck,
@@ -106,8 +107,7 @@ export class AdminTeamsComponent implements OnInit {
     this.editingTeam.set(team);
     this.formName = team.name;
     this.formDescription = team.description || '';
-    // La API no dice quiénes son los miembros, sólo cuántos, así que no hay a quién marcar.
-    this.selectedMemberIds.set([]);
+    this.selectedMemberIds.set([...(team.memberIds ?? [])]);
     this.showFormModal.set(true);
   }
 

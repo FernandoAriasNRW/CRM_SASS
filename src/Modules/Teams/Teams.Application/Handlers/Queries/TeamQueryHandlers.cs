@@ -10,7 +10,7 @@ public sealed class GetTeamsQueryHandler(ITeamRepository repository) : IQueryHan
     public async Task<Result<IReadOnlyList<TeamDto>>> Handle(GetTeamsQuery request, CancellationToken cancellationToken)
     {
         var teams = await repository.GetAllAsync(request.TenantId, cancellationToken);
-        var dtos = teams.Select(t => new TeamDto(t.Id, t.Name, t.Description, t.Members.Count)).ToList();
+        var dtos = teams.Select(TeamDto.FromDomain).ToList();
         return Result<IReadOnlyList<TeamDto>>.Success(dtos);
     }
 }
@@ -20,7 +20,7 @@ public sealed class GetMyTeamsQueryHandler(ITeamRepository repository) : IQueryH
     public async Task<Result<IReadOnlyList<TeamDto>>> Handle(GetMyTeamsQuery request, CancellationToken cancellationToken)
     {
         var teams = await repository.GetTeamsForUserAsync(request.TenantId, request.UserId, cancellationToken);
-        var dtos = teams.Select(t => new TeamDto(t.Id, t.Name, t.Description, t.Members.Count)).ToList();
+        var dtos = teams.Select(TeamDto.FromDomain).ToList();
         return Result<IReadOnlyList<TeamDto>>.Success(dtos);
     }
 }
@@ -32,7 +32,7 @@ public sealed class GetTeamByIdQueryHandler(ITeamRepository repository) : IQuery
         var team = await repository.GetByIdAsync(request.TenantId, request.TeamId, cancellationToken);
         if (team is null) return Result<TeamDto>.Failure("Team not found");
         
-        var dto = new TeamDto(team.Id, team.Name, team.Description, team.Members.Count);
+        var dto = TeamDto.FromDomain(team);
         return Result<TeamDto>.Success(dto);
     }
 }

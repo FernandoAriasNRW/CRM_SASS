@@ -35,7 +35,9 @@ export class TeamFormComponent implements OnInit {
       this.formData = {
         name: this.team.name,
         description: this.team.description,
-        memberIds: [] // Assuming we fetch or populate memberIds somehow, for now empty
+        // Al guardar, la lista sustituye a la que había: si se mandara vacía, el equipo se
+        // quedaría sin nadie.
+        memberIds: [...(this.team.memberIds ?? [])]
       };
     }
   }
