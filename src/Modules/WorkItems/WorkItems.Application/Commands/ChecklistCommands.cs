@@ -13,7 +13,7 @@ public sealed record AddChecklistItemCommand(
     string Text
 ) : ICommand<ChecklistItemDto>, IWebhookTriggered, IAuthorizeEntity
 {
-    public string WebhookEventName => "workitem.checklist.added";
+    public string WebhookEventName => "task.checklist.added";
 
     public string EntityType => "Task";
     public Guid EntityId => Id;
@@ -36,7 +36,7 @@ public sealed record UpdateChecklistItemCommand(
     string? Text
 ) : ICommand<bool>, IWebhookTriggered, IAuthorizeEntity
 {
-    public string WebhookEventName => "workitem.checklist.updated";
+    public string WebhookEventName => "task.checklist.updated";
 
     public string EntityType => "Task";
     public Guid EntityId => Id;
@@ -51,7 +51,7 @@ public sealed record RemoveChecklistItemCommand(
     Guid ItemId
 ) : ICommand<bool>, IWebhookTriggered, IAuthorizeEntity
 {
-    public string WebhookEventName => "workitem.checklist.removed";
+    public string WebhookEventName => "task.checklist.removed";
 
     public string EntityType => "Task";
     public Guid EntityId => Id;

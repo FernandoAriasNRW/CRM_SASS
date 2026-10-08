@@ -9,5 +9,5 @@ public sealed record CreateConversationCommand(
     string Type
 ) : ICommand<ConversationDto>, IWebhookTriggered
 {
-    public string WebhookEventName => "communication.conversation.created";
+    public string WebhookEventName => "chat.conversation.created";
 }

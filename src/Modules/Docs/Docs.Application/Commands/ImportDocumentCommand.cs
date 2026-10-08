@@ -10,8 +10,10 @@ public record ImportDocumentCommand(
     Guid OwnerId,
     string Title,
     string Content,
-    int Type = 1) : IRequest<Result<Guid>>, IAuthorizeEntity
+    int Type = 1) : IRequest<Result<Guid>>, IAuthorizeEntity, IWebhookTriggered
 {
+    public string WebhookEventName => "document.created";
+
     public string EntityType => "Document";
     public Guid EntityId => Guid.Empty;
     public string RequiredPermission => "Write";

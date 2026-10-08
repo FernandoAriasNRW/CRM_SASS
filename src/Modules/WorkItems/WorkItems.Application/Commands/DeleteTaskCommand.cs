@@ -12,7 +12,7 @@ public sealed record DeleteTaskCommand(
     string ActorRole
 ) : ICommand<bool>, IWebhookTriggered, IAuthorizeEntity
 {
-    public string WebhookEventName => "workitem.deleted";
+    public string WebhookEventName => "task.deleted";
     
     public string EntityType => "Task";
     public Guid EntityId => Id;

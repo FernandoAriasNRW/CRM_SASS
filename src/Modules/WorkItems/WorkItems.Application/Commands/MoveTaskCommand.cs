@@ -12,7 +12,7 @@ public sealed record MoveTaskCommand(
     string NewStatus
 ) : ICommand<bool>, IWebhookTriggered, IAuthorizeEntity
 {
-    public string WebhookEventName => "workitem.moved";
+    public string WebhookEventName => "task.status_changed";
     
     public string EntityType => "Task";
     public Guid EntityId => Id;

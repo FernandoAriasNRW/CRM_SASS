@@ -14,15 +14,25 @@ public sealed class WebhookSeeder(TimeProvider timeProvider, WebhookDbContext we
         var tenantId = context.TenantId;
 
         using var _ = webhookDb.AsTenant(tenantId);
-        try { await OrphanRows.AdoptAsync(webhookDb, "webhook_subscriptions", "TenantId", tenantId, cancellationToken); } catch { }
+        try { await OrphanRows.AdoptAsync(webhookDb, "WebhookSubscriptions", "TenantId", tenantId, cancellationToken); } catch { }
 
         if (await webhookDb.Subscriptions.AnyAsync(w => w.TenantId == tenantId, cancellationToken))
             return;
 
-        webhookDb.Subscriptions.AddRange(
-            WebhookSubscription.Create(timeProvider.GetUtcNow().UtcDateTime, tenantId, "task.created", "https://hooks.slack.com/services/T00/B00/X00", "whsec_slack_123456789"),
-            WebhookSubscription.Create(timeProvider.GetUtcNow().UtcDateTime, tenantId, "ticket.updated", "https://hooks.zapier.com/hooks/catch/12345/abcde", "whsec_zapier_987654321"),
-            WebhookSubscription.Create(timeProvider.GetUtcNow().UtcDateTime, tenantId, "user.created", "https://http-intake.logs.datadoghq.com/v1/input", "whsec_datadog_456789123"));
+        // Ejemplos para enseñar la pantalla, y por eso desactivados y contra example.com. Apuntaban
+        // a Slack, Zapier y Datadog de verdad: con la entrega en segundo plano, una base de
+        // demostración habría empezado a mandar sus datos a servicios ajenos.
+        var now = timeProvider.GetUtcNow().UtcDateTime;
+        var examples = new[]
+        {
+            WebhookSubscription.Create(now, tenantId, "Avisos de tareas (ejemplo)", "https://example.com/webhooks/tasks", ["task.created", "task.status_changed"], "whsec_ejemplo_tareas"),
+            WebhookSubscription.Create(now, tenantId, "Tickets al CRM (ejemplo)", "https://example.com/webhooks/tickets", ["ticket.created", "ticket.updated"], "whsec_ejemplo_tickets"),
+            WebhookSubscription.Create(now, tenantId, "Altas de usuarios (ejemplo)", "https://example.com/webhooks/users", ["user.created"], "whsec_ejemplo_usuarios"),
+        };
+        foreach (var example in examples)
+            example.Update(now, example.Name, example.TargetUrl, example.EventTypes, isActive: false);
+
+        webhookDb.Subscriptions.AddRange(examples);
         await webhookDb.SaveChangesAsync(cancellationToken);
     }
 }

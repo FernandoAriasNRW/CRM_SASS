@@ -966,8 +966,9 @@ que lleva «8b» en el título. Lo único que sigue siendo propio de un disparad
 - **Documentos tiene la columna de archivado y no la usa.** Se le puso al modelar el concepto
   para no dejar el agregado a medias, pero Docs mantiene su propio panel lateral y no se ha
   enganchado al compartido.
-- **Lo que el frontend pide y la API no tiene** (§22.3): la pantalla de webhooks, las
-  notificaciones push, `GET /dashboards/{id}` y el aviso `notification_received`.
+- **Lo que el frontend pide y la API no tiene** (§22.3): las notificaciones push,
+  `GET /dashboards/{id}` y el aviso `notification_received`. La pantalla de webhooks se resolvió
+  en §23.6.
 - **`/projects` no ordena ni filtra por fechas, y `/reports` no ordena, no busca ni filtra por
   formato**, aunque las pantallas manden esos parámetros: se ignoran sin error.
 
@@ -1810,4 +1811,68 @@ Lo prueban:
 - `CommentMentionsFlowTests` (escribir, la vuelta, editar, borrar);
 - la prueba de Karma de `comment-mentions`;
 - las e2e `comment-mentions` (escribir con `@` y `#`, y la vuelta) y la de `?doc=` en `docs`.
+
+### 23.6 Webhooks (bloque 4)
+
+Los webhooks existían a medias, y lo que había tenía cinco fallos, tres de ellos de seguridad:
+
+- **Mandaban contraseñas.** El contenido era el comando tal cual, y el de crear un usuario lleva
+  la contraseña en claro: cualquier suscriptor de «usuario creado» la recibía.
+- **Cualquiera con sesión podía crear un webhook** y recibir en su servidor los datos de toda la
+  organización. Solo `POST /dispatch` exigía administración, y lo hacía con una política
+  `AdminOnly` que no existía, así que daba error siempre. Ese endpoint servía para disparar
+  eventos inventados hacia todos los suscriptores, y ya no existe.
+- **Se podía apuntar a la red interna** (`localhost`, `10.x`, `169.254.169.254`): el servidor
+  habría hecho de puente hacia sus propios servicios (SSRF).
+- **Se disparaban aunque la operación fallara.** El comportamiento solo reconocía `Result` y
+  `Result<bool>`; cualquier otro `Result<T>` se daba por bueno.
+- **La entrega iba dentro de la petición**, sin reintentos ni registro. Un destino lento
+  retrasaba crear una tarea, y uno caído no dejaba rastro.
+
+Además, había una suscripción por evento, mientras que la pantalla ya pedía una lista. El
+catálogo y los comandos no coincidían: había eventos que nadie emitía y eventos emitidos que no
+estaban en el catálogo.
+
+Lo que hay ahora:
+
+- **Una suscripción, varios eventos, ninguno por defecto.** La lista no puede estar vacía ni
+  llevar comodines; la pantalla agrupa el catálogo por área y no marca nada de entrada.
+- **El catálogo** (`WebhookEventCatalog`) cubre tareas (incluidos los documentos adjuntos),
+  tickets, proyectos, usuarios, equipos, informes, documentos y notificaciones, además del
+  calendario y el chat, que ya emitían. Los nombres pasan a `task.*`, `user.*` y `chat.*`, y la
+  migración traduce las suscripciones que existían. `WebhookEventCatalogTests` comprueba que el
+  catálogo y los comandos dicen lo mismo, en las dos direcciones.
+- **Entrega en segundo plano** (`WebhookDeliveryWorker`):
+  - cada evento deja un envío guardado; el trabajo lo manda y reintenta a los 30 s, 2 min,
+    10 min, 1 h y 6 h;
+  - cada intento deja su código de respuesta o su error, y la pantalla tiene un registro de
+    envíos por suscripción;
+  - un envío lleva `X-Webhook-Event`, `X-Webhook-Delivery` (el mismo en los reintentos, y
+    también en el cuerpo) y una firma `X-Webhook-Signature: sha256=…`, el HMAC de
+    `{timestamp}.{cuerpo}` con el secreto de la suscripción.
+- **Sin secretos en el contenido:** el cuerpo lleva la entrada y el resultado (el identificador
+  de lo creado), sin ninguna propiedad cuyo nombre hable de contraseñas, secretos, tokens o
+  hashes.
+- **Solo administración**, en todo el grupo `/webhooks`.
+- **Solo `https://` y nunca hacia dentro.** Se comprueba al guardar y otra vez al conectar, con
+  la IP ya resuelta; la redirección está apagada. En local se puede abrir con
+  `WEBHOOKS_ALLOW_PRIVATE_NETWORKS` y `WEBHOOKS_ALLOW_INSECURE_HTTP`.
+- **Endpoints:**
+  - `GET /webhooks/events`, `GET`, `POST /webhooks`, y `GET`, `PUT`, `DELETE /webhooks/{id}`;
+  - `GET /webhooks/{id}/secret` y `POST /webhooks/{id}/regenerate-secret`;
+  - `POST /webhooks/{id}/test` y `GET /webhooks/{id}/deliveries`.
+- **El sembrador de la demostración** creaba suscripciones activas contra Slack, Zapier y
+  Datadog de verdad. Con la entrega real habría mandado datos fuera; ahora son ejemplos
+  desactivados contra `example.com`.
+
+Lo prueban:
+
+- `WebhooksTests` (unitarias: reglas, reintentos, contenido sin secretos y el comportamiento que
+  decide si disparar);
+- `WebhooksFlowTests` (18 de integración, con un receptor en memoria);
+- `WebhookEventCatalogTests`;
+- la e2e `webhooks`.
+
+La migración `WebhooksByEvents` se probó de ida y vuelta en una base aparte, con filas en el
+formato viejo.
 

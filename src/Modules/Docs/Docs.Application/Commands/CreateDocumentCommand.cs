@@ -13,8 +13,10 @@ public record CreateDocumentCommand(
     int Type,
     Guid? TeamId,
     Guid? ProjectId,
-    string? InitialContent = null) : IRequest<Result<Guid>>, IAuthorizeEntity
+    string? InitialContent = null) : IRequest<Result<Guid>>, IAuthorizeEntity, IWebhookTriggered
 {
+    public string WebhookEventName => "document.created";
+
     public string EntityType => "Document";
     public Guid EntityId => Guid.Empty;
     public string RequiredPermission => "Write";

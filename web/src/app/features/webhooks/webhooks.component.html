@@ -17,7 +17,7 @@
         class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium hover:bg-primary/90 transition-colors"
       >
         <ng-icon name="lucidePlus" size="16" />
-        Nuevo Webhook
+        <span i18n>Nuevo webhook</span>
       </button>
     </div>
 
@@ -54,6 +54,7 @@
       <input
         type="text"
         i18n-placeholder placeholder="Buscar webhooks..."
+        i18n-aria-label aria-label="Buscar webhooks"
         [ngModel]="searchQuery()"
         (ngModelChange)="searchQuery.set($any($event))"
         class="w-full pl-10 pr-4 py-2 border border-input rounded-md bg-background text-sm focus:ring-2 focus:ring-ring outline-none"
@@ -85,7 +86,7 @@
           class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium hover:bg-primary/90 transition-colors"
         >
           <ng-icon name="lucidePlus" size="16" />
-          Crear Webhook
+          <span i18n>Crear webhook</span>
         </button>
       </div>
     } @else {
@@ -102,12 +103,12 @@
                     @if (subscription.isActive) {
                       <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-success-subtle text-success-subtle-fg">
                         <ng-icon name="lucideCheck" size="10" />
-                        Activo
+                        <span i18n>Activo</span>
                       </span>
                     } @else {
                       <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-muted text-muted-foreground">
                         <ng-icon name="lucideX" size="10" />
-                        Inactivo
+                        <span i18n>Inactivo</span>
                       </span>
                     }
                   </div>
@@ -119,11 +120,8 @@
 
                   <!-- Event Types -->
                   <div class="flex flex-wrap gap-1">
-                    @for (eventType of getEventTypeLabels(subscription.eventTypes); track eventType) {
-                      <span
-                        class="inline-flex items-center px-2 py-0.5 rounded text-xs bg-primary-subtle text-primary-subtle-fg"
-                        [title]="getEventTypeDescription(eventType)"
-                      >
+                    @for (eventType of subscription.eventTypes; track eventType) {
+                      <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-mono bg-primary-subtle text-primary-subtle-fg">
                         {{ eventType }}
                       </span>
                     }
@@ -138,69 +136,111 @@
                       <ng-icon name="lucideCheck" size="12" />
                       {{ subscription.successCount }}
                     </span>
-                    <span class="flex items-center gap-1" [class.text-destructive]="subscription.failureCount > 0">
+                    <span class="flex items-center gap-1" [class.text-destructive]="subscription.failureCount > 0"
+                          i18n-title title="Envíos fallidos">
                       <ng-icon name="lucideX" size="12" />
                       {{ subscription.failureCount }}
                     </span>
+                    @if (subscription.pendingCount > 0) {
+                      <span class="flex items-center gap-1 text-warning" i18n-title title="Envíos pendientes o reintentándose">
+                        <ng-icon name="lucideClock" size="12" />
+                        {{ subscription.pendingCount }}
+                      </span>
+                    }
                   </div>
 
-                  <!-- Actions -->
+                  <!-- Acciones -->
                   <div class="flex items-center gap-1">
-                    @if (togglingId() === subscription.id) {
-                      <span class="p-2">
-                        <ng-icon name="lucideLoader2" size="14" class="animate-spin" />
-                      </span>
+                    @if (busyId() === subscription.id) {
+                      <span class="p-2"><ng-icon name="lucideLoader2" size="14" class="animate-spin" /></span>
                     } @else {
-                      <button
-                        (click)="toggleActive(subscription)"
-                        class="p-2 rounded hover:bg-muted transition-colors"
-                        [title]="subscription.isActive ? 'Desactivar' : 'Activar'"
-                      >
+                      <button (click)="toggleActive(subscription)" class="p-2 rounded hover:bg-muted transition-colors"
+                              [attr.aria-label]="subscription.isActive ? deactivateLabel : activateLabel"
+                              [title]="subscription.isActive ? deactivateLabel : activateLabel">
                         @if (subscription.isActive) {
                           <ng-icon name="lucideEyeOff" size="14" class="text-muted-foreground" />
                         } @else {
                           <ng-icon name="lucideEye" size="14" class="text-success" />
                         }
                       </button>
-                    }
-
-                    <button
-                      (click)="regenerateSecret(subscription)"
-                      [disabled]="regeneratingId() === subscription.id"
-                      class="p-2 rounded hover:bg-muted transition-colors disabled:opacity-50"
-                      i18n-title title="Regenerar Secret"
-                    >
-                      @if (regeneratingId() === subscription.id) {
-                        <ng-icon name="lucideLoader2" size="14" class="animate-spin" />
-                      } @else {
+                      <button (click)="sendTest(subscription)" class="p-2 rounded hover:bg-muted transition-colors"
+                              i18n-title title="Enviar prueba" i18n-aria-label aria-label="Enviar prueba">
+                        <ng-icon name="lucideSend" size="14" class="text-muted-foreground" />
+                      </button>
+                      <button (click)="showSecret(subscription)" class="p-2 rounded hover:bg-muted transition-colors"
+                              i18n-title title="Ver el secreto" i18n-aria-label aria-label="Ver el secreto">
+                        <ng-icon name="lucideKey" size="14" class="text-muted-foreground" />
+                      </button>
+                      <button (click)="regenerateSecret(subscription)" class="p-2 rounded hover:bg-muted transition-colors"
+                              i18n-title title="Cambiar el secreto" i18n-aria-label aria-label="Cambiar el secreto">
                         <ng-icon name="lucideRefreshCw" size="14" class="text-muted-foreground" />
-                      }
+                      </button>
+                    }
+                    <button (click)="openDeliveries(subscription)" class="p-2 rounded hover:bg-muted transition-colors"
+                            [attr.aria-expanded]="deliveriesFor() === subscription.id"
+                            i18n-title title="Registro de envíos" i18n-aria-label aria-label="Registro de envíos">
+                      <ng-icon name="lucideActivity" size="14" class="text-muted-foreground" />
                     </button>
-
-                    <button
-                      (click)="openEditModal(subscription)"
-                      class="p-2 rounded hover:bg-muted transition-colors"
-                      i18n-title title="Editar"
-                    >
+                    <button (click)="openEditModal(subscription)" class="p-2 rounded hover:bg-muted transition-colors"
+                            i18n-title title="Editar" i18n-aria-label aria-label="Editar">
                       <ng-icon name="lucideEdit3" size="14" class="text-muted-foreground" />
                     </button>
-
-                    <button
-                      (click)="confirmDelete(subscription)"
-                      class="p-2 rounded hover:bg-destructive/10 transition-colors"
-                      i18n-title title="Eliminar"
-                    >
+                    <button (click)="confirmDelete(subscription)" class="p-2 rounded hover:bg-destructive/10 transition-colors"
+                            i18n-title title="Eliminar" i18n-aria-label aria-label="Eliminar">
                       <ng-icon name="lucideTrash2" size="14" class="text-destructive" />
                     </button>
                   </div>
 
-                  <!-- Last triggered -->
                   <span class="text-[10px] text-muted-foreground">
-                    Última vez: {{ formatDate(subscription.lastTriggeredAtUtc) }}
+                    @if (subscription.lastDeliveryAtUtc) {
+                      <span i18n>Último envío: {{ subscription.lastDeliveryAtUtc | date:'short' }}</span>
+                    } @else {
+                      <span i18n>Todavía no ha enviado nada</span>
+                    }
                   </span>
                 </div>
               </div>
             </div>
+
+            <!-- El registro de envíos: qué salió, si llegó y, si no, por qué. -->
+            @if (deliveriesFor() === subscription.id) {
+              <div class="border-t border-border bg-muted/20 px-4 py-3">
+                <h4 class="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2" i18n>Últimos envíos</h4>
+                @if (loadingDeliveries()) {
+                  <p class="text-xs text-muted-foreground" i18n>Cargando…</p>
+                } @else if (deliveries().length === 0) {
+                  <p class="text-xs text-muted-foreground" i18n>Todavía no se ha enviado nada a este destino.</p>
+                } @else {
+                  <table class="w-full text-xs">
+                    <thead>
+                      <tr class="text-left text-muted-foreground">
+                        <th class="py-1 font-medium" i18n>Evento</th>
+                        <th class="py-1 font-medium" i18n>Estado</th>
+                        <th class="py-1 font-medium" i18n>Intentos</th>
+                        <th class="py-1 font-medium" i18n>Respuesta</th>
+                        <th class="py-1 font-medium" i18n>Cuándo</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (delivery of deliveries(); track delivery.id) {
+                        <tr class="border-t border-border/50">
+                          <td class="py-1 font-mono">{{ delivery.eventName }}</td>
+                          <td class="py-1"
+                              [class.text-success]="delivery.status === 'Succeeded'"
+                              [class.text-destructive]="delivery.status === 'Failed'">{{ deliveryStatusLabel(delivery) }}</td>
+                          <td class="py-1 tabular-nums">{{ delivery.attempts }}</td>
+                          <td class="py-1" [title]="delivery.lastError ?? ''">
+                            {{ delivery.lastStatusCode ?? '—' }}
+                            @if (delivery.lastError) { <span class="text-muted-foreground">· {{ delivery.lastError }}</span> }
+                          </td>
+                          <td class="py-1 text-muted-foreground">{{ delivery.createdAtUtc | date:'short' }}</td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                }
+              </div>
+            }
           </div>
         }
       </div>
@@ -212,14 +252,13 @@
 @if (showForm()) {
   <app-webhook-form-modal
     [subscription]="editingSubscription()"
-    [tenantId]="getTenantId()"
     (closed)="closeFormModal()"
     (saved)="onFormSaved($event)"
   />
 }
 
 <!-- Secret Modal -->
-@if (showSecretModal() && secretToShow()) {
+@if (secretToShow(); as shown) {
   <div appClickable
     class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4"
     (click)="closeSecretModal()"
@@ -229,9 +268,10 @@
       (click)="$event.stopPropagation()"
     >
       <div class="flex items-center justify-between px-6 py-4 border-b border-border">
-        <h3 class="text-base font-semibold" i18n>Nuevo Secret</h3>
+        <h3 class="text-base font-semibold" i18n>Secreto de firma</h3>
         <button
           (click)="closeSecretModal()"
+          i18n-aria-label aria-label="Cerrar"
           class="text-muted-foreground hover:text-foreground p-1 rounded hover:bg-muted"
         >
           <ng-icon name="lucideX" size="18" />
@@ -240,18 +280,21 @@
 
       <div class="p-6">
         <p class="text-sm text-muted-foreground mb-4">
-          El secret para <strong>{{ secretToShow()!.name }}</strong> ha sido regenerado.
-          Guarda este secret de forma segura, ya que no se mostrará nuevamente.
+          @if (shown.isNew) {
+            <span i18n>Este es el secreto nuevo de <strong>{{ shown.name }}</strong>. Configúralo en el destino para comprobar la firma de cada envío; el anterior ya no vale.</span>
+          } @else {
+            <span i18n>El secreto de <strong>{{ shown.name }}</strong>, para comprobar la firma de cada envío.</span>
+          }
         </p>
 
         <div class="flex items-center gap-2 p-3 rounded-md bg-muted/50 border border-border">
-          <code class="flex-1 text-sm font-mono break-all">{{ secretToShow()!.secret }}</code>
+          <code class="flex-1 text-sm font-mono break-all">{{ shown.secret }}</code>
           <button
-            (click)="copyToClipboard(secretToShow()!.secret)"
+            (click)="copyToClipboard(shown.secret)"
             class="shrink-0 p-2 rounded hover:bg-muted transition-colors"
-            i18n-title title="Copiar"
+            i18n-title title="Copiar" i18n-aria-label aria-label="Copiar"
           >
-            <ng-icon name="lucideLoader2" size="14" />
+            <ng-icon name="lucideCopy" size="14" />
           </button>
         </div>
       </div>
@@ -290,7 +333,7 @@
         </div>
 
         <p class="text-sm text-muted-foreground" i18n>
-          ¿Estás seguro de que deseas eliminar este webhook? Se perderán todas las configuraciones y estadísticas asociadas.
+          Dejarán de enviarse sus eventos, y los envíos pendientes no saldrán.
         </p>
       </div>
 

@@ -22,5 +22,5 @@ public sealed record CreateTaskCommand(
         DateOnly? StartDate = null
     ) : ICommand<WorkTask>, IWebhookTriggered
 {
-    public string WebhookEventName => "workitem.created";
+    public string WebhookEventName => "task.created";
 }

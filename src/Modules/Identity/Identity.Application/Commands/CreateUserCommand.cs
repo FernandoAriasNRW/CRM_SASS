@@ -11,5 +11,5 @@ public sealed record CreateUserCommand(
     string Role
 ) : ICommand<UserDto>, IWebhookTriggered
 {
-    public string WebhookEventName => "identity.user.registered";
+    public string WebhookEventName => "user.created";
 }

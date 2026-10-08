@@ -6,4 +6,7 @@ public sealed record CreateTeamCommand(
     Guid TenantId,
     string Name,
     string Description,
-    List<Guid> MemberIds) : ICommand<Guid>;
+    List<Guid> MemberIds) : ICommand<Guid>, IWebhookTriggered
+{
+    public string WebhookEventName => "team.created";
+}

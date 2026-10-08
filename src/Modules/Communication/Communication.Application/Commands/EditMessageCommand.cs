@@ -10,5 +10,5 @@ public sealed record EditMessageCommand(
     string NewContent
 ) : ICommand<MessageDto>, IWebhookTriggered
 {
-    public string WebhookEventName => "communication.message.edited";
+    public string WebhookEventName => "chat.message.edited";
 }

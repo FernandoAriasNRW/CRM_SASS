@@ -15,7 +15,7 @@ public sealed record AddTaskDependencyCommand(
     Guid DependsOnTaskId
 ) : ICommand<bool>, IWebhookTriggered, IAuthorizeEntity
 {
-    public string WebhookEventName => "workitem.dependency.added";
+    public string WebhookEventName => "task.dependency.added";
 
     public string EntityType => "Task";
     public Guid EntityId => Id;
@@ -30,7 +30,7 @@ public sealed record RemoveTaskDependencyCommand(
     Guid DependsOnTaskId
 ) : ICommand<bool>, IWebhookTriggered, IAuthorizeEntity
 {
-    public string WebhookEventName => "workitem.dependency.removed";
+    public string WebhookEventName => "task.dependency.removed";
 
     public string EntityType => "Task";
     public Guid EntityId => Id;

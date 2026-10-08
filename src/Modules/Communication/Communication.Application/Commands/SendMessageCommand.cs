@@ -10,5 +10,5 @@ public sealed record SendMessageCommand(
     string Content
 ) : ICommand<MessageDto>, IWebhookTriggered
 {
-    public string WebhookEventName => "communication.message.sent";
+    public string WebhookEventName => "chat.message.sent";
 }

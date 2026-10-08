@@ -61,6 +61,11 @@ services:
       - InitialAdmin__Email=${INITIAL_ADMIN_EMAIL:-}
       - InitialAdmin__Password=${INITIAL_ADMIN_PASSWORD:-}
 
+      # Webhooks hacia la propia máquina (http://localhost, redes privadas). Apagado: en
+      # producción abriría la puerta a llamar a servicios internos. Ver `WebhookOptions`.
+      - Webhooks__AllowPrivateNetworks=${WEBHOOKS_ALLOW_PRIVATE_NETWORKS:-false}
+      - Webhooks__AllowInsecureHttp=${WEBHOOKS_ALLOW_INSECURE_HTTP:-false}
+
       # Dónde acaban los ficheros que se adjuntan a un documento.
       #
       # Con credenciales de Cloudinary se suben a Cloudinary; sin ellas, al disco del servidor. La

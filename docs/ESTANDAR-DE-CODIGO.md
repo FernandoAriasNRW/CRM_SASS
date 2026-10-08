@@ -134,6 +134,9 @@ Un concepto, un nombre. Ordenado por área.
 | almacenamiento, almacén en disco | `Storage`, `DiskStorage` |
 | fichero, adjunto | `File`, `Attachment` |
 | documento adjunto (a una tarea) | `AttachedDocument` |
+| suscripción de webhook, envío, catálogo de eventos | `WebhookSubscription`, `WebhookDelivery`, `WebhookEventCatalog` |
+| secreto de firma, firma | `Secret`, `Signature` |
+| reintento, pendiente, entregado, fallido | `Retry`, `Pending`, `Succeeded`, `Failed` |
 | catálogo de documentos, de proyectos (puertos: qué existe) | `IDocumentCatalog`, `IProjectCatalog` |
 | directorio de equipos (puerto: quién está en cada uno) | `ITeamDirectory` |
 | ámbito del tablero | `scope` |

@@ -1,119 +1,68 @@
 /**
- * Webhook subscription model for frontend.
+ * Una suscripción tal como la devuelve `GET /webhooks`. No lleva el secreto: se pide aparte
+ * (`GET /webhooks/{id}/secret`), para que no viaje en cada listado.
  */
 export interface WebhookSubscription {
   id: string;
-  tenantId: string;
   name: string;
   url: string;
-  secret: string;
+  /** Los eventos elegidos, uno a uno. Nunca «todos» por defecto. */
+  eventTypes: string[];
   isActive: boolean;
-  eventTypes: string;
   createdAtUtc: string;
-  lastTriggeredAtUtc: string | null;
+  updatedAtUtc: string | null;
   successCount: number;
   failureCount: number;
+  pendingCount: number;
+  lastDeliveryAtUtc: string | null;
 }
 
-/**
- * Payload for creating a new webhook subscription.
- */
-export interface CreateWebhookRequest {
-  tenantId: string;
-  name: string;
-  url: string;
-  eventTypes: string;
-  maxRetries?: number;
-  timeoutSeconds?: number;
-  customHeaders?: string;
+/** Lo que devuelve crear una suscripción o cambiar su secreto. */
+export interface WebhookWithSecret {
+  subscription: WebhookSubscription;
+  secret: string;
 }
 
-/**
- * Payload for updating a webhook subscription.
- */
-export interface UpdateWebhookRequest {
-  name?: string;
-  url?: string;
-  eventTypes?: string;
-  isActive?: boolean;
-  maxRetries?: number;
-  timeoutSeconds?: number;
-  customHeaders?: string;
-}
-
-/**
- * Available webhook event types.
- */
-export interface WebhookEventType {
-  type: string;
-  description: string;
-}
-
-/**
- * Webhook delivery status for tracking.
- */
-export interface WebhookDelivery {
-  id: string;
-  subscriptionId: string;
-  eventType: string;
-  entityId: string | null;
-  payload: string;
-  attemptNumber: number;
-  attemptedAtUtc: string;
-  httpStatusCode: number | null;
-  responseBody: string | null;
-  errorMessage: string | null;
-}
-
-/**
- * Webhook statistics summary.
- */
-export interface WebhookStats {
-  totalSubscriptions: number;
-  activeSubscriptions: number;
-  totalDeliveries: number;
-  successfulDeliveries: number;
-  failedDeliveries: number;
-  recentActivity: WebhookSubscription[];
-}
-
-/**
- * Form data for webhook subscription form.
- */
-export interface WebhookFormData {
+/** El cuerpo de crear o cambiar una suscripción. */
+export interface WebhookRequest {
   name: string;
   url: string;
   eventTypes: string[];
-  maxRetries: number;
-  timeoutSeconds: number;
+  isActive: boolean;
+}
+
+/** Un evento del catálogo del servidor (`GET /webhooks/events`). */
+export interface WebhookEventType {
+  name: string;
+  category: string;
+}
+
+/** Un envío y sus intentos. */
+export interface WebhookDelivery {
+  id: string;
+  eventName: string;
+  status: 'Pending' | 'Succeeded' | 'Failed';
+  attempts: number;
+  createdAtUtc: string;
+  completedAtUtc: string | null;
+  nextAttemptAtUtc: string | null;
+  lastStatusCode: number | null;
+  lastError: string | null;
 }
 
 /**
- * Predefined event types available in the system.
+ * Cómo se llama en pantalla cada grupo del catálogo. La clave es la del servidor
+ * (`WebhookEventCatalog.Categories`); un grupo nuevo sin nombre aquí se enseña con su clave.
  */
-export const WEBHOOK_EVENT_TYPES: WebhookEventType[] = [
-  // WorkItems
-  { type: 'TaskCreated', description: 'Cuando se crea una tarea' },
-  { type: 'TaskMoved', description: 'Cuando cambia el estado de una tarea' },
-  { type: 'TaskDeleted', description: 'Cuando se elimina una tarea' },
-  { type: 'TaskAssigned', description: 'Cuando se asigna una tarea' },
-  { type: 'TaskCommentAdded', description: 'Cuando se agrega un comentario' },
-
-  // Projects
-  { type: 'ProjectCreated', description: 'Cuando se crea un proyecto' },
-  { type: 'ProjectUpdated', description: 'Cuando se actualiza un proyecto' },
-  { type: 'ProjectDeleted', description: 'Cuando se elimina un proyecto' },
-
-  // Tickets
-  { type: 'TicketCreated', description: 'Cuando se crea un ticket' },
-  { type: 'TicketAssigned', description: 'Cuando se asigna un ticket' },
-  { type: 'TicketStatusChanged', description: 'Cuando cambia el estado del ticket' },
-
-  // Calendar
-  { type: 'CalendarEventCreated', description: 'Cuando se crea un evento' },
-  { type: 'CalendarEventUpdated', description: 'Cuando se actualiza un evento' },
-
-  // Identity
-  { type: 'UserCreated', description: 'Cuando se crea un usuario' },
-  { type: 'UserInvited', description: 'Cuando se invita un usuario' },
-];
+export const WEBHOOK_CATEGORY_LABELS: Record<string, string> = {
+  tasks: $localize`Tareas`,
+  tickets: $localize`Tickets`,
+  projects: $localize`Proyectos`,
+  users: $localize`Usuarios`,
+  teams: $localize`Equipos`,
+  reports: $localize`Informes`,
+  documents: $localize`Documentos`,
+  notifications: $localize`Notificaciones`,
+  calendar: $localize`Calendario`,
+  chat: $localize`Chat`,
+};
