@@ -35,6 +35,40 @@
       (apply)="applySavedView($event)"
       (create)="createView($event)"
       (remove)="deleteView($event)" />
+
+    <!-- De quién son las tareas: de toda la organización, mías, de un proyecto o de un equipo.
+         Queda en los filtros de la vista, así que guardar la vista guarda también su ámbito. -->
+    <div class="flex flex-wrap items-center gap-2 px-4 py-2 border-t border-border" role="group"
+         i18n-aria-label aria-label="Ámbito del tablero">
+      <button uiButton size="sm" [variant]="scope() === 'all' ? 'default' : 'outline'"
+              [attr.aria-pressed]="scope() === 'all'" (click)="setScope('all')" i18n>Toda la organización</button>
+      <button uiButton size="sm" [variant]="scope() === 'mine' ? 'default' : 'outline'"
+              [attr.aria-pressed]="scope() === 'mine'" (click)="setScope('mine')" i18n>Mis tareas</button>
+
+      <label for="tasks-scope-project" class="sr-only" i18n>Tablero de un proyecto</label>
+      <select id="tasks-scope-project"
+              class="h-8 rounded-md border border-border bg-background px-2 text-xs"
+              [class.ring-2]="scope() === 'project'" [class.ring-primary]="scope() === 'project'"
+              [ngModel]="tableState().filters?.['projectId'] ?? ''"
+              (ngModelChange)="$event ? setScope('project', $event) : setScope('all')">
+        <option value="" i18n>Proyecto…</option>
+        @for (p of projects(); track p.id) {
+          <option [value]="p.id">{{ p.name }}</option>
+        }
+      </select>
+
+      <label for="tasks-scope-team" class="sr-only" i18n>Tablero de un equipo</label>
+      <select id="tasks-scope-team"
+              class="h-8 rounded-md border border-border bg-background px-2 text-xs"
+              [class.ring-2]="scope() === 'team'" [class.ring-primary]="scope() === 'team'"
+              [ngModel]="tableState().filters?.['teamId'] ?? ''"
+              (ngModelChange)="$event ? setScope('team', $event) : setScope('all')">
+        <option value="" i18n>Equipo…</option>
+        @for (team of teams(); track team.id) {
+          <option [value]="team.id">{{ team.name }}</option>
+        }
+      </select>
+    </div>
   </div>
   <!-- VISTA BOARD -->
   @if (viewMode() === 'board') {

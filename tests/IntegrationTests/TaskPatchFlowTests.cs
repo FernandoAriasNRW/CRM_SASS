@@ -52,7 +52,7 @@ public sealed class TaskPatchFlowTests(CrmApiFactory factory)
         {
             tenantId,
             createdById = Guid.NewGuid(),
-            projectId = Guid.NewGuid(),
+            projectId = await TestProjects.CreateAsync(client),
             title = title,
             description = "creada por las pruebas de integración",
             assigneeId = Guid.NewGuid(),
@@ -202,7 +202,7 @@ public sealed class TaskPatchFlowTests(CrmApiFactory factory)
         {
             tenantId,
             createdById = Guid.NewGuid(),
-            projectId = Guid.NewGuid(),
+            projectId = await TestProjects.CreateAsync(client),
             title = "Con calendario",
             description = "creada por las pruebas de integración",
             assigneeId = Guid.NewGuid(),

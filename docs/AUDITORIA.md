@@ -968,8 +968,6 @@ que lleva «8b» en el título. Lo único que sigue siendo propio de un disparad
   enganchado al compartido.
 - **Lo que el frontend pide y la API no tiene** (§22.3): la pantalla de webhooks, las
   notificaciones push, `GET /dashboards/{id}` y el aviso `notification_received`.
-- **El tablero de tareas no se suscribe a ningún proyecto** (§22.4): `connectBoard` existe y nadie
-  la llama, así que las tareas que mueve otra persona no se ven hasta recargar.
 - **`/projects` no ordena ni filtra por fechas, y `/reports` no ordena, no busca ni filtra por
   formato**, aunque las pantallas manden esos parámetros: se ignoran sin error.
 
@@ -1650,7 +1648,7 @@ Lo que se cambió:
 usuario de otra organización pide los mismos grupos: el tablero, el canal y los tickets le llegan
 al dueño y a él no. Quitando el inquilino del nombre del grupo, la prueba del tablero falla.
 
-Queda una cosa: **el tablero de tareas no llama a `connectBoard`**. La pantalla mezcla tareas de
+Quedaba una cosa: **el tablero de tareas no llamaba a `connectBoard`**. Resuelto en §23. La pantalla mezcla tareas de
 varios proyectos y no se suscribe a ninguno, así que el aviso `task_moved` sale y nadie lo
 escucha.
 
@@ -1680,3 +1678,66 @@ parten de ellos.
 
 Lo prueban `TeamMembersFlowTests`, que lee el equipo después de guardar, la prueba de Karma de
 `admin-teams` y la e2e `team-members`, que marca y desmarca pulsando los nombres.
+
+## 23. Tareas, proyectos y tableros
+
+Octubre de 2026. Es el primero de cinco bloques pedidos juntos. Los otros cuatro, en este orden,
+con un PR cada uno:
+
+2. Documentos adjuntos a una tarea.
+3. Menciones en los comentarios: personas, equipos, proyectos, tareas, tickets y documentos.
+4. Webhooks: catálogo completo, cada suscripción elige sus eventos (ninguna recibe todo por
+   defecto), y entrega en segundo plano con reintentos y registro.
+5. Notificaciones a quien crea o lleva una tarea, un ticket o un proyecto. También avisos de chat,
+   informes, equipos, usuarios y webhooks. Las preferencias las cambia cada uno, con límites según
+   el rol.
+
+### 23.1 Toda tarea pertenece a un proyecto que existe
+
+La tarea tenía `ProjectId`, pero nadie lo comprobaba. Se podía crear una tarea en un proyecto
+inventado o de otra organización, y entonces no salía en el tablero de ningún proyecto. Las
+pruebas de integración lo hacían en 17 ficheros.
+
+Ahora `CreateTaskCommandHandler` lo comprueba con un puerto nuevo, `IProjectCatalog`, que
+implementa Projects. Un proyecto borrado o archivado no cuenta. Las tareas que ya existían no se
+tocan.
+
+### 23.2 El tablero por ámbito
+
+El tablero se puede pedir de cuatro formas, y como el ámbito queda en los filtros de la vista,
+cada una se puede guardar como vista:
+
+| Ámbito | Petición |
+|---|---|
+| Toda la organización | `GET /tasks` |
+| Mis tareas | `?filter=mine` |
+| Un proyecto | `?projectId=` |
+| Un equipo | `?teamId=`: las tareas que lleva alguno de sus miembros. Un equipo inexistente es 404 |
+
+Desde la lista de proyectos y desde la ficha de un proyecto se llega a su tablero («Ver
+tablero»).
+
+Al hacerlo salieron dos fallos:
+
+- **«De mi equipo» (`filter=team`) no devolvía nunca nada.** Buscaba el id de la persona dentro
+  de las etiquetas de la tarea, y lo mismo en proyectos. Ahora son las tareas que lleva gente de
+  mis equipos, y en proyectos los que posee gente de mis equipos. La lista la da otro puerto,
+  `ITeamDirectory`, que implementa Teams.
+- **El selector de proyecto del tablero enseñaba identificadores.** Salía de las tareas cargadas,
+  así que un proyecto sin tareas no se podía elegir. Ahora sale de la lista de proyectos.
+
+### 23.3 Tiempo real en cualquier ámbito
+
+El tablero se une a un grupo de SignalR con todas las tareas de la organización
+(`RealtimeGroups.Tasks`) y actualiza solo las tarjetas que tiene delante. Un único grupo sirve
+para los cuatro ámbitos. No enseña nada de más: cualquiera de la organización puede listar sus
+tareas. Al reconectar, la pantalla vuelve a unirse; antes, el tablero de tickets se quedaba fuera
+de su grupo tras un corte.
+
+Lo prueban:
+
+- `TaskBoardsFlowTests`: proyecto inexistente, tablero de proyecto y de equipo, y «de mi
+  equipo»;
+- una prueba nueva en `RealtimeFlowTests`;
+- la e2e `board-scopes`, que elige cada ámbito y va al tablero desde un proyecto.
+

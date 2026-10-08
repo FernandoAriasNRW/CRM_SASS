@@ -29,6 +29,7 @@ public static class TeamsInfrastructureExtensions
         services.AddScoped<ITeamsUnitOfWork, TeamsModuleUnitOfWork>();
 
         services.AddScoped<Teams.Application.Abstractions.Repositories.ITeamRepository, Teams.Infrastructure.Repositories.TeamRepository>();
+        services.AddScoped<BuildingBlocks.Application.Abstractions.ITeamDirectory, Teams.Infrastructure.Repositories.TeamDirectory>();
 
         return services;
     }

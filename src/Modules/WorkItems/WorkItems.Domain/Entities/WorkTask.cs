@@ -329,6 +329,12 @@ public sealed class WorkTask : AggregateRoot, ITenantEntity, ISoftDeletable, IAr
         public const string ParentIsSubtask = "Una subtarea no puede tener subtareas: el anidamiento admite un solo nivel";
         public const string HasSubtasks = "Una tarea con subtareas no puede convertirse en subtarea de otra";
         public const string ParentFromAnotherProject = "La tarea padre pertenece a otro proyecto";
+
+        /// <summary>
+        /// Toda tarea pertenece a un proyecto que existe: es por donde se llega a ella, desde el
+        /// tablero del proyecto. Una tarea con un proyecto inventado no sale en ningún tablero.
+        /// </summary>
+        public const string ProjectNotFound = "El proyecto no existe en la organización";
     }
 
     /// <summary>

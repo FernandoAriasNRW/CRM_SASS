@@ -129,7 +129,7 @@ public sealed class RealtimeFlowTests(CrmApiFactory factory)
     public async Task Joining_another_organizations_board_by_its_id_hears_nothing()
     {
         var (client, token) = await AuthenticateAsync();
-        var projectId = Guid.NewGuid();
+        var projectId = await TestProjects.CreateAsync(client);
 
         var creation = await client.PostAsJsonAsync("/api/v1/tasks", new
         {
@@ -164,6 +164,51 @@ public sealed class RealtimeFlowTests(CrmApiFactory factory)
 
         await Task.Delay(500);
         leaked.Should().BeEmpty("saber el identificador de un proyecto ajeno no da acceso a su tablero");
+    }
+
+    /// <summary>
+    /// El tablero de tareas se une al grupo de toda la organización, sea cual sea su ámbito —mías,
+    /// de un proyecto, de un equipo—, y oye las tareas de cualquier proyecto. No llamaba a nada:
+    /// <c>connectBoard</c> existía y ninguna pantalla la usaba.
+    /// </summary>
+    [Fact]
+    public async Task The_tasks_board_hears_moves_from_any_project_of_my_organization_only()
+    {
+        var (client, token) = await AuthenticateAsync();
+        var projectId = await TestProjects.CreateAsync(client);
+
+        var creation = await client.PostAsJsonAsync("/api/v1/tasks", new
+        {
+            projectId,
+            title = "Tarea que se mueve en el tablero de todas",
+            description = "Creada por las pruebas del tiempo real",
+            assigneeId = Guid.NewGuid(),
+            estimatedHours = 1m,
+            dueDate = "2026-12-01",
+        });
+        creation.EnsureSuccessStatusCode();
+        var taskId = (await creation.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetGuid();
+
+        await using var mine = Connect("hubs/board", token);
+        await using var stranger = Connect("hubs/board", ForeignToken());
+
+        var received = new TaskCompletionSource<Guid>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var leaked = new List<Guid>();
+        mine.On<JsonElement>("task_moved", t => received.TrySetResult(t.GetProperty("taskId").GetGuid()));
+        stranger.On<JsonElement>("task_moved", t => leaked.Add(t.GetProperty("taskId").GetGuid()));
+
+        await mine.StartAsync();
+        await stranger.StartAsync();
+        await mine.InvokeAsync("JoinTasks");
+        await stranger.InvokeAsync("JoinTasks");
+
+        (await client.PatchAsJsonAsync($"/api/v1/tasks/{taskId}", new { status = "In Progress" }))
+            .EnsureSuccessStatusCode();
+
+        (await received.Task.WaitAsync(Wait)).Should().Be(taskId);
+
+        await Task.Delay(500);
+        leaked.Should().BeEmpty("las tareas de otra organización no se oyen");
     }
 
     /// <summary>

@@ -21,6 +21,7 @@ public class WorkItemsTests
     private readonly ITaskRepository _repositoryMock;
     private readonly IWorkItemsUnitOfWork _unitOfWorkMock;
     private readonly ITaskQueries _queriesMock;
+    private readonly IProjectCatalog _projectsMock;
     private readonly Guid _tenantId = Guid.NewGuid();
     private readonly Guid _projectId = Guid.NewGuid();
     private readonly Guid _userId = Guid.NewGuid();
@@ -31,6 +32,8 @@ public class WorkItemsTests
         _repositoryMock = Substitute.For<ITaskRepository>();
         _unitOfWorkMock = Substitute.For<IWorkItemsUnitOfWork>();
         _queriesMock = Substitute.For<ITaskQueries>();
+        _projectsMock = Substitute.For<IProjectCatalog>();
+        _projectsMock.ExistsAsync(Arg.Any<Guid>(), Arg.Any<Guid>(), Arg.Any<CancellationToken>()).Returns(true);
     }
 
     #region WorkTask Domain Tests
@@ -78,7 +81,7 @@ public class WorkItemsTests
     public async Task CreateTask_WithValidCommand_ReturnsTask()
     {
         // Arrange
-        var handler = new CreateTaskCommandHandler(TimeProvider.System, _repositoryMock, _unitOfWorkMock);
+        var handler = new CreateTaskCommandHandler(TimeProvider.System, _repositoryMock, _unitOfWorkMock, _projectsMock);
         var command = new CreateTaskCommand(
             TenantId: _tenantId,
             CreatedById: _adminId,
@@ -259,7 +262,7 @@ public class WorkItemsTests
         _repositoryMock.GetByIdAsync(_tenantId, Arg.Any<Guid>(), Arg.Any<CancellationToken>())
             .Returns((WorkTask?)null);
 
-        var handler = new CreateTaskCommandHandler(TimeProvider.System, _repositoryMock, _unitOfWorkMock);
+        var handler = new CreateTaskCommandHandler(TimeProvider.System, _repositoryMock, _unitOfWorkMock, _projectsMock);
         var result = await handler.Handle(new CreateTaskCommand(
             TenantId: _tenantId, CreatedById: _adminId, ProjectId: _projectId,
             Title: "Subtarea huérfana", Description: "x", AssigneeId: _userId,
@@ -268,6 +271,24 @@ public class WorkItemsTests
 
         result.IsSuccess.Should().BeFalse();
         result.Error.Should().Be(WorkTask.NestingRules.ParentNotFound);
+        await _repositoryMock.DidNotReceive().AddAsync(Arg.Any<WorkTask>(), Arg.Any<CancellationToken>());
+    }
+
+    /// <summary>Toda tarea pertenece a un proyecto que existe en la organización.</summary>
+    [Fact]
+    public async Task CreateTask_InAProjectThatDoesNotExistIsRejected()
+    {
+        _projectsMock.ExistsAsync(_tenantId, _projectId, Arg.Any<CancellationToken>()).Returns(false);
+
+        var handler = new CreateTaskCommandHandler(TimeProvider.System, _repositoryMock, _unitOfWorkMock, _projectsMock);
+        var result = await handler.Handle(new CreateTaskCommand(
+            TenantId: _tenantId, CreatedById: _adminId, ProjectId: _projectId,
+            Title: "Tarea sin proyecto", Description: "x", AssigneeId: _userId,
+            EstimatedHours: 1, DueDate: DateOnly.FromDateTime(DateTime.UtcNow),
+            Priority: null), CancellationToken.None);
+
+        result.IsSuccess.Should().BeFalse();
+        result.Error.Should().Be(WorkTask.NestingRules.ProjectNotFound);
         await _repositoryMock.DidNotReceive().AddAsync(Arg.Any<WorkTask>(), Arg.Any<CancellationToken>());
     }
 
@@ -291,7 +312,7 @@ public class WorkItemsTests
 
         // El handler usa GetByTenantWithPaginationAsync, no GetByTenantAsync.
         _queriesMock.GetByTenantWithPaginationAsync(
-                _tenantId, null, null, null, null, null, null, false,
+                _tenantId, null, null, null, null, null, null, false, null,
                 Arg.Any<PaginationRequest>(), Arg.Any<CancellationToken>())
             .Returns(pagedResult);
 

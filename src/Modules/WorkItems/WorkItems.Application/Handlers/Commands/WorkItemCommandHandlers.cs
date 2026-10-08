@@ -10,10 +10,14 @@ namespace WorkItems.Application.Handlers.Commands;
 public sealed class CreateTaskCommandHandler(
     TimeProvider timeProvider,
     ITaskRepository repository,
-    IWorkItemsUnitOfWork unitOfWork) : ICommandHandler<CreateTaskCommand, WorkTask>
+    IWorkItemsUnitOfWork unitOfWork,
+    IProjectCatalog projects) : ICommandHandler<CreateTaskCommand, WorkTask>
 {
   public async Task<Result<WorkTask>> Handle(CreateTaskCommand request, CancellationToken cancellationToken)
   {
+    if (!await projects.ExistsAsync(request.TenantId, request.ProjectId, cancellationToken))
+      return Result<WorkTask>.Failure(WorkTask.NestingRules.ProjectNotFound);
+
     // Si nace como subtarea, el padre tiene que existir, ser del mismo proyecto y no ser él
     // mismo una subtarea. Se comprueba antes de crear para no dejar nada a medias.
     if (request.ParentTaskId.HasValue)

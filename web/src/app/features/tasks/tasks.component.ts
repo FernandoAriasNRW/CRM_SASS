@@ -159,6 +159,7 @@ export class TasksComponent implements OnInit {
   // Advanced Filters definition
   filterFields = computed<FilterField[]>(() => [
     { key: 'projectId', label: $localize`Proyecto`, type: 'select', options: this.projectOptions() },
+    { key: 'teamId', label: $localize`Equipo`, type: 'select', options: this.teamOptions() },
     { key: 'status', label: $localize`Estado`, type: 'select', options: TASK_STATUSES.map(e => ({ label: e.label, value: e.key })) },
     { key: 'priority', label: $localize`Prioridad`, type: 'select', options: PRIORITIES.map(p => ({ label: p.label, value: p.key })) },
     { key: 'startDate', label: $localize`Desde`, type: 'date' },
@@ -176,12 +177,65 @@ export class TasksComponent implements OnInit {
   cols: Column[] = COLUMN_DEFS.map(c => ({ ...c, tasks: [] as TaskItem[], pending: [] as TaskItem[] }));
   readonly columnIds = COLUMN_DEFS.map(c => c.key);
 
-  readonly projectOptions = computed(() => {
-    const seen = new Set<string>();
-    return this.allTasks()
-      .filter(t => t.projectId && !seen.has(t.projectId) && (seen.add(t.projectId), true))
-      .map(t => ({ label: t.projectId, value: t.projectId }));
+  /**
+   * Los proyectos y equipos de la organización, para elegir el ámbito del tablero.
+   *
+   * El selector de proyecto se sacaba de las tareas cargadas y enseñaba sus identificadores como
+   * nombre: un proyecto sin tareas no se podía elegir, y los que sí, se leían como un Guid.
+   */
+  readonly projects = signal<{ id: string; name: string }[]>([]);
+  readonly teams = signal<{ id: string; name: string }[]>([]);
+
+  readonly projectOptions = computed(() => this.projects().map(p => ({ label: p.name, value: p.id })));
+  readonly teamOptions = computed(() => this.teams().map(t => ({ label: t.name, value: t.id })));
+
+  /**
+   * De quién son las tareas del tablero: de toda la organización, mías, de un proyecto o de un
+   * equipo. Vive en los filtros del estado de la tabla, así que una vista guardada recuerda su
+   * ámbito: «el tablero de mi equipo» o «el del proyecto X» se guardan como cualquier vista.
+   */
+  readonly scope = computed<'all' | 'mine' | 'project' | 'team'>(() => {
+    const filters = this.tableState().filters ?? {};
+    if (filters['projectId']) return 'project';
+    if (filters['teamId']) return 'team';
+    if (filters['filter'] === 'mine') return 'mine';
+    return 'all';
   });
+
+  setScope(kind: 'all' | 'mine' | 'project' | 'team', id?: string): void {
+    this.tableState.update(s => {
+      const filters = { ...(s.filters ?? {}) };
+      delete filters['projectId'];
+      delete filters['teamId'];
+      if (filters['filter'] === 'mine') delete filters['filter'];
+
+      if (kind === 'mine') filters['filter'] = 'mine';
+      if (kind === 'project' && id) filters['projectId'] = id;
+      if (kind === 'team' && id) filters['teamId'] = id;
+
+      return { ...s, filters, page: 1 };
+    });
+    this.activeViewId.set(null);
+    this.loadTasks();
+  }
+
+  /**
+   * Los selectores de ámbito son secundarios: si una de estas listas falla o llega con otra
+   * forma, el selector se queda vacío, pero el tablero se pinta igual.
+   */
+  private loadScopeOptions(): void {
+    this.api.get<{ items?: { id: string; name: string | { value: string } }[] }>('/projects', { pageSize: 1000 }).subscribe({
+      next: res => this.projects.set((Array.isArray(res?.items) ? res.items : []).map(p => ({
+        id: p.id,
+        name: typeof p.name === 'string' ? p.name : p.name?.value ?? p.id,
+      }))),
+      error: () => this.projects.set([]),
+    });
+    this.api.get<{ id: string; name: string }[]>('/teams').subscribe({
+      next: teams => this.teams.set(Array.isArray(teams) ? teams : []),
+      error: () => this.teams.set([]),
+    });
+  }
 
   statusBadge(status: string): BadgeVariant { return taskStatusBadge(status); }
 
@@ -248,6 +302,8 @@ export class TasksComponent implements OnInit {
     this.tableColumns.find(c => c.key === 'status')!.template = this.statusTemplate;
     this.tableColumns.find(c => c.key === 'priority')!.template = this.priorityTemplate;
     this.loadViews();
+    this.loadScopeOptions();
+    this.realtime.connectTasks();
 
     this.route.queryParams.subscribe(params => {
       // «Nuevo …» de la paleta de comandos llega con ?create=1: abre el formulario y quita el
@@ -272,6 +328,20 @@ export class TasksComponent implements OnInit {
           return { ...s, filters: f };
         });
       }
+
+      // Desde un proyecto o un equipo se llega a su tablero con ?projectId= o ?teamId=.
+      if (params['projectId'] || params['teamId']) {
+        this.tableState.update(s => {
+          const f = { ...s.filters };
+          delete f['projectId'];
+          delete f['teamId'];
+          if (params['projectId']) f['projectId'] = params['projectId'];
+          else f['teamId'] = params['teamId'];
+          return { ...s, filters: f, page: 1 };
+        });
+      }
+      if (params['view']) this.applyMode(params['view']);
+
       this.loadTasks();
     });
 
@@ -411,6 +481,7 @@ export class TasksComponent implements OnInit {
       if (state.filters['startDate']) params.startDate = state.filters['startDate'];
       if (state.filters['endDate']) params.endDate = state.filters['endDate'];
       if (state.filters['projectId']) params.projectId = state.filters['projectId'];
+      if (state.filters['teamId']) params.teamId = state.filters['teamId'];
       if (state.filters['status']) params.status = state.filters['status'];
       if (state.filters['priority']) params.priority = state.filters['priority'];
       if (state.filters['filter']) params.filter = state.filters['filter'];

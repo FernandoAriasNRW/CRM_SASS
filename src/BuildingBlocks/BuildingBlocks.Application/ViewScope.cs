@@ -21,7 +21,8 @@ public sealed record ViewScope(
     Guid? UserId = null,
     IReadOnlyList<Guid>? FavoriteIds = null,
     IReadOnlyList<Guid>? SharedWithMeIds = null,
-    IReadOnlyList<Guid>? SharedWithOthersIds = null)
+    IReadOnlyList<Guid>? SharedWithOthersIds = null,
+    IReadOnlyList<Guid>? TeamMateIdsList = null)
 {
     /// <summary>Lo que marcó esta persona con la estrella.</summary>
     public IReadOnlyList<Guid> Favorites { get; } = FavoriteIds ?? [];
@@ -34,6 +35,13 @@ public sealed record ViewScope(
     /// lo mío que no está aquí.
     /// </summary>
     public IReadOnlyList<Guid> SharedWithOthers { get; } = SharedWithOthersIds ?? [];
+
+    /// <summary>
+    /// Las personas con las que comparto equipo, yo incluida. Es lo que significa «de mi
+    /// equipo»: lo que lleva gente de mis equipos. El filtro buscaba el id de la persona dentro
+    /// de las etiquetas, que no tiene nada que ver, y no devolvía nunca nada.
+    /// </summary>
+    public IReadOnlyList<Guid> TeamMateIds { get; } = TeamMateIdsList ?? [];
 
     /// <summary>Sin entrada de menú pulsada: la lista de siempre.</summary>
     public static ViewScope None { get; } = new();

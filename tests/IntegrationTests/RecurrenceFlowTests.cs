@@ -72,7 +72,7 @@ public sealed class RecurrenceFlowTests(CrmApiFactory factory)
     public async Task A_task_can_be_marked_recurring_and_shows_on_read()
     {
         var (client, tenantId) = await AuthenticateAsync();
-        var task = await CreateTaskAsync(client, tenantId, Guid.NewGuid(), "Informe semanal", new DateOnly(2026, 9, 1));
+        var task = await CreateTaskAsync(client, tenantId, await TestProjects.CreateAsync(client), "Informe semanal", new DateOnly(2026, 9, 1));
 
         var set = await client.PutAsJsonAsync($"/api/v1/tasks/{task}/recurrence", new
         {
@@ -92,7 +92,7 @@ public sealed class RecurrenceFlowTests(CrmApiFactory factory)
     public async Task The_generator_sees_the_series_even_without_a_user()
     {
         var (client, tenantId) = await AuthenticateAsync();
-        var project = Guid.NewGuid();
+        var project = await TestProjects.CreateAsync(client);
         var mark = $"serie-{Guid.NewGuid():N}";
         var task = await CreateTaskAsync(client, tenantId, project, mark, new DateOnly(2026, 1, 5));
 
@@ -127,7 +127,7 @@ public sealed class RecurrenceFlowTests(CrmApiFactory factory)
         // El generador cruza tenants para leer, pero lo que escribe tiene que quedar aislado: si
         // una ocurrencia naciera con el tenant vacío, sería invisible para todo el mundo.
         var (client, tenantId) = await AuthenticateAsync();
-        var project = Guid.NewGuid();
+        var project = await TestProjects.CreateAsync(client);
         var mark = $"aislada-{Guid.NewGuid():N}";
         var task = await CreateTaskAsync(client, tenantId, project, mark, new DateOnly(2026, 2, 2));
 
@@ -152,7 +152,7 @@ public sealed class RecurrenceFlowTests(CrmApiFactory factory)
     public async Task Generating_twice_does_not_duplicate_occurrences()
     {
         var (client, tenantId) = await AuthenticateAsync();
-        var project = Guid.NewGuid();
+        var project = await TestProjects.CreateAsync(client);
         var mark = $"idempotente-{Guid.NewGuid():N}";
         var task = await CreateTaskAsync(client, tenantId, project, mark, new DateOnly(2026, 3, 3));
 
@@ -175,7 +175,7 @@ public sealed class RecurrenceFlowTests(CrmApiFactory factory)
     public async Task Stopping_the_repeat_stops_the_series()
     {
         var (client, tenantId) = await AuthenticateAsync();
-        var project = Guid.NewGuid();
+        var project = await TestProjects.CreateAsync(client);
         var task = await CreateTaskAsync(client, tenantId, project, $"parada-{Guid.NewGuid():N}", new DateOnly(2026, 4, 4));
 
         await client.PutAsJsonAsync($"/api/v1/tasks/{task}/recurrence", new
@@ -195,7 +195,7 @@ public sealed class RecurrenceFlowTests(CrmApiFactory factory)
     public async Task A_made_up_frequency_is_rejected()
     {
         var (client, tenantId) = await AuthenticateAsync();
-        var task = await CreateTaskAsync(client, tenantId, Guid.NewGuid(), "Rara", new DateOnly(2026, 5, 5));
+        var task = await CreateTaskAsync(client, tenantId, await TestProjects.CreateAsync(client), "Rara", new DateOnly(2026, 5, 5));
 
         var response = await client.PutAsJsonAsync($"/api/v1/tasks/{task}/recurrence", new
         {

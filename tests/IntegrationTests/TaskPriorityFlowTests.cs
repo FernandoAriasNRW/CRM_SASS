@@ -53,11 +53,11 @@ public sealed class TaskPriorityFlowTests(CrmApiFactory factory)
         return Guid.Parse(json.RootElement.GetProperty("tenantId").GetString()!);
     }
 
-    private static object TaskBody(Guid tenantId, string title, string? priority) => new
+    private static object TaskBody(Guid tenantId, Guid projectId, string title, string? priority) => new
     {
         tenantId,
         createdById = Guid.NewGuid(),
-        projectId = Guid.NewGuid(),
+        projectId,
         title = title,
         description = "creada por las pruebas de integración",
         assigneeId = Guid.NewGuid(),
@@ -68,7 +68,7 @@ public sealed class TaskPriorityFlowTests(CrmApiFactory factory)
 
     private async Task<JsonElement> CreateAsync(HttpClient client, Guid tenantId, string title, string? priority)
     {
-        var response = await client.PostAsJsonAsync("/api/v1/tasks", TaskBody(tenantId, title, priority));
+        var response = await client.PostAsJsonAsync("/api/v1/tasks", TaskBody(tenantId, await TestProjects.CreateAsync(client), title, priority));
         response.StatusCode.Should().Be(HttpStatusCode.Created);
         return await response.Content.ReadFromJsonAsync<JsonElement>();
     }
@@ -119,7 +119,7 @@ public sealed class TaskPriorityFlowTests(CrmApiFactory factory)
         var (client, tenantId) = await AuthenticateAsync();
 
         var response = await client.PostAsJsonAsync("/api/v1/tasks",
-            TaskBody(tenantId, "Prioridad inventada", "Altísima"));
+            TaskBody(tenantId, await TestProjects.CreateAsync(client), "Prioridad inventada", "Altísima"));
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }

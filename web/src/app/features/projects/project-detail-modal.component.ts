@@ -5,7 +5,8 @@ import { ToastService } from '../../shared/services/toast.service';
 import { Store } from '@ngrx/store';
 import { projectDeleted, projectUpdated, type Project } from '../../state/projects/projects.state';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import { lucideLoader2, lucideTrash2, lucideEdit3, lucideX } from '@ng-icons/lucide';
+import { lucideLoader2, lucideTrash2, lucideEdit3, lucideX, lucideLayoutDashboard } from '@ng-icons/lucide';
+import { Router } from '@angular/router';
 
 import { DrawerComponent } from '../../shared/ui/drawer.component';
 import { TagFieldComponent } from '../../shared/ui/tag-field.component';
@@ -17,7 +18,7 @@ import { errorMessage } from '../../shared/utils/error-message';
   selector: 'app-project-detail-modal',
   standalone: true,
   imports: [CommentsComponent, FormsModule, NgIconComponent, DrawerComponent, TagFieldComponent],
-  viewProviders: [provideIcons({ lucideLoader2, lucideTrash2, lucideEdit3, lucideX })],
+  viewProviders: [provideIcons({ lucideLoader2, lucideTrash2, lucideEdit3, lucideX, lucideLayoutDashboard })],
   templateUrl: './project-detail-modal.component.html',
 })
 export class ProjectDetailModalComponent implements OnInit {
@@ -42,6 +43,13 @@ export class ProjectDetailModalComponent implements OnInit {
   private readonly api = inject(ApiService);
   private readonly store = inject(Store);
   private readonly toast = inject(ToastService);
+  private readonly router = inject(Router);
+
+  /** Al tablero de tareas del proyecto: sus tareas, y sólo las suyas. */
+  openBoard(): void {
+    this.closed.emit();
+    void this.router.navigate(['/tasks'], { queryParams: { projectId: this.project().id, view: 'board' } });
+  }
 
   ngOnInit(): void {
     const p = this.project();

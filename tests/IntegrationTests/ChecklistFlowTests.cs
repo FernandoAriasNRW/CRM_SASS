@@ -43,7 +43,7 @@ public sealed class ChecklistFlowTests(CrmApiFactory factory)
         {
             tenantId,
             createdById = Guid.NewGuid(),
-            projectId = Guid.NewGuid(),
+            projectId = await TestProjects.CreateAsync(client),
             title = title,
             description = "creada por las pruebas de integración",
             assigneeId = Guid.NewGuid(),

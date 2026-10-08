@@ -17,5 +17,10 @@ public sealed record GetTasksQuery(
     BuildingBlocks.Application.ViewScope? ViewScope,
     PaginationRequest Pagination,
     Guid? ParentTaskId = null,
-    bool IncludeSubtasks = false
+    bool IncludeSubtasks = false,
+    /// <summary>
+    /// El tablero de un equipo: sólo las tareas que lleva alguno de estos miembros. <c>null</c> es
+    /// no filtrar; una lista vacía —un equipo sin nadie— no devuelve nada.
+    /// </summary>
+    IReadOnlyList<Guid>? TeamMemberIds = null
 ) : IQuery<PagedResult<TaskDto>>;

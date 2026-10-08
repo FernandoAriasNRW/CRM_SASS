@@ -24,6 +24,7 @@ export class RealtimeService {
   readonly ticketMoved$ = new Subject<{ ticketId: string; status: string }>();
   private chatHub: signalR.HubConnection | null = null;
   private ticketsHub: signalR.HubConnection | null = null;
+  private boardHub: signalR.HubConnection | null = null;
 
   connect(): void {
     if (this.hub?.state === signalR.HubConnectionState.Connected) return;
@@ -40,17 +41,27 @@ export class RealtimeService {
     this.hub.start().catch(err => console.warn('SignalR connection failed:', err));
   }
 
-  connectBoard(projectId: string): void {
-    const boardHub = new signalR.HubConnectionBuilder()
+  /**
+   * Las tareas que se mueven en la organización, para el tablero sea cual sea su ámbito —mías, de
+   * un proyecto, de un equipo, de todos—. La pantalla sólo actualiza las tarjetas que tiene
+   * delante. Se llamaba `connectBoard(projectId)` y ninguna pantalla la usaba, así que una tarea
+   * movida por otra persona no se veía hasta recargar.
+   */
+  connectTasks(): void {
+    if (this.boardHub?.state === signalR.HubConnectionState.Connected) return;
+
+    this.boardHub = new signalR.HubConnectionBuilder()
       .withUrl('http://localhost:8080/hubs/board', {
         accessTokenFactory: () => this.authStore.getAccessToken() ?? '',
       })
       .withAutomaticReconnect()
       .build();
 
-    boardHub.on('task_moved', (task: any) => this.taskMoved$.next(task));
-    boardHub.start()
-      .then(() => boardHub.invoke('JoinBoard', projectId))
+    this.boardHub.on('task_moved', (task: any) => this.taskMoved$.next(task));
+    // Al reconectar, la conexión es nueva y no está en ningún grupo: hay que volver a unirse.
+    this.boardHub.onreconnected(() => this.boardHub?.invoke('JoinTasks'));
+    this.boardHub.start()
+      .then(() => this.boardHub?.invoke('JoinTasks'))
       .catch(err => console.warn('Board hub failed:', err));
   }
 
@@ -66,6 +77,7 @@ export class RealtimeService {
       .build();
 
     this.ticketsHub.on('ticket_moved', (ticket: any) => this.ticketMoved$.next(ticket));
+    this.ticketsHub.onreconnected(() => this.ticketsHub?.invoke('JoinTickets'));
     this.ticketsHub.start()
       .then(() => this.ticketsHub?.invoke('JoinTickets'))
       .catch(err => console.warn('Tickets hub failed:', err));
@@ -91,5 +103,6 @@ export class RealtimeService {
     this.hub?.stop();
     this.chatHub?.stop();
     this.ticketsHub?.stop();
+    this.boardHub?.stop();
   }
 }

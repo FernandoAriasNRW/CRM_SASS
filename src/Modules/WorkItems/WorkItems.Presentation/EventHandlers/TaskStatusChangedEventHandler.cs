@@ -16,8 +16,10 @@ public sealed class TaskStatusChangedEventHandler(
   {
     var domainEvent = notification.DomainEvent;
     
-    // Al tablero del proyecto, dentro de la organización de la tarea.
-    await hubContext.Clients.Group(RealtimeGroups.Board(domainEvent.TenantId, domainEvent.ProjectId))
+    // Al tablero del proyecto y al de todas las tareas, dentro de la organización de la tarea.
+    await hubContext.Clients.Groups(
+            RealtimeGroups.Board(domainEvent.TenantId, domainEvent.ProjectId),
+            RealtimeGroups.Tasks(domainEvent.TenantId))
         .SendAsync("task_moved", new { taskId = domainEvent.TaskId, status = domainEvent.NewStatus }, cancellationToken);
         
     logger.LogInformation("Broadcasted task {TaskId} moved to status {Status} in board {ProjectId}", domainEvent.TaskId, domainEvent.NewStatus, domainEvent.ProjectId);

@@ -170,7 +170,7 @@ public sealed class TimeBasedAutomationsFlowTests(CrmApiFactory factory)
         // Crear una tarea dispara TareaCreada.
         var task = await client.PostAsJsonAsync("/api/v1/tasks", new
         {
-            projectId = Guid.NewGuid(),
+            projectId = await TestProjects.CreateAsync(client),
             title = "Tarea que dispara la regla",
             description = "Para ver qué anota el registro",
             assigneeId = Guid.Empty,
@@ -195,7 +195,7 @@ public sealed class TimeBasedAutomationsFlowTests(CrmApiFactory factory)
 
         // La regla se acota a un proyecto que sólo usa esta prueba. Ver el comentario de la
         // clase: una regla activa sin condiciones alcanzaría a las tareas de las demás.
-        var myProject = Guid.NewGuid();
+        var myProject = await TestProjects.CreateAsync(client);
 
         var creation = await DefineAsync(client, Unique("Urgente en mi proyecto"), "TaskCreated",
             conditions: [new { field = "ProjectId", @operator = "EqualTo", value = myProject.ToString() }],

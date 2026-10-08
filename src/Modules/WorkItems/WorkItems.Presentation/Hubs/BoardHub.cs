@@ -14,6 +14,17 @@ namespace WorkItems.Presentation.Hubs;
 [Authorize]
 public class BoardHub : Hub
 {
+    /// <summary>Todas las tareas de la organización de quien llama. Ver <see cref="RealtimeGroups.Tasks"/>.</summary>
+    public async Task JoinTasks()
+    {
+        await Groups.AddToGroupAsync(Context.ConnectionId, RealtimeGroups.Tasks(CallerTenant()));
+    }
+
+    public async Task LeaveTasks()
+    {
+        await Groups.RemoveFromGroupAsync(Context.ConnectionId, RealtimeGroups.Tasks(CallerTenant()));
+    }
+
     public async Task JoinBoard(Guid projectId)
     {
         await Groups.AddToGroupAsync(Context.ConnectionId, RealtimeGroups.Board(CallerTenant(), projectId));

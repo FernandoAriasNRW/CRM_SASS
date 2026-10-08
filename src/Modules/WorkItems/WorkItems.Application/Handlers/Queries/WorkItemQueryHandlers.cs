@@ -14,7 +14,7 @@ public sealed class GetTasksQueryHandler(ITaskQueries queries)
     var result = await queries.GetByTenantWithPaginationAsync(
         request.TenantId, request.ProjectId, request.AssigneeId, request.Status,
         request.Priority, request.ViewScope,
-        request.ParentTaskId, request.IncludeSubtasks,
+        request.ParentTaskId, request.IncludeSubtasks, request.TeamMemberIds,
         request.Pagination, cancellationToken);
 
     return Result<PagedResult<TaskDto>>.Success(result);
