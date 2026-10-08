@@ -9,8 +9,11 @@ import { UsersService } from '../../core/users.service';
   template: `
     @if (user(); as u) {
       <div class="flex items-center gap-2">
+        <!-- Sólo el avatar: el nombre va en el title y en el nombre accesible, que es lo que
+             dice de quién son unas iniciales. -->
         <div class="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center text-xs font-medium text-white shadow-sm"
-          [style.backgroundColor]="u.avatarUrl ? 'transparent' : getColor(u.id)">
+          [style.backgroundColor]="u.avatarUrl ? 'transparent' : getColor(u.id)"
+          [title]="u.name" role="img" [attr.aria-label]="u.name">
           @if (u.avatarUrl) {
             <img [src]="u.avatarUrl" [alt]="u.name" class="w-full h-full object-cover" />
           }
@@ -18,14 +21,10 @@ import { UsersService } from '../../core/users.service';
             <span>{{ getInitials(u.name) }}</span>
           }
         </div>
-        <span class="text-sm text-muted-foreground font-medium truncate max-w-[150px]" [title]="u.name">
-          {{ u.name }}
-        </span>
       </div>
     } @else {
       <div class="flex items-center gap-2 animate-pulse">
         <div class="w-8 h-8 rounded-full bg-secondary"></div>
-        <div class="h-4 bg-secondary rounded w-24"></div>
       </div>
     }
     `
