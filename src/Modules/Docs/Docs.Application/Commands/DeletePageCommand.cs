@@ -8,6 +8,7 @@ namespace Docs.Application.Commands;
 public record DeletePageCommand(Guid PageId) : IRequest<Result>, IAuthorizeEntity
 {
     // La página no lleva el documento, así que se comprueba el nivel sobre los documentos en general.
+    // El del documento concreto lo comprueba el manejador con la página ya cargada (PagePermissions).
     public string EntityType => "Document";
     public Guid EntityId => Guid.Empty;
     public string RequiredPermission => "Write";

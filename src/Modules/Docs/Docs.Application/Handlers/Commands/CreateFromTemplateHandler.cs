@@ -74,7 +74,7 @@ public class CreateFromTemplateHandler(TimeProvider timeProvider, IDocumentRepos
         int order = 0;
         foreach (var pageData in templatePages)
         {
-            var page = Page.Create(timeProvider.GetUtcNow().UtcDateTime, document.Id, null, pageData.PageTitle, pageData.Content, order++);
+            var page = Page.Create(timeProvider.GetUtcNow().UtcDateTime, document.TenantId, document.Id, null, pageData.PageTitle, pageData.Content, order++);
             await repository.AddPageAsync(page, cancellationToken);
         }
 

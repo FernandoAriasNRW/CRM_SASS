@@ -2,6 +2,7 @@ using BuildingBlocks.Application.Authorization;
 using BuildingBlocks.Application.Abstractions;
 using BuildingBlocks.Domain;
 using Docs.Application.Abstractions.Repositories;
+using Docs.Application.Authorization;
 using Docs.Domain.Entities;
 using MediatR;
 
@@ -10,6 +11,7 @@ namespace Docs.Application.Handlers.Commands;
 public record UpdatePageCommand(Guid PageId, string Title, string Content) : IRequest<Result>, IAuthorizeEntity
 {
     // La página no lleva el documento, así que se comprueba el nivel sobre los documentos en general.
+    // El del documento concreto lo comprueba el manejador con la página ya cargada (PagePermissions).
     public string EntityType => "Document";
     public Guid EntityId => Guid.Empty;
     public string RequiredPermission => "Write";
@@ -19,13 +21,16 @@ public class UpdatePageHandler(
     TimeProvider timeProvider,
     IDocumentRepository documentRepository,
     Mentions.MentionUpdater mentionUpdater,
-    IUserContext userContext) : IRequestHandler<UpdatePageCommand, Result>
+    IUserContext userContext,
+    IEntityPermissionService permissions) : IRequestHandler<UpdatePageCommand, Result>
 {
     public async Task<Result> Handle(UpdatePageCommand request, CancellationToken cancellationToken)
     {
         var page = await documentRepository.GetPageByIdAsync(request.PageId, cancellationToken);
         if (page == null)
             return Result.Failure("The page was not found.");
+
+        await permissions.EnsureCanWriteAsync(userContext, page, cancellationToken);
 
         page.UpdateContent(timeProvider.GetUtcNow().UtcDateTime, request.Title, request.Content);
 

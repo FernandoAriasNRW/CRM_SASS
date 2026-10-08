@@ -10,6 +10,9 @@ public sealed class PageConfiguration : IEntityTypeConfiguration<Page>
     {
         builder.HasKey(p => p.Id);
 
+        // Las páginas de un documento, dentro de su inquilino: es la consulta del árbol lateral.
+        builder.HasIndex(p => new { p.TenantId, p.DocumentId });
+
         builder.Property(p => p.Title).HasMaxLength(255).IsRequired();
         builder.Property(p => p.Content).HasColumnType("longtext");
 

@@ -37,7 +37,7 @@ public class ImportDocumentHandler(TimeProvider timeProvider, IDocumentRepositor
             content = string.Join("", paragraphs.Select(p => $"<p>{System.Net.WebUtility.HtmlEncode(p).Replace("\n", "<br/>")}</p>"));
         }
 
-        var page = Page.Create(timeProvider.GetUtcNow().UtcDateTime, document.Id, null, title, content, 0);
+        var page = Page.Create(timeProvider.GetUtcNow().UtcDateTime, document.TenantId, document.Id, null, title, content, 0);
         await repository.AddPageAsync(page, cancellationToken);
 
         await repository.SaveChangesAsync(cancellationToken);

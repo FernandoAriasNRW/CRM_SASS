@@ -25,12 +25,14 @@ public class CreatePageHandler(TimeProvider timeProvider, IDocumentRepository do
         if (request.ParentPageId.HasValue)
         {
             var parentPage = await documentRepository.GetPageByIdAsync(request.ParentPageId.Value, cancellationToken);
-            if (parentPage == null)
+            // La página madre tiene que ser de este mismo documento: si no, la nueva colgaría de
+            // un árbol ajeno y no aparecería en ninguno de los dos.
+            if (parentPage == null || parentPage.DocumentId != document.Id)
                 return Result<Guid>.Failure("The parent page was not found.");
             order = parentPage.SubPages.Count;
         }
 
-        var page = Page.Create(timeProvider.GetUtcNow().UtcDateTime, request.DocumentId, request.ParentPageId, request.Title, string.Empty, order);
+        var page = Page.Create(timeProvider.GetUtcNow().UtcDateTime, document.TenantId, document.Id, request.ParentPageId, request.Title, string.Empty, order);
         
         await documentRepository.AddPageAsync(page, cancellationToken);
         

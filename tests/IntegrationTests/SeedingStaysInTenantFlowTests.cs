@@ -41,6 +41,7 @@ public sealed class SeedingStaysInTenantFlowTests(CrmApiFactory factory)
         ("Tickets", "TenantId", ""),
         ("Tags", "TenantId", ""),
         ("Documents", "TenantId", ""),
+        ("Pages", "TenantId", ""),
         ("Notifications", "TenantId", ""),
         ("calendar_events", "tenant_id", ""),
         ("Conversations", "TenantId", ""),
