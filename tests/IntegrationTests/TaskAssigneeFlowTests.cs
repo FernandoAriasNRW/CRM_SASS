@@ -73,7 +73,7 @@ public sealed class TaskAssigneeFlowTests(CrmApiFactory factory)
         var (client, tenantId) = await AuthenticateAsync();
         var who = Guid.NewGuid();
 
-        var task = await CreateAsync(client, tenantId, Guid.NewGuid(), "Con responsable", who);
+        var task = await CreateAsync(client, tenantId, await TestProjects.CreateAsync(client), "Con responsable", who);
 
         (await AssigneesOfAsync(client, task)).Should().ContainSingle().Which.Should().Be(who);
     }
@@ -85,7 +85,7 @@ public sealed class TaskAssigneeFlowTests(CrmApiFactory factory)
         var principal = Guid.NewGuid();
         var second = Guid.NewGuid();
         var third = Guid.NewGuid();
-        var task = await CreateAsync(client, tenantId, Guid.NewGuid(), "En equipo", principal);
+        var task = await CreateAsync(client, tenantId, await TestProjects.CreateAsync(client), "En equipo", principal);
 
         foreach (var who in new[] { second, third })
         {
@@ -104,7 +104,7 @@ public sealed class TaskAssigneeFlowTests(CrmApiFactory factory)
     {
         var (client, tenantId) = await AuthenticateAsync();
         var who = Guid.NewGuid();
-        var task = await CreateAsync(client, tenantId, Guid.NewGuid(), "Repetida", who);
+        var task = await CreateAsync(client, tenantId, await TestProjects.CreateAsync(client), "Repetida", who);
 
         var response = await client.PostAsJsonAsync($"/api/v1/tasks/{task}/assignees", new { userId = who });
 
@@ -118,7 +118,7 @@ public sealed class TaskAssigneeFlowTests(CrmApiFactory factory)
         var (client, tenantId) = await AuthenticateAsync();
         var principal = Guid.NewGuid();
         var second = Guid.NewGuid();
-        var task = await CreateAsync(client, tenantId, Guid.NewGuid(), "Con relevo", principal);
+        var task = await CreateAsync(client, tenantId, await TestProjects.CreateAsync(client), "Con relevo", principal);
         await client.PostAsJsonAsync($"/api/v1/tasks/{task}/assignees", new { userId = second });
 
         var deleted = await client.DeleteAsync($"/api/v1/tasks/{task}/assignees/{principal}");
@@ -134,7 +134,7 @@ public sealed class TaskAssigneeFlowTests(CrmApiFactory factory)
     {
         var (client, tenantId) = await AuthenticateAsync();
         var who = Guid.NewGuid();
-        var task = await CreateAsync(client, tenantId, Guid.NewGuid(), "Se queda sola", who);
+        var task = await CreateAsync(client, tenantId, await TestProjects.CreateAsync(client), "Se queda sola", who);
 
         await client.DeleteAsync($"/api/v1/tasks/{task}/assignees/{who}");
 
@@ -148,7 +148,7 @@ public sealed class TaskAssigneeFlowTests(CrmApiFactory factory)
     {
         // El caso que un filtro que siguiera mirando sólo el campo antiguo perdería en silencio.
         var (client, tenantId) = await AuthenticateAsync();
-        var project = Guid.NewGuid();
+        var project = await TestProjects.CreateAsync(client);
         var collaborator = Guid.NewGuid();
         var task = await CreateAsync(client, tenantId, project, "La que colabora", Guid.NewGuid());
         await client.PostAsJsonAsync($"/api/v1/tasks/{task}/assignees", new { userId = collaborator });

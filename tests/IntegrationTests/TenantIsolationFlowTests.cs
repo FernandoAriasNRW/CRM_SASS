@@ -106,7 +106,7 @@ public sealed class TenantIsolationFlowTests(CrmApiFactory factory)
         {
             tenantId = Guid.NewGuid(),
             createdById = Guid.NewGuid(),
-            projectId = Guid.NewGuid(),
+            projectId = await TestProjects.CreateAsync(client),
             title = "Tarea con inquilino ajeno en el cuerpo",
             description = "Debe acabar en mi inquilino",
             assigneeId = Guid.Empty,
@@ -204,7 +204,7 @@ public sealed class TenantIsolationFlowTests(CrmApiFactory factory)
     {
         var creation = await client.PostAsJsonAsync("/api/v1/tasks", new
         {
-            projectId = Guid.NewGuid(),
+            projectId = await TestProjects.CreateAsync(client),
             title = "Tarea para mover",
             description = "Creada por la prueba",
             assigneeId = Guid.Empty,

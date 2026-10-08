@@ -13,7 +13,9 @@ namespace BuildingBlocks.Infrastructure.Views;
 /// </summary>
 public sealed class ViewScopeResolver(
     IUserFavorites favorites,
-    IEntityVisibility visibility) : IViewScopeResolver
+    IEntityVisibility visibility,
+    ITeamDirectory teams,
+    IUserContext currentUser) : IViewScopeResolver
 {
     public async Task<ViewScope> ResolveAsync(
         string? filter, Guid? userId, string entityType, CancellationToken ct = default)
@@ -37,6 +39,10 @@ public sealed class ViewScopeResolver(
             ? await visibility.GetSharedWithOthersAsync(entityType, ct)
             : [];
 
-        return new ViewScope(filter, userId, favoriteIds, sharedWithMe, sharedWithOthers);
+        var teamMates = ViewFilters.Is(filter, ViewFilters.MyTeam) && userId.HasValue
+            ? await teams.GetTeamMateIdsAsync(currentUser.TenantId, userId.Value, ct)
+            : [];
+
+        return new ViewScope(filter, userId, favoriteIds, sharedWithMe, sharedWithOthers, teamMates);
     }
 }

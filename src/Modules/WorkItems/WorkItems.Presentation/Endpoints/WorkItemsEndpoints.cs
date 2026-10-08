@@ -38,7 +38,7 @@ public static class WorkItemsEndpoints
   {
     var group = app.MapGroup("/api/v1/tasks").WithTags("Tasks").RequireAuthorization();
 
-    group.MapGet("", async (IUserContext currentUser, [Microsoft.AspNetCore.Mvc.FromQuery] Guid? projectId, [Microsoft.AspNetCore.Mvc.FromQuery] Guid? assigneeId, [Microsoft.AspNetCore.Mvc.FromQuery] string? status, [Microsoft.AspNetCore.Mvc.FromQuery] string? priority, [Microsoft.AspNetCore.Mvc.FromQuery] string? filter, BuildingBlocks.Application.Abstractions.IViewScopeResolver viewScopes, IMediator mediator, [Microsoft.AspNetCore.Mvc.FromQuery] Guid? parentTaskId = null, [Microsoft.AspNetCore.Mvc.FromQuery] bool includeSubtasks = false, [Microsoft.AspNetCore.Mvc.FromQuery] int page = 1, [Microsoft.AspNetCore.Mvc.FromQuery] int pageSize = 25, [Microsoft.AspNetCore.Mvc.FromQuery] string? sortColumn = null, [Microsoft.AspNetCore.Mvc.FromQuery] string? sortDirection = null, [Microsoft.AspNetCore.Mvc.FromQuery] DateTime? startDate = null, [Microsoft.AspNetCore.Mvc.FromQuery] DateTime? endDate = null, [Microsoft.AspNetCore.Mvc.FromQuery] string? search = null) =>
+    group.MapGet("", async (IUserContext currentUser, [Microsoft.AspNetCore.Mvc.FromQuery] Guid? projectId, [Microsoft.AspNetCore.Mvc.FromQuery] Guid? assigneeId, [Microsoft.AspNetCore.Mvc.FromQuery] string? status, [Microsoft.AspNetCore.Mvc.FromQuery] string? priority, [Microsoft.AspNetCore.Mvc.FromQuery] string? filter, BuildingBlocks.Application.Abstractions.IViewScopeResolver viewScopes, BuildingBlocks.Application.Abstractions.ITeamDirectory teams, IMediator mediator, [Microsoft.AspNetCore.Mvc.FromQuery] Guid? parentTaskId = null, [Microsoft.AspNetCore.Mvc.FromQuery] bool includeSubtasks = false, [Microsoft.AspNetCore.Mvc.FromQuery] int page = 1, [Microsoft.AspNetCore.Mvc.FromQuery] int pageSize = 25, [Microsoft.AspNetCore.Mvc.FromQuery] string? sortColumn = null, [Microsoft.AspNetCore.Mvc.FromQuery] string? sortDirection = null, [Microsoft.AspNetCore.Mvc.FromQuery] DateTime? startDate = null, [Microsoft.AspNetCore.Mvc.FromQuery] DateTime? endDate = null, [Microsoft.AspNetCore.Mvc.FromQuery] string? search = null, [Microsoft.AspNetCore.Mvc.FromQuery] Guid? teamId = null) =>
     {
       var tenantId = currentUser.TenantId;
       var userId = currentUser.UserId;
@@ -47,7 +47,16 @@ public static class WorkItemsEndpoints
       // haga nada con él, que es como «Mis Tickets» acabó devolviendo los 175 de siempre.
       var viewScope = await viewScopes.ResolveAsync(filter, userId, BuildingBlocks.Domain.EntityTypes.Task);
 
-      var query = new GetTasksQuery(tenantId, projectId, assigneeId, status, priority, viewScope, new() { Page = page, PageSize = pageSize, SortColumn = sortColumn, SortDirection = sortDirection, StartDate = startDate, EndDate = endDate, Search = search }, parentTaskId, includeSubtasks);
+      // El tablero de un equipo: las tareas que lleva alguno de sus miembros. Un equipo que no es
+      // de la organización es un 404, no una lista vacía que parezca un equipo sin trabajo.
+      IReadOnlyList<Guid>? teamMembers = null;
+      if (teamId.HasValue)
+      {
+        teamMembers = await teams.GetMemberIdsAsync(tenantId, teamId.Value);
+        if (teamMembers is null) return Results.NotFound("El equipo no existe");
+      }
+
+      var query = new GetTasksQuery(tenantId, projectId, assigneeId, status, priority, viewScope, new() { Page = page, PageSize = pageSize, SortColumn = sortColumn, SortDirection = sortDirection, StartDate = startDate, EndDate = endDate, Search = search }, parentTaskId, includeSubtasks, teamMembers);
       var result = await mediator.Send(query);
       return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
     });

@@ -6,7 +6,7 @@ import { ApiService } from '../../core/api.service';
 import { ProjectCreateModalComponent } from './project-create-modal.component';
 import { ProjectDetailModalComponent } from './project-detail-modal.component';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import { lucideRefreshCw, lucidePlus, lucideEye, lucideFilter, lucideSave } from '@ng-icons/lucide';
+import { lucideRefreshCw, lucidePlus, lucideEye, lucideFilter, lucideSave, lucideLayoutDashboard } from '@ng-icons/lucide';
 import {
   projectsLoaded, selectProjects, selectProjectsLoaded, type Project
 } from '../../state/projects/projects.state';
@@ -30,7 +30,7 @@ const STATUS_VARIANT: Record<string, string> = {
   selector: 'app-projects',
   standalone: true,
   imports: [CommonModule, NgIconComponent, ProjectCreateModalComponent, ProjectDetailModalComponent, AsyncPipe, DataTableComponent, AdvancedFiltersComponent, ButtonComponent],
-  viewProviders: [provideIcons({ lucideRefreshCw, lucidePlus, lucideEye, lucideFilter, lucideSave })],
+  viewProviders: [provideIcons({ lucideRefreshCw, lucidePlus, lucideEye, lucideFilter, lucideSave, lucideLayoutDashboard })],
   templateUrl: './projects.component.html',
 })
 export class ProjectsComponent implements OnInit {
@@ -239,6 +239,11 @@ export class ProjectsComponent implements OnInit {
 
   closeCreateModal(): void {
     this.showCreateModal.set(false);
+  }
+
+  /** Al tablero de tareas, con el ámbito puesto en este proyecto. */
+  openBoard(project: Project): void {
+    void this.router.navigate(['/tasks'], { queryParams: { projectId: project.id, view: 'board' } });
   }
 
   openDetailModal(project: Project): void {

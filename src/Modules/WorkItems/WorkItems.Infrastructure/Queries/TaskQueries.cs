@@ -55,10 +55,10 @@ public sealed class TaskQueries(TimeProvider timeProvider, WorkItemsDbContext co
       Guid tenantId, Guid? projectId, Guid? assigneeId, string? status,
       int page, int pageSize, CancellationToken ct = default)
   {
-      return await GetByTenantWithPaginationAsync(tenantId, projectId, assigneeId, status, null, null, null, false, new PaginationRequest { Page = page, PageSize = pageSize }, ct);
+      return await GetByTenantWithPaginationAsync(tenantId, projectId, assigneeId, status, null, null, null, false, null, new PaginationRequest { Page = page, PageSize = pageSize }, ct);
   }
 
-  public async Task<PagedResult<TaskDto>> GetByTenantWithPaginationAsync(Guid tenantId, Guid? projectId, Guid? assigneeId, string? status, string? priority, ViewScope? viewScope, Guid? parentTaskId, bool includeSubtasks, PaginationRequest pagination, CancellationToken ct = default)
+  public async Task<PagedResult<TaskDto>> GetByTenantWithPaginationAsync(Guid tenantId, Guid? projectId, Guid? assigneeId, string? status, string? priority, ViewScope? viewScope, Guid? parentTaskId, bool includeSubtasks, IReadOnlyList<Guid>? teamMemberIds, PaginationRequest pagination, CancellationToken ct = default)
   {
     var scope = viewScope ?? ViewScope.None;
 
@@ -90,6 +90,13 @@ public sealed class TaskQueries(TimeProvider timeProvider, WorkItemsDbContext co
     if (!string.IsNullOrEmpty(status)) query = query.Where(t => t.Status.Value == status || t.Status.Name == status);
     if (!string.IsNullOrEmpty(priority)) query = query.Where(t => t.Priority.Value == priority || t.Priority.Name == priority);
 
+    if (teamMemberIds is not null)
+    {
+      var members = teamMemberIds.ToArray();
+      query = query.Where(t => EF.Constant(members).Contains(t.AssigneeId)
+                               || t.Assignees.Any(a => EF.Constant(members).Contains(a.UserId)));
+    }
+
     var me = scope.UserId;
 
     if (scope.Is(ViewFilters.Mine) && me.HasValue)
@@ -100,7 +107,10 @@ public sealed class TaskQueries(TimeProvider timeProvider, WorkItemsDbContext co
     }
     else if (scope.Is(ViewFilters.MyTeam) && me.HasValue)
     {
-        query = query.Where(t => EF.Functions.JsonContains(t.TagIds, me.Value.ToString()));
+        // Lo que lleva gente de mis equipos, como responsable principal o como uno más.
+        var teamMates = scope.TeamMateIds.ToArray();
+        query = query.Where(t => EF.Constant(teamMates).Contains(t.AssigneeId)
+                                 || t.Assignees.Any(a => EF.Constant(teamMates).Contains(a.UserId)));
     }
     else if (scope.Is(ViewFilters.CreatedByMe) && me.HasValue)
     {

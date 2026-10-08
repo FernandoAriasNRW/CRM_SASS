@@ -68,7 +68,7 @@ public sealed class SubtaskFlowTests(CrmApiFactory factory)
     public async Task A_subtask_keeps_its_parent_and_returns_it()
     {
         var (client, tenantId) = await AuthenticateAsync();
-        var projectId = Guid.NewGuid();
+        var projectId = await TestProjects.CreateAsync(client);
         var parent = await CreateAsync(client, tenantId, projectId, "Padre");
 
         var child = await CreateAsync(client, tenantId, projectId, "Hija", parent);
@@ -80,7 +80,7 @@ public sealed class SubtaskFlowTests(CrmApiFactory factory)
     public async Task Lists_return_only_top_level_tasks()
     {
         var (client, tenantId) = await AuthenticateAsync();
-        var projectId = Guid.NewGuid();
+        var projectId = await TestProjects.CreateAsync(client);
         var parent = await CreateAsync(client, tenantId, projectId, "Padre visible");
         await CreateAsync(client, tenantId, projectId, "Hija escondida", parent);
 
@@ -97,7 +97,7 @@ public sealed class SubtaskFlowTests(CrmApiFactory factory)
     public async Task Subtasks_are_requested_by_their_parent()
     {
         var (client, tenantId) = await AuthenticateAsync();
-        var projectId = Guid.NewGuid();
+        var projectId = await TestProjects.CreateAsync(client);
         var parent = await CreateAsync(client, tenantId, projectId, "Padre");
         await CreateAsync(client, tenantId, projectId, "Hija 1", parent);
         await CreateAsync(client, tenantId, projectId, "Hija 2", parent);
@@ -113,7 +113,7 @@ public sealed class SubtaskFlowTests(CrmApiFactory factory)
     public async Task Parent_progress_counts_completed_subtasks()
     {
         var (client, tenantId) = await AuthenticateAsync();
-        var projectId = Guid.NewGuid();
+        var projectId = await TestProjects.CreateAsync(client);
         var parent = await CreateAsync(client, tenantId, projectId, "Padre con progreso");
         var child1 = await CreateAsync(client, tenantId, projectId, "Hija 1", parent);
         await CreateAsync(client, tenantId, projectId, "Hija 2", parent);
@@ -132,7 +132,7 @@ public sealed class SubtaskFlowTests(CrmApiFactory factory)
     public async Task A_subtask_cannot_have_subtasks()
     {
         var (client, tenantId) = await AuthenticateAsync();
-        var projectId = Guid.NewGuid();
+        var projectId = await TestProjects.CreateAsync(client);
         var parent = await CreateAsync(client, tenantId, projectId, "Padre");
         var child = await CreateAsync(client, tenantId, projectId, "Hija", parent);
 
@@ -147,7 +147,7 @@ public sealed class SubtaskFlowTests(CrmApiFactory factory)
     public async Task A_task_can_be_reparented_and_detached_later()
     {
         var (client, tenantId) = await AuthenticateAsync();
-        var projectId = Guid.NewGuid();
+        var projectId = await TestProjects.CreateAsync(client);
         var parent = await CreateAsync(client, tenantId, projectId, "Padre");
         var loose = await CreateAsync(client, tenantId, projectId, "Suelta");
 
@@ -167,7 +167,7 @@ public sealed class SubtaskFlowTests(CrmApiFactory factory)
     public async Task A_task_with_subtasks_cannot_become_a_subtask()
     {
         var (client, tenantId) = await AuthenticateAsync();
-        var projectId = Guid.NewGuid();
+        var projectId = await TestProjects.CreateAsync(client);
         var withChildren = await CreateAsync(client, tenantId, projectId, "Con hijas");
         await CreateAsync(client, tenantId, projectId, "Hija", withChildren);
         var other = await CreateAsync(client, tenantId, projectId, "Otra");

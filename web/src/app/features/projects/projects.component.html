@@ -69,6 +69,10 @@
 </ng-template>
 
 <ng-template #actionsTemplate let-item>
+  <!-- El tablero del proyecto: sus tareas, y sólo las suyas. -->
+  <button (click)="$event.stopPropagation(); openBoard(item)" class="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-colors" i18n-title title="Ver tablero" i18n-aria-label aria-label="Ver tablero">
+    <ng-icon name="lucideLayoutDashboard" size="16" />
+  </button>
   <button (click)="$event.stopPropagation(); openDetailModal(item)" class="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-colors" i18n-title title="Ver detalle">
     <ng-icon name="lucideEye" size="16" />
   </button>

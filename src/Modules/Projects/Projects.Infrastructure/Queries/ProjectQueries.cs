@@ -42,7 +42,9 @@ public sealed class ProjectQueries(ProjectsDbContext context) : IProjectQueries
         }
         else if (scope.Is(ViewFilters.MyTeam) && me.HasValue)
         {
-            query = query.Where(p => EF.Functions.JsonContains(p.TagIds, me.Value.ToString()));
+            // Los proyectos que lleva gente de mis equipos.
+            var teamMates = scope.TeamMateIds.ToArray();
+            query = query.Where(p => EF.Constant(teamMates).Contains(p.OwnerId));
         }
         else if (scope.Is(ViewFilters.CreatedByMe) && me.HasValue)
         {

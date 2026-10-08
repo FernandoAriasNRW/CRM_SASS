@@ -13,6 +13,10 @@
   <!-- Action Slot -->
   <div drawer-actions class="flex items-center gap-2">
     @if (!isEditing()) {
+      <button (click)="openBoard()" class="px-3 py-1.5 rounded-lg border border-border text-xs font-medium hover:bg-accent transition-colors flex items-center gap-1.5">
+        <ng-icon name="lucideLayoutDashboard" size="14" />
+        <span i18n>Ver tablero</span>
+      </button>
       <button (click)="startEdit()" class="px-3 py-1.5 rounded-lg border border-border text-xs font-medium hover:bg-accent transition-colors flex items-center gap-1.5">
         <ng-icon name="lucideEdit3" size="14" />
         <span i18n>Editar</span>

@@ -228,7 +228,7 @@ public sealed class ReportingFlowTests(CrmApiFactory factory)
 
         var creation = await client.PostAsJsonAsync("/api/v1/tasks", new
         {
-            projectId = Guid.NewGuid(),
+            projectId = await TestProjects.CreateAsync(client),
             title = "Tarea que se cierra al momento",
             description = "Para medir un tiempo de entrega conocido",
             assigneeId = Guid.Empty,

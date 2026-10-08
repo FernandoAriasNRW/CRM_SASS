@@ -66,7 +66,7 @@ public sealed class TaskDependencyFlowTests(CrmApiFactory factory)
     public async Task A_task_can_be_blocked_by_another_and_it_shows_both_ways()
     {
         var (client, tenantId) = await AuthenticateAsync();
-        var project = Guid.NewGuid();
+        var project = await TestProjects.CreateAsync(client);
         var task = await CreateAsync(client, tenantId, project, "La que espera");
         var bloqueante = await CreateAsync(client, tenantId, project, "La que bloquea");
 
@@ -87,7 +87,7 @@ public sealed class TaskDependencyFlowTests(CrmApiFactory factory)
     public async Task Blocking_counts_come_in_the_listing()
     {
         var (client, tenantId) = await AuthenticateAsync();
-        var project = Guid.NewGuid();
+        var project = await TestProjects.CreateAsync(client);
         var task = await CreateAsync(client, tenantId, project, "Bloqueada");
         var one = await CreateAsync(client, tenantId, project, "Bloqueante 1");
         var two = await CreateAsync(client, tenantId, project, "Bloqueante 2");
@@ -107,7 +107,7 @@ public sealed class TaskDependencyFlowTests(CrmApiFactory factory)
     public async Task A_task_cannot_block_itself()
     {
         var (client, tenantId) = await AuthenticateAsync();
-        var project = Guid.NewGuid();
+        var project = await TestProjects.CreateAsync(client);
         var task = await CreateAsync(client, tenantId, project, "Sola");
 
         var response = await BlockAsync(client, task, task);
@@ -120,7 +120,7 @@ public sealed class TaskDependencyFlowTests(CrmApiFactory factory)
     public async Task A_direct_cycle_is_rejected()
     {
         var (client, tenantId) = await AuthenticateAsync();
-        var project = Guid.NewGuid();
+        var project = await TestProjects.CreateAsync(client);
         var a = await CreateAsync(client, tenantId, project, "A");
         var b = await CreateAsync(client, tenantId, project, "B");
 
@@ -138,7 +138,7 @@ public sealed class TaskDependencyFlowTests(CrmApiFactory factory)
         // A←B←C, y cerrar C←A. Es el caso que sólo se detecta recorriendo el grafo, no mirando
         // la arista que se añade.
         var (client, tenantId) = await AuthenticateAsync();
-        var project = Guid.NewGuid();
+        var project = await TestProjects.CreateAsync(client);
         var a = await CreateAsync(client, tenantId, project, "A");
         var b = await CreateAsync(client, tenantId, project, "B");
         var c = await CreateAsync(client, tenantId, project, "C");
@@ -158,7 +158,7 @@ public sealed class TaskDependencyFlowTests(CrmApiFactory factory)
         // Contrapeso del test anterior: comprobar que se rechazan los ciclos no sirve de nada si
         // de paso se rechazan las cadenas válidas.
         var (client, tenantId) = await AuthenticateAsync();
-        var project = Guid.NewGuid();
+        var project = await TestProjects.CreateAsync(client);
         var a = await CreateAsync(client, tenantId, project, "A");
         var b = await CreateAsync(client, tenantId, project, "B");
         var c = await CreateAsync(client, tenantId, project, "C");
@@ -174,7 +174,7 @@ public sealed class TaskDependencyFlowTests(CrmApiFactory factory)
     public async Task The_same_dependency_is_not_registered_twice()
     {
         var (client, tenantId) = await AuthenticateAsync();
-        var project = Guid.NewGuid();
+        var project = await TestProjects.CreateAsync(client);
         var task = await CreateAsync(client, tenantId, project, "Repetida");
         var bloqueante = await CreateAsync(client, tenantId, project, "Bloqueante");
 
@@ -190,8 +190,8 @@ public sealed class TaskDependencyFlowTests(CrmApiFactory factory)
     public async Task Dependencies_only_exist_within_one_project()
     {
         var (client, tenantId) = await AuthenticateAsync();
-        var task = await CreateAsync(client, tenantId, Guid.NewGuid(), "De un proyecto");
-        var foreign = await CreateAsync(client, tenantId, Guid.NewGuid(), "De otro proyecto");
+        var task = await CreateAsync(client, tenantId, await TestProjects.CreateAsync(client), "De un proyecto");
+        var foreign = await CreateAsync(client, tenantId, await TestProjects.CreateAsync(client), "De otro proyecto");
 
         var response = await BlockAsync(client, task, foreign);
 
@@ -203,7 +203,7 @@ public sealed class TaskDependencyFlowTests(CrmApiFactory factory)
     public async Task A_dependency_can_be_removed()
     {
         var (client, tenantId) = await AuthenticateAsync();
-        var project = Guid.NewGuid();
+        var project = await TestProjects.CreateAsync(client);
         var task = await CreateAsync(client, tenantId, project, "Se desbloquea");
         var bloqueante = await CreateAsync(client, tenantId, project, "Deja de bloquear");
         await BlockAsync(client, task, bloqueante);
@@ -219,7 +219,7 @@ public sealed class TaskDependencyFlowTests(CrmApiFactory factory)
     public async Task Removing_a_missing_dependency_is_rejected()
     {
         var (client, tenantId) = await AuthenticateAsync();
-        var project = Guid.NewGuid();
+        var project = await TestProjects.CreateAsync(client);
         var task = await CreateAsync(client, tenantId, project, "Sin bloqueos");
         var other = await CreateAsync(client, tenantId, project, "Otra");
 

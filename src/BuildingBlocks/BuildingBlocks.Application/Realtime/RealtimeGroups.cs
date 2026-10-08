@@ -18,6 +18,14 @@ public static class RealtimeGroups
     /// <summary>Todas las conexiones de una organización (el tablero de tickets).</summary>
     public static string Tenant(Guid tenantId) => $"tenant:{tenantId}";
 
+    /// <summary>
+    /// Todas las tareas de una organización. Es al que se une el tablero de tareas, sea cual sea su
+    /// ámbito —mías, de un proyecto, de un equipo, de toda la organización—: la pantalla sólo
+    /// actualiza las tarjetas que tiene delante, y así no hace falta un grupo por cada forma de
+    /// filtrar. Cualquiera de la organización puede ver sus tareas, así que no enseña nada de más.
+    /// </summary>
+    public static string Tasks(Guid tenantId) => $"tenant:{tenantId}:tasks";
+
     /// <summary>El tablero de un proyecto.</summary>
     public static string Board(Guid tenantId, Guid projectId) => $"tenant:{tenantId}:board:{projectId}";
 
