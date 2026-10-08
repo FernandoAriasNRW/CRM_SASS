@@ -135,6 +135,10 @@ Un concepto, un nombre. Ordenado por área.
 | fichero, adjunto | `File`, `Attachment` |
 | documento adjunto (a una tarea) | `AttachedDocument` |
 | suscripción de webhook, envío, catálogo de eventos | `WebhookSubscription`, `WebhookDelivery`, `WebhookEventCatalog` |
+| aviso (notificación), tipo de aviso, catálogo de avisos | `Notification`, `Kind`, `NotificationCatalog` |
+| remitente de avisos, empujón en tiempo real | `NotificationSender`, `NotificationPush` |
+| interesados (quien creó y quien lleva algo) | `InterestedParties` |
+| directorio de personas (puerto: quién es de la organización y si administra) | `IUserDirectory` |
 | secreto de firma, firma | `Secret`, `Signature` |
 | reintento, pendiente, entregado, fallido | `Retry`, `Pending`, `Succeeded`, `Failed` |
 | catálogo de documentos, de proyectos (puertos: qué existe) | `IDocumentCatalog`, `IProjectCatalog` |

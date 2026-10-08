@@ -1,8 +1,6 @@
 using Automations.Domain.ValueObjects;
-using MediatR;
 using Microsoft.EntityFrameworkCore;
-using Notifications.Application.Commands;
-using Notifications.Application.Preferences;
+using Notifications.Application.Sending;
 using Notifications.Domain.Entities;
 using WorkItems.Infrastructure.Persistence;
 
@@ -28,10 +26,8 @@ namespace ApiHost.Services;
 /// por qué no le llegó nada.
 /// </summary>
 public sealed class AutomationNotifier(
-    TimeProvider timeProvider,
-    IMediator mediator,
     WorkItemsDbContext tasks,
-    INotificationPreferencesRepository preferences)
+    INotificationSender sender)
 {
     public async Task NotifyAsync(Guid tenantId, Guid taskId, string recipient, CancellationToken ct)
     {
@@ -57,33 +53,16 @@ public sealed class AutomationNotifier(
                     : $"«{recipient}» no es un destinatario válido");
         }
 
-        // Las preferencias mandan. Se usa la propia función del dominio de Notifications en vez
-        // de repetir la lógica aquí: son las mismas reglas, incluidas las horas de silencio y su
-        // cruce de medianoche.
-        var theirs = await preferences.GetForUserAsync(tenantId, recipientId, ct)
-                    ?? NotificationPreferences.CreateDefault(tenantId, recipientId);
-
-        var now = TimeOnly.FromDateTime(timeProvider.GetUtcNow().UtcDateTime);
-
-        if (!theirs.ShouldDeliver(NotificationTypes.TaskDueSoon, now))
-        {
-            // No es un fallo: es la persona ejerciendo su preferencia. Se devuelve sin más para
-            // que el motor lo cuente como aplicado —la regla hizo lo que tenía que hacer— en vez
-            // de como error, que llenaría el registro de falsos problemas.
-            return;
-        }
-
-        var result = await mediator.Send(new CreateNotificationCommand(
-            TenantId: tenantId,
-            RecipientUserId: recipientId,
-            Type: "InApp",
-            Subject: "Una tarea necesita tu atención",
-            Body: $"«{task.Title}» se acerca a su fecha de vencimiento.",
-            // Sin remitente: no lo manda una persona, lo manda una regla que alguien configuró
-            // antes. Poner aquí a quien tocó la tarea le atribuiría un aviso que no escribió.
-            SenderUserId: null), ct);
-
-        if (!result.IsSuccess)
-            throw new InvalidOperationException(result.Error);
+        // Por el remitente común: aplica las preferencias —incluidas las horas de silencio— igual
+        // que a cualquier otro aviso. Que la persona lo tenga apagado no es un fallo de la regla:
+        // la regla hizo lo que tenía que hacer, y por eso no se lanza nada si no llega.
+        //
+        // Sin quien lo cause: no lo manda una persona, lo manda una regla que alguien configuró
+        // antes. Atribuírselo a quien tocó la tarea le pondría un aviso que no escribió.
+        await sender.SendAsync(new NotificationMessage(
+            tenantId, NotificationCatalog.TaskDueSoon,
+            "Una tarea necesita tu atención",
+            $"«{task.Title}» se acerca a su fecha de vencimiento.",
+            EntityType: BuildingBlocks.Domain.EntityTypes.Task, EntityId: taskId), [recipientId], ct);
     }
 }

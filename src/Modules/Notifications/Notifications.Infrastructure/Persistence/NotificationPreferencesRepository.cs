@@ -17,6 +17,21 @@ public sealed class NotificationPreferencesRepository(NotificationsDbContext db)
         db.NotificationPreferences
             .FirstOrDefaultAsync(p => p.TenantId == tenantId && p.UserId == userId, ct);
 
+    public async Task<IReadOnlyDictionary<Guid, NotificationPreferences>> GetForUsersAsync(
+        Guid tenantId, IReadOnlyCollection<Guid> userIds, CancellationToken ct)
+    {
+        if (userIds.Count == 0) return new Dictionary<Guid, NotificationPreferences>();
+
+        var ids = userIds.Distinct().ToArray();
+        using var _ = db.AsTenant(tenantId);
+
+        var rows = await db.NotificationPreferences.AsNoTracking()
+            .Where(p => p.TenantId == tenantId && EF.Constant(ids).Contains(p.UserId))
+            .ToListAsync(ct);
+
+        return rows.ToDictionary(p => p.UserId);
+    }
+
     public async Task AddAsync(NotificationPreferences preferences, CancellationToken ct) =>
         await db.NotificationPreferences.AddAsync(preferences, ct);
 

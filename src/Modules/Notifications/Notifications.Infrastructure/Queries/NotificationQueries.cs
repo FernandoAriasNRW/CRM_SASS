@@ -25,7 +25,7 @@ public sealed class NotificationQueries(NotificationsDbContext context) : INotif
             .Skip((page - 1) * pageSize).Take(pageSize)
             .Select(n => new NotificationDto(n.Id, n.TenantId, n.RecipientUserId, n.SenderUserId,
                 n.TypeValue, n.StatusValue, n.Subject, n.Body, n.Metadata,
-                n.CreatedAt, n.SentAt, n.ReadAt))
+                n.CreatedAt, n.SentAt, n.ReadAt, n.Kind, n.EntityType, n.EntityId))
             .ToListAsync(ct);
 
         return PagedResult<NotificationDto>.Create(items, totalCount, page, pageSize);
@@ -36,7 +36,7 @@ public sealed class NotificationQueries(NotificationsDbContext context) : INotif
             .Where(n => n.TenantId == tenantId && n.Id == id)
             .Select(n => new NotificationDto(n.Id, n.TenantId, n.RecipientUserId, n.SenderUserId,
                 n.TypeValue, n.StatusValue, n.Subject, n.Body, n.Metadata,
-                n.CreatedAt, n.SentAt, n.ReadAt))
+                n.CreatedAt, n.SentAt, n.ReadAt, n.Kind, n.EntityType, n.EntityId))
             .FirstOrDefaultAsync(ct);
 
     public async Task<int> GetUnreadCountAsync(Guid tenantId, Guid recipientId, CancellationToken ct = default)

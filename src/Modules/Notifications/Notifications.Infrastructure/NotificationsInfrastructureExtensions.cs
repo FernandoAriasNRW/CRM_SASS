@@ -30,6 +30,7 @@ public static class NotificationsInfrastructureExtensions
 
     services.AddScoped<INotificationRepository, EfNotificationRepository>();
     services.AddScoped<INotificationQueries, NotificationQueries>();
+    services.AddScoped<Notifications.Application.Sending.INotificationSender, Notifications.Application.Sending.NotificationSender>();
     services.AddScoped<Notifications.Application.Preferences.INotificationPreferencesRepository,
                        Notifications.Infrastructure.Persistence.NotificationPreferencesRepository>();
     return services;

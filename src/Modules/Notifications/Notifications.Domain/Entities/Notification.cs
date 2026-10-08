@@ -18,6 +18,19 @@ public sealed class Notification : AggregateRoot, ITenantEntity, ISoftDeletable
   public string Subject { get; private set; } = string.Empty;
   public string Body { get; private set; } = string.Empty;
   public string? Metadata { get; private set; }
+
+  /// <summary>
+  /// De qué trata el aviso: uno de <see cref="NotificationCatalog"/>. Vacío en los anteriores a que
+  /// existiera, que sólo guardaban el canal.
+  /// </summary>
+  public string? Kind { get; private set; }
+
+  /// <summary>
+  /// A qué cosa se refiere —una tarea, un ticket, un proyecto— para que el aviso lleve a ella.
+  /// Un aviso que dice «te asignaron una tarea» y no deja abrirla obliga a buscarla a mano.
+  /// </summary>
+  public string? EntityType { get; private set; }
+  public Guid? EntityId { get; private set; }
   public DateTime CreatedAt { get; private set; }
   public DateTime? SentAt { get; private set; }
   public DateTime? ReadAt { get; private set; }
@@ -65,7 +78,10 @@ public sealed class Notification : AggregateRoot, ITenantEntity, ISoftDeletable
       string type,
       string subject,
       string body,
-      Guid? senderUserId = null)
+      Guid? senderUserId = null,
+      string? kind = null,
+      string? entityType = null,
+      Guid? entityId = null)
   {
     var contentResult = NotificationContent.Create(subject, body);
     if (contentResult.IsFailure)
@@ -81,6 +97,9 @@ public sealed class Notification : AggregateRoot, ITenantEntity, ISoftDeletable
       StatusValue = NotificationStatus.Pending.Name,
       Subject = subject,
       Body = body,
+      Kind = kind,
+      EntityType = entityType,
+      EntityId = entityId,
       CreatedAt = nowUtc,
       IsDeleted = false,
       DeletedAt = null,

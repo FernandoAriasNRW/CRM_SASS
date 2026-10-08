@@ -1876,3 +1876,68 @@ Lo prueban:
 La migración `WebhooksByEvents` se probó de ida y vuelta en una base aparte, con filas en el
 formato viejo.
 
+### 23.7 Avisos a quien le interesa (bloque 5a)
+
+Hasta aquí solo avisaban las exportaciones y las automatizaciones. Nadie se enteraba de que le
+habían asignado una tarea, de que habían comentado en su ticket o de que lo habían mencionado.
+Y al mirar los avisos salieron fallos graves:
+
+- **Cada persona veía los avisos de toda la organización.** `GET /notifications` filtraba por un
+  destinatario que mandaba quien llamaba, y era opcional; la pantalla no lo mandaba.
+  `unread-count` lo exigía por la URL.
+- **Se podía marcar como leído o borrar el aviso de otra persona** sabiendo su identificador:
+  ningún manejador comprobaba de quién era. Ahora un aviso ajeno es, para quien pregunta, uno que
+  no existe.
+- **El aviso en tiempo real no lo mandaba nadie.** La pantalla escuchaba `notification_received`
+  desde el principio, y el hub ni siquiera pedía sesión.
+- **Las preferencias eran once columnas fijas.** Cada aviso nuevo pedía una migración, y los
+  tipos sin columna pasaban siempre sin poderse apagar.
+
+Lo que hay ahora:
+
+- **Un catálogo de avisos** (`NotificationCatalog`): para cada tipo, su área, si viene encendido
+  y si es solo de administración. En el 5a:
+  - tareas (asignada, cambio de estado, completada, cambios, borrada, comentada, vence pronto);
+  - tickets (asignado, cambio de estado, cambios, comentado);
+  - proyectos (cambios, borrado, comentado);
+  - menciones;
+  - exportaciones.
+- **Un solo remitente** (`INotificationSender`):
+  - quita a quien hizo el cambio y a quien no es de la organización (puerto nuevo
+    `IUserDirectory`, que implementa Identity);
+  - aplica las preferencias de cada uno, con su rol y sus horas de silencio;
+  - guarda el aviso con su tipo y a qué se refiere (`Kind`, `EntityType`, `EntityId`);
+  - lo empuja en tiempo real a esa persona.
+
+  Las exportaciones y las automatizaciones pasan también por él.
+- **A quién:** `InterestedParties` da quien lo creó y quien lo tiene asignado:
+  - en una tarea, su autor y sus responsables;
+  - en un ticket, quien lo abrió y su agente;
+  - en un proyecto, su dueño.
+- **Desde dónde:** `WorkNotifications` escucha los mismos comandos que los webhooks (la
+  notificación que publica `WebhookDispatchBehavior` cuando un comando sale bien) y
+  `CommentNotifications` escucha los eventos de los comentarios. Comments reparte ya sus
+  eventos en proceso.
+- **Las menciones avisan una vez:** quien está mencionado no recibe además «han comentado». Una
+  mención a un equipo llega a sus miembros, y una a alguien que no es de la organización no se
+  manda.
+- **Preferencias por tipo:** se guarda solo lo que cada persona cambió respecto al catálogo, en
+  JSON. La migración traslada los once interruptores conservando lo que tenía cada uno; se probó
+  de ida y vuelta. Quien no administra no ve ni puede encender los avisos de administración.
+- **En la pantalla:**
+  - la campana enseña los avisos de quien la mira, y pulsar uno lleva a lo que avisa y lo da
+    por leído;
+  - las preferencias se agrupan por área y cada cambio se guarda al momento;
+  - correo y push se quitan de la pantalla: no hay nada que los mande;
+  - en el perfil, las preferencias se pintaban como una ventana encima de la página.
+
+Lo prueban:
+
+- `NotificationPreferencesTests` (unitarias);
+- `NotificationPreferencesFlowTests` y `WorkNotificationsFlowTests`: asignación, estado,
+  comentario, mención, preferencia apagada, ticket, que nadie vea los avisos de otro y el aviso
+  en tiempo real;
+- la e2e `notifications`.
+
+Queda para el 5b: los avisos de chat, equipos, usuarios (solo administración) y webhooks.
+

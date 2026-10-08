@@ -382,6 +382,10 @@
           <context context-type="sourcefile">src/app/shared/ui/navigation-panel/menu-vocabulary.ts</context>
           <context context-type="linenumber">152</context>
         </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/notification-preferences.component.ts</context>
+          <context context-type="linenumber">134</context>
+        </context-group>
       </trans-unit>
       <trans-unit id="1872099000671699527" datatype="html">
         <source>Proyectos</source>
@@ -412,6 +416,10 @@
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/ui/navigation-panel/menu-vocabulary.ts</context>
           <context context-type="linenumber">151</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/notification-preferences.component.ts</context>
+          <context context-type="linenumber">136</context>
         </context-group>
       </trans-unit>
       <trans-unit id="7069705998625865227" datatype="html">
@@ -495,6 +503,10 @@
           <context context-type="sourcefile">src/app/shared/ui/navigation-panel/menu-vocabulary.ts</context>
           <context context-type="linenumber">153</context>
         </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/notification-preferences.component.ts</context>
+          <context context-type="linenumber">135</context>
+        </context-group>
       </trans-unit>
       <trans-unit id="1704927142412128979" datatype="html">
         <source>Equipos</source>
@@ -542,6 +554,10 @@
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/webhooks/webhook.model.ts</context>
           <context context-type="linenumber">63</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/notification-preferences.component.ts</context>
+          <context context-type="linenumber">138</context>
         </context-group>
       </trans-unit>
       <trans-unit id="1843037166883285564" datatype="html">
@@ -1154,6 +1170,10 @@
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/webhooks/webhooks.component.html</context>
           <context context-type="linenumber">210,211</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/notification-preferences.component.ts</context>
+          <context context-type="linenumber">71,72</context>
         </context-group>
       </trans-unit>
       <trans-unit id="5418150855302403712" datatype="html">
@@ -4406,6 +4426,10 @@ Pendiente</source>
           <context context-type="linenumber">34</context>
         </context-group>
         <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/notifications/notifications.component.ts</context>
+          <context context-type="linenumber">62</context>
+        </context-group>
+        <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/reports/report-builder.component.ts</context>
           <context context-type="linenumber">77</context>
         </context-group>
@@ -4420,6 +4444,10 @@ Pendiente</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/webhooks/webhooks.component.html</context>
           <context context-type="linenumber">275</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/notification-preferences.component.ts</context>
+          <context context-type="linenumber">58</context>
         </context-group>
       </trans-unit>
       <trans-unit id="6620361978501757441" datatype="html">
@@ -4944,6 +4972,127 @@ Pendiente</source>
           <context context-type="linenumber">61</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="1070390441670850729" datatype="html">
+        <source>Notificaciones</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/notifications/notifications.component.ts</context>
+          <context context-type="linenumber">50,51</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/notifications/notifications.component.ts</context>
+          <context context-type="linenumber">178</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhook.model.ts</context>
+          <context context-type="linenumber">65</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1342033690330010378" datatype="html">
+        <source>Preferencias de avisos</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/notifications/notifications.component.ts</context>
+          <context context-type="linenumber">55</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/notifications/notifications.component.ts</context>
+          <context context-type="linenumber">55,56</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/notification-preferences.component.ts</context>
+          <context context-type="linenumber">55,56</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7624876697289277717" datatype="html">
+        <source>No hay notificaciones</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/notifications/notifications.component.ts</context>
+          <context context-type="linenumber">79,80</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6797134744879731866" datatype="html">
+        <source>Marcar como leída</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/notifications/notifications.component.ts</context>
+          <context context-type="linenumber">108</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/notifications/notifications.component.ts</context>
+          <context context-type="linenumber">108,109</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6665903341931535342" datatype="html">
+        <source>Eliminar</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/notifications/notifications.component.ts</context>
+          <context context-type="linenumber">116</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/notifications/notifications.component.ts</context>
+          <context context-type="linenumber">116,117</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/projects/project-detail-modal.component.html</context>
+          <context context-type="linenumber">26,27</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhooks.component.html</context>
+          <context context-type="linenumber">189</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhooks.component.html</context>
+          <context context-type="linenumber">189,190</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7648054480661262844" datatype="html">
+        <source> Marcar todas como leídas </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/notifications/notifications.component.ts</context>
+          <context context-type="linenumber">133</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5054385873689390037" datatype="html">
+        <source>Notificaciones (<x id="PH" equiv-text="count"/> sin leer)</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/notifications/notifications.component.ts</context>
+          <context context-type="linenumber">180</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5518668165018817798" datatype="html">
+        <source>Hace un momento</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/notifications/notifications.component.ts</context>
+          <context context-type="linenumber">270</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/notifications/notifications.component.ts</context>
+          <context context-type="linenumber">272</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/notifications/notifications.component.ts</context>
+          <context context-type="linenumber">279</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4692112629217518778" datatype="html">
+        <source>Hace <x id="PH" equiv-text="minutes"/> min</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/notifications/notifications.component.ts</context>
+          <context context-type="linenumber">280</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5189745860941637671" datatype="html">
+        <source>Hace <x id="PH" equiv-text="hours"/> h</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/notifications/notifications.component.ts</context>
+          <context context-type="linenumber">281</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4890738886338434441" datatype="html">
+        <source>Hace <x id="PH" equiv-text="days"/> días</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/notifications/notifications.component.ts</context>
+          <context context-type="linenumber">282</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="771879419236270848" datatype="html">
         <source>Mi perfil</source>
         <context-group purpose="location">
@@ -5259,21 +5408,6 @@ Pendiente</source>
           <context context-type="linenumber">73,74</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="6665903341931535342" datatype="html">
-        <source>Eliminar</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/projects/project-detail-modal.component.html</context>
-          <context context-type="linenumber">26,27</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/webhooks/webhooks.component.html</context>
-          <context context-type="linenumber">189</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/webhooks/webhooks.component.html</context>
-          <context context-type="linenumber">189,190</context>
-        </context-group>
-      </trans-unit>
       <trans-unit id="2469826925352615042" datatype="html">
         <source>Fecha de Inicio</source>
         <context-group purpose="location">
@@ -5465,6 +5599,10 @@ Pendiente</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tickets/tickets.component.ts</context>
           <context context-type="linenumber">118</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/notification-preferences.component.ts</context>
+          <context context-type="linenumber">108,109</context>
         </context-group>
       </trans-unit>
       <trans-unit id="2987084982624145537" datatype="html">
@@ -7499,13 +7637,6 @@ Pendiente</source>
           <context context-type="linenumber">61</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="1070390441670850729" datatype="html">
-        <source>Notificaciones</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/webhooks/webhook.model.ts</context>
-          <context context-type="linenumber">65</context>
-        </context-group>
-      </trans-unit>
       <trans-unit id="4805347537486370999" datatype="html">
         <source>Webhook creado</source>
         <context-group purpose="location">
@@ -8149,18 +8280,172 @@ Pendiente</source>
           <context context-type="linenumber">68</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="8253475360221692409" datatype="html">
-        <source>Preferencias guardadas</source>
+      <trans-unit id="3429833464017143743" datatype="html">
+        <source> Elige de qué quieres enterarte. Nunca recibes aviso de lo que haces tú. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/ui/notification-preferences.component.ts</context>
-          <context context-type="linenumber">366</context>
+          <context context-type="linenumber">75</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="3894733885576770296" datatype="html">
-        <source>Permiso denegado</source>
+      <trans-unit id="3225449892613845320" datatype="html">
+        <source>Sólo administración</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/ui/notification-preferences.component.ts</context>
-          <context context-type="linenumber">382</context>
+          <context context-type="linenumber">86,87</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4617418185009336704" datatype="html">
+        <source>Horas de silencio</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/notification-preferences.component.ts</context>
+          <context context-type="linenumber">99,100</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8188049569191437862" datatype="html">
+        <source>No recibir avisos en este tramo</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/notification-preferences.component.ts</context>
+          <context context-type="linenumber">102,103</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2537973299976115860" datatype="html">
+        <source>hasta</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/notification-preferences.component.ts</context>
+          <context context-type="linenumber">111,112</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1301200436010657737" datatype="html">
+        <source>Menciones</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/notification-preferences.component.ts</context>
+          <context context-type="linenumber">137</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1226729832137607991" datatype="html">
+        <source>Me asignan una tarea</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/notification-preferences.component.ts</context>
+          <context context-type="linenumber">146</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6661625277999212660" datatype="html">
+        <source>Una tarea mía cambia de estado</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/notification-preferences.component.ts</context>
+          <context context-type="linenumber">147</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1906625007883208674" datatype="html">
+        <source>Se completa una tarea mía</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/notification-preferences.component.ts</context>
+          <context context-type="linenumber">148</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2707104426870549728" datatype="html">
+        <source>Cualquier cambio en una tarea mía</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/notification-preferences.component.ts</context>
+          <context context-type="linenumber">149</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2932481895493026867" datatype="html">
+        <source>Se borra una tarea mía</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/notification-preferences.component.ts</context>
+          <context context-type="linenumber">150</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6018227770381440650" datatype="html">
+        <source>Comentan en una tarea mía</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/notification-preferences.component.ts</context>
+          <context context-type="linenumber">151</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1039250125489718266" datatype="html">
+        <source>Una tarea mía se acerca a su vencimiento</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/notification-preferences.component.ts</context>
+          <context context-type="linenumber">152</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5420763879695859389" datatype="html">
+        <source>Me asignan un ticket</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/notification-preferences.component.ts</context>
+          <context context-type="linenumber">153</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2036300658873508185" datatype="html">
+        <source>Un ticket mío cambia de estado</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/notification-preferences.component.ts</context>
+          <context context-type="linenumber">154</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1532899432079692853" datatype="html">
+        <source>Cualquier cambio en un ticket mío</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/notification-preferences.component.ts</context>
+          <context context-type="linenumber">155</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1478013618457022996" datatype="html">
+        <source>Comentan en un ticket mío</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/notification-preferences.component.ts</context>
+          <context context-type="linenumber">156</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8765622549394251905" datatype="html">
+        <source>Cambia un proyecto mío</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/notification-preferences.component.ts</context>
+          <context context-type="linenumber">157</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1543682871512620937" datatype="html">
+        <source>Se borra un proyecto mío</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/notification-preferences.component.ts</context>
+          <context context-type="linenumber">158</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6978421193369293040" datatype="html">
+        <source>Comentan en un proyecto mío</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/notification-preferences.component.ts</context>
+          <context context-type="linenumber">159</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4646593700016993062" datatype="html">
+        <source>Me mencionan</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/notification-preferences.component.ts</context>
+          <context context-type="linenumber">160</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="885336961498484442" datatype="html">
+        <source>Mi exportación está lista</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/notification-preferences.component.ts</context>
+          <context context-type="linenumber">161</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5751765327206801156" datatype="html">
+        <source>Mi exportación no salió</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/notification-preferences.component.ts</context>
+          <context context-type="linenumber">162</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1242019757898316148" datatype="html">
+        <source>No se pudieron guardar tus preferencias</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/notification-preferences.component.ts</context>
+          <context context-type="linenumber">220</context>
         </context-group>
       </trans-unit>
       <trans-unit id="2862644391545078849" datatype="html">
@@ -8350,6 +8635,13 @@ Pendiente</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/ui/view-tabs/view-tabs.component.ts</context>
           <context context-type="linenumber">141,142</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8024686887641078251" datatype="html">
+        <source>Notificación</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/state/notifications/notifications.state.ts</context>
+          <context context-type="linenumber">41</context>
         </context-group>
       </trans-unit>
     </body>

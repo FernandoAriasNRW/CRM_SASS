@@ -31,6 +31,7 @@ public static class IdentityInfrastructureExtensions
         services.AddScoped<IIdentityUnitOfWork, IdentityModuleUnitOfWork>();
 
         services.AddScoped<IUserRepository, EfUserRepository>();
+        services.AddScoped<BuildingBlocks.Application.Abstractions.IUserDirectory, UserDirectory>();
         services.AddScoped<ISavedViewRepository, EfSavedViewRepository>();
         services.AddScoped<IEntityPermissionRepository, EfEntityPermissionRepository>();
         services.AddScoped<Identity.Application.Favorites.IFavoriteRepository,

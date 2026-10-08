@@ -16,54 +16,49 @@ public sealed class NotificationPreferencesTests
     private static NotificationPreferences Defaults() =>
         NotificationPreferences.CreateDefault(Guid.NewGuid(), Guid.NewGuid());
 
-    #region Valores de partida
+    #region Valores de partida y ajustes por tipo
 
     /// <summary>
-    /// Lo que la persona espera llega encendido; lo que informa de actividad ajena, apagado.
-    /// El criterio importa: si todo llegara encendido, el ruido acabaría con la persona
-    /// ignorando todos los avisos, incluidos los que sí importaban.
+    /// Lo que la persona espera llega encendido; el ruido —cada edición de un campo—, apagado.
+    /// Si todo llegara encendido, la persona acabaría ignorando todos los avisos.
     /// </summary>
     [Theory]
-    [InlineData(NotificationTypes.TaskAssigned, true)]
-    [InlineData(NotificationTypes.TaskDueSoon, true)]
-    [InlineData(NotificationTypes.Mention, true)]
-    [InlineData(NotificationTypes.ExportReady, true)]
-    [InlineData(NotificationTypes.TaskCompleted, false)]
-    [InlineData(NotificationTypes.TicketUpdated, false)]
-    public void Defaults_tell_own_from_others(string type, bool expected)
+    [InlineData(NotificationCatalog.TaskAssigned, true)]
+    [InlineData(NotificationCatalog.TaskDueSoon, true)]
+    [InlineData(NotificationCatalog.Mention, true)]
+    [InlineData(NotificationCatalog.ExportReady, true)]
+    [InlineData(NotificationCatalog.TaskCommented, true)]
+    [InlineData(NotificationCatalog.TaskUpdated, false)]
+    [InlineData(NotificationCatalog.TicketUpdated, false)]
+    public void Defaults_follow_the_catalog(string kind, bool expected)
     {
-        Defaults().IsEnabled(type).Should().Be(expected);
+        Defaults().IsEnabled(kind, isAdmin: false).Should().Be(expected);
     }
 
-    /// <summary>
-    /// El aviso de exportación terminada llega encendido: era una condición explícita del
-    /// encargo, y es la respuesta a algo que la persona pidió.
-    /// </summary>
     [Fact]
-    public void The_export_notification_starts_on_and_can_be_turned_off()
+    public void A_type_can_be_turned_off_and_back_on()
     {
         var p = Defaults();
-        p.ExportReady.Should().BeTrue();
 
-        p.Update(
-            emailEnabled: true, pushEnabled: false,
-            taskAssigned: true, taskDueSoon: true, mentionEnabled: true, exportReady: false,
-            taskCompleted: false, ticketCreated: true, ticketUpdated: false, projectUpdated: true,
-            quietHoursEnabled: false, quietHoursStart: new TimeOnly(22, 0), quietHoursEnd: new TimeOnly(8, 0));
+        p.SetType(NotificationCatalog.ExportReady, false, isAdmin: false).IsSuccess.Should().BeTrue();
+        p.IsEnabled(NotificationCatalog.ExportReady, isAdmin: false).Should().BeFalse();
 
-        p.ExportReady.Should().BeFalse();
-        p.IsEnabled(NotificationTypes.ExportReady).Should().BeFalse();
+        p.SetType(NotificationCatalog.ExportReady, true, isAdmin: false);
+        p.IsEnabled(NotificationCatalog.ExportReady, isAdmin: false).Should().BeTrue();
+        p.Types.Should().BeEmpty("volver al valor del catálogo no deja nada guardado: sigue al catálogo");
     }
 
     /// <summary>
-    /// Un tipo que nadie declaró pasa. Es deliberado: si alguien añade un aviso y olvida
-    /// ponerlo en la lista, el fallo es que se recibe de más —molesto y visible— y no que se
-    /// pierde en silencio, que es el fallo que nadie detecta.
+    /// Un tipo que no está en el catálogo no se manda: no habría forma de apagarlo, y lo que no
+    /// se puede apagar acaba en ruido. Tampoco se puede guardar.
     /// </summary>
     [Fact]
-    public void An_unknown_type_passes_instead_of_being_lost()
+    public void An_unknown_type_is_neither_sent_nor_saved()
     {
-        Defaults().IsEnabled("UnAvisoQueNadieDeclaro").Should().BeTrue();
+        var p = Defaults();
+
+        p.IsEnabled("UnAvisoQueNadieDeclaro", isAdmin: true).Should().BeFalse();
+        p.SetType("UnAvisoQueNadieDeclaro", true, isAdmin: true).IsFailure.Should().BeTrue();
     }
 
     #endregion
@@ -73,11 +68,7 @@ public sealed class NotificationPreferencesTests
     private static NotificationPreferences WithQuietHours(TimeOnly from, TimeOnly to)
     {
         var p = Defaults();
-        p.Update(
-            emailEnabled: true, pushEnabled: false,
-            taskAssigned: true, taskDueSoon: true, mentionEnabled: true, exportReady: true,
-            taskCompleted: false, ticketCreated: true, ticketUpdated: false, projectUpdated: true,
-            quietHoursEnabled: true, quietHoursStart: from, quietHoursEnd: to);
+        p.SetQuietHours(true, from, to);
         return p;
     }
 
@@ -120,7 +111,7 @@ public sealed class NotificationPreferencesTests
     {
         var p = Defaults();   // nace con el silencio desactivado
 
-        p.ShouldDeliver(NotificationTypes.TaskAssigned, new TimeOnly(3, 0)).Should().BeTrue();
+        p.ShouldDeliver(NotificationCatalog.TaskAssigned, new TimeOnly(3, 0), isAdmin: false).Should().BeTrue();
     }
 
     /// <summary>
@@ -132,9 +123,9 @@ public sealed class NotificationPreferencesTests
     {
         var p = WithQuietHours(new TimeOnly(22, 0), new TimeOnly(8, 0));
 
-        p.ShouldDeliver(NotificationTypes.TaskAssigned, new TimeOnly(23, 30)).Should().BeFalse("es de noche");
-        p.ShouldDeliver(NotificationTypes.TaskAssigned, new TimeOnly(10, 0)).Should().BeTrue("ya es de día");
-        p.ShouldDeliver(NotificationTypes.TaskCompleted, new TimeOnly(10, 0)).Should().BeFalse("ese aviso está apagado");
+        p.ShouldDeliver(NotificationCatalog.TaskAssigned, new TimeOnly(23, 30), isAdmin: false).Should().BeFalse("es de noche");
+        p.ShouldDeliver(NotificationCatalog.TaskAssigned, new TimeOnly(10, 0), isAdmin: false).Should().BeTrue("ya es de día");
+        p.ShouldDeliver(NotificationCatalog.TaskUpdated, new TimeOnly(10, 0), isAdmin: false).Should().BeFalse("ese aviso está apagado");
     }
 
     #endregion

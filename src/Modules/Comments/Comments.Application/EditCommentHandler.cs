@@ -18,7 +18,7 @@ public sealed class EditCommentHandler(
         catch (InvalidOperationException ex) { return Result<bool>.Failure(ex.Message); }
 
         await repository.UpdateAsync(comment, ct);
-        await unitOfWork.SaveChangesAsync(ct);
+        await unitOfWork.SaveChangesAndDispatchAsync(ct);
 
         return Result<bool>.Success(true);
     }

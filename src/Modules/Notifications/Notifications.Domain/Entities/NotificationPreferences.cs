@@ -6,19 +6,17 @@ namespace Notifications.Domain.Entities;
 /// <summary>
 /// Qué avisos quiere recibir una persona, y por qué vía.
 ///
-/// **No existían.** `GET /notifications/preferences` devolvía un objeto con valores fijos
-/// escritos en el código y `PUT` respondía con lo mismo que recibía, sin guardar nada: la
-/// pantalla de preferencias funcionaba, se podían mover todos los interruptores, y al recargar
-/// volvían a su sitio. Peor que no tener la pantalla, porque prometía algo que no cumplía.
-///
 /// Hay una fila por persona y organización. El aislamiento entre inquilinos lo aplica el filtro
 /// global, igual que al resto de entidades del módulo.
 ///
-/// **Todo llega activado salvo lo que molesta.** El criterio: un aviso que la persona espera
-/// —le asignan algo, la mencionan, su exportación terminó— viene encendido, porque no recibirlo
-/// se vive como que el sistema falla. Los que informan de actividad ajena —una tarea que otro
-/// completó, un ticket que otro tocó— vienen apagados, porque encendidos hacen ruido y el ruido
-/// acaba con la persona ignorando *todos* los avisos, incluidos los que sí importaban.
+/// <b>Un ajuste por tipo de aviso, no un campo por tipo.</b> Eran once columnas fijas: cada aviso
+/// nuevo pedía una migración, y los que no tenían columna pasaban siempre sin poderse apagar. Ahora
+/// se guarda sólo lo que la persona cambió respecto a lo que trae el catálogo
+/// (<see cref="NotificationCatalog"/>): un tipo que nunca tocó sigue lo que diga el catálogo, también
+/// si el catálogo cambia de criterio más adelante.
+///
+/// <b>Con límites según el rol.</b> Los avisos de administración no los puede encender quien no
+/// administra, y aunque la fila los tuviera encendidos —un rol que cambió—, no le llegan.
 /// </summary>
 public sealed class NotificationPreferences : AggregateRoot, ITenantEntity
 {
@@ -35,26 +33,11 @@ public sealed class NotificationPreferences : AggregateRoot, ITenantEntity
     /// </summary>
     public bool PushEnabled { get; private set; }
 
-    // ── Sobre el trabajo propio ───────────────────────────────────────────────────────────
-    public bool TaskAssigned { get; private set; }
-    public bool TaskDueSoon { get; private set; }
-    public bool MentionEnabled { get; private set; }
+    // ── Por tipo de aviso ─────────────────────────────────────────────────────────────────
+    private Dictionary<string, bool> _types = [];
 
-    /// <summary>
-    /// El aviso de que una exportación terminó.
-    ///
-    /// Encendido de origen porque es la respuesta a algo que la persona pidió: las
-    /// exportaciones se generan en segundo plano y pueden tardar, así que sin aviso hay que
-    /// volver a mirar la pantalla cada poco. Se puede apagar como cualquier otro; era una
-    /// condición explícita del encargo.
-    /// </summary>
-    public bool ExportReady { get; private set; }
-
-    // ── Sobre el trabajo de los demás ─────────────────────────────────────────────────────
-    public bool TaskCompleted { get; private set; }
-    public bool TicketCreated { get; private set; }
-    public bool TicketUpdated { get; private set; }
-    public bool ProjectUpdated { get; private set; }
+    /// <summary>Lo que la persona cambió respecto al catálogo. Lo que no está aquí, sigue al catálogo.</summary>
+    public IReadOnlyDictionary<string, bool> Types => _types;
 
     // ── Horas de silencio ─────────────────────────────────────────────────────────────────
     public bool QuietHoursEnabled { get; private set; }
@@ -68,56 +51,62 @@ public sealed class NotificationPreferences : AggregateRoot, ITenantEntity
 
     private NotificationPreferences() { }
 
-    /// <summary>
-    /// Las preferencias de quien nunca las ha tocado. Ver arriba el criterio de qué nace
-    /// encendido.
-    /// </summary>
+    /// <summary>Las preferencias de quien nunca las ha tocado: todo lo que dice el catálogo.</summary>
     public static NotificationPreferences CreateDefault(Guid tenantId, Guid userId) => new()
     {
         Id = Guid.NewGuid(),
         TenantId = tenantId,
         UserId = userId,
-
         EmailEnabled = true,
         PushEnabled = false,
-
-        TaskAssigned = true,
-        TaskDueSoon = true,
-        MentionEnabled = true,
-        ExportReady = true,
-
-        TaskCompleted = false,
-        TicketCreated = true,
-        TicketUpdated = false,
-        ProjectUpdated = true,
-
         QuietHoursEnabled = false,
         QuietHoursStart = new TimeOnly(22, 0),
         QuietHoursEnd = new TimeOnly(8, 0),
     };
 
-    public void Update(
-        bool emailEnabled, bool pushEnabled,
-        bool taskAssigned, bool taskDueSoon, bool mentionEnabled, bool exportReady,
-        bool taskCompleted, bool ticketCreated, bool ticketUpdated, bool projectUpdated,
-        bool quietHoursEnabled, TimeOnly quietHoursStart, TimeOnly quietHoursEnd)
+    public void SetChannels(bool emailEnabled, bool pushEnabled)
     {
         EmailEnabled = emailEnabled;
         PushEnabled = pushEnabled;
+    }
 
-        TaskAssigned = taskAssigned;
-        TaskDueSoon = taskDueSoon;
-        MentionEnabled = mentionEnabled;
-        ExportReady = exportReady;
+    public void SetQuietHours(bool enabled, TimeOnly start, TimeOnly end)
+    {
+        QuietHoursEnabled = enabled;
+        QuietHoursStart = start;
+        QuietHoursEnd = end;
+    }
 
-        TaskCompleted = taskCompleted;
-        TicketCreated = ticketCreated;
-        TicketUpdated = ticketUpdated;
-        ProjectUpdated = projectUpdated;
+    /// <summary>
+    /// Enciende o apaga un tipo de aviso.
+    ///
+    /// Un tipo que no existe se rechaza —se guardaría y no serviría para nada— y uno de
+    /// administración también, si quien lo pide no administra.
+    /// </summary>
+    public Result SetType(string kind, bool enabled, bool isAdmin)
+    {
+        var entry = NotificationCatalog.Find(kind);
+        if (entry is null) return Result.Failure(Rules.UnknownKind + kind);
+        if (entry.AdminOnly && !isAdmin) return Result.Failure(Rules.AdminOnly + kind);
 
-        QuietHoursEnabled = quietHoursEnabled;
-        QuietHoursStart = quietHoursStart;
-        QuietHoursEnd = quietHoursEnd;
+        // Sólo se guarda lo que difiere del catálogo, para que lo que no se tocó siga su criterio.
+        if (enabled == entry.DefaultEnabled) _types.Remove(kind);
+        else _types[kind] = enabled;
+
+        return Result.Success();
+    }
+
+    /// <summary>
+    /// Si este tipo de aviso está encendido para esta persona. Un tipo que no está en el catálogo
+    /// no se manda: no hay forma de apagarlo, y algo que no se puede apagar acaba en ruido.
+    /// </summary>
+    public bool IsEnabled(string kind, bool isAdmin)
+    {
+        var entry = NotificationCatalog.Find(kind);
+        if (entry is null) return false;
+        if (entry.AdminOnly && !isAdmin) return false;
+
+        return _types.TryGetValue(kind, out var enabled) ? enabled : entry.DefaultEnabled;
     }
 
     /// <summary>
@@ -126,29 +115,8 @@ public sealed class NotificationPreferences : AggregateRoot, ITenantEntity
     /// Función pura, con la hora como argumento y no leída del reloj, para que se pueda probar
     /// la medianoche sin esperar a que sean las doce.
     /// </summary>
-    public bool ShouldDeliver(string type, TimeOnly now)
-    {
-        if (!IsEnabled(type)) return false;
-
-        return !QuietHoursEnabled || !IsQuietAt(now);
-    }
-
-    public bool IsEnabled(string type) => type switch
-    {
-        NotificationTypes.TaskAssigned => TaskAssigned,
-        NotificationTypes.TaskCompleted => TaskCompleted,
-        NotificationTypes.TaskDueSoon => TaskDueSoon,
-        NotificationTypes.TicketCreated => TicketCreated,
-        NotificationTypes.TicketUpdated => TicketUpdated,
-        NotificationTypes.ProjectUpdated => ProjectUpdated,
-        NotificationTypes.Mention => MentionEnabled,
-        NotificationTypes.ExportReady => ExportReady,
-
-        // Un tipo que nadie ha declarado pasa. Es deliberado: si mañana alguien añade un aviso
-        // y se olvida de ponerlo en esta lista, el fallo es que se recibe de más —molesto y
-        // visible— y no que se pierde en silencio, que es el fallo que nadie detecta.
-        _ => true,
-    };
+    public bool ShouldDeliver(string kind, TimeOnly now, bool isAdmin)
+        => IsEnabled(kind, isAdmin) && (!QuietHoursEnabled || !IsQuietAt(now));
 
     /// <summary>
     /// Si la hora cae dentro del silencio.
@@ -162,4 +130,10 @@ public sealed class NotificationPreferences : AggregateRoot, ITenantEntity
         QuietHoursStart <= QuietHoursEnd
             ? now >= QuietHoursStart && now < QuietHoursEnd
             : now >= QuietHoursStart || now < QuietHoursEnd;
+
+    public static class Rules
+    {
+        public const string UnknownKind = "Ese tipo de aviso no existe: ";
+        public const string AdminOnly = "Ese aviso es sólo para quien administra: ";
+    }
 }

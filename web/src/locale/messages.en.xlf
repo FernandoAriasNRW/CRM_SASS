@@ -2,6 +2,298 @@
 <xliff xmlns="urn:oasis:names:tc:xliff:document:1.2" version="1.2">
   <file source-language="es" target-language="en" datatype="plaintext" original="ng2.template">
     <body>
+      <trans-unit id="1342033690330010378" datatype="html">
+        <source>Preferencias de avisos</source>
+        <target state="final">Notification preferences</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/notifications/notifications.component.ts</context>
+          <context context-type="linenumber">55</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/notifications/notifications.component.ts</context>
+          <context context-type="linenumber">55,56</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/notification-preferences.component.ts</context>
+          <context context-type="linenumber">55,56</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7624876697289277717" datatype="html">
+        <source>No hay notificaciones</source>
+        <target state="final">No notifications</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/notifications/notifications.component.ts</context>
+          <context context-type="linenumber">79,80</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6797134744879731866" datatype="html">
+        <source>Marcar como leída</source>
+        <target state="final">Mark as read</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/notifications/notifications.component.ts</context>
+          <context context-type="linenumber">108</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/notifications/notifications.component.ts</context>
+          <context context-type="linenumber">108,109</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7648054480661262844" datatype="html">
+        <source> Marcar todas como leídas </source>
+        <target state="final">Mark all as read</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/notifications/notifications.component.ts</context>
+          <context context-type="linenumber">133</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5054385873689390037" datatype="html">
+        <source>Notificaciones (<x id="PH" equiv-text="count"/> sin leer)</source>
+        <target state="final">Notifications (<x id="PH" equiv-text="count"/> unread)</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/notifications/notifications.component.ts</context>
+          <context context-type="linenumber">180</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5518668165018817798" datatype="html">
+        <source>Hace un momento</source>
+        <target state="final">Just now</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/notifications/notifications.component.ts</context>
+          <context context-type="linenumber">270</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/notifications/notifications.component.ts</context>
+          <context context-type="linenumber">272</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/notifications/notifications.component.ts</context>
+          <context context-type="linenumber">279</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4692112629217518778" datatype="html">
+        <source>Hace <x id="PH" equiv-text="minutes"/> min</source>
+        <target state="final"><x id="PH" equiv-text="minutes"/> min ago</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/notifications/notifications.component.ts</context>
+          <context context-type="linenumber">280</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5189745860941637671" datatype="html">
+        <source>Hace <x id="PH" equiv-text="hours"/> h</source>
+        <target state="final"><x id="PH" equiv-text="hours"/> h ago</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/notifications/notifications.component.ts</context>
+          <context context-type="linenumber">281</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4890738886338434441" datatype="html">
+        <source>Hace <x id="PH" equiv-text="days"/> días</source>
+        <target state="final"><x id="PH" equiv-text="days"/> days ago</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/notifications/notifications.component.ts</context>
+          <context context-type="linenumber">282</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3429833464017143743" datatype="html">
+        <source> Elige de qué quieres enterarte. Nunca recibes aviso de lo que haces tú. </source>
+        <target state="final">Choose what you want to hear about. You never get notified about what you do yourself.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/notification-preferences.component.ts</context>
+          <context context-type="linenumber">75</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3225449892613845320" datatype="html">
+        <source>Sólo administración</source>
+        <target state="final">Admins only</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/notification-preferences.component.ts</context>
+          <context context-type="linenumber">86,87</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4617418185009336704" datatype="html">
+        <source>Horas de silencio</source>
+        <target state="final">Quiet hours</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/notification-preferences.component.ts</context>
+          <context context-type="linenumber">99,100</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8188049569191437862" datatype="html">
+        <source>No recibir avisos en este tramo</source>
+        <target state="final">Don't send me notifications during this time</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/notification-preferences.component.ts</context>
+          <context context-type="linenumber">102,103</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2537973299976115860" datatype="html">
+        <source>hasta</source>
+        <target state="final">to</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/notification-preferences.component.ts</context>
+          <context context-type="linenumber">111,112</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1301200436010657737" datatype="html">
+        <source>Menciones</source>
+        <target state="final">Mentions</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/notification-preferences.component.ts</context>
+          <context context-type="linenumber">137</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1226729832137607991" datatype="html">
+        <source>Me asignan una tarea</source>
+        <target state="final">I'm assigned a task</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/notification-preferences.component.ts</context>
+          <context context-type="linenumber">146</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6661625277999212660" datatype="html">
+        <source>Una tarea mía cambia de estado</source>
+        <target state="final">A task of mine changes status</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/notification-preferences.component.ts</context>
+          <context context-type="linenumber">147</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1906625007883208674" datatype="html">
+        <source>Se completa una tarea mía</source>
+        <target state="final">A task of mine is completed</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/notification-preferences.component.ts</context>
+          <context context-type="linenumber">148</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2707104426870549728" datatype="html">
+        <source>Cualquier cambio en una tarea mía</source>
+        <target state="final">Any change to a task of mine</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/notification-preferences.component.ts</context>
+          <context context-type="linenumber">149</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2932481895493026867" datatype="html">
+        <source>Se borra una tarea mía</source>
+        <target state="final">A task of mine is deleted</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/notification-preferences.component.ts</context>
+          <context context-type="linenumber">150</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6018227770381440650" datatype="html">
+        <source>Comentan en una tarea mía</source>
+        <target state="final">Someone comments on a task of mine</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/notification-preferences.component.ts</context>
+          <context context-type="linenumber">151</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1039250125489718266" datatype="html">
+        <source>Una tarea mía se acerca a su vencimiento</source>
+        <target state="final">A task of mine is nearly due</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/notification-preferences.component.ts</context>
+          <context context-type="linenumber">152</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5420763879695859389" datatype="html">
+        <source>Me asignan un ticket</source>
+        <target state="final">I'm assigned a ticket</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/notification-preferences.component.ts</context>
+          <context context-type="linenumber">153</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2036300658873508185" datatype="html">
+        <source>Un ticket mío cambia de estado</source>
+        <target state="final">A ticket of mine changes status</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/notification-preferences.component.ts</context>
+          <context context-type="linenumber">154</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1532899432079692853" datatype="html">
+        <source>Cualquier cambio en un ticket mío</source>
+        <target state="final">Any change to a ticket of mine</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/notification-preferences.component.ts</context>
+          <context context-type="linenumber">155</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1478013618457022996" datatype="html">
+        <source>Comentan en un ticket mío</source>
+        <target state="final">Someone comments on a ticket of mine</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/notification-preferences.component.ts</context>
+          <context context-type="linenumber">156</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8765622549394251905" datatype="html">
+        <source>Cambia un proyecto mío</source>
+        <target state="final">A project of mine changes</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/notification-preferences.component.ts</context>
+          <context context-type="linenumber">157</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1543682871512620937" datatype="html">
+        <source>Se borra un proyecto mío</source>
+        <target state="final">A project of mine is deleted</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/notification-preferences.component.ts</context>
+          <context context-type="linenumber">158</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6978421193369293040" datatype="html">
+        <source>Comentan en un proyecto mío</source>
+        <target state="final">Someone comments on a project of mine</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/notification-preferences.component.ts</context>
+          <context context-type="linenumber">159</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4646593700016993062" datatype="html">
+        <source>Me mencionan</source>
+        <target state="final">I'm mentioned</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/notification-preferences.component.ts</context>
+          <context context-type="linenumber">160</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="885336961498484442" datatype="html">
+        <source>Mi exportación está lista</source>
+        <target state="final">My export is ready</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/notification-preferences.component.ts</context>
+          <context context-type="linenumber">161</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5751765327206801156" datatype="html">
+        <source>Mi exportación no salió</source>
+        <target state="final">My export failed</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/notification-preferences.component.ts</context>
+          <context context-type="linenumber">162</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1242019757898316148" datatype="html">
+        <source>No se pudieron guardar tus preferencias</source>
+        <target state="final">Could not save your preferences</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/notification-preferences.component.ts</context>
+          <context context-type="linenumber">220</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8024686887641078251" datatype="html">
+        <source>Notificación</source>
+        <target state="final">Notification</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/state/notifications/notifications.state.ts</context>
+          <context context-type="linenumber">41</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="1431469213182003102" datatype="html">
         <source>Nombre del webhook</source>
         <target state="final">Webhook name</target>

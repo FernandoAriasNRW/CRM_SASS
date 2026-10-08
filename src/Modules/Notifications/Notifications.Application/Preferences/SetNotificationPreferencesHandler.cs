@@ -32,17 +32,24 @@ public sealed class SetNotificationPreferencesHandler(INotificationPreferencesRe
             await repository.AddAsync(preferences, ct);
         }
 
-        preferences.Update(
-            request.EmailEnabled, request.PushEnabled,
-            request.TaskAssigned, request.TaskDueSoon, request.MentionEnabled, request.ExportReady,
-            request.TaskCompleted, request.TicketCreated, request.TicketUpdated, request.ProjectUpdated,
-            request.QuietHoursEnabled, start, end);
+        preferences.SetChannels(request.EmailEnabled, request.PushEnabled);
+        preferences.SetQuietHours(request.QuietHoursEnabled, start, end);
+
+        // Todos o ninguno: si un tipo no se puede cambiar —no existe, o es de administración y
+        // quien lo pide no administra—, no se guarda nada. Guardar la mitad dejaría la pantalla
+        // diciendo una cosa y la base otra.
+        foreach (var setting in request.Types ?? [])
+        {
+            var applied = preferences.SetType(setting.Kind, setting.Enabled, request.IsAdmin);
+            if (applied.IsFailure)
+                return Result<NotificationPreferencesDto>.Failure(applied.Error!);
+        }
 
         await repository.SaveAsync(ct);
 
         // Se devuelve lo guardado, no lo recibido. El `PUT` anterior devolvía el cuerpo de la
         // petición tal cual, así que la pantalla confirmaba cambios que nunca llegaron a la
         // base: parecía funcionar hasta que alguien recargaba.
-        return Result<NotificationPreferencesDto>.Success(NotificationPreferencesDto.From(preferences));
+        return Result<NotificationPreferencesDto>.Success(NotificationPreferencesDto.From(preferences, request.IsAdmin));
     }
 }

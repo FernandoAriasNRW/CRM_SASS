@@ -27,10 +27,13 @@ public static class NotificationsEndpoints
   {
     var group = app.MapGroup("/api/v1/notifications").WithTags("Notifications").RequireAuthorization();
 
-    group.MapGet("", async (IUserContext currentUser, Guid? recipientId, string? type, string? status, IMediator mediator, int page = 1, int pageSize = 25) =>
+    // Los avisos de quien pregunta, y sólo los suyos. El destinatario llegaba por la URL y era
+    // opcional: sin él salían los avisos de toda la organización, que es justo lo que pedía la
+    // pantalla. Cada persona veía los de todas las demás.
+    group.MapGet("", async (IUserContext currentUser, string? type, string? status, IMediator mediator, int page = 1, int pageSize = 25) =>
     {
       var tenantId = currentUser.TenantId;
-      var query = new GetNotificationsQuery(tenantId, recipientId, type, status, new() { Page = page, PageSize = pageSize });
+      var query = new GetNotificationsQuery(tenantId, currentUser.UserId, type, status, new() { Page = page, PageSize = pageSize });
       var result = await mediator.Send(query);
       return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
     });
@@ -40,13 +43,15 @@ public static class NotificationsEndpoints
       var tenantId = currentUser.TenantId;
       var query = new GetNotificationByIdQuery(tenantId, id);
       var result = await mediator.Send(query);
-      return result.Value is null ? Results.NotFound() : Results.Ok(result.Value);
+      return result.Value is null || result.Value.RecipientUserId != currentUser.UserId
+          ? Results.NotFound()
+          : Results.Ok(result.Value);
     });
 
-    group.MapGet("/unread-count", async (IUserContext currentUser, Guid recipientId, IMediator mediator) =>
+    group.MapGet("/unread-count", async (IUserContext currentUser, IMediator mediator) =>
     {
       var tenantId = currentUser.TenantId;
-      var result = await mediator.Send(new GetUnreadCountQuery(tenantId, recipientId));
+      var result = await mediator.Send(new GetUnreadCountQuery(tenantId, currentUser.UserId));
       return Results.Ok(new { Count = result });
     });
 
@@ -68,18 +73,18 @@ public static class NotificationsEndpoints
               : Results.BadRequest(result.Error);
     });
 
-    group.MapPost("/{id:guid}/read", async (IUserContext currentUser, Guid id, Guid? recipientId, IMediator mediator) =>
+    group.MapPost("/{id:guid}/read", async (IUserContext currentUser, Guid id, IMediator mediator) =>
     {
       var tenantId = currentUser.TenantId;
-      var userId = recipientId ?? (currentUser.UserId);
+      var userId = currentUser.UserId;
       var result = await mediator.Send(new MarkNotificationAsReadCommand(tenantId, id, userId));
       return result.IsSuccess ? Results.Ok() : Results.BadRequest(result.Error);
     });
 
-    group.MapPatch("/{id:guid}/read", async (IUserContext currentUser, Guid id, Guid? recipientId, IMediator mediator) =>
+    group.MapPatch("/{id:guid}/read", async (IUserContext currentUser, Guid id, IMediator mediator) =>
     {
       var tenantId = currentUser.TenantId;
-      var userId = recipientId ?? (currentUser.UserId);
+      var userId = currentUser.UserId;
       var result = await mediator.Send(new MarkNotificationAsReadCommand(tenantId, id, userId));
       return result.IsSuccess ? Results.Ok() : Results.BadRequest(result.Error);
     });
@@ -90,7 +95,7 @@ public static class NotificationsEndpoints
       var userId = currentUser.UserId;
       
       var notifs = await dbContext.Notifications
-          .Where(n => n.TenantId == tenantId && (n.RecipientUserId == userId || userId == Guid.Empty) && n.StatusValue != "Read" && !n.IsDeleted)
+          .Where(n => n.TenantId == tenantId && n.RecipientUserId == userId && n.StatusValue != "Read" && !n.IsDeleted)
           .ToListAsync();
 
       foreach (var n in notifs)
@@ -119,7 +124,7 @@ public static class NotificationsEndpoints
     // al recargar todo volvía a su sitio. Prometer y no cumplir es peor que no ofrecerlo.
     group.MapGet("/preferences", async (IUserContext currentUser, IMediator mediator) =>
     {
-      var result = await mediator.Send(new GetNotificationPreferencesQuery(currentUser.TenantId, currentUser.UserId));
+      var result = await mediator.Send(new GetNotificationPreferencesQuery(currentUser.TenantId, currentUser.UserId, currentUser.Role == "Admin"));
       return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
     });
 
@@ -127,13 +132,12 @@ public static class NotificationsEndpoints
     // devolvía tal cual: no había forma de que una hora mal escrita diera error.
     group.MapPut("/preferences", async (NotificationPreferencesRequest body, IUserContext currentUser, IMediator mediator) =>
     {
+      // El rol sale del token: es lo que decide si se pueden tocar los avisos de administración.
       var result = await mediator.Send(new SetNotificationPreferencesCommand(
-          currentUser.TenantId, currentUser.UserId,
+          currentUser.TenantId, currentUser.UserId, currentUser.Role == "Admin",
           body.EmailEnabled, body.PushEnabled,
-          body.TaskAssigned, body.TaskCompleted, body.TaskDueSoon,
-          body.TicketCreated, body.TicketUpdated, body.ProjectUpdated,
-          body.MentionEnabled, body.ExportReady,
-          body.QuietHoursEnabled, body.QuietHoursStart, body.QuietHoursEnd));
+          body.QuietHoursEnabled, body.QuietHoursStart, body.QuietHoursEnd,
+          body.Types ?? []));
 
       return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
     });
@@ -143,23 +147,13 @@ public static class NotificationsEndpoints
 }
 
 /// <summary>
-/// El cuerpo del PUT de preferencias. Los nombres son los que ya mandaba la pantalla.
-///
-/// Cada campo trae el valor de por defecto que le corresponde: si una versión antigua de la
-/// interfaz manda un JSON sin `exportReady`, la preferencia queda encendida —que es lo que
-/// espera quien no la ha tocado— en vez de apagarse sola por omisión.
+/// El cuerpo del PUT de preferencias: las vías, las horas de silencio y los tipos que se cambian.
+/// Los tipos que no vienen se quedan como estaban.
 /// </summary>
 public sealed record NotificationPreferencesRequest(
     bool EmailEnabled = true,
     bool PushEnabled = false,
-    bool TaskAssigned = true,
-    bool TaskCompleted = false,
-    bool TaskDueSoon = true,
-    bool TicketCreated = true,
-    bool TicketUpdated = false,
-    bool ProjectUpdated = true,
-    bool MentionEnabled = true,
-    bool ExportReady = true,
     bool QuietHoursEnabled = false,
     string QuietHoursStart = "22:00",
-    string QuietHoursEnd = "08:00");
+    string QuietHoursEnd = "08:00",
+    IReadOnlyList<Notifications.Application.Preferences.NotificationTypeSetting>? Types = null);

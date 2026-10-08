@@ -52,7 +52,10 @@ public sealed class MarkNotificationAsReadHandler(
   public async Task<Result<bool>> Handle(MarkNotificationAsReadCommand request, CancellationToken cancellationToken)
   {
     var dto = await _repository.GetByIdAsync(request.TenantId, request.NotificationId, includeDeleted: false, ct: cancellationToken);
-    if (dto == null) return Result<bool>.Failure("Notification not found");
+
+    // Un aviso de otra persona es, para quien pregunta, un aviso que no existe. Se podía marcar
+    // como leído el de cualquiera de la organización con sólo saber su identificador.
+    if (dto == null || dto.RecipientUserId != request.RecipientUserId) return Result<bool>.Failure("Notification not found");
 
     if (dto.IsDeleted)
       return Result<bool>.Failure("No se puede modificar una notificación eliminada");
@@ -74,7 +77,9 @@ public sealed class DeleteNotificationHandler(
   public async Task<Result<bool>> Handle(DeleteNotificationCommand request, CancellationToken cancellationToken)
   {
     var existing = await _repository.GetByIdAsync(request.TenantId, request.NotificationId, includeDeleted: false, ct: cancellationToken);
-    if (existing == null)
+
+    // Sólo se borra lo propio: igual que al marcarlo como leído.
+    if (existing == null || existing.RecipientUserId != request.DeletedBy)
       return Result<bool>.Failure("Notificación no encontrada");
 
     if (existing.IsDeleted)

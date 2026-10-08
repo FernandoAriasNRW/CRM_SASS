@@ -2,16 +2,10 @@ import { Injectable, inject } from '@angular/core';
 import * as signalR from '@microsoft/signalr';
 import { Subject } from 'rxjs';
 import { AuthSignalStore } from './auth-signal.store';
+import type { NotificationDto } from '../state/notifications/notifications.state';
 
-export interface RealtimeNotification {
-  id: string;
-  userId: string;
-  title: string;
-  body: string;
-  type: 'info' | 'success' | 'warning' | 'error';
-  createdAtUtc: string;
-  isRead: boolean;
-}
+/** Los avisos llegan con la misma forma que en la lista: ver `fromApi`. */
+export type RealtimeNotification = NotificationDto;
 
 @Injectable({ providedIn: 'root' })
 export class RealtimeService {

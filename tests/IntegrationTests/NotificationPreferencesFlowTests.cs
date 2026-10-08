@@ -38,25 +38,24 @@ public sealed class NotificationPreferencesFlowTests(CrmApiFactory factory)
         return client;
     }
 
-    /// <summary>Un cuerpo completo, para no depender de los valores por omisión al enviar.</summary>
+    /// <summary>Un cuerpo completo: vías, silencio y los tipos que se cambian.</summary>
     private static object Body(
-        bool emailEnabled = true, bool taskCompleted = false, bool exportReady = true,
-        bool quietHoursEnabled = false, string start = "22:00", string end = "08:00") => new
+        bool emailEnabled = true, bool quietHoursEnabled = false, string start = "22:00", string end = "08:00",
+        params (string Kind, bool Enabled)[] types) => new
         {
             emailEnabled,
             pushEnabled = false,
-            taskAssigned = true,
-            taskCompleted,
-            taskDueSoon = true,
-            ticketCreated = true,
-            ticketUpdated = false,
-            projectUpdated = true,
-            mentionEnabled = true,
-            exportReady,
             quietHoursEnabled,
             quietHoursStart = start,
             quietHoursEnd = end,
+            types = types.Select(t => new { kind = t.Kind, enabled = t.Enabled }).ToArray(),
         };
+
+    private static bool? TypeEnabled(JsonElement preferences, string kind)
+        => preferences.GetProperty("types").EnumerateArray()
+            .Where(t => t.GetProperty("kind").GetString() == kind)
+            .Select(t => (bool?)t.GetProperty("enabled").GetBoolean())
+            .FirstOrDefault();
 
     [Fact]
     public async Task Untouched_preferences_return_the_defaults()
@@ -65,8 +64,8 @@ public sealed class NotificationPreferencesFlowTests(CrmApiFactory factory)
 
         var preferences = await client.GetFromJsonAsync<JsonElement>(Route);
 
-        preferences.GetProperty("taskAssigned").GetBoolean().Should().BeTrue("un aviso que la persona espera llega encendido");
-        preferences.GetProperty("exportReady").GetBoolean().Should().BeTrue("era una condición del encargo");
+        TypeEnabled(preferences, "task.assigned").Should().BeTrue("un aviso que la persona espera llega encendido");
+        TypeEnabled(preferences, "report.export_ready").Should().BeTrue("era una condición del encargo");
         preferences.GetProperty("quietHoursStart").GetString().Should().Be("22:00");
     }
 
@@ -79,13 +78,13 @@ public sealed class NotificationPreferencesFlowTests(CrmApiFactory factory)
     {
         var client = await AuthenticateAsync();
 
-        var saved = await client.PutAsJsonAsync(Route, Body(emailEnabled: false, taskCompleted: true));
+        var saved = await client.PutAsJsonAsync(Route, Body(emailEnabled: false, types: ("task.updated", true)));
         saved.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var reread = await client.GetFromJsonAsync<JsonElement>(Route);
 
         reread.GetProperty("emailEnabled").GetBoolean().Should().BeFalse();
-        reread.GetProperty("taskCompleted").GetBoolean().Should().BeTrue();
+        TypeEnabled(reread, "task.updated").Should().BeTrue();
     }
 
     /// <summary>
@@ -97,14 +96,14 @@ public sealed class NotificationPreferencesFlowTests(CrmApiFactory factory)
     {
         var client = await AuthenticateAsync();
 
-        await client.PutAsJsonAsync(Route, Body(exportReady: false));
+        await client.PutAsJsonAsync(Route, Body(types: ("report.export_ready", false)));
 
         var reread = await client.GetFromJsonAsync<JsonElement>(Route);
-        reread.GetProperty("exportReady").GetBoolean().Should().BeFalse();
+        TypeEnabled(reread, "report.export_ready").Should().BeFalse();
 
         // Y se puede volver a encender: una preferencia que sólo se puede apagar es una trampa.
-        await client.PutAsJsonAsync(Route, Body(exportReady: true));
-        (await client.GetFromJsonAsync<JsonElement>(Route)).GetProperty("exportReady").GetBoolean().Should().BeTrue();
+        await client.PutAsJsonAsync(Route, Body(types: ("report.export_ready", true)));
+        TypeEnabled(await client.GetFromJsonAsync<JsonElement>(Route), "report.export_ready").Should().BeTrue();
     }
 
     [Fact]
@@ -155,5 +154,15 @@ public sealed class NotificationPreferencesFlowTests(CrmApiFactory factory)
 
         (await anonymous.GetAsync(Route)).StatusCode.Should().Be(HttpStatusCode.Unauthorized);
         (await anonymous.PutAsJsonAsync(Route, Body())).StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task A_type_that_does_not_exist_is_rejected()
+    {
+        var client = await AuthenticateAsync();
+
+        var response = await client.PutAsJsonAsync(Route, Body(types: ("aviso.inventado", true)));
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 }
