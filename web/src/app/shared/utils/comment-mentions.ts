@@ -80,6 +80,7 @@ export function mentionLink(type: string, id: string): { route: string; queryPar
     case 'Project': return { route: '/projects', queryParams: { project: id } };
     case 'Ticket': return { route: '/tickets', queryParams: { ticket: id } };
     case 'Document': return { route: '/docs', queryParams: { doc: id } };
+    case 'Conversation': return { route: '/chat', queryParams: { channel: id } };
     default: return null;
   }
 }

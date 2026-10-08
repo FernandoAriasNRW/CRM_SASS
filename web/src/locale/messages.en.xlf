@@ -2,6 +2,70 @@
 <xliff xmlns="urn:oasis:names:tc:xliff:document:1.2" version="1.2">
   <file source-language="es" target-language="en" datatype="plaintext" original="ng2.template">
     <body>
+      <trans-unit id="3705884100505324179" datatype="html">
+        <source>Cuentas de la organización</source>
+        <target state="final">Organization accounts</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/notification-preferences.component.ts</context>
+          <context context-type="linenumber">141</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1254689366701613628" datatype="html">
+        <source>Escriben en una conversación en la que participo</source>
+        <target state="final">Someone writes in a conversation I take part in</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/notification-preferences.component.ts</context>
+          <context context-type="linenumber">167</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2946427240371310105" datatype="html">
+        <source>Me añaden a un equipo</source>
+        <target state="final">I'm added to a team</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/notification-preferences.component.ts</context>
+          <context context-type="linenumber">168</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2180091833965515062" datatype="html">
+        <source>Me quitan de un equipo</source>
+        <target state="final">I'm removed from a team</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/notification-preferences.component.ts</context>
+          <context context-type="linenumber">169</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2658448234211077600" datatype="html">
+        <source>Se crea una cuenta</source>
+        <target state="final">An account is created</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/notification-preferences.component.ts</context>
+          <context context-type="linenumber">170</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="595623614773667840" datatype="html">
+        <source>Cambia una cuenta</source>
+        <target state="final">An account changes</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/notification-preferences.component.ts</context>
+          <context context-type="linenumber">171</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4043659216201591064" datatype="html">
+        <source>Se borra una cuenta</source>
+        <target state="final">An account is deleted</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/notification-preferences.component.ts</context>
+          <context context-type="linenumber">172</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1492735645219186465" datatype="html">
+        <source>Un webhook deja de entregarse</source>
+        <target state="final">A webhook stops being delivered</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/notification-preferences.component.ts</context>
+          <context context-type="linenumber">173</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="1342033690330010378" datatype="html">
         <source>Preferencias de avisos</source>
         <target state="final">Notification preferences</target>

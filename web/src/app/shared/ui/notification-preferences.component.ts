@@ -136,6 +136,10 @@ export class NotificationPreferencesComponent implements OnInit {
     projects: $localize`Proyectos`,
     mentions: $localize`Menciones`,
     reports: $localize`Informes`,
+    chat: $localize`Chat`,
+    teams: $localize`Equipos`,
+    users: $localize`Cuentas de la organización`,
+    webhooks: $localize`Webhooks`,
   };
 
   /**
@@ -160,6 +164,13 @@ export class NotificationPreferencesComponent implements OnInit {
     'mention': $localize`Me mencionan`,
     'report.export_ready': $localize`Mi exportación está lista`,
     'report.export_failed': $localize`Mi exportación no salió`,
+    'chat.message': $localize`Escriben en una conversación en la que participo`,
+    'team.member_added': $localize`Me añaden a un equipo`,
+    'team.member_removed': $localize`Me quitan de un equipo`,
+    'user.created': $localize`Se crea una cuenta`,
+    'user.updated': $localize`Cambia una cuenta`,
+    'user.deleted': $localize`Se borra una cuenta`,
+    'webhook.delivery_failed': $localize`Un webhook deja de entregarse`,
   };
 
   readonly groups = computed(() => {

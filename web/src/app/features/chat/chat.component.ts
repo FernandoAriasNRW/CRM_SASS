@@ -10,6 +10,7 @@ import { BadgeComponent } from '../../shared/ui/badge.component';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import { lucidePlus, lucideHash, lucideSend } from '@ng-icons/lucide';
 import { Subscription } from 'rxjs';
+import { ActivatedRoute } from '@angular/router';
 
 interface Channel { id: string; name: string; type: string; }
 interface Message { id: string; conversationId: string; senderId: string; content: string; sentAt: string; }
@@ -24,6 +25,7 @@ interface Message { id: string; conversationId: string; senderId: string; conten
 export class ChatComponent implements OnInit, OnDestroy {
   private readonly api = inject(ApiService);
   private readonly realtime = inject(RealtimeService);
+  private readonly route = inject(ActivatedRoute);
   private sub?: Subscription;
 
   readonly channels = signal<Channel[]>([]);
@@ -37,7 +39,9 @@ export class ChatComponent implements OnInit, OnDestroy {
       next: res => {
         const data = res.items || [];
         this.channels.set(data);
-        if (data.length > 0) this.selectChannel(data[0]);
+        // Un aviso de mensaje nuevo llega con ?channel=: se abre ese canal y no el primero.
+        const requested = data.find(c => c.id === this.route.snapshot.queryParamMap.get('channel'));
+        if (requested ?? data[0]) this.selectChannel(requested ?? data[0]);
       },
       error: () => {},
     });

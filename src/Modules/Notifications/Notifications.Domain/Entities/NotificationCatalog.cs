@@ -25,6 +25,10 @@ public static class NotificationCatalog
         public const string Projects = "projects";
         public const string Mentions = "mentions";
         public const string Reports = "reports";
+        public const string Chat = "chat";
+        public const string Teams = "teams";
+        public const string Users = "users";
+        public const string Webhooks = "webhooks";
     }
 
     // ── Tareas ───────────────────────────────────────────────────────────────────────────────
@@ -54,6 +58,23 @@ public static class NotificationCatalog
     public const string ExportReady = "report.export_ready";
     public const string ExportFailed = "report.export_failed";
 
+    // ── Chat ─────────────────────────────────────────────────────────────────────────────────
+    /// <summary>Un mensaje nuevo en una conversación en la que la persona ha escrito.</summary>
+    public const string ChatMessage = "chat.message";
+
+    // ── Equipos ──────────────────────────────────────────────────────────────────────────────
+    public const string TeamMemberAdded = "team.member_added";
+    public const string TeamMemberRemoved = "team.member_removed";
+
+    // ── Usuarios (administración) ────────────────────────────────────────────────────────────
+    public const string UserCreated = "user.created";
+    public const string UserUpdated = "user.updated";
+    public const string UserDeleted = "user.deleted";
+
+    // ── Webhooks (administración) ────────────────────────────────────────────────────────────
+    /// <summary>Un envío de webhook se dio por perdido tras agotar los reintentos.</summary>
+    public const string WebhookDeliveryFailed = "webhook.delivery_failed";
+
     public static IReadOnlyList<Entry> All { get; } =
     [
         new(TaskAssigned, Categories.Tasks, true),
@@ -77,6 +98,20 @@ public static class NotificationCatalog
 
         new(ExportReady, Categories.Reports, true),
         new(ExportFailed, Categories.Reports, true),
+
+        new(ChatMessage, Categories.Chat, true),
+
+        new(TeamMemberAdded, Categories.Teams, true),
+        new(TeamMemberRemoved, Categories.Teams, true),
+
+        // Avisos de administración: quién entra, cambia o sale de la organización, y webhooks que
+        // dejan de llegar. Las cuentas vienen apagadas —en una organización grande serían ruido—
+        // y el fallo de un webhook encendido: es algo que hay que arreglar.
+        new(UserCreated, Categories.Users, false, AdminOnly: true),
+        new(UserUpdated, Categories.Users, false, AdminOnly: true),
+        new(UserDeleted, Categories.Users, false, AdminOnly: true),
+
+        new(WebhookDeliveryFailed, Categories.Webhooks, true, AdminOnly: true),
     ];
 
     public static Entry? Find(string? kind) => All.FirstOrDefault(e => e.Kind == kind);

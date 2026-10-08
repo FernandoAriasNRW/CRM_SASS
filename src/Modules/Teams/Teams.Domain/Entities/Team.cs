@@ -59,12 +59,20 @@ public sealed class Team : AggregateRoot, ITenantEntity, ISoftDeletable
         if (IsDeleted) throw new InvalidOperationException("Team is deleted.");
 
         var wanted = userIds.Where(id => id != Guid.Empty).ToHashSet();
+        var before = ActiveMemberIds.ToHashSet();
 
         foreach (var member in _members.Where(m => !m.IsDeleted && !wanted.Contains(m.UserId)))
             member.Remove(nowUtc);
 
         foreach (var userId in wanted)
             AddMember(nowUtc, userId, ValueObjects.TeamRole.Member);
+
+        // Quién entra y quién sale, para avisarles. Sólo si hay cambios: guardar el mismo equipo no
+        // es una novedad para nadie.
+        var added = wanted.Where(id => !before.Contains(id)).ToList();
+        var removed = before.Where(id => !wanted.Contains(id)).ToList();
+        if (added.Count > 0 || removed.Count > 0)
+            RaiseDomainEvent(new TeamMembersChangedEvent(Id, TenantId, Name, added, removed));
     }
 
     public void Update(string name, string description)

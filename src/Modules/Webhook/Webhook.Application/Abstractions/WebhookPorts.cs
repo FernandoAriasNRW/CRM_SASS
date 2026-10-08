@@ -24,3 +24,11 @@ public interface IWebhookUrlPolicy
     /// <summary>El motivo por el que no se acepta la URL, o <c>null</c> si se acepta.</summary>
     string? Reject(string url);
 }
+
+/// <summary>
+/// Un envío se dio por perdido tras agotar los reintentos. Lo publica el trabajo de entrega, y el
+/// host avisa a quien administra: un destino que no responde hay que arreglarlo, y sin aviso se
+/// descubre cuando alguien echa en falta los datos al otro lado.
+/// </summary>
+public sealed record WebhookDeliveryFailedNotification(
+    Guid TenantId, Guid SubscriptionId, string SubscriptionName, string EventName, string? Error) : MediatR.INotification;
