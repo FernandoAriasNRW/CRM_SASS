@@ -46,6 +46,27 @@ public sealed class Team : AggregateRoot, ITenantEntity, ISoftDeletable
         _members.Add(member);
     }
 
+    /// <summary>Quiénes están en el equipo ahora: los miembros dados de baja no cuentan.</summary>
+    public IReadOnlyList<Guid> ActiveMemberIds =>
+        _members.Where(m => !m.IsDeleted).Select(m => m.UserId).ToList();
+
+    /// <summary>
+    /// Deja como miembros exactamente a estas personas: da de baja a quien ya no está y añade a
+    /// quien falta. Quien sigue conserva su fila, con su rol y su fecha de entrada.
+    /// </summary>
+    public void SetMembers(DateTime nowUtc, IEnumerable<Guid> userIds)
+    {
+        if (IsDeleted) throw new InvalidOperationException("Team is deleted.");
+
+        var wanted = userIds.Where(id => id != Guid.Empty).ToHashSet();
+
+        foreach (var member in _members.Where(m => !m.IsDeleted && !wanted.Contains(m.UserId)))
+            member.Remove(nowUtc);
+
+        foreach (var userId in wanted)
+            AddMember(nowUtc, userId, ValueObjects.TeamRole.Member);
+    }
+
     public void Update(string name, string description)
     {
         if (IsDeleted) throw new InvalidOperationException("Team is deleted.");

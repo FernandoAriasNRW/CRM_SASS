@@ -999,7 +999,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/admin/teams/admin-teams.component.html</context>
-          <context context-type="linenumber">149,150</context>
+          <context context-type="linenumber">152,153</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/calendar/event-drawer.component.ts</context>
@@ -1922,7 +1922,7 @@ Pendiente</source>
         <source>Guardar Cambios</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/admin/teams/admin-teams.component.html</context>
-          <context context-type="linenumber">152</context>
+          <context context-type="linenumber">155</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/admin/users/admin-users.component.html</context>
@@ -1945,14 +1945,14 @@ Pendiente</source>
         <source>Crear Equipo</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/admin/teams/admin-teams.component.html</context>
-          <context context-type="linenumber">152,153</context>
+          <context context-type="linenumber">155,156</context>
         </context-group>
       </trans-unit>
       <trans-unit id="9089392450232532076" datatype="html">
         <source>Error al cargar equipos</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/admin/teams/admin-teams.component.ts</context>
-          <context context-type="linenumber">85</context>
+          <context context-type="linenumber">86</context>
         </context-group>
       </trans-unit>
       <trans-unit id="183276747283762359" datatype="html">

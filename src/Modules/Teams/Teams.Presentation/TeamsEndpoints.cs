@@ -75,4 +75,4 @@ public static class TeamsEndpoints
 }
 
 public record CreateTeamRequest(string Name, string Description, List<Guid> MemberIds);
-public record UpdateTeamRequest(string Name, string Description, List<Guid> MemberIds);
+public record UpdateTeamRequest(string Name, string Description, List<Guid>? MemberIds);

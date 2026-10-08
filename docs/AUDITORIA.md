@@ -970,8 +970,6 @@ que lleva «8b» en el título. Lo único que sigue siendo propio de un disparad
   notificaciones push, `GET /dashboards/{id}` y el aviso `notification_received`.
 - **El tablero de tareas no se suscribe a ningún proyecto** (§22.4): `connectBoard` existe y nadie
   la llama, así que las tareas que mueve otra persona no se ven hasta recargar.
-- **Los miembros de un equipo no se pueden editar**: `UpdateTeamCommand` ignora `memberIds` y la
-  API no dice quiénes son los miembros, sólo cuántos.
 - **`/projects` no ordena ni filtra por fechas, y `/reports` no ordena, no busca ni filtra por
   formato**, aunque las pantallas manden esos parámetros: se ignoran sin error.
 
@@ -1655,3 +1653,30 @@ al dueño y a él no. Quitando el inquilino del nombre del grupo, la prueba del 
 Queda una cosa: **el tablero de tareas no llama a `connectBoard`**. La pantalla mezcla tareas de
 varios proyectos y no se suscribe a ninguno, así que el aviso `task_moved` sale y nadie lo
 escucha.
+
+
+### 22.5 Los miembros de un equipo no se podían editar (arreglado)
+
+`PUT /teams/{id}` recibía `memberIds` y lo ignoraba. La API tampoco decía quiénes eran los
+miembros, sólo cuántos, así que la pantalla abría la edición sin nadie marcado. El administrador
+elegía, guardaba, y el equipo seguía igual.
+
+Arreglarlo tenía una trampa: si la API hubiera empezado a aplicar la lista sin que las pantallas
+la precargaran, editar el nombre de un equipo lo habría vaciado. Las dos pantallas mandaban una
+lista vacía al editar (`admin-teams` y `team-form`). Ahora `TeamDto` trae `memberIds` y las dos
+parten de ellos.
+
+- `Team.SetMembers` da de baja a quien ya no está, añade a quien falta y deja como está a quien
+  sigue. Sin `memberIds` en la petición, los miembros no se tocan.
+- Al añadir saltó otro fallo: el `Guid` del miembro lo pone el dominio, pero EF lo tenía por
+  clave generada. Un miembro nuevo en un equipo ya cargado se tomaba por existente, se mandaba
+  un UPDATE que no tocaba ninguna fila y la petición acababa en `DbUpdateConcurrencyException`.
+  La clave es ahora `ValueGeneratedNever`, sin cambio de esquema.
+
+- Y en la pantalla, al probarla en el navegador: **pulsar el nombre de una persona no la marcaba**.
+  El `(click)` estaba en la etiqueta que envuelve la casilla, y la etiqueta reenvía el clic a la
+  casilla, que vuelve a subir: se aplicaba dos veces y se anulaba. Sólo funcionaba acertando
+  justo en la casilla. Ahora se escucha el `change` de la casilla.
+
+Lo prueban `TeamMembersFlowTests`, que lee el equipo después de guardar, la prueba de Karma de
+`admin-teams` y la e2e `team-members`, que marca y desmarca pulsando los nombres.

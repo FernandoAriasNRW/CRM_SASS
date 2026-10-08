@@ -132,12 +132,15 @@
     </div>
 
     <div>
-      <label for="admin-teams-seleccionar-miembros-del-equipo" class="block text-xs font-semibold text-muted-foreground mb-1.5" i18n>Seleccionar Miembros del Equipo</label>
-      <div class="max-h-52 overflow-y-auto space-y-1 border border-border rounded-lg p-2 bg-muted/50 dark:bg-background">
+      <span id="admin-teams-seleccionar-miembros-del-equipo" class="block text-xs font-semibold text-muted-foreground mb-1.5" i18n>Seleccionar Miembros del Equipo</span>
+      <!-- El cambio se escucha en la casilla y no en la etiqueta. Con el (click) en la etiqueta,
+           pulsar el nombre lo aplicaba dos veces —el de la etiqueta y el que ésta reenvía a la
+           casilla— y la selección no cambiaba. -->
+      <div role="group" aria-labelledby="admin-teams-seleccionar-miembros-del-equipo" class="max-h-52 overflow-y-auto space-y-1 border border-border rounded-lg p-2 bg-muted/50 dark:bg-background">
         @for (u of availableUsers(); track u.id) {
-          <label appClickable (click)="toggleMemberSelection(u.id)" class="flex items-center justify-between p-2 hover:bg-secondary/60 dark:hover:bg-muted rounded-lg cursor-pointer text-xs transition-colors">
+          <label [for]="'admin-teams-miembro-' + u.id" class="flex items-center justify-between p-2 hover:bg-secondary/60 dark:hover:bg-muted rounded-lg cursor-pointer text-xs transition-colors">
             <span class="font-medium text-foreground">{{ u.name }} ({{ u.email }})</span>
-            <input id="admin-teams-seleccionar-miembros-del-equipo" type="checkbox" [checked]="selectedMemberIds().includes(u.id)" class="rounded text-primary focus:ring-primary">
+            <input [id]="'admin-teams-miembro-' + u.id" type="checkbox" [checked]="selectedMemberIds().includes(u.id)" (change)="toggleMemberSelection(u.id)" class="rounded text-primary focus:ring-primary">
           </label>
         }
       </div>

@@ -7,4 +7,4 @@ public sealed record UpdateTeamCommand(
     Guid TeamId,
     string Name,
     string Description,
-    List<Guid> MemberIds) : ICommand<bool>;
+    List<Guid>? MemberIds) : ICommand<bool>;

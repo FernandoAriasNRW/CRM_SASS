@@ -30,6 +30,7 @@ public sealed class CreateTeamCommandHandler(
 }
 
 public sealed class UpdateTeamCommandHandler(
+    TimeProvider timeProvider,
     ITeamRepository repository,
     ITeamsUnitOfWork unitOfWork) : ICommandHandler<UpdateTeamCommand, bool>
 {
@@ -39,6 +40,11 @@ public sealed class UpdateTeamCommandHandler(
         if (team is null) return Result<bool>.Failure("Team not found");
 
         team.Update(request.Name, request.Description);
+
+        // Sin lista, los miembros no se tocan. Este handler ignoraba la lista siempre: la
+        // pantalla de administración mandaba a quién había marcado y el equipo seguía igual.
+        if (request.MemberIds is not null)
+            team.SetMembers(timeProvider.GetUtcNow().UtcDateTime, request.MemberIds);
 
         await repository.UpdateAsync(team, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);

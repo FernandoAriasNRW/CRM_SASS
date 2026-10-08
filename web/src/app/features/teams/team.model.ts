@@ -3,6 +3,8 @@ export interface TeamDto {
   name: string;
   description: string;
   memberCount: number;
+  /** Los miembros activos. Al editar se vuelven a mandar: la lista sustituye a la que había. */
+  memberIds: string[];
 }
 
 export interface CreateTeamRequest {
