@@ -2,8 +2,17 @@ using BuildingBlocks.Domain.Primitives;
 
 namespace Docs.Domain.Entities;
 
-public sealed class Page : Entity, ISoftDeletable
+/// <summary>
+/// Una página de un documento.
+///
+/// Lleva su propio <c>TenantId</c> aunque ya lo tenga su documento: las páginas se buscan por su
+/// identificador, sin pasar por el documento, y sin inquilino propio el filtro global no las
+/// alcanzaba. Quien supiera el identificador de una página de otra organización podía leerla,
+/// editarla, moverla o borrarla.
+/// </summary>
+public sealed class Page : Entity, ITenantEntity, ISoftDeletable
 {
+    public Guid TenantId { get; private set; }
     public Guid DocumentId { get; private set; }
     public Guid? ParentPageId { get; private set; }
     
@@ -20,11 +29,12 @@ public sealed class Page : Entity, ISoftDeletable
 
     private Page() { Content = null!; Title = null!; } // EF las rellena al materializar.
 
-    public static Page Create(DateTime nowUtc, Guid documentId, Guid? parentPageId, string title, string content, int order)
+    public static Page Create(DateTime nowUtc, Guid tenantId, Guid documentId, Guid? parentPageId, string title, string content, int order)
     {
         return new Page
         {
             Id = Guid.NewGuid(),
+            TenantId = tenantId,
             DocumentId = documentId,
             ParentPageId = parentPageId,
             Title = title,

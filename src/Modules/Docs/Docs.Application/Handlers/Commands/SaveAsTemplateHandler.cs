@@ -50,7 +50,7 @@ public class SaveAsTemplateHandler(TimeProvider timeProvider, IDocumentRepositor
                 ? pageMap[srcPage.ParentPageId.Value]
                 : null;
 
-            var newPage = Page.Create(timeProvider.GetUtcNow().UtcDateTime, templateDoc.Id, newParentId, srcPage.Title, srcPage.Content, srcPage.Order);
+            var newPage = Page.Create(timeProvider.GetUtcNow().UtcDateTime, templateDoc.TenantId, templateDoc.Id, newParentId, srcPage.Title, srcPage.Content, srcPage.Order);
             pageMap[srcPage.Id] = newPage.Id;
             await repository.AddPageAsync(newPage, cancellationToken);
         }

@@ -900,9 +900,6 @@ que lleva «8b» en el título. Lo único que sigue siendo propio de un disparad
 
 ## 14. Lo que queda anotado y sin resolver
 
-- **Las páginas de documentos no llevan inquilino.** `CreatePageCommand` y `UpdatePageCommand`
-  no tienen `TenantId`, así que el aislamiento de las páginas depende de conocer el
-  identificador del documento. No es explotable a ciegas, pero es la misma familia que 2.5.
 - **`Reporting.Domain` sigue al 0 %**: sólo quedan `Report` y `Dashboard`, y nada ejercita el
   alta de informes.
 - **Los eventos de integración de `BuildingBlocks.Contracts` están declarados y no los usa
@@ -920,12 +917,12 @@ que lleva «8b» en el título. Lo único que sigue siendo propio de un disparad
   (`LegacyTicketTagsConverter`). La pantalla `/tags` las lista y las crea, edita y borra en un
   cajón; las categorías propias se crean, renombran (sus etiquetas las siguen) y borran si están
   vacías. Proyectos, informes y paneles tienen su selector. Queda: la columna `Tickets.Tags` se
-  puede quitar cuando esté vacía en todas las bases; y el filtro «Mi equipo» de tareas y proyectos
-  busca el id **del usuario** dentro de `TagIds`, así que no devuelve nada (ya fallaba antes de este cambio).
+  puede quitar cuando esté vacía en todas las bases. (El filtro «Mi equipo», que buscaba el id del
+  usuario dentro de `TagIds`, desapareció con el tablero por equipo de §23.2.)
 - **Los adjuntos de un ticket no se pueden quitar**, y no hay nada que los borre del almacenamiento
   si algún día se vacía la papelera de tickets.
-- **Espacios, carpetas, anotaciones y subidas no piden autorización por entidad**, y los
-  permisos de páginas de documentos se comprueban sobre el módulo, no sobre el documento.
+- **Espacios, carpetas, anotaciones y subidas no piden autorización por entidad.** Las páginas
+  de documentos sí, desde §24.
 - **Compartir no tiene interfaz todavía.** Los endpoints existen y están probados, y los filtros
   «compartido conmigo» y «privado» funcionan contra ellos, pero no hay ningún botón en la
   aplicación que comparta. Hasta que lo haya, esas dos entradas del menú responden bien y
@@ -955,9 +952,6 @@ que lleva «8b» en el título. Lo único que sigue siendo propio de un disparad
 - **`doughnut-chart` se ha quedado sin uso** al pasar la tarta a ser un widget. `line-chart` sigue
   vivo para el burndown.
 - **De la Fase 5B faltan los bloques arrastrables y los comentarios en línea** (ver `FASE-5.md`).
-- **Las menciones a personas no avisan a la persona mencionada.** Se guardan y se pueden consultar,
-  pero mencionar a alguien no le manda una notificación. El tipo de aviso `Mention` ya existe en
-  las preferencias, así que es enganchar el evento.
 - **Un documento borrado deja sus menciones.** Se quitan al reescribir la página, no al borrar el
   documento, así que una tarea podría enseñar un enlace a un documento que ya no está. El enlace
   no rompe nada —lleva a una pantalla que dirá que no existe— pero conviene limpiarlo.
@@ -966,9 +960,10 @@ que lleva «8b» en el título. Lo único que sigue siendo propio de un disparad
 - **Documentos tiene la columna de archivado y no la usa.** Se le puso al modelar el concepto
   para no dejar el agregado a medias, pero Docs mantiene su propio panel lateral y no se ha
   enganchado al compartido.
-- **Lo que el frontend pide y la API no tiene** (§22.3): las notificaciones push,
-  `GET /dashboards/{id}` y el aviso `notification_received`. La pantalla de webhooks se resolvió
-  en §23.6.
+- **`DashboardsService.get` y `update` piden rutas que no existen** (`GET /dashboards/{id}`), pero
+  ninguna pantalla los llama: son código muerto. Lo demás de §22.3 está resuelto: los webhooks en
+  §23.6, y las notificaciones push (quitadas de la pantalla) y el aviso `notification_received`
+  en §23.7.
 - **`/projects` no ordena ni filtra por fechas, y `/reports` no ordena, no busca ni filtra por
   formato**, aunque las pantallas manden esos parámetros: se ignoran sin error.
 
@@ -1979,3 +1974,34 @@ Lo prueban:
 Con este bloque queda completo el plan de tareas, proyectos, tableros, documentos, menciones,
 webhooks y avisos.
 
+---
+
+## 24. Las páginas de documentos no estaban aisladas por organización
+
+`Page` no llevaba `TenantId` y el repositorio la buscaba solo por su identificador, así que el
+filtro global de inquilino no la alcanzaba. Sabiendo el identificador de una página de otra
+organización, se podía editarla, moverla, anotarla o borrarla. La prueba nueva lo reproduce: un
+administrador de otra organización reescribía la página y recibía un 200.
+
+Había dos fallos más en el mismo sitio:
+
+- **El permiso se comprobaba sobre los documentos en general.** Los comandos de página llegan
+  solo con el identificador de la página, así que `AuthorizationBehavior` miraba el nivel sobre
+  «Document» sin documento concreto. Quien solo podía leer un documento podía reescribir sus
+  páginas.
+- **Una página nueva podía colgar de una página de otro documento**, y entonces no aparecía en
+  ningún árbol.
+
+Lo que hay ahora:
+
+- `Page` es `ITenantEntity`, así que el filtro global la alcanza. `Page.Create` recibe el
+  inquilino del documento. La migración `PagesCarryTenant` rellena el de cada página existente
+  desde su documento. Se probó de ida y vuelta en una base aparte.
+- Editar, mover y borrar una página comprueban el permiso sobre su documento, con la página ya
+  cargada (`PagePermissions`). Sin permiso, la respuesta es un 403.
+- Crear una página con madre exige que la madre sea del mismo documento.
+
+Lo prueba `DocumentPagesIsolationFlowTests`, con un administrador real de otra organización. Con
+un token inventado la autorización lo frena antes, porque su usuario no existe, y la prueba no
+vería el fallo. Las tres pruebas fallaban antes del arreglo. `SeedingStaysInTenantFlowTests`
+incluye ya la tabla `Pages`.

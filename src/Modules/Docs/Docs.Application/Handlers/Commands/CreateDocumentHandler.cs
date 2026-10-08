@@ -40,7 +40,7 @@ public class CreateDocumentHandler(TimeProvider timeProvider, IDocumentRepositor
             ? "<p>Start typing or use / for commands...</p>" 
             : request.InitialContent;
             
-        var page = Page.Create(timeProvider.GetUtcNow().UtcDateTime, document.Id, null, request.Title, initialContent, 0);
+        var page = Page.Create(timeProvider.GetUtcNow().UtcDateTime, document.TenantId, document.Id, null, request.Title, initialContent, 0);
         await repository.AddPageAsync(page, cancellationToken);
 
         await repository.SaveChangesAsync(cancellationToken);

@@ -1,6 +1,8 @@
 using BuildingBlocks.Application.Authorization;
+using BuildingBlocks.Application.Abstractions;
 using BuildingBlocks.Domain;
 using Docs.Application.Abstractions.Repositories;
+using Docs.Application.Authorization;
 using Docs.Domain.Entities;
 using MediatR;
 
@@ -20,12 +22,15 @@ namespace Docs.Application.Handlers.Commands;
 public record MovePageCommand(Guid PageId, Guid? ParentPageId, int Order) : IRequest<Result>, IAuthorizeEntity
 {
     // La página no lleva el documento, así que se comprueba el nivel sobre los documentos en general.
+    // El del documento concreto lo comprueba el manejador con la página ya cargada (PagePermissions).
     public string EntityType => "Document";
     public Guid EntityId => Guid.Empty;
     public string RequiredPermission => "Write";
 }
 
-public class MovePageHandler(TimeProvider timeProvider, IDocumentRepository repository)
+public class MovePageHandler(
+    TimeProvider timeProvider, IDocumentRepository repository,
+    IUserContext userContext, IEntityPermissionService permissions)
     : IRequestHandler<MovePageCommand, Result>
 {
     public async Task<Result> Handle(MovePageCommand request, CancellationToken cancellationToken)
@@ -33,6 +38,8 @@ public class MovePageHandler(TimeProvider timeProvider, IDocumentRepository repo
         var page = await repository.GetPageByIdAsync(request.PageId, cancellationToken);
         if (page is null)
             return Result.Failure("La página no existe.");
+
+        await permissions.EnsureCanWriteAsync(userContext, page, cancellationToken);
 
         if (request.ParentPageId == request.PageId)
             return Result.Failure("Una página no puede colgar de sí misma.");
