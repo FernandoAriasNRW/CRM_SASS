@@ -227,3 +227,27 @@ test('has no serious accessibility violations', async ({ page }) => {
 
   expect(graves.map(v => `${v.id} (${v.impact}) ×${v.nodes.length}: ${v.help}`)).toEqual([]);
 });
+
+/**
+ * Los enlaces de fuera —«Mencionado en», los documentos adjuntos de una tarea, una mención en un
+ * comentario— llevan a `/docs?doc=<id>`. Nadie leía ese parámetro: se abría la lista y no el
+ * documento pedido.
+ */
+test('a link with ?doc= opens that document', async ({ page }) => {
+  await openDocs(page);
+
+  await page.route(/\/api\/v1\/docs\/[^/]+\/pages/, r => r.fulfill({
+    status: 200, contentType: 'application/json',
+    body: JSON.stringify([{ id: '00000000-0000-0000-0000-0000000000a1', documentId: DOCUMENTS[0].id, parentPageId: null, title: 'Página', content: '<p>x</p>', order: 0 }]),
+  }));
+
+  // Navegación de la propia aplicación, como al pulsar un enlace: `page.goto` recargaría y
+  // perdería la sesión, que vive en memoria.
+  await page.evaluate(id => {
+    history.pushState({}, '', `/docs?doc=${id}`);
+    dispatchEvent(new PopStateEvent('popstate'));
+  }, DOCUMENTS[0].id);
+
+  await expect(page.getByRole('textbox', { name: /título del documento/i }))
+    .toHaveValue('Manual de arquitectura', { timeout: 15_000 });
+});

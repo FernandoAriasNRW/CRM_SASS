@@ -36,12 +36,22 @@
       </div>
     }
 
-    <div class="flex items-end gap-2">
-      <textarea [(ngModel)]="text" rows="2"
+    <div class="relative flex items-end gap-2">
+      <textarea #newBox [(ngModel)]="text" rows="2"
                 (keydown.control.enter)="send()"
-                i18n-placeholder placeholder="Escribe un comentario… (Ctrl+Enter para enviar)"
+                (input)="onDraftInput($event, 'new')"
+                (keydown)="onDraftKeydown($event, 'new', newBox)"
+                (blur)="closeSuggestions()"
+                role="combobox" aria-autocomplete="list"
+                [attr.aria-expanded]="suggestingFor() === 'new'"
+                aria-controls="comment-mentions-new"
+                i18n-placeholder placeholder="Escribe un comentario… (@ o # para mencionar, Ctrl+Enter para enviar)"
                 i18n-aria-label aria-label="Nuevo comentario"
                 class="flex-1 bg-transparent border border-border rounded-lg px-3 py-2 text-sm outline-none resize-none focus:ring-1 focus:ring-ring"></textarea>
+
+      @if (suggestingFor() === 'new') {
+        <ng-container *ngTemplateOutlet="suggestionList; context: { $implicit: newBox, listId: 'comment-mentions-new' }" />
+      }
 
       <button (click)="send()" [disabled]="!text.trim() || sending()"
               i18n-aria-label aria-label="Publicar el comentario"
@@ -71,16 +81,28 @@
       </div>
 
       @if (editing() === comment.id) {
-        <textarea [(ngModel)]="editedText" rows="2"
-                  i18n-aria-label aria-label="Editar el comentario"
-                  class="w-full mt-1 bg-transparent border border-border rounded-lg px-2 py-1 text-sm outline-none resize-none focus:ring-1 focus:ring-ring"></textarea>
+        <div class="relative">
+          <textarea #editBox [(ngModel)]="editedText" rows="2"
+                    (input)="onDraftInput($event, 'edit')"
+                    (keydown)="onDraftKeydown($event, 'edit', editBox)"
+                    (blur)="closeSuggestions()"
+                    role="combobox" aria-autocomplete="list"
+                    [attr.aria-expanded]="suggestingFor() === 'edit'"
+                    aria-controls="comment-mentions-edit"
+                    i18n-aria-label aria-label="Editar el comentario"
+                    class="w-full mt-1 bg-transparent border border-border rounded-lg px-2 py-1 text-sm outline-none resize-none focus:ring-1 focus:ring-ring"></textarea>
+
+          @if (suggestingFor() === 'edit') {
+            <ng-container *ngTemplateOutlet="suggestionList; context: { $implicit: editBox, listId: 'comment-mentions-edit' }" />
+          }
+        </div>
         <div class="flex items-center gap-2 mt-1">
           <button (click)="saveEdit(comment)" [disabled]="!editedText.trim()"
                   class="text-xs text-primary disabled:opacity-40" i18n>Guardar</button>
           <button (click)="cancelEdit()" class="text-xs text-muted-foreground" i18n>Cancelar</button>
         </div>
       } @else {
-        <p class="text-sm whitespace-pre-wrap break-words">{{ comment.text }}</p>
+        <p class="text-sm whitespace-pre-wrap break-words">@for (segment of segments(comment.text); track $index) {@if (segment.kind === 'text') {{{ segment.text }}} @else {@if (linkOf(segment); as link) {<a [routerLink]="link.route" [queryParams]="link.queryParams" class="text-primary font-medium hover:underline">{{ prefixOf(segment.type) }}{{ segment.label }}</a>} @else {<span class="text-primary font-medium">{{ prefixOf(segment.type) }}{{ segment.label }}</span>}}}</p>
 
         <div class="flex items-center gap-3 mt-0.5">
           @if (!isReply) {
@@ -113,4 +135,23 @@
       }
     </div>
   </div>
+</ng-template>
+
+<!-- Las sugerencias de mención. Se elige con el ratón (mousedown, para que el cuadro no pierda el
+     foco antes) o con las flechas e Intro desde el propio cuadro. -->
+<ng-template #suggestionList let-box let-listId="listId">
+  <ul [id]="listId" role="listbox" i18n-aria-label aria-label="Sugerencias de mención"
+      class="absolute left-0 right-12 bottom-full mb-1 z-20 max-h-56 overflow-y-auto rounded-lg border border-border bg-popover shadow-md p-1">
+    @for (candidate of suggestions(); track candidate.type + candidate.id; let i = $index) {
+      <li role="option" [attr.aria-selected]="i === activeSuggestion()">
+        <button type="button" tabindex="-1"
+                (mousedown)="$event.preventDefault(); pick(candidate, box)"
+                class="w-full text-left rounded px-2 py-1 text-sm flex items-baseline gap-2"
+                [class.bg-secondary]="i === activeSuggestion()">
+          <span class="truncate">{{ prefixOf(candidate.type) }}{{ candidate.label }}</span>
+          <span class="text-[11px] text-muted-foreground shrink-0">{{ typeLabels[candidate.type] }}</span>
+        </button>
+      </li>
+    }
+  </ul>
 </ng-template>

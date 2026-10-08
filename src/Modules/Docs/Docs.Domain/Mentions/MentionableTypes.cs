@@ -15,8 +15,11 @@ public static class MentionableTypes
 {
     public const string Person = "Person";
 
+    /// <summary>Un equipo, como en los comentarios. Igual que una persona, no es una cosa con ficha.</summary>
+    public const string Team = "Team";
+
     public static IReadOnlyList<string> All() =>
-        [Person, EntityTypes.Task, EntityTypes.Ticket, EntityTypes.Project, EntityTypes.Document];
+        [Person, Team, EntityTypes.Task, EntityTypes.Ticket, EntityTypes.Project, EntityTypes.Document];
 
     public static bool Exists(string? type) => type is not null && All().Contains(type);
 }

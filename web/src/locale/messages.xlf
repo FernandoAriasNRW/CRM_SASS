@@ -109,11 +109,11 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/projects/projects.component.ts</context>
-          <context context-type="linenumber">65</context>
+          <context context-type="linenumber">67</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/projects/projects.component.ts</context>
-          <context context-type="linenumber">78</context>
+          <context context-type="linenumber">80</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tasks/task-detail-panel.component.html</context>
@@ -185,7 +185,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/docs/extensions/mention.ts</context>
-          <context context-type="linenumber">20</context>
+          <context context-type="linenumber">21</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tasks/tasks.component.ts</context>
@@ -424,7 +424,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/projects/projects.component.ts</context>
-          <context context-type="linenumber">69</context>
+          <context context-type="linenumber">71</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/ui/navigation-panel/menu-vocabulary.ts</context>
@@ -837,7 +837,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/projects/projects.component.ts</context>
-          <context context-type="linenumber">63</context>
+          <context context-type="linenumber">65</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tags/tag-drawer.component.html</context>
@@ -1074,7 +1074,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/ui/comments.component.html</context>
-          <context context-type="linenumber">79,80</context>
+          <context context-type="linenumber">101,102</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/ui/tag-assign-drawer.component.ts</context>
@@ -1175,7 +1175,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/ui/comments.component.html</context>
-          <context context-type="linenumber">103,104</context>
+          <context context-type="linenumber">125,126</context>
         </context-group>
       </trans-unit>
       <trans-unit id="3542042671420335679" datatype="html">
@@ -1198,7 +1198,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/ui/comments.component.html</context>
-          <context context-type="linenumber">104,105</context>
+          <context context-type="linenumber">126,127</context>
         </context-group>
       </trans-unit>
       <trans-unit id="7534538458854608789" datatype="html">
@@ -1885,7 +1885,7 @@ Pendiente</source>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/projects/projects.component.ts</context>
-          <context context-type="linenumber">64</context>
+          <context context-type="linenumber">66</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tasks/task-create-modal.component.html</context>
@@ -2137,7 +2137,7 @@ Pendiente</source>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/ui/comments.component.html</context>
-          <context context-type="linenumber">80,81</context>
+          <context context-type="linenumber">102,103</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/ui/submenu-customizer.component.html</context>
@@ -2686,7 +2686,7 @@ Pendiente</source>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/docs/extensions/mention.ts</context>
-          <context context-type="linenumber">18</context>
+          <context context-type="linenumber">19</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tasks/gantt.component.html</context>
@@ -3413,7 +3413,11 @@ Pendiente</source>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/docs/extensions/mention.ts</context>
-          <context context-type="linenumber">21</context>
+          <context context-type="linenumber">22</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/mentions.service.ts</context>
+          <context context-type="linenumber">90</context>
         </context-group>
       </trans-unit>
       <trans-unit id="4871571573427035383" datatype="html">
@@ -3732,29 +3736,29 @@ Pendiente</source>
         <source>Untitled Wiki</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/docs/docs.component.ts</context>
-          <context context-type="linenumber">718</context>
+          <context context-type="linenumber">734</context>
         </context-group>
       </trans-unit>
       <trans-unit id="6426244299766531645" datatype="html">
         <source>Untitled Document</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/docs/docs.component.ts</context>
-          <context context-type="linenumber">718</context>
+          <context context-type="linenumber">734</context>
         </context-group>
       </trans-unit>
       <trans-unit id="765029681281106238" datatype="html">
         <source>Sin título</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/docs/docs.component.ts</context>
-          <context context-type="linenumber">842</context>
+          <context context-type="linenumber">862</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/docs/docs.component.ts</context>
-          <context context-type="linenumber">853</context>
+          <context context-type="linenumber">873</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/docs/docs.component.ts</context>
-          <context context-type="linenumber">869</context>
+          <context context-type="linenumber">889</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/docs/page-tree.component.ts</context>
@@ -3765,21 +3769,21 @@ Pendiente</source>
         <source>No se pudo crear la página</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/docs/docs.component.ts</context>
-          <context context-type="linenumber">860</context>
+          <context context-type="linenumber">880</context>
         </context-group>
       </trans-unit>
       <trans-unit id="3987557394785611089" datatype="html">
         <source>No se pudo mover la página</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/docs/docs.component.ts</context>
-          <context context-type="linenumber">890</context>
+          <context context-type="linenumber">910</context>
         </context-group>
       </trans-unit>
       <trans-unit id="600148905644155332" datatype="html">
         <source>No se pudo borrar la página</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/docs/docs.component.ts</context>
-          <context context-type="linenumber">913</context>
+          <context context-type="linenumber">933</context>
         </context-group>
       </trans-unit>
       <trans-unit id="1305965028187905812" datatype="html">
@@ -4292,11 +4296,26 @@ Pendiente</source>
           <context context-type="linenumber">11,12</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="7313802053180164698" datatype="html">
+        <source>Equipo</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/extensions/mention.ts</context>
+          <context context-type="linenumber">18</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/mentions.service.ts</context>
+          <context context-type="linenumber">71</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/tasks.component.ts</context>
+          <context context-type="linenumber">162</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="2097731515016603806" datatype="html">
         <source>Ticket</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/docs/extensions/mention.ts</context>
-          <context context-type="linenumber">19</context>
+          <context context-type="linenumber">20</context>
         </context-group>
       </trans-unit>
       <trans-unit id="2921678257689813286" datatype="html">
@@ -5363,21 +5382,21 @@ Pendiente</source>
         <source>Propietario</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/projects/projects.component.ts</context>
-          <context context-type="linenumber">66</context>
+          <context context-type="linenumber">68</context>
         </context-group>
       </trans-unit>
       <trans-unit id="3067930309989544614" datatype="html">
         <source>Fin estimado</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/projects/projects.component.ts</context>
-          <context context-type="linenumber">70</context>
+          <context context-type="linenumber">72</context>
         </context-group>
       </trans-unit>
       <trans-unit id="4155087585589578541" datatype="html">
         <source>Desde</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/projects/projects.component.ts</context>
-          <context context-type="linenumber">79</context>
+          <context context-type="linenumber">81</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tasks/tasks.component.ts</context>
@@ -5392,7 +5411,7 @@ Pendiente</source>
         <source>Hasta</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/projects/projects.component.ts</context>
-          <context context-type="linenumber">80</context>
+          <context context-type="linenumber">82</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tasks/tasks.component.ts</context>
@@ -5401,6 +5420,13 @@ Pendiente</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tickets/tickets.component.ts</context>
           <context context-type="linenumber">119</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5017886094308721120" datatype="html">
+        <source>No se encontró el proyecto</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/projects/projects.component.ts</context>
+          <context context-type="linenumber">147</context>
         </context-group>
       </trans-unit>
       <trans-unit id="1453124955640330010" datatype="html">
@@ -6884,13 +6910,6 @@ Pendiente</source>
           <context context-type="linenumber">155</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="7313802053180164698" datatype="html">
-        <source>Equipo</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/tasks/tasks.component.ts</context>
-          <context context-type="linenumber">162</context>
-        </context-group>
-      </trans-unit>
       <trans-unit id="8121921990776935406" datatype="html">
         <source><x id="PH" equiv-text="task.checklistDone ?? 0"/> de <x id="PH_1" equiv-text="task.checklistTotal"/> puntos hechos</source>
         <context-group purpose="location">
@@ -7255,11 +7274,18 @@ Pendiente</source>
           <context context-type="linenumber">111</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="6691236047365407661" datatype="html">
+        <source>No se encontró el ticket</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tickets/tickets.component.ts</context>
+          <context context-type="linenumber">171</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="8593116484969132330" datatype="html">
         <source>No se pudo mover el ticket</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tickets/tickets.component.ts</context>
-          <context context-type="linenumber">419</context>
+          <context context-type="linenumber">428</context>
         </context-group>
       </trans-unit>
       <trans-unit id="3672287793640783844" datatype="html">
@@ -7493,99 +7519,106 @@ Pendiente</source>
           <context context-type="linenumber">32,33</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="486025792742582932" datatype="html">
-        <source>Escribe un comentario… (Ctrl+Enter para enviar)</source>
+      <trans-unit id="5081028673377884550" datatype="html">
+        <source>Escribe un comentario… (@ o # para mencionar, Ctrl+Enter para enviar)</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/ui/comments.component.html</context>
-          <context context-type="linenumber">42,43</context>
+          <context context-type="linenumber">48,49</context>
         </context-group>
       </trans-unit>
       <trans-unit id="5851258101851884859" datatype="html">
         <source>Nuevo comentario</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/ui/comments.component.html</context>
-          <context context-type="linenumber">43,44</context>
+          <context context-type="linenumber">49,50</context>
         </context-group>
       </trans-unit>
       <trans-unit id="4076669920287250203" datatype="html">
         <source>Publicar el comentario</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/ui/comments.component.html</context>
-          <context context-type="linenumber">47,48</context>
+          <context context-type="linenumber">57,58</context>
         </context-group>
       </trans-unit>
       <trans-unit id="8602416935724150170" datatype="html">
         <source>(editado)</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/ui/comments.component.html</context>
-          <context context-type="linenumber">69,70</context>
+          <context context-type="linenumber">79,80</context>
         </context-group>
       </trans-unit>
       <trans-unit id="6664390424027781479" datatype="html">
         <source>Editar el comentario</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/ui/comments.component.html</context>
-          <context context-type="linenumber">75,76</context>
+          <context context-type="linenumber">92,93</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/ui/comments.component.html</context>
-          <context context-type="linenumber">94,95</context>
+          <context context-type="linenumber">116,117</context>
         </context-group>
       </trans-unit>
       <trans-unit id="2003310705431718470" datatype="html">
         <source> Responder </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/ui/comments.component.html</context>
-          <context context-type="linenumber">89</context>
+          <context context-type="linenumber">111</context>
         </context-group>
       </trans-unit>
       <trans-unit id="3929206053338750869" datatype="html">
         <source>¿Borrarlo?</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/ui/comments.component.html</context>
-          <context context-type="linenumber">102,103</context>
+          <context context-type="linenumber">124,125</context>
         </context-group>
       </trans-unit>
       <trans-unit id="7971534499227239033" datatype="html">
         <source>Borrar el comentario</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/ui/comments.component.html</context>
-          <context context-type="linenumber">106,107</context>
+          <context context-type="linenumber">128,129</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8059978116966943361" datatype="html">
+        <source>Sugerencias de mención</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/comments.component.html</context>
+          <context context-type="linenumber">143,144</context>
         </context-group>
       </trans-unit>
       <trans-unit id="805776766358169009" datatype="html">
         <source>Alguien del equipo</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/ui/comments.component.ts</context>
-          <context context-type="linenumber">69</context>
+          <context context-type="linenumber">194</context>
         </context-group>
       </trans-unit>
       <trans-unit id="7851991137235053103" datatype="html">
         <source>No se pudieron cargar los comentarios</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/ui/comments.component.ts</context>
-          <context context-type="linenumber">92</context>
+          <context context-type="linenumber">217</context>
         </context-group>
       </trans-unit>
       <trans-unit id="7022624237856598323" datatype="html">
         <source>No se pudo publicar el comentario</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/ui/comments.component.ts</context>
-          <context context-type="linenumber">120</context>
+          <context context-type="linenumber">248</context>
         </context-group>
       </trans-unit>
       <trans-unit id="5578848177483459918" datatype="html">
         <source>No se pudo guardar el comentario</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/ui/comments.component.ts</context>
-          <context context-type="linenumber">146</context>
+          <context context-type="linenumber">279</context>
         </context-group>
       </trans-unit>
       <trans-unit id="4680015701743909049" datatype="html">
         <source>No se pudo borrar el comentario</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/ui/comments.component.ts</context>
-          <context context-type="linenumber">160</context>
+          <context context-type="linenumber">293</context>
         </context-group>
       </trans-unit>
       <trans-unit id="2587801187258995084" datatype="html">
@@ -7648,21 +7681,49 @@ Pendiente</source>
         <source> Mencionado en </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/ui/mentioned-in.component.ts</context>
-          <context context-type="linenumber">26,27</context>
+          <context context-type="linenumber">27,28</context>
         </context-group>
       </trans-unit>
       <trans-unit id="8945437521514466384" datatype="html">
         <source>Buscando…</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/ui/mentioned-in.component.ts</context>
-          <context context-type="linenumber">30,31</context>
+          <context context-type="linenumber">31,32</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="5251603998857396173" datatype="html">
-        <source> Ningún documento habla de esto todavía. </source>
+      <trans-unit id="429332817597139019" datatype="html">
+        <source> Ningún documento ni comentario habla de esto todavía. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/ui/mentioned-in.component.ts</context>
-          <context context-type="linenumber">33,34</context>
+          <context context-type="linenumber">34,35</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7439167036438355662" datatype="html">
+        <source>En un comentario de una tarea</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/mentioned-in.component.ts</context>
+          <context context-type="linenumber">101</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3026525931920501137" datatype="html">
+        <source>En un comentario de un ticket</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/mentioned-in.component.ts</context>
+          <context context-type="linenumber">102</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3764443424592495122" datatype="html">
+        <source>En un comentario de un proyecto</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/mentioned-in.component.ts</context>
+          <context context-type="linenumber">103</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2727579871410179487" datatype="html">
+        <source>En un comentario</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/mentioned-in.component.ts</context>
+          <context context-type="linenumber">104</context>
         </context-group>
       </trans-unit>
       <trans-unit id="6686527627555450047" datatype="html">

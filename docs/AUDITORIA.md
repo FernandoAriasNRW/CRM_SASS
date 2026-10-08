@@ -1772,3 +1772,42 @@ lado.
 Queda fuera, porque no se pidió: adjuntar ficheros sueltos (imágenes, vídeo) a una tarea. El
 botón que lo prometía ya no está.
 
+### 23.5 Menciones en los comentarios (bloque 3)
+
+Los comentarios de tareas, tickets y proyectos mencionan ahora personas, equipos, proyectos,
+tareas, tickets y documentos.
+
+- **Al escribir:** `@` busca personas y equipos, y `#` busca tareas, tickets, proyectos y
+  documentos. Se elige con el ratón o con las flechas e Intro. En el cuadro queda el nombre
+  (`@Ana Pérez`), no el identificador.
+- **Al guardar,** cada mención va como `@[Nombre](Tipo:id)`. Es un contrato con el servidor, en un
+  solo sitio a cada lado: `comment-mentions.ts` y `CommentMentionReader`.
+- **Al leer,** cada mención es un enlace a su sitio: la ficha de la tarea, del ticket o del
+  proyecto, el documento o el tablero del equipo. Las personas no enlazan, porque no tienen ficha.
+- **Al editar,** el comentario vuelve a enseñar los nombres, y al guardar se reescriben sus
+  menciones.
+- **La vuelta:** «Mencionado en», en tareas, tickets y proyectos, enseña también los comentarios
+  que los mencionan, con un extracto (`GET /comments/mentions/{tipo}/{id}`).
+- **El aviso:** el comentario emite `CommentMentionsAddedEvent` con las menciones nuevas: al
+  crearlo, todas; al editarlo, solo las añadidas, para no volver a avisar por una errata. Lo
+  consumirá el bloque 5 para avisar a quien se menciona.
+- **El editor de documentos** comparte el buscador, así que también menciona equipos y
+  documentos.
+
+Al hacerlo salieron dos fallos:
+
+- **Los enlaces a un documento no lo abrían.** «Mencionado en» y los adjuntos de una tarea
+  llevan a `/docs?doc=<id>`, pero nadie leía el parámetro y se quedaba en la lista. Ahora se abre
+  el documento, y la página si viene `?page=`. Se añadieron también `?ticket=` y `?project=`,
+  que abren su ficha.
+- **Editar un comentario con menciones nuevas habría fallado.** El repositorio llamaba a
+  `Update`, que toma por existentes las filas nuevas con clave puesta; es lo mismo que pasó con
+  los miembros de un equipo. Ahora solo llama a `Update` si el comentario no está seguido.
+
+Lo prueban:
+
+- `CommentMentionsTests` (unitarias del lector y del evento);
+- `CommentMentionsFlowTests` (escribir, la vuelta, editar, borrar);
+- la prueba de Karma de `comment-mentions`;
+- las e2e `comment-mentions` (escribir con `@` y `#`, y la vuelta) y la de `?doc=` en `docs`.
+

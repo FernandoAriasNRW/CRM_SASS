@@ -2,7 +2,8 @@ import { Component, inject, input, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 
-import { MentionsService, type MentioningDocument } from '../../features/docs/mentions.service';
+import { MentionsService, type MentioningComment, type MentioningDocument } from '../../features/docs/mentions.service';
+import { mentionLink } from '../utils/comment-mentions';
 
 /**
  * «Mencionado en»: los documentos que hablan de esta tarea, ticket o proyecto.
@@ -28,9 +29,9 @@ import { MentionsService, type MentioningDocument } from '../../features/docs/me
 
       @if (loading()) {
         <p class="text-sm text-muted-foreground" i18n>Buscando…</p>
-      } @else if (documents().length === 0) {
+      } @else if (documents().length === 0 && comments().length === 0) {
         <p class="text-sm text-muted-foreground" i18n>
-          Ningún documento habla de esto todavía.
+          Ningún documento ni comentario habla de esto todavía.
         </p>
       } @else {
         <ul class="space-y-1.5">
@@ -54,6 +55,28 @@ import { MentionsService, type MentioningDocument } from '../../features/docs/me
             </li>
           }
         </ul>
+
+        <!-- Los comentarios que lo mencionan, con un extracto y a dónde llevan. -->
+        @if (comments().length > 0) {
+          <ul class="space-y-1.5">
+            @for (c of comments(); track c.commentId) {
+              <li>
+                @if (linkOf(c); as link) {
+                  <a [routerLink]="link.route" [queryParams]="link.queryParams"
+                     class="block rounded-md px-2 py-1.5 hover:bg-secondary transition-colors">
+                    <span class="text-xs text-muted-foreground">{{ whereLabel(c) }}</span>
+                    <span class="block text-sm truncate">«{{ c.excerpt }}»</span>
+                  </a>
+                } @else {
+                  <div class="rounded-md px-2 py-1.5">
+                    <span class="text-xs text-muted-foreground">{{ whereLabel(c) }}</span>
+                    <span class="block text-sm truncate">«{{ c.excerpt }}»</span>
+                  </div>
+                }
+              </li>
+            }
+          </ul>
+        }
       }
     </div>
   `
@@ -66,6 +89,21 @@ export class MentionedInComponent {
   readonly entityId = input.required<string>();
 
   readonly documents = signal<MentioningDocument[]>([]);
+  readonly comments = signal<MentioningComment[]>([]);
+
+  linkOf(comment: MentioningComment) {
+    return mentionLink(comment.entityType, comment.entityId);
+  }
+
+  /** Dónde está el comentario, dicho como se lee: «En un comentario de una tarea». */
+  whereLabel(comment: MentioningComment): string {
+    switch (comment.entityType) {
+      case 'Task': return $localize`En un comentario de una tarea`;
+      case 'Ticket': return $localize`En un comentario de un ticket`;
+      case 'Project': return $localize`En un comentario de un proyecto`;
+      default: return $localize`En un comentario`;
+    }
+  }
   readonly loading = signal(true);
 
   constructor() {
@@ -77,12 +115,15 @@ export class MentionedInComponent {
 
   private async load(): Promise<void> {
     try {
-      this.documents.set(await firstValueFrom(
-        this.mentions.mentioningDocuments(this.type(), this.entityId())));
-    } catch {
+      // Las dos a la vez, y cada una por su lado: que falle una no deja la otra vacía.
+      const [documents, comments] = await Promise.allSettled([
+        firstValueFrom(this.mentions.mentioningDocuments(this.type(), this.entityId())),
+        firstValueFrom(this.mentions.mentioningComments(this.type(), this.entityId())),
+      ]);
       // Que esto falle no puede estropear el panel de la tarea: es información añadida, no el
       // contenido. Se queda vacío y lo demás sigue funcionando.
-      this.documents.set([]);
+      this.documents.set(documents.status === 'fulfilled' && Array.isArray(documents.value) ? documents.value : []);
+      this.comments.set(comments.status === 'fulfilled' && Array.isArray(comments.value) ? comments.value : []);
     } finally {
       this.loading.set(false);
     }

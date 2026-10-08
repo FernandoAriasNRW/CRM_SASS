@@ -1,4 +1,4 @@
-import { Component, effect, inject, signal, computed, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewInit, Injector } from '@angular/core';
+import { Component, effect, inject, signal, computed, untracked, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewInit, Injector } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
@@ -659,6 +659,22 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
       ]);
     }, { injector: this.injector });
 
+    // Un enlace de fuera —«Mencionado en», los documentos adjuntos de una tarea, una mención en
+    // un comentario— llega con ?doc= y, a veces, ?page=. Nadie leía esos parámetros: el enlace
+    // abría la lista de documentos y no el que se pedía. Se abre en cuanto la lista está cargada.
+    effect(() => {
+      const params = this.queryParams();
+      const documentId = params['doc'];
+      if (!documentId) return;
+
+      // Una sola vez por enlace: si después se abre otro documento a mano, el parámetro sigue en
+      // la dirección y no debe volver a llevar al del enlace.
+      const doc = this.documents().find(d => d.id === documentId);
+      if (!doc || this.openedFromLink === documentId + (params['page'] ?? '')) return;
+
+      this.openedFromLink = documentId + (params['page'] ?? '');
+      untracked(() => this.selectDocument(doc, params['page']));
+    }, { injector: this.injector });
   }
 
   ngAfterViewInit() {
@@ -831,13 +847,17 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
     });
   }
 
-  selectDocument(doc: DocumentDto) {
+  /** El documento (y página) que ya se abrió desde un enlace `?doc=`. */
+  private openedFromLink: string | null = null;
+
+  /** Abre un documento en la página que se pida, o en la primera. */
+  selectDocument(doc: DocumentDto, pageId?: string) {
     this.activeDocument.set(doc);
     
     this.docsService.getPages(doc.id).subscribe(pages => {
       this.pagesByDoc.update(dict => ({ ...dict, [doc.id]: pages }));
       if (pages.length > 0) {
-        this.selectPage(pages[0]);
+        this.selectPage(pages.find(p => p.id === pageId) ?? pages[0]);
       } else {
         this.createNewPage(doc.id, $localize`Sin título`);
       }
