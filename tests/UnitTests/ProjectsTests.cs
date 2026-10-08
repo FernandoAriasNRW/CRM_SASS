@@ -104,7 +104,9 @@ public class ProjectsTests
         result.Value!.Name.Value.Should().Be("Test Project");
         
         await _repositoryMock.Received(1).AddAsync(Arg.Any<Project>(), Arg.Any<CancellationToken>());
-        await _unitOfWorkMock.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
+
+        // Guarda repartiendo los eventos: de ahí sale la etiqueta automática del proyecto.
+        await _unitOfWorkMock.Received(1).SaveChangesAndDispatchAsync(Arg.Any<CancellationToken>());
     }
 
     #endregion

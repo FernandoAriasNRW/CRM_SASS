@@ -21,7 +21,8 @@ public sealed class CreateProjectCommandHandler(
         request.EstimatedEndDate, request.OwnerId);
 
     await repository.AddAsync(project, cancellationToken);
-    await unitOfWork.SaveChangesAsync(cancellationToken);
+    // Se reparten los eventos: de aquí sale la etiqueta automática del proyecto.
+    await unitOfWork.SaveChangesAndDispatchAsync(cancellationToken);
 
     return Result<Project>.Success(project);
   }

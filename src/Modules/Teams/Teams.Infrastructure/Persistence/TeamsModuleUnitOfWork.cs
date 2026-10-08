@@ -8,7 +8,8 @@ namespace Teams.Infrastructure.Persistence;
 /// <summary>
 /// Ata el UnitOfWork del módulo Teams a su propio <c>DbContext</c>.
 /// </summary>
-public sealed class TeamsModuleUnitOfWork(TeamsDbContext context, IOutboxService outboxService, TimeProvider timeProvider)
-    : UnitOfWork<TeamsDbContext>(context, outboxService, timeProvider), ITeamsUnitOfWork
+public sealed class TeamsModuleUnitOfWork(TeamsDbContext context, IOutboxService outboxService, TimeProvider timeProvider,
+    BuildingBlocks.Infrastructure.DomainEvents.IDomainEventDispatcher domainEventDispatcher)
+    : UnitOfWork<TeamsDbContext>(context, outboxService, timeProvider, domainEventDispatcher), ITeamsUnitOfWork
 {
 }

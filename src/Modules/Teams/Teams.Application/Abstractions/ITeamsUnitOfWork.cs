@@ -12,4 +12,10 @@ namespace Teams.Application.Abstractions;
 /// </summary>
 public interface ITeamsUnitOfWork : IUnitOfWork
 {
+    /// <summary>
+    /// Guarda, deja los eventos en el outbox y además los reparte en proceso por MediatR. Ver
+    /// <c>IWorkItemsUnitOfWork.SaveChangesAndDispatchAsync</c>: sin esto, la etiqueta automática
+    /// de cada equipo nuevo estaba escrita y no se creaba nunca.
+    /// </summary>
+    Task<int> SaveChangesAndDispatchAsync(CancellationToken ct = default);
 }

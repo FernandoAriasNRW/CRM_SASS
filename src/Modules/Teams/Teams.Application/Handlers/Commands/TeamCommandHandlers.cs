@@ -16,14 +16,15 @@ public sealed class CreateTeamCommandHandler(
     public async Task<Result<Guid>> Handle(CreateTeamCommand request, CancellationToken cancellationToken)
     {
         var team = Team.Create(timeProvider.GetUtcNow().UtcDateTime, request.TenantId, request.Name, request.Description);
-        
-        foreach (var memberId in request.MemberIds)
-        {
-            team.AddMember(timeProvider.GetUtcNow().UtcDateTime, memberId, TeamRole.Member);
-        }
+
+        // Por SetMembers y no uno a uno: así el alta anuncia quién entra, igual que una edición.
+        team.SetMembers(timeProvider.GetUtcNow().UtcDateTime, request.MemberIds ?? []);
 
         await repository.AddAsync(team, cancellationToken);
-        await unitOfWork.SaveChangesAsync(cancellationToken);
+
+        // Se reparten los eventos: de aquí salen la etiqueta automática del equipo y el aviso a
+        // quienes entran en él.
+        await unitOfWork.SaveChangesAndDispatchAsync(cancellationToken);
 
         return Result<Guid>.Success(team.Id);
     }
@@ -47,7 +48,7 @@ public sealed class UpdateTeamCommandHandler(
             team.SetMembers(timeProvider.GetUtcNow().UtcDateTime, request.MemberIds);
 
         await repository.UpdateAsync(team, cancellationToken);
-        await unitOfWork.SaveChangesAsync(cancellationToken);
+        await unitOfWork.SaveChangesAndDispatchAsync(cancellationToken);
         return Result<bool>.Success(true);
     }
 }

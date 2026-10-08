@@ -1939,5 +1939,43 @@ Lo prueban:
   en tiempo real;
 - la e2e `notifications`.
 
-Queda para el 5b: los avisos de chat, equipos, usuarios (solo administración) y webhooks.
+Los avisos de chat, equipos, cuentas y webhooks van en el 5b (§23.8).
+
+### 23.8 Avisos del chat, los equipos, las cuentas y los webhooks (bloque 5b)
+
+El catálogo suma cuatro áreas. `OrganizationNotifications` (en el host, porque cruza módulos)
+reparte los avisos:
+
+- **Chat** (`chat.message`, encendido): avisa a quien ya ha escrito en la conversación, salvo a
+  quien manda el mensaje. Los canales no tienen lista de miembros. Quien ha participado es quien
+  la sigue, y avisar a toda la organización por cada mensaje sería ruido. El aviso lleva a
+  `/chat?channel=<id>`. La pantalla del chat no leía ese parámetro y abría siempre el primer
+  canal.
+- **Equipos** (`team.member_added` / `team.member_removed`, encendidos): a quien entra o sale.
+  `Team.SetMembers` calcula quién entra y quién sale y lo anuncia con `TeamMembersChangedEvent`.
+  El alta de un equipo pasa también por `SetMembers`. Quien sale no recibe enlace al equipo.
+- **Cuentas** (`user.created` / `user.updated` / `user.deleted`, apagados y solo de
+  administración): a quien administra, salvo a quien hizo el cambio. Quien no administra ni los
+  ve ni los puede encender.
+- **Webhooks** (`webhook.delivery_failed`, encendido, solo de administración): cuando una
+  entrega agota sus reintentos, el trabajo de entrega publica `WebhookDeliveryFailedNotification`
+  después de guardar. Un fallo al avisar se registra y no frena las entregas.
+
+Al probarlo salió otro defecto: **la etiqueta automática de cada proyecto y cada equipo nuevo no
+se creaba nunca.** `AutomaticTags` escuchaba los eventos de alta, pero ni Projects ni Teams
+repartían sus eventos en proceso, y ninguna prueba lo miraba. Sus unidades de trabajo reparten
+ya, como las de Ticketing, Communication y Comments.
+
+Lo prueban:
+
+- `OrganizationNotificationsFlowTests`:
+  - el mensaje llega a quien participa y no a quien escribe;
+  - entrar y salir de un equipo;
+  - los avisos de cuentas, solo para administración;
+  - un webhook que se rinde avisa a quien administra.
+- `AutomaticTagsFlowTests`: la etiqueta de un proyecto y de un equipo nuevos. Fallaba antes del
+  arreglo.
+
+Con este bloque queda completo el plan de tareas, proyectos, tableros, documentos, menciones,
+webhooks y avisos.
 

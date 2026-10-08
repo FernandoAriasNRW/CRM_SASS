@@ -1,11 +1,13 @@
 using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Text;
+using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Webhook.Application.Abstractions;
 using Webhook.Domain.Entities;
 using Webhook.Infrastructure.Persistence;
 
@@ -76,6 +78,8 @@ internal sealed class WebhookDeliveryWorker(
             .Take(BatchSize)
             .ToListAsync(ct);
 
+        var givenUp = new List<WebhookDeliveryFailedNotification>();
+
         foreach (var delivery in due)
         {
             var subscription = await db.Subscriptions.IgnoreQueryFilters()
@@ -89,9 +93,22 @@ internal sealed class WebhookDeliveryWorker(
             }
 
             await SendAsync(delivery, subscription, ct);
+
+            // Se acaban de agotar los reintentos: hay que decírselo a quien administra.
+            if (delivery.Status == WebhookDeliveryStatus.Failed)
+                givenUp.Add(new(delivery.TenantId, subscription.Id, subscription.Name, delivery.EventName, delivery.LastError));
         }
 
         await db.SaveChangesAsync(ct);
+
+        // Después de guardar: el aviso habla de algo que ya consta como fallido.
+        var publisher = scope.ServiceProvider.GetRequiredService<IPublisher>();
+        foreach (var failure in givenUp)
+        {
+            try { await publisher.Publish(failure, ct); }
+            catch (Exception ex) { logger.LogWarning(ex, "No se pudo avisar del webhook fallido {Subscription}", failure.SubscriptionId); }
+        }
+
         return due.Count;
     }
 
