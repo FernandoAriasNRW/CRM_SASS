@@ -1,3 +1,4 @@
+using BuildingBlocks.Application.Abstractions;
 using BuildingBlocks.Application.Authorization;
 using BuildingBlocks.Domain;
 using Docs.Application.Abstractions.Repositories;
@@ -14,9 +15,11 @@ namespace Docs.Application.Handlers.Commands;
 /// llamándose igual. <c>Document.Update</c> llevaba escrito en el dominio desde el principio sin
 /// que lo llamara nadie.
 /// </summary>
-public record RenameDocumentCommand(Guid DocumentId, string Title, string? Description)
-    : IRequest<Result>, IAuthorizeEntity
+public record RenameDocumentCommand(Guid TenantId, Guid DocumentId, string Title, string? Description)
+    : IRequest<Result>, IAuthorizeEntity, IWebhookTriggered
 {
+    public string WebhookEventName => "document.updated";
+
     public string EntityType => "Document";
     public Guid EntityId => DocumentId;
     public string RequiredPermission => "Write";

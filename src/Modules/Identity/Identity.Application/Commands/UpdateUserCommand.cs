@@ -11,5 +11,5 @@ public sealed record UpdateUserCommand(
     string? Role
 ) : ICommand<UserDto>, IWebhookTriggered
 {
-    public string WebhookEventName => "identity.user.updated";
+    public string WebhookEventName => "user.updated";
 }

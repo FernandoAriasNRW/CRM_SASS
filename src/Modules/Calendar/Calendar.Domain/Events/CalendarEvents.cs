@@ -26,7 +26,7 @@ public sealed record CalendarRescheduledEvent(
 /// Se llamaba <c>CalendarCancelledEvent</c> aunque no es la cancelación de la reunión, sino quitarla
 /// de en medio (<c>CalendarEvent.MoveToTrash</c>). La cancelación de verdad es
 /// <see cref="CalendarEventCancelledEvent"/>. Lo que ven los suscriptores de webhooks no es este
-/// nombre sino el del comando: «calendar.event.trashed» (ver <c>WebhookEventNames</c>).
+/// nombre sino el del comando: «calendar.event.trashed» (ver <c>WebhookEventCatalog</c>).
 /// </summary>
 public sealed record CalendarEventTrashedEvent(
     Guid Id,

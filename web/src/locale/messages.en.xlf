@@ -2,6 +2,450 @@
 <xliff xmlns="urn:oasis:names:tc:xliff:document:1.2" version="1.2">
   <file source-language="es" target-language="en" datatype="plaintext" original="ng2.template">
     <body>
+      <trans-unit id="1431469213182003102" datatype="html">
+        <source>Nombre del webhook</source>
+        <target state="final">Webhook name</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhook-form-modal.component.html</context>
+          <context context-type="linenumber">12</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="548627930425529018" datatype="html">
+        <source>URL de destino</source>
+        <target state="final">Destination URL</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhook-form-modal.component.html</context>
+          <context context-type="linenumber">34</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2856005412247483975" datatype="html">
+        <source> Cada evento llega como un POST con su firma en la cabecera X-Webhook-Signature. </source>
+        <target state="final">Each event arrives as a POST with its signature in the X-Webhook-Signature header.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhook-form-modal.component.html</context>
+          <context context-type="linenumber">53,54</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4192143499889021312" datatype="html">
+        <source>Eventos</source>
+        <target state="final">Events</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhook-form-modal.component.html</context>
+          <context context-type="linenumber">66</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2046403395668503467" datatype="html">
+        <source> Elige los eventos que quieres recibir. Un webhook no recibe nada que no elijas. </source>
+        <target state="final">Choose the events you want to receive. A webhook receives nothing you don't choose.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhook-form-modal.component.html</context>
+          <context context-type="linenumber">69,70</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5190204953659333647" datatype="html">
+        <source>Todos los de este grupo</source>
+        <target state="final">All in this group</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhook-form-modal.component.html</context>
+          <context context-type="linenumber">82,83</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3966107326072350310" datatype="html">
+        <source>Cargando eventos…</source>
+        <target state="final">Loading events…</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhook-form-modal.component.html</context>
+          <context context-type="linenumber">95,96</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="876183231820471907" datatype="html">
+        <source>El secreto de firma se genera solo y se enseña una vez al crear el webhook</source>
+        <target state="final">The signing secret is generated automatically and shown once when the webhook is created</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhook-form-modal.component.html</context>
+          <context context-type="linenumber">111,112</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6580221003146005000" datatype="html">
+        <source>Nuevo webhook</source>
+        <target state="final">New webhook</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhook-form-modal.component.ts</context>
+          <context context-type="linenumber">53</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhooks.component.html</context>
+          <context context-type="linenumber">20,21</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5268453495374917265" datatype="html">
+        <source>Editar webhook</source>
+        <target state="final">Edit webhook</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhook-form-modal.component.ts</context>
+          <context context-type="linenumber">54</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3019164630401200338" datatype="html">
+        <source>Elige a dónde se mandan los eventos y cuáles</source>
+        <target state="final">Choose where events are sent and which ones</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhook-form-modal.component.ts</context>
+          <context context-type="linenumber">55</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6369193901505463460" datatype="html">
+        <source>Cambia la URL o los eventos que recibe</source>
+        <target state="final">Change the URL or the events it receives</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhook-form-modal.component.ts</context>
+          <context context-type="linenumber">56</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2014443633083909637" datatype="html">
+        <source>El nombre es obligatorio</source>
+        <target state="final">The name is required</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhook-form-modal.component.ts</context>
+          <context context-type="linenumber">124</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="263829983663865829" datatype="html">
+        <source>El nombre puede tener como mucho 100 caracteres</source>
+        <target state="final">The name can be at most 100 characters</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhook-form-modal.component.ts</context>
+          <context context-type="linenumber">126</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5177046248272370355" datatype="html">
+        <source>La URL es obligatoria</source>
+        <target state="final">The URL is required</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhook-form-modal.component.ts</context>
+          <context context-type="linenumber">130</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5090660530302493048" datatype="html">
+        <source>Escribe una URL completa que empiece por https://</source>
+        <target state="final">Enter a full URL starting with https://</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhook-form-modal.component.ts</context>
+          <context context-type="linenumber">132</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3230025598537735738" datatype="html">
+        <source>Elige al menos un evento: un webhook no recibe todo por defecto</source>
+        <target state="final">Choose at least one event: a webhook does not receive everything by default</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhook-form-modal.component.ts</context>
+          <context context-type="linenumber">136</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5359751386135164450" datatype="html">
+        <source>Usuarios</source>
+        <target state="final">Users</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhook.model.ts</context>
+          <context context-type="linenumber">61</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1070390441670850729" datatype="html">
+        <source>Notificaciones</source>
+        <target state="final">Notifications</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhook.model.ts</context>
+          <context context-type="linenumber">65</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4033948969413571453" datatype="html">
+        <source>No se pudo crear el webhook</source>
+        <target state="final">Could not create the webhook</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhook.service.ts</context>
+          <context context-type="linenumber">33</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8477542576233519407" datatype="html">
+        <source>No se pudo actualizar el webhook</source>
+        <target state="final">Could not update the webhook</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhook.service.ts</context>
+          <context context-type="linenumber">42</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1069925525917869408" datatype="html">
+        <source>No se pudo eliminar el webhook</source>
+        <target state="final">Could not delete the webhook</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhook.service.ts</context>
+          <context context-type="linenumber">51</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1717770008012644136" datatype="html">
+        <source>No se pudo cambiar el secreto</source>
+        <target state="final">Could not change the secret</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhook.service.ts</context>
+          <context context-type="linenumber">62</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6190418390724577427" datatype="html">
+        <source>Prueba enviada</source>
+        <target state="final">Test sent</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhook.service.ts</context>
+          <context context-type="linenumber">69</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1165208818302233561" datatype="html">
+        <source>Mira el registro de envíos en unos segundos</source>
+        <target state="final">Check the delivery log in a few seconds</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhook.service.ts</context>
+          <context context-type="linenumber">69</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="712957501770511304" datatype="html">
+        <source>No se pudo enviar la prueba</source>
+        <target state="final">Could not send the test</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhook.service.ts</context>
+          <context context-type="linenumber">70</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1673370191727485454" datatype="html">
+        <source>Buscar webhooks</source>
+        <target state="final">Search webhooks</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhooks.component.html</context>
+          <context context-type="linenumber">57,58</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4582599329488069437" datatype="html">
+        <source>Crear webhook</source>
+        <target state="final">Create webhook</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhooks.component.html</context>
+          <context context-type="linenumber">89,90</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5308089386353373336" datatype="html">
+        <source>Activo</source>
+        <target state="final">Active</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhooks.component.html</context>
+          <context context-type="linenumber">106,107</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3838676801008878481" datatype="html">
+        <source>Inactivo</source>
+        <target state="final">Inactive</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhooks.component.html</context>
+          <context context-type="linenumber">111,112</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6363320565760645951" datatype="html">
+        <source>Envíos fallidos</source>
+        <target state="final">Failed deliveries</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhooks.component.html</context>
+          <context context-type="linenumber">140,141</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2879219177924901797" datatype="html">
+        <source>Envíos pendientes o reintentándose</source>
+        <target state="final">Pending or retrying deliveries</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhooks.component.html</context>
+          <context context-type="linenumber">145,146</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="897678443875286401" datatype="html">
+        <source>Enviar prueba</source>
+        <target state="final">Send test</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhooks.component.html</context>
+          <context context-type="linenumber">167</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhooks.component.html</context>
+          <context context-type="linenumber">167,168</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7601014635095313076" datatype="html">
+        <source>Ver el secreto</source>
+        <target state="final">View the secret</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhooks.component.html</context>
+          <context context-type="linenumber">171</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhooks.component.html</context>
+          <context context-type="linenumber">171,172</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7141526365124530187" datatype="html">
+        <source>Cambiar el secreto</source>
+        <target state="final">Change the secret</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhooks.component.html</context>
+          <context context-type="linenumber">175</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhooks.component.html</context>
+          <context context-type="linenumber">175,176</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2237989439732879930" datatype="html">
+        <source>Registro de envíos</source>
+        <target state="final">Delivery log</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhooks.component.html</context>
+          <context context-type="linenumber">181</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhooks.component.html</context>
+          <context context-type="linenumber">181,182</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3057895180397556966" datatype="html">
+        <source>Último envío: <x id="INTERPOLATION" equiv-text="{{ subscription.lastDeliveryAtUtc | date:&apos;short&apos; }}"/></source>
+        <target state="final">Last delivery: <x id="INTERPOLATION" equiv-text="{{ subscription.lastDeliveryAtUtc | date:&apos;short&apos; }}"/></target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhooks.component.html</context>
+          <context context-type="linenumber">196,197</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2083165871272841649" datatype="html">
+        <source>Todavía no ha enviado nada</source>
+        <target state="final">Nothing sent yet</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhooks.component.html</context>
+          <context context-type="linenumber">198,199</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8400343633090220468" datatype="html">
+        <source>Últimos envíos</source>
+        <target state="final">Latest deliveries</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhooks.component.html</context>
+          <context context-type="linenumber">208,209</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7089742374346216981" datatype="html">
+        <source>Todavía no se ha enviado nada a este destino.</source>
+        <target state="final">Nothing has been sent to this destination yet.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhooks.component.html</context>
+          <context context-type="linenumber">212,213</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2196761948183611795" datatype="html">
+        <source>Evento</source>
+        <target state="final">Event</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhooks.component.html</context>
+          <context context-type="linenumber">217,218</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6585939259797276189" datatype="html">
+        <source>Intentos</source>
+        <target state="final">Attempts</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhooks.component.html</context>
+          <context context-type="linenumber">219,220</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8587719824058864319" datatype="html">
+        <source>Respuesta</source>
+        <target state="final">Response</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhooks.component.html</context>
+          <context context-type="linenumber">220,221</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8858506682808358415" datatype="html">
+        <source>Secreto de firma</source>
+        <target state="final">Signing secret</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhooks.component.html</context>
+          <context context-type="linenumber">271,272</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1987996288762551893" datatype="html">
+        <source>Este es el secreto nuevo de <x id="START_TAG_STRONG" ctype="x-strong" equiv-text="&lt;strong&gt;"/><x id="INTERPOLATION" equiv-text="{{ shown.name }}"/><x id="CLOSE_TAG_STRONG" ctype="x-strong" equiv-text="&lt;/strong&gt;"/>. Configúralo en el destino para comprobar la firma de cada envío; el anterior ya no vale.</source>
+        <target state="final">This is the new secret for <x id="START_TAG_STRONG" ctype="x-strong" equiv-text="&lt;strong&gt;"/><x id="INTERPOLATION" equiv-text="{{ shown.name }}"/><x id="CLOSE_TAG_STRONG" ctype="x-strong" equiv-text="&lt;/strong&gt;"/>. Set it at the destination to verify each delivery's signature; the previous one no longer works.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhooks.component.html</context>
+          <context context-type="linenumber">284,285</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5602989294738785145" datatype="html">
+        <source>El secreto de <x id="START_TAG_STRONG" ctype="x-strong" equiv-text="&lt;strong&gt;"/><x id="INTERPOLATION" equiv-text="{{ shown.name }}"/><x id="CLOSE_TAG_STRONG" ctype="x-strong" equiv-text="&lt;/strong&gt;"/>, para comprobar la firma de cada envío.</source>
+        <target state="final">The secret for <x id="START_TAG_STRONG" ctype="x-strong" equiv-text="&lt;strong&gt;"/><x id="INTERPOLATION" equiv-text="{{ shown.name }}"/><x id="CLOSE_TAG_STRONG" ctype="x-strong" equiv-text="&lt;/strong&gt;"/>, to verify each delivery's signature.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhooks.component.html</context>
+          <context context-type="linenumber">286,288</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2150313809913369914" datatype="html">
+        <source> Dejarán de enviarse sus eventos, y los envíos pendientes no saldrán. </source>
+        <target state="final">Its events will stop being sent, and pending deliveries will not go out.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhooks.component.html</context>
+          <context context-type="linenumber">336,337</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6623674485145209487" datatype="html">
+        <source>Activar</source>
+        <target state="final">Activate</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhooks.component.ts</context>
+          <context context-type="linenumber">49</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3737090945159841789" datatype="html">
+        <source>Desactivar</source>
+        <target state="final">Deactivate</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhooks.component.ts</context>
+          <context context-type="linenumber">50</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5083496569529516313" datatype="html">
+        <source>Entregado</source>
+        <target state="final">Delivered</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhooks.component.ts</context>
+          <context context-type="linenumber">202</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5080225151302839648" datatype="html">
+        <source>Fallido</source>
+        <target state="final">Failed</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhooks.component.ts</context>
+          <context context-type="linenumber">203</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6801840666333978406" datatype="html">
+        <source>Reintentando</source>
+        <target state="final">Retrying</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhooks.component.ts</context>
+          <context context-type="linenumber">204</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1029150937787246789" datatype="html">
+        <source>Pendiente</source>
+        <target state="final">Pending</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhooks.component.ts</context>
+          <context context-type="linenumber">204</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="5081028673377884550" datatype="html">
         <source>Escribe un comentario… (@ o # para mencionar, Ctrl+Enter para enviar)</source>
         <target state="final">Write a comment… (@ or # to mention, Ctrl+Enter to send)</target>

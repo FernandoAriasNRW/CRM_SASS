@@ -30,7 +30,7 @@ public sealed record PatchTaskCommand(
     IReadOnlyList<Guid>? TagIds = null
 ) : ICommand<bool>, IWebhookTriggered, IAuthorizeEntity
 {
-    public string WebhookEventName => "workitem.patched";
+    public string WebhookEventName => "task.updated";
 
     public string EntityType => "Task";
     public Guid EntityId => Id;

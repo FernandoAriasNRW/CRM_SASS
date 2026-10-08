@@ -8,5 +8,5 @@ public sealed record DeleteConversationCommand(
     Guid DeletedBy
 ) : ICommand<bool>, IWebhookTriggered
 {
-    public string WebhookEventName => "communication.conversation.deleted";
+    public string WebhookEventName => "chat.conversation.deleted";
 }

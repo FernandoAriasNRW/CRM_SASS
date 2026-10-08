@@ -52,9 +52,9 @@ public static class DocsEndpointsExtensions
             return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
         });
 
-        group.MapDelete("/{id:guid}", async (Guid id, IMediator mediator) =>
+        group.MapDelete("/{id:guid}", async (Guid id, IUserContext currentUser, IMediator mediator) =>
         {
-            var command = new DeleteDocumentCommand(id);
+            var command = new DeleteDocumentCommand(currentUser.TenantId, id);
             var result = await mediator.Send(command);
             return result.IsSuccess ? Results.Ok() : Results.BadRequest(result.Error);
         });
@@ -141,10 +141,10 @@ public static class DocsEndpointsExtensions
 
         // Renombrar un documento. No había forma de hacerlo: el campo de título de la pantalla
         // escribía en la página activa porque no existía este endpoint.
-        group.MapPut("/{id:guid}", async (Guid id, [FromBody] RenameDocumentRequest req, IMediator mediator) =>
+        group.MapPut("/{id:guid}", async (Guid id, [FromBody] RenameDocumentRequest req, IUserContext currentUser, IMediator mediator) =>
         {
             var command = new Docs.Application.Handlers.Commands.RenameDocumentCommand(
-                id, req.Title, req.Description);
+                currentUser.TenantId, id, req.Title, req.Description);
 
             var result = await mediator.Send(command);
             return result.IsSuccess ? Results.NoContent() : Results.BadRequest(result.Error);

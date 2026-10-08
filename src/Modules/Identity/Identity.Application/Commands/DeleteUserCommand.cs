@@ -8,5 +8,5 @@ public sealed record DeleteUserCommand(
     Guid DeletedBy
 ) : ICommand<bool>, IWebhookTriggered
 {
-    public string WebhookEventName => "identity.user.deleted";
+    public string WebhookEventName => "user.deleted";
 }

@@ -2,154 +2,77 @@ import { Injectable, inject } from '@angular/core';
 import { Observable, tap } from 'rxjs';
 import { ApiService } from '../../core/api.service';
 import { ToastService } from '../../shared/services/toast.service';
-import {
-  WebhookSubscription,
-  CreateWebhookRequest,
-  UpdateWebhookRequest,
-  WebhookEventType,
+import { errorMessage } from '../../shared/utils/error-message';
+import type {
+  WebhookDelivery, WebhookEventType, WebhookRequest, WebhookSubscription, WebhookWithSecret,
 } from './webhook.model';
-import { AuthSignalStore } from '../../core/auth-signal.store';
 
+/**
+ * La API de webhooks. Sólo la puede usar quien administra.
+ *
+ * Mandaba `?tenantId=` en cada petición —el inquilino sale del token, no de la URL— y los eventos
+ * como una cadena separada por comas que la API no sabía leer.
+ */
 @Injectable({ providedIn: 'root' })
 export class WebhookService {
   private readonly api = inject(ApiService);
   private readonly toast = inject(ToastService);
-  private readonly authStore = inject(AuthSignalStore);
 
-  /**
-   * Gets all webhook subscriptions for the current tenant.
-   */
   getSubscriptions(): Observable<WebhookSubscription[]> {
-    const tenantId = this.getTenantId();
-    return this.api.get<WebhookSubscription[]>(`/webhooks?tenantId=${tenantId}`);
+    return this.api.get<WebhookSubscription[]>('/webhooks');
   }
 
-  /**
-   * Gets a single webhook subscription by ID.
-   */
-  getSubscription(subscriptionId: string): Observable<WebhookSubscription> {
-    const tenantId = this.getTenantId();
-    return this.api.get<WebhookSubscription>(
-      `/webhooks/${subscriptionId}?tenantId=${tenantId}`
-    );
-  }
-
-  /**
-   * Creates a new webhook subscription.
-   */
-  createSubscription(request: CreateWebhookRequest): Observable<WebhookSubscription> {
-    return this.api.post<WebhookSubscription>('/webhooks', request).pipe(
-      tap({
-        next: (subscription) => {
-          this.toast.success($localize`Webhook creado`,
-            `"${subscription.name}" ha sido creado exitosamente. Guarda el secret de forma segura.`
-          );
-        },
-        error: () => {
-          this.toast.error('Error', 'No se pudo crear el webhook');
-        },
-      })
-    );
-  }
-
-  /**
-   * Updates an existing webhook subscription.
-   */
-  updateSubscription(
-    subscriptionId: string,
-    request: UpdateWebhookRequest
-  ): Observable<WebhookSubscription> {
-    const tenantId = this.getTenantId();
-    return this.api
-      .put<WebhookSubscription>(`/webhooks/${subscriptionId}?tenantId=${tenantId}`, request)
-      .pipe(
-        tap({
-          next: () => {
-            this.toast.success($localize`Webhook actualizado`, 'Los cambios han sido guardados');
-          },
-          error: () => {
-            this.toast.error('Error', 'No se pudo actualizar el webhook');
-          },
-        })
-      );
-  }
-
-  /**
-   * Deletes a webhook subscription.
-   */
-  deleteSubscription(subscriptionId: string): Observable<void> {
-    const tenantId = this.getTenantId();
-    return this.api.delete<void>(`/webhooks/${subscriptionId}?tenantId=${tenantId}`).pipe(
-      tap({
-        next: () => {
-          this.toast.success($localize`Webhook eliminado`, 'La suscripción ha sido eliminada');
-        },
-        error: () => {
-          this.toast.error('Error', 'No se pudo eliminar el webhook');
-        },
-      })
-    );
-  }
-
-  /**
-   * Regenerates the webhook secret.
-   */
-  regenerateSecret(subscriptionId: string): Observable<{ secret: string }> {
-    const tenantId = this.getTenantId();
-    return this.api
-      .post<{ secret: string }>(
-        `/webhooks/${subscriptionId}/regenerate-secret?tenantId=${tenantId}`,
-        {}
-      )
-      .pipe(
-        tap({
-          next: () => {
-            this.toast.warning($localize`Secret regenerado`,
-              'El secret anterior ha dejado de funcionar. Usa el nuevo secret.'
-            );
-          },
-          error: () => {
-            this.toast.error('Error', 'No se pudo regenerar el secret');
-          },
-        })
-      );
-  }
-
-  /**
-   * Gets the list of available webhook event types.
-   */
   getEventTypes(): Observable<WebhookEventType[]> {
     return this.api.get<WebhookEventType[]>('/webhooks/events');
   }
 
-  /**
-   * Toggles the active status of a webhook subscription.
-   */
-  toggleActive(subscriptionId: string, isActive: boolean): Observable<WebhookSubscription> {
-    const tenantId = this.getTenantId();
-    return this.updateSubscription(subscriptionId, { isActive });
+  createSubscription(request: WebhookRequest): Observable<WebhookWithSecret> {
+    return this.api.post<WebhookWithSecret>('/webhooks', request, { silent: true }).pipe(
+      tap({
+        next: created => this.toast.success($localize`Webhook creado`, created.subscription.name),
+        error: err => this.toast.error($localize`No se pudo crear el webhook`, errorMessage(err, '')),
+      })
+    );
   }
 
-  /**
-   * Gets the current tenant ID from the auth store.
-   */
-  private getTenantId(): string {
-    const userInfo = this.authStore.userInfo();
-    return userInfo?.tenantId ?? '';
+  updateSubscription(id: string, request: WebhookRequest): Observable<WebhookSubscription> {
+    return this.api.put<WebhookSubscription>(`/webhooks/${id}`, request, { silent: true }).pipe(
+      tap({
+        next: () => this.toast.success($localize`Webhook actualizado`),
+        error: err => this.toast.error($localize`No se pudo actualizar el webhook`, errorMessage(err, '')),
+      })
+    );
   }
 
-  /**
-   * Parses event types string to array.
-   */
-  parseEventTypes(eventTypes: string): string[] {
-    if (!eventTypes) return [];
-    return eventTypes.split(',').map((s) => s.trim()).filter(Boolean);
+  deleteSubscription(id: string): Observable<void> {
+    return this.api.delete<void>(`/webhooks/${id}`, { silent: true }).pipe(
+      tap({
+        next: () => this.toast.success($localize`Webhook eliminado`),
+        error: err => this.toast.error($localize`No se pudo eliminar el webhook`, errorMessage(err, '')),
+      })
+    );
   }
 
-  /**
-   * Formats event types array to comma-separated string.
-   */
-  formatEventTypes(eventTypes: string[]): string {
-    return eventTypes.join(',');
+  getSecret(id: string): Observable<{ secret: string }> {
+    return this.api.get<{ secret: string }>(`/webhooks/${id}/secret`);
+  }
+
+  regenerateSecret(id: string): Observable<WebhookWithSecret> {
+    return this.api.post<WebhookWithSecret>(`/webhooks/${id}/regenerate-secret`, {}, { silent: true }).pipe(
+      tap({ error: err => this.toast.error($localize`No se pudo cambiar el secreto`, errorMessage(err, '')) })
+    );
+  }
+
+  sendTest(id: string): Observable<WebhookDelivery> {
+    return this.api.post<WebhookDelivery>(`/webhooks/${id}/test`, {}, { silent: true }).pipe(
+      tap({
+        next: () => this.toast.success($localize`Prueba enviada`, $localize`Mira el registro de envíos en unos segundos`),
+        error: err => this.toast.error($localize`No se pudo enviar la prueba`, errorMessage(err, '')),
+      })
+    );
+  }
+
+  getDeliveries(id: string): Observable<WebhookDelivery[]> {
+    return this.api.get<WebhookDelivery[]>(`/webhooks/${id}/deliveries`);
   }
 }

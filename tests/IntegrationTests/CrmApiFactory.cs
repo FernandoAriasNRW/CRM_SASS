@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Testcontainers.MySql;
 using Xunit;
@@ -25,6 +26,9 @@ public sealed class CrmApiFactory : WebApplicationFactory<Program>, IAsyncLifeti
 
     public string ConnectionString => _mysql.GetConnectionString();
 
+    /// <summary>Lo que recibiría el servidor de fuera de cada webhook. Ver <see cref="WebhookReceiver"/>.</summary>
+    public WebhookReceiver Webhooks { get; } = new();
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Development");
@@ -47,6 +51,13 @@ public sealed class CrmApiFactory : WebApplicationFactory<Program>, IAsyncLifeti
 
         // Y el endpoint de siembra, para poder comprobar que exige ser Admin.
         builder.UseSetting("DemoData:AllowSeedEndpoint", "true");
+
+        // Los webhooks no salen a la red: van al receptor en memoria. Y la cola se mira cada
+        // segundo, para no esperar cinco en cada prueba.
+        builder.UseSetting("Webhooks:PollIntervalSeconds", "1");
+        builder.ConfigureTestServices(services =>
+            services.AddHttpClient("webhook")
+                .ConfigurePrimaryHttpMessageHandler(() => new WebhookReceiverHandler(Webhooks)));
     }
 
     public async Task InitializeAsync() => await _mysql.StartAsync();

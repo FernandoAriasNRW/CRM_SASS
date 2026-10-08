@@ -19,7 +19,7 @@ public sealed record ReparentTaskCommand(
     Guid? ParentTaskId
 ) : ICommand<bool>, IWebhookTriggered, IAuthorizeEntity
 {
-    public string WebhookEventName => "workitem.reparented";
+    public string WebhookEventName => "task.reparented";
 
     public string EntityType => "Task";
     public Guid EntityId => Id;

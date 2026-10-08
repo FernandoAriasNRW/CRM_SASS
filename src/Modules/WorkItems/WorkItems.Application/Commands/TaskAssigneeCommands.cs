@@ -18,7 +18,7 @@ public sealed record AddTaskAssigneeCommand(
     Guid UserId
 ) : ICommand<bool>, IWebhookTriggered, IAuthorizeEntity
 {
-    public string WebhookEventName => "workitem.assignee.added";
+    public string WebhookEventName => "task.assignee.added";
 
     public string EntityType => "Task";
     public Guid EntityId => Id;
@@ -33,7 +33,7 @@ public sealed record RemoveTaskAssigneeCommand(
     Guid UserId
 ) : ICommand<bool>, IWebhookTriggered, IAuthorizeEntity
 {
-    public string WebhookEventName => "workitem.assignee.removed";
+    public string WebhookEventName => "task.assignee.removed";
 
     public string EntityType => "Task";
     public Guid EntityId => Id;

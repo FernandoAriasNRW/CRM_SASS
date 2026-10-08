@@ -1,143 +1,168 @@
-using FluentAssertions;
-using Webhook.Application.Abstractions;
-using Xunit;
-using NSubstitute;
-using Webhook.Application.Commands;
-using Webhook.Application.Queries;
-using Webhook.Application.Handlers.Commands;
-using Webhook.Application.Handlers.Queries;
-using Webhook.Application.Abstractions.Repositories;
-using Webhook.Application.DTOs;
-using Webhook.Domain.Entities;
+using System.Text.Json;
 using BuildingBlocks.Application.Abstractions;
+using BuildingBlocks.Application.Behaviors;
 using BuildingBlocks.Domain;
+using FluentAssertions;
+using MediatR;
+using Microsoft.Extensions.Logging.Abstractions;
+using NSubstitute;
+using Webhook.Application;
+using Webhook.Domain;
+using Webhook.Domain.Entities;
+using Xunit;
 
 namespace UnitTests;
 
-public class WebhooksTests
+/// <summary>
+/// Las reglas de los webhooks que no necesitan base de datos: qué se puede suscribir, cuándo se
+/// reintenta, qué se manda y cuándo se dispara.
+/// </summary>
+public sealed class WebhooksTests
 {
-    private readonly IWebhookSubscriptionRepository _repositoryMock;
-    private readonly IWebhookUnitOfWork _unitOfWorkMock;
-    private readonly Guid _tenantId = Guid.NewGuid();
-    private readonly Guid _subscriptionId = Guid.NewGuid();
+    private static readonly Guid Tenant = Guid.NewGuid();
 
-    public WebhooksTests()
-    {
-        _repositoryMock = Substitute.For<IWebhookSubscriptionRepository>();
-        _unitOfWorkMock = Substitute.For<IWebhookUnitOfWork>();
-    }
+    private static WebhookSubscription New(params string[] events)
+        => WebhookSubscription.Create(DateTime.UtcNow, Tenant, "Mi webhook", "https://example.com/hook", events, "whsec_x");
 
-    #region WebhookSubscription Domain Tests
+    // ── La suscripción ───────────────────────────────────────────────────────────────────────
 
     [Fact]
-    public void Create_ReturnsSubscription()
+    public void A_subscription_listens_to_the_events_it_names_and_no_others()
     {
-        // Arrange & Act
-        var subscription = WebhookSubscription.Create(DateTime.UtcNow, _tenantId, "TestEvent", "https://test.com", "secret");
+        var subscription = New("task.created", "ticket.created");
 
-        // Assert
-        subscription.Should().NotBeNull();
-        subscription.EventName.Should().Be("TestEvent");
-        subscription.TargetUrl.Should().Be("https://test.com");
+        subscription.Subscribes("task.created").Should().BeTrue();
+        subscription.Subscribes("project.created").Should().BeFalse();
     }
 
-    #endregion
-
-    #region CreateWebhookSubscriptionHandler Tests
+    /// <summary>Nunca «todo» por defecto: sin eventos no hay suscripción.</summary>
+    [Fact]
+    public void A_subscription_without_events_is_rejected()
+    {
+        var create = () => New();
+        create.Should().Throw<InvalidOperationException>().WithMessage(WebhookSubscription.Rules.EventsRequired);
+    }
 
     [Fact]
-    public async Task CreateSubscription_WithValidCommand_ReturnsDto()
+    public void Events_outside_the_catalog_and_wildcards_are_rejected()
     {
-        // Arrange
-        var handler = new CreateWebhookSubscriptionHandler(TimeProvider.System, _repositoryMock, _unitOfWorkMock);
-        var command = new CreateWebhookCommand("https://test.com", "TestEvent", _tenantId, "secret");
-
-        // Act
-        var result = await handler.Handle(command, CancellationToken.None);
-
-        // Assert
-        result.IsSuccess.Should().BeTrue();
-        result.Value.Should().NotBeNull();
-        result.Value!.EventName.Should().Be("TestEvent");
-
-        await _repositoryMock.Received(1).AddAsync(Arg.Any<WebhookSubscription>(), Arg.Any<CancellationToken>());
-        await _unitOfWorkMock.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
+        var create = () => New("task.created", "*", "task.exploded");
+        create.Should().Throw<InvalidOperationException>().WithMessage("*task.exploded*");
     }
 
-    #endregion
-
-    #region UpdateWebhookSubscriptionHandler Tests
+    [Theory]
+    [InlineData("ftp://example.com/hook")]
+    [InlineData("example.com/hook")]
+    [InlineData("")]
+    public void Only_full_http_or_https_urls_are_accepted(string url)
+    {
+        var create = () => WebhookSubscription.Create(DateTime.UtcNow, Tenant, "x", url, ["task.created"], "whsec_x");
+        create.Should().Throw<InvalidOperationException>().WithMessage(WebhookSubscription.Rules.InvalidUrl);
+    }
 
     [Fact]
-    public async Task UpdateSubscription_ReturnsUpdatedDto()
+    public void A_deactivated_subscription_listens_to_nothing()
     {
-        // Arrange
-        var subscription = WebhookSubscription.Create(DateTime.UtcNow, _tenantId, "TestEvent", "https://test.com", "secret");
-        _repositoryMock.GetByIdAsync(_tenantId, _subscriptionId, Arg.Any<CancellationToken>())
-            .Returns(subscription);
+        var subscription = New("task.created");
+        subscription.Update(DateTime.UtcNow, subscription.Name, subscription.TargetUrl, subscription.EventTypes, isActive: false);
 
-        var handler = new UpdateWebhookSubscriptionHandler(TimeProvider.System, _repositoryMock, _unitOfWorkMock);
-        var command = new UpdateWebhookSubscriptionCommand(_tenantId, _subscriptionId, "https://new.com", "newsecret");
-
-        // Act
-        var result = await handler.Handle(command, CancellationToken.None);
-
-        // Assert
-        result.IsSuccess.Should().BeTrue();
-        result.Value!.TargetUrl.Should().Be("https://new.com");
-
-        await _repositoryMock.Received(1).UpdateAsync(subscription, Arg.Any<CancellationToken>());
-        await _unitOfWorkMock.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
+        subscription.Subscribes("task.created").Should().BeFalse();
     }
 
-    #endregion
-
-    #region DeleteWebhookSubscriptionHandler Tests
+    // ── Los reintentos ───────────────────────────────────────────────────────────────────────
 
     [Fact]
-    public async Task DeleteSubscription_ReturnsTrue()
+    public void A_failed_delivery_waits_longer_each_time_and_gives_up_in_the_end()
     {
-        // Arrange
-        var subscription = WebhookSubscription.Create(DateTime.UtcNow, _tenantId, "TestEvent", "https://test.com", "secret");
-        _repositoryMock.GetByIdAsync(_tenantId, _subscriptionId, Arg.Any<CancellationToken>())
-            .Returns(subscription);
+        var now = new DateTime(2026, 10, 8, 12, 0, 0, DateTimeKind.Utc);
+        var delivery = WebhookDelivery.Create(now, Tenant, Guid.NewGuid(), "task.created", _ => "{}");
 
-        var handler = new DeleteWebhookSubscriptionHandler(_repositoryMock, _unitOfWorkMock);
-        var command = new DeleteWebhookSubscriptionCommand(_tenantId, _subscriptionId);
+        delivery.RecordFailure(now, 500, "El destino respondió 500");
+        delivery.Status.Should().Be(WebhookDeliveryStatus.Pending);
+        delivery.NextAttemptAtUtc.Should().Be(now + WebhookDelivery.RetryDelays[0]);
 
-        // Act
-        var result = await handler.Handle(command, CancellationToken.None);
+        for (var i = 1; i < WebhookDelivery.MaxAttempts; i++)
+            delivery.RecordFailure(now, 500, "El destino respondió 500");
 
-        // Assert
-        result.IsSuccess.Should().BeTrue();
-        result.Value.Should().BeTrue();
-
-        await _repositoryMock.Received(1).DeleteAsync(subscription, Arg.Any<CancellationToken>());
+        delivery.Status.Should().Be(WebhookDeliveryStatus.Failed);
+        delivery.Attempts.Should().Be(WebhookDelivery.MaxAttempts);
     }
-
-    #endregion
-
-    #region QueryHandlers Tests
 
     [Fact]
-    public async Task GetSubscriptions_ReturnsList()
+    public void The_delivery_id_travels_inside_the_body()
     {
-        // Arrange
-        var subscription = WebhookSubscription.Create(DateTime.UtcNow, _tenantId, "TestEvent", "https://test.com", "secret");
-        _repositoryMock.GetByTenantAsync(_tenantId, null, Arg.Any<CancellationToken>())
-            .Returns(new List<WebhookSubscription> { subscription });
+        var delivery = WebhookDelivery.Create(DateTime.UtcNow, Tenant, Guid.NewGuid(), "task.created",
+            id => WebhookPayload.Build(id, "task.created", Tenant, DateTime.UtcNow, null, null));
 
-        var handler = new GetWebhookSubscriptionsHandler(_repositoryMock);
-        var query = new GetWebhookSubscriptionsQuery(_tenantId, null);
-
-        // Act
-        var result = await handler.Handle(query, CancellationToken.None);
-
-        // Assert
-        result.IsSuccess.Should().BeTrue();
-        result.Value.Should().HaveCount(1);
-        result.Value![0].EventName.Should().Be("TestEvent");
+        JsonDocument.Parse(delivery.Payload).RootElement.GetProperty("id").GetGuid().Should().Be(delivery.Id);
     }
 
-    #endregion
+    // ── Lo que se manda ──────────────────────────────────────────────────────────────────────
+
+    private sealed record NewUser(Guid TenantId, string Name, string Email, string Password, string Role);
+    private sealed record Created(Guid Id, string Name, string PasswordHash, Nested Settings);
+    private sealed record Nested(string ApiToken, string Theme);
+
+    /// <summary>
+    /// El comando de crear un usuario lleva la contraseña en claro, y se mandaba tal cual a
+    /// cualquier suscriptor de «usuario creado».
+    /// </summary>
+    [Fact]
+    public void Passwords_secrets_tokens_and_hashes_never_leave()
+    {
+        var json = WebhookPayload.Build(Guid.NewGuid(), "user.created", Tenant, DateTime.UtcNow,
+            new NewUser(Tenant, "Ana", "ana@acme.com", "S3creta!", "Member"),
+            new Created(Guid.NewGuid(), "Ana", "hash", new Nested("tok_123", "dark")));
+
+        json.Should().NotContain("S3creta!").And.NotContain("tok_123").And.NotContain("\"hash\"");
+
+        var data = JsonDocument.Parse(json).RootElement.GetProperty("data");
+        data.GetProperty("input").GetProperty("email").GetString().Should().Be("ana@acme.com");
+        data.GetProperty("result").GetProperty("settings").GetProperty("theme").GetString().Should().Be("dark",
+            "se quita lo sensible, no el resto: el suscriptor necesita el identificador y los datos");
+    }
+
+    // ── Cuándo se dispara ────────────────────────────────────────────────────────────────────
+
+    private sealed record CreateThing(Guid TenantId) : IRequest<Result<Guid>>, IWebhookTriggered
+    {
+        public string WebhookEventName => "task.created";
+    }
+
+    /// <summary>
+    /// Sólo se reconocían <c>Result</c> y <c>Result&lt;bool&gt;</c>: un <c>Result&lt;Guid&gt;</c>
+    /// fallido se daba por bueno y el webhook anunciaba algo que no había pasado.
+    /// </summary>
+    [Fact]
+    public async Task A_failed_command_does_not_fire_the_webhook()
+    {
+        var publisher = Substitute.For<IPublisher>();
+        var behavior = new WebhookDispatchBehavior<CreateThing, Result<Guid>>(publisher, NullLogger<WebhookDispatchBehavior<CreateThing, Result<Guid>>>.Instance);
+
+        await behavior.Handle(new CreateThing(Tenant), _ => Task.FromResult(Result<Guid>.Failure("no")), CancellationToken.None);
+
+        await publisher.DidNotReceive().Publish(Arg.Any<WebhookEventNotification>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task A_successful_command_fires_it_with_its_result()
+    {
+        var publisher = Substitute.For<IPublisher>();
+        var behavior = new WebhookDispatchBehavior<CreateThing, Result<Guid>>(publisher, NullLogger<WebhookDispatchBehavior<CreateThing, Result<Guid>>>.Instance);
+        var id = Guid.NewGuid();
+
+        await behavior.Handle(new CreateThing(Tenant), _ => Task.FromResult(Result<Guid>.Success(id)), CancellationToken.None);
+
+        await publisher.Received(1).Publish(
+            Arg.Is<WebhookEventNotification>(n => n.EventName == "task.created" && n.TenantId == Tenant && Equals(n.Result, id)),
+            Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public void The_catalog_has_no_repeated_names()
+    {
+        WebhookEventCatalog.All.Select(e => e.Name).Should().OnlyHaveUniqueItems();
+        WebhookEventCatalog.Exists(WebhookEventCatalog.Test).Should().BeFalse(
+            "el evento de prueba no se puede suscribir: sólo lo manda «Enviar prueba»");
+    }
 }

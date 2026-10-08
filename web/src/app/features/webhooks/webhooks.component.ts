@@ -1,67 +1,73 @@
 import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { DatePipe } from '@angular/common';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import {
   lucidePlus, lucideWebhook, lucideTrash2, lucideEdit3, lucideRefreshCw,
   lucideCheck, lucideX, lucideExternalLink, lucideActivity, lucideSearch,
-  lucideLoader2, lucideServer, lucideEye, lucideEyeOff
+  lucideLoader2, lucideServer, lucideEye, lucideEyeOff, lucideSend, lucideKey, lucideCopy, lucideClock
 } from '@ng-icons/lucide';
 import { WebhookService } from './webhook.service';
-import { WebhookSubscription, WEBHOOK_EVENT_TYPES } from './webhook.model';
+import type { WebhookDelivery, WebhookSubscription } from './webhook.model';
 import { WebhookFormModalComponent } from './webhook-form-modal.component';
-import { AuthSignalStore } from '../../core/auth-signal.store';
 import { ClickableDirective } from '../../shared/directives/clickable.directive';
 
+/**
+ * Los webhooks de la organización: a dónde se mandan los eventos, cuáles, y si están llegando.
+ *
+ * Cada suscripción enseña cuántos envíos salieron bien, cuántos fallaron y cuántos esperan un
+ * reintento, y su registro de envíos dice por qué falló cada uno. Antes los fallos no dejaban
+ * rastro: un destino caído durante un mes no se notaba desde aquí.
+ */
 @Component({
   selector: 'app-webhooks',
   standalone: true,
-  imports: [ClickableDirective, 
-    NgIconComponent,
-    WebhookFormModalComponent,
-    FormsModule
-  ],
+  imports: [ClickableDirective, DatePipe, NgIconComponent, WebhookFormModalComponent, FormsModule],
   viewProviders: [
     provideIcons({
       lucidePlus, lucideWebhook, lucideTrash2, lucideEdit3, lucideRefreshCw,
       lucideCheck, lucideX, lucideExternalLink, lucideActivity, lucideSearch,
-      lucideLoader2, lucideServer, lucideEye, lucideEyeOff
+      lucideLoader2, lucideServer, lucideEye, lucideEyeOff, lucideSend, lucideKey, lucideCopy, lucideClock
     })
   ],
   templateUrl: './webhooks.component.html',
 })
 export class WebhooksComponent implements OnInit {
   private readonly webhookService = inject(WebhookService);
-  private readonly authStore = inject(AuthSignalStore);
 
-  // State
   subscriptions = signal<WebhookSubscription[]>([]);
   loading = signal(false);
   searchQuery = signal('');
   showForm = signal(false);
   editingSubscription = signal<WebhookSubscription | null>(null);
   confirmDeleteId = signal<string | null>(null);
-  showSecretModal = signal(false);
-  secretToShow = signal<{ name: string; secret: string } | null>(null);
-  regeneratingId = signal<string | null>(null);
-  togglingId = signal<string | null>(null);
 
-  // Computed
+  /** El secreto que se enseña: al crear, al regenerarlo o al pedirlo. */
+  secretToShow = signal<{ name: string; secret: string; isNew: boolean } | null>(null);
+  busyId = signal<string | null>(null);
+
+  readonly activateLabel = $localize`Activar`;
+  readonly deactivateLabel = $localize`Desactivar`;
+
+  /** La suscripción cuyo registro de envíos está abierto, y sus envíos. */
+  deliveriesFor = signal<string | null>(null);
+  deliveries = signal<WebhookDelivery[]>([]);
+  loadingDeliveries = signal(false);
+
   filteredSubscriptions = computed(() => {
     const query = this.searchQuery().toLowerCase();
     if (!query) return this.subscriptions();
-    return this.subscriptions().filter(
-      (s) =>
-        s.name.toLowerCase().includes(query) ||
-        s.url.toLowerCase().includes(query) ||
-        s.eventTypes.toLowerCase().includes(query)
-    );
+    return this.subscriptions().filter(s =>
+      s.name.toLowerCase().includes(query)
+      || s.url.toLowerCase().includes(query)
+      || s.eventTypes.some(e => e.toLowerCase().includes(query)));
   });
 
   stats = computed(() => {
     const subs = this.subscriptions();
     return {
       total: subs.length,
-      active: subs.filter((s) => s.isActive).length,
+      active: subs.filter(s => s.isActive).length,
       successCount: subs.reduce((acc, s) => acc + s.successCount, 0),
       failureCount: subs.reduce((acc, s) => acc + s.failureCount, 0),
     };
@@ -74,13 +80,11 @@ export class WebhooksComponent implements OnInit {
   loadSubscriptions(): void {
     this.loading.set(true);
     this.webhookService.getSubscriptions().subscribe({
-      next: (data) => {
-        this.subscriptions.set(data);
+      next: data => {
+        this.subscriptions.set(Array.isArray(data) ? data : []);
         this.loading.set(false);
       },
-      error: () => {
-        this.loading.set(false);
-      },
+      error: () => this.loading.set(false),
     });
   }
 
@@ -99,8 +103,12 @@ export class WebhooksComponent implements OnInit {
     this.editingSubscription.set(null);
   }
 
-  onFormSaved(subscription: WebhookSubscription): void {
+  /** Al crear, el secreto se enseña en el momento: es cuando hay que guardarlo al otro lado. */
+  onFormSaved(result: { subscription: WebhookSubscription; secret?: string }): void {
     this.closeFormModal();
+    if (result.secret) {
+      this.secretToShow.set({ name: result.subscription.name, secret: result.secret, isNew: true });
+    }
     this.loadSubscriptions();
   }
 
@@ -115,73 +123,93 @@ export class WebhooksComponent implements OnInit {
   deleteSubscription(id: string): void {
     this.confirmDeleteId.set(null);
     this.webhookService.deleteSubscription(id).subscribe({
-      next: () => {
-        this.subscriptions.update((subs) => subs.filter((s) => s.id !== id));
-      },
+      next: () => this.subscriptions.update(subs => subs.filter(s => s.id !== id)),
     });
   }
 
   toggleActive(subscription: WebhookSubscription): void {
-    this.togglingId.set(subscription.id);
-    this.webhookService.toggleActive(subscription.id, !subscription.isActive).subscribe({
-      next: (updated) => {
-        this.subscriptions.update((subs) =>
-          subs.map((s) => (s.id === subscription.id ? updated : s))
-        );
-        this.togglingId.set(null);
+    this.busyId.set(subscription.id);
+    this.webhookService.updateSubscription(subscription.id, {
+      name: subscription.name,
+      url: subscription.url,
+      eventTypes: subscription.eventTypes,
+      isActive: !subscription.isActive,
+    }).subscribe({
+      next: updated => {
+        this.subscriptions.update(subs => subs.map(s => s.id === updated.id ? updated : s));
+        this.busyId.set(null);
       },
-      error: () => {
-        this.togglingId.set(null);
+      error: () => this.busyId.set(null),
+    });
+  }
+
+  showSecret(subscription: WebhookSubscription): void {
+    this.busyId.set(subscription.id);
+    this.webhookService.getSecret(subscription.id).subscribe({
+      next: result => {
+        this.secretToShow.set({ name: subscription.name, secret: result.secret, isNew: false });
+        this.busyId.set(null);
       },
+      error: () => this.busyId.set(null),
     });
   }
 
   regenerateSecret(subscription: WebhookSubscription): void {
-    this.regeneratingId.set(subscription.id);
+    this.busyId.set(subscription.id);
     this.webhookService.regenerateSecret(subscription.id).subscribe({
-      next: (result) => {
-        this.secretToShow.set({ name: subscription.name, secret: result.secret });
-        this.showSecretModal.set(true);
-        this.regeneratingId.set(null);
-        this.loadSubscriptions();
+      next: result => {
+        this.secretToShow.set({ name: subscription.name, secret: result.secret, isNew: true });
+        this.busyId.set(null);
+      },
+      error: () => this.busyId.set(null),
+    });
+  }
+
+  sendTest(subscription: WebhookSubscription): void {
+    this.busyId.set(subscription.id);
+    this.webhookService.sendTest(subscription.id).subscribe({
+      next: () => {
+        this.busyId.set(null);
+        this.openDeliveries(subscription, true);
+      },
+      error: () => this.busyId.set(null),
+    });
+  }
+
+  /** Abre o cierra el registro de envíos de una suscripción. */
+  openDeliveries(subscription: WebhookSubscription, keepOpen = false): void {
+    if (this.deliveriesFor() === subscription.id && !keepOpen) {
+      this.deliveriesFor.set(null);
+      return;
+    }
+
+    this.deliveriesFor.set(subscription.id);
+    this.loadingDeliveries.set(true);
+    this.webhookService.getDeliveries(subscription.id).subscribe({
+      next: list => {
+        this.deliveries.set(Array.isArray(list) ? list : []);
+        this.loadingDeliveries.set(false);
       },
       error: () => {
-        this.regeneratingId.set(null);
+        this.deliveries.set([]);
+        this.loadingDeliveries.set(false);
       },
     });
   }
 
+  deliveryStatusLabel(delivery: WebhookDelivery): string {
+    switch (delivery.status) {
+      case 'Succeeded': return $localize`Entregado`;
+      case 'Failed': return $localize`Fallido`;
+      default: return delivery.attempts > 0 ? $localize`Reintentando` : $localize`Pendiente`;
+    }
+  }
+
   closeSecretModal(): void {
-    this.showSecretModal.set(false);
     this.secretToShow.set(null);
   }
 
   copyToClipboard(text: string): void {
-    navigator.clipboard.writeText(text);
-  }
-
-  formatDate(dateStr: string | null): string {
-    if (!dateStr) return 'Nunca';
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('es-ES', {
-      day: '2-digit',
-      month: 'short',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  }
-
-  getEventTypeLabels(eventTypesStr: string): string[] {
-    return this.webhookService.parseEventTypes(eventTypesStr);
-  }
-
-  getEventTypeDescription(type: string): string {
-    const found = WEBHOOK_EVENT_TYPES.find((e) => e.type === type);
-    return found?.description ?? type;
-  }
-
-  getTenantId(): string {
-    const userInfo = this.authStore.userInfo();
-    return userInfo?.tenantId ?? '';
+    void navigator.clipboard?.writeText(text);
   }
 }

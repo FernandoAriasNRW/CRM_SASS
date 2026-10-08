@@ -18,7 +18,7 @@ public sealed record SetTaskRecurrenceCommand(
     DateOnly? EndDate
 ) : ICommand<bool>, IWebhookTriggered, IAuthorizeEntity
 {
-    public string WebhookEventName => "workitem.recurrence.set";
+    public string WebhookEventName => "task.recurrence.set";
 
     public string EntityType => "Task";
     public Guid EntityId => Id;
@@ -32,7 +32,7 @@ public sealed record ClearTaskRecurrenceCommand(
     string ActorRole
 ) : ICommand<bool>, IWebhookTriggered, IAuthorizeEntity
 {
-    public string WebhookEventName => "workitem.recurrence.cleared";
+    public string WebhookEventName => "task.recurrence.cleared";
 
     public string EntityType => "Task";
     public Guid EntityId => Id;

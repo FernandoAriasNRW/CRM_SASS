@@ -128,20 +128,24 @@ public sealed class TenantIsolationFlowTests(CrmApiFactory factory)
     [Fact]
     public async Task A_webhook_is_saved_in_my_tenant_even_if_the_body_says_otherwise()
     {
-        var (client, myTenant, _) = await AuthenticateAsync();
+        var (client, _, _) = await AuthenticateAsync();
 
         var response = await client.PostAsJsonAsync("/api/v1/webhooks", new
         {
-            tenantId = Guid.NewGuid(),
-            targetUrl = "https://ejemplo.invalido/hook",
-            eventName = "task.created",
-            secret = "un-secreto-de-prueba-suficientemente-largo",
+            tenantId = Guid.NewGuid(),   // no es el mío
+            name = "Webhook con inquilino ajeno en el cuerpo",
+            url = "https://ejemplo.invalido/hook",
+            eventTypes = new[] { "task.created" },
         });
 
-        response.StatusCode.Should().Be(HttpStatusCode.Created);
+        response.StatusCode.Should().Be(HttpStatusCode.Created, await response.Content.ReadAsStringAsync());
+        var id = (await response.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("subscription").GetProperty("id").GetGuid();
 
-        var created = await response.Content.ReadFromJsonAsync<JsonElement>();
-        created.GetProperty("tenantId").GetGuid().Should().Be(myTenant);
+        // La lista sólo enseña lo de mi organización: si se hubiera guardado con el inquilino del
+        // cuerpo, no saldría aquí.
+        var mine = await client.GetFromJsonAsync<JsonElement>("/api/v1/webhooks");
+        mine.EnumerateArray().Select(w => w.GetProperty("id").GetGuid()).Should().Contain(id,
+            "el inquilino sale del token; si saliera del cuerpo, el webhook recibiría los eventos de otra empresa");
     }
 
     /// <summary>
