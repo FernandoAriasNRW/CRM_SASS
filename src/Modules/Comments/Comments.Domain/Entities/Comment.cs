@@ -1,5 +1,6 @@
 using BuildingBlocks.Domain.Primitives;
 using Comments.Domain.Events;
+using Comments.Domain.Mentions;
 
 namespace Comments.Domain.Entities;
 
@@ -42,6 +43,11 @@ public sealed class Comment : AggregateRoot, ITenantEntity
     /// </summary>
     public Guid? ReplyToId { get; private set; }
 
+    private readonly List<CommentMention> _mentions = [];
+
+    /// <summary>Lo que menciona el texto. Se recalcula al crear y al editar. Ver <see cref="CommentMentionReader"/>.</summary>
+    public IReadOnlyCollection<CommentMention> Mentions => _mentions.AsReadOnly();
+
     private Comment() { }
 
     public static Comment Create(
@@ -74,6 +80,7 @@ public sealed class Comment : AggregateRoot, ITenantEntity
 
         comment.RaiseDomainEvent(
             new CommentAddedEvent(comment.Id, tenantId, entityType, entityId, authorId));
+        comment.UpdateMentions();
 
         return comment;
     }
@@ -94,6 +101,7 @@ public sealed class Comment : AggregateRoot, ITenantEntity
         EditedAtUtc = nowUtc;
 
         RaiseDomainEvent(new CommentEditedEvent(Id, TenantId, AuthorId));
+        UpdateMentions();
     }
 
     /// <summary>
@@ -102,6 +110,27 @@ public sealed class Comment : AggregateRoot, ITenantEntity
     /// Aquí sí entra el administrador, porque moderar es parte de su trabajo y borrar no pone
     /// palabras en boca de nadie.
     /// </summary>
+    /// <summary>
+    /// Vuelve a leer las menciones del texto y avisa de las que no estaban.
+    ///
+    /// Sólo de las nuevas: al corregir una errata en un comentario que mencionaba a alguien no se
+    /// le tiene que volver a avisar. De esto vive el aviso de «te han mencionado».
+    /// </summary>
+    private void UpdateMentions()
+    {
+        var current = CommentMentionReader.Read(Text);
+        var added = current
+            .Where(m => !_mentions.Any(old => old.Type == m.Type && old.EntityId == m.EntityId))
+            .Select(m => new MentionedEntity(m.Type, m.EntityId))
+            .ToList();
+
+        _mentions.Clear();
+        _mentions.AddRange(current);
+
+        if (added.Count > 0)
+            RaiseDomainEvent(new CommentMentionsAddedEvent(Id, TenantId, EntityType, EntityId, AuthorId, added));
+    }
+
     public bool CanDelete(Guid userId, string role)
         => userId == AuthorId || role == "Admin";
 

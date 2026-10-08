@@ -45,6 +45,21 @@ public static class CommentsEndpoints
       return Results.BadRequest(error);
     }
 
+    // La vuelta de las menciones: qué comentarios hablan de una persona, un equipo, un proyecto,
+    // una tarea, un ticket o un documento. Tres tramos, así que no compite con el hilo de abajo.
+    group.MapGet("/mentions/{type}/{entityId:guid}", async (IUserContext currentUser, string type, Guid entityId, IMediator mediator) =>
+    {
+      if (!Comments.Domain.Mentions.MentionTypes.Exists(type))
+      {
+        return Results.BadRequest(
+            $"«{type}» no se puede mencionar. Los que sí: "
+            + string.Join(", ", Comments.Domain.Mentions.MentionTypes.All()));
+      }
+
+      var result = await mediator.Send(new GetMentioningCommentsQuery(currentUser.TenantId, type, entityId));
+      return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
+    });
+
     group.MapGet("/{entityType}/{entityId:guid}", async (IUserContext currentUser, string entityType, Guid entityId, IMediator mediator) =>
     {
       var result = await mediator.Send(new GetCommentsQuery(currentUser.TenantId, entityType, entityId));

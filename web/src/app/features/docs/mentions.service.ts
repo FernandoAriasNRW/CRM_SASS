@@ -14,11 +14,21 @@ export interface MentioningDocument {
   mentionedAtUtc: string;
 }
 
+/** Un comentario que menciona algo: dónde está, quién lo escribió y un extracto legible. */
+export interface MentioningComment {
+  commentId: string;
+  entityType: string;
+  entityId: string;
+  authorId: string;
+  excerpt: string;
+  createdAtUtc: string;
+}
+
 /**
  * Busca a quién y a qué se puede mencionar, y pregunta quién menciona a quién.
  *
- * **Cada disparador busca en un sitio distinto**: `@` en la lista de personas y `#` en tareas,
- * tickets y proyectos. Se buscan los tres en paralelo y se mezclan, porque quien escribe `#`
+ * **Cada disparador busca en un sitio distinto**: `@` en personas y equipos, y `#` en tareas,
+ * tickets, proyectos y documentos. Se buscan los tres en paralelo y se mezclan, porque quien escribe `#`
  * quiere «lo que sea que se llame así» y no elegir antes el tipo.
  */
 @Injectable({ providedIn: 'root' })
@@ -48,27 +58,55 @@ export class MentionsService {
     // `/auth/users` sólo tiene `/me`. Estuvo mal escrito y **el `catch` de más abajo se lo
     // tragaba**: las menciones con `@` no encontraban a nadie nunca, sin dar ningún error. Hay
     // una prueba que fija estas rutas justo por eso.
-    const users = await this.request(
-      `/users?pageSize=${MentionsService.PORTIPO}&search=${encodeURIComponent(text)}`,
-      [] as { id: string; name: string; email: string }[]);
+    const [users, teams] = await Promise.all([
+      this.request(
+        `/users?pageSize=${MentionsService.PORTIPO}&search=${encodeURIComponent(text)}`,
+        [] as { id: string; name: string; email: string }[]),
+      this.request('/teams', [] as { id: string; name: string; memberCount?: number }[]),
+    ]);
 
-    return users.map(u => ({ id: u.id, label: u.name, type: 'Person' as const, detail: u.email }));
+    return [
+      ...this.asArray(users).map(u => ({ id: u.id, label: u.name, type: 'Person' as const, detail: u.email })),
+      ...this.filterLocally(teams, t => t.name, text)
+        .map(t => ({ id: t.id, label: t.name, type: 'Team' as const, detail: $localize`Equipo` })),
+    ];
   }
 
   private async things(text: string): Promise<MentionCandidate[]> {
     // En paralelo: son tres módulos distintos y esperarlos en fila triplicaría lo que tarda el
     // desplegable en aparecer, que es justo lo que hace que se deje de usar.
-    const [tasks, tickets, projects] = await Promise.all([
+    const [tasks, tickets, projects, documents] = await Promise.all([
       this.fetchList('/tasks', text),
       this.fetchList('/tickets', text),
-      this.fetchList('/projects', text)
+      this.fetchList('/projects', text),
+      this.request('/docs', [] as { id: string; title: string }[]),
     ]);
 
     return [
       ...tasks.map(t => ({ id: t.id, label: t.title, type: 'Task' as const, detail: t.detail })),
       ...tickets.map(t => ({ id: t.id, label: t.title, type: 'Ticket' as const, detail: t.detail })),
-      ...projects.map(p => ({ id: p.id, label: p.title, type: 'Project' as const, detail: p.detail }))
+      ...projects.map(p => ({ id: p.id, label: p.title, type: 'Project' as const, detail: p.detail })),
+      ...this.filterLocally(documents, d => d.title, text)
+        .map(d => ({ id: d.id, label: d.title, type: 'Document' as const, detail: $localize`Documento` })),
     ];
+  }
+
+  /**
+   * Equipos y documentos llegan enteros —el servidor no los busca por texto—, así que se filtran
+   * aquí. Son listas cortas: los equipos de una organización y sus documentos, no miles de tareas.
+   * Sin distinguir mayúsculas ni acentos, como la búsqueda del servidor.
+   */
+  private filterLocally<T>(items: T[], name: (item: T) => string, text: string): T[] {
+    const fold = (s: string) => s.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
+    const wanted = fold(text);
+    return this.asArray(items)
+      .filter(item => fold(name(item) ?? '').includes(wanted))
+      .slice(0, MentionsService.PORTIPO);
+  }
+
+  /** Lo que llega puede no ser una lista si el servidor responde otra cosa; mejor vacío que reventar. */
+  private asArray<T>(value: T[]): T[] {
+    return Array.isArray(value) ? value : [];
   }
 
   /**
@@ -128,6 +166,11 @@ export class MentionsService {
    * Es la vuelta del diferencial, y la razón de que las menciones se guarden en una tabla: leer el
    * documento no contesta esta pregunta, porque habría que abrir todos.
    */
+  /** Qué comentarios mencionan algo. Es la misma vuelta, para las menciones escritas en comentarios. */
+  mentioningComments(type: string, entityId: string) {
+    return this.api.get<MentioningComment[]>(`/comments/mentions/${type}/${entityId}`);
+  }
+
   mentioningDocuments(type: string, entityId: string) {
     return this.api.get<MentioningDocument[]>(`/docs/mentions/${type}/${entityId}`);
   }

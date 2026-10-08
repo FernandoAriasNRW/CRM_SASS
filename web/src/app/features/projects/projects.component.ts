@@ -2,6 +2,7 @@ import { Component, inject, OnInit, signal, computed, ViewChild, TemplateRef, ef
 import { AsyncPipe, CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Store } from '@ngrx/store';
+import { ToastService } from '../../shared/services/toast.service';
 import { ApiService } from '../../core/api.service';
 import { ProjectCreateModalComponent } from './project-create-modal.component';
 import { ProjectDetailModalComponent } from './project-detail-modal.component';
@@ -36,6 +37,7 @@ const STATUS_VARIANT: Record<string, string> = {
 export class ProjectsComponent implements OnInit {
 
   private readonly api = inject(ApiService);
+  private readonly toast = inject(ToastService);
   private readonly store = inject(Store);
   private readonly viewsService = inject(ViewsService);
   private readonly columnService = inject(TableColumnService);
@@ -137,6 +139,15 @@ export class ProjectsComponent implements OnInit {
         });
         return;
       }
+      // Desde fuera —una mención en un comentario— se llega a un proyecto con ?project=: se abre su
+      // ficha.
+      if (params['project']) {
+        this.api.get<Project>(`/projects/${params['project']}`).subscribe({
+          next: project => this.openDetailModal(project),
+          error: () => this.toast.error($localize`No se encontró el proyecto`),
+        });
+      }
+
       if (params['filter']) {
         this.tableState.update(s => ({ ...s, filters: { ...s.filters, filter: params['filter'] } }));
       } else {

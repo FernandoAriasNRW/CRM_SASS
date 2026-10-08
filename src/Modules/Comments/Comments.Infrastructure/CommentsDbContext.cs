@@ -3,6 +3,7 @@ using BuildingBlocks.Infrastructure.Outbox;
 using BuildingBlocks.Infrastructure.Persistence;
 using Comments.Application;
 using Comments.Domain.Entities;
+using Comments.Domain.Mentions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -30,6 +31,21 @@ public sealed class CommentsDbContext(DbContextOptions<CommentsDbContext> option
       // Es la consulta del hilo, y ocurre cada vez que se abre un detalle.
       e.HasIndex(c => new { c.TenantId, c.EntityType, c.EntityId, c.CreatedAtUtc })
        .HasDatabaseName("IX_Comments_TenantId_EntityType_EntityId_CreatedAtUtc");
+
+      // Las menciones, en su propia tabla y propiedad del comentario: se reescriben al editar y
+      // se van con él al borrarlo.
+      e.OwnsMany(c => c.Mentions, m =>
+      {
+        m.ToTable("CommentMentions");
+        m.WithOwner().HasForeignKey("CommentId");
+        m.HasKey("CommentId", nameof(CommentMention.Type), nameof(CommentMention.EntityId));
+        m.Property(x => x.Type).HasMaxLength(20).IsRequired();
+        m.Property(x => x.Label).HasMaxLength(200).IsRequired();
+
+        // Por aquí pregunta una tarea, un ticket o un documento qué comentarios lo mencionan.
+        m.HasIndex(x => new { x.Type, x.EntityId }).HasDatabaseName("IX_CommentMentions_Type_EntityId");
+      });
+      e.Navigation(c => c.Mentions).UsePropertyAccessMode(PropertyAccessMode.Field);
     });
 
     ApplyTenantFilters(modelBuilder);

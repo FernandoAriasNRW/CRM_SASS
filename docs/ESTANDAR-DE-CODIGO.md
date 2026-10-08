@@ -139,6 +139,8 @@ Un concepto, un nombre. Ordenado por área.
 | ámbito del tablero | `scope` |
 | subir | `Upload` |
 | mención, mencionado en | `Mention`, `MentionedIn` |
+| mención en un comentario, tipos mencionables | `CommentMention`, `MentionTypes` |
+| borrador (lo que se escribe antes de guardar) | `Draft` (`DraftMention`, `toDraft`, `toStored`) |
 | comentario, hilo | `Comment`, `Thread` |
 | entidad comentable | `CommentableEntity` |
 | idioma | `Language` |

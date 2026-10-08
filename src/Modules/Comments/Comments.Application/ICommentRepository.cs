@@ -15,4 +15,8 @@ public interface ICommentRepository
     Task AddAsync(Comment comment, CancellationToken ct = default);
     Task UpdateAsync(Comment comment, CancellationToken ct = default);
     Task RemoveAsync(Comment comment, CancellationToken ct = default);
+
+    /// <summary>Los comentarios que mencionan algo, del más reciente al más antiguo.</summary>
+    Task<IReadOnlyList<Comment>> GetMentioningAsync(
+        Guid tenantId, string type, Guid entityId, int max, CancellationToken ct = default);
 }

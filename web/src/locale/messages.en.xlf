@@ -2,6 +2,78 @@
 <xliff xmlns="urn:oasis:names:tc:xliff:document:1.2" version="1.2">
   <file source-language="es" target-language="en" datatype="plaintext" original="ng2.template">
     <body>
+      <trans-unit id="5081028673377884550" datatype="html">
+        <source>Escribe un comentario… (@ o # para mencionar, Ctrl+Enter para enviar)</source>
+        <target state="final">Write a comment… (@ or # to mention, Ctrl+Enter to send)</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/comments.component.html</context>
+          <context context-type="linenumber">48,49</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5017886094308721120" datatype="html">
+        <source>No se encontró el proyecto</source>
+        <target state="final">Project not found</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/projects/projects.component.ts</context>
+          <context context-type="linenumber">147</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6691236047365407661" datatype="html">
+        <source>No se encontró el ticket</source>
+        <target state="final">Ticket not found</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tickets/tickets.component.ts</context>
+          <context context-type="linenumber">171</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8059978116966943361" datatype="html">
+        <source>Sugerencias de mención</source>
+        <target state="final">Mention suggestions</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/comments.component.html</context>
+          <context context-type="linenumber">143,144</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="429332817597139019" datatype="html">
+        <source> Ningún documento ni comentario habla de esto todavía. </source>
+        <target state="final">No document or comment talks about this yet.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/mentioned-in.component.ts</context>
+          <context context-type="linenumber">34,35</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7439167036438355662" datatype="html">
+        <source>En un comentario de una tarea</source>
+        <target state="final">In a comment on a task</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/mentioned-in.component.ts</context>
+          <context context-type="linenumber">101</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3026525931920501137" datatype="html">
+        <source>En un comentario de un ticket</source>
+        <target state="final">In a comment on a ticket</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/mentioned-in.component.ts</context>
+          <context context-type="linenumber">102</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3764443424592495122" datatype="html">
+        <source>En un comentario de un proyecto</source>
+        <target state="final">In a comment on a project</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/mentioned-in.component.ts</context>
+          <context context-type="linenumber">103</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2727579871410179487" datatype="html">
+        <source>En un comentario</source>
+        <target state="final">In a comment</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/mentioned-in.component.ts</context>
+          <context context-type="linenumber">104</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="4119886956721888228" datatype="html">
         <source> Tareas </source>
         <target state="final">Tasks</target>

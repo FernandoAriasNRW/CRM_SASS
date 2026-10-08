@@ -31,6 +31,14 @@ describe('MentionsService', () => {
         return of([{ id: 'u1', name: 'Ana Ruiz', email: 'ana@ejemplo.com' }]) as any;
       }
 
+      if (route === '/teams') {
+        return of([{ id: 'e1', name: 'Diseño y obra', memberCount: 2 }, { id: 'e2', name: 'Soporte', memberCount: 1 }]) as never;
+      }
+
+      if (route === '/docs') {
+        return of([{ id: 'd1', title: 'Migrar la base: plan' }, { id: 'd2', title: 'Acta' }]) as never;
+      }
+
       if (route.startsWith('/tasks')) {
         return of({ items: [{ id: 't1', title: 'Migrar la base', status: 'Abierta' }] }) as any;
       }
@@ -45,13 +53,20 @@ describe('MentionsService', () => {
     service = TestBed.inject(MentionsService);
   });
 
-  it('searches people in /users, asking only for those it will show', async () => {
+  it('searches people in /users, asking only for those it will show, and teams too', async () => {
     const candidates = await service.search('@', 'ana');
 
-    expect(requested).toEqual(['/users?pageSize=5&search=ana']);
+    expect(requested).toEqual(['/users?pageSize=5&search=ana', '/teams']);
     expect(candidates).toEqual([
       { id: 'u1', label: 'Ana Ruiz', type: 'Person', detail: 'ana@ejemplo.com' }
     ]);
+  });
+
+  /** Los equipos llegan enteros y se filtran aquí, sin distinguir acentos. */
+  it('offers the teams whose name matches, ignoring accents', async () => {
+    const candidates = await service.search('@', 'diseno');
+
+    expect(candidates.filter(c => c.type === 'Team').map(c => c.id)).toEqual(['e1']);
   });
 
   /**
@@ -59,20 +74,22 @@ describe('MentionsService', () => {
    * búsqueda volvería a mirar sólo las primeras filas y fallaría únicamente con datos grandes,
    * que es cuando ya no se relaciona con esto.
    */
-  it('sends the text to the server in the three # lists', async () => {
-    await service.search('#', 'migrar');
+  it('sends the text to the server in the three # lists, and offers matching documents', async () => {
+    const candidates = await service.search('#', 'migrar');
 
     expect(requested).toEqual([
       '/tasks?pageSize=5&search=migrar',
       '/tickets?pageSize=5&search=migrar',
-      '/projects?pageSize=5&search=migrar'
+      '/projects?pageSize=5&search=migrar',
+      '/docs'
     ]);
+    expect(candidates.filter(c => c.type === 'Document').map(c => c.id)).toEqual(['d1']);
   });
 
   it('escapes what is typed, so an & does not split the query', async () => {
     await service.search('@', 'diseño & obra');
 
-    expect(requested).toEqual(['/users?pageSize=5&search=dise%C3%B1o%20%26%20obra']);
+    expect(requested).toEqual(['/users?pageSize=5&search=dise%C3%B1o%20%26%20obra', '/teams']);
   });
 
   /** Sin nada escrito no se molesta al servidor: `@` recién tecleado no es una búsqueda. */
@@ -93,11 +110,12 @@ describe('MentionsService', () => {
     expect(callout).toHaveBeenCalled();
   });
 
-  it('mixes tasks, tickets and projects in one list', async () => {
+  it('mixes tasks, tickets, projects and documents in one list', async () => {
     const candidates = await service.search('#', 'migrar');
 
     expect(candidates).toEqual([
-      { id: 't1', label: 'Migrar la base', type: 'Task', detail: 'Abierta' }
+      { id: 't1', label: 'Migrar la base', type: 'Task', detail: 'Abierta' },
+      { id: 'd1', label: 'Migrar la base: plan', type: 'Document', detail: 'Documento' }
     ]);
   });
 });

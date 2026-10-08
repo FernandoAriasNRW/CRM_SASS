@@ -163,6 +163,15 @@ export class TicketsComponent implements OnInit {
         });
         return;
       }
+      // Desde fuera —una mención en un comentario— se llega a un ticket con ?ticket=: se abre su
+      // ficha encima del tablero.
+      if (params['ticket']) {
+        this.api.get<Ticket>(`/tickets/${params['ticket']}`).subscribe({
+          next: ticket => this.openDetail(ticket),
+          error: () => this.toast.error($localize`No se encontró el ticket`),
+        });
+      }
+
       if (params['filter']) {
         this.tableState.update(s => ({ ...s, filters: { ...s.filters, filter: params['filter'] } }));
       } else {

@@ -7,7 +7,7 @@ import tippy, { type Instance } from 'tippy.js';
  * Qué se puede mencionar. Los nombres son los que el servidor lee de
  * `MentionableTypes`; escribir otro deja la mención fuera del índice **sin dar ningún error**.
  */
-export type MentionType = 'Person' | 'Task' | 'Ticket' | 'Project' | 'Document';
+export type MentionType = 'Person' | 'Team' | 'Task' | 'Ticket' | 'Project' | 'Document';
 
 /**
  * Cómo se le llama a cada tipo en pantalla. El valor de {@link MentionType} es un dato que se
@@ -15,6 +15,7 @@ export type MentionType = 'Person' | 'Task' | 'Ticket' | 'Project' | 'Document';
  */
 export const MENTION_TYPE_LABELS: Record<MentionType, string> = {
   Person: $localize`Persona`,
+  Team: $localize`Equipo`,
   Task: $localize`Tarea`,
   Ticket: $localize`Ticket`,
   Project: $localize`Proyecto`,
