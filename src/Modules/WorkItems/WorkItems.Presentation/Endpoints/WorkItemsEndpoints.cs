@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using WorkItems.Application.Attachments;
 using WorkItems.Application.Commands;
 using WorkItems.Application.Queries;
 using WorkItems.Infrastructure;
@@ -252,6 +253,41 @@ public static class WorkItemsEndpoints
       return result.IsSuccess ? Results.NoContent() : Results.BadRequest(result.Error);
     });
 
+    // ── Documentos adjuntos ────────────────────────────────────────────────────────────────
+    //
+    // Los documentos son de Docs; aquí sólo se guarda qué documento cuelga de qué tarea. El
+    // título se pregunta a Docs al enseñarlo, por el puerto IDocumentCatalog.
+    group.MapGet("/{id:guid}/documents", async (IUserContext currentUser, Guid id, IMediator mediator) =>
+    {
+      var result = await mediator.Send(new GetAttachedDocumentsQuery(currentUser.TenantId, id));
+      return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
+    });
+
+    group.MapPost("/{id:guid}/documents", async (IUserContext currentUser, Guid id, AttachDocumentRequest body, IMediator mediator) =>
+    {
+      var result = await mediator.Send(new AttachDocumentCommand(currentUser.TenantId, id, body.DocumentId, currentUser.UserId));
+
+      if (result.IsSuccess) return Results.Ok(result.Value);
+      return result.Error == WorkItems.Domain.Entities.AttachedDocument.Rules.TaskNotFound
+          ? Results.NotFound(result.Error)
+          : Results.BadRequest(result.Error);
+    });
+
+    group.MapDelete("/{id:guid}/documents/{documentId:guid}", async (IUserContext currentUser, Guid id, Guid documentId, IMediator mediator) =>
+    {
+      var result = await mediator.Send(new DetachDocumentCommand(currentUser.TenantId, id, documentId));
+      return result.IsSuccess ? Results.NoContent() : Results.BadRequest(result.Error);
+    });
+
+    // La vuelta: en qué tareas está adjunto un documento. Va bajo /tasks porque la respuesta es
+    // una lista de tareas y la da WorkItems; la pantalla del documento la consume sin que Docs
+    // tenga que conocer las tareas.
+    group.MapGet("/with-document/{documentId:guid}", async (IUserContext currentUser, Guid documentId, IMediator mediator) =>
+    {
+      var result = await mediator.Send(new GetTasksWithDocumentQuery(currentUser.TenantId, documentId));
+      return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
+    });
+
     // El grafo entero, para el Gantt. Va antes que la ruta con identificador para que no la
     // capture: «dependencies» no es un Guid, pero dejar dos rutas que compiten por el mismo
     // tramo es la clase de cosa que se rompe sola al tocar cualquiera de las dos.
@@ -322,3 +358,6 @@ public static class WorkItemsEndpoints
 /// El cuerpo de «mover una tarea». El nombre del campo es el que ya mandaba el tablero.
 /// </summary>
 public sealed record MoveTaskRequest(string NewStatus);
+
+/// <summary>El cuerpo de <c>POST /tasks/{id}/documents</c>.</summary>
+public sealed record AttachDocumentRequest(Guid DocumentId);

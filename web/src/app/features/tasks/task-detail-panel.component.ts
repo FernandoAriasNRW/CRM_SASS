@@ -9,7 +9,7 @@ import { SkeletonComponent } from '../../shared/ui/skeleton.component';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import {
   lucideX, lucideCheck, lucideCalendar, lucideClock, lucideUser,
-  lucideTag, lucideFlag, lucideMessageSquare, lucidePaperclip,
+  lucideTag, lucideFlag, lucideMessageSquare,
   lucideSmile, lucideSend, lucideChevronDown, lucideAlertCircle,
   lucideArrowUp, lucideMinus, lucideArrowDown, lucideLoader2,
   lucideBan, lucideArrowRight, lucideRepeat
@@ -25,6 +25,7 @@ import { UsersService, type TenantUser } from '../../core/users.service';
 import { CustomFieldsFormComponent } from '../../shared/ui/custom-fields-form.component';
 import { CommentsComponent } from '../../shared/ui/comments.component';
 import { MentionedInComponent } from '../../shared/ui/mentioned-in.component';
+import { AttachedDocumentsComponent } from './attached-documents.component';
 import { TASK_STATUSES, taskStatusBadge, taskStatusLabel } from './task-vocabulary';
 
 /** Los dos estados entre los que alterna el check de una subtarea. Los define el backend. */
@@ -34,10 +35,10 @@ const INITIAL_STATUS = 'To Do';
 @Component({
   selector: 'app-task-detail-panel',
   standalone: true,
-  imports: [MentionedInComponent, FormsModule, DatePipe, BadgeComponent, AvatarComponent, NgIconComponent, SkeletonComponent, DrawerComponent, CustomFieldsFormComponent, CommentsComponent, TagFieldComponent],
+  imports: [AttachedDocumentsComponent, MentionedInComponent, FormsModule, DatePipe, BadgeComponent, AvatarComponent, NgIconComponent, SkeletonComponent, DrawerComponent, CustomFieldsFormComponent, CommentsComponent, TagFieldComponent],
   viewProviders: [provideIcons({
     lucideX, lucideCheck, lucideCalendar, lucideClock, lucideUser,
-    lucideTag, lucideFlag, lucideMessageSquare, lucidePaperclip,
+    lucideTag, lucideFlag, lucideMessageSquare,
     lucideSmile, lucideSend, lucideChevronDown, lucideAlertCircle,
     lucideArrowUp, lucideMinus, lucideArrowDown, lucideLoader2,
     lucideBan, lucideArrowRight, lucideRepeat

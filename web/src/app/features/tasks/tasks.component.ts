@@ -342,6 +342,15 @@ export class TasksComponent implements OnInit {
       }
       if (params['view']) this.applyMode(params['view']);
 
+      // Desde fuera —un documento que la tiene adjunta— se llega a una tarea con ?task=: se abre
+      // su ficha encima del tablero.
+      if (params['task']) {
+        this.api.get<TaskItem>(`/tasks/${params['task']}`).subscribe({
+          next: task => this.openDetail(task),
+          error: () => this.toast.error($localize`No se encontró la tarea`),
+        });
+      }
+
       this.loadTasks();
     });
 

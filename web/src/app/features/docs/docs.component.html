@@ -179,10 +179,28 @@
                     </span>
                   }
                 </button>
+
+                <!-- Las tareas que tienen adjunto el documento, y adjuntarlo a otra. -->
+                <button type="button" role="tab"
+                        [attr.aria-selected]="sidePanel() === 'tasks'"
+                        (click)="sidePanel.set('tasks')"
+                        class="px-2 py-1.5 text-xs font-medium border-b-2 -mb-px transition-colors
+                               focus:outline-none focus:ring-2 focus:ring-ring rounded-t"
+                        [class.border-primary]="sidePanel() === 'tasks'"
+                        [class.text-foreground]="sidePanel() === 'tasks'"
+                        [class.border-transparent]="sidePanel() !== 'tasks'"
+                        [class.text-muted-foreground]="sidePanel() !== 'tasks'"
+                        i18n>
+                  Tareas
+                </button>
               </div>
 
               @if (sidePanel() === 'outline') {
                 <app-document-outline [editor]="editor" [version]="outlineVersion()" />
+              } @else if (sidePanel() === 'tasks') {
+                @if (activeDocument(); as doc) {
+                  <app-document-tasks [documentId]="doc.id" />
+                }
               } @else {
                 <app-document-comments
                   [annotations]="annotations()"

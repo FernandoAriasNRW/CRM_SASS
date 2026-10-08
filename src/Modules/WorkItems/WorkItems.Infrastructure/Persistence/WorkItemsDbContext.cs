@@ -11,6 +11,7 @@ public sealed class WorkItemsDbContext(DbContextOptions<WorkItemsDbContext> opti
 {
   public DbSet<WorkTask> Tasks => Set<WorkTask>();
   public DbSet<TaskDependency> TaskDependencies => Set<TaskDependency>();
+  public DbSet<AttachedDocument> AttachedDocuments => Set<AttachedDocument>();
 
   protected override void OnModelCreating(ModelBuilder modelBuilder)
   {
@@ -116,6 +117,20 @@ public sealed class WorkItemsDbContext(DbContextOptions<WorkItemsDbContext> opti
     modelBuilder.Entity<TaskDependency>()
         .HasIndex(d => new { d.TenantId, d.DependsOnTaskId })
         .HasDatabaseName("IX_TaskDependencies_Tenant_DependsOn");
+
+    // Un documento está adjunto a una tarea una vez. Lo garantiza la base y no sólo el handler:
+    // dos clics seguidos en «Adjuntar» pasarían los dos la comprobación previa.
+    modelBuilder.Entity<AttachedDocument>(a =>
+    {
+      a.ToTable("AttachedDocuments");
+      a.HasIndex(x => new { x.TenantId, x.TaskId, x.DocumentId })
+          .IsUnique()
+          .HasDatabaseName("UX_AttachedDocuments_Tenant_Task_Document");
+
+      // Por aquí pregunta un documento en qué tareas está.
+      a.HasIndex(x => new { x.TenantId, x.DocumentId })
+          .HasDatabaseName("IX_AttachedDocuments_Tenant_Document");
+    });
 
     // Aislamiento por tenant y soft delete, compuestos en un solo filtro.
     ApplyTenantFilters(modelBuilder);

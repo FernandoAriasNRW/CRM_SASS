@@ -2,6 +2,126 @@
 <xliff xmlns="urn:oasis:names:tc:xliff:document:1.2" version="1.2">
   <file source-language="es" target-language="en" datatype="plaintext" original="ng2.template">
     <body>
+      <trans-unit id="4119886956721888228" datatype="html">
+        <source> Tareas </source>
+        <target state="final">Tasks</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/docs.component.html</context>
+          <context context-type="linenumber">194</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5971287544736761257" datatype="html">
+        <source>Este documento no está adjunto a ninguna tarea.</source>
+        <target state="final">This document is not attached to any task.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/document-tasks.component.ts</context>
+          <context context-type="linenumber">30,31</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1188154277419265708" datatype="html">
+        <source>Adjuntar a una tarea</source>
+        <target state="final">Attach to a task</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/document-tasks.component.ts</context>
+          <context context-type="linenumber">46,47</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6079095595029212864" datatype="html">
+        <source>Buscar una tarea…</source>
+        <target state="final">Search for a task…</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/document-tasks.component.ts</context>
+          <context context-type="linenumber">48,49</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3130186403531886059" datatype="html">
+        <source>No se pudo adjuntar el documento</source>
+        <target state="final">Could not attach the document</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/docs/document-tasks.component.ts</context>
+          <context context-type="linenumber">136</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/attached-documents.component.ts</context>
+          <context context-type="linenumber">138</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1046510238865718709" datatype="html">
+        <source>Documentos adjuntos</source>
+        <target state="final">Attached documents</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/attached-documents.component.ts</context>
+          <context context-type="linenumber">27,29</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5875406547124920743" datatype="html">
+        <source>Esta tarea no tiene documentos adjuntos.</source>
+        <target state="final">This task has no attached documents.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/attached-documents.component.ts</context>
+          <context context-type="linenumber">33,34</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1493140879610389761" datatype="html">
+        <source>Quitar de la tarea</source>
+        <target state="final">Remove from the task</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/attached-documents.component.ts</context>
+          <context context-type="linenumber">44</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/attached-documents.component.ts</context>
+          <context context-type="linenumber">44,45</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7687376293032787950" datatype="html">
+        <source>Buscar un documento</source>
+        <target state="final">Search for a document</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/attached-documents.component.ts</context>
+          <context context-type="linenumber">54,55</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7391191532232316060" datatype="html">
+        <source>Buscar un documento…</source>
+        <target state="final">Search for a document…</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/attached-documents.component.ts</context>
+          <context context-type="linenumber">56,57</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="120214503386156073" datatype="html">
+        <source>No hay documentos que adjuntar.</source>
+        <target state="final">No documents to attach.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/attached-documents.component.ts</context>
+          <context context-type="linenumber">67,68</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8872667074910880346" datatype="html">
+        <source>Adjuntar documento</source>
+        <target state="final">Attach document</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/attached-documents.component.ts</context>
+          <context context-type="linenumber">76,77</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3513378034934733373" datatype="html">
+        <source>No se pudo quitar el documento</source>
+        <target state="final">Could not remove the document</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/attached-documents.component.ts</context>
+          <context context-type="linenumber">147</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5177669300863629427" datatype="html">
+        <source>No se encontró la tarea</source>
+        <target state="final">Task not found</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tasks/tasks.component.ts</context>
+          <context context-type="linenumber">350</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="5766599216006151783" datatype="html">
         <source>Ver tablero</source>
         <target state="final">View board</target>

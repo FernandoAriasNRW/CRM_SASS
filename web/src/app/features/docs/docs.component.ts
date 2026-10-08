@@ -28,6 +28,7 @@ import SlashCommand from './extensions/slash-command';
 import { Mention } from './extensions/mention';
 import { MentionsService } from './mentions.service';
 import { DocumentOutlineComponent } from './document-outline.component';
+import { DocumentTasksComponent } from './document-tasks.component';
 import { FileAttachment } from './extensions/file-attachment';
 import { TiptapEditorDirective } from 'ngx-tiptap';
 import { Table } from '@tiptap/extension-table';
@@ -67,7 +68,7 @@ import { VISIBLE_TEMPLATES, AvailableTemplate, availableTemplates } from './temp
 @Component({
   selector: 'app-docs',
   standalone: true,
-  imports: [DocumentOutlineComponent, 
+  imports: [DocumentOutlineComponent, DocumentTasksComponent, 
     SaveTemplateModalComponent, ImportDocumentModalComponent, TemplatesDrawerComponent,
     PageTreeComponent, PromptUrlModalComponent, DocumentCommentsComponent,
     ClickableDirective, CommonModule, FormsModule, NgIconComponent, TiptapEditorDirective, EmojiPickerComponent],
@@ -140,7 +141,7 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
   readonly activeAnnotationId = signal<string | null>(null);
 
   /** Si el panel lateral enseña el índice o los comentarios. */
-  readonly sidePanel = signal<'outline' | 'comments'>('outline');
+  readonly sidePanel = signal<'outline' | 'comments' | 'tasks'>('outline');
 
   readonly openComments = computed(() => this.annotations().filter(a => !a.resolvedAtUtc).length);
 
