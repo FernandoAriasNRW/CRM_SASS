@@ -20,6 +20,6 @@ public sealed class GetNotificationPreferencesHandler(INotificationPreferencesRe
         var saved = await repository.GetForUserAsync(request.TenantId, request.UserId, ct);
 
         return Result<NotificationPreferencesDto>.Success(NotificationPreferencesDto.From(
-            saved ?? NotificationPreferences.CreateDefault(request.TenantId, request.UserId)));
+            saved ?? NotificationPreferences.CreateDefault(request.TenantId, request.UserId), request.IsAdmin));
     }
 }

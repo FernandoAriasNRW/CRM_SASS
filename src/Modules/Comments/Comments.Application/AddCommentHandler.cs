@@ -40,7 +40,7 @@ public sealed class AddCommentHandler(
         catch (InvalidOperationException ex) { return Result<CommentDto>.Failure(ex.Message); }
 
         await repository.AddAsync(comment, ct);
-        await unitOfWork.SaveChangesAsync(ct);
+        await unitOfWork.SaveChangesAndDispatchAsync(ct);
 
         return Result<CommentDto>.Success(CommentMapping.ToDto(comment));
     }

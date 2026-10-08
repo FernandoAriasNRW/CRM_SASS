@@ -1,395 +1,229 @@
-import { Component, inject, OnInit, signal, output } from '@angular/core';
+import { Component, computed, inject, input, OnInit, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { NgTemplateOutlet } from '@angular/common';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import { lucideX, lucideBell, lucideMail, lucideSmartphone, lucideClock } from '@ng-icons/lucide';
+import { lucideX, lucideBell, lucideClock, lucideShieldCheck } from '@ng-icons/lucide';
 import { ApiService } from '../../core/api.service';
-import { ToastService } from '../../shared/services/toast.service';
-import { WebPushService, NotificationPreferences } from '../../shared/services/web-push.service';
+import { ToastService } from '../services/toast.service';
+import { errorMessage } from '../utils/error-message';
 
+/** Un tipo de aviso tal como lo devuelve el servidor. */
+interface TypePreference {
+  kind: string;
+  category: string;
+  enabled: boolean;
+  adminOnly: boolean;
+}
+
+interface Preferences {
+  emailEnabled: boolean;
+  pushEnabled: boolean;
+  quietHoursEnabled: boolean;
+  quietHoursStart: string;
+  quietHoursEnd: string;
+  types: TypePreference[];
+}
+
+/**
+ * Qué avisos recibe cada persona, y cuándo no.
+ *
+ * <b>La lista sale del servidor</b>, con lo que puede recibir quien pregunta: quien no administra
+ * no ve los avisos de administración. Antes eran once interruptores escritos aquí, algunos de
+ * avisos que nadie mandaba; y había un apartado de avisos push contra una API que no existe.
+ * Push y correo se quitan de la pantalla hasta que haya algo que los mande: un interruptor que no
+ * hace nada es prometer y no cumplir.
+ *
+ * Cada cambio se guarda al momento, sólo con el tipo que se tocó.
+ */
 @Component({
   selector: 'app-notification-preferences',
   standalone: true,
-  imports: [FormsModule, NgIconComponent],
-  viewProviders: [
-    provideIcons({ lucideX, lucideBell, lucideMail, lucideSmartphone, lucideClock })
-  ],
+  imports: [FormsModule, NgIconComponent, NgTemplateOutlet],
+  viewProviders: [provideIcons({ lucideX, lucideBell, lucideClock, lucideShieldCheck })],
   template: `
-    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4">
-      <div class="w-full max-w-lg bg-card rounded-xl border border-border shadow-2xl overflow-hidden">
-        <!-- Header -->
-        <div class="flex items-center justify-between px-6 py-4 border-b border-border">
-          <div class="flex items-center gap-3">
-            <div class="p-2 rounded-lg bg-primary/10">
-              <ng-icon name="lucideBell" size="20" class="text-primary" />
+    @if (inline()) {
+      <ng-container *ngTemplateOutlet="body" />
+    } @else {
+      <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4">
+        <div class="w-full max-w-lg bg-card rounded-xl border border-border shadow-2xl overflow-hidden"
+             role="dialog" aria-modal="true" aria-labelledby="notification-preferences-title">
+          <div class="flex items-center justify-between px-6 py-4 border-b border-border">
+            <div class="flex items-center gap-3">
+              <div class="p-2 rounded-lg bg-primary/10">
+                <ng-icon name="lucideBell" size="20" class="text-primary" />
+              </div>
+              <h2 id="notification-preferences-title" class="text-lg font-semibold" i18n>Preferencias de avisos</h2>
             </div>
-            <h2 class="text-lg font-semibold">Preferencias de Notificaciones</h2>
+            <button (click)="close()" i18n-aria-label aria-label="Cerrar"
+                    class="p-1.5 rounded-md hover:bg-accent text-muted-foreground hover:text-foreground transition-colors">
+              <ng-icon name="lucideX" size="18" />
+            </button>
           </div>
-          <button
-            (click)="close()"
-            class="p-1.5 rounded-md hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <ng-icon name="lucideX" size="18" />
-          </button>
-        </div>
-
-        <!-- Content -->
-        <div class="px-6 py-4 space-y-6 max-h-[70vh] overflow-y-auto">
-          @if (loading()) {
-            <div class="flex items-center justify-center py-8">
-              <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-            </div>
-          } @else {
-            <!-- Push Notifications Section -->
-            <div class="space-y-4">
-              <h3 class="text-sm font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-2">
-                <ng-icon name="lucideSmartphone" size="14" />
-                Notificaciones Push
-              </h3>
-
-              <div class="space-y-3">
-                <label class="flex items-center justify-between p-3 rounded-lg border border-border hover:bg-accent/50 transition-colors cursor-pointer">
-                  <div class="flex items-center gap-3">
-                    <input
-                      type="checkbox"
-                      [(ngModel)]="preferences.pushEnabled"
-                      (ngModelChange)="savePreferences()"
-                      class="w-4 h-4 rounded border-input bg-background text-primary focus:ring-2 focus:ring-primary"
-                    />
-                    <div>
-                      <span class="font-medium">Notificaciones push</span>
-                      <p class="text-xs text-muted-foreground">Recibe alertas en tu navegador</p>
-                    </div>
-                  </div>
-                </label>
-
-                @if (preferences.pushEnabled) {
-                  <div class="ml-7 flex gap-2">
-                    @if (!webPush.isSubscribed()) {
-                      <button
-                        (click)="subscribePush()"
-                        class="text-xs px-3 py-1.5 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
-                      >
-                        Activar push
-                      </button>
-                    } @else {
-                      <button
-                        (click)="testPush()"
-                        class="text-xs px-3 py-1.5 rounded-md border border-border hover:bg-accent transition-colors"
-                      >
-                        Enviar prueba
-                      </button>
-                      <button
-                        (click)="unsubscribePush()"
-                        class="text-xs px-3 py-1.5 rounded-md border border-destructive/50 text-destructive-subtle-fg hover:bg-destructive-subtle transition-colors"
-                      >
-                        Desactivar
-                      </button>
-                    }
-                  </div>
-                }
-              </div>
-            </div>
-
-            <!-- Email Section -->
-            <div class="space-y-4">
-              <h3 class="text-sm font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-2">
-                <ng-icon name="lucideMail" size="14" />
-                Notificaciones por Email
-              </h3>
-
-              <div class="space-y-3">
-                <label class="flex items-center justify-between p-3 rounded-lg border border-border hover:bg-accent/50 transition-colors cursor-pointer">
-                  <div class="flex items-center gap-3">
-                    <input
-                      type="checkbox"
-                      [(ngModel)]="preferences.emailEnabled"
-                      (ngModelChange)="savePreferences()"
-                      class="w-4 h-4 rounded border-input bg-background text-primary focus:ring-2 focus:ring-primary"
-                    />
-                    <div>
-                      <span class="font-medium">Notificaciones por email</span>
-                      <p class="text-xs text-muted-foreground">Recibe resúmenes diarios</p>
-                    </div>
-                  </div>
-                </label>
-              </div>
-            </div>
-
-            <!-- Event Types Section -->
-            <div class="space-y-4">
-              <h3 class="text-sm font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-2">
-                <ng-icon name="lucideBell" size="14" />
-                Tipos de Eventos
-              </h3>
-
-              <div class="space-y-3">
-                <label class="flex items-center justify-between p-3 rounded-lg border border-border hover:bg-accent/50 transition-colors cursor-pointer">
-                  <div class="flex items-center gap-3">
-                    <input
-                      type="checkbox"
-                      [(ngModel)]="preferences.taskAssigned"
-                      (ngModelChange)="savePreferences()"
-                      class="w-4 h-4 rounded border-input bg-background text-primary focus:ring-2 focus:ring-primary"
-                    />
-                    <div>
-                      <span class="font-medium">Tarea asignada</span>
-                      <p class="text-xs text-muted-foreground">Cuando te asignan una tarea</p>
-                    </div>
-                  </div>
-                </label>
-
-                <label class="flex items-center justify-between p-3 rounded-lg border border-border hover:bg-accent/50 transition-colors cursor-pointer">
-                  <div class="flex items-center gap-3">
-                    <input
-                      type="checkbox"
-                      [(ngModel)]="preferences.taskCompleted"
-                      (ngModelChange)="savePreferences()"
-                      class="w-4 h-4 rounded border-input bg-background text-primary focus:ring-2 focus:ring-primary"
-                    />
-                    <div>
-                      <span class="font-medium">Tarea completada</span>
-                      <p class="text-xs text-muted-foreground">Cuando se completa una tarea</p>
-                    </div>
-                  </div>
-                </label>
-
-                <label class="flex items-center justify-between p-3 rounded-lg border border-border hover:bg-accent/50 transition-colors cursor-pointer">
-                  <div class="flex items-center gap-3">
-                    <input
-                      type="checkbox"
-                      [(ngModel)]="preferences.taskDueSoon"
-                      (ngModelChange)="savePreferences()"
-                      class="w-4 h-4 rounded border-input bg-background text-primary focus:ring-2 focus:ring-primary"
-                    />
-                    <div>
-                      <span class="font-medium">Recordatorio de fecha límite</span>
-                      <p class="text-xs text-muted-foreground">24h antes del vencimiento</p>
-                    </div>
-                  </div>
-                </label>
-
-                <label class="flex items-center justify-between p-3 rounded-lg border border-border hover:bg-accent/50 transition-colors cursor-pointer">
-                  <div class="flex items-center gap-3">
-                    <input
-                      type="checkbox"
-                      [(ngModel)]="preferences.ticketCreated"
-                      (ngModelChange)="savePreferences()"
-                      class="w-4 h-4 rounded border-input bg-background text-primary focus:ring-2 focus:ring-primary"
-                    />
-                    <div>
-                      <span class="font-medium">Ticket creado</span>
-                      <p class="text-xs text-muted-foreground">Nuevo ticket creado</p>
-                    </div>
-                  </div>
-                </label>
-
-                <label class="flex items-center justify-between p-3 rounded-lg border border-border hover:bg-accent/50 transition-colors cursor-pointer">
-                  <div class="flex items-center gap-3">
-                    <input
-                      type="checkbox"
-                      [(ngModel)]="preferences.ticketUpdated"
-                      (ngModelChange)="savePreferences()"
-                      class="w-4 h-4 rounded border-input bg-background text-primary focus:ring-2 focus:ring-primary"
-                    />
-                    <div>
-                      <span class="font-medium">Ticket actualizado</span>
-                      <p class="text-xs text-muted-foreground">Cambios en tickets</p>
-                    </div>
-                  </div>
-                </label>
-
-                <label class="flex items-center justify-between p-3 rounded-lg border border-border hover:bg-accent/50 transition-colors cursor-pointer">
-                  <div class="flex items-center gap-3">
-                    <input
-                      type="checkbox"
-                      [(ngModel)]="preferences.projectUpdated"
-                      (ngModelChange)="savePreferences()"
-                      class="w-4 h-4 rounded border-input bg-background text-primary focus:ring-2 focus:ring-primary"
-                    />
-                    <div>
-                      <span class="font-medium">Proyecto actualizado</span>
-                      <p class="text-xs text-muted-foreground">Cambios en proyectos</p>
-                    </div>
-                  </div>
-                </label>
-
-                <label class="flex items-center justify-between p-3 rounded-lg border border-border hover:bg-accent/50 transition-colors cursor-pointer">
-                  <div class="flex items-center gap-3">
-                    <input
-                      type="checkbox"
-                      [(ngModel)]="preferences.mentionEnabled"
-                      (ngModelChange)="savePreferences()"
-                      class="w-4 h-4 rounded border-input bg-background text-primary focus:ring-2 focus:ring-primary"
-                    />
-                    <div>
-                      <span class="font-medium">Menciones</span>
-                      <p class="text-xs text-muted-foreground">Cuando te mencionan</p>
-                    </div>
-                  </div>
-                </label>
-
-                <label class="flex items-center justify-between p-3 rounded-lg border border-border hover:bg-accent/50 transition-colors cursor-pointer">
-                  <div class="flex items-center gap-3">
-                    <input
-                      type="checkbox"
-                      [(ngModel)]="preferences.exportReady"
-                      (ngModelChange)="savePreferences()"
-                      class="w-4 h-4 rounded border-input bg-background text-primary focus:ring-2 focus:ring-primary"
-                    />
-                    <div>
-                      <span class="font-medium">Exportación lista</span>
-                      <p class="text-xs text-muted-foreground">Cuando termina un informe que pediste descargar</p>
-                    </div>
-                  </div>
-                </label>
-              </div>
-            </div>
-
-            <!-- Quiet Hours Section -->
-            <div class="space-y-4">
-              <h3 class="text-sm font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-2">
-                <ng-icon name="lucideClock" size="14" />
-                Horas de Silencio
-              </h3>
-
-              <div class="space-y-3">
-                <label class="flex items-center justify-between p-3 rounded-lg border border-border hover:bg-accent/50 transition-colors cursor-pointer">
-                  <div class="flex items-center gap-3">
-                    <input
-                      type="checkbox"
-                      [(ngModel)]="preferences.quietHoursEnabled"
-                      (ngModelChange)="savePreferences()"
-                      class="w-4 h-4 rounded border-input bg-background text-primary focus:ring-2 focus:ring-primary"
-                    />
-                    <div>
-                      <span class="font-medium">Activar horas de silencio</span>
-                      <p class="text-xs text-muted-foreground">No molestar durante estas horas</p>
-                    </div>
-                  </div>
-                </label>
-
-                @if (preferences.quietHoursEnabled) {
-                  <div class="ml-7 grid grid-cols-2 gap-4">
-                    <div class="space-y-1">
-                      <label class="text-xs text-muted-foreground">Desde</label>
-                      <input
-                        type="time"
-                        [(ngModel)]="preferences.quietHoursStart"
-                        (ngModelChange)="savePreferences()"
-                        class="w-full px-3 py-2 border border-input rounded-md bg-background text-sm focus:ring-2 focus:ring-primary"
-                      />
-                    </div>
-                    <div class="space-y-1">
-                      <label class="text-xs text-muted-foreground">Hasta</label>
-                      <input
-                        type="time"
-                        [(ngModel)]="preferences.quietHoursEnd"
-                        (ngModelChange)="savePreferences()"
-                        class="w-full px-3 py-2 border border-input rounded-md bg-background text-sm focus:ring-2 focus:ring-primary"
-                      />
-                    </div>
-                  </div>
-                }
-              </div>
-            </div>
-          }
-        </div>
-
-        <!-- Footer -->
-        <div class="px-6 py-4 border-t border-border bg-muted/30 flex justify-end">
-          <button
-            (click)="close()"
-            class="px-4 py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors font-medium"
-          >
-            Cerrar
-          </button>
+          <div class="px-6 py-4 max-h-[70vh] overflow-y-auto">
+            <ng-container *ngTemplateOutlet="body" />
+          </div>
         </div>
       </div>
-    </div>
-  `
+    }
+
+    <ng-template #body>
+      @if (loading()) {
+        <p class="text-sm text-muted-foreground py-6 text-center" i18n>Cargando…</p>
+      } @else if (preferences(); as p) {
+        <div class="space-y-6">
+          <p class="text-xs text-muted-foreground" i18n>
+            Elige de qué quieres enterarte. Nunca recibes aviso de lo que haces tú.
+          </p>
+
+          @for (group of groups(); track group.category) {
+            <fieldset class="space-y-1">
+              <legend class="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">{{ group.label }}</legend>
+              @for (type of group.types; track type.kind) {
+                <label class="flex items-center justify-between gap-3 rounded-lg px-3 py-2 hover:bg-accent/50 cursor-pointer">
+                  <span class="text-sm flex items-center gap-2">
+                    {{ kindLabel(type.kind) }}
+                    @if (type.adminOnly) {
+                      <ng-icon name="lucideShieldCheck" size="12" class="text-muted-foreground" i18n-title title="Sólo administración" />
+                    }
+                  </span>
+                  <input type="checkbox" [checked]="type.enabled" (change)="toggle(type)"
+                         class="w-4 h-4 rounded border-input text-primary focus:ring-2 focus:ring-primary" />
+                </label>
+              }
+            </fieldset>
+          }
+
+          <fieldset class="space-y-3 border-t border-border pt-4">
+            <legend class="text-xs font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-2">
+              <ng-icon name="lucideClock" size="12" />
+              <span i18n>Horas de silencio</span>
+            </legend>
+            <label class="flex items-center justify-between gap-3 px-3 cursor-pointer">
+              <span class="text-sm" i18n>No recibir avisos en este tramo</span>
+              <input type="checkbox" [ngModel]="p.quietHoursEnabled" (ngModelChange)="setQuiet({ quietHoursEnabled: $event })"
+                     class="w-4 h-4 rounded border-input text-primary focus:ring-2 focus:ring-primary" />
+            </label>
+            @if (p.quietHoursEnabled) {
+              <div class="flex items-center gap-3 px-3">
+                <label for="quiet-start" class="text-xs text-muted-foreground" i18n>Desde</label>
+                <input id="quiet-start" type="time" [ngModel]="p.quietHoursStart" (ngModelChange)="setQuiet({ quietHoursStart: $event })"
+                       class="rounded-md border border-border bg-background px-2 py-1 text-sm" />
+                <label for="quiet-end" class="text-xs text-muted-foreground" i18n>hasta</label>
+                <input id="quiet-end" type="time" [ngModel]="p.quietHoursEnd" (ngModelChange)="setQuiet({ quietHoursEnd: $event })"
+                       class="rounded-md border border-border bg-background px-2 py-1 text-sm" />
+              </div>
+            }
+          </fieldset>
+        </div>
+      }
+    </ng-template>
+  `,
 })
 export class NotificationPreferencesComponent implements OnInit {
   private readonly api = inject(ApiService);
   private readonly toast = inject(ToastService);
-  readonly webPush = inject(WebPushService);
 
+  /** Dentro de otra pantalla —el perfil— y no como ventana encima. */
+  readonly inline = input(false);
   readonly closed = output<void>();
-  readonly loading = signal(true);
-  readonly saving = signal(false);
 
-  preferences: NotificationPreferences = {
-    emailEnabled: true,
-    pushEnabled: false,
-    taskAssigned: true,
-    taskCompleted: false,
-    taskDueSoon: true,
-    ticketCreated: true,
-    ticketUpdated: false,
-    projectUpdated: true,
-    mentionEnabled: true,
-    exportReady: true,
-    quietHoursEnabled: false,
-    quietHoursStart: '22:00',
-    quietHoursEnd: '08:00'
+  readonly preferences = signal<Preferences | null>(null);
+  readonly loading = signal(true);
+
+  private static readonly CATEGORY_LABELS: Record<string, string> = {
+    tasks: $localize`Tareas`,
+    tickets: $localize`Tickets`,
+    projects: $localize`Proyectos`,
+    mentions: $localize`Menciones`,
+    reports: $localize`Informes`,
   };
 
+  /**
+   * Cómo se llama cada aviso en pantalla. La clave es la del servidor
+   * (`NotificationCatalog`); uno nuevo sin nombre aquí se enseña con su clave.
+   */
+  private static readonly KIND_LABELS: Record<string, string> = {
+    'task.assigned': $localize`Me asignan una tarea`,
+    'task.status_changed': $localize`Una tarea mía cambia de estado`,
+    'task.completed': $localize`Se completa una tarea mía`,
+    'task.updated': $localize`Cualquier cambio en una tarea mía`,
+    'task.deleted': $localize`Se borra una tarea mía`,
+    'task.commented': $localize`Comentan en una tarea mía`,
+    'task.due_soon': $localize`Una tarea mía se acerca a su vencimiento`,
+    'ticket.assigned': $localize`Me asignan un ticket`,
+    'ticket.status_changed': $localize`Un ticket mío cambia de estado`,
+    'ticket.updated': $localize`Cualquier cambio en un ticket mío`,
+    'ticket.commented': $localize`Comentan en un ticket mío`,
+    'project.updated': $localize`Cambia un proyecto mío`,
+    'project.deleted': $localize`Se borra un proyecto mío`,
+    'project.commented': $localize`Comentan en un proyecto mío`,
+    'mention': $localize`Me mencionan`,
+    'report.export_ready': $localize`Mi exportación está lista`,
+    'report.export_failed': $localize`Mi exportación no salió`,
+  };
+
+  readonly groups = computed(() => {
+    const byCategory = new Map<string, TypePreference[]>();
+    for (const type of this.preferences()?.types ?? []) {
+      byCategory.set(type.category, [...(byCategory.get(type.category) ?? []), type]);
+    }
+    return [...byCategory.entries()].map(([category, types]) => ({
+      category,
+      label: NotificationPreferencesComponent.CATEGORY_LABELS[category] ?? category,
+      types,
+    }));
+  });
+
+  kindLabel(kind: string): string {
+    return NotificationPreferencesComponent.KIND_LABELS[kind] ?? kind;
+  }
+
   ngOnInit(): void {
-    this.loadPreferences();
+    this.api.get<Preferences>('/notifications/preferences').subscribe({
+      next: p => {
+        this.preferences.set({ ...p, types: Array.isArray(p?.types) ? p.types : [] });
+        this.loading.set(false);
+      },
+      error: () => this.loading.set(false),
+    });
+  }
+
+  toggle(type: TypePreference): void {
+    this.save({ types: [{ kind: type.kind, enabled: !type.enabled }] });
+  }
+
+  setQuiet(change: Partial<Pick<Preferences, 'quietHoursEnabled' | 'quietHoursStart' | 'quietHoursEnd'>>): void {
+    const current = this.preferences();
+    if (!current) return;
+    this.preferences.set({ ...current, ...change });
+    this.save({ types: [] });
+  }
+
+  /**
+   * Guarda y pinta lo que devuelve el servidor, no lo que se mandó: si algo se rechaza, el
+   * interruptor vuelve a donde estaba en vez de quedarse diciendo lo que no se guardó.
+   */
+  private save(change: { types: { kind: string; enabled: boolean }[] }): void {
+    const current = this.preferences();
+    if (!current) return;
+
+    this.api.put<Preferences>('/notifications/preferences', {
+      emailEnabled: current.emailEnabled,
+      pushEnabled: current.pushEnabled,
+      quietHoursEnabled: current.quietHoursEnabled,
+      quietHoursStart: current.quietHoursStart,
+      quietHoursEnd: current.quietHoursEnd,
+      types: change.types,
+    }, { silent: true }).subscribe({
+      next: saved => this.preferences.set({ ...saved, types: Array.isArray(saved?.types) ? saved.types : [] }),
+      error: err => {
+        this.toast.error($localize`No se pudieron guardar tus preferencias`, errorMessage(err, ''));
+        this.preferences.set({ ...current });
+      },
+    });
   }
 
   close(): void {
     this.closed.emit();
-  }
-
-  private loadPreferences(): void {
-    this.api.get<NotificationPreferences>('/notifications/preferences').subscribe({
-      next: (prefs) => {
-        this.preferences = { ...this.preferences, ...prefs };
-        this.loading.set(false);
-      },
-      error: () => {
-        this.loading.set(false);
-      }
-    });
-  }
-
-  savePreferences(): void {
-    this.saving.set(true);
-    this.api.put<NotificationPreferences>('/notifications/preferences', this.preferences).subscribe({
-      next: saved => {
-        // Se adopta lo que devuelve el servidor, no lo que se mandó. Hasta ahora el `PUT`
-        // respondía con el mismo cuerpo de la petición sin guardar nada, así que la pantalla
-        // confirmaba cambios que no existían y al recargar volvían atrás. Pintar la respuesta
-        // real es lo que hace que el aviso de «guardado» signifique algo.
-        this.preferences = { ...this.preferences, ...saved };
-        this.saving.set(false);
-        this.toast.success($localize`Preferencias guardadas`, 'Tus preferencias de notificación han sido actualizadas.');
-      },
-      error: () => {
-        this.saving.set(false);
-        this.toast.error('Error', 'No se pudieron guardar las preferencias.');
-      }
-    });
-  }
-
-  async subscribePush(): Promise<void> {
-    const permission = await this.webPush.requestPermission();
-    if (permission === 'granted') {
-      await this.webPush.subscribe();
-      this.preferences.pushEnabled = true;
-      this.savePreferences();
-    } else {
-      this.toast.warning($localize`Permiso denegado`, 'No se pudieron activar las notificaciones push.');
-    }
-  }
-
-  async unsubscribePush(): Promise<void> {
-    await this.webPush.unsubscribe();
-    this.preferences.pushEnabled = false;
-    this.savePreferences();
-  }
-
-  testPush(): void {
-    this.webPush.testLocalNotification('CRM SaaS', '¡Las notificaciones push están funcionando!');
   }
 }

@@ -14,7 +14,10 @@ public sealed record NotificationDto(
     string? Metadata,
     DateTime CreatedAt,
     DateTime? SentAt,
-    DateTime? ReadAt)
+    DateTime? ReadAt,
+    string? Kind = null,
+    string? EntityType = null,
+    Guid? EntityId = null)
 {
     /// <summary>
     /// Mapea una entidad Notification a un DTO de forma segura.
@@ -33,7 +36,10 @@ public sealed record NotificationDto(
             notification.Metadata,
             notification.CreatedAt,
             notification.SentAt,
-            notification.ReadAt
+            notification.ReadAt,
+            notification.Kind,
+            notification.EntityType,
+            notification.EntityId
         );
     }
 }

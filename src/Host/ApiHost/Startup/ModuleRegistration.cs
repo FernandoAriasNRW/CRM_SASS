@@ -153,6 +153,8 @@ public static class ModuleRegistration
         // Avisar cruza tres módulos: Automations decide, WorkItems sabe quién tiene la tarea y
         // Notifications entrega. Por eso vive aquí y no dentro de ninguno de los tres.
         services.AddScoped<Services.AutomationNotifier>();
+        services.AddScoped<global::Notifications.Application.Sending.INotificationPush, ApiHost.Notifications.NotificationPush>();
+        services.AddScoped<ApiHost.Notifications.InterestedParties>();
 
         // El disparador por vencimiento no lo levanta un evento —nadie toca la tarea— sino este
         // trabajo, que revisa cada hora qué se acerca a su fecha. Es el que reacciona a que NO ha

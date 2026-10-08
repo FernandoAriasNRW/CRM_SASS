@@ -70,7 +70,12 @@ public static class EndpointRegistration
 }
 
 /// <summary>
-/// El hub de notificaciones no tiene métodos propios: los mensajes se empujan desde el servidor.
-/// Se llamaba <c>DummyNotificationsHub</c>, pero no es de pruebas, es el que usa la aplicación.
+/// El hub de notificaciones no tiene métodos propios: los avisos se empujan desde el servidor a
+/// la persona que los recibe (<see cref="ApiHost.Notifications.NotificationPush"/>).
+///
+/// <b>Exige sesión.</b> No la pedía, y no importaba porque nadie empujaba nada por aquí. Ahora cada
+/// aviso va a su destinatario por su identificador, que SignalR saca del token: sin token no hay
+/// a quién mandarle nada.
 /// </summary>
+[Microsoft.AspNetCore.Authorization.Authorize]
 public class NotificationsHub : Microsoft.AspNetCore.SignalR.Hub { }

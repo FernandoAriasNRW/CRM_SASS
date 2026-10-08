@@ -1,22 +1,18 @@
 using BuildingBlocks.Application.Abstractions;
-using BuildingBlocks.Domain;
-using Notifications.Domain.Entities;
 
 namespace Notifications.Application.Preferences;
 
+/// <summary>
+/// Cambia las preferencias. Los tipos que no vienen en la lista se quedan como estaban: la
+/// pantalla puede mandar sólo el que se tocó.
+/// </summary>
 public sealed record SetNotificationPreferencesCommand(
     Guid TenantId,
     Guid UserId,
+    bool IsAdmin,
     bool EmailEnabled,
     bool PushEnabled,
-    bool TaskAssigned,
-    bool TaskCompleted,
-    bool TaskDueSoon,
-    bool TicketCreated,
-    bool TicketUpdated,
-    bool ProjectUpdated,
-    bool MentionEnabled,
-    bool ExportReady,
     bool QuietHoursEnabled,
     string QuietHoursStart,
-    string QuietHoursEnd) : ICommand<NotificationPreferencesDto>;
+    string QuietHoursEnd,
+    IReadOnlyList<NotificationTypeSetting> Types) : ICommand<NotificationPreferencesDto>;
