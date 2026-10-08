@@ -37,7 +37,12 @@ privados `_camelCase`; interfaces con `I`; asíncronos con sufijo `Async`; `Verb
 ## 3. Lo que este repositorio ya aprendió (no lo repitas)
 
 - **El inquilino y el usuario salen de `IUserContext`.** Nunca leas los claims a mano en un
-  endpoint. Esa repetición ya causó una escritura entre organizaciones.
+  endpoint. Esa repetición ya causó una escritura entre organizaciones. En un hub de SignalR, que
+  no tiene petición HTTP, se usa `UserClaims.TenantId(Context.User)`: la misma regla.
+- **Un grupo de SignalR lleva el inquilino del token delante** (`RealtimeGroups`). Nunca metas una
+  conexión en un grupo que elija el cliente tal cual: con un identificador ajeno oiría a otra
+  organización. Un `INotificationHandler` nuevo en `*.Presentation` sólo se ejecuta si su
+  ensamblado está en la lista de MediatR y el handler guarda con `SaveChangesAndDispatchAsync`.
 - **La hora entra por un solo sitio.** Aplicación, infraestructura y Host piden `TimeProvider`
   inyectado (`timeProvider.GetUtcNow().UtcDateTime`); las entidades de dominio no leen el reloj:
   reciben `DateTime nowUtc` como **primer parámetro**. `ClockUsageTests` falla si aparece un

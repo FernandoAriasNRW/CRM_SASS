@@ -180,6 +180,13 @@ public static class ModuleRegistration
             cfg.RegisterServicesFromAssembly(typeof(global::Comments.Application.AddCommentCommand).Assembly); // Comments
             cfg.RegisterServicesFromAssembly(typeof(global::Tags.Application.Commands.CreateTagCommand).Assembly); // Tags
 
+            // Los avisos por SignalR viven en la capa de presentación de cada módulo, porque usan
+            // su hub. Esos ensamblados no estaban en la lista, así que MediatR no encontraba los
+            // manejadores y ningún cambio llegaba en tiempo real.
+            cfg.RegisterServicesFromAssembly(typeof(global::Ticketing.Presentation.Hubs.TicketsHub).Assembly);         // Ticketing
+            cfg.RegisterServicesFromAssembly(typeof(global::WorkItems.Presentation.Hubs.BoardHub).Assembly);           // WorkItems
+            cfg.RegisterServicesFromAssembly(typeof(global::Communication.Presentation.Hubs.ChatHub).Assembly);        // Communication
+
             // Pipeline behavior: valida el request con FluentValidation.
             // Va PRIMERO: no tiene sentido autorizar ni despachar una petición malformada.
             cfg.AddOpenBehavior(typeof(ValidationBehavior<,>));

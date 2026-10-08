@@ -12,4 +12,10 @@ namespace Communication.Application.Abstractions;
 /// </summary>
 public interface ICommunicationUnitOfWork : IUnitOfWork
 {
+    /// <summary>
+    /// Guarda, deja los eventos en el outbox y además los reparte en proceso por MediatR.
+    /// Ver <c>IWorkItemsUnitOfWork.SaveChangesAndDispatchAsync</c>: aquí faltaba lo mismo, y el
+    /// aviso por SignalR de los mensajes nuevos estaba escrito sin ejecutarse nunca.
+    /// </summary>
+    Task<int> SaveChangesAndDispatchAsync(CancellationToken ct = default);
 }

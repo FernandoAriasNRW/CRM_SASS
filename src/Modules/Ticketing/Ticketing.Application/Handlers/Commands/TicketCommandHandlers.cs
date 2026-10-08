@@ -117,7 +117,7 @@ public sealed class UpdateTicketHandler(
     }
 
     await repository.UpdateAsync(ticket, cancellationToken);
-    await unitOfWork.SaveChangesAsync(cancellationToken);
+    await unitOfWork.SaveChangesAndDispatchAsync(cancellationToken);
     return Result<bool>.Success(true);
   }
 }
@@ -142,7 +142,7 @@ public sealed class ChangeTicketStatusHandler(
       return Result<bool>.Failure($"Cannot transition from {ticket.Status.Name} to {request.NewStatus}");
 
     await repository.UpdateAsync(ticket, cancellationToken);
-    await unitOfWork.SaveChangesAsync(cancellationToken);
+    await unitOfWork.SaveChangesAndDispatchAsync(cancellationToken);
     return Result<bool>.Success(true);
   }
 }
@@ -181,7 +181,7 @@ public sealed class CloseTicketHandler(
       return Result<bool>.Failure("Cannot close ticket in current status");
 
     await repository.UpdateAsync(ticket, cancellationToken);
-    await unitOfWork.SaveChangesAsync(cancellationToken);
+    await unitOfWork.SaveChangesAndDispatchAsync(cancellationToken);
     return Result<bool>.Success(true);
   }
 }

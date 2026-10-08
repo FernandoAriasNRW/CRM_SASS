@@ -5,7 +5,6 @@ import { CdkDragDrop, DragDropModule, moveItemInArray, transferArrayItem } from 
 import { ActivatedRoute, Router } from '@angular/router';
 import { ApiService } from '../../core/api.service';
 import { RealtimeService } from '../../core/realtime.service';
-import { AuthSignalStore } from '../../core/auth-signal.store';
 import { BadgeComponent, type BadgeVariant } from '../../shared/ui/badge.component';
 import { ButtonComponent } from '../../shared/ui/button.component';
 import { TicketCreateModalComponent, type Ticket } from './ticket-create-modal.component';
@@ -73,7 +72,6 @@ export class TicketsComponent implements OnInit {
   private readonly toast = inject(ToastService);
   private readonly api = inject(ApiService);
   private readonly realtime = inject(RealtimeService);
-  private readonly authStore = inject(AuthSignalStore);
   private readonly viewsService = inject(ViewsService);
   private readonly columnService = inject(TableColumnService);
   private readonly route = inject(ActivatedRoute);
@@ -177,10 +175,7 @@ export class TicketsComponent implements OnInit {
       this.loadTickets();
     });
 
-    const userInfo = this.authStore.userInfo();
-    if (userInfo?.tenantId) {
-      this.realtime.connectTickets(userInfo.tenantId);
-    }
+    this.realtime.connectTickets();
 
     // El estado llega por su nombre, el mismo que trae la lista.
     this.realtime.ticketMoved$.subscribe(({ ticketId, status }) => {

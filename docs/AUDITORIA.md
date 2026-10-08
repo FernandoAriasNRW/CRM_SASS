@@ -968,7 +968,8 @@ que lleva «8b» en el título. Lo único que sigue siendo propio de un disparad
   enganchado al compartido.
 - **Lo que el frontend pide y la API no tiene** (§22.3): la pantalla de webhooks, las
   notificaciones push, `GET /dashboards/{id}` y el aviso `notification_received`.
-- **El tiempo real no conecta** (§22.4), y los hubs dejan unirse a grupos de otra organización.
+- **El tablero de tareas no se suscribe a ningún proyecto** (§22.4): `connectBoard` existe y nadie
+  la llama, así que las tareas que mueve otra persona no se ven hasta recargar.
 - **Los miembros de un equipo no se pueden editar**: `UpdateTeamCommand` ignora `memberIds` y la
   API no dice quiénes son los miembros, sólo cuántos.
 - **`/projects` no ordena ni filtra por fechas, y `/reports` no ordena, no busca ni filtra por
@@ -1618,10 +1619,39 @@ No son nombres cambiados sino pantallas hechas contra una API que no existe; que
 - **`GET /dashboards/{id}`** (`getDashboardById`, sin uso) no existe.
 - **`notification_received`**: el frontend lo escucha y nadie lo manda.
 
-### 22.4 El tiempo real no conecta
+### 22.4 El tiempo real no conectaba (arreglado)
+
+> Resuelto en octubre de 2026. Lo que sigue es cómo estaba; el arreglo, al final.
 
 Los hubs exigen autenticación, pero la API no lee el token de la cadena de consulta
 (`access_token`), que es por donde lo manda SignalR en WebSockets y SSE: la conexión da 401. Así
 que el arreglo de 22.2 sobre el estado de los tickets no se ve hasta resolver esto. Y al
 resolverlo hay que cerrar antes otra cosa: `JoinTickets`, `JoinBoard` y `JoinChannel` aceptan
 cualquier identificador, así que cualquiera podría escuchar los grupos de otra organización.
+
+Al arreglarlo salieron dos fallos más, por debajo del 401: aunque la conexión hubiera entrado,
+no habría llegado ningún aviso.
+
+- **Los manejadores que mandan por SignalR no se ejecutaban.** Viven en la capa de presentación
+  de cada módulo, junto a su hub, y esos ensamblados no estaban registrados en MediatR.
+- **Ticketing y Communication guardaban sin repartir los eventos.** Su UnitOfWork no pedía el
+  repartidor y su contrato no ofrecía `SaveChangesAndDispatchAsync`, igual que le pasó a
+  WorkItems antes (ver `IWorkItemsUnitOfWork`). Ahora lo ofrecen, y cambiar el estado de un
+  ticket o mandar un mensaje reparten el evento.
+
+Lo que se cambió:
+
+- La API lee `access_token` de la cadena de consulta, **sólo en `/hubs`**.
+- Los grupos se llaman con el inquilino del token delante (`RealtimeGroups`). `JoinTickets` ya no
+  recibe nada. `JoinBoard` y `JoinChannel` reciben el proyecto o el canal, pero el grupo lleva el
+  inquilino de quien llama. Quien pide el proyecto de otra organización entra en un grupo al que
+  nunca se manda nada.
+- El chat exige autenticación; antes era el único hub que no la pedía.
+
+`RealtimeFlowTests` conecta por WebSockets con el token en la URL, como el navegador, y un
+usuario de otra organización pide los mismos grupos: el tablero, el canal y los tickets le llegan
+al dueño y a él no. Quitando el inquilino del nombre del grupo, la prueba del tablero falla.
+
+Queda una cosa: **el tablero de tareas no llama a `connectBoard`**. La pantalla mezcla tareas de
+varios proyectos y no se suscribe a ninguno, así que el aviso `task_moved` sale y nadie lo
+escucha.
