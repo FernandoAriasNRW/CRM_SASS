@@ -1,6 +1,5 @@
 import { Component, inject, input, output, signal, OnInit, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { DatePipe } from '@angular/common';
 import { ApiService } from '../../core/api.service';
 import { ToastService } from '../../shared/services/toast.service';
 import { BadgeComponent, type BadgeVariant } from '../../shared/ui/badge.component';
@@ -36,7 +35,7 @@ import { LifecycleActionsComponent, type LifecycleChange } from '../../shared/ui
 @Component({
   selector: 'app-task-detail-panel',
   standalone: true,
-  imports: [LifecycleActionsComponent, AttachedDocumentsComponent, MentionedInComponent, FormsModule, DatePipe, BadgeComponent, AvatarComponent, NgIconComponent, SkeletonComponent, DrawerComponent, CustomFieldsFormComponent, CommentsComponent, TagFieldComponent],
+  imports: [LifecycleActionsComponent, AttachedDocumentsComponent, MentionedInComponent, FormsModule, BadgeComponent, AvatarComponent, NgIconComponent, SkeletonComponent, DrawerComponent, CustomFieldsFormComponent, CommentsComponent, TagFieldComponent],
   viewProviders: [provideIcons({
     lucideX, lucideCheck, lucideCalendar, lucideClock, lucideUser,
     lucideTag, lucideFlag, lucideMessageSquare,

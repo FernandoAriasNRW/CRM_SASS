@@ -114,3 +114,20 @@ for (const { command, form, url } of CREATE_COMMANDS) {
     await expect(page).toHaveURL(url);
   });
 }
+
+/**
+ * Cada comando pinta su icono. La paleta registraba el juego entero de Lucide (815 kB en el
+ * paquete inicial); ahora registra solo los suyos, y un icono que faltara saldría en blanco.
+ */
+test('every command shows its icon', async ({ page }) => {
+  await signIn(page);
+  await page.keyboard.press('Control+k');
+
+  const options = palette(page).getByRole('option');
+  await expect(options.first()).toBeVisible();
+  const count = await options.count();
+  expect(count).toBeGreaterThan(5);
+  for (let i = 0; i < count; i++) {
+    await expect(options.nth(i).locator('ng-icon svg')).toHaveCount(1);
+  }
+});

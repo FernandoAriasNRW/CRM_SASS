@@ -3,7 +3,11 @@ import { Router } from '@angular/router';
 import { Observable, of, forkJoin } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { ApiService } from '../../../core/api.service';
-import { DEFAULT_NAV_ITEMS, type NavItem } from '../../../core/navigation-signal.store';
+import {
+  lucideCheckSquare, lucideFolderKanban, lucideFolderPlus, lucideLanguages, lucideMoon, lucidePalette,
+  lucidePlus, lucideSearch, lucideTicket, lucideUser,
+} from '@ng-icons/lucide';
+import { DEFAULT_NAV_ITEMS, NAV_ICONS, type NavItem } from '../../../core/navigation-signal.store';
 import { LANGUAGES, currentLanguage, urlInLanguage } from '../../../core/language';
 
 export type CommandGroup = 'Ir a' | 'Acciones' | 'Proyectos' | 'Tareas' | 'Tickets';
@@ -19,11 +23,26 @@ export function groupName(group: CommandGroup): string {
   }
 }
 
+/**
+ * Los iconos que puede pintar la paleta: los del menú más los de sus acciones.
+ *
+ * **Se registran por nombre, no el juego entero.** La paleta de comandos y el cajón de plantillas
+ * hacían `provideIcons(import * as lucide)`: los ~1.500 iconos de Lucide, 815 kB, en el paquete
+ * inicial, porque la paleta vive en el armazón de la aplicación. El tipo del campo `icon` son las
+ * claves de este objeto, así que un icono que no esté aquí no compila en vez de no pintarse.
+ */
+export const PALETTE_ICONS = {
+  ...NAV_ICONS,
+  lucideCheckSquare, lucideFolderKanban, lucideFolderPlus, lucideLanguages, lucideMoon, lucidePalette,
+  lucidePlus, lucideSearch, lucideTicket, lucideUser,
+};
+export type PaletteIcon = keyof typeof PALETTE_ICONS;
+
 export interface Command {
   id: string;
   label: string;
   group: CommandGroup;
-  icon: string;
+  icon: PaletteIcon;
   /** Texto adicional que también se busca: descripción, estado, etc. */
   keywords?: string;
   /** Pista a la derecha: atajo, estado del elemento… */
@@ -73,7 +92,7 @@ export class CommandPaletteService {
 
   /** Comandos estáticos: navegación a cada sección y acciones globales. */
   private readonly estaticos = computed<Command[]>(() => [
-    ...DEFAULT_NAV_ITEMS.map((item: NavItem) => ({
+    ...DEFAULT_NAV_ITEMS.map((item: NavItem): Command => ({
       id: `nav-${item.id}`,
       label: item.label,
       group: 'Ir a' as const,
@@ -130,7 +149,7 @@ export class CommandPaletteService {
       run: () => void this.router.navigateByUrl('/design-system'),
     },
     // Un comando por idioma disponible, salvo el que ya se está usando.
-    ...LANGUAGES.filter(i => i.code !== currentLanguage()).map(i => ({
+    ...LANGUAGES.filter(i => i.code !== currentLanguage()).map((i): Command => ({
       id: `accion-idioma-${i.code}`,
       label: $localize`Cambiar idioma a ${i.name}:idioma:`,
       group: 'Acciones' as const,
@@ -220,7 +239,7 @@ export class CommandPaletteService {
   }
 
   private command(
-    group: CommandGroup, icon: string, id: string,
+    group: CommandGroup, icon: PaletteIcon, id: string,
     label: string, state: string | undefined, route: string,
   ): Command {
     return {

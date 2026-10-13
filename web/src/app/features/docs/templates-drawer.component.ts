@@ -1,8 +1,8 @@
 import { Component, computed, input, output, signal } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import * as lucide from '@ng-icons/lucide';
+import { lucideSearch, lucideWand2 } from '@ng-icons/lucide';
 import { DrawerComponent } from '../../shared/ui/drawer.component';
-import type { AvailableTemplate } from './templates';
+import { TEMPLATE_ICONS, type AvailableTemplate } from './templates';
 
 /**
  * Todas las plantillas disponibles, en un cajón.
@@ -18,7 +18,7 @@ import type { AvailableTemplate } from './templates';
   selector: 'app-templates-drawer',
   standalone: true,
   imports: [NgIcon, DrawerComponent],
-  providers: [provideIcons(lucide as unknown as Record<string, string>)],
+  providers: [provideIcons({ ...TEMPLATE_ICONS, lucideSearch, lucideWand2 })],
   template: `
     <app-drawer
       [isOpen]="isOpen()"
