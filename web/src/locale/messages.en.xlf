@@ -2,6 +2,14 @@
 <xliff xmlns="urn:oasis:names:tc:xliff:document:1.2" version="1.2">
   <file source-language="es" target-language="en" datatype="plaintext" original="ng2.template">
     <body>
+      <trans-unit id="3309599294096364508" datatype="html">
+        <source> Se enseñan <x id="INTERPOLATION" equiv-text="{{ p.rows.length }}"/> de <x id="INTERPOLATION_1" equiv-text="{{ p.totalRows }}"/> filas. </source>
+        <target state="final"> Showing <x id="INTERPOLATION" equiv-text="{{ p.rows.length }}"/> of <x id="INTERPOLATION_1" equiv-text="{{ p.totalRows }}"/> rows. </target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/reports/report-builder.component.ts</context>
+          <context context-type="linenumber">233,234</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="6733123396946095495" datatype="html">
         <source>Resumen de tareas</source>
         <target state="final">Task summary</target>

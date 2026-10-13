@@ -21,16 +21,8 @@ export class DashboardsService {
     return this.api.get<Dashboard[]>('/dashboards');
   }
 
-  getDashboardById(id: string): Observable<Dashboard> {
-    return this.api.get<Dashboard>(`/dashboards/${id}`);
-  }
-
   createDashboard(dashboard: Partial<Dashboard>): Observable<Dashboard> {
     return this.api.post<Dashboard>('/dashboards', dashboard);
-  }
-
-  updateDashboard(id: string, dashboard: Partial<Dashboard>): Observable<void> {
-    return this.api.put<void>(`/dashboards/${id}`, dashboard);
   }
 
   deleteDashboard(id: string): Observable<void> {
