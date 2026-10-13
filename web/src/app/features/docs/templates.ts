@@ -1,4 +1,16 @@
+import { lucideBookOpen, lucideBriefcase, lucideCalendar, lucideFileText, lucideLayoutTemplate } from '@ng-icons/lucide';
 import type { DocumentDto } from './docs.service';
+
+/**
+ * Los iconos de las plantillas.
+ *
+ * **Se registran por nombre, no el juego entero.** La paleta de comandos y el cajón de plantillas
+ * hacían `provideIcons(import * as lucide)`: los ~1.500 iconos de Lucide, 815 kB, en el paquete
+ * inicial, porque la paleta vive en el armazón de la aplicación. El tipo del campo `icon` son las
+ * claves de este objeto, así que un icono que no esté aquí no compila en vez de no pintarse.
+ */
+export const TEMPLATE_ICONS = { lucideBookOpen, lucideBriefcase, lucideCalendar, lucideFileText, lucideLayoutTemplate };
+export type TemplateIcon = keyof typeof TEMPLATE_ICONS;
 
 /**
  * Una plantilla que se puede usar, venga del sistema o del equipo.
@@ -15,7 +27,7 @@ export interface AvailableTemplate {
   key: string;
   title: string;
   description: string;
-  icon: string;
+  icon: TemplateIcon;
   /** Clases del recuadro del icono. */
   iconBackground: string;
   /** Clases del borde de la tarjeta. */

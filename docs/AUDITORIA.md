@@ -907,11 +907,9 @@ que lleva «8b» en el título. Lo único que sigue siendo propio de un disparad
   hoy no existe camino de publicación.
 - **El árbol de trabajo de git abandonado** (2.4).
 - **167 avisos de lint** en el frontend, heredados.
-- **El frontend supera sus presupuestos de tamaño**, medido en octubre de 2026:
-  - el paquete inicial pesa 1,53 MB, 533 kB por encima del presupuesto de 1 MB;
-  - `html2pdf` va 282 kB por encima;
-  - un trozo compartido va 121 kB por encima;
-  - `docs` va 10 kB por encima.
+- **`html2pdf` supera en 282 kB el presupuesto por fichero.** Es la propia librería y se carga
+  solo al exportar un documento a PDF; subir el presupuesto general escondería engordes futuros.
+  El resto de presupuestos se cumple desde §30.
 - **Etiquetas: un solo sistema desde septiembre de 2026.** Tareas, tickets, proyectos, informes y
   dashboards guardan ids de etiquetas del módulo Tags (`TagIds`), comprobados con el puerto
   `ITagCatalog`, y borrar una etiqueta la suelta de todos (`ITagReferences`). Las claves fijas de la
@@ -2124,3 +2122,37 @@ Lo prueba la e2e `lifecycle-actions`, sobre la ficha de un ticket:
 `/comments`, el componente de comentarios falla en cada pasada de detección de cambios y la ficha
 deja de redibujarse. Los botones parecen no hacer nada, aunque el fallo está en el simulacro. La
 API real devuelve una lista.
+
+---
+
+## 30. El paquete inicial, de 1,53 MB a 773 kB
+
+**El juego entero de iconos de Lucide iba en el paquete inicial: 815 kB de 1,53 MB.** La paleta
+de comandos y el cajón de plantillas registraban `import * as lucide`, porque sus elementos traen
+el nombre del icono como texto. La paleta vive en el armazón de la aplicación, así que los ~1.500
+iconos se descargaban al entrar, aunque solo se usaran unos veinte.
+
+Ahora cada sitio registra un objeto con sus iconos (`NAV_ICONS`, `PALETTE_ICONS`,
+`TEMPLATE_ICONS`), y **el tipo del campo `icon` son las claves de ese objeto**: un icono que no
+esté registrado no compila, en vez de salir en blanco.
+
+| Medido al compilar | Antes | Después |
+|---|---|---|
+| Paquete inicial | 1,53 MB (261 kB transferidos) | 773 kB (195 kB transferidos) |
+| Trozo del editor de documentos | 710 kB (173 kB transferidos) | 602 kB (148 kB transferidos) |
+
+- **El selector de emojis del editor carga picmo al primer clic**, con `import()`. Eran 108 kB
+  para todo el que abría un documento. Antes se le pasaba a picmo el botón como
+  `triggerElement`; con el clic ya atendido por el componente, el primer clic lo abriría y
+  cerraría a la vez, así que ya no se le pasa.
+- **El resaltado de código sigue registrando `common`** de lowlight (172 kB), a propósito: los
+  bloques que ya traían un lenguaje fuera de la lista del desplegable se siguen coloreando.
+- **Se quita el presupuesto con nombre `dashboard-component`**, que nunca se aplicaba (el de
+  `anyScript` cubre cada fichero igualmente), y el `DatePipe` sin uso de la ficha de tarea, que
+  avisaba en cada compilación.
+
+Lo prueban tres e2e nuevas:
+
+- cada comando de la paleta pinta su icono;
+- cada plantilla del cajón pinta el suyo;
+- el selector de emojis se abre al primer clic.

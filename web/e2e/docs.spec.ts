@@ -251,3 +251,39 @@ test('a link with ?doc= opens that document', async ({ page }) => {
   await expect(page.getByRole('textbox', { name: /título del documento/i }))
     .toHaveValue('Manual de arquitectura', { timeout: 15_000 });
 });
+
+/** Cada plantilla del cajón pinta su icono: ya no se registra el juego entero de Lucide. */
+test('every template in the drawer shows its icon', async ({ page }) => {
+  await openDocs(page);
+
+  await page.getByRole('button', { name: /más opciones de documento nuevo/i }).click();
+  await page.getByRole('button', { name: /ver todas las plantillas/i }).first().click();
+  const cajon = page.getByRole('dialog', { name: /^plantillas$/i });
+  await expect(cajon.getByRole('heading', { name: /del sistema/i })).toBeVisible();
+
+  const icons = cajon.locator('ng-icon');
+  const count = await icons.count();
+  expect(count).toBeGreaterThan(3);
+  for (let i = 0; i < count; i++) {
+    await expect(icons.nth(i).locator('svg')).toHaveCount(1);
+  }
+});
+
+/**
+ * El selector de emojis se carga al primer clic, y abre a la primera: si picmo pusiera además su
+ * propio manejador en el botón, ese clic lo abriría y lo cerraría a la vez.
+ */
+test('the emoji picker loads on first click and opens', async ({ page }) => {
+  await openDocs(page);
+  await page.route(/\/api\/v1\/docs\/[^/]+\/pages/, r => r.fulfill({
+    status: 200, contentType: 'application/json',
+    body: JSON.stringify([{ id: '00000000-0000-0000-0000-0000000000a1', documentId: DOCUMENTS[0].id, parentPageId: null, title: 'Primera', content: '<p>Hola</p>', order: 0 }]),
+  }));
+
+  await page.getByText('Manual de arquitectura').first().click();
+  const button = page.getByRole('button', { name: 'Insertar emoji' });
+  await expect(button).toBeVisible({ timeout: 15_000 });
+  await button.click();
+
+  await expect(page.locator('.picmo__popupContainer, .popupContainer, [class*="popupContainer"]').first()).toBeVisible({ timeout: 10_000 });
+});

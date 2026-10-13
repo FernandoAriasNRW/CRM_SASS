@@ -1,10 +1,28 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
+import {
+  lucideCalendar, lucideChartBar, lucideCheckSquare, lucideFileText, lucideFolderKanban, lucideHome,
+  lucideLayoutDashboard, lucideMessageSquare, lucideTag, lucideTicket, lucideUsers,
+} from '@ng-icons/lucide';
 import { ApiService } from './api.service';
+
+/**
+ * Los iconos del menú principal.
+ *
+ * **Se registran por nombre, no el juego entero.** La paleta de comandos y el cajón de plantillas
+ * hacían `provideIcons(import * as lucide)`: los ~1.500 iconos de Lucide, 815 kB, en el paquete
+ * inicial, porque la paleta vive en el armazón de la aplicación. El tipo del campo `icon` son las
+ * claves de este objeto, así que un icono que no esté aquí no compila en vez de no pintarse.
+ */
+export const NAV_ICONS = {
+  lucideCalendar, lucideChartBar, lucideCheckSquare, lucideFileText, lucideFolderKanban, lucideHome,
+  lucideLayoutDashboard, lucideMessageSquare, lucideTag, lucideTicket, lucideUsers,
+};
+export type NavIcon = keyof typeof NAV_ICONS;
 
 export interface NavItem {
   id: string; // unique identifier
   label: string;
-  icon: string;
+  icon: NavIcon;
   route: string;
   hasSubmenu?: boolean;
   isHome?: boolean;

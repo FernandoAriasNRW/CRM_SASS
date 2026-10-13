@@ -2,8 +2,7 @@ import {
   Component, ElementRef, computed, effect, inject, signal, viewChild,
 } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import * as lucide from '@ng-icons/lucide';
-import { CommandPaletteService, type Command } from './command-palette.service';
+import { CommandPaletteService, PALETTE_ICONS, type Command } from './command-palette.service';
 
 /**
  * Paletón de comandos (⌘K / Ctrl+K).
@@ -22,7 +21,7 @@ import { CommandPaletteService, type Command } from './command-palette.service';
   selector: 'ui-command-palette',
   standalone: true,
   imports: [NgIcon],
-  providers: [provideIcons(lucide as unknown as Record<string, string>)],
+  providers: [provideIcons(PALETTE_ICONS)],
   template: `
     @if (svc.isOpen()) {
       <!-- El fondo cierra al pulsar. Es decorativo: la vía accesible para cerrar es
