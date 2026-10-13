@@ -31,8 +31,12 @@ public sealed class GetReportsHandler(IReportRepository repository) : IQueryHand
 
   public async Task<Result<PagedResult<ReportDto>>> Handle(GetReportsQuery request, CancellationToken cancellationToken)
   {
-    var (items, totalCount) = await _repository.GetByTenantAsync(request.TenantId, request.Type, request.Pagination, cancellationToken);
-    var result = PagedResult<ReportDto>.Create(items, request.Pagination.Page, request.Pagination.PageSize, totalCount);
+    var (items, totalCount) = await _repository.GetByTenantAsync(
+        request.TenantId, request.Type, request.Pagination, cancellationToken, request.Format);
+
+    // El total va segundo. Iba al final, en el sitio del tamaño de página, y la página iba en el
+    // del total: la lista decía que había un informe en total y no se podía pasar de página.
+    var result = PagedResult<ReportDto>.Create(items, totalCount, request.Pagination.Page, request.Pagination.PageSize);
     return Result<PagedResult<ReportDto>>.Success(result);
   }
 }

@@ -28,10 +28,12 @@ public static class ReportingEndpoints
   {
     var group = app.MapGroup("/api/v1/reports").WithTags("Reporting").RequireAuthorization();
 
-    group.MapGet("", async (IUserContext currentUser, string? type, IMediator mediator, int page = 1, int pageSize = 25) =>
+    group.MapGet("", async (IUserContext currentUser, string? type, IMediator mediator, int page = 1, int pageSize = 25,
+        string? format = null, string? search = null, string? sortColumn = null, string? sortDirection = null) =>
     {
       var tenantId = currentUser.TenantId;
-      var query = new GetReportsQuery(tenantId, type, new() { Page = page, PageSize = pageSize });
+      var query = new GetReportsQuery(tenantId, type,
+          new() { Page = page, PageSize = pageSize, Search = search, SortColumn = sortColumn, SortDirection = sortDirection }, format);
       var result = await mediator.Send(query);
       return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
     });

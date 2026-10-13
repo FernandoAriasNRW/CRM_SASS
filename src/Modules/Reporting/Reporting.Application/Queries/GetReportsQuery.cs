@@ -7,5 +7,6 @@ namespace Reporting.Application.Queries;
 public sealed record GetReportsQuery(
     Guid TenantId,
     string? Type,
-    PaginationRequest Pagination
+    PaginationRequest Pagination,
+    string? Format = null
 ) : IQuery<PagedResult<ReportDto>>;

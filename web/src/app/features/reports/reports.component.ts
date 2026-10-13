@@ -73,8 +73,22 @@ export class ReportsComponent implements OnInit {
   ]);
 
   filterFields = computed<FilterField[]>(() => [
-    { key: 'type', label: 'Type', type: 'select', options: ['Tasks', 'Tickets', 'Sales', 'Activity'].map(s => ({ label: s, value: s })) },
-    { key: 'format', label: 'Format', type: 'select', options: ['PDF', 'Excel', 'CSV'].map(s => ({ label: s, value: s })) },
+    // Los valores son los nombres que guarda el servidor. Antes ofrecía «Tasks», «Tickets»,
+    // «Sales» y «Activity», que no son tipos de informe: filtrar por cualquiera dejaba la lista vacía.
+    { key: 'type', label: $localize`Tipo`, type: 'select', options: [
+      { label: $localize`Resumen de tareas`, value: 'TaskSummary' },
+      { label: $localize`Progreso de Proyectos`, value: 'ProjectProgress' },
+      { label: $localize`Actividad por persona`, value: 'UserActivity' },
+      { label: $localize`Análisis de tickets`, value: 'TicketAnalytics' },
+      { label: $localize`Distribución de Tareas`, value: 'TaskBreakdown' },
+      { label: $localize`Resumen de KPIs`, value: 'KpiSummary' },
+      { label: $localize`Personalizado`, value: 'Custom' },
+    ] },
+    { key: 'format', label: $localize`Formato`, type: 'select', options: [
+      { label: 'PDF', value: 'Pdf' },
+      { label: 'Excel', value: 'Excel' },
+      { label: 'CSV', value: 'Csv' },
+    ] },
   ]);
 
   savedViews = signal<SavedView[]>([]);
