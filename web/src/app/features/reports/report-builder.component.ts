@@ -6,6 +6,7 @@ import { ApiService } from '../../core/api.service';
 import { ButtonComponent } from '../../shared/ui/button.component';
 import { ToastService } from '../../shared/services/toast.service';
 import { errorMessage } from '../../shared/utils/error-message';
+import { ReportChartComponent, type WidgetData } from '../../shared/ui/charts/report-chart.component';
 
 /** El catálogo tal como lo sirve el servidor. La pantalla no escribe ninguna de estas listas. */
 export interface ReportCatalog {
@@ -65,7 +66,7 @@ interface ReportPreview {
 @Component({
   selector: 'app-report-builder',
   standalone: true,
-  imports: [FormsModule, ButtonComponent],
+  imports: [FormsModule, ButtonComponent, ReportChartComponent],
   template: `
     <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" (click)="close()">
       <div class="bg-card rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto"
@@ -220,27 +221,15 @@ interface ReportPreview {
                     Con estos filtros no hay datos. No es un error: es lo que hay.
                   </p>
                 } @else {
-                  <table class="w-full text-sm">
-                    <thead>
-                      <tr class="border-b border-border">
-                        @for (c of p.columns; track c) {
-                          <th class="text-left px-3 py-2 font-medium">{{ c }}</th>
-                        }
-                      </tr>
-                    </thead>
-                    <tbody>
-                      @for (row of p.rows; track $index) {
-                        <tr class="border-b border-border/50">
-                          @for (cell of row; track $index) {
-                            <td class="px-3 py-1.5">{{ cell }}</td>
-                          }
-                        </tr>
-                      }
-                    </tbody>
-                  </table>
+                  <!--
+                    La misma gráfica que pinta el panel, con la misma definición: lo que se ve aquí
+                    es lo que se verá en el recuadro. Antes era siempre una tabla, aunque se
+                    eligiera barras o tarta.
+                  -->
+                  <app-report-chart [data]="previewChart()!" class="block h-72" data-testid="builder-preview" />
 
                   @if (p.totalRows > p.rows.length) {
-                    <p class="px-3 py-2 text-xs text-muted-foreground">
+                    <p class="px-3 py-2 text-xs text-muted-foreground" i18n>
                       Se enseñan {{ p.rows.length }} de {{ p.totalRows }} filas.
                     </p>
                   }
@@ -279,6 +268,22 @@ export class ReportBuilderComponent {
   readonly busy = signal(false);
   readonly error = signal('');
   readonly preview = signal<ReportPreview | null>(null);
+
+  /**
+   * La forma con la que se pidió el resultado. Se guarda al pedirlo y no se lee del desplegable:
+   * cambiar la forma después no debe redibujar un resultado calculado con otra definición.
+   */
+  private readonly previewVisualization = signal('table');
+
+  /** La vista previa con la forma que espera la gráfica del panel. */
+  readonly previewChart = computed<WidgetData | null>(() => {
+    const p = this.preview();
+    if (!p) return null;
+    return {
+      widgetId: 'preview', reportId: 'preview', title: p.title, subtitle: p.subtitle,
+      visualization: this.previewVisualization(), columns: p.columns, rows: p.rows, error: null,
+    };
+  });
 
   readonly dataSource = signal('');
   groupBy = '';
@@ -427,11 +432,13 @@ export class ReportBuilderComponent {
     this.error.set('');
 
     try {
+      const definition = this.definition();
       const preview = await firstValueFrom(this.api.post<ReportPreview>(
         '/reports/preview',
-        { definition: this.definition(), title: this.reportTitle() },
+        { definition, title: this.reportTitle() },
         { silent: true }));
 
+      this.previewVisualization.set(definition.visualization);
       this.preview.set(preview);
     } catch (e) {
       // El servidor dice qué pieza no encaja. Se enseña dentro del constructor, junto a los

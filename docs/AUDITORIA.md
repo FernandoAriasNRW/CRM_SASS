@@ -907,7 +907,11 @@ que lleva «8b» en el título. Lo único que sigue siendo propio de un disparad
   hoy no existe camino de publicación.
 - **El árbol de trabajo de git abandonado** (2.4).
 - **167 avisos de lint** en el frontend, heredados.
-- **Un paquete del frontend supera el presupuesto** de tamaño en 120 kB.
+- **El frontend supera sus presupuestos de tamaño**, medido en octubre de 2026:
+  - el paquete inicial pesa 1,53 MB, 533 kB por encima del presupuesto de 1 MB;
+  - `html2pdf` va 282 kB por encima;
+  - un trozo compartido va 121 kB por encima;
+  - `docs` va 10 kB por encima.
 - **Etiquetas: un solo sistema desde septiembre de 2026.** Tareas, tickets, proyectos, informes y
   dashboards guardan ids de etiquetas del módulo Tags (`TagIds`), comprobados con el puerto
   `ITagCatalog`, y borrar una etiqueta la suelta de todos (`ITagReferences`). Las claves fijas de la
@@ -932,25 +936,20 @@ que lleva «8b» en el título. Lo único que sigue siendo propio de un disparad
   personalizados en tickets como dimensión de análisis: hoy los campos personalizados son de
   tareas y proyectos. El catálogo del constructor está preparado para recibirlos —basta añadir
   campos a un origen— pero la extensión a tickets es trabajo del módulo de campos.
-- **El constructor sigue enseñando tablas en su vista previa**, aunque el panel ya pinta gráficas
-  con la misma definición. Reutilizar ahí el componente de gráfica es un cambio pequeño y
-  pendiente.
 - **«Barras apiladas» se pinta como barras normales.** Apilar necesita una segunda dimensión
   —agrupar por dos campos— que el catálogo no ofrece todavía. Se pinta en vez de rechazarse
   porque el resultado sigue siendo cierto, sólo que menos rico.
 - **Los recuadros no se arrastran.** La disposición se guarda y se respeta, y hay endpoint para
   cambiarla, pero en la pantalla sólo se pueden quitar recuadros: falta el arrastrar y
   redimensionar.
-- **`doughnut-chart` se ha quedado sin uso** al pasar la tarta a ser un widget. `line-chart` sigue
-  vivo para el burndown.
 - **De la Fase 5B faltan los bloques arrastrables y los comentarios en línea** (ver `FASE-5.md`).
 - **Documentos tiene la columna de archivado y no la usa.** Se le puso al modelar el concepto
   para no dejar el agregado a medias, pero Docs mantiene su propio panel lateral y no se ha
   enganchado al compartido.
-- **`DashboardsService.get` y `update` piden rutas que no existen** (`GET /dashboards/{id}`), pero
-  ninguna pantalla los llama: son código muerto. Lo demás de §22.3 está resuelto: los webhooks en
-  §23.6, y las notificaciones push (quitadas de la pantalla) y el aviso `notification_received`
-  en §23.7.
+- Lo de §22.3 está resuelto:
+  - los webhooks, en §23.6;
+  - las notificaciones push (quitadas de la pantalla) y el aviso `notification_received`, en §23.7;
+  - `DashboardsService.get` y `update`, que nadie llamaba, en §27.
 
 ---
 
@@ -2048,3 +2047,21 @@ Las tres pruebas de lo que se corrigió fallaban antes del cambio. La de mencion
   inicio. Antes se mandaban y se ignoraban.
 
 Lo prueba `ListParametersAndNamesFlowTests`. Sus cuatro pruebas fallaban antes del cambio.
+
+---
+
+## 27. La vista previa del constructor se pinta con su forma
+
+- **La vista previa del constructor era siempre una tabla**, aunque se eligieran barras, líneas o
+  tarta, mientras el panel ya pintaba gráficas con la misma definición.
+  - Ahora usa `app-report-chart`, el mismo componente que el panel, así que se ve lo mismo que
+    se verá en el recuadro.
+  - La forma se toma al pedir el resultado y no del desplegable: cambiarla después no redibuja
+    un resultado que se calculó con otra definición.
+  - Lo prueba la e2e `report-builder-preview`. La de barras fallaba antes del cambio.
+- **Se quita código sin uso:**
+  - `doughnut-chart`;
+  - `DashboardsService.getDashboardById`, que pedía una ruta que no existe;
+  - `DashboardsService.updateDashboard`.
+- **Medido al compilar:** el paquete inicial no cambia. El trozo del panel deja de superar su
+  presupuesto, porque ECharts pasa a un trozo compartido con el constructor.
