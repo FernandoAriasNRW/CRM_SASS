@@ -143,5 +143,6 @@
     [ticket]="selectedTicket()!"
     (closed)="selectedTicket.set(null)"
     (updated)="onTicketUpdated($event)"
+    (lifecycleChanged)="selectedTicket.set(null); loadTickets()"
     />
   }

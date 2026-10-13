@@ -83,5 +83,6 @@
 }
 
 @if (selectedProject()) {
-  <app-project-detail-modal [project]="selectedProject()!" (closed)="closeDetailModal()" />
+  <app-project-detail-modal [project]="selectedProject()!" (closed)="closeDetailModal()"
+    (lifecycleChanged)="closeDetailModal(); loadProjects()" />
 }

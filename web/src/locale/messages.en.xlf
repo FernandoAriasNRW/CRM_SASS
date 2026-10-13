@@ -2,6 +2,150 @@
 <xliff xmlns="urn:oasis:names:tc:xliff:document:1.2" version="1.2">
   <file source-language="es" target-language="en" datatype="plaintext" original="ng2.template">
     <body>
+      <trans-unit id="7321991329220023298" datatype="html">
+        <source>Restaurar</source>
+        <target state="final">Restore</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/lifecycle-actions.component.ts</context>
+          <context context-type="linenumber">45,46</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1422753847993609635" datatype="html">
+        <source>Desarchivar</source>
+        <target state="final">Unarchive</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/lifecycle-actions.component.ts</context>
+          <context context-type="linenumber">50,51</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3367646580763901870" datatype="html">
+        <source>Compartir</source>
+        <target state="final">Share</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/lifecycle-actions.component.ts</context>
+          <context context-type="linenumber">56,57</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/lifecycle-actions.component.ts</context>
+          <context context-type="linenumber">78</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/lifecycle-actions.component.ts</context>
+          <context context-type="linenumber">117,118</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="9077577477688980439" datatype="html">
+        <source>Archivar</source>
+        <target state="final">Archive</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/lifecycle-actions.component.ts</context>
+          <context context-type="linenumber">59,60</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7921531086644889767" datatype="html">
+        <source>¿Enviar a la papelera?</source>
+        <target state="final">Send to the trash?</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/lifecycle-actions.component.ts</context>
+          <context context-type="linenumber">66,67</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="123288345744469038" datatype="html">
+        <source>Sí, enviar</source>
+        <target state="final">Yes, send</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/lifecycle-actions.component.ts</context>
+          <context context-type="linenumber">67,68</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7717825151977326844" datatype="html">
+        <source>Compartir con</source>
+        <target state="final">Share with</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/lifecycle-actions.component.ts</context>
+          <context context-type="linenumber">80,81</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3848738762478471002" datatype="html">
+        <source>Todavía no está compartido con nadie.</source>
+        <target state="final">Not shared with anyone yet.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/lifecycle-actions.component.ts</context>
+          <context context-type="linenumber">88,89</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2365521062215929063" datatype="html">
+        <source>Elige a alguien</source>
+        <target state="final">Choose someone</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/lifecycle-actions.component.ts</context>
+          <context context-type="linenumber">104,105</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3292647914193824201" datatype="html">
+        <source>Nivel</source>
+        <target state="final">Level</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/lifecycle-actions.component.ts</context>
+          <context context-type="linenumber">111</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8029781778391324651" datatype="html">
+        <source>Persona que ya no está</source>
+        <target state="final">Former member</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/lifecycle-actions.component.ts</context>
+          <context context-type="linenumber">163</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2402149002981305508" datatype="html">
+        <source>Dejar de compartir con <x id="name" equiv-text="this.nameOf(id)"/></source>
+        <target state="final">Stop sharing with <x id="name" equiv-text="this.nameOf(id)"/></target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/lifecycle-actions.component.ts</context>
+          <context context-type="linenumber">167</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8554717262742642479" datatype="html">
+        <source>No se pudo completar la acción.</source>
+        <target state="final">Couldn't complete the action.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/lifecycle-actions.component.ts</context>
+          <context context-type="linenumber">172</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8614529831059254922" datatype="html">
+        <source>No se pudo enviar a la papelera.</source>
+        <target state="final">Couldn't send it to the trash.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/lifecycle-actions.component.ts</context>
+          <context context-type="linenumber">179</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8370285774808784909" datatype="html">
+        <source>No se pudo compartir.</source>
+        <target state="final">Couldn't share.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/lifecycle-actions.component.ts</context>
+          <context context-type="linenumber">195</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1828819717687813517" datatype="html">
+        <source>No se pudo dejar de compartir.</source>
+        <target state="final">Couldn't stop sharing.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/lifecycle-actions.component.ts</context>
+          <context context-type="linenumber">204</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6949969088070857809" datatype="html">
+        <source>No se pudo saber con quién está compartido.</source>
+        <target state="final">Couldn't find out who it's shared with.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/lifecycle-actions.component.ts</context>
+          <context context-type="linenumber">210</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="3309599294096364508" datatype="html">
         <source> Se enseñan <x id="INTERPOLATION" equiv-text="{{ p.rows.length }}"/> de <x id="INTERPOLATION_1" equiv-text="{{ p.totalRows }}"/> filas. </source>
         <target state="final"> Showing <x id="INTERPOLATION" equiv-text="{{ p.rows.length }}"/> of <x id="INTERPOLATION_1" equiv-text="{{ p.totalRows }}"/> rows. </target>

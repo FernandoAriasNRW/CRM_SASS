@@ -239,5 +239,6 @@
     [task]="selectedTask()!"
     (closed)="selectedTask.set(null)"
     (updated)="onTaskUpdated($event)"
+    (lifecycleChanged)="selectedTask.set(null); loadTasks()"
   />
 }

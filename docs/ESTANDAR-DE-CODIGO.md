@@ -107,6 +107,7 @@ Un concepto, un nombre. Ordenado por área.
 | archivado en, borrado en | `ArchivedAtUtc`, `DeletedAtUtc` |
 | acción de archivo | `ArchiveAction` |
 | cambiar archivo/papelera (comando) | `Change<Entidad>ArchiveStateCommand` |
+| botones de archivar, papelera y compartir de una ficha | `LifecycleActions` (`LifecycleChange`) |
 | vista guardada | `SavedView` |
 | vocabulario | `Vocabulary` (o `…Options` si es una lista de opciones) |
 | etiqueta (de texto visible) | `Label` |
