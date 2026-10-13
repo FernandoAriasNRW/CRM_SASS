@@ -1,5 +1,6 @@
 <app-drawer [isOpen]="true" (closed)="close()" [title]="title"
             i18n-subtitle subtitle="Detalle de tarea y comentarios" size="xl" [scrollBody]="false">
+  <app-lifecycle-actions drawer-actions kind="Task" [entityId]="task().id" (changed)="lifecycleChanged.emit($event)" />
   <div drawer-header class="flex items-center gap-2">
     <!-- Status pill -->
     <div class="relative group">

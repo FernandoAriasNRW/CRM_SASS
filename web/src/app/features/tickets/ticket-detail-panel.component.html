@@ -6,6 +6,7 @@
   size="xl"
   [scrollBody]="false"
 >
+  <app-lifecycle-actions drawer-actions kind="Ticket" [entityId]="ticket().id" (changed)="lifecycleChanged.emit($event)" />
   <!-- Badge Slot -->
   <!--
     El nombre legible, no la clave. Arriba ponía «Open» y «Low» —lo que viaja al servidor— junto a

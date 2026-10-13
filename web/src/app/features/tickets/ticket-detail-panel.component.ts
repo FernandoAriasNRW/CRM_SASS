@@ -22,10 +22,11 @@ import { DrawerComponent } from '../../shared/ui/drawer.component';
 import { CommentsComponent } from '../../shared/ui/comments.component';
 import { MentionedInComponent } from '../../shared/ui/mentioned-in.component';
 
+import { LifecycleActionsComponent, type LifecycleChange } from '../../shared/ui/lifecycle-actions.component';
 @Component({
   selector: 'app-ticket-detail-panel',
   standalone: true,
-  imports: [MentionedInComponent, CommentsComponent, FormsModule, BadgeComponent, NgIconComponent, DrawerComponent, TagFieldComponent],
+  imports: [LifecycleActionsComponent, MentionedInComponent, CommentsComponent, FormsModule, BadgeComponent, NgIconComponent, DrawerComponent, TagFieldComponent],
   viewProviders: [provideIcons({
     lucideX, lucideCheck, lucideUser, lucideTag,
     lucideFlag, lucideMessageSquare, lucidePaperclip,
@@ -37,6 +38,8 @@ export class TicketDetailPanelComponent implements OnInit {
   readonly ticket = input.required<Ticket>();
   readonly closed = output<void>();
   readonly updated = output<Ticket>();
+  /** Archivado, a la papelera o restaurado: la lista se recarga y la ficha se cierra. */
+  readonly lifecycleChanged = output<LifecycleChange>();
 
   private readonly api = inject(ApiService);
 

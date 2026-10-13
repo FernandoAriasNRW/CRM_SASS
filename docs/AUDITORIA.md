@@ -925,12 +925,6 @@ que lleva «8b» en el título. Lo único que sigue siendo propio de un disparad
   tickets. Quitar un adjunto suelto sí lo borra (§25).
 - **Espacios, carpetas, anotaciones y subidas no piden autorización por entidad.** Las páginas
   de documentos sí, desde §24.
-- **Compartir no tiene interfaz todavía.** La API ya pide permiso para compartir (§28). Los endpoints existen y están probados, y los filtros
-  «compartido conmigo» y «privado» funcionan contra ellos, pero no hay ningún botón en la
-  aplicación que comparta. Hasta que lo haya, esas dos entradas del menú responden bien y
-  devuelven poco, que es honesto pero no útil.
-- **Archivar y borrar tampoco tienen botón.** Misma situación: la API responde, el menú enseña
-  el archivo y la papelera, y de momento sólo se llenan desde la API.
 - **No hay zona horaria por inquilino** y los informes programados usan la del servidor (11.3).
 - **«Tickets por área» sigue sin poderse hacer.** Es el ejemplo que se pidió, y necesita campos
   personalizados en tickets como dimensión de análisis: hoy los campos personalizados son de
@@ -2091,3 +2085,42 @@ No tenía botón, pero la API estaba publicada. Se arregla antes de ponerle inte
 
 Lo prueba `SharingPermissionFlowTests`, con una persona sin privilegios. Las tres pruebas fallaban
 antes del arreglo.
+
+---
+
+## 29. Archivar, papelera y compartir desde la ficha
+
+La API existía y estaba probada, y el menú enseñaba «Archivado», «Papelera», «Compartido
+conmigo» y «Privado», pero ningún botón archivaba, mandaba a la papelera ni compartía: esas
+listas solo se llenaban desde la API.
+
+Ahora las fichas de tarea, ticket y proyecto tienen en su cabecera un mismo componente
+(`LifecycleActions`). Lo que ofrece depende del filtro con el que se abrió la lista, que lee de
+la URL:
+
+| Lista | Botones |
+|---|---|
+| cualquiera menos las dos de abajo | Compartir, Archivar, Papelera |
+| «Archivado» | Desarchivar, Papelera |
+| «Papelera» | Restaurar |
+
+- **Mandar a la papelera se confirma en el propio botón.** El «Eliminar» del proyecto usaba un
+  `confirm()` del navegador y ahora es este mismo flujo. `DELETE` ya no borra de verdad: el
+  elemento va a la papelera y se puede restaurar.
+- **Compartir** abre un panel con quién lo tiene ya, para quitarlo, y para elegir a alguien de la
+  organización con nivel Ver, Editar o Total. Si la API lo rechaza por permisos (§28), el motivo
+  se enseña junto a los botones.
+- Tras archivar, desarchivar, borrar o restaurar, la ficha se cierra y la lista se recarga: el
+  elemento ya no pertenece a esa lista.
+
+Lo prueba la e2e `lifecycle-actions`, sobre la ficha de un ticket:
+
+- archivar;
+- mandar a la papelera solo después de confirmar;
+- compartir y dejar de compartir;
+- desde la papelera, solo restaurar.
+
+**Una nota para quien escriba e2e de fichas:** si el simulacro devuelve `{ items: [] }` a
+`/comments`, el componente de comentarios falla en cada pasada de detección de cambios y la ficha
+deja de redibujarse. Los botones parecen no hacer nada, aunque el fallo está en el simulacro. La
+API real devuelve una lista.

@@ -32,10 +32,11 @@ import { TASK_STATUSES, taskStatusBadge, taskStatusLabel } from './task-vocabula
 const COMPLETED_STATUS = 'Done';
 const INITIAL_STATUS = 'To Do';
 
+import { LifecycleActionsComponent, type LifecycleChange } from '../../shared/ui/lifecycle-actions.component';
 @Component({
   selector: 'app-task-detail-panel',
   standalone: true,
-  imports: [AttachedDocumentsComponent, MentionedInComponent, FormsModule, DatePipe, BadgeComponent, AvatarComponent, NgIconComponent, SkeletonComponent, DrawerComponent, CustomFieldsFormComponent, CommentsComponent, TagFieldComponent],
+  imports: [LifecycleActionsComponent, AttachedDocumentsComponent, MentionedInComponent, FormsModule, DatePipe, BadgeComponent, AvatarComponent, NgIconComponent, SkeletonComponent, DrawerComponent, CustomFieldsFormComponent, CommentsComponent, TagFieldComponent],
   viewProviders: [provideIcons({
     lucideX, lucideCheck, lucideCalendar, lucideClock, lucideUser,
     lucideTag, lucideFlag, lucideMessageSquare,
@@ -49,6 +50,8 @@ export class TaskDetailPanelComponent implements OnInit {
   readonly task = input.required<TaskItem>();
   readonly closed = output<void>();
   readonly updated = output<TaskItem>();
+  /** Archivada, a la papelera o restaurada: la lista se recarga y la ficha se cierra. */
+  readonly lifecycleChanged = output<LifecycleChange>();
 
   private readonly api = inject(ApiService);
   private readonly toast = inject(ToastService);

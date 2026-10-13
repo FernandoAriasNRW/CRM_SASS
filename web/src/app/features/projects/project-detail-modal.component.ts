@@ -14,16 +14,19 @@ import { CommentsComponent } from '../../shared/ui/comments.component';
 import { PROJECT_STATUSES } from './project-vocabulary';
 import { errorMessage } from '../../shared/utils/error-message';
 
+import { LifecycleActionsComponent, type LifecycleChange } from '../../shared/ui/lifecycle-actions.component';
 @Component({
   selector: 'app-project-detail-modal',
   standalone: true,
-  imports: [CommentsComponent, FormsModule, NgIconComponent, DrawerComponent, TagFieldComponent],
+  imports: [LifecycleActionsComponent, CommentsComponent, FormsModule, NgIconComponent, DrawerComponent, TagFieldComponent],
   viewProviders: [provideIcons({ lucideLoader2, lucideTrash2, lucideEdit3, lucideX, lucideLayoutDashboard })],
   templateUrl: './project-detail-modal.component.html',
 })
 export class ProjectDetailModalComponent implements OnInit {
   readonly project = input.required<Project>();
   readonly closed = output<void>();
+  /** Archivado, a la papelera o restaurado: la lista se recarga y la ficha se cierra. */
+  readonly lifecycleChanged = output<LifecycleChange>();
 
   // Edit mode
   isEditing = signal(false);
@@ -35,7 +38,6 @@ export class ProjectDetailModalComponent implements OnInit {
   /** Las etiquetas del proyecto. Se guardan al marcarlas, como en tareas y tickets. */
   readonly tagIds = signal<string[]>([]);
   readonly tagsError = signal('');
-  deleting = signal(false);
   error = signal('');
 
   readonly statuses = PROJECT_STATUSES;
@@ -119,23 +121,14 @@ export class ProjectDetailModalComponent implements OnInit {
     });
   }
 
-  deleteProject(): void {
-    if (!confirm('¿Estás seguro de eliminar este proyecto?')) return;
-    this.deleting.set(true);
-    this.error.set('');
-    this.api.delete(`/projects/${this.project().id}`).subscribe({
-      next: () => {
-        this.store.dispatch(projectDeleted({ id: this.project().id }));
-        this.deleting.set(false);
-        this.toast.success($localize`Proyecto eliminado`, 'El proyecto ha sido eliminado correctamente');
-        this.closed.emit();
-      },
-      error: () => {
-        this.error.set($localize`Error al eliminar el proyecto`);
-        this.deleting.set(false);
-        this.toast.error('Error', 'No se pudo eliminar el proyecto');
-      },
-    });
+  /**
+   * Archivado, a la papelera o restaurado. Sale de la lista en la que estaba, así que se quita
+   * del estado y la lista se recarga. Antes había un «Eliminar» con un `confirm()` del navegador;
+   * ahora se manda a la papelera, de donde se puede restaurar.
+   */
+  onLifecycle(change: LifecycleChange): void {
+    this.store.dispatch(projectDeleted({ id: this.project().id }));
+    this.lifecycleChanged.emit(change);
   }
 
   close(): void {
