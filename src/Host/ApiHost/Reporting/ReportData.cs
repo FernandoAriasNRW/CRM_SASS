@@ -1,4 +1,5 @@
 using System.Globalization;
+using BuildingBlocks.Application.Abstractions;
 using Microsoft.EntityFrameworkCore;
 using Projects.Infrastructure.Persistence;
 using Reporting.Application.Exports;
@@ -32,7 +33,8 @@ public sealed class ReportData(
     ReportEngine motor,
     ProjectsDbContext projectsDb,
     WorkItemsDbContext tasksDb,
-    TicketingDbContext ticketsDb)
+    TicketingDbContext ticketsDb,
+    IUserDirectory users)
 {
     /// <summary>
     /// Cuántas filas de detalle entran como mucho en un informe.
@@ -248,13 +250,12 @@ public sealed class ReportData(
             .Take(MaxRows)
             .ToListAsync(ct);
 
-        // El identificador y no el nombre: los nombres viven en Identity, y este informe ya cruza
-        // dos módulos. Ponerle nombre exige un puerto nuevo, y es trabajo aparte —queda anotado
-        // en la auditoría—.
+        var names = await PersonNames.ResolveAsync(users, tenantId, byPerson.Select(p => p.Persona).ToList(), ct);
+
         var rows = byPerson
             .Select(p => (IReadOnlyList<string>)
             [
-                p.Persona.ToString(),
+                names[p.Persona],
                 p.Total.ToString(Spanish),
                 p.Terminadas.ToString(Spanish),
                 p.Horas.ToString("0.##", Spanish)

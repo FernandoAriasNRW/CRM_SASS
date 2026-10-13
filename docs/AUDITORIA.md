@@ -927,9 +927,6 @@ que lleva «8b» en el título. Lo único que sigue siendo propio de un disparad
   devuelven poco, que es honesto pero no útil.
 - **Archivar y borrar tampoco tienen botón.** Misma situación: la API responde, el menú enseña
   el archivo y la papelera, y de momento sólo se llenan desde la API.
-- **El informe de actividad por persona enseña identificadores, no nombres.** Los nombres viven
-  en Identity y este informe ya cruza dos módulos; ponerles nombre exige un puerto nuevo, como el
-  de favoritos.
 - **No hay zona horaria por inquilino** y los informes programados usan la del servidor (11.3).
 - **«Tickets por área» sigue sin poderse hacer.** Es el ejemplo que se pidió, y necesita campos
   personalizados en tickets como dimensión de análisis: hoy los campos personalizados son de
@@ -947,8 +944,6 @@ que lleva «8b» en el título. Lo único que sigue siendo propio de un disparad
 - **`doughnut-chart` se ha quedado sin uso** al pasar la tarta a ser un widget. `line-chart` sigue
   vivo para el burndown.
 - **De la Fase 5B faltan los bloques arrastrables y los comentarios en línea** (ver `FASE-5.md`).
-- **Agrupar por persona enseña identificadores.** Igual que el informe de actividad: los nombres
-  viven en Identity y hace falta un puerto, como el de favoritos.
 - **Documentos tiene la columna de archivado y no la usa.** Se le puso al modelar el concepto
   para no dejar el agregado a medias, pero Docs mantiene su propio panel lateral y no se ha
   enganchado al compartido.
@@ -956,8 +951,6 @@ que lleva «8b» en el título. Lo único que sigue siendo propio de un disparad
   ninguna pantalla los llama: son código muerto. Lo demás de §22.3 está resuelto: los webhooks en
   §23.6, y las notificaciones push (quitadas de la pantalla) y el aviso `notification_received`
   en §23.7.
-- **`/projects` no ordena ni filtra por fechas, y `/reports` no ordena, no busca ni filtra por
-  formato**, aunque las pantallas manden esos parámetros: se ignoran sin error.
 
 ---
 
@@ -2028,3 +2021,30 @@ Lo prueban:
 - La e2e `ticket-attachments`: quitar solo después de confirmar, y cancelar.
 
 Las tres pruebas de lo que se corrigió fallaban antes del cambio. La de menciones pasaba ya.
+
+---
+
+## 26. Nombres en los informes y listas que hacen caso a la pantalla
+
+- **Los informes enseñan el nombre de cada persona.**
+  - Antes, agrupar por responsable, agente o dueño en el constructor escribía el Guid, y el
+    informe de actividad por persona también.
+  - Ahora se resuelven de una vez con `IUserDirectory` (`PersonNames`), que funciona también en
+    las exportaciones en segundo plano.
+  - Los grupos se arman con el identificador y se nombran después, así que dos personas que se
+    llaman igual no se suman en una fila: se distinguen con el principio de su identificador.
+  - Quien ya no está en la organización sale como «(persona que ya no está)».
+- **`/reports` hace caso a la pantalla:**
+  - **El total estaba mal.** `PagedResult.Create` recibía la página donde va el total, así que
+    la lista decía que había un informe en total y no se podía pasar de página.
+  - **Filtrar por tipo reventaba.** Comparaba con `Type.Name`, una propiedad calculada que EF no
+    traduce a SQL. Ahora se filtra por el número guardado, y un tipo que no existe da una lista
+    vacía.
+  - **El filtro de la pantalla ofrecía tipos que no existen** («Tasks», «Sales»…). Ahora ofrece
+    los siete reales, con su nombre en español.
+  - Se aplican además la búsqueda por nombre, el formato y el orden por nombre, tipo o formato.
+    Antes se ignoraban.
+- **`/projects`** aplica el orden de la tabla y las fechas «Desde» y «Hasta», sobre la fecha de
+  inicio. Antes se mandaban y se ignoraban.
+
+Lo prueba `ListParametersAndNamesFlowTests`. Sus cuatro pruebas fallaban antes del cambio.

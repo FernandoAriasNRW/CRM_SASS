@@ -1,4 +1,5 @@
 using System.Globalization;
+using BuildingBlocks.Application.Abstractions;
 using Microsoft.EntityFrameworkCore;
 using Projects.Infrastructure.Persistence;
 using Reporting.Application.Exports;
@@ -32,7 +33,8 @@ public sealed class ReportEngine(
     TimeProvider timeProvider,
     WorkItemsDbContext tasksDb,
     TicketingDbContext ticketsDb,
-    ProjectsDbContext projectsDb) : global::Reporting.Application.Definitions.IReportResolver
+    ProjectsDbContext projectsDb,
+    IUserDirectory users) : global::Reporting.Application.Definitions.IReportResolver
 {
     private static readonly CultureInfo Spanish = CultureInfo.GetCultureInfo("es-ES");
 
@@ -101,7 +103,26 @@ public sealed class ReportEngine(
             _ => throw new InvalidOperationException($"El origen «{dataSource.Key}» no tiene motor todavía")
         };
 
+        if (dataSource.Field(definition.GroupBy)?.Type == FieldType.Person)
+            raw = await NamePeopleAsync(tenantId, raw, ct);
+
         return Compose(title, definition, dataSource, raw);
+    }
+
+    /// <summary>
+    /// Cambia el identificador de cada grupo por el nombre de la persona. Los grupos se arman con
+    /// el identificador y se nombran después: dos personas que se llaman igual no se juntan.
+    /// </summary>
+    private async Task<List<RawRow>> NamePeopleAsync(Guid tenantId, List<RawRow> raw, CancellationToken ct)
+    {
+        var ids = raw.Select(r => Guid.TryParse(r.Group, out var id) ? id : Guid.Empty)
+            .Where(id => id != Guid.Empty).Distinct().ToList();
+        var names = await PersonNames.ResolveAsync(users, tenantId, ids, ct);
+
+        return raw.Select(r => Guid.TryParse(r.Group, out var id) && names.TryGetValue(id, out var name)
+                ? r with { Group = name }
+                : r)
+            .ToList();
     }
 
     /// <summary>

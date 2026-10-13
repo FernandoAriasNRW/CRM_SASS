@@ -3,6 +3,7 @@ using BuildingBlocks.Domain;
 using Microsoft.EntityFrameworkCore;
 using Projects.Application.Abstractions.Queries;
 using Projects.Application.DTOs;
+using Projects.Domain.Entities;
 using Projects.Infrastructure.Persistence;
 
 namespace Projects.Infrastructure.Queries;
@@ -83,9 +84,33 @@ public sealed class ProjectQueries(ProjectsDbContext context) : IProjectQueries
         if (pagination.SearchText is { } text)
             query = query.Where(p => p.Name.Value.Contains(text) || p.Description.Contains(text));
 
+        // «Desde» y «Hasta» de la pantalla, sobre la fecha de inicio. Se mandaban y se ignoraban.
+        if (pagination.StartDate is { } from)
+        {
+            var fromDate = DateOnly.FromDateTime(from);
+            query = query.Where(p => p.StartDate >= fromDate);
+        }
+        if (pagination.EndDate is { } to)
+        {
+            var toDate = DateOnly.FromDateTime(to);
+            query = query.Where(p => p.StartDate <= toDate);
+        }
+
         var totalCount = await query.CountAsync(ct);
-        var items = await query
-            .OrderByDescending(p => p.StartDate)
+
+        // El orden de la tabla. Se mandaba y se ignoraba: pulsar una cabecera no cambiaba nada.
+        var desc = pagination.SortDirection?.ToLower() == "desc";
+        IOrderedQueryable<Project> ordered = pagination.SortColumn?.ToLower() switch
+        {
+            "name" => desc ? query.OrderByDescending(p => p.Name.Value) : query.OrderBy(p => p.Name.Value),
+            "status" => desc ? query.OrderByDescending(p => p.Status.Value) : query.OrderBy(p => p.Status.Value),
+            "ownerid" => desc ? query.OrderByDescending(p => p.OwnerId) : query.OrderBy(p => p.OwnerId),
+            "startdate" => desc ? query.OrderByDescending(p => p.StartDate) : query.OrderBy(p => p.StartDate),
+            "estimatedenddate" => desc ? query.OrderByDescending(p => p.EstimatedEndDate) : query.OrderBy(p => p.EstimatedEndDate),
+            _ => query.OrderByDescending(p => p.StartDate)
+        };
+
+        var items = await ordered
             // Desempate por Id: ver TaskQueries. Dos proyectos con la misma fecha de inicio podían
             // salir en las dos páginas, o en ninguna.
             .ThenBy(p => p.Id)

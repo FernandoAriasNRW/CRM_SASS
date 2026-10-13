@@ -32,14 +32,14 @@ public static class ProjectsEndpoints
   {
     var group = app.MapGroup("/api/v1/projects").WithTags("Projects").RequireAuthorization();
 
-    group.MapGet("", async (IUserContext currentUser, [Microsoft.AspNetCore.Mvc.FromQuery] string? status, [Microsoft.AspNetCore.Mvc.FromQuery] Guid? ownerId, [Microsoft.AspNetCore.Mvc.FromQuery] Guid? spaceId, [Microsoft.AspNetCore.Mvc.FromQuery] Guid? folderId, [Microsoft.AspNetCore.Mvc.FromQuery] string? filter, BuildingBlocks.Application.Abstractions.IViewScopeResolver viewScopes, IMediator mediator, [Microsoft.AspNetCore.Mvc.FromQuery] int page = 1, [Microsoft.AspNetCore.Mvc.FromQuery] int pageSize = 25, [Microsoft.AspNetCore.Mvc.FromQuery] string? search = null) =>
+    group.MapGet("", async (IUserContext currentUser, [Microsoft.AspNetCore.Mvc.FromQuery] string? status, [Microsoft.AspNetCore.Mvc.FromQuery] Guid? ownerId, [Microsoft.AspNetCore.Mvc.FromQuery] Guid? spaceId, [Microsoft.AspNetCore.Mvc.FromQuery] Guid? folderId, [Microsoft.AspNetCore.Mvc.FromQuery] string? filter, BuildingBlocks.Application.Abstractions.IViewScopeResolver viewScopes, IMediator mediator, [Microsoft.AspNetCore.Mvc.FromQuery] int page = 1, [Microsoft.AspNetCore.Mvc.FromQuery] int pageSize = 25, [Microsoft.AspNetCore.Mvc.FromQuery] string? search = null, [Microsoft.AspNetCore.Mvc.FromQuery] string? sortColumn = null, [Microsoft.AspNetCore.Mvc.FromQuery] string? sortDirection = null, [Microsoft.AspNetCore.Mvc.FromQuery] DateTime? startDate = null, [Microsoft.AspNetCore.Mvc.FromQuery] DateTime? endDate = null) =>
     {
       var tenantId = currentUser.TenantId;
       var userId = currentUser.UserId;
       // El resolutor decide en un solo sitio qué hace falta consultar para el filtro pedido.
       var viewScope = await viewScopes.ResolveAsync(filter, userId, BuildingBlocks.Domain.EntityTypes.Project);
 
-      var result = await mediator.Send(new GetProjectsQuery(tenantId, status, ownerId, spaceId, folderId, viewScope, new() { Page = page, PageSize = pageSize, Search = search }));
+      var result = await mediator.Send(new GetProjectsQuery(tenantId, status, ownerId, spaceId, folderId, viewScope, new() { Page = page, PageSize = pageSize, Search = search, SortColumn = sortColumn, SortDirection = sortDirection, StartDate = startDate, EndDate = endDate }));
       return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
     });
 

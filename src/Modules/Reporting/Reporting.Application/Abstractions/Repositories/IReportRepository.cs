@@ -10,7 +10,8 @@ public interface IReportRepository
         Guid tenantId,
         string? type,
         PaginationRequest pagination,
-        CancellationToken ct = default);
+        CancellationToken ct = default,
+        string? format = null);
 
     Task<Report?> GetByIdAsync(Guid tenantId, Guid id, CancellationToken ct = default);
 
