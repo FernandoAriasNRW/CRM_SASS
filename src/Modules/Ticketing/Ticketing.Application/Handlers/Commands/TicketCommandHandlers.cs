@@ -49,7 +49,8 @@ public sealed class UpdateTicketHandler(
     TimeProvider timeProvider,
     ITicketRepository repository,
     ITicketingUnitOfWork unitOfWork,
-    ITagCatalog tagCatalog) : ICommandHandler<UpdateTicketCommand, bool>
+    ITagCatalog tagCatalog,
+    ITeamDirectory teams) : ICommandHandler<UpdateTicketCommand, bool>
 {
   public async Task<Result<bool>> Handle(UpdateTicketCommand request, CancellationToken cancellationToken)
   {
@@ -75,6 +76,15 @@ public sealed class UpdateTicketHandler(
       if (status is null)
         return Result<bool>.Failure($"Invalid status: {request.Status}");
     }
+
+    // El equipo tiene que existir en la organización. Ticketing no ve el módulo de equipos y
+    // guardaba cualquier identificador tal cual: uno inventado, o el de un equipo de otra
+    // organización, dejaba el ticket asignado a un equipo que nadie podía ver. Guid.Empty quita
+    // el equipo y no se comprueba.
+    if (request.TeamId is { } teamId && teamId != Guid.Empty
+        && teamId != ticket.TeamId
+        && await teams.GetMemberIdsAsync(request.TenantId, teamId, cancellationToken) is null)
+      return Result<bool>.Failure("Team not found");
 
     var updated = ticket.Update(request.Title, request.Description, priority);
     if (updated.IsFailure)

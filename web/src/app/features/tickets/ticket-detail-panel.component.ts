@@ -58,6 +58,8 @@ export class TicketDetailPanelComponent implements OnInit {
   readonly attachments = signal<TicketAttachment[]>([]);
   readonly uploading = signal(false);
   readonly attachmentsError = signal('');
+  /** El adjunto que espera confirmación para quitarse: se confirma en su propia tarjeta. */
+  readonly removingAttachmentId = signal<string | null>(null);
 
   // Las tres se exponen tal cual, sin envolverlas en un método: un método con el mismo nombre
   // que la función importada se llamaría a sí mismo.
@@ -111,6 +113,24 @@ export class TicketDetailPanelComponent implements OnInit {
         this.attachmentsError.set(errorMessage(err, $localize`No se pudieron subir los adjuntos`));
         this.uploading.set(false);
         picker.value = '';
+      },
+    });
+  }
+
+  removeLabel(attachment: TicketAttachment): string {
+    return $localize`Quitar ${attachment.name}:name:`;
+  }
+
+  removeAttachment(attachment: TicketAttachment): void {
+    this.attachmentsError.set('');
+    this.api.delete(`/tickets/${this.ticket().id}/attachments/${attachment.id}`).subscribe({
+      next: () => {
+        this.attachments.update(current => current.filter(a => a.id !== attachment.id));
+        this.removingAttachmentId.set(null);
+      },
+      error: err => {
+        this.attachmentsError.set(errorMessage(err, $localize`No se pudo quitar el adjunto`));
+        this.removingAttachmentId.set(null);
       },
     });
   }

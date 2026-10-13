@@ -373,6 +373,64 @@ public sealed class TicketIntakeFlowTests(CrmApiFactory factory)
         ticket.GetProperty("title").GetString().Should().Be("Ticket desde la aplicación", "lo que no se manda no se toca");
     }
 
+    /// <summary>
+    /// Un adjunto se puede quitar desde la ficha. Antes no había forma: una captura subida por
+    /// error se quedaba en el ticket para siempre.
+    /// </summary>
+    [Fact]
+    public async Task An_attachment_can_be_removed_from_the_ticket()
+    {
+        var admin = await AdminAsync();
+        var id = await CreatedIdAsync(await admin.PostAsJsonAsync("/api/v1/tickets",
+            new { Title = "Ticket con adjunto equivocado", Description = "", Priority = "Low" }));
+        var otherId = await CreatedIdAsync(await admin.PostAsJsonAsync("/api/v1/tickets",
+            new { Title = "Otro ticket", Description = "", Priority = "Low" }));
+
+        using var form = new MultipartFormDataContent();
+        form.Add(File("buena.png", "image/png", 256), "attachments", "buena.png");
+        form.Add(File("equivocada.png", "image/png", 256), "attachments", "equivocada.png");
+        var uploaded = await (await admin.PostAsync($"/api/v1/tickets/{id}/attachments", form)).Content.ReadFromJsonAsync<JsonElement>();
+        var wrong = uploaded.EnumerateArray().Single(a => a.GetProperty("name").GetString() == "equivocada.png").GetProperty("id").GetGuid();
+
+        (await admin.DeleteAsync($"/api/v1/tickets/{otherId}/attachments/{wrong}")).StatusCode
+            .Should().Be(HttpStatusCode.NotFound, "el adjunto no es de ese ticket");
+
+        (await admin.DeleteAsync($"/api/v1/tickets/{id}/attachments/{wrong}")).StatusCode.Should().Be(HttpStatusCode.NoContent);
+        (await admin.DeleteAsync($"/api/v1/tickets/{id}/attachments/{wrong}")).StatusCode.Should().Be(HttpStatusCode.NotFound);
+
+        var left = await admin.GetFromJsonAsync<JsonElement>($"/api/v1/tickets/{id}/attachments");
+        left.EnumerateArray().Select(a => a.GetProperty("name").GetString()).Should().Equal("buena.png");
+    }
+
+    /// <summary>
+    /// El equipo de un ticket tiene que existir en la organización. Ticketing guardaba cualquier
+    /// identificador tal cual, y el ticket quedaba asignado a un equipo que nadie podía ver.
+    /// </summary>
+    [Fact]
+    public async Task A_ticket_only_takes_a_team_that_exists()
+    {
+        var admin = await AdminAsync();
+        var id = await CreatedIdAsync(await admin.PostAsJsonAsync("/api/v1/tickets",
+            new { Title = "Ticket con equipo", Description = "", Priority = "Low" }));
+        var team = await admin.PostAsJsonAsync("/api/v1/teams",
+            new { name = "Soporte " + Guid.NewGuid().ToString("N")[..6], description = "", memberIds = Array.Empty<Guid>() });
+        team.EnsureSuccessStatusCode();
+        var teamId = await team.Content.ReadFromJsonAsync<Guid>();
+
+        (await admin.PatchAsJsonAsync($"/api/v1/tickets/{id}", new { TeamId = Guid.NewGuid(), Title = "Cambiado" }))
+            .StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        var untouched = await admin.GetFromJsonAsync<JsonElement>($"/api/v1/tickets/{id}");
+        untouched.GetProperty("teamId").ValueKind.Should().Be(JsonValueKind.Null);
+        untouched.GetProperty("title").GetString().Should().Be("Ticket con equipo", "se rechaza entero, sin dejarlo a medias");
+
+        (await admin.PatchAsJsonAsync($"/api/v1/tickets/{id}", new { TeamId = teamId })).EnsureSuccessStatusCode();
+        (await admin.GetFromJsonAsync<JsonElement>($"/api/v1/tickets/{id}")).GetProperty("teamId").GetGuid().Should().Be(teamId);
+
+        (await admin.PatchAsJsonAsync($"/api/v1/tickets/{id}", new { TeamId = Guid.Empty })).EnsureSuccessStatusCode();
+        (await admin.GetFromJsonAsync<JsonElement>($"/api/v1/tickets/{id}")).GetProperty("teamId").ValueKind
+            .Should().Be(JsonValueKind.Null, "Guid.Empty quita el equipo");
+    }
+
     private static ByteArrayContent File(string name, string type, int bytes)
     {
         var content = new ByteArrayContent(Enumerable.Repeat((byte)7, bytes).ToArray());

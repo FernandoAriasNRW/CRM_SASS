@@ -908,8 +908,6 @@ que lleva «8b» en el título. Lo único que sigue siendo propio de un disparad
 - **El árbol de trabajo de git abandonado** (2.4).
 - **167 avisos de lint** en el frontend, heredados.
 - **Un paquete del frontend supera el presupuesto** de tamaño en 120 kB.
-- **El equipo de un ticket no se valida**: Ticketing guarda el identificador sin poder consultar el
-  módulo de equipos. Un identificador inventado se guarda tal cual.
 - **Etiquetas: un solo sistema desde septiembre de 2026.** Tareas, tickets, proyectos, informes y
   dashboards guardan ids de etiquetas del módulo Tags (`TagIds`), comprobados con el puerto
   `ITagCatalog`, y borrar una etiqueta la suelta de todos (`ITagReferences`). Las claves fijas de la
@@ -919,8 +917,8 @@ que lleva «8b» en el título. Lo único que sigue siendo propio de un disparad
   vacías. Proyectos, informes y paneles tienen su selector. Queda: la columna `Tickets.Tags` se
   puede quitar cuando esté vacía en todas las bases. (El filtro «Mi equipo», que buscaba el id del
   usuario dentro de `TagIds`, desapareció con el tablero por equipo de §23.2.)
-- **Los adjuntos de un ticket no se pueden quitar**, y no hay nada que los borre del almacenamiento
-  si algún día se vacía la papelera de tickets.
+- **Nada borra del almacenamiento los adjuntos de un ticket** si algún día se vacía la papelera de
+  tickets. Quitar un adjunto suelto sí lo borra (§25).
 - **Espacios, carpetas, anotaciones y subidas no piden autorización por entidad.** Las páginas
   de documentos sí, desde §24.
 - **Compartir no tiene interfaz todavía.** Los endpoints existen y están probados, y los filtros
@@ -929,9 +927,6 @@ que lleva «8b» en el título. Lo único que sigue siendo propio de un disparad
   devuelven poco, que es honesto pero no útil.
 - **Archivar y borrar tampoco tienen botón.** Misma situación: la API responde, el menú enseña
   el archivo y la papelera, y de momento sólo se llenan desde la API.
-- **`POST /api/v1/reports` devuelve la entidad de dominio, no el DTO.** Se cuelan `typeValue`,
-  `formatValue`, `tenantId` y hasta `domainEvents` en la respuesta. No es explotable, pero expone
-  la forma interna del agregado y ata la API a ella.
 - **El informe de actividad por persona enseña identificadores, no nombres.** Los nombres viven
   en Identity y este informe ya cruza dos módulos; ponerles nombre exige un puerto nuevo, como el
   de favoritos.
@@ -952,9 +947,6 @@ que lleva «8b» en el título. Lo único que sigue siendo propio de un disparad
 - **`doughnut-chart` se ha quedado sin uso** al pasar la tarta a ser un widget. `line-chart` sigue
   vivo para el burndown.
 - **De la Fase 5B faltan los bloques arrastrables y los comentarios en línea** (ver `FASE-5.md`).
-- **Un documento borrado deja sus menciones.** Se quitan al reescribir la página, no al borrar el
-  documento, así que una tarea podría enseñar un enlace a un documento que ya no está. El enlace
-  no rompe nada —lleva a una pantalla que dirá que no existe— pero conviene limpiarlo.
 - **Agrupar por persona enseña identificadores.** Igual que el informe de actividad: los nombres
   viven en Identity y hace falta un puerto, como el de favoritos.
 - **Documentos tiene la columna de archivado y no la usa.** Se le puso al modelar el concepto
@@ -2005,3 +1997,34 @@ Lo prueba `DocumentPagesIsolationFlowTests`, con un administrador real de otra o
 un token inventado la autorización lo frena antes, porque su usuario no existe, y la prueba no
 vería el fallo. Las tres pruebas fallaban antes del arreglo. `SeedingStaysInTenantFlowTests`
 incluye ya la tabla `Pages`.
+
+---
+
+## 25. Cuatro pendientes de §14: tickets, documentos e informes
+
+- **El equipo de un ticket se valida.** `UpdateTicketHandler` pregunta a `ITeamDirectory` si el
+  equipo existe en la organización, antes de tocar ningún campo. Antes se guardaba cualquier
+  identificador, también uno inventado o el de un equipo de otra organización. `Guid.Empty`
+  quita el equipo. Un equipo que no cambia no se vuelve a comprobar, para que un valor viejo no
+  bloquee el resto de la edición.
+- **Un adjunto de un ticket se puede quitar** con
+  `DELETE /tickets/{id}/attachments/{attachmentId}`. Se borra primero la fila y después el
+  fichero: si fallara el guardado, el ticket no enseñaría un enlace roto. Lo peor que puede
+  pasar es un fichero suelto en el almacenamiento, y eso queda en el registro. En la ficha, cada
+  adjunto tiene su botón de quitar, que se confirma en la propia tarjeta.
+- **`POST /reports` devuelve el DTO**, el mismo que `GET /reports/{id}`, en vez de la entidad
+  con `typeValue`, `formatValue` y `domainEvents`.
+- **Un documento borrado no deja menciones visibles. Este pendiente no era un fallo.** «Mencionado
+  en» se une con el documento a través del filtro global, que excluye lo borrado. Las filas de
+  menciones se conservan a propósito: borrarlas haría que un documento recuperado volviera sin
+  sus enlaces. Una prueba lo fija.
+
+Lo prueban:
+
+- `TicketIntakeFlowTests`: quitar un adjunto (también desde otro ticket, que da 404) y el equipo
+  validado, sin dejar la edición a medias.
+- `ReportContractTests`: el alta tiene la misma forma que la consulta.
+- `MentionsFlowTests`: el documento borrado desaparece de «Mencionado en».
+- La e2e `ticket-attachments`: quitar solo después de confirmar, y cancelar.
+
+Las tres pruebas de lo que se corrigió fallaban antes del cambio. La de menciones pasaba ya.

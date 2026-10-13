@@ -18,4 +18,6 @@ public static class IntakeErrors
     public const string InvalidKey = "Clave de entrada no válida";
 
     public const string TicketNotFound = "Ticket no encontrado";
+
+    public const string AttachmentNotFound = "Adjunto no encontrado";
 }

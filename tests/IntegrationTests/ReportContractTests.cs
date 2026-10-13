@@ -92,6 +92,27 @@ public sealed class ReportContractTests(CrmApiFactory factory)
         return data;
     }
 
+    /// <summary>
+    /// El alta devuelve el informe como lo devuelve la consulta, no la entidad de dominio. Antes
+    /// se colaban <c>typeValue</c>, <c>formatValue</c> y <c>domainEvents</c>.
+    /// </summary>
+    [Fact]
+    public async Task Creating_a_report_returns_the_same_shape_as_reading_it()
+    {
+        var client = await AuthenticateAsync();
+
+        var response = await client.PostAsJsonAsync("/api/v1/reports", new { name = "Informe con forma", type = "Custom", format = "Csv" });
+        response.StatusCode.Should().Be(HttpStatusCode.Created);
+        var created = await response.Content.ReadFromJsonAsync<JsonElement>();
+
+        var names = created.EnumerateObject().Select(p => p.Name).ToList();
+        names.Should().NotContain(["domainEvents", "typeValue", "formatValue"]);
+        created.GetProperty("type").GetString().Should().Be("Custom");
+
+        var read = await client.GetFromJsonAsync<JsonElement>($"/api/v1/reports/{created.GetProperty("id").GetGuid()}");
+        names.Should().BeEquivalentTo(read.EnumerateObject().Select(p => p.Name));
+    }
+
     [Theory]
     [MemberData(nameof(TypesTheScreenOffers))]
     public async Task The_api_accepts_every_type_the_form_offers(string type)

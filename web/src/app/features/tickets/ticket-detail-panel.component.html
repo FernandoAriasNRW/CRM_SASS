@@ -145,10 +145,24 @@
                     <img [src]="fileUrl(attachment)" [alt]="attachment.name" class="w-full h-28 object-cover" loading="lazy" />
                   }
                 </a>
-                <p class="px-2 py-1 text-[11px] truncate" [title]="attachment.name">
-                  {{ attachment.name }}
-                  @if (attachment.fromExternal) { <span class="text-muted-foreground" i18n>· del cliente</span> }
-                </p>
+                <div class="flex items-center gap-1 px-2 py-1">
+                  <p class="flex-1 text-[11px] truncate" [title]="attachment.name">
+                    {{ attachment.name }}
+                    @if (attachment.fromExternal) { <span class="text-muted-foreground" i18n>· del cliente</span> }
+                  </p>
+                  @if (removingAttachmentId() === attachment.id) {
+                    <button type="button" class="text-[11px] font-medium text-destructive hover:underline"
+                            (click)="removeAttachment(attachment)" i18n>Quitar</button>
+                    <button type="button" class="text-[11px] text-muted-foreground hover:underline"
+                            (click)="removingAttachmentId.set(null)" i18n>Cancelar</button>
+                  } @else {
+                    <button type="button" class="shrink-0 rounded p-0.5 text-muted-foreground hover:text-destructive hover:bg-muted"
+                            (click)="removingAttachmentId.set(attachment.id)"
+                            [attr.aria-label]="removeLabel(attachment)" i18n-title title="Quitar adjunto">
+                      <ng-icon name="lucideX" size="12" />
+                    </button>
+                  }
+                </div>
               </li>
             }
           </ul>
