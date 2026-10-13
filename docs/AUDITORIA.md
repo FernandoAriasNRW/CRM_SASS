@@ -931,9 +931,6 @@ que lleva «8b» en el título. Lo único que sigue siendo propio de un disparad
 - **«Barras apiladas» se pinta como barras normales.** Apilar necesita una segunda dimensión
   —agrupar por dos campos— que el catálogo no ofrece todavía. Se pinta en vez de rechazarse
   porque el resultado sigue siendo cierto, sólo que menos rico.
-- **Los recuadros no se arrastran.** La disposición se guarda y se respeta, y hay endpoint para
-  cambiarla, pero en la pantalla sólo se pueden quitar recuadros: falta el arrastrar y
-  redimensionar.
 - **De la Fase 5B faltan los bloques arrastrables y los comentarios en línea** (ver `FASE-5.md`).
 - **Documentos tiene la columna de archivado y no la usa.** Se le puso al modelar el concepto
   para no dejar el agregado a medias, pero Docs mantiene su propio panel lateral y no se ha
@@ -2156,3 +2153,38 @@ Lo prueban tres e2e nuevas:
 - cada comando de la paleta pinta su icono;
 - cada plantilla del cajón pinta el suyo;
 - el selector de emojis se abre al primer clic.
+
+---
+
+## 31. Los recuadros del panel se mueven y se redimensionan
+
+La disposición se guardaba y había endpoint para cambiarla (`PUT /dashboards/{id}/layout`), pero
+en pantalla solo se podían quitar recuadros. Y había un fallo debajo: **la fila guardada se
+ignoraba.** La rejilla solo recibía el alto (`span N`) y CSS colocaba cada recuadro donde cupiera,
+así que mover uno no habría servido de nada.
+
+- **La fila sale de `y`** (`grid-row: y+1 / span alto`).
+- **Cada recuadro tiene dos asideros:** uno para moverlo, junto al título, y otro en la esquina
+  para cambiarle el tamaño.
+  - Con el ratón se arrastra.
+  - Con el teclado, las flechas lo mueven o lo redimensionan una celda.
+  - Se guarda al soltar, o medio segundo después de la última tecla.
+- **Se guarda la disposición entera**, con todos los campos de cada recuadro, porque el PUT la
+  sustituye. Si el servidor la rechaza, vuelve a como estaba y se dice por qué.
+- **Solo en el panel propio.** El servidor rechaza recolocar el de otra persona, y la pantalla ni
+  enseña los asideros.
+
+La lógica de colocar está aparte, en funciones puras (`dashboard-layout.ts`):
+
+- se aplican los límites que valida el servidor;
+- el recuadro movido se queda donde se soltó;
+- los demás suben todo lo que pueden sin pisar a nadie, así que no quedan huecos ni solapes.
+
+Lo prueban:
+
+- `dashboard-layout.spec.ts`, 7 pruebas unitarias;
+- la e2e `dashboard-layout`:
+  - la fila guardada se respeta: fallaba antes del cambio;
+  - arrastrar empuja al de debajo;
+  - redimensionar con el teclado guarda una sola vez;
+  - un panel ajeno no se recoloca.

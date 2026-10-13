@@ -85,14 +85,27 @@
       </ui-card-content>
     </ui-card>
   } @else {
+    @if (layoutError()) {
+      <p class="text-sm text-destructive" role="alert">{{ layoutError() }}</p>
+    }
     <!-- Doce columnas, que es la rejilla que valida el servidor. -->
-    <div class="grid grid-cols-12 gap-4 auto-rows-[5rem]">
+    <div #grid class="grid grid-cols-12 gap-4 auto-rows-[5rem]" data-testid="panel-grid">
       @for (w of widgets(); track w.widgetId) {
-        <div [style.grid-column]="gridColumnOf(w)" [style.grid-row]="gridRowOf(w)">
+        <div class="relative" [style.grid-column]="gridColumnOf(w)" [style.grid-row]="gridRowOf(w)"
+             [attr.data-widget]="w.title">
           <ui-card class="h-full flex flex-col">
             <ui-card-header>
               <div class="flex items-start justify-between gap-2">
-                <div class="min-w-0">
+                @if (canArrange()) {
+                  <button type="button" class="shrink-0 -ml-1 mt-0.5 p-0.5 rounded text-muted-foreground hover:text-foreground hover:bg-muted cursor-grab active:cursor-grabbing touch-none"
+                          [attr.aria-label]="moveLabel(w)" i18n-title title="Arrastra para mover; con el teclado, flechas"
+                          (pointerdown)="startGesture($event, w, 'move')" (pointermove)="moveGesture($event)"
+                          (pointerup)="endGesture()" (pointercancel)="endGesture()"
+                          (keydown)="nudge($event, w, 'move')">
+                    <ng-icon name="lucideGripVertical" size="14" />
+                  </button>
+                }
+                <div class="min-w-0 flex-1">
                   <ui-card-title class="text-sm truncate">{{ w.title }}</ui-card-title>
                   @if (w.subtitle) {
                     <p class="text-[11px] text-muted-foreground truncate" [title]="w.subtitle">
@@ -112,6 +125,15 @@
               <app-report-chart [data]="w" class="block h-full" />
             </ui-card-content>
           </ui-card>
+          @if (canArrange()) {
+            <button type="button" class="absolute bottom-1 right-1 p-0.5 rounded text-muted-foreground hover:text-foreground hover:bg-muted cursor-nwse-resize touch-none"
+                    [attr.aria-label]="resizeLabel(w)" i18n-title title="Arrastra para cambiar el tamaño; con el teclado, flechas"
+                    (pointerdown)="startGesture($event, w, 'resize')" (pointermove)="moveGesture($event)"
+                    (pointerup)="endGesture()" (pointercancel)="endGesture()"
+                    (keydown)="nudge($event, w, 'resize')">
+              <ng-icon name="lucideMoveDiagonal2" size="12" />
+            </button>
+          }
         </div>
       }
     </div>

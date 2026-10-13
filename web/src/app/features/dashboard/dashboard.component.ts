@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal, computed } from '@angular/core';
+import { Component, ElementRef, inject, OnInit, signal, computed, viewChild } from '@angular/core';
 import { ApiService } from '../../core/api.service';
 import {
   CardComponent, CardHeaderComponent, CardTitleComponent, CardContentComponent
@@ -7,7 +7,8 @@ import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import {
   lucideFolderKanban, lucideCheckSquare, lucideTicket, lucideTrendingUp,
   lucideClock, lucideActivity, lucidePieChart, lucideBarChart3,
-  lucidePlus, lucideSettings, lucideLayout, lucideGlobe, lucideLock, lucideTag
+  lucidePlus, lucideSettings, lucideLayout, lucideGlobe, lucideLock, lucideTag,
+  lucideGripVertical, lucideMoveDiagonal2
 } from '@ng-icons/lucide';
 import { TagChipsComponent } from '../../shared/ui/tag-chips.component';
 import { TagAssignDrawerComponent } from '../../shared/ui/tag-assign-drawer.component';
@@ -19,6 +20,8 @@ import { firstValueFrom } from 'rxjs';
 import {
   ReportChartComponent, type WidgetData
 } from '../../shared/ui/charts/report-chart.component';
+import { moveTo, resizeTo, sameLayout, type Placement } from './dashboard-layout';
+import { errorMessage } from '../../shared/utils/error-message';
 
 interface KpiData {
   totalProjects: number;
@@ -84,7 +87,8 @@ import { DrawerComponent } from '../../shared/ui/drawer.component';
   viewProviders: [provideIcons({
     lucideFolderKanban, lucideCheckSquare, lucideTicket, lucideTrendingUp,
     lucideClock, lucideActivity, lucidePieChart, lucideBarChart3,
-    lucidePlus, lucideSettings, lucideLayout, lucideGlobe, lucideLock, lucideTag
+    lucidePlus, lucideSettings, lucideLayout, lucideGlobe, lucideLock, lucideTag,
+    lucideGripVertical, lucideMoveDiagonal2
   })],
   templateUrl: './dashboard.component.html',
 })
@@ -108,7 +112,7 @@ export class DashboardComponent implements OnInit {
   // los informes de partida la primera vez. Antes esta pantalla tenía tres gráficas fijas iguales
   // para todo el mundo.
 
-  readonly panel = signal<{ id: string; title: string } | null>(null);
+  readonly panel = signal<{ id: string; title: string; isMine: boolean } | null>(null);
   readonly widgets = signal<WidgetData[]>([]);
   readonly myDashboardLoading = signal(true);
 
@@ -244,10 +248,10 @@ export class DashboardComponent implements OnInit {
 
     try {
       const mine = await firstValueFrom(
-        this.api.get<{ id: string; title: string }>('/dashboards/mine'));
+        this.api.get<{ id: string; title: string; isMine: boolean; widgets: Placement[] }>('/dashboards/mine'));
 
       this.panel.set(mine);
-      this.layout.set((mine as unknown as { widgets: { id: string; x: number; y: number; width: number; height: number }[] }).widgets ?? []);
+      this.layout.set(mine.widgets ?? []);
 
       const data = await firstValueFrom(
         this.api.get<WidgetData[]>(`/dashboards/${mine.id}/data`));
@@ -283,9 +287,14 @@ export class DashboardComponent implements OnInit {
     return widget ? `${widget.x + 1} / span ${widget.width}` : 'auto / span 6';
   }
 
+  /**
+   * La fila de inicio sale de `y`. Antes sólo se ponía el alto (`span N`) y CSS colocaba cada
+   * recuadro donde cupiera: la fila guardada se ignoraba, y mover un recuadro no habría servido de
+   * nada.
+   */
   gridRowOf(w: WidgetData): string {
     const widget = this.placementOf(w.widgetId);
-    return widget ? `span ${widget.height}` : 'span 4';
+    return widget ? `${widget.y + 1} / span ${widget.height}` : 'auto / span 4';
   }
 
   /** La colocación viene con el panel, no con los datos: son dos cosas distintas. */
@@ -293,8 +302,106 @@ export class DashboardComponent implements OnInit {
     return this.layout().find(w => w.id === widgetId);
   }
 
-  private readonly layout = signal<
-    { id: string; x: number; y: number; width: number; height: number }[]>([]);
+  private readonly layout = signal<Placement[]>([]);
+
+  // ── Mover y redimensionar ───────────────────────────────────────────────────────────────────
+  //
+  // Los recuadros se guardaban con su posición y había endpoint para cambiarla, pero en pantalla
+  // sólo se podían quitar. Ahora cada uno tiene un asidero para moverlo y otro en la esquina para
+  // cambiarle el tamaño, con el ratón o con el teclado (flechas). Sólo en el panel propio: el
+  // servidor rechaza recolocar el de otra persona.
+
+  readonly grid = viewChild<ElementRef<HTMLElement>>('grid');
+  readonly layoutError = signal('');
+
+  /** Si el panel es de quien lo mira: sólo entonces se puede recolocar. */
+  readonly canArrange = computed(() => this.panel()?.isMine === true);
+
+  private gesture: {
+    id: string; mode: 'move' | 'resize'; startX: number; startY: number;
+    origin: Placement; before: Placement[];
+  } | null = null;
+
+  private saveTimer: ReturnType<typeof setTimeout> | null = null;
+  private savedLayout: Placement[] = [];
+
+  moveLabel(w: WidgetData): string { return $localize`Mover «${w.title}:title:»`; }
+
+  resizeLabel(w: WidgetData): string { return $localize`Cambiar el tamaño de «${w.title}:title:»`; }
+
+  startGesture(event: PointerEvent, w: WidgetData, mode: 'move' | 'resize'): void {
+    const origin = this.placementOf(w.widgetId);
+    if (!origin || event.button !== 0) return;
+    event.preventDefault();
+    (event.target as HTMLElement).setPointerCapture?.(event.pointerId);
+    this.gesture = { id: w.widgetId, mode, startX: event.clientX, startY: event.clientY, origin, before: this.layout() };
+  }
+
+  moveGesture(event: PointerEvent): void {
+    const g = this.gesture;
+    const grid = this.grid()?.nativeElement;
+    if (!g || !grid) return;
+
+    // El tamaño de una celda se lee de la rejilla tal como se pinta, con su separación: así el
+    // arrastre sigue al ratón también en pantallas estrechas o con otro tamaño de letra.
+    const style = getComputedStyle(grid);
+    const gap = parseFloat(style.columnGap) || 0;
+    const rowGap = parseFloat(style.rowGap) || 0;
+    const columnWidth = (grid.clientWidth + gap) / 12;
+    const rowHeight = (parseFloat(style.gridAutoRows) || 80) + rowGap;
+
+    const dx = Math.round((event.clientX - g.startX) / columnWidth);
+    const dy = Math.round((event.clientY - g.startY) / rowHeight);
+
+    this.layout.set(g.mode === 'move'
+      ? moveTo(g.before, g.id, g.origin.x + dx, g.origin.y + dy)
+      : resizeTo(g.before, g.id, g.origin.width + dx, g.origin.height + dy));
+  }
+
+  endGesture(): void {
+    const g = this.gesture;
+    this.gesture = null;
+    if (g && !sameLayout(g.before, this.layout())) void this.saveLayout(g.before);
+  }
+
+  /**
+   * Con el teclado: en el asidero de mover, las flechas lo mueven una celda; en el de la esquina,
+   * lo ensanchan o lo alargan. Se guarda al dejar de pulsar, no en cada tecla.
+   */
+  nudge(event: KeyboardEvent, w: WidgetData, mode: 'move' | 'resize'): void {
+    const steps: Record<string, [number, number]> = {
+      ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1],
+    };
+    const step = steps[event.key];
+    const current = this.placementOf(w.widgetId);
+    if (!step || !current) return;
+    event.preventDefault();
+
+    if (!this.saveTimer) this.savedLayout = this.layout();
+    const [dx, dy] = step;
+    this.layout.set(mode === 'move'
+      ? moveTo(this.layout(), w.widgetId, current.x + dx, current.y + dy)
+      : resizeTo(this.layout(), w.widgetId, current.width + dx, current.height + dy));
+
+    if (this.saveTimer) clearTimeout(this.saveTimer);
+    this.saveTimer = setTimeout(() => {
+      this.saveTimer = null;
+      if (!sameLayout(this.savedLayout, this.layout())) void this.saveLayout(this.savedLayout);
+    }, 500);
+  }
+
+  /** Guarda la disposición entera. Si el servidor la rechaza, vuelve a como estaba y dice por qué. */
+  private async saveLayout(previous: Placement[]): Promise<void> {
+    const panel = this.panel();
+    if (!panel) return;
+    this.layoutError.set('');
+    try {
+      await firstValueFrom(this.api.put<void>(`/dashboards/${panel.id}/layout`, { widgets: this.layout() }, { silent: true }));
+    } catch (e) {
+      this.layout.set(previous);
+      this.layoutError.set(errorMessage(e, $localize`No se pudo guardar la nueva colocación.`));
+    }
+  }
 
   loadAllData(): void {
     this.isLoading.set(true);
