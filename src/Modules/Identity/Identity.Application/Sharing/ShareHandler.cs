@@ -1,4 +1,5 @@
 using BuildingBlocks.Application.Abstractions;
+using BuildingBlocks.Application.Authorization;
 using BuildingBlocks.Domain;
 using Identity.Application.Abstractions;
 using Identity.Application.Abstractions.Repositories;
@@ -9,7 +10,10 @@ namespace Identity.Application.Sharing;
 
 public sealed class ShareHandler(
     ISharingRepository repository,
-    IIdentityUnitOfWork unitOfWork) : ICommandHandler<ShareCommand, bool>
+    IIdentityUnitOfWork unitOfWork,
+    IEntityPermissionService permissions,
+    IUserContext user,
+    IUserDirectory users) : ICommandHandler<ShareCommand, bool>
 {
     /// <summary>Los niveles que la tabla de permisos entiende; cualquier otro se rechaza.</summary>
     private static readonly string[] ValidLevels = ["View", "Edit", "Full"];
@@ -26,6 +30,15 @@ public sealed class ShareHandler(
             return Result<bool>.Failure("Falta el elemento que se quiere compartir");
 
         var permissionType = PermissionTypes.FromEntityType(request.EntityType);
+
+        await SharingRules.EnsureAsync(
+            permissions, user, permissionType, request.EntityId, SharingRules.RequiredToShare(request.Level), ct);
+
+        // Con alguien de la organización: un identificador inventado, o de otra organización,
+        // dejaría una fila que no le sirve a nadie.
+        var withUser = await users.GetAsync(request.TenantId, [request.WithUserId], ct);
+        if (!withUser.ContainsKey(request.WithUserId))
+            return Result<bool>.Failure("Esa persona no está en la organización");
 
         var existing = await repository.FindAsync(
             request.TenantId, request.WithUserId, permissionType, request.EntityId, ct);

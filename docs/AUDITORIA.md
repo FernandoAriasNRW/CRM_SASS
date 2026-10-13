@@ -925,7 +925,7 @@ que lleva «8b» en el título. Lo único que sigue siendo propio de un disparad
   tickets. Quitar un adjunto suelto sí lo borra (§25).
 - **Espacios, carpetas, anotaciones y subidas no piden autorización por entidad.** Las páginas
   de documentos sí, desde §24.
-- **Compartir no tiene interfaz todavía.** Los endpoints existen y están probados, y los filtros
+- **Compartir no tiene interfaz todavía.** La API ya pide permiso para compartir (§28). Los endpoints existen y están probados, y los filtros
   «compartido conmigo» y «privado» funcionan contra ellos, pero no hay ningún botón en la
   aplicación que comparta. Hasta que lo haya, esas dos entradas del menú responden bien y
   devuelven poco, que es honesto pero no útil.
@@ -2065,3 +2065,29 @@ Lo prueba `ListParametersAndNamesFlowTests`. Sus cuatro pruebas fallaban antes d
   - `DashboardsService.updateDashboard`.
 - **Medido al compilar:** el paquete inicial no cambia. El trozo del panel deja de superar su
   presupuesto, porque ECharts pasa a un trozo compartido con el constructor.
+
+---
+
+## 28. Compartir no pedía permiso
+
+**Cualquiera con sesión podía compartir cualquier tarea, ticket o proyecto con quien quisiera.**
+`PUT /sharing/{tipo}/{id}/{persona}` no comprobaba nada, así que:
+
+- **una persona sin privilegios se daba a sí misma `Full`** sobre lo que quisiera;
+- **quien tenía un elemento restringido (`None`) borraba su propia restricción** con `DELETE`, y
+  volvía al acceso por defecto;
+- **se podía compartir con identificadores inventados o de otra organización.**
+
+No tenía botón, pero la API estaba publicada. Se arregla antes de ponerle interfaz
+(`SharingRules`):
+
+- compartir con `View` o `Edit` exige poder editar el elemento;
+- compartir con `Full` exige tener `Full`: nadie da más de lo que tiene, y por tanto nadie se lo
+  sube a sí mismo;
+- dejar de compartir exige `Full`, porque quitar una fila puede ser quitar una restricción;
+- la persona tiene que ser de la organización (`IUserDirectory`);
+- quien administra puede siempre, como en el resto de permisos. Sin permiso, la respuesta es un
+  403.
+
+Lo prueba `SharingPermissionFlowTests`, con una persona sin privilegios. Las tres pruebas fallaban
+antes del arreglo.
