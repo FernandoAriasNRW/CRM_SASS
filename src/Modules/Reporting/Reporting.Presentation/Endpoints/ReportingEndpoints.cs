@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Reporting.Application.Commands;
+using Reporting.Application.DTOs;
 using Reporting.Application.Definitions;
 using Reporting.Application.Exports;
 using Reporting.Application.Schedules;
@@ -49,8 +50,11 @@ public static class ReportingEndpoints
       
       var cmdWithClaims = command with { TenantId = tenantId, CreatedById = userId };
       var result = await mediator.Send(cmdWithClaims);
+
+      // El DTO, el mismo que devuelve GET /reports/{id}. Devolvía la entidad de dominio, y con
+      // ella se colaban typeValue, formatValue y domainEvents: la forma interna del agregado.
       return result.IsSuccess
-              ? Results.Created($"/api/v1/reports/{result.Value!.Id}", result.Value)
+              ? Results.Created($"/api/v1/reports/{result.Value!.Id}", ReportDto.FromEntity(result.Value))
               : Results.BadRequest(result.Error);
     });
 

@@ -119,6 +119,32 @@ public sealed class MentionsFlowTests(CrmApiFactory factory)
     }
 
     /// <summary>
+    /// Un documento borrado deja de aparecer en «Mencionado en» de la tarea.
+    ///
+    /// Sus filas de menciones se quedan en la tabla a propósito: la consulta se une con el
+    /// documento a través del filtro global, que excluye lo borrado, así que la tarea no enseña
+    /// un enlace a algo que ya no está. Borrarlas además haría que un documento recuperado de la
+    /// papelera volviera sin sus enlaces.
+    /// </summary>
+    [Fact]
+    public async Task A_deleted_document_no_longer_shows_as_mentioning_the_task()
+    {
+        var client = await AuthenticateAsync();
+        var taskId = await ATaskAsync(client);
+        var (documentId, pageId) = await CreateDocumentAsync(client);
+
+        await SaveAsync(client, pageId, "Documento que se borrará",
+            $"""<p>Ver <span data-mention-type="Task" data-mention-id="{taskId}">la tarea</span>.</p>""");
+        (await GetMentioningDocumentsAsync(client, "Task", taskId)).EnumerateArray()
+            .Should().Contain(m => m.GetProperty("documentId").GetGuid() == documentId);
+
+        (await client.DeleteAsync($"/api/v1/docs/{documentId}")).IsSuccessStatusCode.Should().BeTrue();
+
+        (await GetMentioningDocumentsAsync(client, "Task", taskId)).EnumerateArray()
+            .Should().NotContain(m => m.GetProperty("documentId").GetGuid() == documentId);
+    }
+
+    /// <summary>
     /// Borrar la mención del texto la borra de verdad.
     ///
     /// Es la razón de que las menciones se reescriban enteras en cada guardado en vez de ir

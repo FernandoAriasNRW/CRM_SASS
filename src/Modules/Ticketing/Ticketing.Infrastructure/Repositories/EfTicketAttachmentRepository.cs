@@ -15,4 +15,10 @@ public sealed class EfTicketAttachmentRepository(TicketingDbContext context) : I
 
     public async Task AddAsync(TicketAttachment attachment, CancellationToken ct)
         => await context.TicketAttachments.AddAsync(attachment, ct);
+
+    public Task<TicketAttachment?> GetAsync(Guid tenantId, Guid ticketId, Guid attachmentId, CancellationToken ct)
+        => context.TicketAttachments
+            .FirstOrDefaultAsync(a => a.TenantId == tenantId && a.TicketId == ticketId && a.Id == attachmentId, ct);
+
+    public void Remove(TicketAttachment attachment) => context.TicketAttachments.Remove(attachment);
 }

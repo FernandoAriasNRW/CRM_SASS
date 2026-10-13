@@ -223,6 +223,14 @@ public static class TicketingEndpoints
     .WithMetadata(new Microsoft.AspNetCore.Mvc.RequestSizeLimitAttribute(Ticketing.Domain.Entities.AttachmentRules.MaxRequestBytes))
     .WithTags("Tickets");
 
+    app.MapDelete("/api/v1/tickets/{id:guid}/attachments/{attachmentId:guid}", async (Guid id, Guid attachmentId, IMediator mediator, CancellationToken ct) =>
+    {
+      var result = await mediator.Send(new Ticketing.Application.Intake.RemoveTicketAttachmentCommand(id, attachmentId), ct);
+      return result.IsSuccess ? Results.NoContent() : Results.NotFound(result.Error);
+    })
+    .RequireAuthorization()
+    .WithTags("Tickets");
+
     var keys = app.MapGroup("/api/v1/tickets/intake-keys")
         .WithTags("Ticket intake")
         .RequireAuthorization(policy => policy.RequireRole("Admin"));
