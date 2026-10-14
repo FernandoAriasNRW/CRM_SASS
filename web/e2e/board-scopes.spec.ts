@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
+import { createSession, submitLogin } from './support/auth';
 
 /**
  * El ámbito del tablero de tareas: toda la organización, mis tareas, un proyecto o un equipo.
@@ -8,16 +9,7 @@ import { test, expect, type Page } from '@playwright/test';
  * enseñaba identificadores como nombre; aquí sale de la lista de proyectos, con sus nombres.
  */
 
-const SESSION = {
-  accessToken: 'token-de-prueba',
-  refreshToken: 'refresco-de-prueba',
-  refreshTokenExpiresAtUtc: new Date(Date.now() + 7 * 864e5).toISOString(),
-  user: {
-    id: '00000000-0000-0000-0000-000000000001',
-    name: 'Admin', email: 'admin@acme.com', role: 'Admin',
-    tenantId: '00000000-0000-0000-0000-0000000000ff',
-  },
-};
+const SESSION = createSession();
 
 const PROJECTS = [
   { id: 'p-web', name: 'Web corporativa', status: 'Active', description: '', ownerId: SESSION.user.id, spaceId: 's1' },
@@ -51,11 +43,7 @@ async function signIn(page: Page): Promise<URL[]> {
     return r.fulfill(json({ items: [], totalCount: 0 }));
   });
 
-  await page.goto('/login');
-  await page.getByPlaceholder('admin@acme.com').fill('admin@acme.com');
-  await page.getByPlaceholder('••••••••').fill('admin123');
-  await page.getByRole('button', { name: /ingresar/i }).click();
-  await expect(page).not.toHaveURL(/\/login/, { timeout: 30_000 });
+  await submitLogin(page);
 
   return taskRequests;
 }

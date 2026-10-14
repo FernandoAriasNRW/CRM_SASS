@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
+import { createSession, submitLogin } from './support/auth';
 
 /**
  * Menciones en los comentarios de una tarea.
@@ -8,15 +9,7 @@ import { test, expect, type Page } from '@playwright/test';
  * También la vuelta: la tarea mencionada dice en «Mencionado en» qué comentario habla de ella.
  */
 
-const SESSION = {
-  accessToken: 't', refreshToken: 'r',
-  accessTokenExpiresAtUtc: new Date(Date.now() + 864e5).toISOString(),
-  refreshTokenExpiresAtUtc: new Date(Date.now() + 864e5).toISOString(),
-  user: {
-    id: '00000000-0000-0000-0000-000000000001', name: 'Admin', email: 'admin@acme.com', role: 'Admin',
-    tenantId: '00000000-0000-0000-0000-0000000000ff',
-  },
-};
+const SESSION = createSession();
 
 const ANA = { id: '00000000-0000-0000-0000-0000000000a1', name: 'Ana Pérez', email: 'ana@acme.com' };
 const TASK = {
@@ -60,11 +53,7 @@ async function openTask(page: Page, mentioning: unknown[] = []): Promise<{ poste
     return r.fulfill(json({ items: [], totalCount: 0 }));
   });
 
-  await page.goto('/login');
-  await page.getByPlaceholder('admin@acme.com').fill('admin@acme.com');
-  await page.getByPlaceholder('••••••••').fill('admin123');
-  await page.getByRole('button', { name: /ingresar/i }).click();
-  await expect(page).not.toHaveURL(/\/login/, { timeout: 30_000 });
+  await submitLogin(page);
 
   await page.keyboard.press('Control+k');
   await page.keyboard.type('tareas');

@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { DEFAULT_USER, createSession, submitLogin } from './support/auth';
 
 /**
  * Flujo de acceso. Las respuestas de la API se interceptan para que la prueba no dependa
@@ -7,18 +8,7 @@ import { test, expect } from '@playwright/test';
  * no la autenticación en sí, que ya cubren los tests de integración.
  */
 
-const VALID_SESSION = {
-  accessToken: 'token-de-prueba',
-  refreshToken: 'refresco-de-prueba',
-  refreshTokenExpiresAtUtc: new Date(Date.now() + 7 * 864e5).toISOString(),
-  user: {
-    id: '00000000-0000-0000-0000-000000000001',
-    name: 'Admin Administrator',
-    email: 'admin@acme.com',
-    role: 'Admin',
-    tenantId: '00000000-0000-0000-0000-0000000000ff',
-  },
-};
+const VALID_SESSION = createSession({ ...DEFAULT_USER, name: 'Admin Administrator' });
 
 test('an unauthenticated user visiting the root ends up at login', async ({ page }) => {
   await page.goto('/');
@@ -64,10 +54,5 @@ test('valid credentials sign in to the application', async ({ page }) => {
       ? route.fallback()
       : route.fulfill({ status: 200, contentType: 'application/json', body: '[]' }));
 
-  await page.goto('/login');
-  await page.getByPlaceholder('admin@acme.com').fill('admin@acme.com');
-  await page.getByPlaceholder('••••••••').fill('admin123');
-  await page.getByRole('button', { name: /ingresar/i }).click();
-
-  await expect(page).not.toHaveURL(/\/login/, { timeout: 30_000 });
+  await submitLogin(page);
 });

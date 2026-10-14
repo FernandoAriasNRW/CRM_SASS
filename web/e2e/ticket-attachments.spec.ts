@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
+import { createSession, submitLogin } from './support/auth';
 
 /**
  * Quitar un adjunto desde la ficha de un ticket.
@@ -13,13 +14,7 @@ const USER = {
   tenantId: '00000000-0000-0000-0000-0000000000ff',
 };
 
-const SESSION = {
-  accessToken: 'token-de-prueba',
-  accessTokenExpiresAtUtc: new Date(Date.now() + 864e5).toISOString(),
-  refreshToken: 'refresco-de-prueba',
-  refreshTokenExpiresAtUtc: new Date(Date.now() + 7 * 864e5).toISOString(),
-  user: USER,
-};
+const SESSION = createSession(USER);
 
 const TICKET = {
   id: 'tk1', title: 'No carga la factura', description: '', priority: 'Normal', status: 'Open',
@@ -62,11 +57,7 @@ async function openTicket(page: Page): Promise<string[]> {
   });
   await page.route(/\/files\//, r => r.fulfill({ status: 404, body: '' }));
 
-  await page.goto('/login');
-  await page.getByPlaceholder('admin@acme.com').fill('admin@acme.com');
-  await page.getByPlaceholder('••••••••').fill('admin123');
-  await page.getByRole('button', { name: /ingresar/i }).click();
-  await expect(page).not.toHaveURL(/\/login/, { timeout: 30_000 });
+  await submitLogin(page);
 
   // Se navega por dentro: `page.goto` recargaría y perdería el token, que vive en memoria.
   await page.keyboard.press('Control+k');
