@@ -95,17 +95,17 @@ sería justo lo que esta fase viene a quitar.
 
 ---
 
-## 5B — Editor tipo Notion  ◐ **parcial** (2026-09-07)
+## 5B — Editor tipo Notion  ✅ **hecho**
 
 > **Estado por punto**, sobre la lista de abajo:
 >
 > | | | |
 > |---|---|---|
 > | 1 | Menú `/` | ✅ Ya existía y funciona |
-> | 2 | Bloques arrastrables | ❌ **No hecho** |
+> | 2 | Bloques arrastrables | ✅ Hecho (`DragHandle`) |
 > | 3 | Menú flotante de selección | ✅ Ya existía |
 > | 4 | Barra lateral de esquema | ✅ Hecha |
-> | 5 | Comentarios en línea | ❌ **No hecho** |
+> | 5 | Comentarios en línea | ✅ Hecho (anotaciones con hilo); el menú que los crea no salía hasta AUDITORIA §32 |
 > | 6 | Menciones `@` y `#` | ✅ Hechas, **con la vuelta** |
 >
 > Se atacó primero el 6 porque es donde el plan sitúa el diferencial, y con él el 4, que es barato
