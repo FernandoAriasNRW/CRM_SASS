@@ -2251,8 +2251,8 @@ Lo que hay ahora, tal como se acordó:
 - **En la pantalla:** pestaña «Organización» en Administración, con el desplegable de zonas que
   conoce el navegador.
 
-**Queda:** los filtros de fecha del constructor de informes («creado después del 1 de octubre»)
-siguen comparando en UTC.
+Los filtros de fecha del constructor de informes, que seguían comparando en UTC, se resolvieron
+después (§35).
 
 Lo prueban:
 
@@ -2311,3 +2311,37 @@ Lo prueban:
 - `EntityAuthorizationFlowTests`, con personas de permisos recortados.
 
 Las nueve pruebas de integración nuevas fallaban antes del cambio.
+
+---
+
+## 35. Los filtros de fecha de los informes, en la zona de la organización
+
+Lo que quedó de §33: **«creado después del 1 de octubre» comparaba con el 1 de octubre en UTC.** En
+Bogotá, los tickets abiertos la noche del 30 de septiembre entraban como si fueran de octubre.
+
+- **En los campos que son un instante** (cuándo se creó o se resolvió algo, guardados en UTC), la
+  fecha del filtro se lee en la zona de la organización y se pasa a UTC.
+- **En los que son una fecha a secas** (cuándo vence, cuándo empieza un proyecto), se compara tal
+  cual.
+- Si el valor trae su propia zona (`…Z`, `…+02:00`), manda la suya.
+
+Al reescribir la lectura de la fecha salieron dos fallos más:
+
+- **`AdjustToUniversal` interpretaba una fecha sin zona como hora local del servidor.** La misma
+  definición filtraba distinto según dónde corriera la API, que es justo lo que el comentario
+  decía evitar.
+- **El formato español no se usaba nunca.** Se probaba primero la cultura invariante, que lee
+  mes/día, así que «01/11/2026» era el 11 de enero. Ahora, si el valor empieza por el año es ISO;
+  si no, día/mes.
+
+Lo prueban dos pruebas nuevas de `OrganizationTimeZoneFlowTests`, que fallaban antes del cambio:
+
+- **«creado hoy» es hoy en la zona de la organización.** Se elige una zona cuya fecha de hoy no es
+  la de UTC en ese momento, y el ticket recién creado entra solo con la lectura nueva.
+- **una fecha española es día/mes.**
+
+**De paso:** `TenantIsolationFlowTests` esperaba encontrar un proyecto recién creado entre los cien
+primeros del listado, y empezó a fallar porque la suite ya crea más de cien proyectos el mismo día.
+Entre proyectos que empiezan el mismo día, el desempate es el identificador, que es aleatorio,
+porque **el proyecto no guarda cuándo se creó**. La prueba busca ahora por el nombre, que es lo que
+le importa. Ordenar por fecha de alta queda pendiente: necesita una columna nueva.

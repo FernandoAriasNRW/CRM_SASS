@@ -87,4 +87,102 @@ public sealed class OrganizationTimeZoneFlowTests(CrmApiFactory factory)
             await admin.PutAsJsonAsync(Settings, new { timeZone = "UTC" });
         }
     }
+
+    /// <summary>
+    /// «Creado hoy» es hoy en la organización.
+    ///
+    /// Se elige una zona cuya fecha de hoy no es la de UTC en este momento —UTC+14 a partir de
+    /// las 10:00 UTC, UTC-12 antes—, así la ventana del día local y la del día UTC no se solapan
+    /// en el instante actual. Un ticket recién creado entra en la primera y no en la segunda. El
+    /// ticket se asigna a un agente nuevo para que el filtro solo pueda contar ese.
+    /// </summary>
+    [Fact]
+    public async Task A_date_filter_means_that_day_in_the_organization_zone()
+    {
+        var admin = await LoginAsync("admin@acme.com", "admin123");
+        var agentEmail = $"agente.{Guid.NewGuid():N}@acme.com";
+        var agent = await admin.PostAsJsonAsync("/api/v1/users", new { Name = "Agente", Email = agentEmail, Password = MemberPassword, Role = "Member" });
+        agent.EnsureSuccessStatusCode();
+        var agentId = (await agent.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetGuid();
+
+        var ticket = await admin.PostAsJsonAsync("/api/v1/tickets", new { Title = "Ticket de hoy", Description = "", Priority = "Low" });
+        ticket.EnsureSuccessStatusCode();
+        var ticketId = (await ticket.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetGuid();
+        (await admin.PatchAsJsonAsync($"/api/v1/tickets/{ticketId}", new { AssignedAgentId = agentId })).EnsureSuccessStatusCode();
+
+        var zoneName = DateTime.UtcNow.Hour >= 10 ? "Pacific/Kiritimati" : "Etc/GMT+12";
+        var zone = TimeZoneInfo.FindSystemTimeZoneById(zoneName);
+        var localToday = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, zone).Date;
+        DateTime.UtcNow.Date.Should().NotBe(localToday, "la prueba necesita una zona donde hoy sea otro día");
+
+        try
+        {
+            (await admin.PutAsJsonAsync(Settings, new { timeZone = zoneName })).EnsureSuccessStatusCode();
+
+            var response = await admin.PostAsJsonAsync("/api/v1/reports/preview", new
+            {
+                definition = new
+                {
+                    dataSource = "Tickets", groupBy = "status", measure = "count", visualization = "table",
+                    filters = new object[]
+                    {
+                        new { field = "agent", @operator = "is", value = agentId.ToString() },
+                        new { field = "created_at", @operator = "greater_than", value = localToday.ToString("yyyy-MM-dd") },
+                        new { field = "created_at", @operator = "less_than", value = localToday.AddDays(1).ToString("yyyy-MM-dd") },
+                    },
+                },
+                title = "Tickets de hoy",
+            });
+            response.StatusCode.Should().Be(HttpStatusCode.OK, await response.Content.ReadAsStringAsync());
+
+            var rows = (await response.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("rows").EnumerateArray().ToList();
+            rows.Sum(r => int.Parse(r[1].GetString()!)).Should().Be(1,
+                $"el ticket se creó hoy en {zoneName}; leído en UTC sería otro día y no contaría");
+        }
+        finally
+        {
+            await admin.PutAsJsonAsync(Settings, new { timeZone = "UTC" });
+        }
+    }
+
+    /// <summary>
+    /// Una fecha en formato español se lee como día/mes. Antes se probaba primero el formato
+    /// invariante, que es mes/día, y «01/11/2026» era el 11 de enero.
+    /// </summary>
+    [Fact]
+    public async Task A_spanish_date_is_day_then_month()
+    {
+        var admin = await LoginAsync("admin@acme.com", "admin123");
+        var agentEmail = $"agente.{Guid.NewGuid():N}@acme.com";
+        var agent = await admin.PostAsJsonAsync("/api/v1/users", new { Name = "Agente", Email = agentEmail, Password = MemberPassword, Role = "Member" });
+        agent.EnsureSuccessStatusCode();
+        var agentId = (await agent.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetGuid();
+
+        var ticket = await admin.PostAsJsonAsync("/api/v1/tickets", new { Title = "Ticket de este mes", Description = "", Priority = "Low" });
+        var ticketId = (await ticket.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetGuid();
+        (await admin.PatchAsJsonAsync($"/api/v1/tickets/{ticketId}", new { AssignedAgentId = agentId })).EnsureSuccessStatusCode();
+
+        // El día 1 del mes que viene, escrito a la española: el día va primero y es 01, así que
+        // leído como mes/día sería una fecha de enero, anterior a hoy salvo en los primeros días.
+        var today = DateTime.UtcNow;
+        var nextMonth = new DateTime(today.Year, today.Month, 1).AddMonths(1);
+
+        var response = await admin.PostAsJsonAsync("/api/v1/reports/preview", new
+        {
+            definition = new
+            {
+                dataSource = "Tickets", groupBy = "status", measure = "count", visualization = "table",
+                filters = new object[]
+                {
+                    new { field = "agent", @operator = "is", value = agentId.ToString() },
+                    new { field = "created_at", @operator = "less_than", value = nextMonth.ToString("dd/MM/yyyy") },
+                },
+            },
+            title = "Tickets de este mes",
+        });
+        response.StatusCode.Should().Be(HttpStatusCode.OK, await response.Content.ReadAsStringAsync());
+
+        var rows = (await response.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("rows").EnumerateArray().ToList();
+        rows.Sum(r => int.Parse(r[1].GetString()!)).Should().Be(1, $"«{nextMonth:dd/MM/yyyy}» es el 1 del mes que viene");
+    }
 }
