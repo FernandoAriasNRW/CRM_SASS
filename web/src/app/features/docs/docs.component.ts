@@ -39,7 +39,7 @@ import TaskList from '@tiptap/extension-task-list';
 import TaskItem from '@tiptap/extension-task-item';
 import Link from '@tiptap/extension-link';
 import Placeholder from '@tiptap/extension-placeholder';
-import BubbleMenu from '@tiptap/extension-bubble-menu';
+import { BubbleMenuPlugin } from '@tiptap/extension-bubble-menu';
 import { Details, DetailsContent, DetailsSummary } from '@tiptap/extension-details';
 import { DragHandle } from '@tiptap/extension-drag-handle';
 import Highlight from '@tiptap/extension-highlight';
@@ -677,13 +677,24 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
     }, { injector: this.injector });
   }
 
+  /**
+   * El menú que sale al seleccionar texto: formato, enlace y «Comentar».
+   *
+   * **No salía nunca.** Se metía la extensión a mano en `extensionManager.extensions` con el
+   * editor ya creado, y eso sólo cambia una lista que nadie vuelve a leer: el plugin de
+   * ProseMirror que vigila la selección no se registraba. Sin él no había negrita, ni enlace, ni
+   * forma de crear un comentario en línea desde la pantalla, aunque la API funcionara.
+   *
+   * El editor se crea antes que la vista, así que el plugin se registra aquí, cuando ya existe el
+   * elemento del menú, con `registerPlugin`, que es la forma de añadir uno a un editor vivo.
+   */
   ngAfterViewInit() {
     if (this.bubbleMenuElement) {
-      this.editor.extensionManager.extensions.push(
-        BubbleMenu.configure({
-          element: this.bubbleMenuElement.nativeElement
-        })
-      );
+      this.editor.registerPlugin(BubbleMenuPlugin({
+        pluginKey: 'bubbleMenu',
+        editor: this.editor,
+        element: this.bubbleMenuElement.nativeElement,
+      }));
     }
   }
 
