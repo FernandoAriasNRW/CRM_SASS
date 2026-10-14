@@ -1,3 +1,6 @@
+using BuildingBlocks.Application.Abstractions;
+using BuildingBlocks.Application.Authorization;
+using Docs.Application.Authorization;
 using BuildingBlocks.Domain;
 using Docs.Application.Abstractions.Repositories;
 using Docs.Domain.Entities;
@@ -5,7 +8,12 @@ using MediatR;
 
 namespace Docs.Application.Annotations;
 
-public sealed class DeleteAnnotationHandler(IDocumentRepository repository)
+/// <summary>
+/// Borra quien la creó o quien puede editar el documento. Antes la podía borrar cualquiera de la
+/// organización, con su hilo colgado de ella.
+/// </summary>
+public sealed class DeleteAnnotationHandler(
+    IDocumentRepository repository, IUserContext user, IEntityPermissionService permissions)
     : IRequestHandler<DeleteAnnotationCommand, Result>
 {
     public async Task<Result> Handle(DeleteAnnotationCommand request, CancellationToken cancellationToken)
@@ -13,6 +21,9 @@ public sealed class DeleteAnnotationHandler(IDocumentRepository repository)
         var annotation = await repository.GetAnnotationAsync(request.AnnotationId, cancellationToken);
         if (annotation is null)
             return Result.Failure("La anotación no existe.");
+
+        if (annotation.CreatedBy != user.UserId)
+            await permissions.EnsureOnDocumentAsync(user, annotation.DocumentId, "Write", cancellationToken);
 
         // Se borra de verdad, sin papelera.
         //

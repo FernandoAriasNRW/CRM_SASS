@@ -921,8 +921,6 @@ que lleva «8b» en el título. Lo único que sigue siendo propio de un disparad
   usuario dentro de `TagIds`, desapareció con el tablero por equipo de §23.2.)
 - **Nada borra del almacenamiento los adjuntos de un ticket** si algún día se vacía la papelera de
   tickets. Quitar un adjunto suelto sí lo borra (§25).
-- **Espacios, carpetas, anotaciones y subidas no piden autorización por entidad.** Las páginas
-  de documentos sí, desde §24.
 - **«Tickets por área» sigue sin poderse hacer.** Es el ejemplo que se pidió, y necesita campos
   personalizados en tickets como dimensión de análisis: hoy los campos personalizados son de
   tareas y proyectos. El catálogo del constructor está preparado para recibirlos —basta añadir
@@ -2191,6 +2189,35 @@ Lo prueban:
 
 ---
 
+## 32. El menú de selección del editor no salía nunca
+
+Los dos pendientes de la Fase 5B que seguían en §14 ya estaban hechos: el asa para arrastrar
+bloques (`DragHandle`) y los comentarios en línea (anotaciones con su hilo, API probada en
+`InlineCommentsFlowTests`). La nota se había quedado atrás.
+
+Pero al escribir la e2e de los comentarios en línea salió un fallo real: **el menú que aparece al
+seleccionar texto no salía nunca**. Ese menú tiene negrita, cursiva, tachado, código, encabezados,
+cita, enlace y «Comentar».
+
+- **La causa:** `ngAfterViewInit` metía `BubbleMenu` a mano en `editor.extensionManager.extensions`,
+  con el editor ya creado. Eso solo cambia una lista que nadie vuelve a leer: el plugin de
+  ProseMirror que vigila la selección no se registraba.
+- **La consecuencia:** no había forma de dar formato con el ratón ni de **crear un comentario en
+  línea desde la pantalla**, aunque la API funcionara.
+- **El origen:** ese registro viene del 23 de julio de 2026 (`d0ff004c`). No he comprobado si llegó
+  a funcionar con alguna versión anterior de TipTap.
+
+**El arreglo:** se registra con `editor.registerPlugin(BubbleMenuPlugin({...}))`, que es la forma
+de añadir un plugin a un editor ya creado.
+
+Lo prueban dos e2e nuevas en `docs.spec.ts`:
+
+- seleccionar texto y pulsar «Comentar» crea la anotación con la cita y la enseña en el panel:
+  **fallaba antes del arreglo**;
+- al pasar por encima de un bloque aparece su asa.
+
+---
+
 ## 33. Zona horaria por organización
 
 **Los informes programados comparaban con la hora del servidor.** La programación guarda la hora
@@ -2234,29 +2261,53 @@ Lo prueban:
 - `OrganizationTimeZoneFlowTests`: solo quien administra la cambia y solo a una zona real; el
   informe dice su hora en la zona de la organización;
 - la e2e `organization-time-zone`.
-## 32. El menú de selección del editor no salía nunca
 
-Los dos pendientes de la Fase 5B que seguían en §14 ya estaban hechos: el asa para arrastrar
-bloques (`DragHandle`) y los comentarios en línea (anotaciones con su hilo, API probada en
-`InlineCommentsFlowTests`). La nota se había quedado atrás.
+---
 
-Pero al escribir la e2e de los comentarios en línea salió un fallo real: **el menú que aparece al
-seleccionar texto no salía nunca**. Ese menú tiene negrita, cursiva, tachado, código, encabezados,
-cita, enlace y «Comentar».
+## 34. Subidas, anotaciones, espacios y carpetas piden permiso
 
-- **La causa:** `ngAfterViewInit` metía `BubbleMenu` a mano en `editor.extensionManager.extensions`,
-  con el editor ya creado. Eso solo cambia una lista que nadie vuelve a leer: el plugin de
-  ProseMirror que vigila la selección no se registraba.
-- **La consecuencia:** no había forma de dar formato con el ratón ni de **crear un comentario en
-  línea desde la pantalla**, aunque la API funcionara.
-- **El origen:** ese registro viene del 23 de julio de 2026 (`d0ff004c`). No he comprobado si llegó
-  a funcionar con alguna versión anterior de TipTap.
+Era la última entrada de seguridad de §14. Al mirarla salió algo más grave de lo que decía la
+nota.
 
-**El arreglo:** se registra con `editor.registerPlugin(BubbleMenuPlugin({...}))`, que es la forma
-de añadir un plugin a un editor ya creado.
+**Un fichero subido podía robar la sesión.** `POST /docs/upload` admitía cualquier tipo y tamaño, y
+el almacenamiento en disco lo sirve desde el origen de la API (`/storage/…`, con
+`ServeUnknownFileTypes`). Ese origen es también el de la cookie de refresco. Un `.html` subido y
+abierto ahí podía llamar a `/api/v1/auth/refresh` con la cookie de quien lo abriera y leer su
+token. Cualquiera con sesión podía subir la página, mandar el enlace a quien administra y quedarse
+con su cuenta.
 
-Lo prueban dos e2e nuevas en `docs.spec.ts`:
+Se cierra por dos lados (`UploadRules`):
 
-- seleccionar texto y pulsar «Comentar» crea la anotación con la cita y la enseña en el panel:
-  **fallaba antes del arreglo**;
-- al pasar por encima de un bloque aparece su asa.
+- **Al servir**, que es la defensa principal y vale también para lo ya subido:
+  - `Content-Security-Policy: sandbox`: una página abierta ahí no ejecuta scripts y corre en un
+    origen opaco, sin las cookies de la API;
+  - `X-Content-Type-Options: nosniff`;
+  - lo ejecutable (html, svg, xml, js) se sirve como descarga.
+  - **Excepción:** los PDF van sin sandbox, porque Chrome bloquea su visor de PDF bajo `sandbox` y
+    los adjuntos dejarían de abrirse. El visor no da acceso al origen de la API.
+- **Al subir:**
+  - se rechazan esos tipos ejecutables;
+  - el tope es de 25 MB;
+  - hace falta poder editar documentos, cuando antes bastaba con tener sesión;
+  - el editor enseña el motivo del rechazo en vez de «no llegó al servidor».
+
+**Anotaciones:**
+
+- crearlas y resolverlas pide poder leer el documento: quien lo ve puede comentarlo;
+- borrarlas pide ser quien la creó o poder editar el documento;
+- antes las borraba cualquiera de la organización, con el hilo colgado de ellas.
+
+**Espacios y carpetas:**
+
+- crearlos y renombrarlos pide poder editar proyectos, que es lo que ordenan;
+- crear una carpeta exige que el espacio sea de la organización: antes aceptaba un identificador
+  inventado o de otra organización.
+
+Lo prueban:
+
+- `UploadRulesTests`, unitarias;
+- en `FileUploadFlowTests`: no se sube un `.html`, `.svg` ni `.js`; lo servido va con sandbox; una
+  página antigua se descarga;
+- `EntityAuthorizationFlowTests`, con personas de permisos recortados.
+
+Las nueve pruebas de integración nuevas fallaban antes del cambio.
