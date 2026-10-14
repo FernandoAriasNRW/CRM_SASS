@@ -140,6 +140,8 @@ Un concepto, un nombre. Ordenado por área.
 | remitente de avisos, empujón en tiempo real | `NotificationSender`, `NotificationPush` |
 | interesados (quien creó y quien lleva algo) | `InterestedParties` |
 | directorio de personas (puerto: quién es de la organización y si administra) | `IUserDirectory` |
+| configuración de la organización | `OrganizationSettings` |
+| zona horaria (de la organización, nombre IANA) | `TimeZone` (puerto `IOrganizationTimeZone`) |
 | secreto de firma, firma | `Secret`, `Signature` |
 | reintento, pendiente, entregado, fallido | `Retry`, `Pending`, `Succeeded`, `Failed` |
 | catálogo de documentos, de proyectos (puertos: qué existe) | `IDocumentCatalog`, `IProjectCatalog` |

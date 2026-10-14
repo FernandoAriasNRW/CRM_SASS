@@ -141,6 +141,25 @@ public static class IdentityEndpoints
           : Results.BadRequest(result.Error);
     }).RequireAuthorization();
 
+    // La configuración de la organización. Leerla puede cualquiera con sesión —la pantalla la
+    // necesita para enseñar fechas—; cambiarla, solo quien administra.
+    var organizationGroup = app.MapGroup("/api/v1/organization").WithTags("Organization").RequireAuthorization();
+
+    organizationGroup.MapGet("/settings", async (IUserContext currentUser, IMediator mediator) =>
+    {
+      var result = await mediator.Send(
+          new Identity.Application.Organization.GetOrganizationSettingsQuery(currentUser.TenantId));
+      return Results.Ok(result.Value);
+    });
+
+    organizationGroup.MapPut("/settings", async (
+        OrganizationSettingsRequest body, IUserContext currentUser, IMediator mediator) =>
+    {
+      var result = await mediator.Send(new Identity.Application.Organization.ChangeOrganizationTimeZoneCommand(
+          currentUser.TenantId, body.TimeZone ?? string.Empty));
+      return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
+    }).RequireAuthorization(policy => policy.RequireRole("Admin"));
+
     // Compartición. Va bajo el elemento y no bajo el usuario, al revés que los favoritos: un
     // favorito es una decisión sobre mí, y compartir es una decisión sobre la cosa.
     var sharingGroup = app.MapGroup("/api/v1/sharing").WithTags("Sharing");
@@ -346,3 +365,6 @@ public record SaveGranularPermissionsRequest(string TargetType, Guid? UserId, Gu
 
 /// <summary>Con qué nivel se comparte: «View», «Edit» o «Full».</summary>
 public sealed record ShareRequest(string Level);
+
+/// <summary>Lo que se cambia de la organización: su zona horaria, con su nombre IANA.</summary>
+public sealed record OrganizationSettingsRequest(string? TimeZone);
