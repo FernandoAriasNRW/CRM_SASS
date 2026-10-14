@@ -282,3 +282,60 @@ test('the emoji picker loads on first click and opens', async ({ page }) => {
 
   await expect(page.locator('.picmo__popupContainer, .popupContainer, [class*="popupContainer"]').first()).toBeVisible({ timeout: 10_000 });
 });
+
+/**
+ * Abre el primer documento con una página de un párrafo y deja simuladas sus anotaciones:
+ * crear una la añade a la lista que devuelve el servidor, como haría la API.
+ */
+async function openPageWithText(page: Page) {
+  const PAGE_ID = '00000000-0000-0000-0000-0000000000a1';
+  const annotations: { id: string; documentId: string; pageId: string; quotedText: string; createdBy: string; createdAtUtc: string; resolvedAtUtc: null }[] = [];
+
+  await openDocs(page);
+  await page.route(/\/api\/v1\/docs\/[^/]+\/pages$/, r => r.fulfill({
+    status: 200, contentType: 'application/json',
+    body: JSON.stringify([{ id: PAGE_ID, documentId: DOCUMENTS[0].id, parentPageId: null, title: 'Primera', content: '<p>El despliegue se hace los martes.</p><p>Segundo párrafo.</p>', order: 0 }]),
+  }));
+  await page.route(/\/api\/v1\/docs\/pages\/[^/]+\/annotations/, r => {
+    if (r.request().method() === 'POST') {
+      const body = JSON.parse(r.request().postData() ?? '{}');
+      annotations.push({ id: '00000000-0000-0000-0000-0000000000c1', documentId: DOCUMENTS[0].id, pageId: PAGE_ID, quotedText: body.quotedText, createdBy: SESSION.user.id, createdAtUtc: new Date().toISOString(), resolvedAtUtc: null });
+      return r.fulfill({ status: 200, contentType: 'application/json', body: '"00000000-0000-0000-0000-0000000000c1"' });
+    }
+    return r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(annotations) });
+  });
+  // Los hilos de comentarios son listas, no páginas: con `{ items }` el componente falla.
+  await page.route(/\/api\/v1\/comments/, r => r.fulfill({ status: 200, contentType: 'application/json', body: '[]' }));
+  await page.route(/\/api\/v1\/docs\/pages\/[^/]+$/, r => r.fulfill({ status: 200, body: '' }));
+
+  await page.getByText('Manual de arquitectura').first().click();
+  await expect(page.getByText('El despliegue se hace los martes.')).toBeVisible({ timeout: 15_000 });
+  return annotations;
+}
+
+/**
+ * Un comentario en línea queda pegado al texto elegido: se selecciona, se pulsa «Comentar» en el
+ * menú flotante y el panel enseña la cita. La API estaba probada por integración; esto prueba
+ * que la pantalla llega hasta ella.
+ */
+test('selecting text and pressing comment anchors an inline comment', async ({ page }) => {
+  const annotations = await openPageWithText(page);
+
+  await page.getByText('El despliegue se hace los martes.').click();
+  await page.keyboard.press('Home');
+  await page.keyboard.press('Shift+End');
+  await page.getByRole('button', { name: 'Comentar', exact: true }).click();
+
+  await expect.poll(() => annotations.length).toBe(1);
+  expect(annotations[0].quotedText).toBe('El despliegue se hace los martes.');
+  await expect(page.locator('app-document-comments').getByText('El despliegue se hace los martes.')).toBeVisible();
+  await expect(page.locator('.ProseMirror [data-comment], .ProseMirror mark, .ProseMirror span[class*="comment"]').first()).toBeVisible();
+});
+
+/** Cada bloque se puede agarrar: al pasar por encima aparece su asa. */
+test('hovering a block shows its drag handle', async ({ page }) => {
+  await openPageWithText(page);
+
+  await page.getByText('Segundo párrafo.').hover();
+  await expect(page.locator('.asa-de-bloque')).toBeVisible();
+});

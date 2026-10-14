@@ -15,6 +15,7 @@ public sealed class IdentityDbContext(DbContextOptions<IdentityDbContext> option
     public DbSet<SavedView> SavedViews => Set<SavedView>();
     public DbSet<EntityPermission> EntityPermissions => Set<EntityPermission>();
     public DbSet<Favorite> Favorites => Set<Favorite>();
+    public DbSet<OrganizationSettings> OrganizationSettings => Set<OrganizationSettings>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -36,6 +37,15 @@ public sealed class IdentityDbContext(DbContextOptions<IdentityDbContext> option
              .IsUnique()
              .HasDatabaseName("UX_Favorites_User_Entity");
         });
+
+      // Una fila por organización: la restricción va en la base para que dos administradores
+      // guardando a la vez no dejen dos zonas horarias y cada lectura coja una distinta.
+      modelBuilder.Entity<OrganizationSettings>(s =>
+      {
+          s.ToTable("OrganizationSettings");
+          s.Property(x => x.TimeZone).HasMaxLength(Identity.Domain.Entities.OrganizationSettings.MaxTimeZoneLength).IsRequired();
+          s.HasIndex(x => x.TenantId).IsUnique().HasDatabaseName("UX_OrganizationSettings_TenantId");
+      });
 
       // Aislamiento por tenant y soft delete, compuestos en un solo filtro.
       ApplyTenantFilters(modelBuilder);

@@ -32,6 +32,10 @@ public static class IdentityInfrastructureExtensions
 
         services.AddScoped<IUserRepository, EfUserRepository>();
         services.AddScoped<BuildingBlocks.Application.Abstractions.IUserDirectory, UserDirectory>();
+        services.AddScoped<Identity.Application.Organization.IOrganizationSettingsRepository,
+                           Identity.Infrastructure.Persistence.OrganizationSettingsRepository>();
+        services.AddScoped<BuildingBlocks.Application.Abstractions.IOrganizationTimeZone,
+                           Identity.Infrastructure.Persistence.OrganizationTimeZone>();
         services.AddScoped<ISavedViewRepository, EfSavedViewRepository>();
         services.AddScoped<IEntityPermissionRepository, EfEntityPermissionRepository>();
         services.AddScoped<Identity.Application.Favorites.IFavoriteRepository,

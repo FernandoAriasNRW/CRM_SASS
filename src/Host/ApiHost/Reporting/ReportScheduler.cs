@@ -67,18 +67,27 @@ public sealed class ReportScheduler(
         var db = scope.ServiceProvider.GetRequiredService<ReportingDbContext>();
         var email = scope.ServiceProvider.GetRequiredService<IEmailService>();
         var recipients = scope.ServiceProvider.GetRequiredService<RecipientEmails>();
+        var timeZones = scope.ServiceProvider.GetRequiredService<IOrganizationTimeZone>();
 
         var active = await schedules.ActiveAsync(ct);
         if (active.Count == 0) return;
 
-        // La hora local del servidor. La programación guarda hora local del inquilino, y mientras
-        // no haya zona horaria por inquilino, ésta es la aproximación honesta: está anotado en la
-        // auditoría como lo que hay que afinar cuando haya clientes en varios husos.
-        var now = timeProvider.GetLocalNow().DateTime;
+        // La programación guarda la hora local de la organización —«cada lunes a las 8» es a las 8
+        // de su mañana—, así que se compara con la hora de su zona. Antes era la hora local del
+        // servidor para todas, y un informe de las 8 llegaba a las 8 del servidor.
+        //
+        // La zona se pide una vez por organización y vuelta, no una por programación.
+        var utcNow = timeProvider.GetUtcNow().UtcDateTime;
+        var zones = new Dictionary<Guid, TimeZoneInfo>();
 
         foreach (var schedule in active)
         {
             if (ct.IsCancellationRequested) return;
+
+            if (!zones.TryGetValue(schedule.TenantId, out var zone))
+                zones[schedule.TenantId] = zone = await timeZones.GetAsync(schedule.TenantId, ct);
+
+            var now = TimeZoneInfo.ConvertTimeFromUtc(utcNow, zone);
             if (!schedule.IsDue(now)) continue;
 
             try

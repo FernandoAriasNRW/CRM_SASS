@@ -34,9 +34,20 @@ public sealed class ReportEngine(
     WorkItemsDbContext tasksDb,
     TicketingDbContext ticketsDb,
     ProjectsDbContext projectsDb,
-    IUserDirectory users) : global::Reporting.Application.Definitions.IReportResolver
+    IUserDirectory users,
+    IOrganizationTimeZone timeZones) : global::Reporting.Application.Definitions.IReportResolver
 {
     private static readonly CultureInfo Spanish = CultureInfo.GetCultureInfo("es-ES");
+
+    /// <summary>
+    /// La zona horaria de la organización. Agrupar por día o por mes un ticket abierto a las 23:30
+    /// de Bogotá lo pondría en el día siguiente si se usara UTC. Se lee al empezar cada informe; el
+    /// servicio es de ámbito y los informes de un ámbito se resuelven de uno en uno.
+    /// </summary>
+    private TimeZoneInfo zone = TimeZoneInfo.Utc;
+
+    /// <summary>Una marca de tiempo guardada en UTC, en la hora de la organización.</summary>
+    private DateTime Local(DateTime utc) => TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(utc, DateTimeKind.Utc), zone);
 
     /// <summary>Lo que se escribe cuando un grupo no tiene valor: sin responsable, sin fecha.</summary>
     private const string Unassigned = "(sin asignar)";
@@ -93,6 +104,7 @@ public sealed class ReportEngine(
         using var __ = ticketsDb.AsTenant(tenantId);
         using var ___ = projectsDb.AsTenant(tenantId);
 
+        zone = await timeZones.GetAsync(tenantId, ct);
         var dataSource = ReportCatalog.FindDataSource(definition.DataSource)!;
 
         var raw = dataSource.Key switch
@@ -185,7 +197,7 @@ public sealed class ReportEngine(
                 "assignee" => t.AssigneeId == Guid.Empty ? Unassigned : t.AssigneeId.ToString(),
                 "project" => projectNames.GetValueOrDefault(t.ProjectId, Unassigned),
                 "due_date" => ByDate(t.DueDate.ToDateTime(TimeOnly.MinValue), d.Granularity),
-                "created_at" => ByDate(t.CreatedAtUtc, d.Granularity),
+                "created_at" => ByDate(Local(t.CreatedAtUtc), d.Granularity),
                 "estimated_hours" => t.EstimatedHours.ToString("0.##", Spanish),
                 _ => throw new InvalidOperationException($"No sé agrupar tareas por «{d.GroupBy}»")
             },
@@ -238,8 +250,8 @@ public sealed class ReportEngine(
                 "agent" => t.AssignedAgentId is null || t.AssignedAgentId == Guid.Empty
                     ? Unassigned
                     : t.AssignedAgentId.Value.ToString(),
-                "created_at" => ByDate(t.CreatedAt, d.Granularity),
-                "resolved_at" => t.ResolvedAt is null ? Unassigned : ByDate(t.ResolvedAt.Value, d.Granularity),
+                "created_at" => ByDate(Local(t.CreatedAt), d.Granularity),
+                "resolved_at" => t.ResolvedAt is null ? Unassigned : ByDate(Local(t.ResolvedAt.Value), d.Granularity),
                 _ => throw new InvalidOperationException($"No sé agrupar tickets por «{d.GroupBy}»")
             },
             Value: d.Measure.ToLowerInvariant() switch
@@ -423,7 +435,7 @@ public sealed class ReportEngine(
             parts.Add($"sólo los {d.EffectiveGroups} mayores");
 
         return string.Join(" · ", parts)
-               + $" · Generado el {timeProvider.GetUtcNow().UtcDateTime.ToString("dd/MM/yyyy HH:mm", Spanish)} UTC";
+               + $" · Generado el {Local(timeProvider.GetUtcNow().UtcDateTime).ToString("dd/MM/yyyy HH:mm", Spanish)} ({zone.Id})";
     }
 
     #endregion
