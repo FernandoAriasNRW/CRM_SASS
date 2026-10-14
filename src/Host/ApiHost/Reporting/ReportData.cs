@@ -1,5 +1,6 @@
 using System.Globalization;
 using BuildingBlocks.Application.Abstractions;
+using BuildingBlocks.Application.Abstractions;
 using Microsoft.EntityFrameworkCore;
 using Projects.Infrastructure.Persistence;
 using Reporting.Application.Exports;
@@ -34,7 +35,8 @@ public sealed class ReportData(
     ProjectsDbContext projectsDb,
     WorkItemsDbContext tasksDb,
     TicketingDbContext ticketsDb,
-    IUserDirectory users)
+    IUserDirectory users,
+    IOrganizationTimeZone timeZones)
 {
     /// <summary>
     /// Cuántas filas de detalle entran como mucho en un informe.
@@ -49,9 +51,19 @@ public sealed class ReportData(
     /// <summary>La cultura en que se formatean fechas y números del informe.</summary>
     private static readonly CultureInfo Spanish = CultureInfo.GetCultureInfo("es-ES");
 
+    /// <summary>
+    /// La zona horaria de la organización del informe, para sus fechas. Se lee al empezar cada
+    /// informe; el servicio es de ámbito y los informes de un ámbito se resuelven de uno en uno.
+    /// </summary>
+    private TimeZoneInfo zone = TimeZoneInfo.Utc;
+
+    /// <summary>Una marca de tiempo guardada en UTC, en la hora de la organización.</summary>
+    private DateTime Local(DateTime utc) => TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(utc, DateTimeKind.Utc), zone);
+
     public async Task<ReportTable> ResolveAsync(Report report, CancellationToken ct)
     {
         var tenantId = report.TenantId;
+        zone = await timeZones.GetAsync(tenantId, ct);
 
         // El inquilino se declara en los tres contextos antes de consultar nada.
         //
@@ -216,8 +228,8 @@ public sealed class ReportData(
                 t.Title,
                 Ticketing.Domain.ValueObjects.TicketPriority.FromValue<Ticketing.Domain.ValueObjects.TicketPriority>(t.PriorityValue).Name,
                 Ticketing.Domain.ValueObjects.TicketStatus.FromValue<Ticketing.Domain.ValueObjects.TicketStatus>(t.StatusValue).Name,
-                t.CreatedAt.ToString("dd/MM/yyyy", Spanish),
-                t.ResolvedAt?.ToString("dd/MM/yyyy", Spanish) ?? "—",
+                Local(t.CreatedAt).ToString("dd/MM/yyyy", Spanish),
+                t.ResolvedAt is { } resolved ? Local(resolved).ToString("dd/MM/yyyy", Spanish) : "—",
 
                 // Los días que lleva abierto, o los que tardó. Es la columna por la que se ordena
                 // cuando alguien busca qué se está atascando, y calcularla aquí evita que cada
@@ -278,7 +290,9 @@ public sealed class ReportData(
     /// </summary>
     private string Subtitle(int rows)
     {
-        var generated = $"Generado el {timeProvider.GetUtcNow().UtcDateTime.ToString("dd/MM/yyyy HH:mm", Spanish)} UTC";
+        // En la hora de la organización, y diciendo cuál: un PDF circula sin quien lo generó al
+        // lado, y «08:00» sin zona no dice nada a quien lo lee en otro país.
+        var generated = $"Generado el {Local(timeProvider.GetUtcNow().UtcDateTime).ToString("dd/MM/yyyy HH:mm", Spanish)} ({zone.Id})";
 
         return rows >= MaxRows
             ? $"{generated} · {rows:N0} filas (recortado: el informe tiene más datos de los que caben)"

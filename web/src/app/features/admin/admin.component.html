@@ -120,6 +120,20 @@
         <span i18n>Entrada de tickets</span>
       </button>
 
+      <!-- Organización: zona horaria -->
+      <button
+        (click)="setTab('organization')"
+        [class.bg-white]="activeTab() === 'organization'"
+        [class.text-foreground]="activeTab() === 'organization'"
+        [class.font-bold]="activeTab() === 'organization'"
+        [class.bg-white/10]="activeTab() !== 'organization'"
+        [class.text-white/80]="activeTab() !== 'organization'"
+        [class.hover:bg-white/20]="activeTab() !== 'organization'"
+        class="px-4 py-2 rounded-xl text-xs font-medium transition-all flex items-center gap-2 shadow-sm shrink-0">
+        <ng-icon name="lucideBuilding2" class="w-4 h-4" [class.text-primary]="activeTab() === 'organization'"></ng-icon>
+        <span i18n>Organización</span>
+      </button>
+
     </div>
   </div>
 
@@ -139,6 +153,8 @@
       <app-webhooks></app-webhooks>
     } @else if (activeTab() === 'ticket-intake') {
       <app-admin-ticket-intake></app-admin-ticket-intake>
+    } @else if (activeTab() === 'organization') {
+      <app-admin-organization></app-admin-organization>
     }
   </div>
 

@@ -13,10 +13,11 @@ import { AdminCustomFieldsComponent } from './custom-fields/admin-custom-fields.
 import { AdminAutomationsComponent } from './automations/admin-automations.component';
 import { WebhooksComponent } from '../webhooks/webhooks.component';
 import { AdminTicketIntakeComponent } from './ticket-intake/admin-ticket-intake.component';
+import { AdminOrganizationComponent } from './organization/admin-organization.component';
 
-type AdminTab = 'users' | 'teams' | 'permissions' | 'custom-fields' | 'automations' | 'webhooks' | 'ticket-intake';
+type AdminTab = 'users' | 'teams' | 'permissions' | 'custom-fields' | 'automations' | 'webhooks' | 'ticket-intake' | 'organization';
 
-const PESTANAS: AdminTab[] = ['users', 'teams', 'permissions', 'custom-fields', 'automations', 'webhooks', 'ticket-intake'];
+const PESTANAS: AdminTab[] = ['users', 'teams', 'permissions', 'custom-fields', 'automations', 'webhooks', 'ticket-intake', 'organization'];
 
 @Component({
   selector: 'app-admin',
@@ -30,7 +31,8 @@ const PESTANAS: AdminTab[] = ['users', 'teams', 'permissions', 'custom-fields', 
     AdminCustomFieldsComponent,
     AdminAutomationsComponent,
     WebhooksComponent,
-    AdminTicketIntakeComponent
+    AdminTicketIntakeComponent,
+    AdminOrganizationComponent
 ],
   viewProviders: [
     provideIcons({

@@ -101,6 +101,32 @@ namespace Identity.Infrastructure.Persistence.Migrations
                     b.ToTable("Favorites", (string)null);
                 });
 
+            modelBuilder.Entity("Identity.Domain.Entities.OrganizationSettings", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<string>("TimeZone")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("varchar(64)");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("datetime(6)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_OrganizationSettings_TenantId");
+
+                    b.ToTable("OrganizationSettings", (string)null);
+                });
+
             modelBuilder.Entity("Identity.Domain.Entities.SavedView", b =>
                 {
                     b.Property<Guid>("Id")

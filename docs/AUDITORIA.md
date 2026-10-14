@@ -923,7 +923,6 @@ que lleva «8b» en el título. Lo único que sigue siendo propio de un disparad
   tickets. Quitar un adjunto suelto sí lo borra (§25).
 - **Espacios, carpetas, anotaciones y subidas no piden autorización por entidad.** Las páginas
   de documentos sí, desde §24.
-- **No hay zona horaria por inquilino** y los informes programados usan la del servidor (11.3).
 - **«Tickets por área» sigue sin poderse hacer.** Es el ejemplo que se pidió, y necesita campos
   personalizados en tickets como dimensión de análisis: hoy los campos personalizados son de
   tareas y proyectos. El catálogo del constructor está preparado para recibirlos —basta añadir
@@ -1619,8 +1618,10 @@ al dueño y a él no. Quitando el inquilino del nombre del grupo, la prueba del 
 Quedaba una cosa: **el tablero de tareas no llamaba a `connectBoard`**. Resuelto en §23. La pantalla mezcla tareas de
 varios proyectos y no se suscribe a ninguno, así que el aviso `task_moved` sale y nadie lo
 escucha.
-
-
+
+
+
+
 ### 22.5 Los miembros de un equipo no se podían editar (arreglado)
 
 `PUT /teams/{id}` recibía `memberIds` y lo ignoraba. La API tampoco decía quiénes eran los
@@ -2190,6 +2191,49 @@ Lo prueban:
 
 ---
 
+## 33. Zona horaria por organización
+
+**Los informes programados comparaban con la hora del servidor.** La programación guarda la hora
+local («cada lunes a las 8»), pero el planificador usaba la del servidor para todas las
+organizaciones. Los informes exportados escribían «UTC» en la fecha de generación, y agrupar por
+día o mes ponía un ticket abierto a las 23:30 de Bogotá en el día siguiente.
+
+Lo que hay ahora, tal como se acordó:
+
+- **La zona se guarda por organización**, con su nombre IANA (`America/Bogota`, `Europe/Madrid`),
+  en la tabla nueva `OrganizationSettings` de Identity: una fila por organización, con índice
+  único. No hay entidad «organización», así que mientras nadie la cambie no hay fila y vale
+  **UTC**, que es lo que se usaba en la práctica.
+- **Solo nombres IANA.** Los de Windows («Romance Standard Time») se rechazan aunque .NET los
+  acepte en Windows, porque la API corre en Linux. Comprobado que la imagen `aspnet:9.0` trae
+  `tzdata`.
+- **API:**
+  - `GET /api/v1/organization/settings`, para cualquiera de la organización;
+  - `PUT`, solo para quien administra. Una zona que no existe da 400.
+- **Puerto `IOrganizationTimeZone`** en BuildingBlocks, implementado por Identity con el inquilino
+  forzado, porque lo usa el planificador, que no tiene petición. Una zona guardada que el sistema
+  ya no conozca cae en UTC en vez de tumbar el informe.
+- **Lo que la usa:**
+  - el planificador compara cada programación con la hora de su organización, y pide la zona una
+    vez por organización y vuelta;
+  - los informes escriben la hora de generación en esa zona y dicen cuál («Generado el
+    14/10/2026 08:00 (America/Bogota)»);
+  - las fechas de creación y resolución de los tickets se escriben en esa zona;
+  - agrupar por fecha usa también esa zona.
+- **El calendario sigue con la hora del navegador** de cada persona.
+- **En la pantalla:** pestaña «Organización» en Administración, con el desplegable de zonas que
+  conoce el navegador.
+
+**Queda:** los filtros de fecha del constructor de informes («creado después del 1 de octubre»)
+siguen comparando en UTC.
+
+Lo prueban:
+
+- `OrganizationSettingsTests`: zonas IANA sí, nombres de Windows o inventados no, y las 13:00 UTC
+  son las 8:00 de Bogotá;
+- `OrganizationTimeZoneFlowTests`: solo quien administra la cambia y solo a una zona real; el
+  informe dice su hora en la zona de la organización;
+- la e2e `organization-time-zone`.
 ## 32. El menú de selección del editor no salía nunca
 
 Los dos pendientes de la Fase 5B que seguían en §14 ya estaban hechos: el asa para arrastrar

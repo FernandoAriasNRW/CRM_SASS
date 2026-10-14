@@ -2,6 +2,66 @@
 <xliff xmlns="urn:oasis:names:tc:xliff:document:1.2" version="1.2">
   <file source-language="es" target-language="en" datatype="plaintext" original="ng2.template">
     <body>
+      <trans-unit id="7211501113903874100" datatype="html">
+        <source>Organización</source>
+        <target state="final">Organization</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/admin.component.html</context>
+          <context context-type="linenumber">134,135</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/organization/admin-organization.component.ts</context>
+          <context context-type="linenumber">31,32</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6976779522596230157" datatype="html">
+        <source>Lo que vale para toda la organización.</source>
+        <target state="final">What applies to the whole organization.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/organization/admin-organization.component.ts</context>
+          <context context-type="linenumber">32,33</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5412991827145160697" datatype="html">
+        <source>Zona horaria</source>
+        <target state="final">Time zone</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/organization/admin-organization.component.ts</context>
+          <context context-type="linenumber">36,37</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="9053718360404307650" datatype="html">
+        <source> Los informes programados se generan a su hora en esta zona, y las fechas de los informes se escriben en ella. El calendario sigue usando la hora del navegador de cada persona. </source>
+        <target state="final"> Scheduled reports run at their time in this zone, and report dates are written in it. The calendar keeps using each person's browser time. </target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/organization/admin-organization.component.ts</context>
+          <context context-type="linenumber">38,39</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7695489105986126617" datatype="html">
+        <source>Guardado.</source>
+        <target state="final">Saved.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/organization/admin-organization.component.ts</context>
+          <context context-type="linenumber">54,55</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3341179449957677361" datatype="html">
+        <source>No se pudo cargar la configuración.</source>
+        <target state="final">Couldn't load the settings.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/organization/admin-organization.component.ts</context>
+          <context context-type="linenumber">86</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4343320461550333666" datatype="html">
+        <source>No se pudo guardar la zona horaria.</source>
+        <target state="final">Couldn't save the time zone.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/admin/organization/admin-organization.component.ts</context>
+          <context context-type="linenumber">102</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="1275367567830072467" datatype="html">
         <source>Arrastra para mover; con el teclado, flechas</source>
         <target state="final">Drag to move; with the keyboard, arrow keys</target>
