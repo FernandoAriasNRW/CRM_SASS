@@ -1,4 +1,5 @@
 import { test, expect, type Page, type Route } from '@playwright/test';
+import { createSession, submitLogin } from './support/auth';
 
 /**
  * Documentos adjuntos a una tarea, desde los dos lados.
@@ -8,15 +9,7 @@ import { test, expect, type Page, type Route } from '@playwright/test';
  * pertenece. Lo que se comprueba es lo que se manda al servidor y lo que se pinta con su respuesta.
  */
 
-const SESSION = {
-  accessToken: 't', refreshToken: 'r',
-  accessTokenExpiresAtUtc: new Date(Date.now() + 864e5).toISOString(),
-  refreshTokenExpiresAtUtc: new Date(Date.now() + 864e5).toISOString(),
-  user: {
-    id: '00000000-0000-0000-0000-000000000001', name: 'Admin', email: 'admin@acme.com', role: 'Admin',
-    tenantId: '00000000-0000-0000-0000-0000000000ff',
-  },
-};
+const SESSION = createSession();
 
 const DOC = {
   id: '00000000-0000-0000-0000-0000000000d1', title: 'Especificación del pago', description: '',
@@ -52,11 +45,7 @@ async function signIn(page: Page, handle: (route: Route, url: string, method: st
     return handle(r, url, method);
   });
 
-  await page.goto('/login');
-  await page.getByPlaceholder('admin@acme.com').fill('admin@acme.com');
-  await page.getByPlaceholder('••••••••').fill('admin123');
-  await page.getByRole('button', { name: /ingresar/i }).click();
-  await expect(page).not.toHaveURL(/\/login/, { timeout: 30_000 });
+  await submitLogin(page);
   return sent;
 }
 

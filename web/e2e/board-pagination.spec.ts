@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
+import { createSession, shellResponse, submitLogin } from './support/auth';
 
 /**
  * Paginación por columna.
@@ -12,16 +13,7 @@ import { test, expect, type Page } from '@playwright/test';
  * tarjetas en posiciones equivocadas.
  */
 
-const SESSION = {
-  accessToken: 'token-de-prueba',
-  refreshToken: 'refresco-de-prueba',
-  refreshTokenExpiresAtUtc: new Date(Date.now() + 7 * 864e5).toISOString(),
-  user: {
-    id: '00000000-0000-0000-0000-000000000001',
-    name: 'Admin', email: 'admin@acme.com', role: 'Admin',
-    tenantId: '00000000-0000-0000-0000-0000000000ff',
-  },
-};
+const SESSION = createSession();
 
 /** 60 tareas en una sola columna: más de dos tandas. */
 const TASKS = Array.from({ length: 60 }, (_, i) => ({
@@ -43,6 +35,8 @@ async function openBoard(page: Page) {
   await page.route(/\/api\/v1\//, r => {
     const url = r.request().url();
     if (/\/auth\/login/.test(url)) return r.fallback();
+    const shell = shellResponse(url, SESSION);
+    if (shell !== undefined) return r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(shell) });
     if (/\/views\//.test(url)) {
       return r.fulfill({ status: 200, contentType: 'application/json', body: '[]' });
     }
@@ -55,11 +49,7 @@ async function openBoard(page: Page) {
     return r.fulfill({ status: 200, contentType: 'application/json', body: '{"items":[],"totalCount":0}' });
   });
 
-  await page.goto('/login');
-  await page.getByPlaceholder('admin@acme.com').fill('admin@acme.com');
-  await page.getByPlaceholder('••••••••').fill('admin123');
-  await page.getByRole('button', { name: /ingresar/i }).click();
-  await expect(page).not.toHaveURL(/\/login/, { timeout: 30_000 });
+  await submitLogin(page);
 
   await page.keyboard.press('Control+k');
   await page.keyboard.type('tareas');

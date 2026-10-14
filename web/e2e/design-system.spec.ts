@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { createSession, shellResponse, submitLogin } from './support/auth';
 import AxeBuilder from '@axe-core/playwright';
 
 /**
@@ -8,11 +9,7 @@ import AxeBuilder from '@axe-core/playwright';
  * por tanto nunca se compilaba.
  */
 
-const SESSION = {
-  accessToken: 't', refreshToken: 'r',
-  refreshTokenExpiresAtUtc: new Date(Date.now() + 864e5).toISOString(),
-  user: { id: '1', name: 'Admin', email: 'admin@acme.com', role: 'Admin', tenantId: 'ff' },
-};
+const SESSION = createSession({ id: '1', name: 'Admin', email: 'admin@acme.com', role: 'Admin', tenantId: 'ff' });
 
 test.beforeEach(async ({ page }) => {
   await page.route(/\/api\/v1\/auth\/login/, r =>
@@ -20,15 +17,13 @@ test.beforeEach(async ({ page }) => {
   await page.route(/\/api\/v1\//, r => {
     const u = r.request().url();
     if (/\/auth\/login/.test(u)) return r.fallback();
+    const shell = shellResponse(u, SESSION);
+    if (shell !== undefined) return r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(shell) });
     if (/\/views\//.test(u)) return r.fulfill({ status: 200, contentType: 'application/json', body: '[]' });
     return r.fulfill({ status: 200, contentType: 'application/json', body: '{"items":[],"totalCount":0}' });
   });
 
-  await page.goto('/login');
-  await page.getByPlaceholder('admin@acme.com').fill('admin@acme.com');
-  await page.getByPlaceholder('••••••••').fill('admin123');
-  await page.getByRole('button', { name: /ingresar/i }).click();
-  await expect(page).not.toHaveURL(/\/login/, { timeout: 30_000 });
+  await submitLogin(page);
 
   await page.keyboard.press('Control+k');
   await page.keyboard.type('sistema de diseño');

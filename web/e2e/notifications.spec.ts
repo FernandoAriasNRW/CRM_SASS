@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
+import { createSession, submitLogin } from './support/auth';
 
 /**
  * La campana de avisos y las preferencias.
@@ -7,15 +8,10 @@ import { test, expect, type Page } from '@playwright/test';
  * preferencias salen del catálogo del servidor, agrupadas, con cada cambio guardado al momento.
  */
 
-const SESSION = {
-  accessToken: 't', refreshToken: 'r',
-  accessTokenExpiresAtUtc: new Date(Date.now() + 864e5).toISOString(),
-  refreshTokenExpiresAtUtc: new Date(Date.now() + 864e5).toISOString(),
-  user: {
-    id: '00000000-0000-0000-0000-000000000001', name: 'Ana', email: 'ana@acme.com', role: 'Member',
-    tenantId: '00000000-0000-0000-0000-0000000000ff',
-  },
-};
+const SESSION = createSession({
+  id: '00000000-0000-0000-0000-000000000001', name: 'Ana', email: 'ana@acme.com', role: 'Member',
+  tenantId: '00000000-0000-0000-0000-0000000000ff',
+});
 
 const TASK_ID = '00000000-0000-0000-0000-000000000101';
 
@@ -70,11 +66,7 @@ async function signIn(page: Page): Promise<{ method: string; url: string; body: 
     return r.fulfill(json({ items: [], totalCount: 0 }));
   });
 
-  await page.goto('/login');
-  await page.getByPlaceholder('admin@acme.com').fill('ana@acme.com');
-  await page.getByPlaceholder('••••••••').fill('secreto');
-  await page.getByRole('button', { name: /ingresar/i }).click();
-  await expect(page).not.toHaveURL(/\/login/, { timeout: 30_000 });
+  await submitLogin(page, 'ana@acme.com', 'secreto');
   return sent;
 }
 

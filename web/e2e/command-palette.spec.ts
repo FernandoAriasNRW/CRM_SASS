@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
+import { DEFAULT_USER, createSession, shellResponse, submitLogin } from './support/auth';
 
 /**
  * Paleta de comandos. Vive detrás del inicio de sesión, así que cada prueba entra con la
@@ -6,32 +7,20 @@ import { test, expect, type Page } from '@playwright/test';
  * que ya cubren los tests de integración.
  */
 
-const SESSION = {
-  accessToken: 'token-de-prueba',
-  refreshToken: 'refresco-de-prueba',
-  refreshTokenExpiresAtUtc: new Date(Date.now() + 7 * 864e5).toISOString(),
-  user: {
-    id: '00000000-0000-0000-0000-000000000001',
-    name: 'Admin Administrator',
-    email: 'admin@acme.com',
-    role: 'Admin',
-    tenantId: '00000000-0000-0000-0000-0000000000ff',
-  },
-};
+const SESSION = createSession({ ...DEFAULT_USER, name: 'Admin Administrator' });
 
 async function signIn(page: Page) {
   await page.route('**/api/v1/auth/login', route =>
     route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(SESSION) }));
-  await page.route('**/api/v1/**', route =>
-    route.request().url().includes('/auth/login')
-      ? route.fallback()
-      : route.fulfill({ status: 200, contentType: 'application/json', body: '{"items":[],"totalCount":0}' }));
+  await page.route('**/api/v1/**', route => {
+    const url = route.request().url();
+    if (url.includes('/auth/login')) return route.fallback();
+    const shell = shellResponse(url, SESSION);
+    if (shell !== undefined) return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(shell) });
+    return route.fulfill({ status: 200, contentType: 'application/json', body: '{"items":[],"totalCount":0}' });
+  });
 
-  await page.goto('/login');
-  await page.getByPlaceholder('admin@acme.com').fill('admin@acme.com');
-  await page.getByPlaceholder('••••••••').fill('admin123');
-  await page.getByRole('button', { name: /ingresar/i }).click();
-  await expect(page).not.toHaveURL(/\/login/, { timeout: 30_000 });
+  await submitLogin(page);
 }
 
 const palette = (page: Page) => page.getByRole('dialog', { name: 'Paleta de comandos' });

@@ -53,9 +53,11 @@ export class UserAvatarComponent implements OnInit {
   }
 
   getColor(id: string): string {
+    // Tonos 700: las iniciales van en blanco y los 500 que había no llegaban al 4,5:1 que
+    // pide WCAG AA (el naranja se quedaba en 2,8:1). Con estos todos pasan de 5:1.
     const colors = [
-      '#EF4444', '#F97316', '#F59E0B', '#10B981', '#06B6D4', 
-      '#3B82F6', '#6366F1', '#8B5CF6', '#D946EF', '#F43F5E'
+      '#B91C1C', '#C2410C', '#B45309', '#047857', '#0E7490',
+      '#1D4ED8', '#4338CA', '#6D28D9', '#A21CAF', '#BE123C'
     ];
     
     // Simple hash of the UUID

@@ -55,9 +55,10 @@
           <div class="relative group/menu w-full flex justify-center"
                (mouseenter)="onModuleEnter(item.id)">
             <!-- Nav Item (Icon only + small label below) -->
+            <!-- Fondo activo al 5 %: al 10 % la etiqueta de 10 px quedaba en 4,48:1, bajo el 4,5:1 de AA. -->
             <a
               [routerLink]="item.route"
-              routerLinkActive="text-primary bg-primary/10"
+              routerLinkActive="text-primary bg-primary/5"
               [routerLinkActiveOptions]="{ exact: item.isHome === true }"
               class="flex flex-col items-center justify-center w-12 h-12 rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground transition-colors cursor-pointer"
             >
@@ -115,7 +116,7 @@
           <div class="relative group/menu w-full flex justify-center">
             <a
               routerLink="/admin"
-              routerLinkActive="text-primary bg-primary/10"
+              routerLinkActive="text-primary bg-primary/5"
               class="flex flex-col items-center justify-center w-12 h-12 rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground transition-colors cursor-pointer"
             >
               <!--
