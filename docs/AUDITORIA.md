@@ -931,7 +931,6 @@ que lleva «8b» en el título. Lo único que sigue siendo propio de un disparad
 - **«Barras apiladas» se pinta como barras normales.** Apilar necesita una segunda dimensión
   —agrupar por dos campos— que el catálogo no ofrece todavía. Se pinta en vez de rechazarse
   porque el resultado sigue siendo cierto, sólo que menos rico.
-- **De la Fase 5B faltan los bloques arrastrables y los comentarios en línea** (ver `FASE-5.md`).
 - **Documentos tiene la columna de archivado y no la usa.** Se le puso al modelar el concepto
   para no dejar el agregado a medias, pero Docs mantiene su propio panel lateral y no se ha
   enganchado al compartido.
@@ -2188,3 +2187,32 @@ Lo prueban:
   - arrastrar empuja al de debajo;
   - redimensionar con el teclado guarda una sola vez;
   - un panel ajeno no se recoloca.
+
+---
+
+## 32. El menú de selección del editor no salía nunca
+
+Los dos pendientes de la Fase 5B que seguían en §14 ya estaban hechos: el asa para arrastrar
+bloques (`DragHandle`) y los comentarios en línea (anotaciones con su hilo, API probada en
+`InlineCommentsFlowTests`). La nota se había quedado atrás.
+
+Pero al escribir la e2e de los comentarios en línea salió un fallo real: **el menú que aparece al
+seleccionar texto no salía nunca**. Ese menú tiene negrita, cursiva, tachado, código, encabezados,
+cita, enlace y «Comentar».
+
+- **La causa:** `ngAfterViewInit` metía `BubbleMenu` a mano en `editor.extensionManager.extensions`,
+  con el editor ya creado. Eso solo cambia una lista que nadie vuelve a leer: el plugin de
+  ProseMirror que vigila la selección no se registraba.
+- **La consecuencia:** no había forma de dar formato con el ratón ni de **crear un comentario en
+  línea desde la pantalla**, aunque la API funcionara.
+- **El origen:** ese registro viene del 23 de julio de 2026 (`d0ff004c`). No he comprobado si llegó
+  a funcionar con alguna versión anterior de TipTap.
+
+**El arreglo:** se registra con `editor.registerPlugin(BubbleMenuPlugin({...}))`, que es la forma
+de añadir un plugin a un editor ya creado.
+
+Lo prueban dos e2e nuevas en `docs.spec.ts`:
+
+- seleccionar texto y pulsar «Comentar» crea la anotación con la cita y la enseña en el panel:
+  **fallaba antes del arreglo**;
+- al pasar por encima de un bloque aparece su asa.
