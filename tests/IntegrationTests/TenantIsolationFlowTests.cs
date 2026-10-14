@@ -86,7 +86,12 @@ public sealed class TenantIsolationFlowTests(CrmApiFactory factory)
         });
         creation.StatusCode.Should().Be(HttpStatusCode.Created);
 
-        var listing = await client.GetFromJsonAsync<JsonElement>("/api/v1/projects?pageSize=100");
+        // Se busca por su nombre, que es único, y no se espera que caiga entre los cien primeros: la
+        // suite crea cientos de proyectos el mismo día, y entre los que empiezan el mismo día el
+        // orden es por identificador, así que el nuevo podía quedar en la segunda página y la
+        // prueba fallar sin que el alta tuviera nada mal.
+        var listing = await client.GetFromJsonAsync<JsonElement>(
+            $"/api/v1/projects?pageSize=100&search={Uri.EscapeDataString(name)}");
         var names = listing.GetProperty("items").EnumerateArray()
             .Select(p => p.GetProperty("name").ValueKind == JsonValueKind.Object
                 ? p.GetProperty("name").GetProperty("value").GetString()

@@ -161,7 +161,7 @@ public sealed class ReportEngine(
                 "assignee" => ApplyGuid(query, filter, t => t.AssigneeId),
                 "project" => ApplyGuid(query, filter, t => t.ProjectId),
                 "due_date" => ApplyDate(query, filter, t => t.DueDate.ToDateTime(TimeOnly.MinValue)),
-                "created_at" => ApplyDate(query, filter, t => t.CreatedAtUtc),
+                "created_at" => ApplyDate(query, filter, t => t.CreatedAtUtc, instant: true),
                 "estimated_hours" => ApplyNumber(query, filter, t => (double)t.EstimatedHours),
                 _ => throw new InvalidOperationException($"No sé filtrar tareas por «{filter.Field}»")
             };
@@ -226,7 +226,7 @@ public sealed class ReportEngine(
                 "status" => ApplyCode(query, filter, t => t.StatusValue, StatusCode),
                 "priority" => ApplyCode(query, filter, t => t.PriorityValue, PriorityCode),
                 "agent" => ApplyNullableGuid(query, filter, t => t.AssignedAgentId),
-                "created_at" => ApplyDate(query, filter, t => t.CreatedAt),
+                "created_at" => ApplyDate(query, filter, t => t.CreatedAt, instant: true),
                 "resolved_at" => ApplyNullableDate(query, filter, t => t.ResolvedAt),
                 _ => throw new InvalidOperationException($"No sé filtrar tickets por «{filter.Field}»")
             };
@@ -581,10 +581,14 @@ public sealed class ReportEngine(
         return query.Where(System.Linq.Expressions.Expression.Lambda<Func<T, bool>>(body, parametro));
     }
 
-    private static IQueryable<T> ApplyDate<T>(
-        IQueryable<T> query, ReportFilter f, System.Linq.Expressions.Expression<Func<T, DateTime>> field)
+    /// <param name="instant">
+    /// Si el campo es un instante guardado en UTC (cuándo se creó algo) y no una fecha a secas
+    /// (cuándo vence). Ver <see cref="FilterValue"/>.
+    /// </param>
+    private IQueryable<T> ApplyDate<T>(
+        IQueryable<T> query, ReportFilter f, System.Linq.Expressions.Expression<Func<T, DateTime>> field, bool instant = false)
     {
-        var value = ParseDate(f);
+        var value = FilterValue(f, instant);
         var parametro = field.Parameters[0];
         var constant = System.Linq.Expressions.Expression.Constant(value);
 
@@ -598,7 +602,8 @@ public sealed class ReportEngine(
         return query.Where(System.Linq.Expressions.Expression.Lambda<Func<T, bool>>(body, parametro));
     }
 
-    private static IQueryable<T> ApplyNullableDate<T>(
+    /// <summary>Las fechas que pueden faltar son, todas, instantes: cuándo se resolvió algo.</summary>
+    private IQueryable<T> ApplyNullableDate<T>(
         IQueryable<T> query, ReportFilter f, System.Linq.Expressions.Expression<Func<T, DateTime?>> field)
     {
         var parametro = field.Parameters[0];
@@ -609,27 +614,58 @@ public sealed class ReportEngine(
             "empty" => System.Linq.Expressions.Expression.Equal(field.Body, isNull),
             "not_empty" => System.Linq.Expressions.Expression.NotEqual(field.Body, isNull),
             "greater_than" => System.Linq.Expressions.Expression.GreaterThan(
-                field.Body, System.Linq.Expressions.Expression.Constant((DateTime?)ParseDate(f), typeof(DateTime?))),
+                field.Body, System.Linq.Expressions.Expression.Constant((DateTime?)FilterValue(f, instant: true), typeof(DateTime?))),
             "less_than" => System.Linq.Expressions.Expression.LessThan(
-                field.Body, System.Linq.Expressions.Expression.Constant((DateTime?)ParseDate(f), typeof(DateTime?))),
+                field.Body, System.Linq.Expressions.Expression.Constant((DateTime?)FilterValue(f, instant: true), typeof(DateTime?))),
             _ => throw new InvalidOperationException($"El operador «{f.Operator}» no vale para una fecha")
         };
 
         return query.Where(System.Linq.Expressions.Expression.Lambda<Func<T, bool>>(body, parametro));
     }
 
-    private static DateTime ParseDate(ReportFilter f)
+    /// <summary>
+    /// El valor del filtro, listo para comparar con la columna.
+    ///
+    /// <b>«Creado después del 1 de octubre» es el 1 de octubre de la organización.</b> En un campo
+    /// que es un instante —guardado en UTC— la fecha escrita se lee en la zona de la organización y
+    /// se pasa a UTC: en Bogotá, el 1 de octubre empieza a las 5:00 UTC. Antes se comparaba en UTC
+    /// y los tickets de las últimas horas del 30 de septiembre entraban como si fueran de octubre.
+    ///
+    /// En un campo que es una fecha a secas —cuándo vence— no hay nada que convertir. Y si el valor
+    /// trae su propia zona (<c>2026-10-01T00:00:00Z</c>), manda la suya.
+    /// </summary>
+    private DateTime FilterValue(ReportFilter f, bool instant)
     {
-        // Se admite ISO y el formato español, porque el valor puede venir del constructor de la
-        // pantalla o de una definición escrita a mano. Se fija UTC: sin eso, la misma definición
-        // filtraría distinto según la zona horaria del servidor.
-        if (DateTime.TryParse(f.Value, CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal, out var iso))
-            return iso;
+        var (value, hasOffset) = ParseDate(f);
+        if (hasOffset) return value;
+        return instant ? TimeZoneInfo.ConvertTimeToUtc(value, zone) : value;
+    }
 
-        if (DateTime.TryParse(f.Value, Spanish, DateTimeStyles.AdjustToUniversal, out var esp))
-            return esp;
+    /// <summary>
+    /// Lee la fecha tal como se escribió, sin convertirla.
+    ///
+    /// Se admite ISO y el formato español, porque el valor puede venir del constructor de la
+    /// pantalla o de una definición escrita a mano. Antes se leía con <c>AdjustToUniversal</c>,
+    /// que interpreta una fecha sin zona como hora local <b>del servidor</b> y la pasa a UTC: la
+    /// misma definición filtraba distinto según dónde corriera la API, justo lo que se quería
+    /// evitar.
+    /// </summary>
+    private static (DateTime Value, bool HasOffset) ParseDate(ReportFilter f)
+    {
+        // ISO si empieza por el año; si no, español. Probar primero la cultura invariante con todo
+        // leía «01/10/2026» como 10 de enero (mes/día), y el formato español nunca se usaba.
+        var value = f.Value?.Trim() ?? string.Empty;
+        var culture = value.Length >= 4 && value[..4].All(char.IsDigit) ? CultureInfo.InvariantCulture : Spanish;
 
-        throw new InvalidOperationException($"«{f.Value}» no es una fecha");
+        if (!DateTime.TryParse(value, culture, DateTimeStyles.RoundtripKind, out var parsed))
+            throw new InvalidOperationException($"«{f.Value}» no es una fecha");
+
+        return parsed.Kind switch
+        {
+            DateTimeKind.Utc => (parsed, true),
+            DateTimeKind.Local => (parsed.ToUniversalTime(), true),
+            _ => (DateTime.SpecifyKind(parsed, DateTimeKind.Unspecified), false),
+        };
     }
 
     #endregion
