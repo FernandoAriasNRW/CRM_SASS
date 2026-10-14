@@ -4,6 +4,7 @@ using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
 using FluentAssertions;
+using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
 namespace IntegrationTests;
@@ -106,5 +107,53 @@ public sealed class FileUploadFlowTests(CrmApiFactory factory)
         var response = await UploadAsync(client, "vacio.txt", string.Empty, "text/plain");
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    /// <summary>
+    /// Una página web no se puede subir.
+    ///
+    /// Los ficheros se sirven desde el origen de la API, donde vive la cookie de sesión: un .html
+    /// subido y abierto ahí podía pedir un token nuevo con la cookie de quien lo abriera.
+    /// </summary>
+    [Theory]
+    [InlineData("pagina.html", "text/html")]
+    [InlineData("dibujo.svg", "image/svg+xml")]
+    [InlineData("codigo.js", "text/javascript")]
+    public async Task A_file_the_browser_would_run_is_rejected(string name, string type)
+    {
+        var client = await AuthenticateAsync();
+
+        var response = await UploadAsync(client, name, "<script>fetch('/api/v1/auth/refresh')</script>", type);
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    /// <summary>
+    /// Lo que se sirve va con un sandbox y sin adivinar el tipo, también lo que ya estuviera
+    /// subido de antes: un .html antiguo se descarga en vez de abrirse como página.
+    /// </summary>
+    [Fact]
+    public async Task Stored_files_are_served_sandboxed_and_old_pages_as_downloads()
+    {
+        var client = await AuthenticateAsync();
+
+        var response = await UploadAsync(client, "notas.txt", "hola", "text/plain");
+        var url = (await response.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("url").GetString()!;
+        if (url.StartsWith("http", StringComparison.OrdinalIgnoreCase)) return;
+
+        var download = await client.GetAsync(url);
+        download.Headers.GetValues("Content-Security-Policy").Single().Should().StartWith("sandbox");
+        download.Headers.GetValues("X-Content-Type-Options").Single().Should().Be("nosniff");
+
+        // Una página que ya estaba en el almacenamiento, de antes de rechazarlas al subir.
+        var folder = BuildingBlocks.Infrastructure.Storage.DiskStorageService.ResolveFolder(
+            factory.Services.GetRequiredService<Microsoft.Extensions.Configuration.IConfiguration>()[$"{BuildingBlocks.Infrastructure.Storage.DiskStorageOptions.SectionName}:Folder"]);
+        var name = $"antigua-{Guid.NewGuid():N}.html";
+        await File.WriteAllTextAsync(Path.Combine(folder, name), "<script>alert(1)</script>");
+
+        var old = await client.GetAsync(url[..(url.LastIndexOf('/') + 1)] + name);
+        old.StatusCode.Should().Be(HttpStatusCode.OK);
+        old.Content.Headers.ContentDisposition?.DispositionType.Should().Be("attachment");
+        old.Headers.GetValues("Content-Security-Policy").Single().Should().StartWith("sandbox");
     }
 }

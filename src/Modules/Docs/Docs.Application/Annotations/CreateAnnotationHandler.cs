@@ -1,11 +1,20 @@
 using BuildingBlocks.Domain;
+using BuildingBlocks.Application.Abstractions;
+using BuildingBlocks.Application.Authorization;
 using Docs.Application.Abstractions.Repositories;
+using Docs.Application.Authorization;
 using Docs.Domain.Entities;
 using MediatR;
 
 namespace Docs.Application.Annotations;
 
-public sealed class CreateAnnotationHandler(TimeProvider timeProvider, IDocumentRepository repository)
+/// <summary>
+/// Comentar pide poder leer el documento: quien lo ve puede comentarlo, aunque no pueda editarlo.
+/// Antes no se comprobaba nada sobre el documento.
+/// </summary>
+public sealed class CreateAnnotationHandler(
+    TimeProvider timeProvider, IDocumentRepository repository,
+    IUserContext user, IEntityPermissionService permissions)
     : IRequestHandler<CreateAnnotationCommand, Result<Guid>>
 {
     public async Task<Result<Guid>> Handle(CreateAnnotationCommand request, CancellationToken cancellationToken)
@@ -13,6 +22,8 @@ public sealed class CreateAnnotationHandler(TimeProvider timeProvider, IDocument
         var page = await repository.GetPageByIdAsync(request.PageId, cancellationToken);
         if (page is null)
             return Result<Guid>.Failure("La página no existe.");
+
+        await permissions.EnsureOnDocumentAsync(user, page.DocumentId, "Read", cancellationToken);
 
         // El documento sale de la página y no de lo que mande el cliente: si viniera de fuera,
         // una anotación podría quedar colgada de un documento que no es el suyo y el panel la

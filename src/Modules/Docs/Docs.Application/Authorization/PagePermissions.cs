@@ -14,15 +14,23 @@ namespace Docs.Application.Authorization;
 /// </summary>
 internal static class PagePermissions
 {
-    public static async Task EnsureCanWriteAsync(
+    public static Task EnsureCanWriteAsync(
         this IEntityPermissionService permissions, IUserContext user, Page page, CancellationToken ct)
+        => permissions.EnsureOnDocumentAsync(user, page.DocumentId, "Write", ct);
+
+    /// <summary>
+    /// El nivel pedido sobre un documento concreto. Lo usan también las anotaciones, que llegan
+    /// con su propio identificador y no con el del documento.
+    /// </summary>
+    public static async Task EnsureOnDocumentAsync(
+        this IEntityPermissionService permissions, IUserContext user, Guid documentId, string level, CancellationToken ct)
     {
         var allowed = await permissions.HasPermissionAsync(
-            user.TenantId, user.UserId, "Document", page.DocumentId, "Write", ct);
+            user.TenantId, user.UserId, "Document", documentId, level, ct);
 
         // La misma excepción que el comportamiento de autorización, para que la respuesta sea la
         // misma: 403.
         if (!allowed)
-            throw new UnauthorizedAccessException("No tienes permisos de Write para este recurso.");
+            throw new UnauthorizedAccessException($"No tienes permisos de {level} para este recurso.");
     }
 }

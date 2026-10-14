@@ -16,6 +16,7 @@ import {
   lucideMessageSquare
 } from '@ng-icons/lucide';
 import { AnnotationDto, DocsService, DocumentDto, PageDto } from './docs.service';
+import { errorMessage } from '../../shared/utils/error-message';
 import { PanelSectionsService } from '../../shared/ui/navigation-panel/panel-sections.service';
 
 /** Las pestañas que el panel de Documentos sabe abrir. Cualquier otra cosa en `?tab=` cae en «all». */
@@ -235,9 +236,11 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
       const { url } = await firstValueFrom(this.docsService.uploadFile(file));
       return { url, name: file.name, isImage: file.type.startsWith('image/') };
     } catch (err) {
+      // El motivo del servidor, si lo hay: un tipo que no se admite o un fichero demasiado
+      // grande se corrigen eligiendo otro, y «no llegó» haría pensar en la red.
       this.toast.error(
         $localize`No se pudo subir el fichero`,
-        $localize`«${file.name}» no llegó al servidor.`);
+        errorMessage(err, $localize`«${file.name}» no llegó al servidor.`));
       console.error('No se pudo subir el fichero', err);
       return null;
     } finally {

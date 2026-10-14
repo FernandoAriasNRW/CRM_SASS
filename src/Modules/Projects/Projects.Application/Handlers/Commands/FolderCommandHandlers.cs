@@ -7,10 +7,17 @@ using Projects.Domain.Entities;
 
 namespace Projects.Application.Handlers.Commands;
 
-public sealed class CreateFolderCommandHandler(IFolderRepository repository, IProjectsUnitOfWork unitOfWork) : ICommandHandler<CreateFolderCommand, Folder>
+public sealed class CreateFolderCommandHandler(
+    IFolderRepository repository, ISpaceRepository spaces, IProjectsUnitOfWork unitOfWork) : ICommandHandler<CreateFolderCommand, Folder>
 {
     public async Task<Result<Folder>> Handle(CreateFolderCommand request, CancellationToken cancellationToken)
     {
+        // El espacio tiene que ser de la organización. Antes se aceptaba cualquier identificador:
+        // uno inventado, o el de un espacio de otra organización, dejaba una carpeta colgada de
+        // nada que no aparecía en ningún árbol.
+        if (await spaces.GetByIdAsync(request.TenantId, request.SpaceId, false, cancellationToken) is null)
+            return Result<Folder>.Failure("Space no encontrado");
+
         var folder = Folder.Create(request.TenantId, request.SpaceId, request.Name);
         await repository.AddAsync(folder, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);

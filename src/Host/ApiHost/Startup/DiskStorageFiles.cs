@@ -41,7 +41,16 @@ public static class DiskStorageFiles
                     // Sin esto, un `.md` o un `.csv` subidos se sirven como 404: el proveedor por
                     // defecto sólo conoce los tipos que trae en su tabla.
                     ServeUnknownFileTypes = true,
-                    DefaultContentType = "application/octet-stream"
+                    DefaultContentType = "application/octet-stream",
+
+                    // Lo subido se sirve desde el origen de la API, donde vive la cookie de sesión:
+                    // sin estas cabeceras, un .html subido podía robar la sesión de quien lo abriera.
+                    // Ver UploadRules.
+                    OnPrepareResponse = context =>
+                    {
+                        foreach (var (name, value) in BuildingBlocks.Application.Abstractions.UploadRules.ServingHeaders(context.File.Name))
+                            context.Context.Response.Headers[name] = value;
+                    }
                 });
             }
         }

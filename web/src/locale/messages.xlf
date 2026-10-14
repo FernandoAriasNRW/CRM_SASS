@@ -3870,63 +3870,63 @@ Pendiente</source>
         <source>No se pudo subir el fichero</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/docs/docs.component.ts</context>
-          <context context-type="linenumber">239</context>
+          <context context-type="linenumber">242</context>
         </context-group>
       </trans-unit>
       <trans-unit id="5208525926701256982" datatype="html">
         <source>«<x id="PH" equiv-text="file.name"/>» no llegó al servidor.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/docs/docs.component.ts</context>
-          <context context-type="linenumber">240</context>
+          <context context-type="linenumber">243</context>
         </context-group>
       </trans-unit>
       <trans-unit id="2628556760851951567" datatype="html">
         <source>No se pudo crear el comentario</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/docs/docs.component.ts</context>
-          <context context-type="linenumber">277</context>
+          <context context-type="linenumber">280</context>
         </context-group>
       </trans-unit>
       <trans-unit id="215376949794144614" datatype="html">
         <source>El texto comentado ya no está en la página</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/docs/docs.component.ts</context>
-          <context context-type="linenumber">300</context>
+          <context context-type="linenumber">303</context>
         </context-group>
       </trans-unit>
       <trans-unit id="3978952260472288956" datatype="html">
         <source>No se pudo cambiar el estado del comentario</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/docs/docs.component.ts</context>
-          <context context-type="linenumber">316</context>
+          <context context-type="linenumber">319</context>
         </context-group>
       </trans-unit>
       <trans-unit id="9156513657614284282" datatype="html">
         <source>No se pudo quitar el comentario</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/docs/docs.component.ts</context>
-          <context context-type="linenumber">338</context>
+          <context context-type="linenumber">341</context>
         </context-group>
       </trans-unit>
       <trans-unit id="5716669141364218435" datatype="html">
         <source>Encabezado…</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/docs/docs.component.ts</context>
-          <context context-type="linenumber">596</context>
+          <context context-type="linenumber">599</context>
         </context-group>
       </trans-unit>
       <trans-unit id="4485468787556077788" datatype="html">
         <source>Escribe / para los comandos, o empieza a escribir…</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/docs/docs.component.ts</context>
-          <context context-type="linenumber">598</context>
+          <context context-type="linenumber">601</context>
         </context-group>
       </trans-unit>
       <trans-unit id="8307013293442796509" datatype="html">
         <source>Favoritos</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/docs/docs.component.ts</context>
-          <context context-type="linenumber">641</context>
+          <context context-type="linenumber">644</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/ui/navigation-panel/menu-vocabulary.ts</context>
@@ -3937,43 +3937,43 @@ Pendiente</source>
         <source>Marca un documento con la estrella para verlo aquí.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/docs/docs.component.ts</context>
-          <context context-type="linenumber">642</context>
+          <context context-type="linenumber">645</context>
         </context-group>
       </trans-unit>
       <trans-unit id="742558317880526807" datatype="html">
         <source>Páginas recientes</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/docs/docs.component.ts</context>
-          <context context-type="linenumber">651</context>
+          <context context-type="linenumber">654</context>
         </context-group>
       </trans-unit>
       <trans-unit id="8470167714752910061" datatype="html">
         <source>Untitled Wiki</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/docs/docs.component.ts</context>
-          <context context-type="linenumber">745</context>
+          <context context-type="linenumber">748</context>
         </context-group>
       </trans-unit>
       <trans-unit id="6426244299766531645" datatype="html">
         <source>Untitled Document</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/docs/docs.component.ts</context>
-          <context context-type="linenumber">745</context>
+          <context context-type="linenumber">748</context>
         </context-group>
       </trans-unit>
       <trans-unit id="765029681281106238" datatype="html">
         <source>Sin título</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/docs/docs.component.ts</context>
-          <context context-type="linenumber">873</context>
+          <context context-type="linenumber">876</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/docs/docs.component.ts</context>
-          <context context-type="linenumber">884</context>
+          <context context-type="linenumber">887</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/docs/docs.component.ts</context>
-          <context context-type="linenumber">900</context>
+          <context context-type="linenumber">903</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/docs/page-tree.component.ts</context>
@@ -3984,21 +3984,21 @@ Pendiente</source>
         <source>No se pudo crear la página</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/docs/docs.component.ts</context>
-          <context context-type="linenumber">891</context>
+          <context context-type="linenumber">894</context>
         </context-group>
       </trans-unit>
       <trans-unit id="3987557394785611089" datatype="html">
         <source>No se pudo mover la página</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/docs/docs.component.ts</context>
-          <context context-type="linenumber">921</context>
+          <context context-type="linenumber">924</context>
         </context-group>
       </trans-unit>
       <trans-unit id="600148905644155332" datatype="html">
         <source>No se pudo borrar la página</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/docs/docs.component.ts</context>
-          <context context-type="linenumber">944</context>
+          <context context-type="linenumber">947</context>
         </context-group>
       </trans-unit>
       <trans-unit id="1305965028187905812" datatype="html">
