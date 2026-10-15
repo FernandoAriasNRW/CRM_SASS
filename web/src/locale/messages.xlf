@@ -422,6 +422,37 @@
           <context context-type="linenumber">136</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="8265500184685762525" datatype="html">
+        <source>Tickets</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/core/custom-fields.service.ts</context>
+          <context context-type="linenumber">32</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/core/navigation-signal.store.ts</context>
+          <context context-type="linenumber">67</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tickets/tickets.component.html</context>
+          <context context-type="linenumber">15,16</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/webhooks/webhook.model.ts</context>
+          <context context-type="linenumber">59</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/command-palette/command-palette.service.ts</context>
+          <context context-type="linenumber">22</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/navigation-panel/menu-vocabulary.ts</context>
+          <context context-type="linenumber">153</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/notification-preferences.component.ts</context>
+          <context context-type="linenumber">135</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="7069705998625865227" datatype="html">
         <source>Sesión expirada</source>
         <context-group purpose="location">
@@ -479,33 +510,6 @@
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/ui/navigation-panel/menu-vocabulary.ts</context>
           <context context-type="linenumber">150</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="8265500184685762525" datatype="html">
-        <source>Tickets</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/core/navigation-signal.store.ts</context>
-          <context context-type="linenumber">67</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/tickets/tickets.component.html</context>
-          <context context-type="linenumber">15,16</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/webhooks/webhook.model.ts</context>
-          <context context-type="linenumber">59</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/shared/ui/command-palette/command-palette.service.ts</context>
-          <context context-type="linenumber">22</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/shared/ui/navigation-panel/menu-vocabulary.ts</context>
-          <context context-type="linenumber">153</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/shared/ui/notification-preferences.component.ts</context>
-          <context context-type="linenumber">135</context>
         </context-group>
       </trans-unit>
       <trans-unit id="1704927142412128979" datatype="html">
@@ -2061,7 +2065,7 @@ Pendiente</source>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tickets/ticket-detail-panel.component.html</context>
-          <context context-type="linenumber">123,124</context>
+          <context context-type="linenumber">127,128</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tickets/tickets.component.ts</context>
@@ -2293,7 +2297,7 @@ Pendiente</source>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tickets/ticket-detail-panel.component.html</context>
-          <context context-type="linenumber">158,159</context>
+          <context context-type="linenumber">162,163</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/ui/comments.component.html</context>
@@ -2939,7 +2943,7 @@ Pendiente</source>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tickets/ticket-detail-panel.component.html</context>
-          <context context-type="linenumber">156,157</context>
+          <context context-type="linenumber">160,161</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/ui/lifecycle-actions.component.ts</context>
@@ -3319,7 +3323,7 @@ Pendiente</source>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tickets/ticket-detail-panel.component.html</context>
-          <context context-type="linenumber">177,178</context>
+          <context context-type="linenumber">181,182</context>
         </context-group>
       </trans-unit>
       <trans-unit id="596202917501368638" datatype="html">
@@ -3428,7 +3432,7 @@ Pendiente</source>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tickets/ticket-detail-panel.component.html</context>
-          <context context-type="linenumber">209,210</context>
+          <context context-type="linenumber">213,214</context>
         </context-group>
       </trans-unit>
       <trans-unit id="4119886956721888228" datatype="html">
@@ -5616,7 +5620,7 @@ Pendiente</source>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tickets/ticket-detail-panel.component.html</context>
-          <context context-type="linenumber">225,226</context>
+          <context context-type="linenumber">229,230</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/webhooks/webhooks.component.html</context>
@@ -5933,21 +5937,21 @@ Pendiente</source>
         <source>No se pudo calcular el resultado.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/reports/report-builder.component.ts</context>
-          <context context-type="linenumber">447</context>
+          <context context-type="linenumber">454</context>
         </context-group>
       </trans-unit>
       <trans-unit id="5022839333651225030" datatype="html">
         <source>Informe guardado.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/reports/report-builder.component.ts</context>
-          <context context-type="linenumber">461</context>
+          <context context-type="linenumber">468</context>
         </context-group>
       </trans-unit>
       <trans-unit id="3060157024170002439" datatype="html">
         <source>No se pudo guardar el informe.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/reports/report-builder.component.ts</context>
-          <context context-type="linenumber">465</context>
+          <context context-type="linenumber">472</context>
         </context-group>
       </trans-unit>
       <trans-unit id="7382126769107886475" datatype="html">
@@ -7566,63 +7570,63 @@ Pendiente</source>
         <source>Describe el problema…</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tickets/ticket-detail-panel.component.html</context>
-          <context context-type="linenumber">128,129</context>
+          <context context-type="linenumber">132,133</context>
         </context-group>
       </trans-unit>
       <trans-unit id="2549948840554240473" datatype="html">
         <source>Adjuntos</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tickets/ticket-detail-panel.component.html</context>
-          <context context-type="linenumber">137,138</context>
+          <context context-type="linenumber">141,142</context>
         </context-group>
       </trans-unit>
       <trans-unit id="5091732465417690225" datatype="html">
         <source>· del cliente</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tickets/ticket-detail-panel.component.html</context>
-          <context context-type="linenumber">152,153</context>
+          <context context-type="linenumber">156,157</context>
         </context-group>
       </trans-unit>
       <trans-unit id="5620538291386893704" datatype="html">
         <source>Quitar adjunto</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tickets/ticket-detail-panel.component.html</context>
-          <context context-type="linenumber">162,163</context>
+          <context context-type="linenumber">166,167</context>
         </context-group>
       </trans-unit>
       <trans-unit id="5695787277296922534" datatype="html">
         <source>Adjuntar imágenes o vídeos</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tickets/ticket-detail-panel.component.html</context>
-          <context context-type="linenumber">179,180</context>
+          <context context-type="linenumber">183,184</context>
         </context-group>
       </trans-unit>
       <trans-unit id="3630040988443975211" datatype="html">
         <source>Sin datos de contacto</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tickets/ticket-detail-panel.component.ts</context>
-          <context context-type="linenumber">58</context>
+          <context context-type="linenumber">59</context>
         </context-group>
       </trans-unit>
       <trans-unit id="955496252303817468" datatype="html">
         <source>No se pudieron subir los adjuntos</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tickets/ticket-detail-panel.component.ts</context>
-          <context context-type="linenumber">116</context>
+          <context context-type="linenumber">117</context>
         </context-group>
       </trans-unit>
       <trans-unit id="4427046182456355511" datatype="html">
         <source>Quitar <x id="name" equiv-text="attachment.name"/></source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tickets/ticket-detail-panel.component.ts</context>
-          <context context-type="linenumber">124</context>
+          <context context-type="linenumber">125</context>
         </context-group>
       </trans-unit>
       <trans-unit id="8749213082143175820" datatype="html">
         <source>No se pudo quitar el adjunto</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tickets/ticket-detail-panel.component.ts</context>
-          <context context-type="linenumber">135</context>
+          <context context-type="linenumber">136</context>
         </context-group>
       </trans-unit>
       <trans-unit id="6094136722135432235" datatype="html">

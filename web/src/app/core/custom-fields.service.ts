@@ -28,6 +28,8 @@ export function isComputed(type: string): boolean {
 export const TARGET_ENTITIES = [
   { key: 'Task', label: $localize`Tareas` },
   { key: 'Project', label: $localize`Proyectos` },
+  // Para clasificar tickets —área, producto, canal— y agrupar los informes por eso.
+  { key: 'Ticket', label: $localize`Tickets` },
 ] as const;
 
 /** Separador de la selección múltiple. Lo fija el backend: un salto de línea. */

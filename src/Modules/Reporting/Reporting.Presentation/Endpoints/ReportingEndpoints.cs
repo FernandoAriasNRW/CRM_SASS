@@ -99,13 +99,13 @@ public static class ReportingEndpoints
 
     // ── El constructor de informes ──────────────────────────────────────────────────────────
     //
-    // El catálogo va primero y sin autenticar por inquilino porque no depende de ninguno: es la
-    // lista de lo que el motor sabe hacer. La pantalla se alimenta de aquí y no escribe ninguna
-    // de estas opciones por su cuenta, que es lo que evita volver a ofrecer algo que el servidor
-    // no conoce.
-    group.MapGet("/catalog", async (IMediator mediator) =>
+    // El catálogo es la lista de lo que el motor sabe hacer: lo fijo, igual para todas las
+    // organizaciones, más los campos personalizados de la del usuario. La pantalla se alimenta de
+    // aquí y no escribe ninguna de estas opciones por su cuenta, que es lo que evita volver a
+    // ofrecer algo que el servidor no conoce.
+    group.MapGet("/catalog", async (IUserContext currentUser, IMediator mediator) =>
     {
-      var result = await mediator.Send(new GetCatalogQuery());
+      var result = await mediator.Send(new GetCatalogQuery(currentUser.TenantId));
       return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
     });
 

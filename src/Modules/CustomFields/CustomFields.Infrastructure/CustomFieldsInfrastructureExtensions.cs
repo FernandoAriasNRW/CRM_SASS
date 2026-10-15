@@ -27,6 +27,7 @@ public static class CustomFieldsInfrastructureExtensions
     services.AddScoped<IOutboxService, OutboxService>();
     services.AddScoped<ICustomFieldsUnitOfWork, CustomFieldsModuleUnitOfWork>();
     services.AddScoped<ICustomFieldRepository, EfCustomFieldRepository>();
+    services.AddScoped<BuildingBlocks.Application.Abstractions.ICustomFieldReader, CustomFieldReader>();
 
     return services;
   }

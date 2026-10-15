@@ -920,11 +920,8 @@ que lleva «8b» en el título. Lo único que sigue siendo propio de un disparad
   puede quitar cuando esté vacía en todas las bases. (El filtro «Mi equipo», que buscaba el id del
   usuario dentro de `TagIds`, desapareció con el tablero por equipo de §23.2.)
 - **Nada borra del almacenamiento los adjuntos de un ticket** si algún día se vacía la papelera de
-  tickets. Quitar un adjunto suelto sí lo borra (§25).
-- **«Tickets por área» sigue sin poderse hacer.** Es el ejemplo que se pidió, y necesita campos
-  personalizados en tickets como dimensión de análisis: hoy los campos personalizados son de
-  tareas y proyectos. El catálogo del constructor está preparado para recibirlos —basta añadir
-  campos a un origen— pero la extensión a tickets es trabajo del módulo de campos.
+  tickets. Hoy no hay forma de vaciarla —ningún ticket se borra de verdad—, así que no ocurre; quien
+  añada el vaciado tiene que borrar también sus ficheros. Quitar un adjunto suelto sí lo borra (§25).
 - **«Barras apiladas» se pinta como barras normales.** Apilar necesita una segunda dimensión
   —agrupar por dos campos— que el catálogo no ofrece todavía. Se pinta en vez de rechazarse
   porque el resultado sigue siendo cierto, sólo que menos rico.
@@ -2345,3 +2342,49 @@ primeros del listado, y empezó a fallar porque la suite ya crea más de cien pr
 Entre proyectos que empiezan el mismo día, el desempate es el identificador, que es aleatorio,
 porque **el proyecto no guarda cuándo se creó**. La prueba busca ahora por el nombre, que es lo que
 le importa. Ordenar por fecha de alta queda pendiente: necesita una columna nueva.
+
+---
+
+## 36. «Tickets por área»: campos personalizados en tickets y en el constructor
+
+Era el ejemplo pedido para el constructor de informes y no se podía hacer:
+
+- los campos personalizados eran solo de tareas y proyectos;
+- el catálogo del constructor no sabía nada de ellos, ni siquiera de los de tareas.
+
+Lo que hay ahora:
+
+- **Los tickets tienen campos personalizados** (`TargetEntityTypes.Ticket`).
+  - Se crean en Administración, eligiendo «Tickets».
+  - Se rellenan en la ficha del ticket, con el mismo formulario que la de tarea.
+- **El catálogo ofrece los campos de la organización** en cada origen —tareas, proyectos y
+  tickets—, con la clave `custom:{id}`.
+  - Solo sirven **para agrupar**: llegan sin operadores, y la pantalla no los ofrece como filtro,
+    porque el motor todavía no filtra por ellos.
+  - Los campos calculados no salen, porque no guardan valor.
+- **El motor agrupa por su valor.**
+  - Cada fila lleva su identificador como grupo provisional y se cambia por el valor del campo,
+    pedido de una vez para todas con el puerto nuevo `ICustomFieldReader`, que implementa
+    CustomFields.
+  - Los que no lo tienen rellenado van a «(sin asignar)».
+  - Un campo de persona se enseña por su nombre, y una selección múltiple con comas.
+  - La cabecera y el subtítulo usan el nombre real del campo.
+  - Un campo que no existe, o que es de otro origen, da 400.
+- **La definición acepta `custom:{id}` por su forma** (`ReportCatalog.CustomFieldId`). Que el campo
+  exista lo comprueba el motor, que es quien conoce la organización.
+
+**De paso, un hueco de permisos:** rellenar un campo personalizado no comprobaba nada sobre el
+elemento, así que quien solo podía ver una tarea le cambiaba sus campos. Ahora pide poder editar
+el elemento, con el tipo de la definición.
+
+Lo prueban:
+
+- `TicketsByAreaFlowTests`:
+  - agrupar tickets por un campo «Área»;
+  - un campo de tareas no agrupa tickets;
+  - quien solo lee un ticket no rellena sus campos.
+
+  La primera y la tercera fallaban antes del cambio.
+- la e2e `report-builder-preview`: el campo sale para agrupar y no para filtrar.
+
+**Queda:** filtrar por un campo personalizado («solo los del área Ventas»).

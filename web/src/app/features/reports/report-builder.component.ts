@@ -158,7 +158,7 @@ interface ReportPreview {
                   <select class="flex-1 border border-border rounded-md px-2 py-1.5 text-sm bg-background"
                           [ngModel]="f.field" (ngModelChange)="changeFilterField($index, $event)"
                           [name]="'filter-field-' + $index">
-                    @for (c of sourceFields(); track c.key) {
+                    @for (c of filterableFields(); track c.key) {
                       <option [value]="c.key">{{ c.name }}</option>
                     }
                   </select>
@@ -331,6 +331,13 @@ export class ReportBuilderComponent {
     this.catalog()?.dataSources.find(o => o.key === this.dataSource()) ?? null);
 
   readonly sourceFields = computed(() => this.currentSource()?.fields ?? []);
+
+  /**
+   * Los campos por los que se puede filtrar: los que tienen operadores. Los campos
+   * personalizados llegan sin ninguno —el motor todavía no filtra por ellos, solo agrupa— y
+   * ofrecerlos aquí sería prometer un filtro que da error.
+   */
+  readonly filterableFields = computed(() => this.sourceFields().filter(c => c.operators.length > 0));
   readonly sourceMeasures = computed(() => this.currentSource()?.measures ?? []);
 
   readonly groupsByDate = computed(() =>
@@ -378,7 +385,7 @@ export class ReportBuilderComponent {
   }
 
   addFilter(): void {
-    const field = this.sourceFields()[0];
+    const field = this.filterableFields()[0];
     if (!field) return;
 
     const operator = this.operatorsFor(field.key)[0];

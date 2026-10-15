@@ -35,7 +35,8 @@ public sealed class ReportEngine(
     TicketingDbContext ticketsDb,
     ProjectsDbContext projectsDb,
     IUserDirectory users,
-    IOrganizationTimeZone timeZones) : global::Reporting.Application.Definitions.IReportResolver
+    IOrganizationTimeZone timeZones,
+    ICustomFieldReader customFields) : global::Reporting.Application.Definitions.IReportResolver
 {
     private static readonly CultureInfo Spanish = CultureInfo.GetCultureInfo("es-ES");
 
@@ -118,7 +119,62 @@ public sealed class ReportEngine(
         if (dataSource.Field(definition.GroupBy)?.Type == FieldType.Person)
             raw = await NamePeopleAsync(tenantId, raw, ct);
 
-        return Compose(title, definition, dataSource, raw);
+        string? groupLabel = null;
+        if (ReportCatalog.CustomFieldId(definition.GroupBy) is { } customFieldId)
+            (raw, groupLabel) = await GroupByCustomFieldAsync(tenantId, dataSource, customFieldId, raw, ct);
+
+        return Compose(title, definition, dataSource, raw, groupLabel);
+    }
+
+    /// <summary>El tipo de elemento de cada origen, como lo nombran los campos personalizados.</summary>
+    private static string EntityTypeOf(DataSource dataSource) => dataSource.Key switch
+    {
+        "Tasks" => BuildingBlocks.Domain.EntityTypes.Task,
+        "Tickets" => BuildingBlocks.Domain.EntityTypes.Ticket,
+        "Projects" => BuildingBlocks.Domain.EntityTypes.Project,
+        _ => throw new InvalidOperationException($"El origen «{dataSource.Key}» no tiene campos personalizados")
+    };
+
+    /// <summary>
+    /// Agrupa por un campo personalizado: «tickets por área».
+    ///
+    /// Cada fila llega con su identificador como grupo provisional y aquí se cambia por el valor
+    /// del campo, pedido de una vez para todas. Los que no lo tienen rellenado van a «(sin
+    /// asignar)», igual que un ticket sin agente. El campo tiene que existir y ser de ese origen:
+    /// un campo de tareas no agrupa tickets.
+    /// </summary>
+    private async Task<(List<RawRow> Rows, string Label)> GroupByCustomFieldAsync(
+        Guid tenantId, DataSource dataSource, Guid fieldId, List<RawRow> raw, CancellationToken ct)
+    {
+        var definitions = await customFields.GetDefinitionsAsync(tenantId, EntityTypeOf(dataSource), ct);
+        var field = definitions.FirstOrDefault(f => f.Id == fieldId)
+            ?? throw new InvalidOperationException($"Ese campo personalizado no existe en {dataSource.Name}");
+
+        var ids = raw.Select(r => Guid.Parse(r.Group)).Distinct().ToList();
+        var values = await customFields.GetValuesAsync(tenantId, fieldId, ids, ct);
+
+        // Una persona se enseña por su nombre, como el responsable; una selección múltiple, con
+        // sus opciones separadas por comas en vez de por saltos de línea, que es como se guardan.
+        var people = field.Type == "User"
+            ? await PersonNames.ResolveAsync(users, tenantId,
+                values.Values.Select(v => Guid.TryParse(v, out var id) ? id : Guid.Empty).Where(id => id != Guid.Empty).ToList(), ct)
+            : new Dictionary<Guid, string>();
+
+        string Label(string value) => field.Type switch
+        {
+            "User" when Guid.TryParse(value, out var person) && people.TryGetValue(person, out var name) => name,
+            "MultiSelect" => value.Replace("\n", ", "),
+            _ => value
+        };
+
+        var rows = raw.Select(r => r with
+        {
+            Group = values.TryGetValue(Guid.Parse(r.Group), out var value) && !string.IsNullOrWhiteSpace(value)
+                ? Label(value)
+                : Unassigned
+        }).ToList();
+
+        return (rows, field.Name);
     }
 
     /// <summary>
@@ -171,6 +227,7 @@ public sealed class ReportEngine(
             .Take(ReportData.MaxRows)
             .Select(t => new
             {
+                t.Id,
                 Status = t.Status.Value,
                 Priority = t.Priority.Value,
                 t.AssigneeId,
@@ -199,6 +256,7 @@ public sealed class ReportEngine(
                 "due_date" => ByDate(t.DueDate.ToDateTime(TimeOnly.MinValue), d.Granularity),
                 "created_at" => ByDate(Local(t.CreatedAtUtc), d.Granularity),
                 "estimated_hours" => t.EstimatedHours.ToString("0.##", Spanish),
+                var key when ReportCatalog.CustomFieldId(key) is not null => t.Id.ToString(),
                 _ => throw new InvalidOperationException($"No sé agrupar tareas por «{d.GroupBy}»")
             },
             Value: d.Measure.ToLowerInvariant() switch
@@ -234,7 +292,7 @@ public sealed class ReportEngine(
 
         var rows = await query
             .Take(ReportData.MaxRows)
-            .Select(t => new { t.StatusValue, t.PriorityValue, t.AssignedAgentId, t.CreatedAt, t.ResolvedAt })
+            .Select(t => new { t.Id, t.StatusValue, t.PriorityValue, t.AssignedAgentId, t.CreatedAt, t.ResolvedAt })
             .ToListAsync(ct);
 
         return rows.Select(t => new RawRow(
@@ -252,6 +310,7 @@ public sealed class ReportEngine(
                     : t.AssignedAgentId.Value.ToString(),
                 "created_at" => ByDate(Local(t.CreatedAt), d.Granularity),
                 "resolved_at" => t.ResolvedAt is null ? Unassigned : ByDate(Local(t.ResolvedAt.Value), d.Granularity),
+                var key when ReportCatalog.CustomFieldId(key) is not null => t.Id.ToString(),
                 _ => throw new InvalidOperationException($"No sé agrupar tickets por «{d.GroupBy}»")
             },
             Value: d.Measure.ToLowerInvariant() switch
@@ -289,7 +348,7 @@ public sealed class ReportEngine(
 
         var rows = await query
             .Take(ReportData.MaxRows)
-            .Select(p => new { Status = p.Status.Value, p.OwnerId, p.StartDate })
+            .Select(p => new { p.Id, Status = p.Status.Value, p.OwnerId, p.StartDate })
             .ToListAsync(ct);
 
         return rows.Select(p => new RawRow(
@@ -298,6 +357,7 @@ public sealed class ReportEngine(
                 "status" => p.Status,
                 "owner" => p.OwnerId == Guid.Empty ? Unassigned : p.OwnerId.ToString(),
                 "start_date" => ByDate(p.StartDate, d.Granularity),
+                var key when ReportCatalog.CustomFieldId(key) is not null => p.Id.ToString(),
                 _ => throw new InvalidOperationException($"No sé agrupar proyectos por «{d.GroupBy}»")
             },
             Value: d.Measure.Equals("count", StringComparison.OrdinalIgnoreCase)
@@ -310,9 +370,11 @@ public sealed class ReportEngine(
 
     #region Componer el resultado
 
+    /// <param name="groupLabel">El nombre de la agrupación cuando no está en el catálogo: un campo personalizado.</param>
     private ReportTable Compose(
-        string title, ReportDefinition d, DataSource dataSource, List<RawRow> raw)
+        string title, ReportDefinition d, DataSource dataSource, List<RawRow> raw, string? groupLabel = null)
     {
+        groupLabel ??= dataSource.Field(d.GroupBy)!.Name;
         var measure = dataSource.Measure(d.Measure)!;
         var isAverage = d.Measure.StartsWith("avg_", StringComparison.OrdinalIgnoreCase);
 
@@ -381,8 +443,8 @@ public sealed class ReportEngine(
 
         return new ReportTable(
             title,
-            Subtitle(d, dataSource, measure, raw.Count, trimmed),
-            [dataSource.Field(d.GroupBy)!.Name, measure.Name],
+            Subtitle(d, dataSource, measure, raw.Count, trimmed, groupLabel),
+            [groupLabel, measure.Name],
             rows);
     }
 
@@ -406,12 +468,12 @@ public sealed class ReportEngine(
     /// «Tickets por estado» son todos o sólo los de una persona.
     /// </summary>
     private string Subtitle(
-        ReportDefinition d, DataSource dataSource, AvailableMeasure measure, int rows, bool trimmed)
+        ReportDefinition d, DataSource dataSource, AvailableMeasure measure, int rows, bool trimmed, string groupLabel)
     {
         var parts = new List<string>
         {
             dataSource.Name,
-            $"agrupado por {dataSource.Field(d.GroupBy)!.Name.ToLowerInvariant()}",
+            $"agrupado por {groupLabel.ToLowerInvariant()}",
             measure.Name.ToLowerInvariant()
         };
 

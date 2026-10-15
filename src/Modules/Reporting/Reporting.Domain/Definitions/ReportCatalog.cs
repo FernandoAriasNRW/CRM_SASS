@@ -23,6 +23,26 @@ public static class ReportCatalog
     public static DataSource? FindDataSource(string? key)
         => DataSources().FirstOrDefault(o => string.Equals(o.Key, key, StringComparison.OrdinalIgnoreCase));
 
+    /// <summary>
+    /// Cómo se nombra en una definición un campo personalizado: <c>custom:{id}</c>.
+    ///
+    /// Los campos personalizados los crea cada organización, así que no pueden estar en este
+    /// catálogo, que es el mismo para todas. La definición los acepta por su forma; que el campo
+    /// exista y sea de ese origen lo comprueba el motor al calcular, que es quien conoce la
+    /// organización.
+    /// </summary>
+    public const string CustomFieldPrefix = "custom:";
+
+    public static string CustomFieldKey(Guid id) => CustomFieldPrefix + id;
+
+    /// <summary>El identificador si la clave es la de un campo personalizado; si no, <c>null</c>.</summary>
+    public static Guid? CustomFieldId(string? key)
+        => key is not null
+           && key.StartsWith(CustomFieldPrefix, StringComparison.OrdinalIgnoreCase)
+           && Guid.TryParse(key[CustomFieldPrefix.Length..], out var id)
+            ? id
+            : null;
+
     public static readonly DataSource Tasks = new(
         Key: "Tasks",
         Name: "Tareas",

@@ -332,6 +332,8 @@ Un concepto, un nombre. Ordenado por área.
 | Español | Inglés |
 |---|---|
 | campo personalizado, definición | `CustomField`, `Definition` |
+| campo personalizado en un informe (clave) | `custom:{id}` (`ReportCatalog.CustomFieldKey`) |
+| lector de campos personalizados (puerto) | `ICustomFieldReader` |
 | tipo de campo | `FieldType` |
 | se calcula, calculado | `IsComputed`, `Computed` |
 | fórmula, analizador de fórmula | `Formula`, `FormulaParser` |
