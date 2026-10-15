@@ -68,6 +68,16 @@ public sealed class Document : Entity, ITenantEntity, ISoftDeletable, IArchivabl
         DeletedAt = nowUtc;
     }
 
+    /// <summary>
+    /// Saca el documento de la papelera. Borrar ya era recuperable —se marca, no se elimina—, pero
+    /// no había forma de recuperarlo: la papelera de documentos no tenía salida.
+    /// </summary>
+    public void RestoreFromTrash()
+    {
+        IsDeleted = false;
+        DeletedAt = null;
+    }
+
     #region Archivo
 
     /// <summary>Cuándo se archivó, o <c>null</c> si está a la vista. Ver <see cref="IArchivable"/>.</summary>

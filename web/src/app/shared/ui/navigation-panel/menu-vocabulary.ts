@@ -109,7 +109,8 @@ export const DOCUMENT_ENTRIES: readonly MenuEntry[] = [
   { label: $localize`Privados`, icon: 'lucideLock', filter: null, params: { tab: 'private' } },
   { label: $localize`Actas de reunión`, icon: 'lucideCalendarDays', filter: null, params: { tab: 'meeting-notes' } },
   { label: $localize`Mis plantillas`, icon: 'lucideLayoutTemplate', filter: null, params: { tab: 'templates' } },
-  { label: $localize`Archivados`, icon: 'lucideArchive', filter: null, params: { tab: 'archived' }, separatorBefore: true }
+  { label: $localize`Archivados`, icon: 'lucideArchive', filter: null, params: { tab: 'archived' }, separatorBefore: true },
+  { label: $localize`Papelera`, icon: 'lucideTrash2', filter: null, params: { tab: 'trash' } }
 ];
 
 /**

@@ -41,16 +41,35 @@ public static class DocsEndpointsExtensions
             return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
         });
 
-        group.MapGet("/", async (IUserContext currentUser, IMediator mediator) =>
+        group.MapGet("/", async (IUserContext currentUser, IMediator mediator,
+            BuildingBlocks.Application.Abstractions.IViewScopeResolver viewScopes, [FromQuery] string? filter) =>
         {
             if (currentUser.TenantId == Guid.Empty || currentUser.UserId == Guid.Empty)
                 return Results.Unauthorized();
 
-            var query = new GetDocumentsQuery(currentUser.TenantId, currentUser.UserId);
+            // El filtro del menú lateral: «mine», «shared», «archived» o «trash».
+            var scope = await viewScopes.ResolveAsync(filter, currentUser.UserId, BuildingBlocks.Domain.EntityTypes.Document);
+            var query = new GetDocumentsQuery(currentUser.TenantId, currentUser.UserId, scope);
             var result = await mediator.Send(query);
             
             return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
         });
+
+        // Archivar, desarchivar y restaurar de la papelera, como en el resto de módulos.
+        foreach (var (route, action) in new[]
+        {
+            ("archive", BuildingBlocks.Application.ArchiveAction.Archive),
+            ("unarchive", BuildingBlocks.Application.ArchiveAction.Unarchive),
+            ("restore", BuildingBlocks.Application.ArchiveAction.RestoreFromTrash),
+        })
+        {
+            group.MapPost("/{id:guid}/" + route, async (Guid id, IUserContext currentUser, IMediator mediator) =>
+            {
+                var result = await mediator.Send(
+                    new Docs.Application.Archiving.ChangeDocumentArchiveStateCommand(currentUser.TenantId, id, action));
+                return result.IsSuccess ? Results.NoContent() : Results.NotFound(result.Error);
+            });
+        }
 
         group.MapDelete("/{id:guid}", async (Guid id, IUserContext currentUser, IMediator mediator) =>
         {

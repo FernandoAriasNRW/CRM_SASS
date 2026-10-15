@@ -11,7 +11,10 @@ public class GetDocumentsHandler(IDocumentRepository repository)
 {
     public async Task<Result<List<DocumentDto>>> Handle(GetDocumentsQuery request, CancellationToken cancellationToken)
     {
-        var docs = await repository.GetByTenantAsync(request.TenantId, cancellationToken);
+        // Antes se devolvían siempre todos: «Mis documentos», «Compartidos conmigo» y
+        // «Archivados» enseñaban la misma lista que «Todos».
+        var docs = await repository.GetListAsync(
+            request.TenantId, request.Scope ?? BuildingBlocks.Application.ViewScope.None, cancellationToken);
         
         var dtoList = docs.Select(d => new DocumentDto(d.Id, d.Title, d.Description, (int)d.Type, d.OwnerId, d.CreatedAtUtc, d.UpdatedAtUtc)).ToList();
 

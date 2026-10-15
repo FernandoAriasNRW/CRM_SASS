@@ -922,9 +922,6 @@ que lleva «8b» en el título. Lo único que sigue siendo propio de un disparad
 - **Nada borra del almacenamiento los adjuntos de un ticket** si algún día se vacía la papelera de
   tickets. Hoy no hay forma de vaciarla —ningún ticket se borra de verdad—, así que no ocurre; quien
   añada el vaciado tiene que borrar también sus ficheros. Quitar un adjunto suelto sí lo borra (§25).
-- **Documentos tiene la columna de archivado y no la usa.** Se le puso al modelar el concepto
-  para no dejar el agregado a medias, pero Docs mantiene su propio panel lateral y no se ha
-  enganchado al compartido.
 - Lo de §22.3 está resuelto:
   - los webhooks, en §23.6;
   - las notificaciones push (quitadas de la pantalla) y el aviso `notification_received`, en §23.7;
@@ -2471,3 +2468,44 @@ por el identificador, que es aleatorio. El recién creado podía quedar en la se
 
 Lo prueba `ListParametersAndNamesFlowTests.A_new_project_comes_first_in_the_default_order`, que crea
 tres proyectos seguidos y mira que cada uno sale el primero. Fallaba antes del cambio.
+
+---
+
+## 40. Documentos: archivados, papelera, míos y compartidos
+
+La nota decía que Documentos tenía la columna de archivado y no la usaba. Era más que eso: **el
+menú lateral de Documentos ofrecía «Mis documentos», «Compartidos conmigo» y «Archivados» sobre
+una lista que no filtraba.** Las tres entradas enseñaban todos los documentos. Y la papelera no
+tenía salida: borrar marcaba el documento, pero no había forma de verlo ni de recuperarlo.
+
+**Servidor**, con el mismo mecanismo que tareas, tickets y proyectos:
+
+- `GET /docs?filter=` admite `mine`, `shared`, `archived` y `trash`, a través de
+  `IViewScopeResolver`.
+  - El archivo y la papelera se abren con `IncludeHidden`, que no apaga el aislamiento por
+    inquilino.
+  - Sin filtro, la lista de siempre: ni archivados ni borrados.
+- `POST /docs/{id}/archive`, `/unarchive` y `/restore` (`ChangeDocumentArchiveStateCommand`).
+  - Piden poder editar ese documento.
+  - Buscan incluyendo lo escondido, porque restaurar exige encontrarlo.
+  - Mandar a la papelera sigue siendo `DELETE`.
+- `Document.RestoreFromTrash`, que no existía.
+
+**Pantalla:**
+
+- La lista se pide al servidor con el filtro de la pestaña y se vuelve a pedir al cambiar de
+  pestaña. Las de actas y plantillas siguen filtrando por tipo en la pantalla.
+- El menú lateral gana «Papelera».
+- El menú de cada documento depende de la lista:
+  - en la normal, «Archivar» y «Enviar a la papelera»;
+  - en «Archivados», «Desarchivar»;
+  - en «Papelera», «Restaurar».
+- La confirmación y el error de borrar estaban en inglés, con `alert()`. Ahora están en español,
+  y el error sale como aviso.
+
+Lo prueban:
+
+- `DocumentArchiveFlowTests`: archivar y desarchivar, papelera y restaurar, míos y compartidos
+  conmigo, y que quien solo lee no archiva. Las cuatro fallaban antes del cambio.
+- la e2e de `docs.spec.ts`, que archiva desde la lista y restaura desde la papelera. Fallaba con la
+  pantalla anterior.

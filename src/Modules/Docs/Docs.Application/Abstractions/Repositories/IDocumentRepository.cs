@@ -6,6 +6,15 @@ public interface IDocumentRepository
 {
     Task AddAsync(Document document, CancellationToken cancellationToken = default);
     Task<List<Document>> GetByTenantAsync(Guid tenantId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Los documentos de la lista según el filtro del menú: míos, compartidos conmigo, archivados
+    /// o en la papelera. Sin filtro, los de siempre: ni archivados ni borrados.
+    /// </summary>
+    Task<List<Document>> GetListAsync(Guid tenantId, BuildingBlocks.Application.ViewScope scope, CancellationToken cancellationToken = default);
+
+    /// <summary>Un documento aunque esté archivado o en la papelera: restaurarlo exige encontrarlo.</summary>
+    Task<Document?> GetIncludingHiddenAsync(Guid tenantId, Guid id, CancellationToken cancellationToken = default);
     Task<Document?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
     Task<Page?> GetPageByIdAsync(Guid id, CancellationToken cancellationToken = default);
     Task AddPageAsync(Page page, CancellationToken cancellationToken = default);

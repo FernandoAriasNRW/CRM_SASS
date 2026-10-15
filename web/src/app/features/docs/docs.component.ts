@@ -9,6 +9,7 @@ import {
   lucideChevronRight, lucideChevronDown, lucideSearch,
   lucideSettings, lucideShare2, lucideClock, lucidePin, lucidePinOff,
   lucideBold, lucideItalic, lucideStrikethrough, lucideLink, lucideTrash,
+  lucideArchive, lucideArchiveRestore, lucideUndo2,
   lucideUpload, lucideWand2, lucideLayoutTemplate, lucideCopy, lucideBookOpen,
   lucideUsers, lucideCalendar, lucideCheckCircle2, lucideStar, lucideFilter,
   lucideArrowUpDown, lucideTag, lucideX, lucideFileUp, lucideBriefcase, lucideCheck,
@@ -20,7 +21,16 @@ import { errorMessage } from '../../shared/utils/error-message';
 import { PanelSectionsService } from '../../shared/ui/navigation-panel/panel-sections.service';
 
 /** Las pestañas que el panel de Documentos sabe abrir. Cualquier otra cosa en `?tab=` cae en «all». */
-const DOCS_TABS = ['all', 'my', 'shared', 'private', 'meeting-notes', 'templates', 'archived'] as const;
+const DOCS_TABS = ['all', 'my', 'shared', 'private', 'meeting-notes', 'templates', 'archived', 'trash'] as const;
+type DocsTab = typeof DOCS_TABS[number];
+
+/**
+ * Las pestañas que filtra el servidor, con el filtro que entiende. Las demás —actas, plantillas—
+ * se filtran aquí por el tipo del documento.
+ */
+const SERVER_FILTERS: Partial<Record<DocsTab, string>> = {
+  my: 'mine', shared: 'shared', archived: 'archived', trash: 'trash',
+};
 import { Editor } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
 import Image from '@tiptap/extension-image';
@@ -85,7 +95,7 @@ import { VISIBLE_TEMPLATES, AvailableTemplate, availableTemplates } from './temp
       lucideUsers, lucideCalendar, lucideCheckCircle2, lucideStar, lucideFilter,
       lucideArrowUpDown, lucideTag, lucideX, lucideFileUp, lucideBriefcase, lucideCheck,
       lucideTriangleAlert, lucideCode, lucideQuote, lucideUnlink, lucideRemoveFormatting,
-      lucideMessageSquare
+      lucideMessageSquare, lucideArchive, lucideArchiveRestore, lucideUndo2
     })
   ],
   templateUrl: './docs.component.html',
@@ -386,7 +396,7 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
   /** `effect` fuera del constructor necesita inyector explícito. */
   private readonly injector = inject(Injector);
 
-  readonly activeSidebarTab = computed<'all' | 'my' | 'shared' | 'private' | 'meeting-notes' | 'templates' | 'archived'>(() => {
+  readonly activeSidebarTab = computed<DocsTab>(() => {
     const tab = this.queryParams()['tab'];
     return DOCS_TABS.includes(tab as never) ? tab as never : 'all';
   });
@@ -630,7 +640,12 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
   });
 
   ngOnInit() {
-    this.loadDocuments();
+    // La lista se pide de nuevo al cambiar de pestaña: «Mis documentos», «Compartidos conmigo»,
+    // «Archivados» y «Papelera» los filtra el servidor.
+    effect(() => {
+      this.activeSidebarTab();
+      untracked(() => this.loadDocuments());
+    }, { injector: this.injector });
     this.loadTemplateUsages();
 
     // Los favoritos y las páginas recientes se le entregan al panel compartido. Son datos de
@@ -717,9 +732,14 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
     }
   }
 
+  /** El filtro del servidor para la pestaña abierta, o `null` si no filtra el servidor. */
+  private serverFilter(): string | null {
+    return SERVER_FILTERS[this.activeSidebarTab()] ?? null;
+  }
+
   loadDocuments() {
     this.isLoading.set(true);
-    this.docsService.getDocuments().subscribe({
+    this.docsService.getDocuments(this.serverFilter()).subscribe({
       next: (docs) => {
         this.documents.set(docs);
         this.isLoading.set(false);
@@ -753,7 +773,7 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
     }).subscribe({
       next: (id: any) => {
         const cleanId = typeof id === 'string' ? id.replace(/['"]/g, '') : (id?.value || id?.id || id);
-        this.docsService.getDocuments().subscribe({
+        this.docsService.getDocuments(this.serverFilter()).subscribe({
           next: (docs) => {
             this.documents.set(docs);
             const newDoc = docs.find(d => d.id === cleanId) || docs[0];
@@ -815,7 +835,7 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
    * llega ya limpio: la normalización vive en DocsService, donde entra el dato.
    */
   private openCreatedDocument(id: string) {
-    this.docsService.getDocuments().subscribe({
+    this.docsService.getDocuments(this.serverFilter()).subscribe({
       next: (docs) => {
         this.documents.set(docs);
         this.isLoading.set(false);
@@ -1064,23 +1084,37 @@ export class DocsComponent implements OnInit, OnDestroy, AfterViewInit {
     this.saving.retry();
   }
 
+  /**
+   * Manda el documento a la papelera, de donde se puede restaurar. La confirmación y el error
+   * estaban en inglés.
+   */
   deleteDocument(event: Event, id: string) {
     event.stopPropagation();
     this.activeRowMenuId.set(null);
-    if (confirm('Are you sure you want to delete this document?')) {
-      this.docsService.deleteDocument(id).subscribe({
-        next: () => {
-          this.documents.update(docs => docs.filter(d => d.id !== id));
-          if (this.activeDocument()?.id === id) {
-            this.activeDocument.set(null);
-            this.activePage.set(null);
-          }
-        },
-        error: (err: any) => {
-          console.error('Error deleting doc:', err);
-          alert('Error deleting document');
-        }
-      });
+    if (!confirm($localize`¿Enviar este documento a la papelera? Se podrá restaurar desde allí.`)) return;
+
+    this.docsService.deleteDocument(id).subscribe({
+      next: () => this.dropFromList(id),
+      error: (err: unknown) => this.toast.error(errorMessage(err, $localize`No se pudo enviar a la papelera`)),
+    });
+  }
+
+  /** Archivar, desarchivar o restaurar: el documento sale de la lista en la que estaba. */
+  changeArchiveState(event: Event, id: string, action: 'archive' | 'unarchive' | 'restore') {
+    event.stopPropagation();
+    this.activeRowMenuId.set(null);
+
+    this.docsService.changeArchiveState(id, action).subscribe({
+      next: () => this.dropFromList(id),
+      error: (err: unknown) => this.toast.error(errorMessage(err, $localize`No se pudo completar la acción`)),
+    });
+  }
+
+  private dropFromList(id: string) {
+    this.documents.update(docs => docs.filter(d => d.id !== id));
+    if (this.activeDocument()?.id === id) {
+      this.activeDocument.set(null);
+      this.activePage.set(null);
     }
   }
 
