@@ -24,12 +24,15 @@ const CATALOG = {
     key: 'Tasks', name: 'Tareas',
     fields: [
       { key: 'status', name: 'Estado', type: 'Text', operators: ['is'], values: ['Todo', 'Done'] },
-      // Un campo personalizado: llega sin operadores porque solo sirve para agrupar.
-      { key: 'custom:00000000-0000-0000-0000-0000000000aa', name: 'Área', type: 'Text', operators: [], values: [] },
+      // Un campo personalizado de selección: con sus operadores y sus opciones como valores.
+      { key: 'custom:00000000-0000-0000-0000-0000000000aa', name: 'Área', type: 'Text', operators: ['is', 'empty'], values: ['Ventas', 'Soporte'] },
     ],
     measures: [{ key: 'count', name: 'Número de tareas' }],
   }],
-  operators: [{ key: 'is', name: 'Es', types: ['Text'], needsValue: true }],
+  operators: [
+    { key: 'is', name: 'Es', types: ['Text'], needsValue: true },
+    { key: 'empty', name: 'Está vacío', types: ['Text'], needsValue: false },
+  ],
   visualizations: [{ key: 'table', name: 'Tabla' }, { key: 'bar', name: 'Barras' }, { key: 'pie', name: 'Tarta' }],
   granularities: [],
 };
@@ -96,20 +99,21 @@ test('choosing table previews the rows as a table', async ({ page }) => {
 });
 
 /**
- * Un campo personalizado se ofrece para agrupar —«tickets por área»— y no para filtrar: el motor
- * todavía no filtra por ellos, y ofrecerlo sería prometer un filtro que da error.
+ * Un campo personalizado sirve para agrupar —«tickets por área»— y para filtrar —«solo los del
+ * área Ventas»—, con sus opciones en un desplegable en vez de texto libre.
  */
-test('a custom field is offered to group by, not to filter', async ({ page }) => {
+test('a custom field can be used to group and to filter, with its options', async ({ page }) => {
   await openBuilder(page);
 
   const groupBy = page.locator('select[name="groupBy"]');
   await expect(groupBy.locator('option', { hasText: 'Área' })).toHaveCount(1);
-  await groupBy.selectOption({ label: 'Área' });
 
-  // Con un filtro añadido hay dos desplegables con «Estado» —agrupar y filtrar— y solo uno, el
-  // de agrupar, con «Área».
+  // Con un filtro añadido hay dos desplegables que ofrecen «Área»: agrupar y filtrar.
   await page.getByRole('button', { name: 'Añadir filtro' }).click();
   const offering = (label: string) => page.locator('select').filter({ has: page.locator('option', { hasText: label }) });
-  await expect(offering('Estado')).toHaveCount(2);
-  await expect(offering('Área')).toHaveCount(1);
+  await expect(offering('Área')).toHaveCount(2);
+
+  await offering('Área').last().selectOption({ label: 'Área' });
+  await expect(offering('Ventas')).toHaveCount(1);
+  await expect(offering('Soporte')).toHaveCount(1);
 });

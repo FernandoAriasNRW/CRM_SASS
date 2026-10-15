@@ -2387,4 +2387,31 @@ Lo prueban:
   La primera y la tercera fallaban antes del cambio.
 - la e2e `report-builder-preview`: el campo sale para agrupar y no para filtrar.
 
-**Queda:** filtrar por un campo personalizado («solo los del área Ventas»).
+Filtrar por un campo personalizado («solo los del área Ventas») se añadió después (§37).
+
+---
+
+## 37. Filtrar por un campo personalizado
+
+Lo que quedó de §36: **«solo los tickets del área Ventas».**
+
+- **El catálogo ofrece los campos personalizados también para filtrar**, con estos operadores:
+  - «es», «no es» y «contiene»;
+  - «está vacío» y «no está vacío».
+
+  Las opciones de un campo de selección van como valores, así que el filtro es un desplegable.
+  «Está vacío» admite ahora el tipo texto. Los textos fijos —estado, prioridad— siempre tienen
+  valor, y `OperatorsFor` no se lo ofrece.
+- **El motor no puede cruzar en SQL con otro módulo.** Pide de una vez todos los valores del campo
+  (`ICustomFieldReader.GetAllValuesAsync`), evalúa el operador en memoria y filtra la consulta por
+  los identificadores, con un `IN` que EF traduce.
+  - «No es» y «está vacío» excluyen en vez de incluir, así que cuentan también los elementos que
+    no tienen el campo rellenado.
+  - Se compara sin distinguir mayúsculas, como la base de datos.
+  - Una selección múltiple «es» una opción si la lleva entre las suyas.
+
+Lo prueban:
+
+- `TicketsByAreaFlowTests.Tickets_can_be_filtered_by_an_area_field`: los cinco operadores y el
+  catálogo. Fallaba antes del cambio.
+- la e2e `report-builder-preview`: el campo sale para agrupar y para filtrar, con sus opciones.

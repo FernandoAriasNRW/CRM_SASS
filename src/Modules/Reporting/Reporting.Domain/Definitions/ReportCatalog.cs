@@ -138,8 +138,10 @@ public static class ReportCatalog
         new("contains", "Contiene", [FieldType.Text]),
         new("greater_than", "Mayor que", [FieldType.Number, FieldType.Date]),
         new("less_than", "Menor que", [FieldType.Number, FieldType.Date]),
-        new("empty", "Está vacío", [FieldType.Date, FieldType.Person, FieldType.Reference]),
-        new("not_empty", "No está vacío", [FieldType.Date, FieldType.Person, FieldType.Reference])
+        // También texto, por los campos personalizados, que pueden estar sin rellenar. Los de texto
+        // fijos —estado, prioridad— siempre tienen valor, y OperatorsFor no se los ofrece.
+        new("empty", "Está vacío", [FieldType.Text, FieldType.Date, FieldType.Person, FieldType.Reference]),
+        new("not_empty", "No está vacío", [FieldType.Text, FieldType.Date, FieldType.Person, FieldType.Reference])
     ];
 
     public static AvailableOperator? Operator(string? key)

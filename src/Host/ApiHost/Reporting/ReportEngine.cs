@@ -210,6 +210,12 @@ public sealed class ReportEngine(
 
         foreach (var filter in d.AppliedFilters)
         {
+            if (ReportCatalog.CustomFieldId(filter.Field) is not null)
+            {
+                query = await ApplyCustomFieldAsync(query, tenantId, ReportCatalog.Tasks, filter, t => t.Id, ct);
+                continue;
+            }
+
             query = filter.Field.ToLowerInvariant() switch
             {
                 "status" => ApplyText(query, filter, t => t.Status.Value),
@@ -274,6 +280,12 @@ public sealed class ReportEngine(
 
         foreach (var filter in d.AppliedFilters)
         {
+            if (ReportCatalog.CustomFieldId(filter.Field) is not null)
+            {
+                query = await ApplyCustomFieldAsync(query, tenantId, ReportCatalog.Tickets, filter, t => t.Id, ct);
+                continue;
+            }
+
             query = filter.Field.ToLowerInvariant() switch
             {
                 // El estado y la prioridad se guardan como número. **Se traduce el valor que
@@ -335,6 +347,12 @@ public sealed class ReportEngine(
 
         foreach (var filter in d.AppliedFilters)
         {
+            if (ReportCatalog.CustomFieldId(filter.Field) is not null)
+            {
+                query = await ApplyCustomFieldAsync(query, tenantId, ReportCatalog.Projects, filter, p => p.Id, ct);
+                continue;
+            }
+
             query = filter.Field.ToLowerInvariant() switch
             {
                 "status" => ApplyText(query, filter, p => p.Status.Value),
@@ -511,6 +529,50 @@ public sealed class ReportEngine(
     /// <summary>El método <c>string.Contains(string)</c>, para construir el «contiene».</summary>
     private static readonly System.Reflection.MethodInfo Contains =
         typeof(string).GetMethod(nameof(string.Contains), [typeof(string)])!;
+
+    /// <summary>
+    /// Un filtro sobre un campo personalizado: «solo los del área Ventas».
+    ///
+    /// Los valores viven en otro módulo, así que no se puede cruzar en SQL. Se piden todos los
+    /// valores del campo de una vez, se evalúa el operador sobre ellos y la consulta se queda con
+    /// los identificadores que cumplen —o sin los que no, en «no es» y «está vacío», que incluyen a
+    /// quien no tiene el campo rellenado—. Se compara sin distinguir mayúsculas, como la base.
+    /// </summary>
+    private async Task<IQueryable<T>> ApplyCustomFieldAsync<T>(
+        IQueryable<T> query, Guid tenantId, DataSource dataSource, ReportFilter f,
+        System.Linq.Expressions.Expression<Func<T, Guid>> id, CancellationToken ct)
+    {
+        var fieldId = ReportCatalog.CustomFieldId(f.Field)!.Value;
+        var definitions = await customFields.GetDefinitionsAsync(tenantId, EntityTypeOf(dataSource), ct);
+        var field = definitions.FirstOrDefault(c => c.Id == fieldId)
+            ?? throw new InvalidOperationException($"Ese campo personalizado no existe en {dataSource.Name}");
+
+        var values = await customFields.GetAllValuesAsync(tenantId, fieldId, ct);
+        var wanted = (f.Value ?? string.Empty).Trim();
+
+        // Una selección múltiple «es» una opción si la lleva entre las suyas.
+        bool Is(string value) => field.Type == "MultiSelect"
+            ? value.Split('\n').Any(o => string.Equals(o.Trim(), wanted, StringComparison.OrdinalIgnoreCase))
+            : string.Equals(value.Trim(), wanted, StringComparison.OrdinalIgnoreCase);
+
+        var (ids, keep) = f.Operator.ToLowerInvariant() switch
+        {
+            "is" => (values.Where(v => Is(v.Value)).Select(v => v.Key), true),
+            "contains" => (values.Where(v => v.Value.Contains(wanted, StringComparison.OrdinalIgnoreCase)).Select(v => v.Key), true),
+            "not_empty" => (values.Keys, true),
+            "is_not" => (values.Where(v => Is(v.Value)).Select(v => v.Key), false),
+            "empty" => (values.Keys, false),
+            _ => throw new InvalidOperationException($"El operador «{f.Operator}» no vale para un campo personalizado")
+        };
+
+        // `ids.Contains(id)`, construido como árbol para que EF lo traduzca a un IN.
+        var list = System.Linq.Expressions.Expression.Constant(ids.Distinct().ToList());
+        System.Linq.Expressions.Expression body = System.Linq.Expressions.Expression.Call(
+            typeof(Enumerable), nameof(Enumerable.Contains), [typeof(Guid)], list, id.Body);
+        if (!keep) body = System.Linq.Expressions.Expression.Not(body);
+
+        return query.Where(System.Linq.Expressions.Expression.Lambda<Func<T, bool>>(body, id.Parameters[0]));
+    }
 
     private static IQueryable<T> ApplyText<T>(
         IQueryable<T> query, ReportFilter f, System.Linq.Expressions.Expression<Func<T, string>> field)

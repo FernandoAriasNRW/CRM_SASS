@@ -119,4 +119,57 @@ public sealed class TicketsByAreaFlowTests(CrmApiFactory factory)
         (await reader.PutAsJsonAsync($"/api/v1/custom-fields/values/{area}/{ticket}", new { value = "Ventas" }))
             .StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }
+
+    /// <summary>Lo que cuenta un informe de tickets con estos filtros, sumando todos los grupos.</summary>
+    private static async Task<int> CountAsync(HttpClient client, params object[] filters)
+    {
+        var response = await client.PostAsJsonAsync("/api/v1/reports/preview", new
+        {
+            definition = new { dataSource = "Tickets", groupBy = "status", measure = "count", visualization = "table", filters },
+            title = "Filtrado por área",
+        });
+        response.StatusCode.Should().Be(HttpStatusCode.OK, await response.Content.ReadAsStringAsync());
+        return (await response.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("rows").EnumerateArray()
+            .Sum(r => int.Parse(r[1].GetString()!));
+    }
+
+    /// <summary>
+    /// «Solo los del área Ventas». Se acota a un agente nuevo para que solo cuenten los tickets de
+    /// esta prueba: uno de Ventas, otro de Soporte y otro sin área.
+    /// </summary>
+    [Fact]
+    public async Task Tickets_can_be_filtered_by_an_area_field()
+    {
+        var admin = await LoginAsync("admin@acme.com", "admin123");
+        var area = await DefineAsync(admin, "Área " + Guid.NewGuid().ToString("N")[..6], "Ticket", ["Ventas", "Soporte"]);
+
+        var agent = await admin.PostAsJsonAsync("/api/v1/users", new { Name = "Agente", Email = $"agente.{Guid.NewGuid():N}@acme.com", Password, Role = "Member" });
+        var agentId = (await agent.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetGuid();
+
+        var sales = await TicketAsync(admin, "De ventas");
+        var support = await TicketAsync(admin, "De soporte");
+        var none = await TicketAsync(admin, "Sin área");
+        foreach (var ticket in new[] { sales, support, none })
+            (await admin.PatchAsJsonAsync($"/api/v1/tickets/{ticket}", new { AssignedAgentId = agentId })).EnsureSuccessStatusCode();
+        (await admin.PutAsJsonAsync($"/api/v1/custom-fields/values/{area}/{sales}", new { value = "Ventas" })).EnsureSuccessStatusCode();
+        (await admin.PutAsJsonAsync($"/api/v1/custom-fields/values/{area}/{support}", new { value = "Soporte" })).EnsureSuccessStatusCode();
+
+        var mine = new { field = "agent", @operator = "is", value = agentId.ToString() };
+        object Area(string op, string? value = null) => new { field = $"custom:{area}", @operator = op, value };
+
+        (await CountAsync(admin, mine, Area("is", "ventas"))).Should().Be(1, "sin distinguir mayúsculas, como la base");
+        (await CountAsync(admin, mine, Area("is_not", "Ventas"))).Should().Be(2, "«no es» incluye a los que no tienen área");
+        (await CountAsync(admin, mine, Area("empty"))).Should().Be(1);
+        (await CountAsync(admin, mine, Area("not_empty"))).Should().Be(2);
+        (await CountAsync(admin, mine, Area("contains", "port"))).Should().Be(1);
+
+        // El catálogo lo ofrece para filtrar, con sus opciones como valores.
+        var catalog = await admin.GetFromJsonAsync<JsonElement>("/api/v1/reports/catalog");
+        var field = catalog.GetProperty("dataSources").EnumerateArray()
+            .Single(s => s.GetProperty("key").GetString() == "Tickets").GetProperty("fields").EnumerateArray()
+            .Single(f => f.GetProperty("key").GetString() == $"custom:{area}");
+        field.GetProperty("operators").EnumerateArray().Select(o => o.GetString())
+            .Should().Contain(["is", "is_not", "contains", "empty", "not_empty"]);
+        field.GetProperty("values").EnumerateArray().Select(v => v.GetString()).Should().Equal("Ventas", "Soporte");
+    }
 }

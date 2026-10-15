@@ -28,13 +28,18 @@ public sealed class GetCatalogHandler(IReportResolver resolutor, ICustomFieldRea
                 ReportCatalog.OperatorsFor(c).Select(op => op.Key).ToList(),
                 resolutor.ValuesOf(o.Key, c.Key))).ToList();
 
-            // Los campos personalizados de la organización, para agrupar por ellos: «tickets por
-            // área». Sin operadores, porque el motor todavía no filtra por ellos y ofrecerlo sería
-            // prometer algo que da error al pedirlo.
+            // Los campos personalizados de la organización, para agrupar y filtrar por ellos:
+            // «tickets por área», «solo los del área Ventas». Las opciones de un campo de selección
+            // van como valores, para que el filtro sea un desplegable y no texto libre.
             if (EntityTypeOf.TryGetValue(o.Key, out var entityType))
             {
                 foreach (var field in await customFields.GetDefinitionsAsync(request.TenantId, entityType, ct))
-                    fields.Add(new FieldDto(ReportCatalog.CustomFieldKey(field.Id), field.Name, "Text", [], []));
+                {
+                    var key = ReportCatalog.CustomFieldKey(field.Id);
+                    fields.Add(new FieldDto(key, field.Name, "Text",
+                        ReportCatalog.OperatorsFor(o.Field(key)!).Select(op => op.Key).ToList(),
+                        field.Options));
+                }
             }
 
             dataSources.Add(new DataSourceDto(
