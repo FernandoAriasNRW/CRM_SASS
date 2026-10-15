@@ -333,9 +333,9 @@ export class ReportBuilderComponent {
   readonly sourceFields = computed(() => this.currentSource()?.fields ?? []);
 
   /**
-   * Los campos por los que se puede filtrar: los que tienen operadores. Los campos
-   * personalizados llegan sin ninguno —el motor todavía no filtra por ellos, solo agrupa— y
-   * ofrecerlos aquí sería prometer un filtro que da error.
+   * Los campos por los que se puede filtrar: los que tienen operadores. Un campo que el servidor
+   * manda sin ninguno sirve solo para agrupar, y ofrecerlo aquí sería prometer un filtro que da
+   * error.
    */
   readonly filterableFields = computed(() => this.sourceFields().filter(c => c.operators.length > 0));
   readonly sourceMeasures = computed(() => this.currentSource()?.measures ?? []);

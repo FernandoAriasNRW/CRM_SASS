@@ -15,12 +15,15 @@ internal sealed class CustomFieldReader(CustomFieldsDbContext context) : ICustom
     {
         using var _ = context.AsTenant(tenantId);
 
-        // Los calculados no se guardan: no hay valor por el que agrupar.
-        return await context.Definitions.AsNoTracking()
+        // Los calculados no se guardan: no hay valor por el que agrupar ni filtrar.
+        var definitions = await context.Definitions.AsNoTracking()
             .Where(d => d.TenantId == tenantId && d.TargetEntity == entityType && d.Type != FieldType.Formula)
             .OrderBy(d => d.Name)
-            .Select(d => new CustomFieldInfo(d.Id, d.Name, d.Type, d.TargetEntity))
             .ToListAsync(ct);
+
+        return definitions
+            .Select(d => new CustomFieldInfo(d.Id, d.Name, d.Type, d.TargetEntity, d.Options.ToList()))
+            .ToList();
     }
 
     public async Task<IReadOnlyDictionary<Guid, string>> GetValuesAsync(
@@ -34,6 +37,18 @@ internal sealed class CustomFieldReader(CustomFieldsDbContext context) : ICustom
         var values = await context.Values.AsNoTracking()
             .Where(v => v.TenantId == tenantId && v.DefinitionId == definitionId && v.Value != null
                         && EF.Constant(ids).Contains(v.EntityId))
+            .Select(v => new { v.EntityId, v.Value })
+            .ToListAsync(ct);
+
+        return values.ToDictionary(v => v.EntityId, v => v.Value!);
+    }
+
+    public async Task<IReadOnlyDictionary<Guid, string>> GetAllValuesAsync(Guid tenantId, Guid definitionId, CancellationToken ct = default)
+    {
+        using var _ = context.AsTenant(tenantId);
+
+        var values = await context.Values.AsNoTracking()
+            .Where(v => v.TenantId == tenantId && v.DefinitionId == definitionId && v.Value != null)
             .Select(v => new { v.EntityId, v.Value })
             .ToListAsync(ct);
 
