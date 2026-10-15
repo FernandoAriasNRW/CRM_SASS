@@ -119,6 +119,10 @@
         borde permanente pesa igual que uno con contenido, y en un cajón con cuatro apartados eso
         es lo que lo hacía parecer un formulario en vez de un documento.
       -->
+      <!-- Campos personalizados del ticket: área, producto, canal… No pinta nada si la
+           organización no ha definido ninguno. -->
+      <app-custom-fields-form entity="Ticket" [entityId]="ticket().id" />
+
       <div class="space-y-1.5">
         <p class="text-xs font-semibold text-muted-foreground uppercase tracking-wide" i18n>Descripción</p>
         <textarea

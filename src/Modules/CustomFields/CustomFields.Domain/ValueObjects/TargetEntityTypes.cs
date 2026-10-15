@@ -17,7 +17,13 @@ public static class TargetEntityTypes
     public const string Task = EntityTypes.Task;
     public const string Project = EntityTypes.Project;
 
-    public static IReadOnlyList<string> All() => [Task, Project];
+    /// <summary>
+    /// Los tickets, para poder clasificarlos —«área», «producto», «canal»— y agrupar los informes
+    /// por eso. Era el ejemplo pedido para el constructor, «tickets por área», y no se podía.
+    /// </summary>
+    public const string Ticket = EntityTypes.Ticket;
+
+    public static IReadOnlyList<string> All() => [Task, Project, Ticket];
 
     public static bool Exists(string type) => All().Contains(type);
 }

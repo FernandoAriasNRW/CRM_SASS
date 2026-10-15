@@ -22,7 +22,11 @@ const REPORT = { id: 'r1', tenantId: USER.tenantId, createdById: USER.id, name: 
 const CATALOG = {
   dataSources: [{
     key: 'Tasks', name: 'Tareas',
-    fields: [{ key: 'status', name: 'Estado', type: 'Text', operators: ['is'], values: ['Todo', 'Done'] }],
+    fields: [
+      { key: 'status', name: 'Estado', type: 'Text', operators: ['is'], values: ['Todo', 'Done'] },
+      // Un campo personalizado: llega sin operadores porque solo sirve para agrupar.
+      { key: 'custom:00000000-0000-0000-0000-0000000000aa', name: 'Área', type: 'Text', operators: [], values: [] },
+    ],
     measures: [{ key: 'count', name: 'Número de tareas' }],
   }],
   operators: [{ key: 'is', name: 'Es', types: ['Text'], needsValue: true }],
@@ -89,4 +93,23 @@ test('choosing table previews the rows as a table', async ({ page }) => {
   const preview = page.getByTestId('builder-preview');
   await expect(preview.locator('table')).toBeVisible();
   await expect(preview.getByRole('cell', { name: 'Todo' })).toBeVisible();
+});
+
+/**
+ * Un campo personalizado se ofrece para agrupar —«tickets por área»— y no para filtrar: el motor
+ * todavía no filtra por ellos, y ofrecerlo sería prometer un filtro que da error.
+ */
+test('a custom field is offered to group by, not to filter', async ({ page }) => {
+  await openBuilder(page);
+
+  const groupBy = page.locator('select[name="groupBy"]');
+  await expect(groupBy.locator('option', { hasText: 'Área' })).toHaveCount(1);
+  await groupBy.selectOption({ label: 'Área' });
+
+  // Con un filtro añadido hay dos desplegables con «Estado» —agrupar y filtrar— y solo uno, el
+  // de agrupar, con «Área».
+  await page.getByRole('button', { name: 'Añadir filtro' }).click();
+  const offering = (label: string) => page.locator('select').filter({ has: page.locator('option', { hasText: label }) });
+  await expect(offering('Estado')).toHaveCount(2);
+  await expect(offering('Área')).toHaveCount(1);
 });

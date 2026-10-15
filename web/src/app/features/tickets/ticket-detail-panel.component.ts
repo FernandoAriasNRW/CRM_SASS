@@ -21,12 +21,13 @@ import {
 import { DrawerComponent } from '../../shared/ui/drawer.component';
 import { CommentsComponent } from '../../shared/ui/comments.component';
 import { MentionedInComponent } from '../../shared/ui/mentioned-in.component';
+import { CustomFieldsFormComponent } from '../../shared/ui/custom-fields-form.component';
 
 import { LifecycleActionsComponent, type LifecycleChange } from '../../shared/ui/lifecycle-actions.component';
 @Component({
   selector: 'app-ticket-detail-panel',
   standalone: true,
-  imports: [LifecycleActionsComponent, MentionedInComponent, CommentsComponent, FormsModule, BadgeComponent, NgIconComponent, DrawerComponent, TagFieldComponent],
+  imports: [CustomFieldsFormComponent, LifecycleActionsComponent, MentionedInComponent, CommentsComponent, FormsModule, BadgeComponent, NgIconComponent, DrawerComponent, TagFieldComponent],
   viewProviders: [provideIcons({
     lucideX, lucideCheck, lucideUser, lucideTag,
     lucideFlag, lucideMessageSquare, lucidePaperclip,

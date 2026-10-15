@@ -6,21 +6,43 @@ using Reporting.Domain.Definitions;
 
 namespace Reporting.Application.Definitions;
 
-public sealed class GetCatalogHandler(IReportResolver resolutor)
+public sealed class GetCatalogHandler(IReportResolver resolutor, ICustomFieldReader customFields)
     : IQueryHandler<GetCatalogQuery, CatalogDto>
 {
-    public Task<Result<CatalogDto>> Handle(GetCatalogQuery request, CancellationToken ct)
+    /// <summary>El tipo de elemento de cada origen, como lo nombran los campos personalizados.</summary>
+    private static readonly Dictionary<string, string> EntityTypeOf = new()
     {
+        ["Tasks"] = BuildingBlocks.Domain.EntityTypes.Task,
+        ["Tickets"] = BuildingBlocks.Domain.EntityTypes.Ticket,
+        ["Projects"] = BuildingBlocks.Domain.EntityTypes.Project,
+    };
+
+    public async Task<Result<CatalogDto>> Handle(GetCatalogQuery request, CancellationToken ct)
+    {
+        var dataSources = new List<DataSourceDto>();
+
+        foreach (var o in ReportCatalog.DataSources())
+        {
+            var fields = o.Fields.Select(c => new FieldDto(
+                c.Key, c.Name, c.Type.ToString(),
+                ReportCatalog.OperatorsFor(c).Select(op => op.Key).ToList(),
+                resolutor.ValuesOf(o.Key, c.Key))).ToList();
+
+            // Los campos personalizados de la organización, para agrupar por ellos: «tickets por
+            // área». Sin operadores, porque el motor todavía no filtra por ellos y ofrecerlo sería
+            // prometer algo que da error al pedirlo.
+            if (EntityTypeOf.TryGetValue(o.Key, out var entityType))
+            {
+                foreach (var field in await customFields.GetDefinitionsAsync(request.TenantId, entityType, ct))
+                    fields.Add(new FieldDto(ReportCatalog.CustomFieldKey(field.Id), field.Name, "Text", [], []));
+            }
+
+            dataSources.Add(new DataSourceDto(
+                o.Key, o.Name, fields, o.Measures.Select(m => new OptionDto(m.Key, m.Name)).ToList()));
+        }
+
         var catalog = new CatalogDto(
-            DataSources: ReportCatalog.DataSources()
-                .Select(o => new DataSourceDto(
-                    o.Key, o.Name,
-                    o.Fields.Select(c => new FieldDto(
-                        c.Key, c.Name, c.Type.ToString(),
-                        ReportCatalog.OperatorsFor(c).Select(op => op.Key).ToList(),
-                        resolutor.ValuesOf(o.Key, c.Key))).ToList(),
-                    o.Measures.Select(m => new OptionDto(m.Key, m.Name)).ToList()))
-                .ToList(),
+            DataSources: dataSources,
 
             Operators: ReportCatalog.Operators()
                 .Select(o => new OperatorDto(
@@ -32,6 +54,6 @@ public sealed class GetCatalogHandler(IReportResolver resolutor)
             Granularities: ReportCatalog.DateGranularities()
                 .Select(g => new OptionDto(g.Key, g.Name)).ToList());
 
-        return Task.FromResult(Result<CatalogDto>.Success(catalog));
+        return Result<CatalogDto>.Success(catalog);
     }
 }

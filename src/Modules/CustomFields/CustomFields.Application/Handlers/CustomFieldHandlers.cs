@@ -95,15 +95,24 @@ public sealed class RemoveCustomFieldCommandHandler(
   }
 }
 
+/// <summary>
+/// Rellenar un campo es editar el elemento, así que pide poder editarlo. Antes bastaba con tener
+/// sesión: quien solo podía ver una tarea le cambiaba sus campos.
+/// </summary>
 public sealed class SetCustomFieldValueCommandHandler(
     ICustomFieldRepository repository,
-    ICustomFieldsUnitOfWork unitOfWork) : ICommandHandler<SetCustomFieldValueCommand, bool>
+    ICustomFieldsUnitOfWork unitOfWork,
+    IUserContext user,
+    BuildingBlocks.Application.Authorization.IEntityPermissionService permissions) : ICommandHandler<SetCustomFieldValueCommand, bool>
 {
   public async Task<Result<bool>> Handle(SetCustomFieldValueCommand request, CancellationToken ct)
   {
     var definition = await repository.GetDefinitionAsync(request.TenantId, request.DefinitionId, ct);
     if (definition is null)
       return Result<bool>.Failure("El campo no existe");
+
+    if (!await permissions.HasPermissionAsync(request.TenantId, user.UserId, definition.TargetEntity, request.EntityId, "Write", ct))
+      throw new UnauthorizedAccessException("No tienes permisos de Write para este recurso.");
 
     // Un campo calculado no se rellena. Aceptar el valor y luego ignorarlo al leer sería peor
     // que rechazarlo: quien lo escribió vería el suyo desaparecer sin explicación.
