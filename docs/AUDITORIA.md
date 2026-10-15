@@ -922,9 +922,6 @@ que lleva «8b» en el título. Lo único que sigue siendo propio de un disparad
 - **Nada borra del almacenamiento los adjuntos de un ticket** si algún día se vacía la papelera de
   tickets. Hoy no hay forma de vaciarla —ningún ticket se borra de verdad—, así que no ocurre; quien
   añada el vaciado tiene que borrar también sus ficheros. Quitar un adjunto suelto sí lo borra (§25).
-- **«Barras apiladas» se pinta como barras normales.** Apilar necesita una segunda dimensión
-  —agrupar por dos campos— que el catálogo no ofrece todavía. Se pinta en vez de rechazarse
-  porque el resultado sigue siendo cierto, sólo que menos rico.
 - **Documentos tiene la columna de archivado y no la usa.** Se le puso al modelar el concepto
   para no dejar el agregado a medias, pero Docs mantiene su propio panel lateral y no se ha
   enganchado al compartido.
@@ -2415,3 +2412,40 @@ Lo prueban:
 - `TicketsByAreaFlowTests.Tickets_can_be_filtered_by_an_area_field`: los cinco operadores y el
   catálogo. Fallaba antes del cambio.
 - la e2e `report-builder-preview`: el campo sale para agrupar y para filtrar, con sus opciones.
+
+---
+
+## 38. Las barras apiladas apilan
+
+«Barras apiladas» se ofrecía en el constructor y se pintaba como barras normales: apilar necesita
+una segunda dimensión, y el catálogo no la tenía.
+
+- **La definición lleva `stackBy`**: por qué se parte cada barra. Sirve cualquier campo del
+  origen, también una persona o un campo personalizado, con estas excepciones:
+  - una fecha no: necesitaría su propia granularidad y daría una pila ilegible;
+  - el mismo campo por el que se agrupa tampoco;
+  - y solo vale con «Barras apiladas».
+- **Compatibilidad:** las definiciones guardadas como apiladas antes de existir `stackBy` siguen
+  pintándose como barras normales, en vez de dar error.
+- **El motor devuelve una tabla ancha:** una fila por grupo y una columna por cada trozo de la
+  barra.
+  - Los grupos son los mismos y en el mismo orden que sin apilar: apilar solo los parte.
+  - Los trozos van de mayor a menor. Pasados ocho, el resto se junta en «Otros» para que la
+    barra siga midiendo lo mismo; en una media se recortan.
+  - Un trozo sin filas es 0 en un conteo o una suma, y «—» en una media.
+  - La serie pasa por lo mismo que el grupo: una persona sale por su nombre y un campo
+    personalizado por su valor. Para eso la clave de cada fila sale de una sola función por
+    origen (`keyOf`), y no de dos `switch` copiados.
+- **La gráfica pinta una serie apilada por columna, con leyenda.** Con una sola columna sigue siendo
+  una barra.
+- **El constructor** pide «Apilado por» al elegir «Barras apiladas».
+- **El panel** usa el mismo motor, así que sus recuadros también apilan.
+
+Lo prueban:
+
+- `StackedBarsFlowTests`: tickets por estado apilados por prioridad, los rechazos y la
+  compatibilidad;
+- la prueba unitaria de `report-chart`: series apiladas, una sola columna y números en español;
+- la e2e `report-builder-preview`: el campo «Apilado por» y lo que se manda.
+
+Las pruebas de apilado fallaban antes del cambio. La de compatibilidad pasaba ya.

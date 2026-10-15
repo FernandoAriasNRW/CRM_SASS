@@ -117,11 +117,22 @@ public sealed class ReportEngine(
         };
 
         if (dataSource.Field(definition.GroupBy)?.Type == FieldType.Person)
-            raw = await NamePeopleAsync(tenantId, raw, ct);
+            raw = await NamePeopleAsync(tenantId, raw, onSeries: false, ct);
 
         string? groupLabel = null;
         if (ReportCatalog.CustomFieldId(definition.GroupBy) is { } customFieldId)
-            (raw, groupLabel) = await GroupByCustomFieldAsync(tenantId, dataSource, customFieldId, raw, ct);
+            (raw, groupLabel) = await GroupByCustomFieldAsync(tenantId, dataSource, customFieldId, raw, onSeries: false, ct);
+
+        // La serie de las barras apiladas pasa por lo mismo: una persona por su nombre, un campo
+        // personalizado por su valor.
+        if (definition.StackBy is { } stackBy)
+        {
+            if (dataSource.Field(stackBy)?.Type == FieldType.Person)
+                raw = await NamePeopleAsync(tenantId, raw, onSeries: true, ct);
+
+            if (ReportCatalog.CustomFieldId(stackBy) is { } stackFieldId)
+                raw = (await GroupByCustomFieldAsync(tenantId, dataSource, stackFieldId, raw, onSeries: true, ct)).Rows;
+        }
 
         return Compose(title, definition, dataSource, raw, groupLabel);
     }
@@ -143,14 +154,17 @@ public sealed class ReportEngine(
     /// asignar)», igual que un ticket sin agente. El campo tiene que existir y ser de ese origen:
     /// un campo de tareas no agrupa tickets.
     /// </summary>
+    /// <param name="onSeries">Si se resuelve la serie de las barras apiladas en vez del grupo.</param>
     private async Task<(List<RawRow> Rows, string Label)> GroupByCustomFieldAsync(
-        Guid tenantId, DataSource dataSource, Guid fieldId, List<RawRow> raw, CancellationToken ct)
+        Guid tenantId, DataSource dataSource, Guid fieldId, List<RawRow> raw, bool onSeries, CancellationToken ct)
     {
+        string KeyOf(RawRow r) => (onSeries ? r.Series : r.Group)!;
+
         var definitions = await customFields.GetDefinitionsAsync(tenantId, EntityTypeOf(dataSource), ct);
         var field = definitions.FirstOrDefault(f => f.Id == fieldId)
             ?? throw new InvalidOperationException($"Ese campo personalizado no existe en {dataSource.Name}");
 
-        var ids = raw.Select(r => Guid.Parse(r.Group)).Distinct().ToList();
+        var ids = raw.Select(r => Guid.Parse(KeyOf(r))).Distinct().ToList();
         var values = await customFields.GetValuesAsync(tenantId, fieldId, ids, ct);
 
         // Una persona se enseña por su nombre, como el responsable; una selección múltiple, con
@@ -167,11 +181,12 @@ public sealed class ReportEngine(
             _ => value
         };
 
-        var rows = raw.Select(r => r with
+        var rows = raw.Select(r =>
         {
-            Group = values.TryGetValue(Guid.Parse(r.Group), out var value) && !string.IsNullOrWhiteSpace(value)
+            var label = values.TryGetValue(Guid.Parse(KeyOf(r)), out var value) && !string.IsNullOrWhiteSpace(value)
                 ? Label(value)
-                : Unassigned
+                : Unassigned;
+            return onSeries ? r with { Series = label } : r with { Group = label };
         }).ToList();
 
         return (rows, field.Name);
@@ -181,14 +196,17 @@ public sealed class ReportEngine(
     /// Cambia el identificador de cada grupo por el nombre de la persona. Los grupos se arman con
     /// el identificador y se nombran después: dos personas que se llaman igual no se juntan.
     /// </summary>
-    private async Task<List<RawRow>> NamePeopleAsync(Guid tenantId, List<RawRow> raw, CancellationToken ct)
+    /// <param name="onSeries">Si se nombra la serie de las barras apiladas en vez del grupo.</param>
+    private async Task<List<RawRow>> NamePeopleAsync(Guid tenantId, List<RawRow> raw, bool onSeries, CancellationToken ct)
     {
-        var ids = raw.Select(r => Guid.TryParse(r.Group, out var id) ? id : Guid.Empty)
+        string? KeyOf(RawRow r) => onSeries ? r.Series : r.Group;
+
+        var ids = raw.Select(r => Guid.TryParse(KeyOf(r), out var id) ? id : Guid.Empty)
             .Where(id => id != Guid.Empty).Distinct().ToList();
         var names = await PersonNames.ResolveAsync(users, tenantId, ids, ct);
 
-        return raw.Select(r => Guid.TryParse(r.Group, out var id) && names.TryGetValue(id, out var name)
-                ? r with { Group = name }
+        return raw.Select(r => Guid.TryParse(KeyOf(r), out var id) && names.TryGetValue(id, out var name)
+                ? onSeries ? r with { Series = name } : r with { Group = name }
                 : r)
             .ToList();
     }
@@ -200,7 +218,14 @@ public sealed class ReportEngine(
     /// —tickets sin resolver, tareas sin horas— debe ignorarlas en lugar de contarlas como cero.
     /// Contar los ceros bajaría la media y nadie sabría por qué.
     /// </summary>
-    private sealed record RawRow(string Group, double? Value);
+    /// <param name="Series">Apilando, el trozo de la barra en que cae; si no, <c>null</c>.</param>
+    private sealed record RawRow(string Group, double? Value, string? Series = null);
+
+    /// <summary>
+    /// Da tipo a la función que calcula la clave de una fila. Las filas son de un tipo anónimo,
+    /// que no se puede escribir en la firma de una función local; así lo infiere el compilador.
+    /// </summary>
+    private static Func<T, string, string> KeyFunction<T>(IEnumerable<T> _, Func<T, string, string> keyOf) => keyOf;
 
     #region Los tres orígenes
 
@@ -252,8 +277,8 @@ public sealed class ReportEngine(
                 .ToDictionaryAsync(p => p.Id, p => p.Name.Value, ct)
             : [];
 
-        return rows.Select(t => new RawRow(
-            Group: d.GroupBy.ToLowerInvariant() switch
+        // La clave de una fila según un campo: sirve para el grupo y, apilando, para la serie.
+        var keyOf = KeyFunction(rows, (t, field) => field.ToLowerInvariant() switch
             {
                 "status" => t.Status,
                 "priority" => t.Priority,
@@ -263,8 +288,12 @@ public sealed class ReportEngine(
                 "created_at" => ByDate(Local(t.CreatedAtUtc), d.Granularity),
                 "estimated_hours" => t.EstimatedHours.ToString("0.##", Spanish),
                 var key when ReportCatalog.CustomFieldId(key) is not null => t.Id.ToString(),
-                _ => throw new InvalidOperationException($"No sé agrupar tareas por «{d.GroupBy}»")
-            },
+                _ => throw new InvalidOperationException($"No sé agrupar tareas por «{field}»")
+            });
+
+        return rows.Select(t => new RawRow(
+            Group: keyOf(t, d.GroupBy),
+            Series: d.StackBy is null ? null : keyOf(t, d.StackBy),
             Value: d.Measure.ToLowerInvariant() switch
             {
                 "count" => null,
@@ -307,8 +336,8 @@ public sealed class ReportEngine(
             .Select(t => new { t.Id, t.StatusValue, t.PriorityValue, t.AssignedAgentId, t.CreatedAt, t.ResolvedAt })
             .ToListAsync(ct);
 
-        return rows.Select(t => new RawRow(
-            Group: d.GroupBy.ToLowerInvariant() switch
+        // La clave de una fila según un campo: sirve para el grupo y, apilando, para la serie.
+        var keyOf = KeyFunction(rows, (t, field) => field.ToLowerInvariant() switch
             {
                 "status" => Ticketing.Domain.ValueObjects.TicketStatus
                     .FromValue<Ticketing.Domain.ValueObjects.TicketStatus>(t.StatusValue).Name,
@@ -323,8 +352,12 @@ public sealed class ReportEngine(
                 "created_at" => ByDate(Local(t.CreatedAt), d.Granularity),
                 "resolved_at" => t.ResolvedAt is null ? Unassigned : ByDate(Local(t.ResolvedAt.Value), d.Granularity),
                 var key when ReportCatalog.CustomFieldId(key) is not null => t.Id.ToString(),
-                _ => throw new InvalidOperationException($"No sé agrupar tickets por «{d.GroupBy}»")
-            },
+                _ => throw new InvalidOperationException($"No sé agrupar tickets por «{field}»")
+            });
+
+        return rows.Select(t => new RawRow(
+            Group: keyOf(t, d.GroupBy),
+            Series: d.StackBy is null ? null : keyOf(t, d.StackBy),
             Value: d.Measure.ToLowerInvariant() switch
             {
                 "count" => null,
@@ -369,15 +402,19 @@ public sealed class ReportEngine(
             .Select(p => new { p.Id, Status = p.Status.Value, p.OwnerId, p.StartDate })
             .ToListAsync(ct);
 
-        return rows.Select(p => new RawRow(
-            Group: d.GroupBy.ToLowerInvariant() switch
+        // La clave de una fila según un campo: sirve para el grupo y, apilando, para la serie.
+        var keyOf = KeyFunction(rows, (p, field) => field.ToLowerInvariant() switch
             {
                 "status" => p.Status,
                 "owner" => p.OwnerId == Guid.Empty ? Unassigned : p.OwnerId.ToString(),
                 "start_date" => ByDate(p.StartDate, d.Granularity),
                 var key when ReportCatalog.CustomFieldId(key) is not null => p.Id.ToString(),
-                _ => throw new InvalidOperationException($"No sé agrupar proyectos por «{d.GroupBy}»")
-            },
+                _ => throw new InvalidOperationException($"No sé agrupar proyectos por «{field}»")
+            });
+
+        return rows.Select(p => new RawRow(
+            Group: keyOf(p, d.GroupBy),
+            Series: d.StackBy is null ? null : keyOf(p, d.StackBy),
             Value: d.Measure.Equals("count", StringComparison.OrdinalIgnoreCase)
                 ? null
                 : throw new InvalidOperationException($"No sé calcular «{d.Measure}» sobre proyectos")))
@@ -450,6 +487,9 @@ public sealed class ReportEngine(
             trimmed = true;
         }
 
+        if (d.StackBy is not null)
+            return Stacked(title, d, dataSource, raw, groups.Select(g => g.Group).ToList(), trimmed, groupLabel, measure, isAverage);
+
         var rows = groups
             .Select(g => (IReadOnlyList<string>)
             [
@@ -463,6 +503,72 @@ public sealed class ReportEngine(
             title,
             Subtitle(d, dataSource, measure, raw.Count, trimmed, groupLabel),
             [groupLabel, measure.Name],
+            rows);
+    }
+
+    /// <summary>Cuántos trozos como mucho tiene una barra apilada; el resto, en «Otros».</summary>
+    private const int MaxSeries = 8;
+
+    /// <summary>
+    /// Las barras apiladas: una fila por grupo y una columna por cada trozo de la barra.
+    ///
+    /// Los grupos son los mismos y en el mismo orden que sin apilar —por cantidad, o por fecha—,
+    /// así que apilar no cambia qué barras salen, solo las parte. Los trozos van de mayor a menor
+    /// en el total, y los que no caben se juntan en «Otros» para que la barra siga midiendo lo
+    /// mismo. En una media no se juntan —daría un número sin significado— y se recortan.
+    /// </summary>
+    private ReportTable Stacked(
+        string title, ReportDefinition d, DataSource dataSource, List<RawRow> raw,
+        List<string> groups, bool trimmed, string groupLabel, AvailableMeasure measure, bool isAverage)
+    {
+        double? Aggregate(IEnumerable<RawRow> rows) =>
+            d.Measure.Equals("count", StringComparison.OrdinalIgnoreCase) ? rows.Count()
+            : isAverage ? Media(rows.Select(x => x.Value))
+            : rows.Sum(x => x.Value ?? 0);
+
+        // La cola de grupos ya se juntó en «Otros» al componer; aquí se le asignan sus filas.
+        var shown = groups.Where(g => g != Others).ToHashSet();
+        string GroupOf(RawRow r) => shown.Contains(r.Group) ? r.Group : Others;
+        var inScope = raw.Where(r => groups.Contains(GroupOf(r))).ToList();
+
+        var series = inScope
+            .GroupBy(r => r.Series ?? Unassigned)
+            .Select(s => (Name: s.Key, Total: Aggregate(s) ?? 0))
+            .OrderByDescending(s => s.Total)
+            .Select(s => s.Name)
+            .ToList();
+
+        if (series.Count > MaxSeries)
+        {
+            var kept = series.Take(MaxSeries).ToHashSet();
+            series = isAverage ? [.. kept] : [.. kept, Others];
+            inScope = inScope
+                .Where(r => isAverage ? kept.Contains(r.Series ?? Unassigned) : true)
+                .Select(r => kept.Contains(r.Series ?? Unassigned) ? r : r with { Series = Others })
+                .ToList();
+            trimmed = true;
+        }
+
+        var cells = inScope
+            .GroupBy(r => (Group: GroupOf(r), Series: r.Series ?? Unassigned))
+            .ToDictionary(c => c.Key, c => Aggregate(c));
+
+        // Un trozo sin filas es un cero en un conteo o una suma, y una raya en una media: no hay
+        // nada que promediar, que no es lo mismo que cero.
+        string Cell(string group, string serie) =>
+            cells.TryGetValue((group, serie), out var value) && value is not null
+                ? value.Value.ToString("0.##", Spanish)
+                : isAverage ? NoData : "0";
+
+        var rows = groups
+            .Select(g => (IReadOnlyList<string>)[g, .. series.Select(s => Cell(g, s))])
+            .ToList();
+
+        return new ReportTable(
+            title,
+            Subtitle(d, dataSource, measure, raw.Count, trimmed, groupLabel)
+                + $" · apilado por {(dataSource.Field(d.StackBy)?.Name ?? d.StackBy!).ToLowerInvariant()}",
+            [groupLabel, .. series],
             rows);
     }
 

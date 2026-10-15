@@ -33,7 +33,7 @@ const CATALOG = {
     { key: 'is', name: 'Es', types: ['Text'], needsValue: true },
     { key: 'empty', name: 'Está vacío', types: ['Text'], needsValue: false },
   ],
-  visualizations: [{ key: 'table', name: 'Tabla' }, { key: 'bar', name: 'Barras' }, { key: 'pie', name: 'Tarta' }],
+  visualizations: [{ key: 'table', name: 'Tabla' }, { key: 'bar', name: 'Barras' }, { key: 'stacked_bar', name: 'Barras apiladas' }, { key: 'pie', name: 'Tarta' }],
   granularities: [],
 };
 
@@ -116,4 +116,32 @@ test('a custom field can be used to group and to filter, with its options', asyn
   await offering('Área').last().selectOption({ label: 'Área' });
   await expect(offering('Ventas')).toHaveCount(1);
   await expect(offering('Soporte')).toHaveCount(1);
+});
+
+/**
+ * Barras apiladas: se elige por qué se parte cada barra, la definición lo manda y la gráfica
+ * pinta un trozo por serie, con su leyenda. Antes se pintaban como barras normales.
+ */
+test('stacked bars ask what to stack by and paint one series per column', async ({ page }) => {
+  await openBuilder(page);
+
+  let sent: { stackBy?: string | null } | null = null;
+  await page.route(/\/reports\/preview/, r => {
+    sent = JSON.parse(r.request().postData() ?? '{}').definition;
+    return r.fulfill(json({
+      title: 'Tareas por estado', subtitle: 'apilado por área',
+      columns: ['Estado', 'Ventas', 'Soporte'], rows: [['Todo', '3', '1'], ['Done', '1', '2']], totalRows: 2,
+    }));
+  });
+
+  await expect(page.getByLabel('Apilado por')).toHaveCount(0);
+  await page.locator('select[name="visualization"]').selectOption('stacked_bar');
+  await page.getByLabel('Apilado por').selectOption({ label: 'Área' });
+  await page.getByRole('button', { name: 'Ver resultado' }).click();
+
+  await expect.poll(() => sent?.stackBy).toBe('custom:00000000-0000-0000-0000-0000000000aa');
+  const preview = page.getByTestId('builder-preview');
+  // Que pinte una serie apilada por columna lo comprueba la prueba unitaria de la gráfica:
+  // ECharts dibuja en un lienzo y no deja nada que leer en la página.
+  await expect(preview.locator('canvas')).toBeVisible();
 });

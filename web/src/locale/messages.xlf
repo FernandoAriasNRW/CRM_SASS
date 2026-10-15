@@ -1702,7 +1702,7 @@ Pendiente</source>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/reports/report-builder.component.ts</context>
-          <context context-type="linenumber">247</context>
+          <context context-type="linenumber">264</context>
         </context-group>
       </trans-unit>
       <trans-unit id="7695489105986126617" datatype="html">
@@ -2265,7 +2265,7 @@ Pendiente</source>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/reports/report-builder.component.ts</context>
-          <context context-type="linenumber">242,243</context>
+          <context context-type="linenumber">259,260</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/reports/report-create-modal.component.html</context>
@@ -4593,7 +4593,7 @@ Pendiente</source>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/reports/report-builder.component.ts</context>
-          <context context-type="linenumber">78</context>
+          <context context-type="linenumber">80</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/tags/tag-categories-drawer.component.html</context>
@@ -5814,63 +5814,77 @@ Pendiente</source>
         <source>Constructor de informes</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/reports/report-builder.component.ts</context>
-          <context context-type="linenumber">76,77</context>
+          <context context-type="linenumber">78,79</context>
         </context-group>
       </trans-unit>
       <trans-unit id="3328248801624290650" datatype="html">
         <source>Cargando el catálogo…</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/reports/report-builder.component.ts</context>
-          <context context-type="linenumber">82,83</context>
+          <context context-type="linenumber">84,85</context>
         </context-group>
       </trans-unit>
       <trans-unit id="8166312070079305013" datatype="html">
         <source>No se pudo cargar el catálogo de informes.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/reports/report-builder.component.ts</context>
-          <context context-type="linenumber">84,85</context>
+          <context context-type="linenumber">86,87</context>
         </context-group>
       </trans-unit>
       <trans-unit id="1269796934540024401" datatype="html">
         <source>Datos de</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/reports/report-builder.component.ts</context>
-          <context context-type="linenumber">90,91</context>
+          <context context-type="linenumber">92,93</context>
         </context-group>
       </trans-unit>
       <trans-unit id="7660603056288412235" datatype="html">
         <source>Agrupado por</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/reports/report-builder.component.ts</context>
-          <context context-type="linenumber">100,101</context>
+          <context context-type="linenumber">102,103</context>
         </context-group>
       </trans-unit>
       <trans-unit id="8194276986070945206" datatype="html">
         <source>Agrupar la fecha</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/reports/report-builder.component.ts</context>
-          <context context-type="linenumber">113,114</context>
+          <context context-type="linenumber">115,116</context>
         </context-group>
       </trans-unit>
       <trans-unit id="5387803419583567166" datatype="html">
         <source>Midiendo</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/reports/report-builder.component.ts</context>
-          <context context-type="linenumber">124,125</context>
+          <context context-type="linenumber">126,127</context>
         </context-group>
       </trans-unit>
       <trans-unit id="4358480477665851139" datatype="html">
         <source>Pintado como</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/reports/report-builder.component.ts</context>
-          <context context-type="linenumber">134,135</context>
+          <context context-type="linenumber">136,137</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3959223725728441775" datatype="html">
+        <source>Apilado por</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/reports/report-builder.component.ts</context>
+          <context context-type="linenumber">149,150</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4979865379196665499" datatype="html">
+        <source>Sin apilar</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/reports/report-builder.component.ts</context>
+          <context context-type="linenumber">152,153</context>
         </context-group>
       </trans-unit>
       <trans-unit id="7532911879405106084" datatype="html">
         <source>Filtros</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/reports/report-builder.component.ts</context>
-          <context context-type="linenumber">146,147</context>
+          <context context-type="linenumber">163,164</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/ui/data-table/advanced-filters.component.ts</context>
@@ -5881,77 +5895,77 @@ Pendiente</source>
         <source> Añadir filtro </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/reports/report-builder.component.ts</context>
-          <context context-type="linenumber">148</context>
+          <context context-type="linenumber">165</context>
         </context-group>
       </trans-unit>
       <trans-unit id="7108391386114972654" datatype="html">
         <source>Sin filtros: entra todo.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/reports/report-builder.component.ts</context>
-          <context context-type="linenumber">153,154</context>
+          <context context-type="linenumber">170,171</context>
         </context-group>
       </trans-unit>
       <trans-unit id="8962914386906245107" datatype="html">
         <source>Valor</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/reports/report-builder.component.ts</context>
-          <context context-type="linenumber">194,195</context>
+          <context context-type="linenumber">211,212</context>
         </context-group>
       </trans-unit>
       <trans-unit id="6645958179466305844" datatype="html">
         <source>Quitar filtro</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/reports/report-builder.component.ts</context>
-          <context context-type="linenumber">200</context>
+          <context context-type="linenumber">217</context>
         </context-group>
       </trans-unit>
       <trans-unit id="1723345460413587971" datatype="html">
         <source> Con estos filtros no hay datos. No es un error: es lo que hay. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/reports/report-builder.component.ts</context>
-          <context context-type="linenumber">221</context>
+          <context context-type="linenumber">238</context>
         </context-group>
       </trans-unit>
       <trans-unit id="3309599294096364508" datatype="html">
         <source> Se enseñan <x id="INTERPOLATION" equiv-text="{{ p.rows.length }}"/> de <x id="INTERPOLATION_1" equiv-text="{{ p.totalRows }}"/> filas. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/reports/report-builder.component.ts</context>
-          <context context-type="linenumber">233,234</context>
+          <context context-type="linenumber">250,251</context>
         </context-group>
       </trans-unit>
       <trans-unit id="5597953777025318659" datatype="html">
         <source> Ver resultado </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/reports/report-builder.component.ts</context>
-          <context context-type="linenumber">244</context>
+          <context context-type="linenumber">261</context>
         </context-group>
       </trans-unit>
       <trans-unit id="7719677780114462028" datatype="html">
         <source>No se pudo cargar el catálogo.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/reports/report-builder.component.ts</context>
-          <context context-type="linenumber">315</context>
+          <context context-type="linenumber">333</context>
         </context-group>
       </trans-unit>
       <trans-unit id="3736855329730769907" datatype="html">
         <source>No se pudo calcular el resultado.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/reports/report-builder.component.ts</context>
-          <context context-type="linenumber">454</context>
+          <context context-type="linenumber">484</context>
         </context-group>
       </trans-unit>
       <trans-unit id="5022839333651225030" datatype="html">
         <source>Informe guardado.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/reports/report-builder.component.ts</context>
-          <context context-type="linenumber">468</context>
+          <context context-type="linenumber">498</context>
         </context-group>
       </trans-unit>
       <trans-unit id="3060157024170002439" datatype="html">
         <source>No se pudo guardar el informe.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/reports/report-builder.component.ts</context>
-          <context context-type="linenumber">472</context>
+          <context context-type="linenumber">502</context>
         </context-group>
       </trans-unit>
       <trans-unit id="7382126769107886475" datatype="html">
@@ -8210,7 +8224,7 @@ Pendiente</source>
         <source>Sin datos para este informe.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/ui/charts/report-chart.component.ts</context>
-          <context context-type="linenumber">52,53</context>
+          <context context-type="linenumber">63,64</context>
         </context-group>
       </trans-unit>
       <trans-unit id="6792949945167720378" datatype="html">

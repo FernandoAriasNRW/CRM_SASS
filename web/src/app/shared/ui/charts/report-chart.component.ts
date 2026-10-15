@@ -33,6 +33,17 @@ export interface WidgetData {
  * La consecuencia práctica: cambiar de librería de gráficas algún día es reescribir este fichero,
  * no migrar los informes que la gente haya construido.
  */
+/**
+ * Una celda de la tabla como número. Llega formateada en español —«1.234,5»— y la raya «—»
+ * significa que no hay nada que promediar: es un hueco, no un cero.
+ */
+function toNumber(raw: string | undefined): number | null {
+  if (!raw || raw === '—') return null;
+
+  const num = Number(raw.replace(/\./g, '').replace(',', '.').replace(/[^\d.-]/g, ''));
+  return Number.isFinite(num) ? num : null;
+}
+
 @Component({
   selector: 'app-report-chart',
   standalone: true,
@@ -93,14 +104,7 @@ export class ReportChartComponent {
    * que escribe cuando no hay nada que promediar) se convierte en `null`, no en 0: ECharts deja el
    * hueco en la serie, que es lo honesto, en vez de dibujar una caída a cero que no ocurrió.
    */
-  private readonly values = computed(() =>
-    this.data().rows.map(row => {
-      const raw = row[row.length - 1];
-      if (!raw || raw === '—') return null;
-
-      const num = Number(raw.replace(/\./g, '').replace(',', '.').replace(/[^\d.-]/g, ''));
-      return Number.isFinite(num) ? num : null;
-    }));
+  private readonly values = computed(() => this.data().rows.map(row => toNumber(row[row.length - 1])));
 
   private readonly labels = computed(() => this.data().rows.map(f => f[0]));
 
@@ -164,9 +168,23 @@ export class ReportChartComponent {
       };
     }
 
-    // Barras y barras apiladas comparten forma mientras haya una sola serie: apilar necesita una
-    // segunda dimensión que el catálogo todavía no ofrece. Se pinta como barras en vez de
-    // rechazarlo, y queda anotado.
+    // Barras apiladas: cada columna de valores es un trozo de la barra, y la leyenda dice cuál es
+    // cuál. Con una sola columna —un informe guardado como apilado sin decir por qué apilar— es
+    // una barra normal.
+    if (d.visualization === 'stacked_bar' && d.columns.length > 2) {
+      return {
+        ...axis,
+        legend: { bottom: 0, type: 'scroll', textStyle: { color: mutedText } },
+        grid: { left: 8, right: 16, top: 24, bottom: 32, containLabel: true },
+        series: d.columns.slice(1).map((name, i) => ({
+          type: 'bar' as const,
+          name,
+          stack: 'total',
+          data: d.rows.map(row => toNumber(row[i + 1]))
+        }))
+      };
+    }
+
     return { ...axis, series: [{ type: 'bar', data: values }] };
   });
 }

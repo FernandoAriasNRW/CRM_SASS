@@ -2,6 +2,22 @@
 <xliff xmlns="urn:oasis:names:tc:xliff:document:1.2" version="1.2">
   <file source-language="es" target-language="en" datatype="plaintext" original="ng2.template">
     <body>
+      <trans-unit id="3959223725728441775" datatype="html">
+        <source>Apilado por</source>
+        <target state="final">Stacked by</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/reports/report-builder.component.ts</context>
+          <context context-type="linenumber">149,150</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4979865379196665499" datatype="html">
+        <source>Sin apilar</source>
+        <target state="final">Not stacked</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/reports/report-builder.component.ts</context>
+          <context context-type="linenumber">152,153</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="7211501113903874100" datatype="html">
         <source>Organización</source>
         <target state="final">Organization</target>
