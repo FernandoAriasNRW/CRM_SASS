@@ -333,6 +333,7 @@ Un concepto, un nombre. Ordenado por área.
 |---|---|
 | campo personalizado, definición | `CustomField`, `Definition` |
 | campo personalizado en un informe (clave) | `custom:{id}` (`ReportCatalog.CustomFieldKey`) |
+| apilado por (segunda dimensión de las barras apiladas) | `StackBy` |
 | lector de campos personalizados (puerto) | `ICustomFieldReader` |
 | tipo de campo | `FieldType` |
 | se calcula, calculado | `IsComputed`, `Computed` |

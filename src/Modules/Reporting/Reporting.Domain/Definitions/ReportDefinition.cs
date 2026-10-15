@@ -28,8 +28,16 @@ public sealed record ReportDefinition(
     /// <summary>Cómo se agrupa la fecha, si la agrupación es por una. Ver el catálogo.</summary>
     string? Granularity = null,
     /// <summary>Cuántos grupos como mucho; el resto se resume en «Otros». Nulo, todos.</summary>
-    int? MaxGroups = null)
+    int? MaxGroups = null,
+    /// <summary>La segunda dimensión de las barras apiladas: por qué se parte cada barra.</summary>
+    string? StackBy = null)
 {
+    /// <summary>
+    /// La forma que apila: cada barra se parte por <see cref="StackBy"/>, la segunda dimensión
+    /// —«tickets por estado, apilados por prioridad»—.
+    /// </summary>
+    public const string StackedBar = "stacked_bar";
+
     /// <summary>
     /// Los filtros, nunca nulos.
     ///
@@ -111,6 +119,31 @@ public sealed record ReportDefinition(
                     $"«{Granularity}» no es una granularidad. Las que hay: "
                     + string.Join(", ", ReportCatalog.DateGranularities().Select(g => g.Key)));
             }
+        }
+
+        // La segunda dimensión solo tiene sentido apilando. Sin ella, unas barras apiladas se
+        // pintan como barras normales: es lo que hacían las guardadas antes de que existiera, y
+        // rechazarlas ahora rompería informes que funcionaban.
+        if (StackBy is not null)
+        {
+            if (Visualization != StackedBar)
+                return Result.Failure("Solo las barras apiladas se parten por un segundo campo");
+
+            var stackBy = dataSource.Field(StackBy);
+            if (stackBy is null)
+            {
+                return Result.Failure(
+                    $"«{StackBy}» no es un campo de {dataSource.Name}. Los que hay: "
+                    + string.Join(", ", dataSource.Fields.Select(c => c.Key)));
+            }
+
+            if (string.Equals(StackBy, GroupBy, StringComparison.OrdinalIgnoreCase))
+                return Result.Failure("Apilar por el mismo campo por el que se agrupa no parte nada");
+
+            // Una fecha necesitaría su propia granularidad, y apilar por meses dentro de cada
+            // barra da una pila ilegible. Para eso está agrupar por la fecha.
+            if (stackBy.Type == FieldType.Date)
+                return Result.Failure($"No se puede apilar por una fecha ({stackBy.Name}): agrupa por ella");
         }
 
         foreach (var filter in AppliedFilters)

@@ -39,6 +39,8 @@ export interface ReportDefinition {
   filters?: ReportFilter[];
   granularity?: string | null;
   maxGroups?: number | null;
+  /** La segunda dimensión de las barras apiladas: por qué se parte cada barra. */
+  stackBy?: string | null;
 }
 
 interface ReportPreview {
@@ -139,6 +141,21 @@ interface ReportPreview {
                   }
                 </select>
               </div>
+
+              <!-- Apilar necesita decir por qué se parte cada barra. Sin elegirlo, se pintan
+                   barras normales, que es lo que hacían las guardadas antes. -->
+              @if (visualization === 'stacked_bar') {
+                <div>
+                  <label class="text-sm font-medium block mb-1" for="stack-by" i18n>Apilado por</label>
+                  <select id="stack-by" class="w-full border border-border rounded-md px-3 py-2 text-sm bg-background"
+                          [(ngModel)]="stackBy" name="stackBy">
+                    <option value="" i18n>Sin apilar</option>
+                    @for (c of stackableFields(); track c.key) {
+                      <option [value]="c.key">{{ c.name }}</option>
+                    }
+                  </select>
+                </div>
+              }
             </div>
 
             <div>
@@ -290,6 +307,7 @@ export class ReportBuilderComponent {
   measure = '';
   visualization = 'bar';
   granularity: string | null = 'month';
+  stackBy = '';
 
   readonly filters = signal<ReportFilter[]>([]);
 
@@ -324,6 +342,7 @@ export class ReportBuilderComponent {
     this.measure = d.measure;
     this.visualization = d.visualization;
     this.granularity = d.granularity ?? 'month';
+    this.stackBy = d.stackBy ?? '';
     this.filters.set([...(d.filters ?? [])]);
   }
 
@@ -331,6 +350,15 @@ export class ReportBuilderComponent {
     this.catalog()?.dataSources.find(o => o.key === this.dataSource()) ?? null);
 
   readonly sourceFields = computed(() => this.currentSource()?.fields ?? []);
+
+  /**
+   * Por qué se puede apilar: cualquier campo menos una fecha —necesitaría su propia granularidad y
+   * daría una pila ilegible— y menos el de agrupar, que no partiría nada. No es una señal porque
+   * `groupBy` no lo es: se recalcula al pintar.
+   */
+  stackableFields(): CatalogField[] {
+    return this.sourceFields().filter(c => c.type !== 'Date' && c.key !== this.groupBy);
+  }
 
   /**
    * Los campos por los que se puede filtrar: los que tienen operadores. Un campo que el servidor
@@ -355,6 +383,7 @@ export class ReportBuilderComponent {
     const source = this.currentSource();
     this.groupBy = source?.fields[0]?.key ?? '';
     this.measure = source?.measures[0]?.key ?? 'count';
+    this.stackBy = '';
     this.filters.set([]);
     this.preview.set(null);
     this.error.set('');
@@ -430,7 +459,8 @@ export class ReportBuilderComponent {
       measure: this.measure,
       visualization: this.visualization,
       filters: this.filters(),
-      granularity: this.groupsByDate() ? this.granularity : null
+      granularity: this.groupsByDate() ? this.granularity : null,
+      stackBy: this.visualization === 'stacked_bar' && this.stackBy && this.stackBy !== this.groupBy ? this.stackBy : null
     };
   }
 
