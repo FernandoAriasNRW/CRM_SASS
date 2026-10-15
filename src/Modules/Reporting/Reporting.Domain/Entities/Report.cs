@@ -74,7 +74,7 @@ public sealed class Report : AggregateRoot, ITenantEntity, ISoftDeletable
             Id = Guid.NewGuid(),
             TenantId = tenantId,
             CreatedById = createdById,
-            Name = name,
+            Name = nameResult.Value!.Value,
             TypeValue = type.Value,
             FormatValue = format.Value,
             Parameters = parameters,

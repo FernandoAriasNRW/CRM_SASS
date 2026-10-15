@@ -18,10 +18,14 @@ import { animate, style, transition, trigger } from '@angular/animations';
     ])
   ],
   template: `
+    <!-- Recoge el clic que sube del disparador proyectado, que ya es un botón con su teclado. -->
+    <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
     <div class="relative inline-block" (click)="toggle($event)">
       <ng-content select="[popover-trigger]"></ng-content>
     
       @if (isOpen) {
+        <!-- Sólo evita que un clic dentro del panel lo cierre; no es un control. -->
+        <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
         <div
           @popoverAnimation
           class="absolute z-50 mt-2 min-w-[200px] bg-background border border-border rounded-md shadow-md p-1"

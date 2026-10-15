@@ -2,6 +2,22 @@
 <xliff xmlns="urn:oasis:names:tc:xliff:document:1.2" version="1.2">
   <file source-language="es" target-language="en" datatype="plaintext" original="ng2.template">
     <body>
+      <trans-unit id="4186491756673981272" datatype="html">
+        <source>Aplicar</source>
+        <target state="final">Apply</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/data-table/advanced-filters.component.ts</context>
+          <context context-type="linenumber">70,71</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8280960581324013553" datatype="html">
+        <source>Filtrar por <x id="label" equiv-text="field.label"/></source>
+        <target state="final">Filter by <x id="label" equiv-text="field.label"/></target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/ui/data-table/advanced-filters.component.ts</context>
+          <context context-type="linenumber">93</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="7657661532079559263" datatype="html">
         <source>¿Enviar este documento a la papelera? Se podrá restaurar desde allí.</source>
         <target state="final">Send this document to the trash? It can be restored from there.</target>

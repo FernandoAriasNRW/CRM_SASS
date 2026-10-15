@@ -52,14 +52,14 @@
             </div>
           </th>
           <th class="py-3.5 px-4 text-center font-semibold text-primary">
-            <div appClickable class="flex items-center justify-center gap-1 cursor-pointer hover:underline" (click)="openRoleModal('Member')">
+            <button type="button" class="w-full flex items-center justify-center gap-1 cursor-pointer hover:underline font-semibold" (click)="openRoleModal('Member')">
               <span i18n>Member (Miembro)</span>
-            </div>
+            </button>
           </th>
           <th class="py-3.5 px-4 text-center font-semibold text-warning">
-            <div appClickable class="flex items-center justify-center gap-1 cursor-pointer hover:underline" (click)="openRoleModal('Guest')">
+            <button type="button" class="w-full flex items-center justify-center gap-1 cursor-pointer hover:underline font-semibold" (click)="openRoleModal('Guest')">
               <span i18n>Guest (Invitado)</span>
-            </div>
+            </button>
           </th>
         </tr>
       </thead>

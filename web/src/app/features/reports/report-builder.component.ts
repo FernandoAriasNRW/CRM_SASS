@@ -70,12 +70,14 @@ interface ReportPreview {
   standalone: true,
   imports: [FormsModule, ButtonComponent, ReportChartComponent],
   template: `
-    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" (click)="close()">
+    <!-- El fondo cierra con un clic sobre él o con Escape desde cualquier sitio del diálogo. -->
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" tabindex="-1"
+         (click)="$event.target === $event.currentTarget && close()" (keydown.escape)="close()">
       <div class="bg-card rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto"
-           (click)="$event.stopPropagation()">
+           role="dialog" aria-modal="true" aria-labelledby="report-builder-title">
 
         <div class="px-5 py-4 border-b border-border flex items-center justify-between">
-          <h2 class="text-lg font-semibold" i18n>Constructor de informes</h2>
+          <h2 id="report-builder-title" class="text-lg font-semibold" i18n>Constructor de informes</h2>
           <button type="button" class="text-muted-foreground hover:text-foreground" (click)="close()"
                   i18n-aria-label aria-label="Cerrar">✕</button>
         </div>
@@ -89,8 +91,8 @@ interface ReportPreview {
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label class="text-sm font-medium block mb-1" i18n>Datos de</label>
-                <select class="w-full border border-border rounded-md px-3 py-2 text-sm bg-background"
+                <label class="text-sm font-medium block mb-1" for="report-data-source" i18n>Datos de</label>
+                <select id="report-data-source" class="w-full border border-border rounded-md px-3 py-2 text-sm bg-background"
                         [ngModel]="dataSource()" (ngModelChange)="changeDataSource($event)" name="dataSource">
                   @for (o of catalog()!.dataSources; track o.key) {
                     <option [value]="o.key">{{ o.name }}</option>
@@ -99,8 +101,8 @@ interface ReportPreview {
               </div>
 
               <div>
-                <label class="text-sm font-medium block mb-1" i18n>Agrupado por</label>
-                <select class="w-full border border-border rounded-md px-3 py-2 text-sm bg-background"
+                <label class="text-sm font-medium block mb-1" for="report-group-by" i18n>Agrupado por</label>
+                <select id="report-group-by" class="w-full border border-border rounded-md px-3 py-2 text-sm bg-background"
                         [(ngModel)]="groupBy" name="groupBy">
                   @for (c of sourceFields(); track c.key) {
                     <option [value]="c.key">{{ c.name }}</option>
@@ -112,8 +114,8 @@ interface ReportPreview {
                    servidor la rechaza, y ofrecerla sería prometer algo que no se acepta. -->
               @if (groupsByDate()) {
                 <div>
-                  <label class="text-sm font-medium block mb-1" i18n>Agrupar la fecha</label>
-                  <select class="w-full border border-border rounded-md px-3 py-2 text-sm bg-background"
+                  <label class="text-sm font-medium block mb-1" for="report-granularity" i18n>Agrupar la fecha</label>
+                  <select id="report-granularity" class="w-full border border-border rounded-md px-3 py-2 text-sm bg-background"
                           [(ngModel)]="granularity" name="granularity">
                     @for (g of catalog()!.granularities; track g.key) {
                       <option [value]="g.key">{{ g.name }}</option>
@@ -123,8 +125,8 @@ interface ReportPreview {
               }
 
               <div>
-                <label class="text-sm font-medium block mb-1" i18n>Midiendo</label>
-                <select class="w-full border border-border rounded-md px-3 py-2 text-sm bg-background"
+                <label class="text-sm font-medium block mb-1" for="report-measure" i18n>Midiendo</label>
+                <select id="report-measure" class="w-full border border-border rounded-md px-3 py-2 text-sm bg-background"
                         [(ngModel)]="measure" name="measure">
                   @for (m of sourceMeasures(); track m.key) {
                     <option [value]="m.key">{{ m.name }}</option>
@@ -133,8 +135,8 @@ interface ReportPreview {
               </div>
 
               <div>
-                <label class="text-sm font-medium block mb-1" i18n>Pintado como</label>
-                <select class="w-full border border-border rounded-md px-3 py-2 text-sm bg-background"
+                <label class="text-sm font-medium block mb-1" for="report-visualization" i18n>Pintado como</label>
+                <select id="report-visualization" class="w-full border border-border rounded-md px-3 py-2 text-sm bg-background"
                         [(ngModel)]="visualization" name="visualization">
                   @for (f of catalog()!.visualizations; track f.key) {
                     <option [value]="f.key">{{ f.name }}</option>
@@ -160,7 +162,7 @@ interface ReportPreview {
 
             <div>
               <div class="flex items-center justify-between mb-2">
-                <label class="text-sm font-medium" i18n>Filtros</label>
+                <h3 class="text-sm font-medium" i18n>Filtros</h3>
                 <button uiButton variant="outline" size="sm" type="button" (click)="addFilter()" i18n>
                   Añadir filtro
                 </button>

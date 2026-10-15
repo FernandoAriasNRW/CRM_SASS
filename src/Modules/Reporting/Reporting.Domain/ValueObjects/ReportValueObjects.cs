@@ -10,18 +10,25 @@ public sealed class ReportName : ValueObject
   private ReportName() { Value = null!; } // EF las rellena al materializar.
   private ReportName(string value) => Value = value;
 
-  public static Result<ReportName> Create(string name)
+  /// <summary>
+  /// El nombre, recortado. Los mensajes llegan tal cual a la pantalla, así que van en español; y
+  /// se mide sin los espacios de los extremos: «  ab  » pasaba el mínimo de tres y se guardaba
+  /// con ellos.
+  /// </summary>
+  public static Result<ReportName> Create(string? name)
   {
-    if (string.IsNullOrWhiteSpace(name))
-      return Result<ReportName>.Failure("Report name is required");
+    var clean = (name ?? string.Empty).Trim();
 
-    if (name.Length < 3)
-      return Result<ReportName>.Failure("Report name must be at least 3 characters");
+    if (clean.Length == 0)
+      return Result<ReportName>.Failure("El informe necesita un nombre");
 
-    if (name.Length > 100)
-      return Result<ReportName>.Failure("Report name must not exceed 100 characters");
+    if (clean.Length < 3)
+      return Result<ReportName>.Failure("El nombre del informe necesita al menos 3 caracteres");
 
-    return Result<ReportName>.Success(new ReportName(name));
+    if (clean.Length > 100)
+      return Result<ReportName>.Failure("El nombre del informe no puede pasar de 100 caracteres");
+
+    return Result<ReportName>.Success(new ReportName(clean));
   }
 
   public override IEnumerable<object> GetEqualityComponents()

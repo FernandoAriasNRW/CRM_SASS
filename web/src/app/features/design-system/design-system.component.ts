@@ -142,6 +142,8 @@ interface Family {
           <code>(click)</code>. Prefiere <code>&lt;button&gt;</code> cuando el elemento sea
           de verdad un botón; esto es para filas, tarjetas y etiquetas.
         </p>
+        <!-- appClickable ya le da el papel de botón, el foco y Enter/Espacio; la regla no ve las directivas. -->
+        <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
         <div appClickable (click)="clicks.set(clicks() + 1)"
              class="cursor-pointer rounded-lg border border-border p-4 text-sm
                     hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring">
