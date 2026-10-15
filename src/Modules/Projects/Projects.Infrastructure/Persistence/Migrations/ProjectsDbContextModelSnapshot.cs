@@ -62,6 +62,9 @@ namespace Projects.Infrastructure.Persistence.Migrations
                     b.Property<DateTime?>("ArchivedAtUtc")
                         .HasColumnType("datetime(6)");
 
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime(6)");
+
                     b.Property<DateTime?>("DeletedAt")
                         .HasColumnType("datetime(6)");
 

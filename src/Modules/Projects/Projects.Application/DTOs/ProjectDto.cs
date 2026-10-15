@@ -12,7 +12,9 @@ public sealed record ProjectDto(
     string Status,
     Guid OwnerId,
     /// <summary>Las etiquetas (ids del módulo Tags); la pantalla las resuelve con <c>GET /tags</c>.</summary>
-    IReadOnlyList<Guid>? TagIds = null
+    IReadOnlyList<Guid>? TagIds = null,
+    /// <summary>Cuándo se dio de alta. Es lo que desempata a los que empiezan el mismo día.</summary>
+    DateTime? CreatedAtUtc = null
 );
 
 public sealed record ProjectsPaginatedResponse(

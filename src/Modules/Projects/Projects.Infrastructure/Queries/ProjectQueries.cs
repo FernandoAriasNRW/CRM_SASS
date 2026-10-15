@@ -107,16 +107,20 @@ public sealed class ProjectQueries(ProjectsDbContext context) : IProjectQueries
             "ownerid" => desc ? query.OrderByDescending(p => p.OwnerId) : query.OrderBy(p => p.OwnerId),
             "startdate" => desc ? query.OrderByDescending(p => p.StartDate) : query.OrderBy(p => p.StartDate),
             "estimatedenddate" => desc ? query.OrderByDescending(p => p.EstimatedEndDate) : query.OrderBy(p => p.EstimatedEndDate),
+            "createdatutc" => desc ? query.OrderByDescending(p => p.CreatedAtUtc) : query.OrderBy(p => p.CreatedAtUtc),
             _ => query.OrderByDescending(p => p.StartDate)
         };
 
         var items = await ordered
-            // Desempate por Id: ver TaskQueries. Dos proyectos con la misma fecha de inicio podían
-            // salir en las dos páginas, o en ninguna.
+            // A igualdad, el más reciente primero: quien acaba de crear un proyecto espera verlo
+            // arriba, no en un sitio cualquiera entre los que empiezan el mismo día.
+            .ThenByDescending(p => p.CreatedAtUtc)
+            // Y por Id, para que el orden sea total: ver TaskQueries. Sin él, dos filas iguales
+            // podían salir en las dos páginas, o en ninguna.
             .ThenBy(p => p.Id)
             .Skip(pagination.Skip).Take(pagination.Take)
             .Select(p => new ProjectDto(p.Id, p.TenantId, p.SpaceId, p.FolderId, p.Name.Value, p.Description,
-                p.StartDate, p.EstimatedEndDate, p.Status.Value, p.OwnerId, p.TagIds))
+                p.StartDate, p.EstimatedEndDate, p.Status.Value, p.OwnerId, p.TagIds, p.CreatedAtUtc))
             .ToListAsync(ct);
 
         return PagedResult<ProjectDto>.Create(items, totalCount, pagination.Page, pagination.PageSize);
@@ -127,7 +131,7 @@ public sealed class ProjectQueries(ProjectsDbContext context) : IProjectQueries
         return await context.Projects.AsNoTracking()
             .Where(p => p.TenantId == tenantId && p.Id == id)
             .Select(p => new ProjectDto(p.Id, p.TenantId, p.SpaceId, p.FolderId, p.Name.Value, p.Description,
-                p.StartDate, p.EstimatedEndDate, p.Status.Value, p.OwnerId, p.TagIds))
+                p.StartDate, p.EstimatedEndDate, p.Status.Value, p.OwnerId, p.TagIds, p.CreatedAtUtc))
             .FirstOrDefaultAsync(ct);
     }
 

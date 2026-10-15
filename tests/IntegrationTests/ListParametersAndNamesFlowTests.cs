@@ -150,4 +150,26 @@ public sealed class ListParametersAndNamesFlowTests(CrmApiFactory factory)
         (await NamesAsync($"startDate={tomorrow}")).Should().BeEmpty("empezaron hoy");
         (await NamesAsync($"startDate={lastMonth}&endDate={tomorrow}")).Should().HaveCount(2);
     }
+
+    /// <summary>
+    /// El proyecto recién creado sale el primero en el orden por defecto.
+    ///
+    /// Todos los creados hoy empiezan hoy, y entre ellos el listado desempataba por el
+    /// identificador, que es aleatorio: con muchos proyectos del mismo día, el nuevo podía quedar
+    /// en la segunda página. Ahora desempata la hora de alta, del más reciente al más antiguo.
+    /// </summary>
+    [Fact]
+    public async Task A_new_project_comes_first_in_the_default_order()
+    {
+        var (client, _, _) = await AdminAsync();
+
+        for (var i = 0; i < 3; i++)
+        {
+            var name = "Recién creado " + Guid.NewGuid().ToString("N")[..8];
+            await TestProjects.CreateAsync(client, name);
+
+            var first = await client.GetFromJsonAsync<JsonElement>("/api/v1/projects?pageSize=1");
+            first.GetProperty("items")[0].GetProperty("name").GetString().Should().Be(name);
+        }
+    }
 }
