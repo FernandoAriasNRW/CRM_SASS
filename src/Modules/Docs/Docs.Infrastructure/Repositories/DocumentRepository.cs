@@ -19,6 +19,38 @@ public class DocumentRepository(TimeProvider timeProvider, DocsDbContext dbConte
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<List<Document>> GetListAsync(Guid tenantId, BuildingBlocks.Application.ViewScope scope, CancellationToken cancellationToken = default)
+    {
+        // La papelera y el archivo quedan fuera de lo que el filtro global deja ver, así que hay
+        // que abrir el alcance antes de consultar. Se cierra al terminar.
+        using var _ = dbContext.IncludeHidden(
+            deleted: scope.Is(BuildingBlocks.Application.ViewFilters.Trash),
+            archived: scope.Is(BuildingBlocks.Application.ViewFilters.Archived));
+
+        var query = dbContext.Documents.AsNoTracking().Where(d => d.TenantId == tenantId);
+        var me = scope.UserId;
+
+        if (scope.Is(BuildingBlocks.Application.ViewFilters.Mine) && me.HasValue)
+            query = query.Where(d => d.OwnerId == me.Value);
+        else if (scope.Is(BuildingBlocks.Application.ViewFilters.SharedWithMe))
+        {
+            var shared = scope.SharedWithMe.ToArray();
+            query = query.Where(d => EF.Constant(shared).Contains(d.Id));
+        }
+        else if (scope.Is(BuildingBlocks.Application.ViewFilters.Archived))
+            query = query.Where(d => d.ArchivedAtUtc != null);
+        else if (scope.Is(BuildingBlocks.Application.ViewFilters.Trash))
+            query = query.Where(d => d.IsDeleted);
+
+        return await query.ToListAsync(cancellationToken);
+    }
+
+    public async Task<Document?> GetIncludingHiddenAsync(Guid tenantId, Guid id, CancellationToken cancellationToken = default)
+    {
+        using var _ = dbContext.IncludeHidden(deleted: true, archived: true);
+        return await dbContext.Documents.FirstOrDefaultAsync(d => d.TenantId == tenantId && d.Id == id, cancellationToken);
+    }
+
     public async Task<Document?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
         return await dbContext.Documents

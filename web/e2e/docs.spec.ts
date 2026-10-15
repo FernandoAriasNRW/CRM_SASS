@@ -339,3 +339,36 @@ test('hovering a block shows its drag handle', async ({ page }) => {
   await page.getByText('Segundo párrafo.').hover();
   await expect(page.locator('.asa-de-bloque')).toBeVisible();
 });
+
+/**
+ * Archivar y la papelera. El documento tenía la columna de archivado y nada la usaba, y la papelera
+ * no tenía salida. Además el menú lateral ofrecía «Archivados» sobre una lista que no filtraba.
+ */
+test('a document is archived from the list and restored from the trash', async ({ page }) => {
+  const requests: string[] = [];
+  await openDocs(page);
+  await page.route(/\/api\/v1\/docs(\/|\?|$)/, r => {
+    const url = r.request().url();
+    const method = r.request().method();
+    const action = url.match(/\/docs\/[^/]+\/(archive|unarchive|restore)$/);
+    if (action && method === 'POST') { requests.push(action[1]); return r.fulfill({ status: 204, body: '' }); }
+    if (/\/docs\/?(\?.*)?$/.test(url) && method === 'GET') {
+      requests.push('list ' + (new URL(url).searchParams.get('filter') ?? 'all'));
+      return r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(DOCUMENTS) });
+    }
+    return r.fallback();
+  });
+
+  await page.getByText('Manual de arquitectura').first().waitFor();
+  await page.getByRole('button', { name: 'Acciones del documento' }).first().click();
+  await page.getByRole('button', { name: 'Archivar' }).click();
+  await expect.poll(() => requests).toContain('archive');
+
+  // La papelera, desde el menú lateral: la lista se pide al servidor con su filtro.
+  await page.getByRole('button', { name: 'Papelera' }).click();
+  await expect.poll(() => requests).toContain('list trash');
+  await page.getByRole('button', { name: 'Acciones del documento' }).first().click();
+  await expect(page.getByRole('button', { name: 'Archivar' })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Restaurar' }).click();
+  await expect.poll(() => requests).toContain('restore');
+});

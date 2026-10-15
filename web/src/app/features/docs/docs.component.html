@@ -487,10 +487,33 @@
                           <span i18n>Guardar como plantilla</span>
                         </button>
                         <div class="my-1 border-t border-border"></div>
-                        <button (click)="deleteDocument($event, doc.id)" class="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-destructive hover:bg-destructive-subtle dark:hover:bg-destructive-subtle/30">
-                          <ng-icon name="lucideTrash" class="w-3.5 h-3.5"></ng-icon>
-                          <span i18n>Borrar</span>
-                        </button>
+                        <!-- Lo que se puede hacer depende de la lista en la que está. -->
+                        @switch (activeSidebarTab()) {
+                          @case ('trash') {
+                            <button (click)="changeArchiveState($event, doc.id, 'restore')" class="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-muted-foreground dark:text-foreground hover:bg-muted">
+                              <ng-icon name="lucideUndo2" class="w-3.5 h-3.5"></ng-icon>
+                              <span i18n>Restaurar</span>
+                            </button>
+                          }
+                          @case ('archived') {
+                            <button (click)="changeArchiveState($event, doc.id, 'unarchive')" class="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-muted-foreground dark:text-foreground hover:bg-muted">
+                              <ng-icon name="lucideArchiveRestore" class="w-3.5 h-3.5"></ng-icon>
+                              <span i18n>Desarchivar</span>
+                            </button>
+                          }
+                          @default {
+                            <button (click)="changeArchiveState($event, doc.id, 'archive')" class="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-muted-foreground dark:text-foreground hover:bg-muted">
+                              <ng-icon name="lucideArchive" class="w-3.5 h-3.5"></ng-icon>
+                              <span i18n>Archivar</span>
+                            </button>
+                          }
+                        }
+                        @if (activeSidebarTab() !== 'trash') {
+                          <button (click)="deleteDocument($event, doc.id)" class="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-destructive hover:bg-destructive-subtle dark:hover:bg-destructive-subtle/30">
+                            <ng-icon name="lucideTrash" class="w-3.5 h-3.5"></ng-icon>
+                            <span i18n>Enviar a la papelera</span>
+                          </button>
+                        }
                       </div>
                     }
                   </td>

@@ -103,8 +103,17 @@ export class DocsService {
   private language = inject(LanguageService);
   private endpoint = '/docs';
 
-  getDocuments(): Observable<DocumentDto[]> {
-    return this.api.get<DocumentDto[]>(this.endpoint);
+  /**
+   * Los documentos de la lista. `filter` es el del menú lateral —`mine`, `shared`, `archived`,
+   * `trash`— y lo aplica el servidor: antes no se mandaba y esas entradas enseñaban todos.
+   */
+  getDocuments(filter: string | null = null): Observable<DocumentDto[]> {
+    return this.api.get<DocumentDto[]>(this.endpoint, filter ? { filter } : undefined);
+  }
+
+  /** Archivar, desarchivar o sacar de la papelera. Mandar a la papelera es borrar. */
+  changeArchiveState(id: string, action: 'archive' | 'unarchive' | 'restore'): Observable<void> {
+    return this.api.post<void>(`${this.endpoint}/${id}/${action}`, {});
   }
 
   createDocument(req: CreateDocumentRequest): Observable<string> {
