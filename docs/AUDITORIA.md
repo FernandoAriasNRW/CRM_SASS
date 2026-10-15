@@ -2338,7 +2338,7 @@ Lo prueban dos pruebas nuevas de `OrganizationTimeZoneFlowTests`, que fallaban a
 primeros del listado, y empezó a fallar porque la suite ya crea más de cien proyectos el mismo día.
 Entre proyectos que empiezan el mismo día, el desempate es el identificador, que es aleatorio,
 porque **el proyecto no guarda cuándo se creó**. La prueba busca ahora por el nombre, que es lo que
-le importa. Ordenar por fecha de alta queda pendiente: necesita una columna nueva.
+le importa. Ordenar por fecha de alta se resolvió después (§39).
 
 ---
 
@@ -2449,3 +2449,25 @@ Lo prueban:
 - la e2e `report-builder-preview`: el campo «Apilado por» y lo que se manda.
 
 Las pruebas de apilado fallaban antes del cambio. La de compatibilidad pasaba ya.
+
+---
+
+## 39. El proyecto recién creado sale el primero
+
+Lo que quedó anotado en §35. **El proyecto no guardaba cuándo se creó.** `StartDate` es el día del
+alta, pero sin hora, así que entre los proyectos que empiezan el mismo día el listado desempataba
+por el identificador, que es aleatorio. El recién creado podía quedar en la segunda página.
+
+- `Project.CreatedAtUtc` guarda el alta con su hora, y sale también en el DTO.
+- **Orden por defecto:** fecha de inicio, después la hora de alta del más reciente al más antiguo,
+  y por último el identificador, para que el orden sea total.
+- **El mismo desempate vale para cualquier orden de la tabla:** dos proyectos con el mismo estado
+  salen del más nuevo al más viejo.
+- Se puede ordenar por `createdAtUtc`.
+- **Migración `ProjectCreatedAt`:** los proyectos que ya existían no guardaron su hora, así que se
+  rellenan con su fecha de inicio a las 00:00. Ordena bien entre días distintos; entre los del
+  mismo día de antes, desempata el identificador como hasta ahora. Probada de ida y vuelta en una
+  base aparte.
+
+Lo prueba `ListParametersAndNamesFlowTests.A_new_project_comes_first_in_the_default_order`, que crea
+tres proyectos seguidos y mira que cada uno sale el primero. Fallaba antes del cambio.

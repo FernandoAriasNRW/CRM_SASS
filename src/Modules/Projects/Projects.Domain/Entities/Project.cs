@@ -21,6 +21,14 @@ public sealed class Project : AggregateRoot, ITenantEntity, ISoftDeletable, IArc
   public Guid OwnerId { get; private set; }
   public List<Guid> TagIds { get; private set; } = new();
 
+  /// <summary>
+  /// Cuándo se dio de alta, con su hora. <see cref="StartDate"/> es el mismo día, pero sin hora:
+  /// entre los proyectos que empiezan el mismo día no decía cuál era el último, y el listado los
+  /// desempataba por el identificador, que es aleatorio. El recién creado podía quedar en la
+  /// segunda página.
+  /// </summary>
+  public DateTime CreatedAtUtc { get; private set; }
+
   // Soft Delete
   public bool IsDeleted { get; private set; }
 
@@ -53,6 +61,7 @@ public sealed class Project : AggregateRoot, ITenantEntity, ISoftDeletable, IArc
       Name = nameResult.Value!,
       Description = description,
       StartDate = DateOnly.FromDateTime(nowUtc),
+      CreatedAtUtc = nowUtc,
       EstimatedEndDate = estimatedEndDate,
       Status = ProjectStatus.Planned,
       OwnerId = ownerId,
