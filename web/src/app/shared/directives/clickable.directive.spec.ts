@@ -11,7 +11,9 @@ import { ClickableDirective } from './clickable.directive';
 @Component({
   standalone: true,
   imports: [ClickableDirective],
-  template: `<div appClickable (click)="times = times + 1">Fila</div>`,
+  // La regla no ve la directiva, que es justo lo que se prueba aquí.
+  template: `<!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
+    <div appClickable (click)="times = times + 1">Fila</div>`,
 })
 class AnfitrionComponent {
   times = 0;

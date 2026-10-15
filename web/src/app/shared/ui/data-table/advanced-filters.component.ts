@@ -12,6 +12,8 @@ export interface FilterField {
   options?: { label: string; value: any }[]; // For select type
 }
 
+let nextInstance = 0;
+
 @Component({
   selector: 'ui-advanced-filters',
   standalone: true,
@@ -33,20 +35,20 @@ export interface FilterField {
             <!-- Dynamic Fields -->
             @for (field of fields; track field) {
               <div class="flex flex-col gap-1.5">
-                <label class="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{{ field.label }}</label>
+                <label class="text-xs font-semibold text-muted-foreground uppercase tracking-wider" [for]="controlId(field)">{{ field.label }}</label>
                 @switch (field.type) {
                   <!-- Text -->
                   @case ('text') {
-                    <input type="text" [(ngModel)]="filters[field.key]" (ngModelChange)="onFilterChange()" [placeholder]="'Filter by ' + field.label" class="w-full px-3 py-2 bg-white dark:bg-muted border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary transition-shadow hover:border-border">
+                    <input type="text" [id]="controlId(field)" [(ngModel)]="filters[field.key]" (ngModelChange)="onFilterChange()" [placeholder]="placeholderFor(field)" class="w-full px-3 py-2 bg-white dark:bg-muted border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary transition-shadow hover:border-border">
                   }
                   <!-- Date -->
                   @case ('date') {
-                    <input type="date" [(ngModel)]="filters[field.key]" (ngModelChange)="onFilterChange()" class="w-full px-3 py-2 bg-white dark:bg-muted border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary transition-shadow hover:border-border">
+                    <input type="date" [id]="controlId(field)" [(ngModel)]="filters[field.key]" (ngModelChange)="onFilterChange()" class="w-full px-3 py-2 bg-white dark:bg-muted border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary transition-shadow hover:border-border">
                   }
                   <!-- Select -->
                   @case ('select') {
-                    <select [(ngModel)]="filters[field.key]" (ngModelChange)="onFilterChange()" class="w-full px-3 py-2 bg-white dark:bg-muted border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary transition-shadow hover:border-border">
-                      <option [ngValue]="null">All</option>
+                    <select [id]="controlId(field)" [(ngModel)]="filters[field.key]" (ngModelChange)="onFilterChange()" class="w-full px-3 py-2 bg-white dark:bg-muted border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary transition-shadow hover:border-border">
+                      <option [ngValue]="null" i18n>Todos</option>
                       @for (opt of field.options; track opt) {
                         <option [value]="opt.value">{{ opt.label }}</option>
                       }
@@ -54,10 +56,10 @@ export interface FilterField {
                   }
                   <!-- Boolean -->
                   @case ('boolean') {
-                    <select [(ngModel)]="filters[field.key]" (ngModelChange)="onFilterChange()" class="w-full px-3 py-2 bg-white dark:bg-muted border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary transition-shadow hover:border-border">
-                      <option [ngValue]="null">All</option>
-                      <option [value]="true">Yes</option>
-                      <option [value]="false">No</option>
+                    <select [id]="controlId(field)" [(ngModel)]="filters[field.key]" (ngModelChange)="onFilterChange()" class="w-full px-3 py-2 bg-white dark:bg-muted border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary transition-shadow hover:border-border">
+                      <option [ngValue]="null" i18n>Todos</option>
+                      <option [value]="true" i18n>Sí</option>
+                      <option [value]="false" i18n>No</option>
                     </select>
                   }
                 }
@@ -65,7 +67,7 @@ export interface FilterField {
             }
           </div>
           <div class="mt-4 flex justify-end border-t border-border pt-4">
-            <button uiButton variant="default" (click)="toggleOpen()">Close / Apply</button>
+            <button uiButton variant="default" (click)="toggleOpen()" i18n>Aplicar</button>
           </div>
         </div>
       }
@@ -73,11 +75,23 @@ export interface FilterField {
     `
 })
 export class AdvancedFiltersComponent {
+  /** Distingue los identificadores de los campos si hay más de un panel en la página. */
+  private readonly instance = nextInstance++;
+
   @Input() fields: FilterField[] = [];
   @Input() filters: Record<string, any> = {};
   @Output() filtersChange = new EventEmitter<Record<string, any>>();
 
   isOpen = signal(false);
+
+  /** El identificador del campo, para que su etiqueta lo nombre. */
+  controlId(field: FilterField): string {
+    return `advanced-filter-${this.instance}-${field.key}`;
+  }
+
+  placeholderFor(field: FilterField): string {
+    return $localize`Filtrar por ${field.label}:label:`;
+  }
 
   toggleOpen() {
     this.isOpen.update(v => !v);

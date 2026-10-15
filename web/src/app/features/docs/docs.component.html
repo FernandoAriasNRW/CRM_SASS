@@ -23,7 +23,7 @@
         <button (click)="closeEditorView()" i18n-aria-label aria-label="Volver a todos los documentos" class="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors" i18n-title title="Volver a todos los documentos">
           <ng-icon name="lucideChevronRight" class="w-4 h-4 rotate-180"></ng-icon>
         </button>
-        <span appClickable (click)="closeEditorView()" class="text-muted-foreground font-medium hover:underline cursor-pointer" i18n>Documentos</span>
+        <button type="button" (click)="closeEditorView()" class="text-muted-foreground font-medium hover:underline cursor-pointer" i18n>Documentos</button>
         <span class="text-muted-foreground">/</span>
         <span class="text-foreground font-semibold">{{ activeDocument()?.title }}</span>
         <span class="text-muted-foreground">/</span>
@@ -337,6 +337,8 @@
 
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             @for (template of featuredTemplates(); track template.key) {
+              <!-- appClickable ya le da el papel de botón, el foco y Enter/Espacio; la regla no ve las directivas. -->
+              <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
               <div appClickable
                 (click)="useTemplate(template)"
                 class="group relative border {{ template.border }} rounded-2xl p-4 bg-gradient-to-br {{ template.gradient }} bg-white dark:bg-muted shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer">

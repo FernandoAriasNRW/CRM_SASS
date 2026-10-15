@@ -41,7 +41,7 @@ export interface MenuOption {
         para que ese clic **no** llegue además a lo que haya detrás: sin ella, cerrar el menú
         pulsando en otra celda abría el día de esa celda a la vez.
       -->
-      <div class="fixed inset-0 z-40" (click)="close()" (contextmenu)="$event.preventDefault(); close()"></div>
+      <div class="fixed inset-0 z-40" aria-hidden="true" (click)="close()" (contextmenu)="$event.preventDefault(); close()"></div>
 
       <div
         role="menu"

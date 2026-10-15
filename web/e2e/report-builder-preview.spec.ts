@@ -145,3 +145,20 @@ test('stacked bars ask what to stack by and paint one series per column', async 
   // ECharts dibuja en un lienzo y no deja nada que leer en la página.
   await expect(preview.locator('canvas')).toBeVisible();
 });
+
+test('the builder is a dialog that closes with Escape, not with a click inside it', async ({ page }) => {
+  await openBuilder(page);
+
+  const dialog = page.getByRole('dialog', { name: 'Constructor de informes' });
+  await expect(dialog).toBeVisible();
+
+  // Las etiquetas nombran su campo: antes ninguna estaba asociada.
+  await expect(dialog.getByLabel('Pintado como')).toBeVisible();
+
+  // Un clic dentro del panel no lo cierra; Escape, sí.
+  await dialog.getByRole('heading', { name: 'Constructor de informes' }).click();
+  await expect(dialog).toBeVisible();
+  await dialog.getByLabel('Pintado como').focus();
+  await page.keyboard.press('Escape');
+  await expect(dialog).toBeHidden();
+});

@@ -276,7 +276,7 @@ Sin cubrir, ordenado por lo que más importa:
 
 | Ensamblado | % | Por qué importa |
 |---|---:|---|
-| Reporting.Domain | **0** | el dashboard de la Fase 5 se apoya aquí |
+| Reporting.Domain | 88,8 | el dashboard de la Fase 5 se apoya aquí; subió en §41 |
 | Reporting.Application | **0** | idem |
 | Tags.Application | **0** | |
 | Teams.Application | **0** | |
@@ -900,13 +900,13 @@ que lleva «8b» en el título. Lo único que sigue siendo propio de un disparad
 
 ## 14. Lo que queda anotado y sin resolver
 
-- **`Reporting.Domain` sigue al 0 %**: sólo quedan `Report` y `Dashboard`, y nada ejercita el
-  alta de informes.
 - **Los eventos de integración de `BuildingBlocks.Contracts` están declarados y no los usa
   nadie.** Serían la forma natural de que un módulo reaccione a otro sin pasar por el host;
   hoy no existe camino de publicación.
-- **El árbol de trabajo de git abandonado** (2.4).
-- **167 avisos de lint** en el frontend, heredados.
+- **Los árboles de trabajo de git** (2.4): sigue `goofy-khorana-d7c41d` y hay otros siete en
+  `.claude/worktrees/`. No se tocan sin preguntar: alguno puede tener trabajo sin subir.
+- **93 avisos de lint** en el frontend (eran 167; ver §41). Quedan los tipos `any` (53), las
+  funciones vacías (18) y las variables sin usar (10), sin defectos de accesibilidad.
 - **`html2pdf` supera en 282 kB el presupuesto por fichero.** Es la propia librería y se carga
   solo al exportar un documento a PDF; subir el presupuesto general escondería engordes futuros.
   El resto de presupuestos se cumple desde §30.
@@ -2509,3 +2509,46 @@ Lo prueban:
   conmigo, y que quien solo lee no archiva. Las cuatro fallaban antes del cambio.
 - la e2e de `docs.spec.ts`, que archiva desde la lista y restaura desde la papelera. Fallaba con la
   pantalla anterior.
+
+---
+
+## 41. Pruebas del dominio de informes y avisos de accesibilidad
+
+**`Reporting.Domain` estaba al 0 %** (§14). Ahora lo prueba `ReportDomainTests`, y pasa al
+88,8 % de líneas (83,9 % de ramas). `ExportContent` sigue sin pruebas unitarias; lo cubren las de
+integración de la exportación.
+
+Escribir las pruebas sacó dos defectos de `ReportName`:
+
+- **No recortaba los espacios.** «  Ventas  » se guardaba tal cual, y «   ab   » pasaba el mínimo
+  de tres caracteres.
+- **Los mensajes de error estaban en inglés**, y llegaban así a la pantalla.
+
+Y una suposición equivocada: un panel personal **empieza vacío**, sin recuadros. La prueba lo deja
+dicho.
+
+**Los avisos de accesibilidad del lint, de 47 a 0.** El total baja de 141 a 93.
+
+- **Los fondos de los modales de webhooks se anunciaban como botón** y recibían el foco con el
+  tabulador, porque llevaban `appClickable`. Ahora no:
+  - el fondo cierra con un clic sobre él mismo o con Escape;
+  - el panel es un `role="dialog"` con su título.
+- **El constructor de informes**, igual. Además, cinco etiquetas no estaban asociadas a su campo:
+  un lector de pantalla leía «desplegable» sin decir cuál.
+- **Los filtros avanzados** tenían el mismo defecto en todas sus etiquetas. También seguían en
+  inglés «Filter by», «All», «Yes» y «Close / Apply».
+- **Los fondos del cajón y del menú contextual** son sólo visuales y quedan ocultos a los lectores.
+  Los dos cierran ya con Escape.
+- **Tres botones disfrazados pasan a `<button>`**:
+  - la miga «Documentos»;
+  - «Customizar submenú», que además no estaba traducido;
+  - las cabeceras de rol de la matriz de permisos.
+- **Lo que queda son falsos positivos**, con su excepción explicada:
+  - elementos con `appClickable`, que la regla no ve: tarjetas arrastrables y de plantilla;
+  - el disparador del popover;
+  - la franja horaria del calendario, que tiene el botón «Nuevo evento» como alternativa de
+    teclado.
+
+Lo prueba la e2e de `report-builder-preview.spec.ts`: el constructor es un diálogo con nombre, sus
+etiquetas nombran el campo, un clic dentro no lo cierra y Escape sí. Fallaba con la pantalla
+anterior.

@@ -257,18 +257,19 @@
   />
 }
 
-<!-- Secret Modal -->
+<!-- Secret Modal. El fondo cierra con un clic sobre él o con Escape; ya no se anuncia como
+     botón ni recibe el foco con el tabulador. -->
 @if (secretToShow(); as shown) {
-  <div appClickable
+  <div tabindex="-1"
     class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4"
-    (click)="closeSecretModal()"
+    (click)="$event.target === $event.currentTarget && closeSecretModal()"
+    (keydown.escape)="closeSecretModal()"
   >
-    <div appClickable
+    <div role="dialog" aria-modal="true" aria-labelledby="webhook-secret-title"
       class="w-full max-w-md rounded-lg border border-border bg-card shadow-xl"
-      (click)="$event.stopPropagation()"
     >
       <div class="flex items-center justify-between px-6 py-4 border-b border-border">
-        <h3 class="text-base font-semibold" i18n>Secreto de firma</h3>
+        <h3 id="webhook-secret-title" class="text-base font-semibold" i18n>Secreto de firma</h3>
         <button
           (click)="closeSecretModal()"
           i18n-aria-label aria-label="Cerrar"
@@ -313,13 +314,13 @@
 
 <!-- Delete Confirmation Modal -->
 @if (confirmDeleteId()) {
-  <div appClickable
+  <div tabindex="-1"
     class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4"
-    (click)="cancelDelete()"
+    (click)="$event.target === $event.currentTarget && cancelDelete()"
+    (keydown.escape)="cancelDelete()"
   >
-    <div appClickable
+    <div role="dialog" aria-modal="true" aria-labelledby="webhook-delete-title"
       class="w-full max-w-sm rounded-lg border border-border bg-card shadow-xl"
-      (click)="$event.stopPropagation()"
     >
       <div class="p-6">
         <div class="flex items-center gap-3 mb-4">
@@ -327,7 +328,7 @@
             <ng-icon name="lucideTrash2" size="20" class="text-destructive" />
           </div>
           <div>
-            <h3 class="font-semibold" i18n>Eliminar Webhook</h3>
+            <h3 id="webhook-delete-title" class="font-semibold" i18n>Eliminar Webhook</h3>
             <p class="text-sm text-muted-foreground" i18n>Esta acción no se puede deshacer</p>
           </div>
         </div>

@@ -11,8 +11,8 @@ import { lucideX, lucideMaximize2, lucideMinimize2 } from '@ng-icons/lucide';
   template: `
     @if (isOpen) {
       <div class="fixed inset-0 z-50 overflow-hidden flex justify-end">
-        <!-- Backdrop Overlay -->
-        <div 
+        <!-- El fondo es sólo visual: con teclado el cajón se cierra con Escape. -->
+        <div aria-hidden="true"
           class="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity duration-300 animate-in fade-in"
           (click)="close()"
         ></div>

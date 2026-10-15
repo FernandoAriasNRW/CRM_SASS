@@ -79,6 +79,8 @@ interface HourSlot {
               La franja entera es pulsable para crear ahí: es el gesto que espera cualquiera que
               haya usado un calendario, y evita tener que ir a buscar el botón de arriba.
             -->
+            <!-- Atajo de ratón: con teclado se crea con el botón «Nuevo evento» de la cabecera. -->
+            <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
             <div class="min-h-12 flex-1 space-y-1 p-1.5"
                  (click)="createAt.emit(franja.hour)"
                  (contextmenu)="hourContextMenu.emit({ mouseEvent: $event, hour: franja.hour })">

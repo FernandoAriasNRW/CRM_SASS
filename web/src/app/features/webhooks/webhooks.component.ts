@@ -10,7 +10,6 @@ import {
 import { WebhookService } from './webhook.service';
 import type { WebhookDelivery, WebhookSubscription } from './webhook.model';
 import { WebhookFormModalComponent } from './webhook-form-modal.component';
-import { ClickableDirective } from '../../shared/directives/clickable.directive';
 
 /**
  * Los webhooks de la organización: a dónde se mandan los eventos, cuáles, y si están llegando.
@@ -22,7 +21,7 @@ import { ClickableDirective } from '../../shared/directives/clickable.directive'
 @Component({
   selector: 'app-webhooks',
   standalone: true,
-  imports: [ClickableDirective, DatePipe, NgIconComponent, WebhookFormModalComponent, FormsModule],
+  imports: [DatePipe, NgIconComponent, WebhookFormModalComponent, FormsModule],
   viewProviders: [
     provideIcons({
       lucidePlus, lucideWebhook, lucideTrash2, lucideEdit3, lucideRefreshCw,

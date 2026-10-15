@@ -24,14 +24,13 @@ import {
 import { HierarchySignalStore } from './core/hierarchy-signal.store';
 import { NavigationSignalStore } from './core/navigation-signal.store';
 import { UpperCasePipe } from '@angular/common';
-import { ClickableDirective } from './shared/directives/clickable.directive';
 import { CommandPaletteComponent } from './shared/ui/command-palette/command-palette.component';
 import { CommandPaletteService } from './shared/ui/command-palette/command-palette.service';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [ClickableDirective, 
+  imports: [
     RouterOutlet,
     RouterLink,
     RouterLinkActive,
