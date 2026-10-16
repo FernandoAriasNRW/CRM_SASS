@@ -244,7 +244,7 @@ export class NotificationsComponent implements OnInit, OnDestroy {
   markRead(id: string): void {
     this.api.post(`/notifications/${id}/read`, {}).subscribe({
       next: () => this.store.dispatch(notificationMarkedRead({ id })),
-      error: () => {},
+      error: () => { /* El aviso global de errores ya dice por qué; la lista sigue como estaba. */ },
     });
   }
 
@@ -253,7 +253,7 @@ export class NotificationsComponent implements OnInit, OnDestroy {
       next: () => {
         this.loadNotifications();
       },
-      error: () => {},
+      error: () => { /* Ídem: lo explica el aviso global. */ },
     });
   }
 
@@ -262,7 +262,7 @@ export class NotificationsComponent implements OnInit, OnDestroy {
       next: () => {
         this.loadNotifications();
       },
-      error: () => {},
+      error: () => { /* Ídem: lo explica el aviso global. */ },
     });
   }
 

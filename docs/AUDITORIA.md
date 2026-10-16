@@ -905,8 +905,13 @@ que lleva «8b» en el título. Lo único que sigue siendo propio de un disparad
   hoy no existe camino de publicación.
 - **Los árboles de trabajo de git** (2.4): sigue `goofy-khorana-d7c41d` y hay otros siete en
   `.claude/worktrees/`. No se tocan sin preguntar: alguno puede tener trabajo sin subir.
-- **93 avisos de lint** en el frontend (eran 167; ver §41). Quedan los tipos `any` (53), las
-  funciones vacías (18) y las variables sin usar (10), sin defectos de accesibilidad.
+- **64 avisos de lint** en el frontend (eran 167; ver §41 y §42). Quedan los tipos `any` (53),
+  cinco inyecciones por constructor y cinco nombres de salidas (`close`, `onX`).
+- **Cerrar la ficha de un ticket antes de que responda un cambio** lo deja guardado en el servidor
+  y sin reflejar en el tablero hasta recargar: la ficha ya no existe cuando llega la respuesta, y lo
+  que emite se pierde. Con la red normal no da tiempo; con una lenta, sí.
+- **Cualquier 403 lleva a Inicio** (`error.interceptor.ts`). Que te nieguen un solo campo te saca de
+  la pantalla en la que estabas, con lo que tuvieras a medias.
 - **`html2pdf` supera en 282 kB el presupuesto por fichero.** Es la propia librería y se carga
   solo al exportar un documento a PDF; subir el presupuesto general escondería engordes futuros.
   El resto de presupuestos se cumple desde §30.
@@ -2552,3 +2557,39 @@ dicho.
 Lo prueba la e2e de `report-builder-preview.spec.ts`: el constructor es un diálogo con nombre, sus
 etiquetas nombran el campo, un clic dentro no lo cierra y Escape sí. Fallaba con la pantalla
 anterior.
+
+---
+
+## 42. Errores que la pantalla no reflejaba
+
+Los 18 avisos de funciones vacías del lint eran, casi todos, `error: () => {}`. El aviso global de
+errores ya decía el porqué de cada fallo; lo que faltaba era que la pantalla no mintiera.
+
+- **Ficha del ticket.** Cambiar el estado, la prioridad, la clasificación o las etiquetas se veía
+  hecho al momento. Si el servidor lo rechazaba, la ficha seguía enseñando el valor nuevo. Ahora
+  vuelve a lo guardado.
+- **La misma ficha emitía cada cambio sobre el ticket tal como se abrió.** Con dos cambios
+  seguidos, el último en responder deshacía en el tablero el otro: guardar la clasificación y luego
+  el estado dejaba el estado antiguo en la lista. La ficha recuerda ahora lo último guardado, y la
+  lista actualiza también la ficha abierta.
+- **Panel de inicio.** Si fallaban los indicadores, se quedaban en «—» para siempre, igual que
+  mientras cargan. Ahora lo dice encima de la cabecera, y el aviso global no lo repite. Lo mismo con
+  el avance de los proyectos.
+  - Se seguía pidiendo el desglose de tareas por estado, cuya tarta ya no está en la pantalla. Ya no se pide.
+- **Chat.** Un fallo al cargar los canales se leía como «Sin canales», y uno de los mensajes, como
+  un canal vacío. Ahora lo dice en su sitio.
+- **Notificaciones.** Marcar como leída o borrar: el aviso global ya lo explicaba y la lista sigue
+  como estaba, que es lo correcto. Queda dicho en un comentario.
+- **Unirse a un canal en tiempo real** fallaba sin rastro, y sin unirse no llegan los mensajes en
+  vivo. Ahora queda en la consola.
+
+**De paso:**
+- «Estado», «Prioridad» y «Etiquetas» de la ficha del ticket se asocian a su campo y se traducen.
+- Quitadas variables, parámetros e imports sin usar, y un `ngOnInit` vacío.
+
+El lint baja de 93 a 64 avisos.
+
+Lo prueban:
+- `ticket-failed-save.spec.ts`: estado rechazado, clasificación rechazada, y que un cambio no
+  deshace en la lista el anterior. Las tres fallaban con la ficha anterior.
+- `dashboard-layout.spec.ts`: los indicadores que fallan lo dicen una sola vez.

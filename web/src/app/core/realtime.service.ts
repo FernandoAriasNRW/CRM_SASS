@@ -90,7 +90,8 @@ export class RealtimeService {
   }
 
   joinChannel(channelId: string): void {
-    this.chatHub?.invoke('JoinChannel', channelId).catch(() => {});
+    // Sin unirse al canal no llegan sus mensajes en vivo: que quede al menos en la consola.
+    this.chatHub?.invoke('JoinChannel', channelId).catch(err => console.warn('JoinChannel failed:', err));
   }
 
   disconnect(): void {

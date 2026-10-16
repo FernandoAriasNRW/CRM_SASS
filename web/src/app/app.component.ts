@@ -249,7 +249,9 @@ export class AppComponent implements OnInit {
         this.api.get<{ id: string; name: string; email: string; tenantId: string; role: string }>('/auth/users/me')
           .subscribe({
             next: (user) => this.authStore.setUserInfo(user),
-            error: () => {}
+            // Sin aviso a propósito: si la sesión caducó, el interceptor ya lleva al login, y si
+            // no, la cabecera se queda sin nombre hasta la siguiente carga, sin bloquear nada.
+            error: () => undefined
           });
       }
     }

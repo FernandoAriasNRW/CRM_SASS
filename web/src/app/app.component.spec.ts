@@ -18,7 +18,7 @@ describe('AppComponent', () => {
         // «getTokenExpiresAt is not a function». Angular se traga los errores de
         // un effect: salían por consola y la prueba seguía pasando en verde.
         AuthSignalStore,
-        { provide: RealtimeService, useValue: { connect: () => {} } },
+        { provide: RealtimeService, useValue: { connect: () => undefined } },
         { provide: ApiService, useValue: {} }
       ]
     }).compileComponents();

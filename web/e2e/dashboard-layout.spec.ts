@@ -31,7 +31,7 @@ const json = (body: unknown, status = 200) => ({
 
 type Saved = { widgets: { id: string; x: number; y: number; width: number; height: number; reportId: string }[] };
 
-async function openPanel(page: Page, isMine = true): Promise<Saved[]> {
+async function openPanel(page: Page, isMine = true, { kpiFails = false } = {}): Promise<Saved[]> {
   const saved: Saved[] = [];
 
   await page.route(/\/api\/v1\//, r => {
@@ -56,7 +56,7 @@ async function openPanel(page: Page, isMine = true): Promise<Saved[]> {
       return r.fulfill({ status: 204, body: '' });
     }
     if (/\/dashboards(\?|$)/.test(url)) return r.fulfill(json([]));
-    if (/\/reports\/kpi/.test(url)) return r.fulfill(json({}));
+    if (/\/reports\/kpi/.test(url)) return r.fulfill(kpiFails ? json({}, 500) : json({}));
     if (/\/reports\//.test(url)) return r.fulfill(json([]));
 
     return r.fulfill(json({ items: [], totalCount: 0 }));
@@ -125,4 +125,13 @@ test('a panel that is not mine cannot be rearranged', async ({ page }) => {
   await expect(box(page, 'Tareas por estado')).toBeVisible();
   await expect(page.getByRole('button', { name: /^Mover «/ })).toHaveCount(0);
   await expect(page.getByRole('button', { name: /^Cambiar el tamaño/ })).toHaveCount(0);
+});
+
+test('indicators that fail to load say so once, instead of a dash forever', async ({ page }) => {
+  await openPanel(page, true, { kpiFails: true });
+
+  // Antes se quedaban en «—», igual que mientras cargan, y nada decía que había un error.
+  await expect(page.getByRole('alert').filter({ hasText: 'No se pudieron cargar los indicadores.' })).toBeVisible();
+  // El panel lo explica él: el aviso global no lo repite.
+  await expect(page.getByText('Error del servidor')).toHaveCount(0);
 });

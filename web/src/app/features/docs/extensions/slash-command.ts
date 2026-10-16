@@ -38,7 +38,7 @@ export default Extension.create<MenuOptions>({
         editor: this.editor,
         char: '/',
         items: getSuggestionItems,
-        render: renderItems(promptUrl),
+        render: renderItems(),
         command: ({ editor, range, props }) => {
           const command = props as unknown as EditorCommand;
           void command.run({ editor, range, promptUrl, uploadFile });

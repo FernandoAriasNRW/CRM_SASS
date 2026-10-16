@@ -144,8 +144,8 @@ export class DrawerComponent {
     this.isOpenChange.emit(false);
   }
 
-  @HostListener('document:keydown.escape', ['$event'])
-  handleEscape(event: Event): void {
+  @HostListener('document:keydown.escape')
+  handleEscape(): void {
     if (this.isOpen) {
       this.close();
     }

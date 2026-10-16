@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AuthSignalStore } from '../../core/auth-signal.store';
 import { HierarchySignalStore } from '../../core/hierarchy-signal.store';
@@ -27,7 +27,7 @@ import { MiniCalendarComponent, CalendarEvent } from '../../shared/ui/mini-calen
   })],
   templateUrl: './home.component.html',
 })
-export class HomeComponent implements OnInit {
+export class HomeComponent {
   readonly authStore = inject(AuthSignalStore);
   readonly hierarchyStore = inject(HierarchySignalStore);
   readonly recentViewsStore = inject(RecentViewsService);
@@ -37,9 +37,5 @@ export class HomeComponent implements OnInit {
 
   toggleRecents() {
     this.showAllRecents = !this.showAllRecents;
-  }
-
-  ngOnInit(): void {
-    // Initializing specific Home logic if needed
   }
 }

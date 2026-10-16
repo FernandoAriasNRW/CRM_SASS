@@ -37,12 +37,6 @@ interface KpiData {
   avgCycleTimeDays: number | null;
 }
 
-interface TaskStatusBreakdown {
-  status: string;
-  count: number;
-  color: string;
-}
-
 interface ProjectProgress {
   id: string;
   name: string;
@@ -100,11 +94,14 @@ export class DashboardComponent implements OnInit {
   readonly hierarchyStore = inject(HierarchySignalStore);
 
   readonly kpi = signal<KpiData | null>(null);
-  readonly taskBreakdown = signal<TaskStatusBreakdown[]>([]);
   readonly projectProgress = signal<ProjectProgress[]>([]);
   readonly selectedProjectBurndown = signal<ProjectBurndown | null>(null);
   readonly selectedProjectId = signal<string | null>(null);
-  readonly isLoading = signal(true);
+  /**
+   * Lo que no se pudo cargar de la cabecera. Sin él, unos KPI que fallaban se quedaban en «—»
+   * para siempre, igual que mientras cargan, y nadie sabía que había un error.
+   */
+  readonly dataError = signal('');
 
   // ── Mi panel ──────────────────────────────────────────────────────────────────────────────
   //
@@ -186,7 +183,7 @@ export class DashboardComponent implements OnInit {
         }
         this.customDashboards.set(filtered);
       },
-      error: () => {}
+      error: () => { /* El aviso global de errores ya dice por qué no hay lista. */ },
     });
   }
 
@@ -403,20 +400,16 @@ export class DashboardComponent implements OnInit {
     }
   }
 
+  // El desglose de tareas por estado se seguía pidiendo aunque su tarta se quitó (ver arriba).
   loadAllData(): void {
-    this.isLoading.set(true);
-    this.api.get<KpiData>('/reports/kpi').subscribe({
+    this.dataError.set('');
+    // Los fallos se explican encima de la cabecera: el aviso global los repetiría.
+    this.api.get<KpiData>('/reports/kpi', undefined, { silent: true }).subscribe({
       next: data => this.kpi.set(data),
-      error: () => {},
-      complete: () => this.isLoading.set(false)
+      error: (e: unknown) => this.dataError.set(errorMessage(e, $localize`No se pudieron cargar los indicadores.`)),
     });
 
-    this.api.get<TaskStatusBreakdown[]>('/reports/tasks/breakdown').subscribe({
-      next: data => this.taskBreakdown.set(data),
-      error: () => {}
-    });
-
-    this.api.get<ProjectProgress[]>('/reports/projects/progress').subscribe({
+    this.api.get<ProjectProgress[]>('/reports/projects/progress', undefined, { silent: true }).subscribe({
       next: data => {
         this.projectProgress.set(data);
         // Auto-select first project for burndown
@@ -424,15 +417,18 @@ export class DashboardComponent implements OnInit {
           this.selectProject(data[0].id);
         }
       },
-      error: () => {}
+      error: (e: unknown) => this.dataError.set(errorMessage(e, $localize`No se pudo cargar el avance de los proyectos.`)),
     });
   }
 
   selectProject(projectId: string): void {
     this.selectedProjectId.set(projectId);
-    this.api.get<ProjectBurndown>(`/reports/projects/${projectId}/burndown`).subscribe({
+    this.api.get<ProjectBurndown>(`/reports/projects/${projectId}/burndown`, undefined, { silent: true }).subscribe({
       next: data => this.selectedProjectBurndown.set(data),
-      error: () => {}
+      error: (e: unknown) => {
+        this.selectedProjectBurndown.set(null);
+        this.dataError.set(errorMessage(e, $localize`No se pudo cargar el avance de ese proyecto.`));
+      },
     });
   }
 }

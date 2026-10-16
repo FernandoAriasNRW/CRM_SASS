@@ -373,6 +373,8 @@ export class TicketsComponent implements OnInit {
 
   onTicketUpdated(updated: Ticket): void {
     this.allTickets.update(tickets => tickets.map(t => t.id === updated.id ? updated : t));
+    // La ficha abierta también: si no, seguía con el ticket tal como se abrió.
+    if (this.selectedTicket()?.id === updated.id) this.selectedTicket.set(updated);
     this.distributeTicketsToColumns();
   }
 

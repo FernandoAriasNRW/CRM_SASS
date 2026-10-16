@@ -44,6 +44,13 @@ export class TicketDetailPanelComponent implements OnInit {
 
   private readonly api = inject(ApiService);
 
+  /**
+   * El ticket tal como está guardado. Cada cambio se emite sobre él y, si el servidor lo rechaza,
+   * se vuelve a él. No sirve la entrada `ticket`: es el ticket con el que se abrió la ficha, y
+   * emitir sobre ella deshacía en la lista lo guardado antes.
+   */
+  private saved!: Ticket;
+
   isEditing = false;
   isSaving = signal(false);
   title = '';
@@ -73,6 +80,7 @@ export class TicketDetailPanelComponent implements OnInit {
 
   ngOnInit(): void {
     const t = this.ticket();
+    this.saved = t;
     this.title = t.title;
     this.description = t.description ?? '';
     this.status = t.status;
@@ -141,44 +149,57 @@ export class TicketDetailPanelComponent implements OnInit {
 
   saveClassification(): void {
     const classification = this.classification.trim();
-    if (classification === (this.ticket().classification ?? '')) return;
+    if (classification === (this.saved.classification ?? '')) return;
 
-    this.api.patch(`/tickets/${this.ticket().id}`, { classification }).subscribe({
-      next: () => this.updated.emit({ ...this.ticket(), classification }),
-      error: () => {},
-    });
+    this.save({ classification });
   }
 
-
-  saveField(field: string, value: unknown): void {
+  saveTextFields(): void {
     this.isSaving.set(true);
-    this.api.patch(`/tickets/${this.ticket().id}`, {
-      title: this.title, description: this.description, priority: this.priority, status: this.status
-    }).subscribe({
-      next: () => {
-        this.isSaving.set(false);
-        this.isEditing = false;
-        this.updated.emit({ ...this.ticket(), title: this.title, description: this.description, status: this.status, priority: this.priority });
-      },
-      error: () => this.isSaving.set(false),
-    });
+    this.save(
+      { title: this.title, description: this.description, priority: this.priority, status: this.status },
+      () => this.isEditing = false);
   }
 
   changeStatus(newStatus: string): void {
     this.status = newStatus;
-    this.api.patch(`/tickets/${this.ticket().id}`, { status: newStatus }).subscribe({
-      next: () => this.updated.emit({ ...this.ticket(), status: newStatus }),
-      error: () => {},
-    });
+    this.save({ status: newStatus });
   }
 
   /** Guarda las etiquetas como ids del módulo de etiquetas, en su propio PATCH. */
   changeTags(ids: string[]): void {
     this.tagIds.set(ids);
-    this.api.patch(`/tickets/${this.ticket().id}`, { tagIds: ids }).subscribe({
-      next: () => this.updated.emit({ ...this.ticket(), tagIds: ids }),
-      error: () => {},
+    this.save({ tagIds: ids });
+  }
+
+  /**
+   * Manda el cambio y, si sale bien, lo da por guardado. Si el servidor lo rechaza, devuelve los
+   * campos a lo guardado; el porqué lo cuenta el aviso global de errores. Antes la ficha seguía
+   * enseñando como hecho el cambio rechazado.
+   */
+  private save(change: Partial<Ticket>, onSaved?: () => void): void {
+    this.api.patch(`/tickets/${this.saved.id}`, change).subscribe({
+      next: () => {
+        this.isSaving.set(false);
+        this.saved = { ...this.saved, ...change };
+        onSaved?.();
+        this.updated.emit(this.saved);
+      },
+      error: () => {
+        this.isSaving.set(false);
+        this.revertToSaved();
+      },
     });
+  }
+
+  private revertToSaved(): void {
+    const t = this.saved;
+    this.title = t.title;
+    this.description = t.description ?? '';
+    this.status = t.status;
+    this.priority = t.priority ?? 'normal';
+    this.classification = t.classification ?? '';
+    this.tagIds.set(t.tagIds ?? []);
   }
 
   close(): void { this.closed.emit(); }
