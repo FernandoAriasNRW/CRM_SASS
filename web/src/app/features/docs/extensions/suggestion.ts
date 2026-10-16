@@ -34,7 +34,7 @@ interface SuggestionProps {
  * Se construye con DOM a mano porque TipTap espera un renderizador síncrono y en Angular no hay un
  * equivalente cómodo a `ReactRenderer`. Es la misma técnica que usa `mention.ts`.
  */
-export function renderItems(promptUrl: PromptUrl) {
+export function renderItems() {
   return () => {
     let box: HTMLElement;
     let popup: Instance[] | undefined;

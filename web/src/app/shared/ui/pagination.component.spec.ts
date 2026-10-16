@@ -14,7 +14,6 @@ import { PaginationComponent, type PaginationState } from './pagination.componen
  */
 describe('PaginationComponent', () => {
   let fixture: ComponentFixture<PaginationComponent>;
-  let component: PaginationComponent;
 
   const state = (partial: Partial<PaginationState> = {}): PaginationState => ({
     page: 2,
@@ -30,7 +29,6 @@ describe('PaginationComponent', () => {
     await TestBed.configureTestingModule({ imports: [PaginationComponent] }).compileComponents();
 
     fixture = TestBed.createComponent(PaginationComponent);
-    component = fixture.componentInstance;
     fixture.componentRef.setInput('state', state());
     fixture.detectChanges();
   });

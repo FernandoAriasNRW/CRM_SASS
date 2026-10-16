@@ -11,6 +11,7 @@ import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import { lucidePlus, lucideHash, lucideSend } from '@ng-icons/lucide';
 import { Subscription } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
+import { errorMessage } from '../../shared/utils/error-message';
 
 interface Channel { id: string; name: string; type: string; }
 interface Message { id: string; conversationId: string; senderId: string; content: string; sentAt: string; }
@@ -33,9 +34,13 @@ export class ChatComponent implements OnInit, OnDestroy {
   readonly activeChannel = signal<Channel | null>(null);
   readonly newMessage = signal('');
   readonly sending = signal(false);
+  /** Sin él, un fallo al cargar los canales se leía como «Sin canales», y uno de mensajes, como un canal vacío. */
+  readonly channelsError = signal('');
+  readonly messagesError = signal('');
 
   ngOnInit(): void {
-    this.api.get<{items: Channel[]}>('/channels').subscribe({
+    // El fallo se explica en la propia lista: el aviso global lo repetiría.
+    this.api.get<{items: Channel[]}>('/channels', undefined, { silent: true }).subscribe({
       next: res => {
         const data = res.items || [];
         this.channels.set(data);
@@ -43,7 +48,7 @@ export class ChatComponent implements OnInit, OnDestroy {
         const requested = data.find(c => c.id === this.route.snapshot.queryParamMap.get('channel'));
         if (requested ?? data[0]) this.selectChannel(requested ?? data[0]);
       },
-      error: () => {},
+      error: (e: unknown) => this.channelsError.set(errorMessage(e, $localize`No se pudieron cargar los canales.`)),
     });
 
     this.sub = this.realtime.chatMessage$.subscribe(msg => {
@@ -60,9 +65,10 @@ export class ChatComponent implements OnInit, OnDestroy {
   selectChannel(channel: Channel): void {
     this.activeChannel.set(channel);
     this.messages.set([]);
-    this.api.get<{items: Message[]}>(`/channels/${channel.id}/messages`).subscribe({
+    this.messagesError.set('');
+    this.api.get<{items: Message[]}>(`/channels/${channel.id}/messages`, undefined, { silent: true }).subscribe({
       next: res => this.messages.set(res.items || []),
-      error: () => {},
+      error: (e: unknown) => this.messagesError.set(errorMessage(e, $localize`No se pudieron cargar los mensajes de este canal.`)),
     });
     this.realtime.joinChannel(channel.id);
   }

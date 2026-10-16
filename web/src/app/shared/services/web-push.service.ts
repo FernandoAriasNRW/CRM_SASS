@@ -180,7 +180,8 @@ export class WebPushService {
 
       // Update favicon with badge if supported
       if ('setAppBadge' in navigator) {
-        navigator.setAppBadge(count).catch(() => {});
+        // La insignia es un adorno: si el sistema la rechaza, no hay nada que avisar.
+        navigator.setAppBadge(count).catch(() => undefined);
       }
     }
   }
@@ -193,7 +194,7 @@ export class WebPushService {
       document.title = 'CRM SaaS';
 
       if ('clearAppBadge' in navigator) {
-        navigator.clearAppBadge().catch(() => {});
+        navigator.clearAppBadge().catch(() => undefined);
       }
     }
   }

@@ -29,6 +29,10 @@
     </button>
   </div>
 
+  @if (dataError()) {
+    <p class="text-sm text-destructive" role="alert">{{ dataError() }}</p>
+  }
+
   @if (viewType() === 'default') {
 
   <!-- KPI Cards Grid -->

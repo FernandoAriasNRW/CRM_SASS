@@ -8,7 +8,7 @@ import {
   lucideInfo,
   lucideX
 } from '@ng-icons/lucide';
-import { ToastService, type Toast, type ToastType } from '../services/toast.service';
+import { ToastService } from '../services/toast.service';
 
 /**
  * Componente contenedor de toasts.

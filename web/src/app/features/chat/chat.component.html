@@ -17,7 +17,11 @@
           <span class="truncate">{{ ch.name }}</span>
         </button>
       } @empty {
-        <p class="px-3 py-4 text-xs text-muted-foreground" i18n>Sin canales</p>
+        @if (channelsError()) {
+          <p class="px-3 py-4 text-xs text-destructive" role="alert">{{ channelsError() }}</p>
+        } @else {
+          <p class="px-3 py-4 text-xs text-muted-foreground" i18n>Sin canales</p>
+        }
       }
     </nav>
   </aside>
@@ -32,6 +36,9 @@
       </div>
 
       <div class="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+        @if (messagesError()) {
+          <p class="text-sm text-destructive" role="alert">{{ messagesError() }}</p>
+        }
         @for (msg of messages(); track msg.id) {
           <div class="flex items-start gap-3">
             <ui-avatar [name]="msg.senderId" class="shrink-0" />

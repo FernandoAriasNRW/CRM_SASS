@@ -494,7 +494,7 @@ export class TaskDetailPanelComponent implements OnInit {
           this.toast.success('Guardado', 'Título actualizado');
         }
       },
-      error: (err) => {
+      error: () => {
         this.saving.set(false);
         this.toast.error('Error', 'No se pudo guardar el cambio');
       },

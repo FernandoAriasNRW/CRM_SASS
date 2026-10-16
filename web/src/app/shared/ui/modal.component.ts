@@ -85,8 +85,8 @@ export class ModalComponent {
     this.onClose.emit();
   }
 
-  @HostListener('document:keydown.escape', ['$event'])
-  onKeydownHandler(event: KeyboardEvent) {
+  @HostListener('document:keydown.escape')
+  onKeydownHandler() {
     if (this.isOpen) {
       this.close();
     }

@@ -22,7 +22,6 @@ export const adminGuard: CanActivateFn = () => {
 export const guestOrAuthGuard: CanActivateFn = () => {
   // Allow access to both guests (for public ticket form) and authenticated users
   const auth = inject(AuthSignalStore);
-  const router = inject(Router);
 
   // If authenticated, allow
   if (auth.isAuthenticated()) return true;

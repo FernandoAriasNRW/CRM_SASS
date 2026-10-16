@@ -30,7 +30,7 @@
       <!-- Título Editable -->
       <textarea
         [(ngModel)]="title"
-        (blur)="saveField('title', title)"
+        (blur)="saveTextFields()"
         rows="2"
         class="w-full text-2xl font-bold bg-transparent border-none outline-none resize-none placeholder:text-muted-foreground/40 leading-tight rounded-lg px-2 py-1 -ml-2 hover:bg-muted/40 focus:bg-muted/40 transition-colors"
         i18n-placeholder placeholder="Título del ticket"
@@ -40,10 +40,10 @@
       <div class="grid grid-cols-2 gap-x-8 gap-y-1 text-sm">
 
         <div class="flex items-center gap-3 py-1">
-          <span class="text-muted-foreground w-24 shrink-0 flex items-center gap-1.5 text-xs font-medium">
-            <ng-icon name="lucideCheck" size="13" /> Estado
-          </span>
-          <select [(ngModel)]="status" (change)="changeStatus(status)"
+          <label for="ticket-status" class="text-muted-foreground w-24 shrink-0 flex items-center gap-1.5 text-xs font-medium">
+            <ng-icon name="lucideCheck" size="13" /> <span i18n>Estado</span>
+          </label>
+          <select id="ticket-status" [(ngModel)]="status" (change)="changeStatus(status)"
                   class="bg-background border border-input rounded-md px-2 py-1 text-xs cursor-pointer focus:ring-1 focus:ring-ring outline-none">
             @for (s of statuses; track s.key) {
               <option [value]="s.key">{{ s.label }}</option>
@@ -52,10 +52,10 @@
         </div>
 
         <div class="flex items-center gap-3 py-1">
-          <span class="text-muted-foreground w-24 shrink-0 flex items-center gap-1.5 text-xs font-medium">
-            <ng-icon name="lucideFlag" size="13" /> Prioridad
-          </span>
-          <select [(ngModel)]="priority" (change)="saveField('priority', priority)"
+          <label for="ticket-priority" class="text-muted-foreground w-24 shrink-0 flex items-center gap-1.5 text-xs font-medium">
+            <ng-icon name="lucideFlag" size="13" /> <span i18n>Prioridad</span>
+          </label>
+          <select id="ticket-priority" [(ngModel)]="priority" (change)="saveTextFields()"
                   class="bg-background border border-input rounded-md px-2 py-1 text-xs cursor-pointer focus:ring-1 focus:ring-ring outline-none">
             @for (p of priorities; track p.key) {
               <option [value]="p.key">{{ p.label }}</option>
@@ -108,7 +108,7 @@
         <!-- Etiquetas -->
         <div class="flex items-start gap-3 col-span-2 pt-3 mt-2 border-t border-border/60">
           <span class="text-muted-foreground w-24 shrink-0 flex items-center gap-1.5 text-xs font-medium pt-1">
-            <ng-icon name="lucideTag" size="13" /> Etiquetas
+            <ng-icon name="lucideTag" size="13" /> <span i18n>Etiquetas</span>
           </span>
           <app-tag-field class="flex-1" [tagIds]="tagIds()" (tagIdsChange)="changeTags($event)" />
         </div>
@@ -127,7 +127,7 @@
         <p class="text-xs font-semibold text-muted-foreground uppercase tracking-wide" i18n>Descripción</p>
         <textarea
           [(ngModel)]="description"
-          (blur)="saveField('description', description)"
+          (blur)="saveTextFields()"
           rows="6"
           i18n-placeholder placeholder="Describe el problema…"
           class="w-full bg-transparent rounded-lg px-3 py-2 -ml-3 text-sm leading-relaxed outline-none resize-none
