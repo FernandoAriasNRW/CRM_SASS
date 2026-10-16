@@ -1,5 +1,6 @@
 import { Component, inject, input, output, signal, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { finalize } from 'rxjs';
 import { ApiService } from '../../core/api.service';
 import { BadgeComponent } from '../../shared/ui/badge.component';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
@@ -50,6 +51,14 @@ export class TicketDetailPanelComponent implements OnInit {
    * emitir sobre ella deshacía en la lista lo guardado antes.
    */
   private saved!: Ticket;
+
+  /**
+   * Los cambios mandados que aún no han respondido, y si se pidió cerrar mientras tanto. Cerrar
+   * destruye la ficha, y lo que emite después se pierde: el cambio quedaba guardado y el tablero no
+   * lo reflejaba hasta recargar.
+   */
+  private pendingSaves = 0;
+  private closeRequested = false;
 
   isEditing = false;
   isSaving = signal(false);
@@ -178,7 +187,13 @@ export class TicketDetailPanelComponent implements OnInit {
    * enseñando como hecho el cambio rechazado.
    */
   private save(change: Partial<Ticket>, onSaved?: () => void): void {
-    this.api.patch(`/tickets/${this.saved.id}`, change).subscribe({
+    this.pendingSaves++;
+    this.api.patch(`/tickets/${this.saved.id}`, change).pipe(
+      finalize(() => {
+        this.pendingSaves--;
+        if (this.closeRequested && this.pendingSaves === 0) this.closed.emit();
+      }),
+    ).subscribe({
       next: () => {
         this.isSaving.set(false);
         this.saved = { ...this.saved, ...change };
@@ -202,5 +217,15 @@ export class TicketDetailPanelComponent implements OnInit {
     this.tagIds.set(t.tagIds ?? []);
   }
 
-  close(): void { this.closed.emit(); }
+  /**
+   * Con un cambio en vuelo, la ficha espera a su respuesta para cerrarse. Pedirlo otra vez la
+   * cierra al momento, por si el servidor no contesta.
+   */
+  close(): void {
+    if (this.pendingSaves > 0 && !this.closeRequested) {
+      this.closeRequested = true;
+      return;
+    }
+    this.closed.emit();
+  }
 }

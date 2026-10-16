@@ -75,3 +75,64 @@ describe('errorInterceptor — duplicate toasts', () => {
     });
   });
 });
+
+/**
+ * Un 403 llevaba siempre a Inicio y avisaba dos veces. Que te nieguen un solo campo, o una carga
+ * en segundo plano, te sacaba de la pantalla con lo que tuvieras a medias. Las pantallas ya las
+ * protegen los guardas de ruta; a la petición le basta con decir que no.
+ */
+describe('errorInterceptor — forbidden', () => {
+  let toast: jasmine.SpyObj<ToastService>;
+  let router: jasmine.SpyObj<Router>;
+
+  function intercept(request: HttpRequest<unknown>) {
+    const next: HttpHandlerFn = () => throwError(() => new HttpErrorResponse({
+      status: 403, error: { title: 'Acceso denegado', detail: 'No tiene permisos para realizar esta operación.' },
+      url: 'http://localhost:8080/api/v1/tickets/1',
+    }));
+    return TestBed.runInInjectionContext(() => errorInterceptor(request, next));
+  }
+
+  beforeEach(() => {
+    toast = jasmine.createSpyObj<ToastService>('ToastService', ['error', 'warning', 'handleHttpError']);
+    router = jasmine.createSpyObj<Router>('Router', ['navigate']);
+
+    TestBed.configureTestingModule({
+      providers: [
+        { provide: ToastService, useValue: toast },
+        { provide: AuthSignalStore, useValue: jasmine.createSpyObj('AuthSignalStore', ['logout', 'setAccessToken']) },
+        { provide: ApiService, useValue: { post: () => throwError(() => new Error('sin refresco')) } },
+        { provide: Router, useValue: router },
+      ],
+    });
+  });
+
+  it('stays on the screen', done => {
+    intercept(new HttpRequest('PATCH', '/api/v1/tickets/1', {})).subscribe({
+      error: () => {
+        expect(router.navigate).not.toHaveBeenCalled();
+        done();
+      },
+    });
+  });
+
+  it('reports it once', done => {
+    intercept(new HttpRequest('PATCH', '/api/v1/tickets/1', {})).subscribe({
+      error: () => {
+        expect(toast.handleHttpError).toHaveBeenCalledTimes(1);
+        expect(toast.warning).not.toHaveBeenCalled();
+        done();
+      },
+    });
+  });
+
+  it('leaves it to a caller that will explain it', done => {
+    intercept(new HttpRequest('GET', '/api/v1/reports/kpi', { context: skipGlobalErrorToast() })).subscribe({
+      error: () => {
+        expect(toast.handleHttpError).not.toHaveBeenCalled();
+        expect(toast.warning).not.toHaveBeenCalled();
+        done();
+      },
+    });
+  });
+});

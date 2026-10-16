@@ -3,7 +3,6 @@ import { inject } from '@angular/core';
 import { catchError, switchMap, throwError } from 'rxjs';
 import { AuthSignalStore } from '../auth-signal.store';
 import { ApiService } from '../api.service';
-import { Router } from '@angular/router';
 import { ToastService } from '../../shared/services/toast.service';
 import { SKIP_GLOBAL_ERROR_TOAST } from '../http-context';
 
@@ -17,7 +16,6 @@ interface RefreshResponse {
 export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   const authStore = inject(AuthSignalStore);
   const api = inject(ApiService);
-  const router = inject(Router);
   const toast = inject(ToastService);
 
   return next(req).pipe(
@@ -53,11 +51,10 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
         }
       }
 
-      // Handle 403 Forbidden
-      if (error.status === 403) {
-        toast.warning($localize`Acceso denegado`, 'No tienes permisos para realizar esta acción.');
-        router.navigate(['/']);
-      }
+      // Un 403 no saca de la pantalla: antes llevaba siempre a Inicio, y que te negaran un solo
+      // campo, o una carga en segundo plano, tiraba lo que tuvieras a medias. Las pantallas ya
+      // las protegen los guardas de ruta. Se avisa una vez, como cualquier otro fallo: antes
+      // salían dos avisos, y el de 403 ni respetaba a quien se reservaba explicarlo.
 
       // Handle other errors - show toast with error message.
       //
