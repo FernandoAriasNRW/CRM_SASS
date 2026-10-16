@@ -576,6 +576,10 @@ export class TasksComponent implements OnInit {
 
   onTaskUpdated(updated: TaskItem): void {
     this.allTasks.update(tasks => tasks.map(t => t.id === updated.id ? updated : t));
+    // La ficha abierta también: emite cada cambio sobre su tarea, y si se quedaba con la de cuando
+    // se abrió, un cambio deshacía en el tablero el anterior (la lista de comprobación, al cambiar
+    // el estado, por ejemplo).
+    if (this.selectedTask()?.id === updated.id) this.selectedTask.set(updated);
     this.distributeTasksToColumns();
   }
 

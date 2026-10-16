@@ -32,6 +32,14 @@ const COMPLETED_STATUS = 'Done';
 const INITIAL_STATUS = 'To Do';
 
 import { LifecycleActionsComponent, type LifecycleChange } from '../../shared/ui/lifecycle-actions.component';
+import { errorMessage } from '../../shared/utils/error-message';
+
+/**
+ * Para las peticiones que cuentan su propio fallo: sin esto, el interceptor avisaba también, y
+ * cada fallo salía dos veces.
+ */
+const SILENT = { silent: true } as const;
+
 @Component({
   selector: 'app-task-detail-panel',
   standalone: true,
@@ -136,7 +144,7 @@ export class TaskDetailPanelComponent implements OnInit {
     this.api.put(`/tasks/${this.task().id}/recurrence`, {
       frequency: this.chosenFrequency,
       interval: interval,
-    }).subscribe({
+    }, SILENT).subscribe({
       next: () => {
         // Se relee para mostrar la próxima ocurrencia que calculó el servidor, en lugar de
         // adivinarla aquí y arriesgarse a pintar una fecha distinta de la guardada.
@@ -149,14 +157,14 @@ export class TaskDetailPanelComponent implements OnInit {
   }
 
   clearRecurrence(): void {
-    this.api.delete(`/tasks/${this.task().id}/recurrence`).subscribe({
+    this.api.delete(`/tasks/${this.task().id}/recurrence`, SILENT).subscribe({
       next: () => {
         this.recurrence.set(null);
         this.chosenFrequency = '';
         this.chosenInterval = 1;
         this.updated.emit({ ...this.task(), recurrence: null });
       },
-      error: () => this.toast.error($localize`Error`, $localize`No se pudo quitar la repetición`),
+      error: response => this.toast.error($localize`No se pudo quitar la repetición`, this.serverMessage(response)),
     });
   }
 
@@ -178,14 +186,14 @@ export class TaskDetailPanelComponent implements OnInit {
 
   loadChecklist(): void {
     this.loadingChecklist.set(true);
-    this.api.get<ChecklistItem[]>(`/tasks/${this.task().id}/checklist`).subscribe({
+    this.api.get<ChecklistItem[]>(`/tasks/${this.task().id}/checklist`, undefined, SILENT).subscribe({
       next: items => {
         this.checklist.set(items ?? []);
         this.loadingChecklist.set(false);
       },
-      error: () => {
+      error: response => {
         this.loadingChecklist.set(false);
-        this.toast.error($localize`Error`, $localize`No se pudo cargar la checklist`);
+        this.toast.error($localize`No se pudo cargar la checklist`, this.serverMessage(response));
       },
     });
   }
@@ -194,7 +202,7 @@ export class TaskDetailPanelComponent implements OnInit {
     const text = this.newChecklistItemText.trim();
     if (!text) return;
 
-    this.api.post<ChecklistItem>(`/tasks/${this.task().id}/checklist`, { text }).subscribe({
+    this.api.post<ChecklistItem>(`/tasks/${this.task().id}/checklist`, { text }, SILENT).subscribe({
       next: item => {
         this.checklist.update(current => [...current, item]);
         this.newChecklistItemText = '';
@@ -214,22 +222,22 @@ export class TaskDetailPanelComponent implements OnInit {
     this.checklist.update(current => current.map(p => p.id === item.id ? { ...p, isDone: updated } : p));
     this.toastChecklist();
 
-    this.api.patch(`/tasks/${this.task().id}/checklist/${item.id}`, { isDone: updated }).subscribe({
-      error: () => {
+    this.api.patch(`/tasks/${this.task().id}/checklist/${item.id}`, { isDone: updated }, SILENT).subscribe({
+      error: response => {
         this.checklist.update(current => current.map(p => p.id === item.id ? { ...p, isDone: !updated } : p));
         this.toastChecklist();
-        this.toast.error($localize`Error`, $localize`No se pudo actualizar el punto`);
+        this.toast.error($localize`No se pudo actualizar el punto`, this.serverMessage(response));
       },
     });
   }
 
   removeChecklistItem(item: ChecklistItem): void {
-    this.api.delete(`/tasks/${this.task().id}/checklist/${item.id}`).subscribe({
+    this.api.delete(`/tasks/${this.task().id}/checklist/${item.id}`, SILENT).subscribe({
       next: () => {
         this.checklist.update(current => current.filter(p => p.id !== item.id));
         this.toastChecklist();
       },
-      error: () => this.toast.error($localize`Error`, $localize`No se pudo quitar el punto`),
+      error: response => this.toast.error($localize`No se pudo quitar el punto`, this.serverMessage(response)),
     });
   }
 
@@ -262,7 +270,7 @@ export class TaskDetailPanelComponent implements OnInit {
     const who = this.chosenUser;
     if (!who) return;
 
-    this.api.post(`/tasks/${this.task().id}/assignees`, { userId: who }).subscribe({
+    this.api.post(`/tasks/${this.task().id}/assignees`, { userId: who }, SILENT).subscribe({
       next: () => {
         this.assignees.update(current => [...current, who]);
         this.chosenUser = '';
@@ -281,7 +289,7 @@ export class TaskDetailPanelComponent implements OnInit {
    * es el que quedó guardado.
    */
   removeAssignee(userId: string): void {
-    this.api.delete(`/tasks/${this.task().id}/assignees/${userId}`).subscribe({
+    this.api.delete(`/tasks/${this.task().id}/assignees/${userId}`, SILENT).subscribe({
       next: () => {
         this.assignees.update(current => current.filter(u => u !== userId));
 
@@ -317,7 +325,7 @@ export class TaskDetailPanelComponent implements OnInit {
 
   loadDependencies(): void {
     this.loadingDependencies.set(true);
-    this.api.get<TaskDependencies>(`/tasks/${this.task().id}/dependencies`).subscribe({
+    this.api.get<TaskDependencies>(`/tasks/${this.task().id}/dependencies`, undefined, SILENT).subscribe({
       next: data => {
         this.dependencies.set({
           blockedBy: data.blockedBy ?? [],
@@ -325,9 +333,9 @@ export class TaskDetailPanelComponent implements OnInit {
         });
         this.loadingDependencies.set(false);
       },
-      error: () => {
+      error: response => {
         this.loadingDependencies.set(false);
-        this.toast.error($localize`Error`, $localize`No se pudieron cargar las dependencias`);
+        this.toast.error($localize`No se pudieron cargar las dependencias`, this.serverMessage(response));
       },
     });
   }
@@ -340,7 +348,7 @@ export class TaskDetailPanelComponent implements OnInit {
   loadCandidates(): void {
     if (this.blockerCandidates().length) return;
 
-    this.api.get<{ items: TaskItem[] }>('/tasks', { projectId: this.task().projectId, pageSize: 200, includeSubtasks: true })
+    this.api.get<{ items: TaskItem[] }>('/tasks', { projectId: this.task().projectId, pageSize: 200, includeSubtasks: true }, SILENT)
       .subscribe({
         next: page => {
           const alreadyBlocking = new Set(this.dependencies().blockedBy.map(t => t.id));
@@ -348,7 +356,7 @@ export class TaskDetailPanelComponent implements OnInit {
             (page.items ?? []).filter(t => t.id !== this.task().id && !alreadyBlocking.has(t.id))
           );
         },
-        error: () => this.toast.error($localize`Error`, $localize`No se pudieron cargar las tareas del proyecto`),
+        error: response => this.toast.error($localize`No se pudieron cargar las tareas del proyecto`, this.serverMessage(response)),
       });
   }
 
@@ -356,7 +364,7 @@ export class TaskDetailPanelComponent implements OnInit {
     const chosen = this.chosenBlocker;
     if (!chosen) return;
 
-    this.api.post(`/tasks/${this.task().id}/dependencies`, { dependsOnTaskId: chosen }).subscribe({
+    this.api.post(`/tasks/${this.task().id}/dependencies`, { dependsOnTaskId: chosen }, SILENT).subscribe({
       next: () => {
         this.chosenBlocker = '';
         this.blockerCandidates.set([]);
@@ -372,21 +380,19 @@ export class TaskDetailPanelComponent implements OnInit {
   }
 
   removeBlocker(blocker: TaskDependencyRef): void {
-    this.api.delete(`/tasks/${this.task().id}/dependencies/${blocker.id}`).subscribe({
+    this.api.delete(`/tasks/${this.task().id}/dependencies/${blocker.id}`, SILENT).subscribe({
       next: () => {
         this.dependencies.update(d => ({ ...d, blockedBy: d.blockedBy.filter(t => t.id !== blocker.id) }));
         this.blockerCandidates.set([]);
         this.toastBlockers(-1);
       },
-      error: () => this.toast.error($localize`Error`, $localize`No se pudo quitar la dependencia`),
+      error: response => this.toast.error($localize`No se pudo quitar la dependencia`, this.serverMessage(response)),
     });
   }
 
+  /** El motivo que da el servidor; antes sólo se leía si venía como texto, no como ProblemDetails. */
   private serverMessage(response: unknown): string {
-    const body = (response as { error?: unknown })?.error;
-    return typeof body === 'string' && body.trim()
-      ? body
-      : $localize`Inténtalo de nuevo`;
+    return errorMessage(response, $localize`Inténtalo de nuevo`);
   }
 
   /** Mantiene al día el distintivo de bloqueada de la tarjeta sin recargar la lista. */
@@ -408,14 +414,14 @@ export class TaskDetailPanelComponent implements OnInit {
 
   loadSubtasks(): void {
     this.loadingSubtasks.set(true);
-    this.api.get<{ items: TaskItem[] }>(`/tasks/${this.task().id}/subtasks`).subscribe({
+    this.api.get<{ items: TaskItem[] }>(`/tasks/${this.task().id}/subtasks`, undefined, SILENT).subscribe({
       next: page => {
         this.subtasks.set(page.items ?? []);
         this.loadingSubtasks.set(false);
       },
-      error: () => {
+      error: response => {
         this.loadingSubtasks.set(false);
-        this.toast.error($localize`Error`, $localize`No se pudieron cargar las subtareas`);
+        this.toast.error($localize`No se pudieron cargar las subtareas`, this.serverMessage(response));
       },
     });
   }
@@ -437,16 +443,16 @@ export class TaskDetailPanelComponent implements OnInit {
       estimatedHours: 1,
       dueDate: parent.dueDate,
       parentTaskId: parent.id,
-    }).subscribe({
+    }, SILENT).subscribe({
       next: created => {
         this.subtasks.update(current => [...current, created]);
         this.newSubtaskTitle = '';
         this.creatingSubtask.set(false);
         this.toastProgress();
       },
-      error: () => {
+      error: response => {
         this.creatingSubtask.set(false);
-        this.toast.error($localize`Error`, $localize`No se pudo crear la subtarea`);
+        this.toast.error($localize`No se pudo crear la subtarea`, this.serverMessage(response));
       },
     });
   }
@@ -463,11 +469,11 @@ export class TaskDetailPanelComponent implements OnInit {
 
     this.subtasks.update(current => current.map(s => s.id === sub.id ? { ...s, status: updated } : s));
 
-    this.api.patch(`/tasks/${sub.id}`, { status: updated }).subscribe({
+    this.api.patch(`/tasks/${sub.id}`, { status: updated }, SILENT).subscribe({
       next: () => this.toastProgress(),
-      error: () => {
+      error: response => {
         this.subtasks.update(current => current.map(s => s.id === sub.id ? { ...s, status: previous } : s));
-        this.toast.error($localize`Error`, $localize`No se pudo actualizar la subtarea`);
+        this.toast.error($localize`No se pudo actualizar la subtarea`, this.serverMessage(response));
       },
     });
   }
@@ -486,7 +492,7 @@ export class TaskDetailPanelComponent implements OnInit {
     this.saving.set(true);
     const payload: Record<string, unknown> = {};
     payload[field] = value;
-    this.api.patch(`/tasks/${this.task().id}`, payload).subscribe({
+    this.api.patch(`/tasks/${this.task().id}`, payload, SILENT).subscribe({
       next: () => {
         this.saving.set(false);
         this.updated.emit({ ...this.task(), title: this.title, description: this.description, status: this.status, priority: this.priority, dueDate: this.dueDate, estimatedHours: this.estimatedHours, tagIds: this.tagIds() });
@@ -494,9 +500,9 @@ export class TaskDetailPanelComponent implements OnInit {
           this.toast.success('Guardado', 'Título actualizado');
         }
       },
-      error: () => {
+      error: response => {
         this.saving.set(false);
-        this.toast.error('Error', 'No se pudo guardar el cambio');
+        this.toast.error($localize`No se pudo guardar el cambio`, this.serverMessage(response));
       },
     });
   }
@@ -524,29 +530,31 @@ export class TaskDetailPanelComponent implements OnInit {
     this.priority = newPriority;
     this.saving.set(true);
 
-    this.api.patch(`/tasks/${this.task().id}`, { priority: newPriority }).subscribe({
+    this.api.patch(`/tasks/${this.task().id}`, { priority: newPriority }, SILENT).subscribe({
       next: () => {
         this.saving.set(false);
         this.updated.emit({ ...this.task(), priority: newPriority });
         this.toast.success($localize`Prioridad actualizada`, this.currentPriority().label);
       },
-      error: () => {
+      error: response => {
         this.priority = previous;
         this.saving.set(false);
-        this.toast.error($localize`Error`, $localize`No se pudo cambiar la prioridad`);
+        this.toast.error($localize`No se pudo cambiar la prioridad`, this.serverMessage(response));
       },
     });
   }
 
   changeStatus(newStatus: string): void {
     this.status = newStatus;
-    this.api.post(`/tasks/${this.task().id}/move`, { newStatus }).subscribe({
+    this.api.post(`/tasks/${this.task().id}/move`, { newStatus }, SILENT).subscribe({
       next: () => {
         this.updated.emit({ ...this.task(), status: newStatus });
-        this.toast.success($localize`Estado actualizado`, `La tarea ahora está en ${newStatus}`);
+        this.toast.success($localize`Estado actualizado`, $localize`La tarea ahora está en ${this.statusLabel(newStatus)}:status:`);
       },
-      error: () => {
-        this.toast.error('Error', 'No se pudo cambiar el estado');
+      error: response => {
+        // El estado rechazado se quedaba en el desplegable como si se hubiera guardado.
+        this.status = this.task().status;
+        this.toast.error($localize`No se pudo cambiar el estado`, this.serverMessage(response));
       },
     });
   }

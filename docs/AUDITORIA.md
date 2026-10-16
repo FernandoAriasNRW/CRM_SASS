@@ -907,11 +907,12 @@ que lleva «8b» en el título. Lo único que sigue siendo propio de un disparad
   `.claude/worktrees/`. No se tocan sin preguntar: alguno puede tener trabajo sin subir.
 - **64 avisos de lint** en el frontend (eran 167; ver §41 y §42). Quedan los tipos `any` (53),
   cinco inyecciones por constructor y cinco nombres de salidas (`close`, `onX`).
-- **Cerrar la ficha de un ticket antes de que responda un cambio** lo deja guardado en el servidor
-  y sin reflejar en el tablero hasta recargar: la ficha ya no existe cuando llega la respuesta, y lo
-  que emite se pierde. Con la red normal no da tiempo; con una lenta, sí.
-- **Cualquier 403 lleva a Inicio** (`error.interceptor.ts`). Que te nieguen un solo campo te saca de
-  la pantalla en la que estabas, con lo que tuvieras a medias.
+- **Avisos de error propios que pueden salir dos veces.** La ficha de tareas lo tenía en sus 18
+  llamadas (§43). Quedan unos veinte `toast.error` en otras pantallas —Documentos, exportaciones,
+  tablero de tareas— cuya petición no pide al interceptor que calle. No todos van detrás de una
+  petición: hay que mirarlos uno a uno.
+- **La ficha de tareas no espera a los cambios en vuelo para cerrarse**, como ya hace la de tickets
+  (§43).
 - **`html2pdf` supera en 282 kB el presupuesto por fichero.** Es la propia librería y se carga
   solo al exportar un documento a PDF; subir el presupuesto general escondería engordes futuros.
   El resto de presupuestos se cumple desde §30.
@@ -2593,3 +2594,43 @@ Lo prueban:
 - `ticket-failed-save.spec.ts`: estado rechazado, clasificación rechazada, y que un cambio no
   deshace en la lista el anterior. Las tres fallaban con la ficha anterior.
 - `dashboard-layout.spec.ts`: los indicadores que fallan lo dicen una sola vez.
+
+---
+
+## 43. Un 403 ya no saca de la pantalla, y las fichas no pierden cambios
+
+**Cualquier 403 llevaba a Inicio** (`error.interceptor.ts`). Bastaba que te negaran un solo campo
+para salir de la pantalla en la que estabas, con lo que tuvieras a medias. Además salían dos avisos
+de «Acceso denegado», y el primero ni respetaba a la pantalla que se reservaba explicar el fallo.
+
+Ahora:
+- un 403 avisa una vez, como cualquier otro fallo;
+- no navega a ninguna parte: las pantallas ya las protegen los guardas de ruta.
+
+**La ficha del ticket, cerrada antes de que respondiera un cambio**, perdía ese cambio en el
+tablero: la respuesta llegaba a una ficha que ya no existía. Ahora espera a la respuesta para
+cerrarse. Pedir cerrar otra vez la cierra al momento, por si el servidor no contesta.
+
+**Ficha de tareas:**
+- **Cada fallo salía dos veces.** El aviso propio, con un genérico «Error», y el del interceptor,
+  con el motivo. Ahora sus 18 llamadas con aviso propio piden al interceptor que calle, y el aviso
+  propio dice qué falló y por qué. `serverMessage` solo leía el motivo si venía como texto, no como
+  los `ProblemDetails` que devuelve la API.
+- **El estado rechazado se quedaba en el desplegable** como si se hubiera guardado. Ahora se
+  deshace.
+- **Emitía sobre la tarea tal como se abrió la ficha**, como hacía la de tickets (§42). Un cambio
+  podía deshacer en el tablero otro anterior: la lista de comprobación, al cambiar el estado. La
+  lista actualiza ahora también la ficha abierta.
+- El aviso de estado cambiado decía la clave interna («In Progress») en vez del nombre, y no se
+  traducía. La etiqueta «Estado» se asocia a su campo.
+
+Lo prueban:
+- `error.interceptor.spec.ts`: un 403 no navega, avisa una vez y calla si la pantalla lo explica.
+  Las tres fallaban.
+- `ticket-failed-save.spec.ts`:
+  - un cambio prohibido te deja en la ficha y se deshace;
+  - cerrar con un cambio en vuelo no lo pierde.
+
+  Las dos fallaban.
+- `task-failed-save.spec.ts`: un estado rechazado avisa una vez, con el motivo, y se deshace.
+  Fallaba.

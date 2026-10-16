@@ -26,8 +26,8 @@ const json = (body: unknown, status = 200) => ({
   status, contentType: 'application/json', body: JSON.stringify(body),
 });
 
-async function openTicket(page: Page, { reject = true } = {}) {
-  await page.route(/\/api\/v1\//, r => {
+async function openTicket(page: Page, { reject = true, status = 400, delayMs = 0 } = {}) {
+  await page.route(/\/api\/v1\//, async r => {
     const url = r.request().url();
     const method = r.request().method();
 
@@ -40,10 +40,13 @@ async function openTicket(page: Page, { reject = true } = {}) {
     if (/\/comments/.test(url)) return r.fulfill(json([]));
     if (/\/custom-fields/.test(url)) return r.fulfill(json([]));
     if (/\/tickets\/tk1\/attachments$/.test(url)) return r.fulfill(json([]));
-    // El servidor rechaza cualquier cambio del ticket. Con un 400: un 403 lleva a Inicio y cerraría la ficha.
-    if (/\/tickets\/tk1$/.test(url) && method === 'PATCH' && !reject) return r.fulfill({ status: 204, body: '' });
+    // El servidor rechaza cualquier cambio del ticket.
+    if (/\/tickets\/tk1$/.test(url) && method === 'PATCH' && !reject) {
+      await new Promise(resolve => setTimeout(resolve, delayMs));
+      return r.fulfill({ status: 204, body: '' });
+    }
     if (/\/tickets\/tk1$/.test(url) && method === 'PATCH')
-      return r.fulfill(json({ detail: 'La clasificación no es válida' }, 400));
+      return r.fulfill(json({ detail: 'La clasificación no es válida' }, status));
     if (/\/tickets(\?|$)/.test(url)) return r.fulfill(json({ items: [TICKET], totalCount: 1 }));
 
     return r.fulfill(json({ items: [], totalCount: 0 }));
@@ -98,5 +101,30 @@ test('a later change does not undo in the list what was saved before', async ({ 
   await expect(classification).toBeHidden();
   await page.getByText('No carga la factura').first().click();
   await expect(page.locator('#ticket-classification')).toHaveValue('Facturación');
+  await expect(page.getByLabel('Estado', { exact: true })).toHaveValue('Resolved');
+});
+
+test('a forbidden change keeps you on the ticket and is undone', async ({ page }) => {
+  await openTicket(page, { status: 403 });
+
+  const status = page.getByLabel('Estado', { exact: true });
+  await status.selectOption('Resolved');
+
+  // Antes, cualquier 403 llevaba a Inicio y cerraba la ficha con lo que tuvieras a medias.
+  await expect(page.getByText('No tienes permisos para realizar esta acción.')).toHaveCount(1);
+  await expect(page).toHaveURL(/\/tickets/);
+  await expect(status).toHaveValue('Open');
+});
+
+test('closing before a change is answered does not lose it from the board', async ({ page }) => {
+  await openTicket(page, { reject: false, delayMs: 1500 });
+
+  // Se cierra con el cambio aún en vuelo: la ficha espera a la respuesta. Antes se cerraba al
+  // momento, la respuesta llegaba a una ficha que ya no existía, y el tablero seguía con «Abierto».
+  await page.getByLabel('Estado', { exact: true }).selectOption('Resolved');
+  await page.keyboard.press('Escape');
+  await expect(page.locator('#ticket-classification')).toBeHidden({ timeout: 5_000 });
+
+  await page.getByText('No carga la factura').first().click();
   await expect(page.getByLabel('Estado', { exact: true })).toHaveValue('Resolved');
 });
